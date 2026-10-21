@@ -50,7 +50,7 @@ class Command(BaseCommand):
         # Deliberate implementation gates: these cannot be cleared by setting an environment flag.
         blockers.extend(
             [
-                "Plenix applicant/council UI and Arabic acceptance tests remain unimplemented",
+                "Full Plenix applicant/council workflows and Arabic acceptance remain incomplete",
                 "151-table contract reconciliation is incomplete",
                 "Backup restoration, provider login and end-to-end ten-user demonstration remain unverified",
             ]
