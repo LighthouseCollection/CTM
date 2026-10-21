@@ -739,3 +739,83 @@ def test_unassigned_member_cannot_insert_findings_using_raw_orm(
                 value={},
                 actor=people["president"],
             )
+
+
+def test_legitimate_council_workflow_writes_under_non_owner_role(
+    runtime, council_sources, people
+):
+    from datetime import date
+    from tribunal.services import council
+
+    app, *_ = council_sources
+    with runtime(people["admin"]):
+        session = council.create_session(people["admin"], date(2026, 11, 12))
+        council.record_attendance(
+            people["admin"], session.pk, people["member"].pk, True
+        )
+    with runtime(people["member"]):
+        item = council.place_agenda(people["member"], session.pk, app.case_id)
+        hearing = council.hear_case(people["member"], item.pk)
+        note = council.save_note(people["member"], app.proceeding_id, "Runtime note")
+        assert note.author_id == people["member"].pk
+        council.save_finding(
+            people["member"], app.proceeding_id, "runtime", {"value": True}
+        )
+        council.save_hearing_outcome(
+            people["member"], hearing.pk, "Private runtime outcome", "Follow up"
+        )
+    with runtime(people["admin"]):
+        council.close_session(people["admin"], session.pk)
+    with runtime(people["member"]):
+        council.save_hearing_outcome(
+            people["member"],
+            hearing.pk,
+            "Corrected after session close",
+            "Revised follow up",
+        )
+
+
+def test_session_date_cannot_be_changed_in_place_by_runtime_admin(
+    runtime, council_sources, people
+):
+    from datetime import timedelta
+    from django.db import DatabaseError
+    from tribunal.models import CouncilSession
+
+    _, session, *_ = council_sources
+    with pytest.raises(DatabaseError):
+        with runtime(people["admin"]):
+            CouncilSession.objects.filter(pk=session.pk).update(
+                date=session.date + timedelta(days=1)
+            )
+
+
+def test_council_record_deletion_is_denied_to_runtime_admin(
+    runtime, council_sources, people
+):
+    _, session, *_ = council_sources
+    with runtime(people["admin"]):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM public.tribunal_councilsession WHERE id=%s",
+                [str(session.pk)],
+            )
+            assert cursor.rowcount == 0
+
+
+def test_new_assignee_cannot_append_to_previous_authors_note(
+    runtime, council_sources, people
+):
+    from django.db import DatabaseError
+    from tribunal.models import NoteRevision
+    from tribunal.services.council import assign_case
+
+    app, _, _, note, _ = council_sources
+    assign_case(
+        people["admin"], app.case_id, people["president"].pk, people["president"].pk
+    )
+    with pytest.raises(DatabaseError):
+        with runtime(people["president"]):
+            NoteRevision.objects.create(
+                note=note, number=2, text="Forged revision", actor=people["president"]
+            )
