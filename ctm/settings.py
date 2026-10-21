@@ -87,6 +87,7 @@ SOCIALACCOUNT_ONLY = True
 # Provider-only mode has no CTM email/password verification flow; adapter requires verified identity.
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_SIGNUP_FIELDS = ["email*", "first_name*", "last_name*"]
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = False
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = False

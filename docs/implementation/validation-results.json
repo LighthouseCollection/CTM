@@ -130,14 +130,19 @@
     "account": "frraphaelmaher@lacopts.org",
     "identity_verified": true,
     "provider_redirect": "passed in real browser after same-origin referrer fix",
-    "callback": "pending user password/MFA",
+    "callback": "passed: real Microsoft OAuth returned authenticated council portal in browser",
     "local_url": "http://localhost:18844/",
-    "data": "isolated local database; no fixture authentication"
+    "data": "isolated local database; no fixture authentication",
+    "fixture_authentication": false
   },
   "local_real_api_latest": {
     "status": "passed",
     "artifact_directory": ".tmp/browser-integration-980276a255b14f749260da1cb7cf30da",
     "provider_login": false,
     "browser_errors": 0
+  },
+  "provider_callback_regression": {
+    "passed": 12,
+    "scope": "email-only allauth login message, integrations and private headers"
   }
 }

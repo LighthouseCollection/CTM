@@ -294,3 +294,8 @@ The requested Microsoft account is frraphaelmaher@lacopts.org; its tenant subjec
 ## Local OAuth server lifetime - 2026-10-21
 
 User callback encountered a connection failure because the foreground local server was no longer listening after the prior turn. Added scripts/start-local-microsoft.ps1 for a hidden independent background process, retaining loopback binding and SSH-to-stdin provider credentials. Verified HTTP200 from the restored listener and reopened a fresh provider flow. The current attempt awaits user password/MFA. Sanitized local diagnostics record only exception categories, state presence and AADSTS codes, never callback codes, tokens or response bodies. Callback acceptance is not yet confirmed.
+
+
+## Microsoft callback verified - 2026-10-21
+
+Genuine Microsoft OAuth for frraphaelmaher@lacopts.org now completes into the council portal on localhost18844. An actual callback exposed AttributeError in allauth default user display: the email-only Account has no username field. Set ACCOUNT_USER_MODEL_USERNAME_FIELD=None. A new regression reproduces the actual logged-in template failure before the fix and passes afterward; the related subset passes12 tests. Browser verified the authenticated name Fr. Raphael Maher, Council portal navigation and Home. This verifies local provider callback acceptance only, not the undeployed public route. Added sanitized server exception frame diagnostics to the local tool (no tokens, query strings or exception values).

@@ -8,6 +8,7 @@ import os
 import logging
 import json
 import re
+import traceback
 import secrets
 import sys
 import uuid
@@ -91,6 +92,25 @@ def csrf_failure(request, reason=""):
 
 
 settings.CSRF_FAILURE_VIEW = csrf_failure
+
+
+def record_exception(sender, request, **kwargs):
+    exc_type, exc, tb = sys.exc_info()
+    diagnostic = {
+        "exception": exc_type.__name__ if exc_type else None,
+        "frames": [
+            {"file": Path(frame.filename).name, "line": frame.lineno, "function": frame.name}
+            for frame in traceback.extract_tb(tb)
+        ],
+    }
+    (root / ".tmp" / "local-microsoft-server-error.json").write_text(
+        json.dumps(diagnostic), encoding="utf-8"
+    )
+
+
+from django.core.signals import got_request_exception
+
+got_request_exception.connect(record_exception, weak=False)
 
 
 class Quiet(WSGIRequestHandler):
