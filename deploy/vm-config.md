@@ -114,7 +114,7 @@ Add proxy host after VM is running:
 - Forward port: 8000
 - SSL: Let's Encrypt certificate
 - Force SSL: yes
-- Websockets: yes (for Tus upload progress)
+- WebSockets: enabled in NPM; tus transfers themselves use HTTP POST/PATCH/HEAD.
 - Block common exploits: yes
 
 ## Engram Cloud
@@ -127,3 +127,14 @@ Engram Cloud runs as an authenticated service on the CTM VM for developer memory
 - Auth: bearer token (ENGRAM_CLOUD_TOKEN) + admin token (ENGRAM_CLOUD_ADMIN)
 - Project allowlist: ENGRAM_CLOUD_ALLOWED_PROJECTS (server-enforced)
 - Client config: `engram cloud config --server http://10.0.0.40:18080` from AdminPC
+
+
+## Verified route and launch prerequisites - 2026-10-21
+
+The operator created NPM proxy30 for `ctm.lighthouseway.org` to `http://10.0.0.40:8000` and issued its Let's Encrypt certificate (reported expiry2027-01-19). DNS and certificate-validated HTTPS502 were independently verified. Port8000 has no listener yet. This is now an upstream application/service task; do not recreate the existing proxy host.
+
+The current validation container remains private and uses test settings. It is not the production upstream. Complete production migration ownership, runtime/function grants and readiness gates before a public launch. Use staged Microsoft configuration from its protected server file; do not embed secrets or test settings in the image. After origin ingress is limited to NPM and NPM overwrites forwarded scheme headers, enable CTM_TRUST_PROXY_SSL=true to preserve HTTPS callbacks/secure cookies through its HTTP upstream.
+
+Application static assets now live in the versioned image at `/srv/ctm/static`; no persistent static volume masks upgrades. Only media persists through the existing uploads bind volume. The no-network init-storage service adjusts the root media directory to UID/GID1000 and0700 before media writers start, without recursively changing existing file owners. Backups restore private media plus the database; static assets are rebuilt from the pinned application image. Inspect existing file ownership separately before adopting any older media tree. No operational volume or database was changed by these source updates.
+
+Tus protocol reference: https://tus.io/protocols/resumable-upload . WebSocket support alone does not implement resumable upload handling; that application endpoint remains planned.

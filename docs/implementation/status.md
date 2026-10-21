@@ -273,3 +273,10 @@ A disposable GitHub PostgreSQL regression checks special-character/newline passw
 An isolated existing validation image confirmed that its runtime media/static paths were absent. The production Dockerfile now creates private media storage for UID1000 and collects application static files at the configured runtime path. Static assets are served from the immutable image, rather than a persistent static volume that could hide an upgrade's new app.js. No CDN component files are copied; the application still links pinned Plenix.
 
 A one-shot storage service prepares only the media directory's UID/GID/mode before media-writing services start. It changes no existing file ownership recursively. Its root filesystem is read-only, it has no network, and capabilities are limited to ownership/mode maintenance plus read/search needed to reopen an existing UID1000/0700 directory. The image smoke runs this initializer twice with the production security flags, checks existing file ownership remains unchanged, verifies a non-root upload write, and checks packaged app.js exists. This runs in disposable GitHub containers/volumes; no operational volume was changed. Existing files with incompatible ownership still require explicit inspection rather than blanket ownership replacement.
+
+
+## Public CDN and image validation - 2026-10-21
+
+Pinned Plenix assets now return200 over public DNS/TLS without the LAN override. The full real-API browser script passed through this public CDN path, including report revision selection, saved attendance/messages, notification reads and applicant isolation. Provider login remains a separate acceptance gate.
+
+CI39686788415 passed185 PostgreSQL tests, built the production image and ran private-volume initialization twice with the configured restricted capabilities. It verified the non-root application user can write media, existing file ownership is preserved and the packaged app.js is present. A further CI HTTP smoke will launch that production image on the disposable runner's loopback address and compare the served app.js to the source. No operational VM application, database, volume or public upstream was changed.

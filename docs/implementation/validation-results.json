@@ -2,17 +2,17 @@
   "date_utc": "2026-10-21",
   "application_version": "0.1.0",
   "postgresql_tests": {
-    "passed": 177,
+    "passed": 185,
     "failed": 0,
     "skipped": 0,
-    "duration_seconds": 21.23,
+    "duration_seconds": null,
     "isolation": "GitHub isolated PostgreSQL16 service; non-owner role source privacy tests"
   },
   "sqlite_tests": {
-    "passed": 141,
+    "passed": 143,
     "failed": 0,
-    "skipped": 41,
-    "note": "Latest Python3.13 local full rerun passed; intermittent Windows interpreter access violation also reproduced on3.13."
+    "skipped": 42,
+    "note": "Latest completed local full suite143 passed before fresh-init test was added; later full reruns hit intermittent Windows native interpreter crashes. Linux PostgreSQL CI is authoritative."
   },
   "django_system_check": "passed",
   "migration_drift_check": "passed",
@@ -39,7 +39,7 @@
   "implemented_domain_models": 58,
   "explicit_root_url_patterns": 64,
   "public_deployment_ready": false,
-  "github_hosted_ci": "passed:177 PostgreSQL tests on05ba068; https://github.com/LighthouseCollection/CTM/actions/runs/39684675265",
+  "github_hosted_ci": "passed:185 PostgreSQL tests, production image build and repeated private-volume initialization on1287979; https://github.com/LighthouseCollection/CTM/actions/runs/39686788415",
   "limitations": [
     "Initial Plenix shell and document/evidence screens implemented; full workflow editors incomplete",
     "151-table contract reconciliation and forced RLS incomplete",
@@ -62,9 +62,9 @@
   },
   "plenix_docs": {
     "version": "0.58.0",
-    "access": "verified via LAN reverse proxy TLS/--resolve",
-    "public_route": "still timing out",
-    "ui_implemented": "initial shell and communications; incomplete full workflows"
+    "access": "Public DNS and TLS now verified without LAN override",
+    "public_route": "HTTP200 for pinned plenix.js",
+    "ui_implemented": "Initial shell, communications, document/evidence reading, reports/revisions, notification inbox, session attendance; remaining workflow editors incomplete"
   },
   "browser_smoke": {
     "status": "passed locally",
@@ -100,6 +100,25 @@
     "private_range_status": 206,
     "other_applicant_case_and_file_access": 403,
     "browser_errors": 0,
-    "attendance_persisted": true
+    "attendance_persisted": true,
+    "cdn_access": "Public DNS/TLS with no LAN resolver override",
+    "report_previous_revision_selected": true
+  },
+  "public_route": {
+    "dns": "ctm.lighthouseway.org CNAME npm.lighthouseway.org /76.246.228.252",
+    "https_status": 502,
+    "upstream_listener": false,
+    "validation_container_exposed": false,
+    "proxy_host_id": 30,
+    "proxy_host_id_source": "operator report"
+  },
+  "production_image_validation": {
+    "build": "passed in CI",
+    "runtime_static_asset_present": true,
+    "non_root_media_write": true,
+    "storage_init_repeat": true,
+    "existing_file_ownership_preserved": true,
+    "production_http_smoke": "queued next CI run",
+    "operational_deployment": false
   }
 }
