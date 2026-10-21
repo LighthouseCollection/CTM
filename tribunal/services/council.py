@@ -125,8 +125,10 @@ def attendance_for(actor, session_id, hearing_id=None):
     session = CouncilSession.objects.get(pk=session_id)
     if hearing_id:
         Hearing.objects.get(pk=hearing_id, agenda__session=session)
-    rows = Attendance.objects.filter(session=session, hearing_id=hearing_id).order_by(
-        "created_at", "pk"
+    rows = (
+        Attendance.objects.filter(session=session, hearing_id=hearing_id)
+        .select_related("member")
+        .order_by("created_at", "pk")
     )
     return {row.member_id: row for row in rows}
 

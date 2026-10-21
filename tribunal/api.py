@@ -424,8 +424,16 @@ def sessions(request):
 def agenda(request, session_id):
     staff(request.user)
     if request.method == "GET":
+        session = m.CouncilSession.objects.get(pk=session_id)
         return JsonResponse(
             {
+                "session": encoded(
+                    session,
+                    date=session.date.isoformat(),
+                    state=session.state,
+                    can_record_attendance=request.user.role in {"admin", "secretary"}
+                    and session.state == "planned",
+                ),
                 "items": [
                     encoded(
                         x,
@@ -437,7 +445,7 @@ def agenda(request, session_id):
                     for x in m.AgendaItem.objects.filter(session_id=session_id)
                     .select_related("case")
                     .order_by("part", "position")
-                ]
+                ],
             }
         )
     from tribunal.services.council import place_agenda
@@ -485,6 +493,8 @@ def attendance(request, session_id):
                     encoded(
                         row,
                         member_id=str(row.member_id),
+                        member_name=f"{row.member.first_name} {row.member.last_name}".strip(),
+                        member_active=row.member.is_active,
                         present=row.present,
                         actor_id=str(row.actor_id),
                         timestamp=row.created_at.isoformat(),

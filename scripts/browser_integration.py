@@ -12,6 +12,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 import uuid
 from pathlib import Path
+from datetime import date
 from wsgiref.simple_server import WSGIRequestHandler, make_server
 
 root = Path(__file__).resolve().parents[1]
@@ -43,6 +44,8 @@ from tribunal.models import (
     Notification,
     Message,
 )
+from tribunal.services.council import create_session
+from tribunal.models import Attendance
 from tribunal.services.files import upload
 from tribunal.services.reports import create_request, send_request, complete_request
 
@@ -63,6 +66,14 @@ applicant = Account.objects.create_user(
 outsider = Account.objects.create_user(
     email="outsider@example.test", email_verified=True
 )
+admin = Account.objects.create_user(
+    email="admin@example.test",
+    first_name="Admin",
+    last_name="Tester",
+    role="admin",
+    email_verified=True,
+)
+session = create_session(admin, date(2030, 1, 2))
 case = Case.objects.create(number="20261021-01", assigned_member=manager)
 proceeding = Proceeding.objects.create(case=case)
 party = Party.objects.create(
@@ -223,6 +234,69 @@ try:
             ).status
             == 403
         )
+        applicant_cookie = database_check(lambda: fixture_cookie(applicant))
+        own = browser.new_context()
+        own.add_cookies(
+            [
+                {
+                    "name": settings.SESSION_COOKIE_NAME,
+                    "value": applicant_cookie,
+                    "url": "http://127.0.0.1:18842/",
+                }
+            ]
+        )
+        assert (
+            own.request.get(f"http://127.0.0.1:18842/api/cases/{case.pk}/").status
+            == 200
+        )
+        assert (
+            own.request.get(f"http://127.0.0.1:18842/api/files/{source.pk}/").status
+            == 403
+        )
+        own_report = own.request.get(
+            f"http://127.0.0.1:18842/api/cases/{case.pk}/reports/"
+        ).json()["items"][0]
+        assert own_report["answers"]["OPEN-TEST"] == "Applicant Tester"
+        assert own_report["observations"] is None
+        admin_cookie = database_check(lambda: fixture_cookie(admin))
+        administrative = browser.new_context(viewport={"width": 1440, "height": 1000})
+        administrative.add_cookies(
+            [
+                {
+                    "name": settings.SESSION_COOKIE_NAME,
+                    "value": admin_cookie,
+                    "url": "http://127.0.0.1:18842/",
+                }
+            ]
+        )
+        attendance_page = administrative.new_page()
+        attendance_page.on("pageerror", lambda error: errors.append(str(error)))
+        attendance_page.goto("http://127.0.0.1:18842/", wait_until="domcontentloaded")
+        attendance_page.get_by_role("heading", name="Home", exact=True).wait_for()
+        attendance_page.get_by_role(
+            "button", name="Tribunal Sessions", exact=True
+        ).click()
+        attendance_page.get_by_role(
+            "button", name="Council Session 2030-01-02", exact=True
+        ).click()
+        group = attendance_page.get_by_role("group", name="Council Tester", exact=True)
+        group.get_by_role("radio", name="Present", exact=True).check()
+        group.get_by_role("radio", name="Present", exact=True).wait_for()
+        attendance_page.wait_for_function(
+            "() => !Array.from(document.querySelectorAll('input[type=radio]')).some(input=>input.disabled && input.value==='present')"
+        )
+        assert (
+            database_check(
+                lambda: (
+                    Attendance.objects.get(
+                        session=session, member=manager, hearing__isnull=True
+                    ).present
+                )
+            )
+            is True
+        )
+        attendance_page.screenshot(path=str(run_dir / "attendance.png"), full_page=True)
+        assert not errors, errors
         browser.close()
         print(
             json.dumps(
@@ -233,6 +307,7 @@ try:
                     "database": "isolated synthetic SQLite",
                     "report_question_snapshot": True,
                     "notification_read_persisted": True,
+                    "attendance_persisted": True,
                     "message_persisted": True,
                     "private_range": 206,
                     "other_applicant_denied": True,

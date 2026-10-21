@@ -41,6 +41,7 @@
       home: "Home",
       cases: "Cases",
       sessions: "Tribunal Sessions",
+      councilSession: "Council Session",
       archived: "Archived",
       search: "Q Search",
       statistics: "Statistics and Reports",
@@ -54,6 +55,10 @@
       noCases: "No cases are available.",
       noFiles: "No technically cleared files are available in this section.",
       noReports: "No completed reports are available.",
+      attendance: "Council attendance",
+      present: "Present",
+      absent: "Absent",
+      notRecorded: "Not recorded",
       notifications: "Notifications",
       noNotifications: "You have no notifications.",
       markRead: "Mark as read",
@@ -187,6 +192,10 @@
       event_appeal_added: "أضيفت معلومات جديدة إلى الاستئناف.",
       event_testimony_response: "تم الرد على دعوة الإدلاء بالشهادة.",
       event_testimony_invited: "لديك دعوة للإدلاء بالشهادة.",
+      attendance: "حضور أعضاء المجلس",
+      present: "حاضر",
+      absent: "غائب",
+      notRecorded: "لم يُسجّل",
       notifications: "الإشعارات",
       noNotifications: "لا توجد إشعارات.",
       markRead: "تحديد كمقروء",
@@ -239,6 +248,7 @@
       home: "الرئيسية",
       cases: "القضايا",
       sessions: "جلسات المجلس",
+      councilSession: "جلسة المجلس",
       archived: "الأرشيف",
       search: "البحث",
       statistics: "الإحصاءات والتقارير",
@@ -489,6 +499,80 @@
   }
   const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
   const heading = (value) => text(value, { as: "h1", variant: "title" });
+  function SessionAttendance({ sessionId, session, members, initial, t }) {
+    const [records, setRecords] = R.useState(initial),
+      [pending, setPending] = R.useState(false),
+      [failed, setFailed] = R.useState(false);
+    async function record(memberId, value) {
+      if (pending || !session.can_record_attendance) return;
+      const previous = records;
+      setRecords((old) => [
+        ...old.filter((row) => row.member_id !== memberId),
+        { member_id: memberId, present: value === "present" },
+      ]);
+      setPending(true);
+      setFailed(false);
+      try {
+        await api(`/api/sessions/${sessionId}/attendance/`, {
+          method: "POST",
+          body: JSON.stringify({
+            member_id: memberId,
+            present: value === "present",
+          }),
+        });
+      } catch {
+        setRecords(previous);
+        setFailed(true);
+      } finally {
+        setPending(false);
+      }
+    }
+    const roster = [
+      ...members.map((member) => ({ ...member, active: true })),
+      ...records
+        .filter((row) => !members.some((member) => member.id === row.member_id))
+        .map((row) => ({
+          id: row.member_id,
+          name: row.member_name,
+          active: false,
+        })),
+    ];
+    return h(
+      P.Panel,
+      { title: t("attendance") },
+      h(
+        P.Stack,
+        null,
+        ...roster.map((member) => {
+          const row = records.find((item) => item.member_id === member.id);
+          const value = row
+            ? row.present
+              ? "present"
+              : "absent"
+            : "notRecorded";
+          return session.can_record_attendance && member.active
+            ? h(P.RadioGroup, {
+                key: member.id,
+                label: member.name,
+                value,
+                options: [
+                  {
+                    value: "notRecorded",
+                    label: t("notRecorded"),
+                    disabled: true,
+                  },
+                  { value: "present", label: t("present"), disabled: pending },
+                  { value: "absent", label: t("absent"), disabled: pending },
+                ],
+                onChange: (value) => record(member.id, value),
+                layout: "row",
+              })
+            : text(`${member.name}: ${t(value)}`, { key: member.id });
+        }),
+        failed ? h(P.Notice, { tone: "danger" }, t("error")) : null,
+      ),
+    );
+  }
   function NotificationInbox({ initial, t, onCase, lang }) {
     const [rows, setRows] = R.useState(initial.items),
       [next, setNext] = R.useState(initial.next_offset);
@@ -911,7 +995,15 @@
           sessions: sessions.items,
         }));
       else if (page === "session" && selection)
-        request = api(`/api/sessions/${selection}/agenda/`);
+        request = Promise.all([
+          api(`/api/sessions/${selection}/agenda/`),
+          api("/api/council/members/"),
+          api(`/api/sessions/${selection}/attendance/`),
+        ]).then(([agenda, members, attendance]) => ({
+          ...agenda,
+          members: members.items,
+          attendance: attendance.items,
+        }));
       else if (page === "sessions") request = api("/api/sessions/");
       else if (page === "applications") request = api("/api/applications/");
       else if (["home", "cases", "archived", "past"].includes(page)) {
@@ -1335,6 +1427,15 @@
             { variant: "ghost", onClick: () => go("sessions") },
             t("backSessions"),
           ),
+          heading(`${t("councilSession")} ${data.session.date}`),
+          h(SessionAttendance, {
+            key: selection,
+            sessionId: selection,
+            session: data.session,
+            members: data.members,
+            initial: data.attendance,
+            t,
+          }),
           heading(t("agenda")),
           ...[1, 2].map((part) =>
             h(
@@ -1362,7 +1463,7 @@
             ? data.items.map((row) =>
                 h(P.Card, {
                   key: row.id,
-                  title: `${t("sessions")} ${row.date}`,
+                  title: `${t("councilSession")} ${row.date}`,
                   meta: t(row.state),
                   onOpen: () => go("session", row.id),
                 }),

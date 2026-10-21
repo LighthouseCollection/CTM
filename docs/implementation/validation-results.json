@@ -2,14 +2,14 @@
   "date_utc": "2026-10-21",
   "application_version": "0.1.0",
   "postgresql_tests": {
-    "passed": 176,
+    "passed": 177,
     "failed": 0,
     "skipped": 0,
-    "duration_seconds": 16.28,
+    "duration_seconds": 21.23,
     "isolation": "GitHub isolated PostgreSQL16 service; non-owner role source privacy tests"
   },
   "sqlite_tests": {
-    "passed": 136,
+    "passed": 141,
     "failed": 0,
     "skipped": 41,
     "note": "Latest Python3.13 local full rerun passed; intermittent Windows interpreter access violation also reproduced on3.13."
@@ -39,7 +39,7 @@
   "implemented_domain_models": 58,
   "explicit_root_url_patterns": 64,
   "public_deployment_ready": false,
-  "github_hosted_ci": "passed:176 PostgreSQL tests on975f8a5; https://github.com/LighthouseCollection/CTM/actions/runs/39683812360",
+  "github_hosted_ci": "passed:177 PostgreSQL tests on05ba068; https://github.com/LighthouseCollection/CTM/actions/runs/39684675265",
   "limitations": [
     "Initial Plenix shell and document/evidence screens implemented; full workflow editors incomplete",
     "151-table contract reconciliation and forced RLS incomplete",
@@ -57,7 +57,8 @@
   "attendance_workflow": {
     "local_tests": "passed",
     "postgres_validation": "passed in GitHub PostgreSQL16 suite; no VM deployment",
-    "production_deployed": false
+    "production_deployed": false,
+    "ui": "Session baseline editable for authorized staff on planned sessions; inactive recorded members preserved read-only; hearing controls pending"
   },
   "plenix_docs": {
     "version": "0.58.0",
@@ -98,6 +99,7 @@
     "sent_report_question_snapshot": true,
     "private_range_status": 206,
     "other_applicant_case_and_file_access": 403,
-    "browser_errors": 0
+    "browser_errors": 0,
+    "attendance_persisted": true
   }
 }
