@@ -48,3 +48,11 @@ An MCP is optional for administration. SSH and supported vendor CLIs/APIs alread
 - Secret expires April 21, 2027; rotate before expiration. Secret values are intentionally absent from this document.
 - Credentials are staged on the VM, not yet loaded by a production CTM service. Callback HTTPS routing, complete browser login and preauthorized council identity onboarding remain acceptance gates.
 - The operator has tenant-level CLI access without an accessible Azure subscription; hosting entitlement is separate from login registration.
+
+## Callback routing diagnosis
+
+On 2026-10-21, an ephemeral container using the staged Microsoft configuration returned HTTP 302 from POST `/accounts/microsoft/login/` with the exact Diocese tenant authorization URL, the HTTPS CTM callback, User.Read scope and nonempty OAuth state. This verifies authorization-request construction only; it is not a completed browser authorization-code exchange. The probe used the isolated validation database and test client, with an explicit allowed-host override, and had no listening port.
+
+The CTM VM can reach Microsoft's login endpoint. Nginx Proxy Manager in LXC 102 is reachable through Proxmox SSH and listens at 10.0.0.20 on ports 80/443. Its configured hostnames include the older `ctm.lighthousecollection.net`, but not `ctm.lighthouseway.org`. A LAN request with the new hostname failed the TLS handshake; a public-host request previously timed out. No existing proxy host was changed.
+
+The existing `ctm-validation-backend` is internal-only and uses test settings; it must not be exposed as the new production upstream. Complete the production database grants/settings and deploy a separately configured service, then add the new NPM host and valid certificate through its supported management interface. Verify the upstream from NPM, HTTPS/CSRF/proxy handling, council identity authorization and full Microsoft callback exchange before declaring login live. Operator app registration access is established; public runtime login remains pending.
