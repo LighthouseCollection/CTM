@@ -2478,7 +2478,7 @@
         {
           "name": "file",
           "column": "file_id",
-          "type": "ForeignKey",
+          "type": "OneToOneField",
           "nullable": false,
           "primary_key": false,
           "target": "tribunal.FileVersion"

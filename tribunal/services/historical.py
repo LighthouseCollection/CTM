@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -72,11 +73,23 @@ def publish(actor, workspace_id):
                 raise ValidationError(
                     "Historical open case conflicts with another open case."
                 )
+    closed_at = None
+    if payload["status"] == "closed" and payload.get("closed_at"):
+        try:
+            closed_at = datetime.fromisoformat(payload["closed_at"])
+        except (TypeError, ValueError):
+            raise ValidationError(
+                "Historical closure timestamp is invalid; leave it unknown if unavailable."
+            )
+        if not timezone.is_aware(closed_at):
+            raise ValidationError(
+                "A known historical closure timestamp must include its timezone."
+            )
     case = Case.objects.create(
         number=payload["number"],
         status=payload["status"],
         origin="historical",
-        closed_at=timezone.now() if payload["status"] == "closed" else None,
+        closed_at=closed_at,
     )
     Proceeding.objects.create(case=case, status=case.status, closed_at=case.closed_at)
     for party, account in people:

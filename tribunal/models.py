@@ -591,7 +591,7 @@ class Recording(Root):
     appointment = models.ForeignKey(
         "TestimonyAppointment", null=True, on_delete=models.PROTECT
     )
-    file = models.ForeignKey(FileVersion, on_delete=models.PROTECT)
+    file = models.OneToOneField(FileVersion, on_delete=models.PROTECT)
     notice_recorded = models.BooleanField(default=False)
     finalized_at = models.DateTimeField(null=True)
 
@@ -602,6 +602,13 @@ class ProcessingRun(Root):
     state = models.CharField(max_length=15, default="queued")
     engine = models.CharField(max_length=100, blank=True)
     error = models.CharField(max_length=250, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["file", "purpose"], name="file_processing_identity"
+            )
+        ]
 
 
 class TranscriptRevision(Immutable):

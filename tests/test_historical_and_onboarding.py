@@ -29,6 +29,7 @@ def test_historical_entry_preserves_number_and_missing_documents(people):
     assert workspace.finalized_case_id is None
     case = publish(people["admin"], workspace.pk)
     assert case.number == "LA-1990-123" and case.status == "closed"
+    assert case.closed_at is None
     assert case.parties.get().reference == "OLD123"
 
 

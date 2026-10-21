@@ -263,7 +263,11 @@ def sign_medical_release(actor, request_id, file_id, scope):
     if request.subject.account_id != actor.pk:
         raise PermissionDenied("Only the report subject can sign their release.")
     open_proceeding(request.proceeding)
-    file = FileVersion.objects.select_related("attachment").get(pk=file_id)
+    file = (
+        FileVersion.objects.select_for_update(of=("self",))
+        .select_related("attachment")
+        .get(pk=file_id)
+    )
     if (
         file.attachment.owner_id != actor.pk
         or file.attachment.case_id != request.case_id
@@ -306,7 +310,11 @@ def create_recording(
         raise ValidationError(
             "Associate the whole recording with one report or testimony appointment."
         )
-    file = FileVersion.objects.select_related("attachment").get(pk=file_id)
+    file = (
+        FileVersion.objects.select_for_update(of=("self",))
+        .select_related("attachment")
+        .get(pk=file_id)
+    )
     if (
         file.attachment.visibility != "council"
         or not file.mime_type.startswith(("audio/", "video/"))
@@ -341,6 +349,15 @@ def create_recording(
     writer(actor, case)
     if file.attachment.case_id != case.pk:
         raise PermissionDenied("Recording belongs to another case.")
+    existing = Recording.objects.filter(file=file).first()
+    if existing:
+        if existing.report_id != (
+            report.pk if report else None
+        ) or existing.appointment_id != (appointment.pk if appointment else None):
+            raise ValidationError(
+                "This original recording already belongs to another report or appointment."
+            )
+        return existing
     recording = Recording.objects.create(
         report=report,
         appointment=appointment,
@@ -377,14 +394,14 @@ def finalize_recording(actor, recording_id):
         return ProcessingRun.objects.get(file=recording.file, purpose="transcription")
     recording.finalized_at = timezone.now()
     recording.save(update_fields=["finalized_at"])
-    run = ProcessingRun.objects.create(file=recording.file, purpose="transcription")
+    run, _ = ProcessingRun.objects.get_or_create(
+        file=recording.file, purpose="transcription"
+    )
     from tribunal.models import Outbox
 
-    Outbox.objects.create(
-        key=f"transcribe:{recording.pk}",
-        kind="transcribe",
-        case=case,
-        payload={"run": str(run.pk)},
+    Outbox.objects.get_or_create(
+        key=f"transcribe:{run.pk}",
+        defaults={"kind": "transcribe", "case": case, "payload": {"run": str(run.pk)}},
     )
     return run
 

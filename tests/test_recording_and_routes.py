@@ -44,6 +44,12 @@ def test_whole_report_recording_queues_only_after_finalization(
         people["admin"], file.pk, report_id=report.pk, notice_recorded=True
     )
     assert recording.finalized_at is None
+    assert (
+        create_recording(
+            people["admin"], file.pk, report_id=report.pk, notice_recorded=True
+        ).pk
+        == recording.pk
+    )
     assert file.processingrun_set.count() == 0
     run = finalize_recording(people["admin"], recording.pk)
     assert run.state == "queued"
