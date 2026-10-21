@@ -239,3 +239,12 @@ The real-CDN browser smoke now checks report selection, sent question text and i
 ## Private-response headers - 2026-10-21
 
 A middleware boundary now sets private/no-store caching, no-referrer and nosniff on CTM API, account/login, capability-report and root-shell responses. It also covers missing-resource and CSRF/access rejection responses, rather than relying on individual successful views. Static CDN assets remain outside this boundary. Local135 tests passed with41 PostgreSQL-only skips; the previous report-reading commit passed171 PostgreSQL tests in CI. Public deployment remains blocked on the documented integration and schema/security acceptance work.
+
+
+## Notification inbox and real-API browser validation - 2026-10-21
+
+Both portal roles now have a header Notifications destination. Its paginated inbox displays translated event summaries, local dates, read/unread status and links to authorized cases. Read updates are recipient-scoped and preserve the first-read timestamp. Raw event payloads are not rendered. This is an inbox, not yet a live push subscription or email delivery integration.
+
+`scripts/browser_integration.py` now validates the real Django API/UI boundary in addition to the synthetic-API component smoke. It creates an isolated ignored SQLite database and private media directory, synthetic accounts/case/report, and Django test-client sessions. It starts only a loopback WSGI server and does not add a login endpoint, call production identity/payment providers, send email, alter the VM or use operational records. The real browser persisted notification read status and a private case message, read the sent report question snapshot, received a206 private byte range and was denied access from an unrelated authenticated applicant. No browser JavaScript errors were observed. PostgreSQL row security remains separately tested in CI; this local browser run does not prove provider authentication or all workflows.
+
+Run with the optional browser dependencies: `uv sync --group browser`, install the matching Chromium, then `uv run --group browser python scripts/browser_integration.py`. The same optional CTM_CDN_LAN_IP/CTM_BROWSER_EXECUTABLE environment overrides as `browser_smoke.py` are supported. Each synthetic database/artifact directory is created under ignored `.tmp/browser-integration-*`. Full local suite136 passed,41 PostgreSQL-only skipped. No operational deployment changed.

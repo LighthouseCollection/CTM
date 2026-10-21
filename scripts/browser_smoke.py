@@ -54,7 +54,7 @@ with sync_playwright() as p:
     page = browser.new_page(viewport={"width": 1440, "height": 1000})
     errors = []
     page.on("pageerror", lambda e: (errors.append(str(e)), print("BROWSER ERROR:", e, flush=True)))
-    page.goto("http://127.0.0.1:18841/", wait_until="networkidle")
+    page.goto("http://127.0.0.1:18841/", wait_until="domcontentloaded")
     page.get_by_role("heading", name="Sign in to CTM").wait_for()
     page.screenshot(path=".tmp/ctm-login.png", full_page=True)
     page.get_by_role("button", name="العربية", exact=True).click()
@@ -146,9 +146,25 @@ with sync_playwright() as p:
         values.update(route.request.post_data_json)
         route.fulfill(json=values)
     page.route('**/api/account/settings/',preferences_route)
-    page.reload(wait_until="networkidle")
+    page.reload(wait_until="domcontentloaded")
     page.get_by_role("heading", name="Home", exact=True).wait_for()
     page.screenshot(path=".tmp/ctm-council-home.png", full_page=True)
+    inbox = [{"id":"notification-one","kind":"report_received","timestamp":"2026-10-21T20:00:00Z","read":False,"case_id":"11111111-1111-1111-1111-111111111111","case_number":"20261021-01","payload":{}}]
+    def inbox_route(route):
+        if route.request.method == 'POST':
+            inbox[0]['read'] = True
+            route.fulfill(json={"updated":True})
+        else:
+            route.fulfill(json={"items":inbox,"next_offset":None,"unread_count":0 if inbox[0]['read'] else 1})
+    page.route("**/api/notifications/", inbox_route)
+    page.get_by_role("button",name="Notifications",exact=True).click()
+    page.get_by_role("heading",name="Notifications",exact=True).wait_for()
+    page.get_by_text("A report was received.",exact=True).wait_for()
+    page.get_by_role("button",name="Mark as read",exact=True).click()
+    page.get_by_role("button",name="Mark as read",exact=True).wait_for(state='detached')
+    assert inbox[0]['read'] is True
+    page.get_by_role("button",name="Home",exact=True).click()
+    page.get_by_role("heading",name="Home",exact=True).wait_for()
     page.get_by_role("button", name="Cases", exact=True).click()
     page.get_by_role("heading", name="Cases", exact=True).wait_for()
     page.get_by_role("button", name="Cases", exact=True).click()
@@ -249,7 +265,7 @@ with sync_playwright() as p:
             }
         ),
     )
-    applicant.goto("http://127.0.0.1:18841/", wait_until="networkidle")
+    applicant.goto("http://127.0.0.1:18841/", wait_until="domcontentloaded")
     applicant.get_by_role("heading", name="Petition", exact=True).wait_for()
     assert (
         applicant.get_by_role("button", name="Tribunal Sessions", exact=True).count()

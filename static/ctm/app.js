@@ -13,6 +13,21 @@
   const config = JSON.parse(document.getElementById("ctm-config").textContent);
   const words = {
     en: {
+      event_report_requested: "A report has been requested.",
+      event_report_received: "A report was received.",
+      event_file_uploaded: "A new or corrected file was uploaded.",
+      event_answer_changed: "Application answers were updated.",
+      event_applicant_message: "A new applicant message was received.",
+      event_case_message: "You have a new case message.",
+      event_assignment_changed: "The assigned case manager changed.",
+      event_submission_received: "Your submission was received.",
+      event_intake_submitted: "A new application is awaiting review.",
+      event_decree_available: "Your decree certificate is available.",
+      event_case_reopened: "The case has reopened.",
+      event_filing_withdrawn: "A filing was withdrawn.",
+      event_appeal_added: "New appeal information was added.",
+      event_testimony_response: "A testimony invitation received a response.",
+      event_testimony_invited: "You have a testimony invitation.",
       tribunal: "Church Tribunal",
       signIn: "Sign in to CTM",
       welcome: "Access your application or council workspace securely.",
@@ -39,6 +54,13 @@
       noCases: "No cases are available.",
       noFiles: "No technically cleared files are available in this section.",
       noReports: "No completed reports are available.",
+      notifications: "Notifications",
+      noNotifications: "You have no notifications.",
+      markRead: "Mark as read",
+      unread: "Unread",
+      read: "Read",
+      openCase: "Open case",
+      caseUpdate: "Case update",
       chooseReport: "Select a report",
       observations: "Council observations",
       followUp: "Follow-up report",
@@ -150,6 +172,28 @@
       noMessages: "No messages yet",
     },
     ar: {
+      event_report_requested: "طُلب منك استكمال تقرير.",
+      event_report_received: "تم استلام تقرير.",
+      event_file_uploaded: "تم رفع ملف جديد أو نسخة مصححة.",
+      event_answer_changed: "تم تحديث إجابات الطلب.",
+      event_applicant_message: "تم استلام رسالة جديدة من مقدم الطلب.",
+      event_case_message: "لديك رسالة جديدة تخص القضية.",
+      event_assignment_changed: "تم تغيير مسؤول القضية.",
+      event_submission_received: "تم استلام طلبك.",
+      event_intake_submitted: "يوجد طلب جديد في انتظار المراجعة.",
+      event_decree_available: "شهادة القرار متاحة الآن.",
+      event_case_reopened: "تمت إعادة فتح القضية.",
+      event_filing_withdrawn: "تم سحب طلب.",
+      event_appeal_added: "أضيفت معلومات جديدة إلى الاستئناف.",
+      event_testimony_response: "تم الرد على دعوة الإدلاء بالشهادة.",
+      event_testimony_invited: "لديك دعوة للإدلاء بالشهادة.",
+      notifications: "الإشعارات",
+      noNotifications: "لا توجد إشعارات.",
+      markRead: "تحديد كمقروء",
+      unread: "غير مقروء",
+      read: "مقروء",
+      openCase: "فتح القضية",
+      caseUpdate: "تحديث القضية",
       noReports: "لا توجد تقارير مكتملة.",
       chooseReport: "اختر تقريرًا",
       observations: "ملاحظات المجلس",
@@ -445,6 +489,90 @@
   }
   const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
   const heading = (value) => text(value, { as: "h1", variant: "title" });
+  function NotificationInbox({ initial, t, onCase, lang }) {
+    const [rows, setRows] = R.useState(initial.items),
+      [next, setNext] = R.useState(initial.next_offset);
+    const [pending, setPending] = R.useState(false),
+      [failed, setFailed] = R.useState(false);
+    async function update(row) {
+      setPending(true);
+      setFailed(false);
+      try {
+        await api("/api/notifications/", {
+          method: "POST",
+          body: JSON.stringify({ id: row.id }),
+        });
+        setRows((old) =>
+          old.map((item) =>
+            item.id === row.id ? { ...item, read: true } : item,
+          ),
+        );
+      } catch {
+        setFailed(true);
+      } finally {
+        setPending(false);
+      }
+    }
+    async function more() {
+      setPending(true);
+      setFailed(false);
+      try {
+        const data = await api(`/api/notifications/?offset=${next}`);
+        setRows((old) => [
+          ...old,
+          ...data.items.filter((item) => !old.some((x) => x.id === item.id)),
+        ]);
+        setNext(data.next_offset);
+      } catch {
+        setFailed(true);
+      } finally {
+        setPending(false);
+      }
+    }
+    return h(
+      P.Stack,
+      null,
+      heading(t("notifications")),
+      ...rows.map((row) =>
+        h(
+          P.Panel,
+          {
+            key: row.id,
+            title: row.case_number || t("caseUpdate"),
+            description: `${new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(row.timestamp))} · ${t(row.read ? "read" : "unread")}`,
+          },
+          text(
+            t("event_" + row.kind) === t("unknown")
+              ? t("caseUpdate")
+              : t("event_" + row.kind),
+          ),
+          h(
+            P.Inline,
+            null,
+            row.case_id
+              ? h(
+                  P.Button,
+                  { onClick: () => onCase(row.case_id) },
+                  t("openCase"),
+                )
+              : null,
+            !row.read
+              ? h(
+                  P.Button,
+                  { disabled: pending, onClick: () => update(row) },
+                  t("markRead"),
+                )
+              : null,
+          ),
+        ),
+      ),
+      !rows.length ? h(P.EmptyState, { title: t("noNotifications") }) : null,
+      failed ? h(P.Notice, { tone: "danger" }, t("error")) : null,
+      next !== null
+        ? h(P.Button, { disabled: pending, onClick: more }, t("more"))
+        : null,
+    );
+  }
   function ReportReader({ rows, t, lang }) {
     const [selected, select] = R.useState(null);
     const reports = rows.filter(
@@ -763,7 +891,8 @@
           active = false;
         };
       let request;
-      if (page === "reports" && selection)
+      if (page === "notifications") request = api("/api/notifications/");
+      else if (page === "reports" && selection)
         request = api(`/api/cases/${selection}/reports/`);
       else if (["documents", "evidence"].includes(page) && selection)
         request = Promise.resolve({});
@@ -1033,7 +1162,16 @@
       switcher: false,
       nav: null,
       account,
-      actions: language,
+      actions: h(
+        P.Inline,
+        null,
+        h(
+          P.Button,
+          { variant: "ghost", onClick: () => go("notifications") },
+          t("notifications"),
+        ),
+        language,
+      ),
     });
     const caseCard = (row) =>
       h(
@@ -1066,6 +1204,14 @@
     function content() {
       if (failure) return errorView();
       if (!data) return text(t("loading"));
+      if (page === "notifications")
+        return h(NotificationInbox, {
+          key: revision,
+          initial: data,
+          t,
+          lang,
+          onCase: (id) => go("case", id),
+        });
       if (page === "reports")
         return h(ReportReader, { key: selection, rows: data.items, t, lang });
       if (["documents", "evidence"].includes(page))

@@ -548,8 +548,16 @@ def messages(request, case_id):
 def notifications(request):
     qs = m.Notification.objects.filter(recipient=request.user)
     if request.method == "POST":
-        qs.filter(pk=body(request)["id"]).update(read_at=timezone.now())
-        return JsonResponse({"updated": True})
+        updated = qs.filter(pk=body(request)["id"], read_at__isnull=True).update(
+            read_at=timezone.now()
+        )
+        return JsonResponse({"updated": bool(updated)})
+    offset = int(request.GET.get("offset", "0"))
+    if not 0 <= offset <= 2**63 - 52:
+        raise ValidationError("Offset is outside the supported range.")
+    rows = list(
+        qs.select_related("case").order_by("-created_at", "-id")[offset : offset + 51]
+    )
     return JsonResponse(
         {
             "items": [
@@ -559,9 +567,13 @@ def notifications(request):
                     payload=x.payload,
                     read=x.read_at is not None,
                     timestamp=x.created_at.isoformat(),
+                    case_id=str(x.case_id) if x.case_id else None,
+                    case_number=x.case.number if x.case_id else None,
                 )
-                for x in qs.order_by("-created_at")[:100]
-            ]
+                for x in rows[:50]
+            ],
+            "next_offset": offset + 50 if len(rows) > 50 else None,
+            "unread_count": qs.filter(read_at__isnull=True).count(),
         }
     )
 

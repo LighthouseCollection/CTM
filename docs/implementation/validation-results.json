@@ -2,14 +2,14 @@
   "date_utc": "2026-10-21",
   "application_version": "0.1.0",
   "postgresql_tests": {
-    "passed": 168,
+    "passed": 176,
     "failed": 0,
     "skipped": 0,
-    "duration_seconds": 20.81,
+    "duration_seconds": 16.28,
     "isolation": "GitHub isolated PostgreSQL16 service; non-owner role source privacy tests"
   },
   "sqlite_tests": {
-    "passed": 127,
+    "passed": 136,
     "failed": 0,
     "skipped": 41,
     "note": "Latest Python3.13 local full rerun passed; intermittent Windows interpreter access violation also reproduced on3.13."
@@ -39,7 +39,7 @@
   "implemented_domain_models": 58,
   "explicit_root_url_patterns": 64,
   "public_deployment_ready": false,
-  "github_hosted_ci": "passed:168 PostgreSQL tests on083cb39; https://github.com/LighthouseCollection/CTM/actions/runs/39682545743",
+  "github_hosted_ci": "passed:176 PostgreSQL tests on975f8a5; https://github.com/LighthouseCollection/CTM/actions/runs/39683812360",
   "limitations": [
     "Initial Plenix shell and document/evidence screens implemented; full workflow editors incomplete",
     "151-table contract reconciliation and forced RLS incomplete",
@@ -76,7 +76,8 @@
     "closed_state_inline_style_attributes": 0,
     "script": "scripts/browser_smoke.py",
     "document_view": "split list/detail, council history toggle, desktop and mobile; synthetic API fixtures",
-    "document_inline_styles": "One empty style attribute emitted by pinned Plenix Checkbox; no application inline styles or values"
+    "document_inline_styles": "One empty style attribute emitted by pinned Plenix Checkbox; no application inline styles or values",
+    "notifications": "inbox read action and localized event label passed with synthetic API fixtures"
   },
   "private_file_delivery": {
     "single_byte_ranges": true,
@@ -85,5 +86,18 @@
     "private_cache_control": true,
     "case_file_listing": "latest clean ordinary files; council-only history; paginated",
     "dedicated_medical_report_and_decree_views": "pending"
+  },
+  "browser_real_api": {
+    "status": "passed locally",
+    "script": "scripts/browser_integration.py",
+    "database": "isolated synthetic SQLite",
+    "api_mocked": false,
+    "provider_login": false,
+    "notification_read_persisted": true,
+    "private_message_persisted": true,
+    "sent_report_question_snapshot": true,
+    "private_range_status": 206,
+    "other_applicant_case_and_file_access": 403,
+    "browser_errors": 0
   }
 }
