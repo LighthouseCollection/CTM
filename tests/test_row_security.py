@@ -631,3 +631,108 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
         )
         assert cursor.fetchone()[0] == 1
+
+
+@pytest.fixture
+def council_sources(ready_application, people):
+    from datetime import date
+    from tribunal.services import council
+    from tribunal import models as m
+
+    app = ready_application
+    submit_application(
+        app.owner, app.pk, "council-privacy", {"accepted": True, "name": "John Smith"}
+    )
+    app.refresh_from_db()
+    council.assign_case(
+        people["admin"], app.case_id, people["member"].pk, people["president"].pk
+    )
+    session = council.create_session(people["admin"], date(2026, 11, 9))
+    item = council.place_agenda(people["member"], session.pk, app.case_id)
+    council.record_attendance(people["admin"], session.pk, people["member"].pk, True)
+    hearing = council.hear_case(people["member"], item.pk)
+    council.save_hearing_outcome(
+        people["member"], hearing.pk, "Internal outcome", "Gather information"
+    )
+    note = council.save_note(people["member"], app.proceeding_id, "Private note")
+    council.save_finding(
+        people["member"], app.proceeding_id, "sample", {"text": "Private finding"}
+    )
+    models = [
+        m.CouncilSession,
+        m.AgendaItem,
+        m.Attendance,
+        m.Hearing,
+        m.HearingOutcome,
+        m.CaseAssignment,
+        m.CaseNote,
+        m.NoteRevision,
+        m.FindingRevision,
+    ]
+    return app, session, hearing, note, models
+
+
+@pytest.mark.parametrize("role", [None, "applicant"])
+def test_council_sources_are_hidden_from_non_council_raw_queries(
+    runtime, council_sources, people, role
+):
+    *_, models = council_sources
+    with runtime(people[role] if role else None):
+        assert {model.__name__: model.objects.count() for model in models} == {
+            model.__name__: 0 for model in models
+        }
+
+
+def test_all_authorized_council_can_read_internal_sources(
+    runtime, council_sources, people
+):
+    *_, models = council_sources
+    with runtime(people["president"]):
+        assert all(model.objects.exists() for model in models)
+
+
+def test_raw_session_attendance_insert_cannot_impersonate_secretary(
+    runtime, council_sources, people
+):
+    from django.db import DatabaseError
+    from tribunal.models import Attendance
+
+    _, session, _, _, _ = council_sources
+    with pytest.raises(DatabaseError):
+        with runtime(people["member"]):
+            Attendance.objects.create(
+                session=session,
+                member=people["president"],
+                present=True,
+                actor=people["secretary"],
+            )
+
+
+def test_internal_note_owner_cannot_be_taken_over(runtime, council_sources, people):
+    from tribunal.models import CaseNote
+
+    _, _, _, note, _ = council_sources
+    with runtime(people["president"]):
+        assert (
+            CaseNote.objects.filter(pk=note.pk).update(author=people["president"]) == 0
+        )
+    note.refresh_from_db()
+    assert note.author_id == people["member"].pk
+
+
+def test_unassigned_member_cannot_insert_findings_using_raw_orm(
+    runtime, council_sources, people
+):
+    from django.db import DatabaseError
+    from tribunal.models import FindingRevision
+
+    app, *_ = council_sources
+    with pytest.raises(DatabaseError):
+        with runtime(people["president"]):
+            FindingRevision.objects.create(
+                proceeding=app.proceeding,
+                fact_code="forged",
+                number=1,
+                value={},
+                actor=people["president"],
+            )
