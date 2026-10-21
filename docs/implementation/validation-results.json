@@ -2,11 +2,11 @@
   "date_utc": "2026-10-21",
   "application_version": "0.1.0",
   "postgresql_tests": {
-    "passed": 92,
+    "passed": 108,
     "failed": 0,
     "skipped": 0,
-    "duration_seconds": 14.6,
-    "isolation": "ctm_validation migration role; restricted ctm_validation_runtime SET ROLE; ephemeral test_ctm_validation"
+    "duration_seconds": 10.8,
+    "isolation": "GitHub isolated PostgreSQL16 service; non-owner role source privacy tests"
   },
   "sqlite_tests": {
     "passed": 79,
@@ -39,7 +39,7 @@
   "implemented_domain_models": 58,
   "explicit_root_url_patterns": 62,
   "public_deployment_ready": false,
-  "github_hosted_ci": "passed:92 PostgreSQL tests on 1c26120; https://github.com/LighthouseCollection/CTM/actions/runs/39665560875",
+  "github_hosted_ci": "passed:108 PostgreSQL tests on 9f7c371; https://github.com/LighthouseCollection/CTM/actions/runs/39676229102",
   "limitations": [
     "Plenix CDN documentation inaccessible; browser UI unimplemented",
     "151-table contract reconciliation and forced RLS incomplete",
@@ -56,7 +56,7 @@
   },
   "attendance_workflow": {
     "local_tests": "passed",
-    "postgres_validation": "pending latest CI",
+    "postgres_validation": "passed in GitHub PostgreSQL16 suite; no VM deployment",
     "production_deployed": false
   }
 }
