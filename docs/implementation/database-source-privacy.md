@@ -1,6 +1,6 @@
 # Database source privacy
 
-Implemented slice: migration `0011_source_privacy`, PostgreSQL only. SQLite tests do not establish database privacy.
+Implemented slices: migrations `0011_source_privacy` and `0012_council_privacy`, PostgreSQL only. SQLite tests do not establish database privacy.
 
 ## Protected sources
 
@@ -33,3 +33,13 @@ This slice does not complete the remaining domain-table policies, financial/auth
 ## Evidence
 
 The isolated Linux/PostgreSQL suite passes 92 tests, including raw non-owner queries, request middleware, external responses and notifications, payment signature/cookie isolation, private-helper ACLs and migration reversal/reapplication. Review found four defects during implementation; ownership takeover, submitted-to-draft reset, later unreleased certificate visibility and OCR draft cleanup now have regression coverage. Final read-only review found no further concrete defect in this slice.
+
+## Council sources
+
+Migration0012 adds forced row policies on nine more tables: CouncilSession, AgendaItem, Attendance, Hearing, HearingOutcome, CaseAssignment, CaseNote, NoteRevision and FindingRevision. Total protected domain tables:23. All active authorized council members can read these internal records; applicants and absent actor contexts cannot. Writes enforce the current assignment, record author, original proceeding and supported lifecycle. Record roots/history have no runtime deletion policy.
+
+Session row visibility for locking is broader than permission to update: PostgreSQL applies UPDATE USING to SELECT FOR UPDATE too. Actual changes still require administrative authority and a trigger preserves closed sessions and the original date. See [PostgreSQL policy semantics](https://www.postgresql.org/docs/16/sql-createpolicy.html).
+
+The assigned presenter receives a transaction-local, exact-hearing snapshot context only around the initial attendance bulk insert. It is restored immediately afterward. Ordinary attendance corrections require admin/secretary authority. This uses the same trusted-server context boundary as authenticated actor IDs; it is not a defense against arbitrary SQL execution or stolen privileged credentials.
+
+A restricted-role workflow test exercises legitimate session/hearing/note/finding/outcome writes as well as denied reads, forged actor writes, note takeover, prior-author revision, in-place session date changes and closed-session reopening. The combined PostgreSQL suite passed147 tests on0f089ad. Migration reversal/reapplication also includes0012. The operational VM/database remains unchanged; worker grants, other tables and151-table contract reconciliation remain incomplete.

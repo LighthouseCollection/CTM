@@ -2,16 +2,16 @@
   "date_utc": "2026-10-21",
   "application_version": "0.1.0",
   "postgresql_tests": {
-    "passed": 121,
+    "passed": 147,
     "failed": 0,
     "skipped": 0,
-    "duration_seconds": 16.44,
+    "duration_seconds": 13.6,
     "isolation": "GitHub isolated PostgreSQL16 service; non-owner role source privacy tests"
   },
   "sqlite_tests": {
     "passed": 106,
     "failed": 0,
-    "skipped": 29,
+    "skipped": 41,
     "note": "Latest Python3.13 local full rerun passed; intermittent Windows interpreter access violation also reproduced on3.13."
   },
   "django_system_check": "passed",
@@ -39,7 +39,7 @@
   "implemented_domain_models": 58,
   "explicit_root_url_patterns": 63,
   "public_deployment_ready": false,
-  "github_hosted_ci": "passed:121 PostgreSQL tests on 3e3ac4d; https://github.com/LighthouseCollection/CTM/actions/runs/39677076540",
+  "github_hosted_ci": "passed:147 PostgreSQL tests on0f089ad; https://github.com/LighthouseCollection/CTM/actions/runs/39681111852",
   "limitations": [
     "Plenix browser UI unimplemented; documentation now accessible over LAN",
     "151-table contract reconciliation and forced RLS incomplete",
@@ -47,8 +47,8 @@
     "Ten-user browser and restore/relocation acceptance pending"
   ],
   "source_privacy": {
-    "migration": "0011",
-    "forced_rls_tables": 14,
+    "migration": "0011 and0012",
+    "forced_rls_tables": 23,
     "raw_non_owner_regressions": true,
     "review": "no additional concrete defects after regression fixes",
     "production_grants_complete": false,
