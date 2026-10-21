@@ -45,6 +45,9 @@ def runtime():
             "ctm_source_mutable(text,jsonb)",
             "ctm_source_deletable(text,jsonb)",
             "ctm_paid_filing_actor(uuid)",
+            "ctm_council_visible()",
+            "ctm_council_writable(text,jsonb,text)",
+            "ctm_council_mutable(text,jsonb)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -625,7 +628,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0011_source_privacy")])
+        MigrationExecutor(connection).migrate([("tribunal", "0012_council_privacy")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
