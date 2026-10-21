@@ -709,7 +709,7 @@ def complete_report_request(request, request_id):
 @endpoint()
 def reports(request, case_id):
     case = case_for(request.user, case_id)
-    qs = m.Report.objects.filter(request__case=case).select_related("request")
+    qs = m.Report.objects.filter(request__case=case).select_related("request__subject")
     if request.user.role == "applicant":
         qs = qs.filter(
             request__subject__account=request.user, author=request.user
@@ -730,6 +730,10 @@ def reports(request, case_id):
             encoded(
                 report,
                 title=report.request.title,
+                kind=report.request.kind,
+                questions=report.request.questions,
+                subject=report.request.subject.name,
+                version=revision.number if revision else None,
                 date=report.completion_date.isoformat(),
                 parent_report_id=str(report.request.parent_report_id)
                 if report.request.parent_report_id

@@ -38,6 +38,14 @@
       empty: "Nothing to show",
       noCases: "No cases are available.",
       noFiles: "No technically cleared files are available in this section.",
+      noReports: "No completed reports are available.",
+      chooseReport: "Select a report",
+      observations: "Council observations",
+      followUp: "Follow-up report",
+      originalReport: "Original report",
+      response: "Response",
+      subject: "Report for",
+      restrictedReport: "A signed disclosure is required for this assessment.",
       chooseFile: "Select a file to preview",
       download: "Download",
       version: "Version",
@@ -142,6 +150,14 @@
       noMessages: "No messages yet",
     },
     ar: {
+      noReports: "لا توجد تقارير مكتملة.",
+      chooseReport: "اختر تقريرًا",
+      observations: "ملاحظات المجلس",
+      followUp: "تقرير متابعة",
+      originalReport: "التقرير الأصلي",
+      response: "الإجابة",
+      subject: "التقرير الخاص بـ",
+      restrictedReport: "يلزم إفصاح موقّع للاطلاع على هذا التقييم.",
       noFiles: "لا توجد ملفات اجتازت الفحص في هذا القسم.",
       chooseFile: "اختر ملفًا لعرضه",
       download: "تنزيل",
@@ -429,6 +445,79 @@
   }
   const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
   const heading = (value) => text(value, { as: "h1", variant: "title" });
+  function ReportReader({ rows, t, lang }) {
+    const [selected, select] = R.useState(null);
+    const reports = rows.filter(
+      (row) =>
+        !["medical", "psychological"].includes(row.kind) && !row.restricted,
+    );
+    const chosen = reports.find((row) => row.id === selected);
+    const answerText = (value) =>
+      typeof value === "string" ? value : JSON.stringify(value);
+    const reading = chosen
+      ? h(
+          P.Stack,
+          null,
+          heading(chosen.title),
+          text(`${t("subject")}: ${chosen.subject}`),
+          text(`${chosen.date} · ${t("version")} ${chosen.version}`),
+          chosen.parent_report_id
+            ? h(
+                P.Button,
+                { onClick: () => select(chosen.parent_report_id) },
+                t("originalReport"),
+              )
+            : null,
+          ...Object.entries(chosen.answers || {}).map(([code, answer]) => {
+            const question = (chosen.questions || []).find(
+              (q) => q.code === code,
+            );
+            return h(
+              P.Panel,
+              {
+                key: code,
+                title: question?.[lang] || question?.en || t("response"),
+              },
+              text(answerText(answer)),
+            );
+          }),
+          chosen.observations
+            ? h(
+                P.Panel,
+                { title: t("observations") },
+                text(chosen.observations),
+              )
+            : null,
+        )
+      : h(P.EmptyState, { title: t("chooseReport") });
+    return h(
+      P.Stack,
+      null,
+      heading(t("reports")),
+      h(P.SplitView, {
+        label: t("reports"),
+        firstLabel: t("reports"),
+        first: h(
+          P.Stack,
+          null,
+          ...reports.map((row) =>
+            h(P.Card, {
+              key: row.id,
+              title: row.title,
+              meta: `${row.date}${row.parent_report_id ? " · " + t("followUp") : ""}`,
+              onOpen: () => select(row.id),
+            }),
+          ),
+          !reports.length ? h(P.EmptyState, { title: t("noReports") }) : null,
+        ),
+        second: h(
+          P.ReadingPane,
+          { label: chosen?.title || t("chooseReport") },
+          reading,
+        ),
+      }),
+    );
+  }
   function CaseFiles({ caseId, section, council, t }) {
     const [rows, setRows] = R.useState([]),
       [selected, select] = R.useState(null);
@@ -674,7 +763,9 @@
           active = false;
         };
       let request;
-      if (["documents", "evidence"].includes(page) && selection)
+      if (page === "reports" && selection)
+        request = api(`/api/cases/${selection}/reports/`);
+      else if (["documents", "evidence"].includes(page) && selection)
         request = Promise.resolve({});
       else if (page === "case" && selection)
         request = api(`/api/cases/${selection}/`);
@@ -822,8 +913,9 @@
       : ["home", "applications", "past"];
     const unavailable = new Set(["search", "statistics"]);
     const caseContext =
-      ["case", "communications", "documents", "evidence"].includes(page) &&
-      selection;
+      ["case", "communications", "documents", "evidence", "reports"].includes(
+        page,
+      ) && selection;
     const caseGroups = [
       {
         heading: t("overview"),
@@ -849,7 +941,7 @@
         ].map((id) => ({
           id,
           label: t(id),
-          disabled: !["documents", "evidence"].includes(id),
+          disabled: !["documents", "evidence", "reports"].includes(id),
         })),
       },
       {
@@ -974,6 +1066,8 @@
     function content() {
       if (failure) return errorView();
       if (!data) return text(t("loading"));
+      if (page === "reports")
+        return h(ReportReader, { key: selection, rows: data.items, t, lang });
       if (["documents", "evidence"].includes(page))
         return h(CaseFiles, {
           key: `${selection}-${page}`,

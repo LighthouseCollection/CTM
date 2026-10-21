@@ -170,6 +170,13 @@ with sync_playwright() as p:
     assert page.locator("body").evaluate("e=>e.scrollWidth") <= 390
     page.screenshot(path=".tmp/ctm-documents-mobile.png", full_page=True)
     page.set_viewport_size({"width":1440,"height":1000})
+    page.route("**/api/cases/*/reports/", lambda r: r.fulfill(json={"items":[{"id":"report-one","title":"Marriage interview","kind":"interview","date":"2026-10-21","version":1,"subject":"Test Party","questions":[{"code":"OPEN-01","en":"Please state your full name."}],"answers":{"OPEN-01":"Test Party"},"observations":"Internal observation","parent_report_id":None}]}))
+    page.get_by_role("button", name="Reports", exact=True).click()
+    page.get_by_role("heading", name="Reports", exact=True).wait_for()
+    page.get_by_role("button", name="Marriage interview", exact=True).click()
+    page.get_by_text("Please state your full name.", exact=True).wait_for()
+    page.get_by_text("Internal observation", exact=True).wait_for()
+    page.screenshot(path=".tmp/ctm-reports.png", full_page=True)
     page.get_by_role("button", name="Communications", exact=True).click()
     page.get_by_role("heading", name="Communications", exact=True).wait_for()
     page.get_by_role("checkbox", name="Test Party", exact=True).check()
