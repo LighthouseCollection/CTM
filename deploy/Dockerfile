@@ -2,7 +2,9 @@ FROM python:3.12-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    CTM_MEDIA_ROOT=/srv/ctm/media \
+    CTM_STATIC_ROOT=/srv/ctm/static
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
@@ -18,6 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -g 1000 ctm && useradd -u 1000 -g ctm -m ctm
+RUN install -d -m 0700 -o 1000 -g 1000 /srv/ctm/media \
+    && install -d -m 0755 -o 1000 -g 1000 /srv/ctm/static
 
 WORKDIR /app
 
@@ -29,7 +33,8 @@ COPY ctm /app/ctm
 COPY tribunal /app/tribunal
 COPY static /app/static
 
-RUN DJANGO_DEBUG=true DJANGO_SECRET_KEY=build-time-static-only-not-runtime python manage.py collectstatic --noinput
+RUN DJANGO_DEBUG=true DJANGO_SECRET_KEY=build-time-static-only-not-runtime python manage.py collectstatic --noinput \
+    && chown -R 1000:1000 /srv/ctm/static
 
 EXPOSE 8000
 

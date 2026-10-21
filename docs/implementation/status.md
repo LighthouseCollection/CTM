@@ -1,4 +1,4 @@
-# Implementation status â€”2026-10-21
+# Implementation status - 2026-10-21
 
 
 
@@ -266,3 +266,10 @@ Council members can now read preserved report revisions through the existing rev
 The staged fresh-cluster role script previously interpolated passwords into a dollar-quoted DO body; special password content could break that SQL framing. The canonical initialization SQL now reads environment variables through psql and quotes them as SQL literals before format/gexec. The shell wrapper supplies its connection password through the environment, ignores psqlrc and calls one read-only mounted SQL source. New runtime roles explicitly lack superuser, role creation, database creation, replication, RLS bypass and inherited role privileges. Existing role passwords are preserved. This initializes roles/schema privileges only; production domain-table/function grants remain incomplete and are not bypassed.
 
 A disposable GitHub PostgreSQL regression checks special-character/newline passwords, idempotency and absence of application-table read access. It never changes preexisting roles and does not execute against the operational VM. Reference: https://www.postgresql.org/docs/16/app-psql.html (getenv, SQL literal interpolation and gexec).
+
+
+## Production image paths and private-volume startup - 2026-10-21
+
+An isolated existing validation image confirmed that its runtime media/static paths were absent. The production Dockerfile now creates private media storage for UID1000 and collects application static files at the configured runtime path. Static assets are served from the immutable image, rather than a persistent static volume that could hide an upgrade's new app.js. No CDN component files are copied; the application still links pinned Plenix.
+
+A one-shot storage service prepares only the media directory's UID/GID/mode before media-writing services start. It changes no existing file ownership recursively. Its root filesystem is read-only, it has no network, and capabilities are limited to ownership/mode maintenance plus read/search needed to reopen an existing UID1000/0700 directory. The image smoke runs this initializer twice with the production security flags, checks existing file ownership remains unchanged, verifies a non-root upload write, and checks packaged app.js exists. This runs in disposable GitHub containers/volumes; no operational volume was changed. Existing files with incompatible ownership still require explicit inspection rather than blanket ownership replacement.

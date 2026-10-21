@@ -80,6 +80,24 @@ services:
       - ctm-internal
       - ctm-egress
 
+  init-storage:
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile
+    restart: "no"
+    user: "0:0"
+    command: ["python", "-m", "ctm.storage_init"]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    # Read/search is needed to reopen the existing UID1000/0700 directory on retries.
+    cap_add: [CHOWN, FOWNER, DAC_READ_SEARCH]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      CTM_MEDIA_ROOT: /srv/ctm/media
+    volumes:
+      - uploads:/srv/ctm/media
+
   django:
     build:
       context: ../
@@ -117,10 +135,11 @@ services:
       EMAIL_USE_TLS: ${EMAIL_USE_TLS:-true}
     volumes:
       - uploads:/srv/ctm/media
-      - staticfiles:/srv/ctm/static
     ports:
       - "10.0.0.40:8000:8000"
     depends_on:
+      init-storage:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -160,6 +179,8 @@ services:
     volumes:
       - uploads:/srv/ctm/media
     depends_on:
+      init-storage:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -190,6 +211,8 @@ services:
     volumes:
       - uploads:/srv/ctm/media
     depends_on:
+      init-storage:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -221,6 +244,8 @@ services:
     volumes:
       - uploads:/srv/ctm/media
     depends_on:
+      init-storage:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -297,12 +322,6 @@ volumes:
       type: none
       o: bind
       device: /srv/ctm/media
-  staticfiles:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /srv/ctm/static
 
 networks:
   ctm-internal:

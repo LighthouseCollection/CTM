@@ -26,3 +26,14 @@ jobs:
       - run: uv run python manage.py makemigrations --check --dry-run --settings=ctm.settings_postgres_test
       - run: uv run pytest --ds=ctm.settings_postgres_test -q
       - run: uv run python docs/architecture/build-spec/validate_spec.py
+      - name: Build non-root application image
+        run: docker build --file deploy/Dockerfile --tag ctm-ci .
+      - name: Verify image assets and private-volume initialization
+        run: |
+          volume="ctm-ci-media-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker volume create "$volume"
+          trap 'docker volume rm "$volume"' EXIT
+          docker run --rm --network none --user 0:0 --volume "$volume:/srv/ctm/media" ctm-ci python -c "from pathlib import Path; Path('/srv/ctm/media/existing').write_text('synthetic')"
+          docker run --rm --network none --read-only --user 0:0 --cap-drop ALL --cap-add CHOWN --cap-add FOWNER --cap-add DAC_READ_SEARCH --security-opt no-new-privileges:true --volume "$volume:/srv/ctm/media" ctm-ci python -m ctm.storage_init
+          docker run --rm --network none --read-only --user 0:0 --cap-drop ALL --cap-add CHOWN --cap-add FOWNER --cap-add DAC_READ_SEARCH --security-opt no-new-privileges:true --volume "$volume:/srv/ctm/media" ctm-ci python -m ctm.storage_init
+          docker run --rm --network none --read-only --volume "$volume:/srv/ctm/media" ctm-ci python -c "from pathlib import Path; import os; assert os.getuid()==1000; assert Path('/srv/ctm/static/ctm/app.js').is_file(); assert Path('/srv/ctm/media/existing').stat().st_uid==0; p=Path('/srv/ctm/media/write-probe'); p.write_text('synthetic'); p.unlink(); assert Path('/srv/ctm/media').stat().st_mode & 0o777 == 0o700"
