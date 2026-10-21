@@ -1,9 +1,10 @@
 --- a/tribunal/templates/tribunal/shell.html
 +++ b/tribunal/templates/tribunal/shell.html
-@@ -10,6 +10,7 @@
+@@ -10,6 +10,8 @@
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react.production.min.js"></script>
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react-dom.production.min.js"></script>
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.js"></script>
++  <script defer src="{% static 'ctm/applicant-filing.js' %}"></script>
 +  <script defer src="{% static 'ctm/applicant.js' %}"></script>
    <script defer src="{% static 'ctm/app.js' %}"></script>
  </head>

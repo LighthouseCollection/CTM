@@ -21,7 +21,7 @@ HARNESS = """<!doctype html><html lang="en" data-plx-density-policy="compact"><h
 <link rel="stylesheet" href="BASEplenix.css">
 <script src="BASEvendor/react.production.min.js"></script>
 <script src="BASEvendor/react-dom.production.min.js"></script><script src="BASEplenix.js"></script>
-<script src="/applicant.js"></script></head><body><div id="root"></div><script>
+<script src="/applicant-filing.js"></script><script src="/applicant.js"></script></head><body><div id="root"></div><script>
 const R = React, P = Plenix, h = R.createElement;
 const api = async (url, options) => {
   const response = await fetch(url, options);
@@ -43,9 +43,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(h(Harness));
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        content = (ROOT / "static/ctm/applicant.js").read_bytes() if self.path == "/applicant.js" else HARNESS.encode()
+        content = (ROOT / ("static/ctm" + self.path)).read_bytes() if self.path in {"/applicant.js", "/applicant-filing.js"} else HARNESS.encode()
         self.send_response(200)
-        self.send_header("Content-Type", "text/javascript" if self.path == "/applicant.js" else "text/html; charset=utf-8")
+        self.send_header("Content-Type", "text/javascript" if self.path.endswith(".js") else "text/html; charset=utf-8")
         self.end_headers()
         self.wfile.write(content)
 
@@ -80,9 +80,19 @@ try:
         app = fixture()
         writes = []
         fail_save = False
+        fail_submit = False
+        action_requests = []
 
         def route_api(route):
-            if route.request.method == "GET":
+            if route.request.url.endswith("/submit/"):
+                action_requests.append(route.request.post_data_json)
+                if fail_submit:
+                    route.abort("failed")
+                else:
+                    route.fulfill(status=201, json={"id": "synthetic-submission"})
+            elif route.request.url.endswith("/checkout/"):
+                route.fulfill(status=201, json={"intent":"synthetic", "checkout_url":"https://evil.example.test/"})
+            elif route.request.method == "GET":
                 route.fulfill(json=app)
             elif fail_save:
                 route.fulfill(status=400, json={"error": "synthetic stale version"})
@@ -92,7 +102,7 @@ try:
                 app.update(answers=payload["answers"], version=app["version"] + 1)
                 route.fulfill(status=201, json={"version": app["version"]})
 
-        page.route("**/api/applications/synthetic-draft/", route_api)
+        page.route("**/api/applications/synthetic-draft/**", route_api)
         page.goto(f"http://127.0.0.1:{server.server_port}/", wait_until="networkidle")
         expect(page.get_by_label("First name", exact=False)).to_have_value("Original")
         page.get_by_label("First name", exact=False).fill("")
@@ -151,6 +161,48 @@ try:
         expect(page.get_by_text("The approved application form is not available.", exact=False)).to_be_visible()
         assert page.locator("section input").count() == 0
         checks.append("Missing Arabic question wording blocks editing")
+        app = fixture()
+        app.update(can_submit=True, fee={"amount_minor":25000,"currency":"USD","status":"waived"})
+        app["questionnaire"].update(declaration_en="Approved synthetic declaration", declaration_ar="إقرار تجريبي معتمد")
+        page.reload(wait_until="networkidle")
+        expect(page.get_by_role("button", name="Submit application", exact=True)).to_be_disabled()
+        page.get_by_role("button", name="Review answers", exact=True).click()
+        page.get_by_label("I have read and accept this declaration.", exact=True).check()
+        page.get_by_label("Your full name", exact=False).fill("Synthetic Applicant")
+        fail_submit = True
+        page.get_by_role("button", name="Submit application", exact=True).click()
+        expect(page.get_by_text("Submission was not confirmed.", exact=False)).to_be_visible()
+        expect(page.get_by_label("Your full name", exact=False)).to_be_disabled()
+        expect(page.get_by_role("button", name="Continue editing", exact=True)).to_be_disabled()
+        fail_submit = False
+        page.get_by_role("button", name="Submit application", exact=True).click()
+        expect(page.get_by_text("The server acknowledged your submission.", exact=False)).to_be_visible()
+        assert action_requests[-1] == action_requests[-2]
+        checks.append("Waived filing requires review/signature; uncertain retry freezes payload and idempotency key")
+        app = fixture()
+        app.update(status="returned", can_resubmit=True, return_instructions="Synthetic correction: clarify your statement.",
+                   fee={"amount_minor":25000,"currency":"USD","status":"paid"})
+        page.reload(wait_until="networkidle")
+        expect(page.get_by_text(app["return_instructions"], exact=True)).to_be_visible()
+        page.get_by_role("button", name="Review answers", exact=True).click()
+        assert page.get_by_label("I have read and accept this declaration.", exact=True).count() == 0
+        assert page.get_by_role("button", name="Continue to secure payment", exact=True).count() == 0
+        page.get_by_role("button", name="Resubmit corrections", exact=True).click()
+        expect(page.get_by_text("The server acknowledged your submission.", exact=False)).to_be_visible()
+        assert "attestation" not in action_requests[-1]
+        checks.append("Returned correction instructions and resubmission reuse fee/signature without checkout")
+        app = fixture()
+        app.update(can_checkout=True, fee={"amount_minor":25000,"currency":"USD","status":"due"})
+        app["questionnaire"].update(declaration_en="Approved synthetic declaration", declaration_ar="إقرار تجريبي معتمد")
+        page.reload(wait_until="networkidle")
+        page.get_by_role("button", name="Review answers", exact=True).click()
+        page.get_by_label("I have read and accept this declaration.", exact=True).check()
+        page.get_by_label("Your full name", exact=False).fill("Synthetic Applicant")
+        page.get_by_role("button", name="Continue to secure payment", exact=True).click()
+        expect(page.get_by_text("Payment could not be started.", exact=False)).to_be_visible()
+        assert page.url.startswith("http://127.0.0.1:")
+        assert page.get_by_text("The server acknowledged your submission.", exact=False).count() == 0
+        checks.append("Untrusted checkout URL is rejected without navigation or invented payment success")
         assert not errors, errors
         browser.close()
 finally:
