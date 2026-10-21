@@ -162,7 +162,8 @@ def required_documents(app, answers):
         raise ValidationError(
             f"Required documents missing: {', '.join(sorted(required - categories))}"
         )
-    statement = str(answers.get("statement", "")).strip()
+    raw_statement = answers.get("statement")
+    statement = raw_statement.strip() if isinstance(raw_statement, str) else ""
     if not statement and "PET" not in categories:
         raise ValidationError("A petition statement or PDF/Word statement is required.")
     for order in answers.get("restraining_orders", []):
@@ -253,12 +254,10 @@ def submit_application(actor, app_id, idempotency_key, attestation=None):
         )
     files = required_documents(app, answers)
     first_submission = app.submitted_at is None
-    if first_submission and (
-        not attestation
-        or not attestation.get("accepted")
-        or not str(attestation.get("name", "")).strip()
-    ):
-        raise ValidationError("Accept the declaration and provide your full name.")
+    if first_submission:
+        from tribunal.validation import validate_attestation
+
+        validate_attestation(attestation)
     if app.kind == "petition":
         dob = date.fromisoformat(answers["birth_date"])
         spouse_dob = None

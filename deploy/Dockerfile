@@ -24,7 +24,10 @@ WORKDIR /app
 COPY deploy/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY manage.py /app/manage.py
+COPY ctm /app/ctm
+COPY tribunal /app/tribunal
+COPY static /app/static
 
 RUN DJANGO_DEBUG=true DJANGO_SECRET_KEY=build-time-static-only-not-runtime python manage.py collectstatic --noinput
 

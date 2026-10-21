@@ -6,6 +6,9 @@ deploy/.env.*
 *.key
 .env
 .env.*
+*.env
+*.tar.gz
+*.log
 .venv
 private-media
 .test-media

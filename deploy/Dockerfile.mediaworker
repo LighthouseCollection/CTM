@@ -18,6 +18,9 @@ WORKDIR /app
 COPY deploy/requirements.txt deploy/requirements-mediaworker.txt ./
 RUN pip install --no-cache-dir -r requirements.txt -r requirements-mediaworker.txt
 
-COPY . .
+COPY manage.py /app/manage.py
+COPY ctm /app/ctm
+COPY tribunal /app/tribunal
+COPY static /app/static
 
 USER ctm

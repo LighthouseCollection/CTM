@@ -54,7 +54,7 @@ Do not run `docker compose up` for the application against the operational datab
 
 File writes happen after database commit to a private atomic destination. A disk write failure can leave source metadata awaiting recovery; a complete repair/reconciliation worker is still required. Files are never exposed by a public MEDIA_URL.
 
-The included GitHub workflow is configured for PostgreSQL but its hosted run must be checked after pushing. Container image build verification does not establish compatibility of every heavyweight OCR/media worker dependency.
+The GitHub PostgreSQL workflow passed on commit111a468, including schema checks, tests and byte-exact source validation. Subsequent follow-up changes have their own CI run. Container image build verification does not establish compatibility of every heavyweight OCR/media worker dependency.
 
 ## Next independent work
 
@@ -63,3 +63,5 @@ The included GitHub workflow is configured for PostgreSQL but its hosted run mus
 3. Complete background scan/extraction/indexing/transcription and incoming/outgoing communication adapters using isolated test services.
 4. Configure real provider test credentials through protected server secrets; verify each integration and complete bilingual institutional content.
 5. Run the synthetic ten-user browser exercise, backup restore and relocation rehearsal, then deploy through the reviewed reverse proxy.
+
+Container Dockerfiles now copy an explicit source allowlist rather than the complete build context. An isolated test credential was rotated after the initial broader validation build; no operational CTM credential was used. The rebuilt image was checked to contain neither the validation environment file nor the source archive.

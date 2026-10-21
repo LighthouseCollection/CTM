@@ -17,7 +17,7 @@ from tribunal.models import (
 from tribunal.policy import application_for
 from .applications import required_documents, validate_petition, submit_application
 from .common import audit, notify, lock_key
-from tribunal.validation import validate_answers
+from tribunal.validation import validate_answers, validate_attestation
 
 
 @transaction.atomic
@@ -34,8 +34,7 @@ def prepare_checkout(actor, app_id, attestation):
         raise ValidationError("Resolve filing eligibility before payment.")
     if app.fee.status != "due":
         raise ValidationError("This fee is already satisfied.")
-    if not attestation.get("accepted") or not str(attestation.get("name", "")).strip():
-        raise ValidationError("Accept the declaration before paying.")
+    validate_attestation(attestation)
     revision = app.revisions.filter(number=app.current_version).first()
     if not revision:
         raise ValidationError("Complete the questionnaire before paying.")

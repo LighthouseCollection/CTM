@@ -10,7 +10,12 @@ def validate_answers(schema, answers):
         if condition and answers.get(condition["field"]) != condition["equals"]:
             continue
         value = answers.get(code)
-        if field.get("required") and (value is None or value == "" or value == []):
+        if field.get("required") and (
+            value is None
+            or value == ""
+            or value == []
+            or (isinstance(value, str) and not value.strip())
+        ):
             raise ValidationError(f"Required answer missing: {code}")
         if value is None or value == "":
             continue
@@ -28,3 +33,13 @@ def validate_answers(schema, answers):
             raise ValidationError(f"Invalid list: {code}")
         if kind == "choice" and value not in field.get("choices", []):
             raise ValidationError(f"Invalid choice: {code}")
+
+
+def validate_attestation(value):
+    if (
+        not isinstance(value, dict)
+        or value.get("accepted") is not True
+        or not isinstance(value.get("name"), str)
+        or not value["name"].strip()
+    ):
+        raise ValidationError("Accept the declaration and provide your full name.")
