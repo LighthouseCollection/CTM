@@ -74,7 +74,11 @@ BEGIN
      AND ((data->>'hearing_id' IS NULL AND role_name IN ('admin','secretary'))
        OR (data->>'hearing_id' IS NOT NULL AND public.ctm_council_hearing_writer((data->>'hearing_id')::uuid)
          AND EXISTS(SELECT 1 FROM public.tribunal_hearing h JOIN public.tribunal_agendaitem a ON a.id=h.agenda_id
-           WHERE h.id=(data->>'hearing_id')::uuid AND a.session_id=(data->>'session_id')::uuid)));
+           WHERE h.id=(data->>'hearing_id')::uuid AND a.session_id=(data->>'session_id')::uuid
+             AND (role_name IN ('admin','secretary') OR (h.presenter_id=actor
+               AND current_setting('ctm.hearing_snapshot',true)=h.id::text
+               AND NOT EXISTS(SELECT 1 FROM public.tribunal_attendance previous
+                 WHERE previous.hearing_id=h.id AND previous.member_id=(data->>'member_id')::uuid))))));
  WHEN 'hearingoutcome' THEN
    RETURN data->>'actor_id'=actor::text AND public.ctm_council_hearing_writer((data->>'hearing_id')::uuid);
  WHEN 'casenote' THEN
@@ -91,7 +95,7 @@ END $$;
 CREATE FUNCTION public.ctm_council_mutable(resource text,data jsonb) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
  SELECT CASE WHEN resource='councilsession' THEN
-   public.ctm_actor_role() IN ('admin','secretary') AND data->>'state'='planned'
+   public.ctm_is_council()
  WHEN resource='agendaitem' THEN public.ctm_council_writable(resource,data,'update')
  ELSE false END
 $$;
@@ -104,6 +108,9 @@ BEGIN
      RAISE EXCEPTION 'Agenda context is immutable; use explicit placement history';
    END IF;
  ELSIF TG_TABLE_NAME='tribunal_councilsession' THEN
+   IF OLD.state='closed' THEN
+     RAISE EXCEPTION 'Closed council session is read-only';
+   END IF;
    IF NEW.date IS DISTINCT FROM OLD.date THEN
      RAISE EXCEPTION 'Rescheduling requires a new dated council session';
    END IF;

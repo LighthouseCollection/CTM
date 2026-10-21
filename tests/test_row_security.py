@@ -819,3 +819,37 @@ def test_new_assignee_cannot_append_to_previous_authors_note(
             NoteRevision.objects.create(
                 note=note, number=2, text="Forged revision", actor=people["president"]
             )
+
+
+def test_assigned_presenter_cannot_record_attendance_revisions_directly(
+    runtime, council_sources, people
+):
+    from django.db import DatabaseError
+    from tribunal.models import Attendance
+
+    _, session, hearing, _, _ = council_sources
+    with pytest.raises(DatabaseError):
+        with runtime(people["member"]):
+            Attendance.objects.create(
+                session=session,
+                hearing=hearing,
+                member=people["president"],
+                present=True,
+                actor=people["member"],
+            )
+
+
+def test_closed_council_session_cannot_be_reopened_by_raw_update(
+    runtime, council_sources, people
+):
+    from django.db import DatabaseError
+    from tribunal.services.council import close_session
+    from tribunal.models import CouncilSession
+
+    _, session, *_ = council_sources
+    with runtime(people["admin"]):
+        close_session(people["admin"], session.pk)
+        assert close_session(people["admin"], session.pk).state == "closed"
+    with pytest.raises(DatabaseError):
+        with runtime(people["admin"]):
+            CouncilSession.objects.filter(pk=session.pk).update(state="planned")

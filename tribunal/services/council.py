@@ -22,6 +22,7 @@ from tribunal.models import (
 )
 from tribunal.policy import administrator, staff, writer, open_proceeding
 from .common import audit, notify, notify_manager
+from tribunal.db.context import database_settings
 
 
 @transaction.atomic
@@ -290,20 +291,23 @@ def hear_case(actor, item_id):
         proceeding=proceeding,
         presenter=actor,
     )
-    Attendance.objects.bulk_create(
-        [
-            Attendance(
-                session=item.session,
-                hearing=hearing,
-                member=member,
-                present=defaults[member.pk].present if member.pk in defaults else False,
-                actor=actor,
-            )
-            for member in Account.objects.filter(is_active=True).exclude(
-                role="applicant"
-            )
-        ]
-    )
+    with database_settings({"ctm.hearing_snapshot": str(hearing.pk)}):
+        Attendance.objects.bulk_create(
+            [
+                Attendance(
+                    session=item.session,
+                    hearing=hearing,
+                    member=member,
+                    present=defaults[member.pk].present
+                    if member.pk in defaults
+                    else False,
+                    actor=actor,
+                )
+                for member in Account.objects.filter(is_active=True).exclude(
+                    role="applicant"
+                )
+            ]
+        )
     item.state = "heard"
     item.save(update_fields=["state"])
     audit(actor, "case_heard", hearing, item.case)
