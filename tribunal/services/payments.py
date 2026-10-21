@@ -2,7 +2,7 @@
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import transaction
+from django.db import transaction, connection
 from django.db.models import Q
 from django.utils import timezone
 import stripe
@@ -18,6 +18,7 @@ from tribunal.policy import application_for
 from .applications import required_documents, validate_petition, submit_application
 from .common import audit, notify, lock_key
 from tribunal.validation import validate_answers, validate_attestation
+from tribunal.db.context import database_actor
 
 
 @transaction.atomic
@@ -89,12 +90,13 @@ def create_checkout(actor, app_id, attestation, base_url):
     return {"intent": str(intent.pk), "checkout_url": session.url}
 
 
+@database_actor(None)
 @transaction.atomic
 def process_paid_checkout(event_id, session):
+    """Caller verifies the provider signature; browser session is not payment authority."""
     intent = (
         CheckoutIntent.objects.select_for_update(of=("self",))
         .filter(provider_reference=session.get("id"))
-        .select_related("application__owner", "revision")
         .first()
     )
     if intent is None:
@@ -104,7 +106,6 @@ def process_paid_checkout(event_id, session):
             try:
                 intent = (
                     CheckoutIntent.objects.select_for_update(of=("self",))
-                    .select_related("application__owner", "revision")
                     .filter(
                         Q(provider_reference__isnull=True) | Q(provider_reference=""),
                         pk=candidate,
@@ -126,15 +127,16 @@ def process_paid_checkout(event_id, session):
         raise ValidationError(
             "Provider checkout identity does not match frozen filing."
         )
-    app = intent.application
     if not intent.provider_reference:
         intent.provider_reference = session["id"]
         intent.save(update_fields=["provider_reference"])
-    fee = FeeObligation.objects.select_for_update(of=("self",)).get(application=app)
+    fee = FeeObligation.objects.select_for_update(of=("self",)).get(
+        application_id=intent.application_id
+    )
     event, created = PaymentEvent.objects.get_or_create(
         provider_event_id=event_id,
         defaults={
-            "application": app,
+            "application_id": intent.application_id,
             "kind": "paid",
             "amount_minor": 25000,
             "currency": "USD",
@@ -152,22 +154,51 @@ def process_paid_checkout(event_id, session):
         key=f"finalize:{intent.pk}",
         defaults={"kind": "finalize_payment", "payload": {"intent": str(intent.pk)}},
     )
-    audit(None, "payment_verified", event, app.case)
+    audit(None, "payment_verified", event)
     return intent
 
 
 def finalize_paid_intent(intent_id):
-    intent = CheckoutIntent.objects.select_related(
-        "application__owner", "revision"
-    ).get(pk=intent_id)
-    if intent.state == "finalized":
-        return intent.application.submissions.get(
-            idempotency_key=f"checkout:{intent.pk}"
-        )
-    if intent.state not in {"paid", "needs_review"}:
+    intent = CheckoutIntent.objects.get(pk=intent_id)
+    if intent.state not in {"paid", "needs_review", "finalized"}:
         raise ValidationError("Checkout has not been paid.")
     try:
-        with transaction.atomic():
+        if connection.vendor == "postgresql":
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT public.ctm_paid_filing_actor(%s)", [str(intent.pk)]
+                )
+                owner_id = cursor.fetchone()[0]
+        else:
+            owner_id = (
+                intent.application.owner_id
+                if intent.application.fee.status == "paid"
+                and PaymentEvent.objects.filter(
+                    application_id=intent.application_id,
+                    kind="paid",
+                    provider_reference=intent.provider_reference,
+                    amount_minor=25000,
+                    currency="USD",
+                ).exists()
+                else None
+            )
+        owner = Account.objects.filter(
+            pk=owner_id, is_active=True, email_verified=True, role="applicant"
+        ).first()
+        if owner is None:
+            if intent.state == "finalized":
+                return None
+            raise ValidationError("Paid applicant identity requires reconciliation.")
+        with database_actor(owner), transaction.atomic():
+            lock_key(f"person:{owner.person_id}")
+            intent = CheckoutIntent.objects.select_related("revision").get(pk=intent.pk)
+            if intent.state == "finalized":
+                from tribunal.models import Submission
+
+                return Submission.objects.get(
+                    application_id=intent.application_id,
+                    idempotency_key=f"checkout:{intent.pk}",
+                )
             app = Application.objects.select_for_update(of=("self",)).get(
                 pk=intent.application_id
             )
@@ -196,5 +227,5 @@ def finalize_paid_intent(intent_id):
         for admin in Account.objects.filter(
             role__in=["admin", "secretary"], is_active=True
         ):
-            notify(admin, "paid_filing_review", intent, case=intent.application.case)
+            notify(admin, "paid_filing_review", intent)
         raise

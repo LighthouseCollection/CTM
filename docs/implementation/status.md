@@ -24,7 +24,7 @@ The alpha prototype remains in its separate repository. No operational CTM datab
 | Appeals | Separate filing fee, append-only additions, withdrawal, per-appeal result, shared reopening proceeding and preserved original history | Full review/agenda UI and end-to-end multi-party appeal exercises |
 | Communications | Private per-party message copies, contextual document links, session-close delivery trigger and manual call records | SMTP/inbound-email integration, bilingual actual message bodies, rejection of inbound attachments, browser conversations |
 | Background work | Durable outbox, retry leases, quiet-period digest batching, current-manager routing, retention warnings and cleanup | Crash/retry load tests and all operational alerts; isolated real-broker/default-worker smoke test passed |
-| Database protection | PostgreSQL constraints/transaction locks, immutable update/delete guards (with explicit private-draft cleanup exceptions), case/party deletion protection, closed-proceeding insert guards on key histories | Forced RLS/actor context, complete grant and ownership split, remaining lifecycle guards and all 151-table security requirements |
+| Database protection | PostgreSQL constraints/transaction locks, immutable update/delete guards (with explicit private-draft cleanup exceptions), case/party deletion protection, closed-proceeding insert guards on key histories; forced RLS on 14 private-source tables with transaction-local actor/capability context | Remaining table RLS, complete grant and ownership split, worker maintenance contexts, remaining lifecycle guards and all 151-table security requirements |
 | Interface | Role-routing session API and documented navigation retained | Entire Plenix React applicant/council interface and isolated Arabic RTL layer |
 
 ## Verified in the VM
@@ -43,7 +43,7 @@ The alpha prototype remains in its separate repository. No operational CTM datab
 2. Microsoft/Google/Apple, Stripe, SMTP/inbound email and transcription/translation credentials were not supplied/configured. Adapters retain work or report unavailable; no credentials were invented and no real charges/emails were attempted.
 3. Approved bilingual declaration/release/decree content remains a configuration dependency. Research/reference drafts were not silently published as institutional text.
 4. The151-table physical contract is not fully represented by the initial Django models. The inventory is an implementation map, not permission to reduce the contract. Full model/migration reconciliation is a production gate.
-5. Public readiness requires forced RLS and grants, full backup restoration, complete Arabic/Plenix UI, provider integration tests and the ten-user end-to-end exercise.
+5. Public readiness requires remaining RLS and production grants, full backup restoration, complete Arabic/Plenix UI, provider integration tests and the ten-user end-to-end exercise.
 6. Windows Python 3.12.11 intermittently crashed in migration state rendering; reruns passed. Linux/PostgreSQL validation is the primary evidence; the Windows runtime issue remains an environment limitation.
 
 ## Deployment cautions
@@ -65,3 +65,11 @@ The GitHub PostgreSQL workflow passed on commit 0652f2a:67 tests, migration chec
 5. Run the synthetic ten-user browser exercise, backup restore and relocation rehearsal, then deploy through the reviewed reverse proxy.
 
 Container Dockerfiles now copy an explicit source allowlist rather than the complete build context. An isolated test credential was rotated after the initial broader validation build; no operational CTM credential was used. The rebuilt image was checked to contain neither the validation environment file nor the source archive.
+
+## Source privacy implementation — 2026-10-21
+
+Migration 0011 adds forced PostgreSQL row policies to 14 private-source tables. Raw queries under a non-owner, non-bypass role verify applicant isolation, private drafts, latest-only attachments, exact decree releases, medical-release scope, private communications and audit visibility. Server-derived actor context is transaction-local and restored after nested operations. External priest submissions use an exact expiring request capability; verified payment recovery uses a validated paid-filing identity rather than an interactive login. Submitted provenance cannot be reset into a disposable draft.
+
+The latest isolated Linux/PostgreSQL suite passes 92 tests. It includes signature-checked synthetic Stripe callbacks with an unrelated signed-in browser identity, external priest responses and assigned-manager notifications, migration reverse/reapply and helper execution ACL checks. A read-only review found no additional concrete issue in this slice after four reported defects were fixed and covered by regressions.
+
+This is partial security implementation: runtime role grants, remaining domain-table policies and background worker/maintenance identities still block production. The migration credential remains explicitly privileged. The isolated fixture's broad grants are test scaffolding and must never become the production grant template. See [database-source-privacy.md](database-source-privacy.md).

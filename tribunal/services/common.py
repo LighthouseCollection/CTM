@@ -30,10 +30,19 @@ def notify(recipient, kind, obj, case=None, payload=None, due_at=None, email=Tru
     if not recipient or not recipient.is_active:
         return
     key = f"{kind}:{obj.pk}:{recipient.pk}"
-    Notification.objects.get_or_create(
-        recipient=recipient,
-        key=key,
-        defaults={"case": case, "kind": kind, "payload": payload or {}},
+    # A sender may create a notification without permission to read its recipient's
+    # inbox. INSERT ON CONFLICT preserves idempotency without that read permission.
+    Notification.objects.bulk_create(
+        [
+            Notification(
+                recipient=recipient,
+                key=key,
+                case=case,
+                kind=kind,
+                payload=payload or {},
+            )
+        ],
+        ignore_conflicts=True,
     )
     if email:
         Outbox.objects.get_or_create(

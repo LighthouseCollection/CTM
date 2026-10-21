@@ -935,9 +935,12 @@ def external_report(request, request_id):
                     source.save(update_fields=["saved_response"])
                     response = JsonResponse({"saved": True})
                 else:
-                    report = complete_external(
-                        request_id, token, data.get("answers", {})
-                    )
+                    from tribunal.db.context import database_external
+
+                    with database_external(request_id, token):
+                        report = complete_external(
+                            request_id, token, data.get("answers", {})
+                        )
                     response = JsonResponse(
                         {"submitted": True, "report_id": str(report.pk)}, status=201
                     )

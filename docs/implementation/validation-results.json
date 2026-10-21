@@ -2,16 +2,16 @@
   "date_utc": "2026-10-21",
   "application_version": "0.1.0",
   "postgresql_tests": {
-    "passed": 67,
+    "passed": 92,
     "failed": 0,
     "skipped": 0,
-    "duration_seconds": 9.92,
-    "isolation": "ctm_validation role/database; ephemeral test_ctm_validation"
+    "duration_seconds": 14.6,
+    "isolation": "ctm_validation migration role; restricted ctm_validation_runtime SET ROLE; ephemeral test_ctm_validation"
   },
   "sqlite_tests": {
     "passed": 63,
     "failed": 0,
-    "skipped": 4,
+    "skipped": 29,
     "note": "PostgreSQL-only invariants skipped; Windows interpreter intermittently crashes, Linux run authoritative"
   },
   "django_system_check": "passed",
@@ -45,5 +45,13 @@
     "151-table contract reconciliation and forced RLS incomplete",
     "Real identity/payment/email/transcription integrations unconfigured",
     "Ten-user browser and restore/relocation acceptance pending"
-  ]
+  ],
+  "source_privacy": {
+    "migration": "0011",
+    "forced_rls_tables": 14,
+    "raw_non_owner_regressions": true,
+    "review": "no additional concrete defects after regression fixes",
+    "production_grants_complete": false,
+    "remaining_table_policies_complete": false
+  }
 }

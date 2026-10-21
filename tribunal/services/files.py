@@ -183,7 +183,9 @@ def upload(
             "medical" if request.kind in {"medical", "psychological"} else "own"
         )
     elif app_id:
-        app = application_for(actor, app_id, write=True)
+        app = application_for(actor, app_id)
+        if app.owner_id != actor.pk:
+            writer(actor, app.case)
         case = app.case
         proceeding = app.proceeding
         if app.status in {"withdrawn", "expired", "deleted", "declined"}:

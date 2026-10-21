@@ -9,3 +9,14 @@ class ActiveAccountMiddleware:
         if request.user.is_authenticated and not request.user.is_active:
             logout(request)
         return self.get_response(request)
+
+
+class DatabaseActorMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from tribunal.db.context import database_actor
+
+        with database_actor(request.user):
+            return self.get_response(request)
