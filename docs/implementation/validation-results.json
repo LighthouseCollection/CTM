@@ -2,17 +2,17 @@
   "date_utc": "2026-10-21",
   "application_version": "0.1.0",
   "postgresql_tests": {
-    "passed": 108,
+    "passed": 121,
     "failed": 0,
     "skipped": 0,
-    "duration_seconds": 10.8,
+    "duration_seconds": 16.44,
     "isolation": "GitHub isolated PostgreSQL16 service; non-owner role source privacy tests"
   },
   "sqlite_tests": {
-    "passed": 79,
+    "passed": 92,
     "failed": 0,
     "skipped": 29,
-    "note": "Current local Python3.13 run; PostgreSQL-only tests skipped. Python3.12 migration-render crash reproduced."
+    "note": "Latest Python3.13 local full rerun passed; intermittent Windows interpreter access violation also reproduced on3.13."
   },
   "django_system_check": "passed",
   "migration_drift_check": "passed",
@@ -39,9 +39,9 @@
   "implemented_domain_models": 58,
   "explicit_root_url_patterns": 62,
   "public_deployment_ready": false,
-  "github_hosted_ci": "passed:108 PostgreSQL tests on 9f7c371; https://github.com/LighthouseCollection/CTM/actions/runs/39676229102",
+  "github_hosted_ci": "passed:121 PostgreSQL tests on 3e3ac4d; https://github.com/LighthouseCollection/CTM/actions/runs/39677076540",
   "limitations": [
-    "Plenix CDN documentation inaccessible; browser UI unimplemented",
+    "Plenix browser UI unimplemented; documentation now accessible over LAN",
     "151-table contract reconciliation and forced RLS incomplete",
     "Real identity/payment/email/transcription integrations unconfigured",
     "Ten-user browser and restore/relocation acceptance pending"
@@ -58,5 +58,11 @@
     "local_tests": "passed",
     "postgres_validation": "passed in GitHub PostgreSQL16 suite; no VM deployment",
     "production_deployed": false
+  },
+  "plenix_docs": {
+    "version": "0.58.0",
+    "access": "verified via LAN reverse proxy TLS/--resolve",
+    "public_route": "still timing out",
+    "ui_implemented": false
   }
 }

@@ -93,3 +93,9 @@ The existing agenda endpoint now lets the current assigned case manager place th
 Local validation: 92 tests passed and 29 PostgreSQL-only tests skipped; migration drift and critical lint checks passed. Pinned Plenix documentation access was retried and still timed out. This remains backend implementation; no browser interface or VM service changed.
 
 Carryover preserves an existing next-session placement even if its agenda part differs; it records the relationship in the case audit rather than failing session closure or changing the placement. The Windows interpreter also crashed once under Python 3.13; the full rerun passed. The runtime issue is not confined to Python 3.12.
+
+Latest agenda-workflow PostgreSQL CI passed: **121 tests** on `3e3ac4d`, including migration drift and source structural checks. Run: https://github.com/LighthouseCollection/CTM/actions/runs/39677076540.
+
+## Plenix documentation access recovered
+
+Pinned version 0.58.0 documentation was retrieved successfully through the existing LAN reverse proxy using `curl --resolve design-system.lighthouseway.org:443:10.0.0.20` with normal TLS certificate validation. The index reports version 0.58.0 and 766 documentation records; account-menu documentation is readable. Earlier public-route timeouts remain recorded above, but documentation access is no longer an implementation blocker. Documentation reference files are in ignored temporary storage; no CDN component/style assets were copied into the app and runtime CDN URLs remain pinned as specified. Browser access via public DNS is not established by this operator-side override.
