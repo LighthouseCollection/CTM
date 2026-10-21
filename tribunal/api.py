@@ -7,7 +7,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError, ObjectDoesNotExist
 from django.db import IntegrityError
-from django.http import JsonResponse, FileResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
@@ -592,24 +592,11 @@ def upload(request):
     )
 
 
-@endpoint()
+@endpoint(("GET", "HEAD"))
 def download(request, file_id):
-    from tribunal.services.files import authorized_file, private_path, display_filename
+    from tribunal.file_delivery import deliver_file
 
-    file = authorized_file(request.user, file_id)
-    path = private_path(file.object_key)
-    if not path.is_file():
-        return JsonResponse({"error": "source_unavailable"}, status=503)
-    audit(request.user, "file_downloaded", file, file.attachment.case)
-    response = FileResponse(
-        path.open("rb"),
-        content_type=file.mime_type,
-        as_attachment=True,
-        filename=display_filename(file),
-    )
-    response["Cache-Control"] = "private, no-store"
-    response["X-Content-Type-Options"] = "nosniff"
-    return response
+    return deliver_file(request, file_id)
 
 
 @endpoint()
