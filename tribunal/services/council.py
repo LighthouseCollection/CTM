@@ -18,6 +18,7 @@ from tribunal.models import (
     Party,
     TestimonyAppointment,
     AppointmentResponse,
+    Attendance,
 )
 from tribunal.policy import administrator, staff, writer, open_proceeding
 from .common import audit, notify, notify_manager
@@ -118,6 +119,54 @@ def create_session(actor, session_date):
     return session
 
 
+def attendance_for(actor, session_id, hearing_id=None):
+    staff(actor)
+    session = CouncilSession.objects.get(pk=session_id)
+    if hearing_id:
+        Hearing.objects.get(pk=hearing_id, agenda__session=session)
+    rows = Attendance.objects.filter(session=session, hearing_id=hearing_id).order_by(
+        "created_at", "pk"
+    )
+    return {row.member_id: row for row in rows}
+
+
+@transaction.atomic
+def record_attendance(actor, session_id, member_id, present, hearing_id=None):
+    administrator(actor)
+    if type(present) is not bool:
+        raise ValidationError("Attendance must be true or false.")
+    session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    if session.state == "closed":
+        raise ValidationError("Closed session attendance is read-only.")
+    member = Account.objects.get(pk=member_id)
+    if not member.is_active or member.role == "applicant":
+        raise ValidationError("Attendance requires an active council account.")
+    hearing = None
+    if hearing_id:
+        hearing = Hearing.objects.select_related("agenda__case", "proceeding").get(
+            pk=hearing_id, agenda__session=session
+        )
+        if hearing.state != "held":
+            raise ValidationError("Attendance requires a held hearing.")
+        Case.objects.select_for_update().get(pk=hearing.agenda.case_id)
+        if hearing.proceeding_id:
+            proceeding = (
+                Proceeding.objects.select_for_update()
+                .select_related("case")
+                .get(pk=hearing.proceeding_id)
+            )
+            open_proceeding(proceeding)
+        elif not hearing.agenda.case.applications.filter(
+            kind="appeal", status="submitted"
+        ).exists():
+            raise ValidationError("Completed appeal hearing attendance is read-only.")
+    row = Attendance.objects.create(
+        session=session, hearing=hearing, member=member, present=present, actor=actor
+    )
+    audit(actor, "attendance_recorded", row, hearing.agenda.case if hearing else None)
+    return row
+
+
 @transaction.atomic
 def place_agenda(actor, session_id, case_id, part=2):
     administrator(actor)
@@ -149,8 +198,15 @@ def close_session(actor, session_id):
         .order_by("date")
         .first()
     )
-    for item in session.agenda.select_for_update(of=("self",)).all():
+    attendance = attendance_for(actor, session.pk)
+    for item in session.agenda.select_for_update(of=("self",)).select_related("case"):
         if item.state in {"scheduled", "time_exhausted"}:
+            presenter = attendance.get(item.case.assigned_member_id)
+            if item.part == 2 and presenter is not None and not presenter.present:
+                item.state = "presenter_absent"
+                item.save(update_fields=["state"])
+                audit(actor, "hearing_deferred_presenter_absent", item, item.case)
+                continue
             item.state = "unpresented"
             item.save(update_fields=["state"])
             if next_session:
@@ -173,19 +229,54 @@ def close_session(actor, session_id):
 @transaction.atomic
 def hear_case(actor, item_id):
     staff(actor)
+    # Attendance edits and hearing snapshots serialize on the same session row.
+    session_id = AgendaItem.objects.values_list("session_id", flat=True).get(pk=item_id)
+    CouncilSession.objects.select_for_update().get(pk=session_id)
     item = (
         AgendaItem.objects.select_for_update(of=("self",))
         .select_related("case", "session")
         .get(pk=item_id)
     )
+    item.case = Case.objects.select_for_update().get(pk=item.case_id)
     if item.case.assigned_member_id != actor.pk:
         raise PermissionDenied("Only the assigned member presents the hearing.")
     if item.session.state == "closed" or item.state != "scheduled":
         raise ValidationError("Agenda item cannot be heard.")
+    proceeding = item.case.proceedings.select_for_update().filter(status="open").first()
+    pending_appeal = item.case.applications.filter(
+        kind="appeal", status="submitted"
+    ).exists()
+    if (item.case.status != "open" or proceeding is None) and not pending_appeal:
+        raise ValidationError("Case has no open proceeding or pending appeal to hear.")
+    defaults = attendance_for(actor, item.session_id)
+    presenter = defaults.get(actor.pk)
+    if presenter is None:
+        raise ValidationError(
+            "Record the assigned presenter's attendance before the hearing."
+        )
+    if not presenter.present:
+        item.state = "presenter_absent"
+        item.save(update_fields=["state"])
+        audit(actor, "hearing_deferred_presenter_absent", item, item.case)
+        return None
     hearing = Hearing.objects.create(
         agenda=item,
-        proceeding=item.case.proceedings.filter(status="open").first(),
+        proceeding=proceeding,
         presenter=actor,
+    )
+    Attendance.objects.bulk_create(
+        [
+            Attendance(
+                session=item.session,
+                hearing=hearing,
+                member=member,
+                present=defaults[member.pk].present if member.pk in defaults else False,
+                actor=actor,
+            )
+            for member in Account.objects.filter(is_active=True).exclude(
+                role="applicant"
+            )
+        ]
     )
     item.state = "heard"
     item.save(update_fields=["state"])
@@ -227,12 +318,15 @@ def save_hearing_outcome(
 
 @transaction.atomic
 def schedule_testimony(actor, agenda_id, party_id, starts_at, ends_at, instructions):
+    session_id = AgendaItem.objects.values_list("session_id", flat=True).get(
+        pk=agenda_id
+    )
+    CouncilSession.objects.select_for_update(of=("self",)).get(pk=session_id)
     agenda = (
         AgendaItem.objects.select_for_update(of=("self",))
         .select_related("case")
         .get(pk=agenda_id)
     )
-    CouncilSession.objects.select_for_update(of=("self",)).get(pk=agenda.session_id)
     writer(actor, agenda.case)
     party = Party.objects.get(pk=party_id, case=agenda.case, account__isnull=False)
     if (

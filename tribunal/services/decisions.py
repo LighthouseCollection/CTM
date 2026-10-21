@@ -291,6 +291,9 @@ def withdraw_application(actor, application_id):
             raise PermissionDenied(
                 "Only the appellant can withdraw before disposition."
             )
+        # Serialize the pending-appeal status transition with hearing attendance
+        # checks, which hold the same case lock and never lock the application.
+        Case.objects.select_for_update(of=("self",)).get(pk=app.case_id)
     else:
         open_proceeding(lock_proceeding(app.proceeding_id))
     app.status = "withdrawn"

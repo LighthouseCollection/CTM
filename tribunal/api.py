@@ -450,7 +450,46 @@ def close_session(request, session_id):
 def hear(request, item_id):
     from tribunal.services.council import hear_case
 
-    return JsonResponse(encoded(hear_case(request.user, item_id)), status=201)
+    hearing = hear_case(request.user, item_id)
+    if hearing is None:
+        return JsonResponse(
+            {"state": "presenter_absent", "awaiting_manual_placement": True}
+        )
+    return JsonResponse(encoded(hearing), status=201)
+
+
+@endpoint(("GET", "POST"))
+def attendance(request, session_id):
+    from tribunal.services.council import attendance_for, record_attendance
+
+    staff(request.user)
+    if request.method == "GET":
+        rows = attendance_for(
+            request.user, session_id, request.GET.get("hearing_id") or None
+        )
+        return JsonResponse(
+            {
+                "items": [
+                    encoded(
+                        row,
+                        member_id=str(row.member_id),
+                        present=row.present,
+                        actor_id=str(row.actor_id),
+                        timestamp=row.created_at.isoformat(),
+                    )
+                    for row in rows.values()
+                ]
+            }
+        )
+    data = body(request)
+    row = record_attendance(
+        request.user,
+        session_id,
+        data["member_id"],
+        data["present"],
+        data.get("hearing_id"),
+    )
+    return JsonResponse(encoded(row), status=201)
 
 
 @endpoint(("GET", "POST"))

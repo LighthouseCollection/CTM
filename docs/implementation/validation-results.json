@@ -9,10 +9,10 @@
     "isolation": "ctm_validation migration role; restricted ctm_validation_runtime SET ROLE; ephemeral test_ctm_validation"
   },
   "sqlite_tests": {
-    "passed": 63,
+    "passed": 79,
     "failed": 0,
     "skipped": 29,
-    "note": "PostgreSQL-only invariants skipped; Windows interpreter intermittently crashes, Linux run authoritative"
+    "note": "Current local Python3.13 run; PostgreSQL-only tests skipped. Python3.12 migration-render crash reproduced."
   },
   "django_system_check": "passed",
   "migration_drift_check": "passed",
@@ -37,7 +37,7 @@
     "status": "passed structural checks only"
   },
   "implemented_domain_models": 58,
-  "explicit_root_url_patterns": 61,
+  "explicit_root_url_patterns": 62,
   "public_deployment_ready": false,
   "github_hosted_ci": "passed:92 PostgreSQL tests on 1c26120; https://github.com/LighthouseCollection/CTM/actions/runs/39665560875",
   "limitations": [
@@ -53,5 +53,10 @@
     "review": "no additional concrete defects after regression fixes",
     "production_grants_complete": false,
     "remaining_table_policies_complete": false
+  },
+  "attendance_workflow": {
+    "local_tests": "passed",
+    "postgres_validation": "pending latest CI",
+    "production_deployed": false
   }
 }

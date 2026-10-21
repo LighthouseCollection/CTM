@@ -80,6 +80,9 @@ def test_accepted_appeal_reopens_same_case_and_locks_original(
     assert supplement.text == "Extra information"
     session = create_session(people["admin"], timezone.localdate())
     agenda = place_agenda(people["admin"], session.pk, app.case_id)
+    from tribunal.services.council import record_attendance
+
+    record_attendance(people["admin"], session.pk, people["member"].pk, True)
     hearing = hear_case(people["member"], agenda.pk)
     result = decide_appeal(people["member"], appeal.pk, hearing.pk, "accept")
     app.case.refresh_from_db()
