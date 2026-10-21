@@ -2,14 +2,14 @@
   "date_utc": "2026-10-21",
   "application_version": "0.1.0",
   "postgresql_tests": {
-    "passed": 147,
+    "passed": 168,
     "failed": 0,
     "skipped": 0,
-    "duration_seconds": 13.6,
+    "duration_seconds": 20.81,
     "isolation": "GitHub isolated PostgreSQL16 service; non-owner role source privacy tests"
   },
   "sqlite_tests": {
-    "passed": 106,
+    "passed": 127,
     "failed": 0,
     "skipped": 41,
     "note": "Latest Python3.13 local full rerun passed; intermittent Windows interpreter access violation also reproduced on3.13."
@@ -37,11 +37,11 @@
     "status": "passed structural checks only"
   },
   "implemented_domain_models": 58,
-  "explicit_root_url_patterns": 63,
+  "explicit_root_url_patterns": 64,
   "public_deployment_ready": false,
-  "github_hosted_ci": "passed:147 PostgreSQL tests on0f089ad; https://github.com/LighthouseCollection/CTM/actions/runs/39681111852",
+  "github_hosted_ci": "passed:168 PostgreSQL tests on083cb39; https://github.com/LighthouseCollection/CTM/actions/runs/39682545743",
   "limitations": [
-    "Plenix browser UI unimplemented; documentation now accessible over LAN",
+    "Initial Plenix shell and document/evidence screens implemented; full workflow editors incomplete",
     "151-table contract reconciliation and forced RLS incomplete",
     "Real identity/payment/email/transcription integrations unconfigured",
     "Ten-user browser and restore/relocation acceptance pending"
@@ -74,6 +74,16 @@
     "browser_errors": 0,
     "horizontal_overflow": false,
     "closed_state_inline_style_attributes": 0,
-    "script": "scripts/browser_smoke.py"
+    "script": "scripts/browser_smoke.py",
+    "document_view": "split list/detail, council history toggle, desktop and mobile; synthetic API fixtures",
+    "document_inline_styles": "One empty style attribute emitted by pinned Plenix Checkbox; no application inline styles or values"
+  },
+  "private_file_delivery": {
+    "single_byte_ranges": true,
+    "authorized_metadata_before_streaming": true,
+    "inline_mime_allowlist": true,
+    "private_cache_control": true,
+    "case_file_listing": "latest clean ordinary files; council-only history; paginated",
+    "dedicated_medical_report_and_decree_views": "pending"
   }
 }

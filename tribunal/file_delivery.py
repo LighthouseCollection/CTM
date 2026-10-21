@@ -106,7 +106,12 @@ def deliver_file(request, file_id):
             request.user,
             action,
             source,
-            source.attachment.case,
+            source.attachment.case
+            or (
+                source.attachment.application.case
+                if source.attachment.application
+                else None
+            ),
             metadata={"partial": selected is not None},
         )
         if request.method == "HEAD":

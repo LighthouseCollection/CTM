@@ -37,6 +37,32 @@
       expired: "Please sign in again to continue.",
       empty: "Nothing to show",
       noCases: "No cases are available.",
+      noFiles: "No technically cleared files are available in this section.",
+      chooseFile: "Select a file to preview",
+      download: "Download",
+      version: "Version",
+      olderVersions: "Include older versions",
+      more: "Load more",
+      previous: "Previous",
+      next: "Next",
+      preview: "Preview",
+      closePreview: "Close preview",
+      rate: "Playback speed",
+      transcript: "Transcript",
+      hideTranscript: "Hide transcript",
+      pip: "Picture in picture",
+      exitPip: "Exit picture in picture",
+      unsupported: "This media format is not supported.",
+      mediaFailed: "Unable to play this recording.",
+      pipFailed: "Picture in picture is unavailable.",
+      seek: "Seek",
+      fallback: "Open media",
+      audioFailed: "Unable to load audio.",
+      volume: "Volume",
+      mute: "Mute",
+      counter: "{index} of {total}",
+      downloadOnly:
+        "Download this document to open it in a compatible application.",
       noSessions: "No council sessions are scheduled.",
       current: "Your current application or case",
       noCurrent: "You have no current application or open case.",
@@ -116,6 +142,31 @@
       noMessages: "No messages yet",
     },
     ar: {
+      noFiles: "لا توجد ملفات اجتازت الفحص في هذا القسم.",
+      chooseFile: "اختر ملفًا لعرضه",
+      download: "تنزيل",
+      version: "الإصدار",
+      olderVersions: "تضمين الإصدارات السابقة",
+      more: "تحميل المزيد",
+      previous: "السابق",
+      next: "التالي",
+      preview: "معاينة",
+      closePreview: "إغلاق المعاينة",
+      rate: "سرعة التشغيل",
+      transcript: "النص المكتوب",
+      hideTranscript: "إخفاء النص",
+      pip: "صورة داخل صورة",
+      exitPip: "إغلاق صورة داخل صورة",
+      unsupported: "صيغة الوسائط غير مدعومة.",
+      mediaFailed: "تعذر تشغيل التسجيل.",
+      pipFailed: "ميزة صورة داخل صورة غير متاحة.",
+      seek: "الانتقال",
+      fallback: "فتح الوسائط",
+      audioFailed: "تعذر تحميل الصوت.",
+      volume: "مستوى الصوت",
+      mute: "كتم الصوت",
+      counter: "{index} من {total}",
+      downloadOnly: "نزّل هذا المستند لفتحه باستخدام تطبيق مناسب.",
       tribunal: "المجلس الإكليريكي",
       signIn: "تسجيل الدخول",
       welcome: "ادخل بأمان لمتابعة طلبك أو للوصول إلى مساحة عمل المجلس.",
@@ -376,6 +427,200 @@
       ),
     );
   }
+  const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
+  const heading = (value) => text(value, { as: "h1", variant: "title" });
+  function CaseFiles({ caseId, section, council, t }) {
+    const [rows, setRows] = R.useState([]),
+      [selected, select] = R.useState(null);
+    const [history, setHistory] = R.useState(false),
+      [next, setNext] = R.useState(null);
+    const [pending, setPending] = R.useState(true),
+      [failed, setFailed] = R.useState(false);
+    const [revision, refresh] = R.useState(0);
+    const generation = R.useRef(0);
+    R.useEffect(() => {
+      let active = true;
+      generation.current += 1;
+      setRows([]);
+      setNext(null);
+      select(null);
+      setPending(true);
+      setFailed(false);
+      api(`/api/cases/${caseId}/files/?history=${history ? 1 : 0}`)
+        .then((data) => {
+          if (active) {
+            setRows(data.items);
+            setNext(data.next_offset);
+          }
+        })
+        .catch(() => {
+          if (active) setFailed(true);
+        })
+        .finally(() => {
+          if (active) setPending(false);
+        });
+      return () => {
+        active = false;
+        generation.current += 1;
+      };
+    }, [caseId, history, revision]);
+    async function more() {
+      if (pending || next === null) return;
+      const requestedGeneration = generation.current;
+      setPending(true);
+      setFailed(false);
+      try {
+        const data = await api(
+          `/api/cases/${caseId}/files/?history=${history ? 1 : 0}&offset=${next}`,
+        );
+        if (requestedGeneration !== generation.current) return;
+        setRows((old) => [
+          ...old,
+          ...data.items.filter((row) => !old.some((x) => x.id === row.id)),
+        ]);
+        setNext(data.next_offset);
+      } catch {
+        if (requestedGeneration === generation.current) setFailed(true);
+      } finally {
+        if (requestedGeneration === generation.current) setPending(false);
+      }
+    }
+    // File purpose determines its section; MIME only chooses its viewer.
+    const applicationDocumentCodes = new Set([
+      "PHOTO",
+      "SPOUSE_PHOTO",
+      "MC",
+      "CMC",
+      "CDD",
+      "RO",
+      "PET",
+    ]);
+    const visible = rows.filter((row) =>
+      section === "documents"
+        ? applicationDocumentCodes.has(row.category)
+        : !applicationDocumentCodes.has(row.category),
+    );
+    const chosen = visible.find((row) => row.id === selected);
+    const list = h(
+      P.Stack,
+      null,
+      council
+        ? h(P.Checkbox, {
+            label: t("olderVersions"),
+            checked: history,
+            onChange: (event) => setHistory(event.target.checked),
+          })
+        : null,
+      ...visible.map((row) =>
+        h(P.Card, {
+          key: row.id,
+          title: row.name,
+          meta: `${row.category} · ${t("version")} ${row.version}`,
+          onOpen: () => select(row.id),
+        }),
+      ),
+      !visible.length && !pending
+        ? h(P.EmptyState, { title: t("noFiles") })
+        : null,
+      pending ? text(t("loading")) : null,
+      failed
+        ? h(
+            P.Notice,
+            { tone: "danger" },
+            t("error"),
+            h(P.Button, { onClick: () => refresh((n) => n + 1) }, t("retry")),
+          )
+        : null,
+      next !== null
+        ? h(P.Button, { onClick: more, disabled: pending }, t("more"))
+        : null,
+    );
+    const preview = !chosen
+      ? h(P.EmptyState, { title: t("chooseFile") })
+      : h(
+          P.Stack,
+          null,
+          text(chosen.name),
+          h(
+            P.Button,
+            { onClick: () => window.location.assign(chosen.download_url) },
+            t("download"),
+          ),
+          chosen.preview_url && chosen.mime_type.startsWith("image/")
+            ? h(P.DocumentViewer, {
+                key: chosen.id,
+                kind: "images",
+                pages: [
+                  { id: chosen.id, src: chosen.preview_url, alt: chosen.name },
+                ],
+                label: chosen.name,
+                strings: {
+                  previous: t("previous"),
+                  next: t("next"),
+                  loading: t("loading"),
+                  failed: t("error"),
+                  empty: t("empty"),
+                  retry: t("retry"),
+                },
+              })
+            : chosen.preview_url && /^(audio|video)\//.test(chosen.mime_type)
+              ? h(P.MediaPlayer, {
+                  key: chosen.id,
+                  src: chosen.preview_url,
+                  kind: chosen.mime_type.startsWith("audio/")
+                    ? "audio"
+                    : "video",
+                  label: chosen.name,
+                  strings: Object.fromEntries(
+                    [
+                      "rate",
+                      "transcript",
+                      "hideTranscript",
+                      "pip",
+                      "exitPip",
+                      "unsupported",
+                      "pipFailed",
+                      "seek",
+                      "fallback",
+                      "audioFailed",
+                      "volume",
+                      "mute",
+                    ]
+                      .map((key) => [key, t(key)])
+                      .concat([["failed", t("mediaFailed")]]),
+                  ),
+                })
+              : chosen.preview_url
+                ? h(
+                    P.Button,
+                    {
+                      onClick: () =>
+                        window.open(
+                          chosen.preview_url,
+                          "_blank",
+                          "noopener,noreferrer",
+                        ),
+                    },
+                    t("preview"),
+                  )
+                : text(t("downloadOnly")),
+        );
+    return h(
+      P.Stack,
+      null,
+      heading(t(section)),
+      h(P.SplitView, {
+        label: t(section),
+        firstLabel: t(section),
+        first: list,
+        second: h(
+          P.ReadingPane,
+          { label: chosen?.name || t("preview") },
+          preview,
+        ),
+      }),
+    );
+  }
   function App() {
     const [lang, setLang] = R.useState(() => {
       try {
@@ -429,7 +674,9 @@
           active = false;
         };
       let request;
-      if (page === "case" && selection)
+      if (["documents", "evidence"].includes(page) && selection)
+        request = Promise.resolve({});
+      else if (page === "case" && selection)
         request = api(`/api/cases/${selection}/`);
       else if (page === "communications" && selection)
         request = Promise.all([
@@ -484,8 +731,6 @@
       setPage(id);
       setSelection(selected);
     };
-    const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
-    const heading = (value) => text(value, { as: "h1", variant: "title" });
     const savePreference = async (field, value) => {
       if (!user) {
         setLang(value);
@@ -576,7 +821,9 @@
       ? ["home", "sessions", "cases", "search", "archived", "statistics"]
       : ["home", "applications", "past"];
     const unavailable = new Set(["search", "statistics"]);
-    const caseContext = ["case", "communications"].includes(page) && selection;
+    const caseContext =
+      ["case", "communications", "documents", "evidence"].includes(page) &&
+      selection;
     const caseGroups = [
       {
         heading: t("overview"),
@@ -599,7 +846,11 @@
           "evidence",
           "documents",
           "medical",
-        ].map((id) => ({ id, label: t(id), disabled: true })),
+        ].map((id) => ({
+          id,
+          label: t(id),
+          disabled: !["documents", "evidence"].includes(id),
+        })),
       },
       {
         heading: t("decision"),
@@ -638,7 +889,12 @@
             items: [{ id: "communications", label: t("communications") }],
           }),
           council
-            ? h(P.NavList, { label: t("assessment"), groups: reviewGroups })
+            ? h(P.NavList, {
+                label: t("assessment"),
+                value: page,
+                onSelect: (id) => go(id, selection),
+                groups: reviewGroups,
+              })
             : null,
         )
       : h(
@@ -718,6 +974,14 @@
     function content() {
       if (failure) return errorView();
       if (!data) return text(t("loading"));
+      if (["documents", "evidence"].includes(page))
+        return h(CaseFiles, {
+          key: `${selection}-${page}`,
+          caseId: selection,
+          section: page,
+          council,
+          t,
+        });
       if (page === "profile")
         return h(
           P.Stack,

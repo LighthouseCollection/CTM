@@ -109,3 +109,59 @@ def test_pending_latest_is_not_replaced_by_old_clean_version(listing, client):
 def test_invalid_offset_is_rejected(listing, client, offset):
     _, url = listing
     assert client.get(url, {"offset": offset}).status_code == 422
+
+
+def test_listing_paginates_without_a_fixed_attachment_count_limit(listing, client):
+    app, url = listing
+    attachment = Attachment.objects.create(
+        case=app.case, owner=app.owner, category="OTHER"
+    )
+    versions = [
+        FileVersion(
+            attachment=attachment,
+            number=n,
+            object_key=f"pages/{n}",
+            original_name="item.pdf",
+            display_name="item.pdf",
+            mime_type="application/pdf",
+            byte_count=5,
+            sha256="b" * 64,
+        )
+        for n in range(1, 53)
+    ]
+    FileVersion.objects.bulk_create(versions)
+    FileTechnicalEvent.objects.bulk_create(
+        [FileTechnicalEvent(file=row, task="scan", result="clean") for row in versions]
+    )
+    from tribunal.models import Account
+
+    member = Account.objects.create_user(
+        email="history@example.test", role="member", email_verified=True
+    )
+    client.force_login(
+        member, backend="allauth.account.auth_backends.AuthenticationBackend"
+    )
+    first = client.get(url + "?history=1").json()
+    second = client.get(url + f"?history=1&offset={first['next_offset']}").json()
+    assert len(first["items"]) == 50
+    assert len(second["items"]) == 6
+    assert second["next_offset"] is None
+    assert not {x["id"] for x in first["items"]} & {x["id"] for x in second["items"]}
+
+
+def test_application_file_access_is_audited_under_its_linked_case(
+    listing, client, settings, tmp_path
+):
+    from tribunal.models import AuditEvent
+    from tribunal.services.files import private_path
+
+    app, _ = listing
+    settings.MEDIA_ROOT = tmp_path
+    source = app.attachments.get(category="MC").versions.get()
+    path = private_path(source.object_key)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"%PDF-test")
+    assert client.head(f"/api/files/{source.pk}/").status_code == 200
+    assert (
+        AuditEvent.objects.get(action="file_metadata_accessed").case_id == app.case_id
+    )

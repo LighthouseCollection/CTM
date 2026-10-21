@@ -100,6 +100,10 @@
     "handler": "notifications"
   },
   {
+    "route": "api/cases/<uuid:case_id>/files/",
+    "handler": "case_files"
+  },
+  {
     "route": "api/files/",
     "handler": "upload"
   },

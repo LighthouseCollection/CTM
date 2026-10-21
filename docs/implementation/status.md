@@ -36,7 +36,7 @@ The alpha prototype remains in its separate repository. No operational CTM datab
 
 | Professional Assessments | Separate medical/psychological request type, exact-request signed disclosure scope, original file authorization, local-only extraction gate | Approved bilingual release content, complete request/doctor/release UI and processing acceptance |
 
-| Files | Private originals, category/MIME limits, contextual owners/versions, technical scan gate, latest-only applicant access, council history, audited download | Resumable/whole-recording capture, background scan recovery, external-upload path, viewers/range delivery, automatic category rename history and all acquisition adapters |
+| Files | Private originals, category/MIME limits, contextual owners/versions, technical scan gate, latest-only applicant access, council history, audited download | Resumable/whole-recording capture, background scan recovery, external-upload path, complete viewer acceptance, automatic category rename history and all acquisition adapters |
 
 | Audio | Whole-report recording association, notice confirmation, finalize-once processing queue | Recorder UI/mobile recovery, actual transcription/translation engine, reviewed transcript editor and all configured engine failure tests |
 
@@ -50,7 +50,7 @@ The alpha prototype remains in its separate repository. No operational CTM datab
 
 | Background work | Durable outbox, retry leases, quiet-period digest batching, current-manager routing, retention warnings and cleanup | Crash/retry load tests and all operational alerts; isolated real-broker/default-worker smoke test passed |
 
-| Database protection | PostgreSQL constraints/transaction locks, immutable update/delete guards (with explicit private-draft cleanup exceptions), case/party deletion protection, closed-proceeding insert guards on key histories; forced RLS on 14 private-source tables with transaction-local actor/capability context | Remaining table RLS, complete grant and ownership split, worker maintenance contexts, remaining lifecycle guards and all 151-table security requirements |
+| Database protection | PostgreSQL constraints/transaction locks, immutable update/delete guards (with explicit private-draft cleanup exceptions), case/party deletion protection, closed-proceeding insert guards on key histories; forced RLS on 23 private-source and council tables with transaction-local actor/capability context | Remaining table RLS, complete grant and ownership split, worker maintenance contexts, remaining lifecycle guards and all 151-table security requirements |
 
 | Interface | Pinned Plenix shell, universal sign-in, account menu, initial case/session/application projections, private communications and persisted language settings | Filing/report/evidence/decision editors, split views, full localization/accessibility acceptance and provider browser login |
 
@@ -216,3 +216,14 @@ Latest local suite:106 passed,29 PostgreSQL-only skipped. Intermittent Windows i
 Forced PostgreSQL row policies now protect23 domain tables, including nine council session/hearing/attendance/notes/assignment tables added in0012. Applicant/anonymous raw access is denied. Assigned presenters can create a scoped initial attendance snapshot but cannot append administrative corrections. Session date/context and closed-session state remain guarded. Legitimate restricted-role workflow writes and raw denial regressions passed in the147-test PostgreSQL suite on0f089ad: https://github.com/LighthouseCollection/CTM/actions/runs/39681111852.
 
 The change was developed and validated on an isolated GitHub branch, reviewed, then fast-forwarded to main. No operational migrations ran. Remaining table policies, production grants and full schema reconciliation still block public deployment.
+
+
+## Private file delivery and initial evidence screens - 2026-10-21
+
+Authenticated original delivery now supports single byte ranges for audio/video seeking, HEAD metadata, If-Range validators, private no-store responses, safe inline MIME types and audited view/download actions. Authorization and scan validation precede source metadata. Unsatisfiable ranges return no file bytes; abandoned bounded streams close their handles. Originals remain private.
+
+The new paginated case-file endpoint filters ownership before pagination, includes submitted application uploads linked to the case, defaults to the latest clean version and allows council-only version history. It excludes medical, report-request and decree sources, which require their dedicated workflows. A pending latest upload does not expose an older clean version as current. No total attachment-count limit was added.
+
+Council Documents and Evidence now use documented pinned Plenix SplitView/ReadingPane components. Images use DocumentViewer, audio/video use MediaPlayer, PDFs open in a private browser PDF tab, and Word files download. This is the initial reading interface; uploading/editing workflows and dedicated medical/report/decree screens remain incomplete. Browser smoke uses synthetic API fixtures with real CDN components, checks selection/history and mobile width, and passed without JavaScript errors. One empty style attribute comes from the CDN Checkbox; no application styling was added.
+
+PostgreSQL CI passed168 tests on083cb39 (https://github.com/LighthouseCollection/CTM/actions/runs/39682545743); local suite127 passed with41 PostgreSQL-only skips. The earlier failing streaming tests closed Django test responses twice, invalidating the enclosing PostgreSQL test transaction; the test harness was corrected. Additional pagination regression and UI validation are being completed. No operational deployment or database migration was performed.
