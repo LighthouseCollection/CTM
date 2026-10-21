@@ -85,3 +85,11 @@ An absent assigned presenter defers the case for manual agenda placement; sessio
 Local Python 3.13 validation: 79 tests passed, 29 PostgreSQL-only tests skipped. The existing Python 3.12 environment crashed in migration rendering; the separate ignored `.tmp/venv313` environment avoids that observed crash. PostgreSQL-specific concurrency and database policy verification remain required. No VM container, proxy, production database or credential changed during this local implementation.
 
 Latest GitHub PostgreSQL validation passed on `9f7c371`: **108 tests**, migration drift and preserved-source structural checks. Run: https://github.com/LighthouseCollection/CTM/actions/runs/39676229102. This run verifies the complete current test suite, not full production readiness or a dedicated concurrent-load exercise.
+
+## Assigned-manager agenda placement — 2026-10-21
+
+The existing agenda endpoint now lets the current assigned case manager place their case in part 2 of a planned dated session, including a pending appeal. Part 1 remains restricted to admin/secretary. Permission is rechecked against the locked case, so a previously assigned member cannot place it after reassignment. Invalid agenda parts, closed sessions and closed cases without pending appeals are rejected. Repeated placement retains one agenda item and one placement audit event; conflicting existing agenda parts require explicit handling rather than being silently changed.
+
+Local validation: 92 tests passed and 29 PostgreSQL-only tests skipped; migration drift and critical lint checks passed. Pinned Plenix documentation access was retried and still timed out. This remains backend implementation; no browser interface or VM service changed.
+
+Carryover preserves an existing next-session placement even if its agenda part differs; it records the relationship in the case audit rather than failing session closure or changing the placement. The Windows interpreter also crashed once under Python 3.13; the full rerun passed. The runtime issue is not confined to Python 3.12.

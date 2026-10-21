@@ -169,10 +169,16 @@ def record_attendance(actor, session_id, member_id, present, hearing_id=None):
 
 @transaction.atomic
 def place_agenda(actor, session_id, case_id, part=2):
-    administrator(actor)
+    staff(actor)
+    if type(part) is not int or part not in {1, 2}:
+        raise ValidationError("Invalid agenda part.")
     session = CouncilSession.objects.select_for_update(of=("self",)).get(pk=session_id)
-    case = Case.objects.get(pk=case_id)
-    if session.state != "planned" or part not in {1, 2}:
+    case = Case.objects.select_for_update(of=("self",)).get(pk=case_id)
+    if part == 1:
+        administrator(actor)
+    else:
+        writer(actor, case)
+    if session.state != "planned":
         raise ValidationError("Invalid session/agenda part.")
     if (
         case.status == "closed"
@@ -180,10 +186,15 @@ def place_agenda(actor, session_id, case_id, part=2):
     ):
         raise ValidationError("Closed case has no pending appeal to hear.")
     position = (session.agenda.aggregate(n=Max("position"))["n"] or 0) + 1
-    item, _ = AgendaItem.objects.get_or_create(
+    item, created = AgendaItem.objects.get_or_create(
         session=session, case=case, defaults={"part": part, "position": position}
     )
-    audit(actor, "agenda_placed", item, case)
+    if item.part != part:
+        raise ValidationError(
+            "Case is already in another part of this session's agenda."
+        )
+    if created:
+        audit(actor, "agenda_placed", item, case)
     return item
 
 
@@ -210,6 +221,21 @@ def close_session(actor, session_id):
             item.state = "unpresented"
             item.save(update_fields=["state"])
             if next_session:
+                CouncilSession.objects.select_for_update(of=("self",)).get(
+                    pk=next_session.pk
+                )
+                existing = AgendaItem.objects.filter(
+                    session=next_session, case_id=item.case_id
+                ).first()
+                if existing:
+                    audit(
+                        actor,
+                        "agenda_carryover_already_placed",
+                        item,
+                        item.case,
+                        metadata={"target_agenda_id": str(existing.pk)},
+                    )
+                    continue
                 target = place_agenda(actor, next_session.pk, item.case_id, item.part)
                 target.carried_from = item
                 target.save(update_fields=["carried_from"])
