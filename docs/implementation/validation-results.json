@@ -39,7 +39,7 @@
   "implemented_domain_models": 58,
   "explicit_root_url_patterns": 61,
   "public_deployment_ready": false,
-  "github_hosted_ci": "passed:67 PostgreSQL tests on0652f2a; https://github.com/LighthouseCollection/CTM/actions/runs/39659081375",
+  "github_hosted_ci": "passed:92 PostgreSQL tests on 1c26120; https://github.com/LighthouseCollection/CTM/actions/runs/39665560875",
   "limitations": [
     "Plenix CDN documentation inaccessible; browser UI unimplemented",
     "151-table contract reconciliation and forced RLS incomplete",

@@ -73,3 +73,5 @@ Migration 0011 adds forced PostgreSQL row policies to 14 private-source tables. 
 The latest isolated Linux/PostgreSQL suite passes 92 tests. It includes signature-checked synthetic Stripe callbacks with an unrelated signed-in browser identity, external priest responses and assigned-manager notifications, migration reverse/reapply and helper execution ACL checks. A read-only review found no additional concrete issue in this slice after four reported defects were fixed and covered by regressions.
 
 This is partial security implementation: runtime role grants, remaining domain-table policies and background worker/maintenance identities still block production. The migration credential remains explicitly privileged. The isolated fixture's broad grants are test scaffolding and must never become the production grant template. See [database-source-privacy.md](database-source-privacy.md).
+
+GitHub validation also passed on commit `1c26120`: 92 PostgreSQL tests, migration drift check and preserved-source structural validation. Run: https://github.com/LighthouseCollection/CTM/actions/runs/39665560875.
