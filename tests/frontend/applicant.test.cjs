@@ -102,3 +102,39 @@ test('malformed save acknowledgement retains dirty data and original version', a
   assert.equal(draft.state.version, 3);
   assert.equal(draft.state.dirty, true);
 });
+
+test('existing backend when conditions control display and preserve hidden answers', () => {
+  const app = fixture();
+  const field = app.questionnaire.definition.fields[0];
+  field.when = { field: 'grounds', equals: 'abuse' };
+  assert.equal(A.definitionProblem(app), null);
+  assert.equal(A.isVisible(field, { grounds: 'abuse' }), true);
+  assert.equal(A.isVisible(field, { grounds: 'other' }), false);
+  field.when.field = 'missing';
+  assert.equal(A.definitionProblem(app), 'definitionUnavailable');
+});
+
+test('malformed saved answer shapes block destructive coercion', () => {
+  for (const answers of [{ first_name: { unexpected: true } }, { grounds: 'abuse' }]) {
+    const app = fixture(); app.answers = answers;
+    assert.equal(A.answerProblem(app), 'answersUnavailable');
+    const draft = A.createDraftSession(app, async () => { throw new Error('must not write'); });
+    assert.equal(draft.state.editable, false);
+  }
+});
+
+test('backend primitive choices with approved bilingual labels remain supported', () => {
+  const app = fixture();
+  const field = app.questionnaire.definition.fields[1];
+  field.choices = ['abuse'];
+  field.choice_labels = { abuse: { label_en: 'Abuse', label_ar: 'الإساءة' } };
+  assert.equal(A.definitionProblem(app), null);
+  assert.equal(A.fieldChoices(field)[0].value, 'abuse');
+});
+
+test('invalid optimistic version blocks editing instead of sending a blind save', () => {
+  for (const version of [undefined, -1, 1.5, '3']) {
+    const app = fixture(); app.version = version;
+    assert.equal(A.createDraftSession(app, async () => {}).state.editable, false);
+  }
+});

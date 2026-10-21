@@ -5,6 +5,10 @@
   const label = (item, lang) => item[`label_${lang === "ar" ? "ar" : "en"}`];
   const bilingual = (item) => ["label_en", "label_ar"].every(
     (key) => typeof item?.[key] === "string" && item[key].trim());
+  const fieldChoices = field => (field.choices || []).map(option =>
+    typeof option === "string" ? { ...field.choice_labels?.[option], value: option } : option);
+  const isVisible = (field, answers) => !field.when ||
+    answers[field.when.field] === field.when.equals;
 
   function definitionProblem(app) {
     const q = app?.questionnaire;
@@ -12,17 +16,22 @@
     if (!q?.id || !Number.isInteger(q.version) || q.published !== true ||
         !Array.isArray(fields) || !fields.length) return "definitionUnavailable";
     const codes = new Set();
+    const allCodes = new Set(fields.map(field => field?.code));
     for (const field of fields) {
       if (!field || typeof field.code !== "string" || !field.code.trim() ||
           ["__proto__", "constructor", "prototype"].includes(field.code) ||
           codes.has(field.code) || !bilingual(field) || !types.has(field.type) ||
           field.condition || field.visible_if) return "definitionUnavailable";
+      if (field.when && (typeof field.when !== "object" ||
+          !allCodes.has(field.when.field) || field.when.field === field.code ||
+          !["string", "boolean"].includes(typeof field.when.equals)))
+        return "definitionUnavailable";
       codes.add(field.code);
       if (["choice", "list"].includes(field.type)) {
         if (!Array.isArray(field.choices) || !field.choices.length)
           return "definitionUnavailable";
         const values = new Set();
-        for (const option of field.choices) {
+        for (const option of fieldChoices(field)) {
           if (!bilingual(option) || typeof option.value !== "string" ||
               !option.value || values.has(option.value)) return "definitionUnavailable";
           values.add(option.value);
@@ -32,10 +41,25 @@
     return null;
   }
 
+  function answerProblem(app) {
+    if (!Number.isInteger(app.version) || app.version < 0) return "answersUnavailable";
+    if (!app.answers || Array.isArray(app.answers) || typeof app.answers !== "object")
+      return "answersUnavailable";
+    for (const field of app.questionnaire?.definition?.fields || []) {
+      const value = app.answers[field.code];
+      if (value === null || value === undefined || value === "") continue;
+      if (field.type === "list") {
+        if (!Array.isArray(value) || value.some(v => typeof v !== "string"))
+          return "answersUnavailable";
+      } else if (typeof value !== "string") return "answersUnavailable";
+    }
+    return null;
+  }
+
   function createDraftSession(app, api, changed = () => {}) {
     const state = {
       answers: structuredClone(app.answers || {}), version: app.version,
-      editable: app.can_edit === true && !definitionProblem(app) &&
+      editable: app.can_edit === true && !definitionProblem(app) && !answerProblem(app) &&
         !["withdrawn", "expired", "deleted"].includes(app.status),
       dirty: false, saving: false, saved: false, error: null,
     };
@@ -75,6 +99,7 @@
       title: "My application", loading: "Loading application…", back: "Back",
       loadFailed: "Unable to load this application.", retry: "Try again",
       definitionUnavailable: "The approved application form is not available. Please contact the tribunal.",
+      answersUnavailable: "The saved answers cannot be displayed safely. Please contact the tribunal; your saved data has not been changed.",
       readOnly: "This application is read-only.", save: "Save draft", saving: "Saving…",
       saved: "Your answers have been saved.", unsaved: "You have unsaved changes.",
       saveFailed: "Your changes were not saved. Keep this page open. Another change may have been saved; reload to check before trying again.",
@@ -92,6 +117,7 @@
       title: "طلبي", loading: "جارٍ تحميل الطلب…", back: "رجوع",
       loadFailed: "تعذر تحميل هذا الطلب.", retry: "إعادة المحاولة",
       definitionUnavailable: "نموذج الطلب المعتمد غير متاح. يرجى التواصل مع المجلس.",
+      answersUnavailable: "لا يمكن عرض الإجابات المحفوظة بأمان. يرجى التواصل مع المجلس؛ لم يتم تغيير بياناتك المحفوظة.",
       readOnly: "هذا الطلب متاح للقراءة فقط.", save: "حفظ المسودة", saving: "جارٍ الحفظ…",
       saved: "تم حفظ إجاباتك.", unsaved: "لديك تغييرات غير محفوظة.",
       saveFailed: "لم يتم حفظ تغييراتك. أبقِ هذه الصفحة مفتوحة. ربما تم حفظ تغيير آخر؛ أعد تحميل الإجابات للتحقق قبل المحاولة مجددًا.",
@@ -153,12 +179,13 @@
     if (failure) body = h(P.Notice, { tone: "danger", actions: button("retry", reloadAnswers) }, t(failure));
     else if (!record || !session) body = text(t("loading"), { role: "status" });
     else if (definitionProblem(record)) body = h(P.Notice, { tone: "warning" }, t("definitionUnavailable"));
+    else if (answerProblem(record)) body = h(P.Notice, { tone: "warning" }, t("answersUnavailable"));
     else {
       const fields = record.questionnaire.definition.fields;
       const renderField = (field) => {
         const value = state.answers[field.code];
         const fieldLabel = label(field, lang);
-        const options = (field.choices || []).map(o => ({ value: o.value, label: label(o, lang) }));
+        const options = fieldChoices(field).map(o => ({ value: o.value, label: label(o, lang) }));
         const display = value === undefined || value === "" || (Array.isArray(value) && !value.length)
           ? t("empty") : Array.isArray(value)
             ? value.map(v => options.find(o => o.value === v)?.label || v).join("، ")
@@ -194,7 +221,7 @@
         state.saved ? h(P.Notice, { tone: "success", role: "status" }, t("saved")) : null,
         state.dirty ? h(P.Notice, { tone: "warning", role: "status" }, t("unsaved")) : null,
         review ? h(P.Notice, null, t("reviewNotice")) : null,
-        ...fields.map(renderField),
+        ...fields.filter(field => isVisible(field, state.answers)).map(renderField),
         h(P.Inline, { wrap: true },
           state.editable ? button(state.saving ? "saving" : "save", () => session.save(),
             { disabled: state.saving || !state.dirty }) : null,
@@ -212,5 +239,6 @@
       body));
   }
 
-  window.CTMApplicant = { ApplicationEditor, createDraftSession, definitionProblem };
+  window.CTMApplicant = { ApplicationEditor, createDraftSession, definitionProblem,
+    answerProblem, fieldChoices, isVisible };
 })();

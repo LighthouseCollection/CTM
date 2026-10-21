@@ -1,0 +1,127 @@
+--- a/tribunal/templates/tribunal/shell.html
++++ b/tribunal/templates/tribunal/shell.html
+@@ -10,6 +10,7 @@
+   <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react.production.min.js"></script>
+   <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react-dom.production.min.js"></script>
+   <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.js"></script>
++  <script defer src="{% static 'ctm/applicant.js' %}"></script>
+   <script defer src="{% static 'ctm/app.js' %}"></script>
+ </head>
+ <body>
+--- a/static/ctm/app.js
++++ b/static/ctm/app.js
+@@ -50,6 +50,7 @@
+       loading: "Loading…",
+       retry: "Try again",
+       error: "Unable to load this information",
++      preferenceFailed: "Your language preference could not be saved. Please try again.",
+       expired: "Please sign in again to continue.",
+       empty: "Nothing to show",
+       noCases: "No cases are available.",
+@@ -259,6 +260,7 @@
+       loading: "جارٍ التحميل…",
+       retry: "إعادة المحاولة",
+       error: "تعذر تحميل هذه المعلومات",
++      preferenceFailed: "تعذر حفظ تفضيل اللغة. يرجى المحاولة مجددًا.",
+       expired: "يرجى تسجيل الدخول مرة أخرى للمتابعة.",
+       empty: "لا توجد بيانات للعرض",
+       noCases: "لا توجد قضايا متاحة.",
+@@ -377,7 +379,11 @@
+       error.status = 401;
+       throw error;
+     }
+-    if (!response.ok) throw new Error("request_failed");
++    if (!response.ok) {
++      const error = new Error("request_failed");
++      error.status = response.status;
++      throw error;
++    }
+     return response.json();
+   }
+   function MessageComposer({ record, sessions, council, t, onSent }) {
+@@ -975,6 +981,11 @@
+     const [failure, setFailure] = R.useState(false),
+       [revision, reload] = R.useState(0);
+     const [saving, setSaving] = R.useState(false);
++    const [preferenceFailure, setPreferenceFailure] = R.useState(null);
++    const applicantGuard = R.useRef(null);
++    const registerApplicantGuard = R.useCallback((guard) => {
++      applicantGuard.current = guard;
++    }, []);
+     const t = (key) => words[lang][key] || words[lang].unknown;
+     R.useEffect(() => {
+       document.documentElement.lang = lang;
+@@ -1074,12 +1085,16 @@
+         active = false;
+       };
+     }, [user?.id, user?.portal, page, selection, revision]);
+-    const go = (id, selected = null) => {
++    const go = (id, selected = null, guarded = false) => {
+       if (id === page && selected === selection) return;
+-      setData(null);
+-      setFailure(false);
+-      setPage(id);
+-      setSelection(selected);
++      const move = () => {
++        setData(null);
++        setFailure(false);
++        setPage(id);
++        setSelection(selected);
++      };
++      if (!guarded && applicantGuard.current) applicantGuard.current(move);
++      else move();
+     };
+     const savePreference = async (field, value) => {
+       if (!user) {
+@@ -1087,6 +1102,7 @@
+         return;
+       }
+       setSaving(true);
++      setPreferenceFailure(null);
+       try {
+         const updated = await api("/api/account/settings/", {
+           method: "POST",
+@@ -1095,8 +1111,7 @@
+         setUser((previous) => ({ ...previous, ...updated }));
+         if (field === "ui_language") setLang(value);
+       } catch (error) {
+-        if (error.status === 401) setUser(null);
+-        else setFailure(true);
++        setPreferenceFailure(error.status === 401 ? "expired" : "preferenceFailed");
+       } finally {
+         setSaving(false);
+       }
+@@ -1329,11 +1344,21 @@
+           null,
+           text(`${t("payment")}: ${t(row.fee?.status || "unknown")}`),
+           h(P.Notice, null, t("fee")),
++          user.portal === "applicant" && window.CTMApplicant
++            ? h(P.Button, { onClick: () => go("application", row.id) },
++                lang === "ar" ? "فتح الطلب" : "Open application")
++            : null,
+         ),
+       );
+     function content() {
+       if (failure) return errorView();
+       if (!data) return text(t("loading"));
++      if (page === "application" && !council && selection && window.CTMApplicant)
++        return h(window.CTMApplicant.ApplicationEditor, {
++          key: selection, applicationId: selection, api, lang,
++          onBack: () => go("applications", null, true),
++          onNavigationGuard: registerApplicantGuard,
++        });
+       if (page === "notifications")
+         return h(NotificationInbox, {
+           key: revision,
+@@ -1556,7 +1581,10 @@
+     return h(
+       P.AppShell,
+       { header, sideNav: nav, page: "workspace", strings: { skip: t("skip") } },
+-      h(P.PageContent, null, content()),
++      h(P.PageContent, null, h(P.Stack, null,
++        preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
++        content(),
++      )),
+     );
+   }
+   window.ReactDOM.createRoot(root).render(h(P.ThemeProvider, null, h(App)));
