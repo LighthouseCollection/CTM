@@ -6,6 +6,8 @@ process memory; never run this development server on a public interface.
 
 import os
 import logging
+import json
+import re
 import secrets
 import sys
 import uuid
@@ -47,6 +49,23 @@ settings.DEBUG = False
 import django
 
 django.setup()
+from tribunal.auth import AccountAdapter
+
+
+def authentication_error(self, request, provider, error=None, exception=None, extra_context=None):
+    # Record categories only, never authorization codes, tokens or provider bodies.
+    diagnostic = {
+        "exception": type(exception).__name__ if exception else None,
+        "error": str(error),
+        "state_found": bool((extra_context or {}).get("state")),
+        "microsoft_error_codes": re.findall(r"AADSTS\d+", str(exception)),
+    }
+    (root / ".tmp" / "local-microsoft-diagnostic.json").write_text(
+        json.dumps(diagnostic), encoding="utf-8"
+    )
+
+
+AccountAdapter.on_authentication_error = authentication_error
 logging.getLogger("django.security.csrf").addHandler(logging.StreamHandler())
 from django.core.management import call_command
 from django.contrib.staticfiles.handlers import StaticFilesHandler
