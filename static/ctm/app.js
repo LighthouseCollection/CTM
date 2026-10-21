@@ -68,6 +68,7 @@
       caseUpdate: "Case update",
       chooseReport: "Select a report",
       observations: "Council observations",
+      history: "Revision history",
       followUp: "Follow-up report",
       originalReport: "Original report",
       response: "Response",
@@ -206,6 +207,7 @@
       noReports: "لا توجد تقارير مكتملة.",
       chooseReport: "اختر تقريرًا",
       observations: "ملاحظات المجلس",
+      history: "سجل التعديلات",
       followUp: "تقرير متابعة",
       originalReport: "التقرير الأصلي",
       response: "الإجابة",
@@ -657,6 +659,71 @@
         : null,
     );
   }
+  function ReportDetail({ report, t, lang, onOriginal }) {
+    const [history, setHistory] = R.useState(null),
+      [version, setVersion] = R.useState(null);
+    const [pending, setPending] = R.useState(false),
+      [failed, setFailed] = R.useState(false);
+    async function load() {
+      setPending(true);
+      setFailed(false);
+      try {
+        const data = await api(`/api/reports/${report.id}/revisions/`);
+        setHistory(data.items);
+        setVersion(data.items[0]?.version ?? null);
+      } catch {
+        setFailed(true);
+      } finally {
+        setPending(false);
+      }
+    }
+    const shown = history?.find((row) => row.version === version) || report;
+    const formatDate = (value) =>
+      new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date(value));
+    return h(
+      P.Stack,
+      null,
+      heading(report.title),
+      text(`${t("subject")}: ${report.subject}`),
+      text(`${report.date} · ${t("version")} ${shown.version}`),
+      report.parent_report_id
+        ? h(P.Button, { onClick: onOriginal }, t("originalReport"))
+        : null,
+      history
+        ? h(P.Select, {
+            "aria-label": t("history"),
+            value: String(version),
+            options: history.map((row) => ({
+              value: String(row.version),
+              label: `${t("version")} ${row.version} · ${formatDate(row.timestamp)}${row.actor ? " · " + row.actor : ""}`,
+            })),
+            onChange: (event) => setVersion(Number(event.target.value)),
+          })
+        : h(
+            P.Button,
+            { loading: pending, disabled: pending, onClick: load },
+            t("history"),
+          ),
+      failed ? h(P.Notice, { tone: "danger" }, t("error")) : null,
+      ...Object.entries(shown.answers || {}).map(([code, answer]) => {
+        const question = (report.questions || []).find((q) => q.code === code);
+        return h(
+          P.Panel,
+          {
+            key: code,
+            title: question?.[lang] || question?.en || t("response"),
+          },
+          text(typeof answer === "string" ? answer : JSON.stringify(answer)),
+        );
+      }),
+      shown.observations
+        ? h(P.Panel, { title: t("observations") }, text(shown.observations))
+        : null,
+    );
+  }
   function ReportReader({ rows, t, lang }) {
     const [selected, select] = R.useState(null);
     const reports = rows.filter(
@@ -664,43 +731,14 @@
         !["medical", "psychological"].includes(row.kind) && !row.restricted,
     );
     const chosen = reports.find((row) => row.id === selected);
-    const answerText = (value) =>
-      typeof value === "string" ? value : JSON.stringify(value);
     const reading = chosen
-      ? h(
-          P.Stack,
-          null,
-          heading(chosen.title),
-          text(`${t("subject")}: ${chosen.subject}`),
-          text(`${chosen.date} · ${t("version")} ${chosen.version}`),
-          chosen.parent_report_id
-            ? h(
-                P.Button,
-                { onClick: () => select(chosen.parent_report_id) },
-                t("originalReport"),
-              )
-            : null,
-          ...Object.entries(chosen.answers || {}).map(([code, answer]) => {
-            const question = (chosen.questions || []).find(
-              (q) => q.code === code,
-            );
-            return h(
-              P.Panel,
-              {
-                key: code,
-                title: question?.[lang] || question?.en || t("response"),
-              },
-              text(answerText(answer)),
-            );
-          }),
-          chosen.observations
-            ? h(
-                P.Panel,
-                { title: t("observations") },
-                text(chosen.observations),
-              )
-            : null,
-        )
+      ? h(ReportDetail, {
+          key: chosen.id,
+          report: chosen,
+          t,
+          lang,
+          onOriginal: () => select(chosen.parent_report_id),
+        })
       : h(P.EmptyState, { title: t("chooseReport") });
     return h(
       P.Stack,

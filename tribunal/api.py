@@ -1326,9 +1326,42 @@ def recording_finalize(request, recording_id):
     )
 
 
-@endpoint(("POST",))
+@endpoint(("GET", "POST"))
 def report_revision(request, report_id):
     from tribunal.services.reports import revise_report
+
+    if request.method == "GET":
+        staff(request.user)
+        report = m.Report.objects.select_related("request__subject").get(pk=report_id)
+        case_for(request.user, report.request.case_id)
+        if (
+            report.request.kind in {"medical", "psychological"}
+            and not m.MedicalRelease.objects.filter(
+                request=report.request,
+                subject=report.request.subject.account,
+                scope__council=True,
+            ).exists()
+        ):
+            raise PermissionDenied("Signed scoped medical disclosure is required.")
+        return JsonResponse(
+            {
+                "items": [
+                    encoded(
+                        row,
+                        version=row.number,
+                        answers=row.answers,
+                        observations=row.observations,
+                        actor=f"{row.actor.first_name} {row.actor.last_name}".strip()
+                        if row.actor
+                        else None,
+                        timestamp=row.created_at.isoformat(),
+                    )
+                    for row in report.revisions.select_related("actor").order_by(
+                        "-number"
+                    )
+                ]
+            }
+        )
 
     data = body(request)
     return JsonResponse(

@@ -47,7 +47,12 @@ from tribunal.models import (
 from tribunal.services.council import create_session
 from tribunal.models import Attendance
 from tribunal.services.files import upload
-from tribunal.services.reports import create_request, send_request, complete_request
+from tribunal.services.reports import (
+    create_request,
+    send_request,
+    complete_request,
+    revise_report,
+)
 
 call_command("migrate", verbosity=0, interactive=False)
 manager = Account.objects.create_user(
@@ -90,6 +95,14 @@ request = create_request(
 )
 send_request(manager, request.pk)
 report = complete_request(applicant, request.pk, {"OPEN-TEST": "Applicant Tester"})
+interview_request = create_request(
+    manager, proceeding.pk, party.pk, "interview", "Council interview", []
+)
+send_request(manager, interview_request.pk)
+interview_report = complete_request(
+    manager, interview_request.pk, {"OPEN-TEST": "Original interview answer"}
+)
+revise_report(manager, interview_report.pk, {"OPEN-TEST": "Corrected interview answer"})
 source = upload(
     manager,
     SimpleUploadedFile("marriage.pdf", b"%PDF-1.4\nSynthetic browser validation only."),
@@ -165,22 +178,17 @@ try:
         page.goto("http://127.0.0.1:18842/", wait_until="domcontentloaded")
         page.get_by_role("heading", name="Home", exact=True).wait_for()
         page.get_by_role("button", name="Notifications", exact=True).click()
-        page.get_by_text("A report was received.", exact=True).wait_for()
-        page.get_by_role("button", name="Mark as read", exact=True).click()
-        page.get_by_role("button", name="Mark as read", exact=True).wait_for(
-            state="detached"
+        page.get_by_text("A report was received.", exact=True).first.wait_for()
+        page.get_by_role("button", name="Mark as read", exact=True).first.click()
+        page.wait_for_function(
+            "() => Array.from(document.querySelectorAll('button')).filter(b=>b.textContent==='Mark as read').length===1"
         )
-        assert (
-            database_check(
-                lambda: (
-                    Notification.objects.get(
-                        recipient=manager, kind="report_received"
-                    ).read_at
-                )
-            )
-            is not None
+        assert database_check(
+            lambda: Notification.objects.filter(
+                recipient=manager, kind="report_received", read_at__isnull=False
+            ).exists()
         )
-        page.get_by_role("button", name="Open case", exact=True).click()
+        page.get_by_role("button", name="Open case", exact=True).first.click()
         page.get_by_role("heading", name=case.number, exact=True).wait_for()
         page.get_by_role("button", name="Documents", exact=True).click()
         page.get_by_role("heading", name="Documents", exact=True).wait_for()
@@ -195,6 +203,13 @@ try:
         page.get_by_role("button", name="Reports", exact=True).click()
         page.get_by_role("button", name="Marriage clarification", exact=True).click()
         page.get_by_text("Please state your full name.", exact=True).wait_for()
+        page.get_by_role("button", name="Council interview", exact=True).click()
+        page.get_by_text("Corrected interview answer", exact=True).wait_for()
+        page.get_by_role("button", name="Revision history", exact=True).click()
+        page.get_by_role("combobox", name="Revision history", exact=True).select_option(
+            "1"
+        )
+        page.get_by_text("Original interview answer", exact=True).wait_for()
         page.get_by_role("button", name="Communications", exact=True).click()
         page.get_by_role("checkbox", name="Applicant Tester", exact=True).check()
         page.get_by_role("textbox", name="Message", exact=True).fill(
