@@ -15,7 +15,7 @@ The alpha prototype remains in its separate repository. No operational CTM datab
 | Payments | Stripe checkout adapter, signature-verified callbacks, immutable payment events, frozen candidate, idempotent recoverable submission and callback race handling | Real Stripe test credentials, refund/chargeback/reversal and reconciliation workflows, receipts |
 | Cases | Los Angeles daily numbers, party references, assignment history, open claims, historical entry workspaces and verified pending-party links | Full identity/alias merge, complete lifecycle and cross-program record reconciliation |
 | Council sessions | Agenda parts, hearings, outcomes, next dated-session carryover, testimony invitations/responses, overlap checks, manual deferrals | Attendance command/UI, session rescheduling/cancellation, complete hearing briefing and session acceptance tests |
-| Reports | Exact question seed, foundational question inclusion, versioned templates and sent snapshots, assigned-author report history, follow-up links, external30-day bearer capability, applicant own-response projection | Browser report editor, printable PDF and paper-response replacement, external invitation delivery/recorded response, all report search/indexing |
+| Reports | Exact question seed, foundational question inclusion, versioned templates and sent snapshots, assigned-author report history, follow-up links, external 30-day bearer capability, applicant own-response projection | Browser report editor, printable PDF and paper-response replacement, external invitation delivery/recorded response, all report search/indexing |
 | Professional Assessments | Separate medical/psychological request type, exact-request signed disclosure scope, original file authorization, local-only extraction gate | Approved bilingual release content, complete request/doctor/release UI and processing acceptance |
 | Files | Private originals, category/MIME limits, contextual owners/versions, technical scan gate, latest-only applicant access, council history, audited download | Resumable/whole-recording capture, background scan recovery, external-upload path, viewers/range delivery, automatic category rename history and all acquisition adapters |
 | Audio | Whole-report recording association, notice confirmation, finalize-once processing queue | Recorder UI/mobile recovery, actual transcription/translation engine, reviewed transcript editor and all configured engine failure tests |
@@ -24,7 +24,7 @@ The alpha prototype remains in its separate repository. No operational CTM datab
 | Appeals | Separate filing fee, append-only additions, withdrawal, per-appeal result, shared reopening proceeding and preserved original history | Full review/agenda UI and end-to-end multi-party appeal exercises |
 | Communications | Private per-party message copies, contextual document links, session-close delivery trigger and manual call records | SMTP/inbound-email integration, bilingual actual message bodies, rejection of inbound attachments, browser conversations |
 | Background work | Durable outbox, retry leases, quiet-period digest batching, current-manager routing, retention warnings and cleanup | Crash/retry load tests and all operational alerts; isolated real-broker/default-worker smoke test passed |
-| Database protection | PostgreSQL constraints/transaction locks, immutable update/delete guards (with explicit private-draft cleanup exceptions), case/party deletion protection, closed-proceeding insert guards on key histories | Forced RLS/actor context, complete grant and ownership split, remaining lifecycle guards and all151-table security requirements |
+| Database protection | PostgreSQL constraints/transaction locks, immutable update/delete guards (with explicit private-draft cleanup exceptions), case/party deletion protection, closed-proceeding insert guards on key histories | Forced RLS/actor context, complete grant and ownership split, remaining lifecycle guards and all 151-table security requirements |
 | Interface | Role-routing session API and documented navigation retained | Entire Plenix React applicant/council interface and isolated Arabic RTL layer |
 
 ## Verified in the VM
@@ -35,16 +35,16 @@ The alpha prototype remains in its separate repository. No operational CTM datab
 - PostgreSQL migrations and regression tests executed in a Linux container. See `validation-results.json` for the final run count.
 - The application Docker image built successfully, including static collection.
 - An isolated Redis/worker probe consumed the configured default queue and recorded a durable retry; its temporary containers were removed. A private validation-only Gunicorn container returned HTTP health status `ok` against the isolated database. It uses test settings and has no public proxy route. It is not the production service and does not enable real identity/payment providers.
-- Reference seeding preserved59 English questions and left institutional declarations unpublished.
+- Reference seeding preserved 59 English questions and left institutional declarations unpublished.
 
 ## Blockers skipped during autonomous work
 
-1. Pinned Plenix0.58.0 component documentation repeatedly timed out from both AdminPC and VM. No prototype UI was copied or undocumented component invented. The root currently returns an honest backend-status JSON response.
+1. Pinned Plenix 0.58.0 component documentation repeatedly timed out from both AdminPC and VM. No prototype UI was copied or undocumented component invented. The root currently returns an honest backend-status JSON response.
 2. Microsoft/Google/Apple, Stripe, SMTP/inbound email and transcription/translation credentials were not supplied/configured. Adapters retain work or report unavailable; no credentials were invented and no real charges/emails were attempted.
 3. Approved bilingual declaration/release/decree content remains a configuration dependency. Research/reference drafts were not silently published as institutional text.
 4. The151-table physical contract is not fully represented by the initial Django models. The inventory is an implementation map, not permission to reduce the contract. Full model/migration reconciliation is a production gate.
 5. Public readiness requires forced RLS and grants, full backup restoration, complete Arabic/Plenix UI, provider integration tests and the ten-user end-to-end exercise.
-6. Windows Python3.12.11 intermittently crashed in migration state rendering; reruns passed. Linux/PostgreSQL validation is the primary evidence; the Windows runtime issue remains an environment limitation.
+6. Windows Python 3.12.11 intermittently crashed in migration state rendering; reruns passed. Linux/PostgreSQL validation is the primary evidence; the Windows runtime issue remains an environment limitation.
 
 ## Deployment cautions
 
@@ -54,7 +54,7 @@ Do not run `docker compose up` for the application against the operational datab
 
 File writes happen after database commit to a private atomic destination. A disk write failure can leave source metadata awaiting recovery; a complete repair/reconciliation worker is still required. Files are never exposed by a public MEDIA_URL.
 
-The GitHub PostgreSQL workflow passed on commit111a468, including schema checks, tests and byte-exact source validation. Subsequent follow-up changes have their own CI run. Container image build verification does not establish compatibility of every heavyweight OCR/media worker dependency.
+The GitHub PostgreSQL workflow passed on commit 0652f2a:67 tests, migration checks and byte-exact source validation. Run: https://github.com/LighthouseCollection/CTM/actions/runs/39659081375. Container image build verification does not establish compatibility of every heavyweight OCR/media worker dependency.
 
 ## Next independent work
 

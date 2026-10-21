@@ -4,11 +4,11 @@ This is the new Django application repository. The earlier prototype is preserve
 
 **Current delivery: tested backend foundation, not a complete public application.** Applicant/council screens, full schema reconciliation, row-level security, live providers, Arabic and the complete processing pipeline remain unfinished. See [implementation status](docs/implementation/status.md) before deploying.
 
-The approved requirements remain in [the consolidated build contract](docs/architecture/build-spec/README.md). That contract contains151 planned physical tables; the initial Django migrations implement only part of it. Do not run the structural SQL beside Django migrations or treat the present smaller model set as an approved replacement architecture.
+The approved requirements remain in [the consolidated build contract](docs/architecture/build-spec/README.md). That contract contains 151 planned physical tables; the initial Django migrations implement only part of it. Do not run the structural SQL beside Django migrations or treat the present smaller model set as an approved replacement architecture.
 
 ## Development
 
-Use Python3.12 and `uv`:
+Use Python 3.12 and `uv`:
 
 ```powershell
 uv sync --frozen
@@ -31,7 +31,7 @@ Use a dedicated disposable database/account with CREATEDB for pytest, never the 
 - `tribunal/models.py`, `tribunal/migrations/`: initial persistent domain model and guarded PostgreSQL history.
 - `tribunal/services/`: explicit authorized workflow commands.
 - `tribunal/api.py`, `ctm/urls.py`: authenticated JSON endpoints; mutation requires CSRF, except scoped external capabilities and signed payment webhooks.
-- `tribunal/reference/question-bank.json`:59 accepted English questions, copied exactly.
+- `tribunal/reference/question-bank.json`: 59 accepted English questions, copied exactly.
 - `deploy/`: Compose/Docker packaging, separate validation image, environment example and initialization scripts.
 - `tests/`: lifecycle, privacy, payment, report, appeal, historical, concurrency and safety regressions.
 - `.github/workflows/backend.yml`: PostgreSQL CI validation.
