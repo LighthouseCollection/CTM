@@ -8,6 +8,10 @@
     "handler": "health"
   },
   {
+    "route": "accounts/login/",
+    "handler": "shell"
+  },
+  {
     "route": "api/session/",
     "handler": "session"
   },

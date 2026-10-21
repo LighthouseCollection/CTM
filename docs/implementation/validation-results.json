@@ -9,7 +9,7 @@
     "isolation": "GitHub isolated PostgreSQL16 service; non-owner role source privacy tests"
   },
   "sqlite_tests": {
-    "passed": 92,
+    "passed": 106,
     "failed": 0,
     "skipped": 29,
     "note": "Latest Python3.13 local full rerun passed; intermittent Windows interpreter access violation also reproduced on3.13."
@@ -37,7 +37,7 @@
     "status": "passed structural checks only"
   },
   "implemented_domain_models": 58,
-  "explicit_root_url_patterns": 62,
+  "explicit_root_url_patterns": 63,
   "public_deployment_ready": false,
   "github_hosted_ci": "passed:121 PostgreSQL tests on 3e3ac4d; https://github.com/LighthouseCollection/CTM/actions/runs/39677076540",
   "limitations": [
@@ -63,6 +63,17 @@
     "version": "0.58.0",
     "access": "verified via LAN reverse proxy TLS/--resolve",
     "public_route": "still timing out",
-    "ui_implemented": false
+    "ui_implemented": "initial shell and communications; incomplete full workflows"
+  },
+  "browser_smoke": {
+    "status": "passed locally",
+    "components": "real pinned Plenix0.58.0 CDN; TLS-validated LAN resolver override",
+    "authenticated_api": "synthetic fixtures; not provider end-to-end",
+    "desktop": 1440,
+    "mobile": 390,
+    "browser_errors": 0,
+    "horizontal_overflow": false,
+    "closed_state_inline_style_attributes": 0,
+    "script": "scripts/browser_smoke.py"
   }
 }

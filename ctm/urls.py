@@ -4,6 +4,7 @@ from tribunal import api
 urlpatterns = [
     path("", api.shell),
     path("health/", api.health),
+    path("accounts/login/", api.shell),
     path("accounts/", include("allauth.urls")),
     path("api/session/", api.session),
     path("api/applications/", api.applications),

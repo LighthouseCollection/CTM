@@ -1,0 +1,20 @@
+{% load static %}<!doctype html>
+<html lang="en" data-plx-density-policy="compact">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CTM</title>
+  <script src="https://design-system.lighthouseway.org/cdn/0.58.0/theme-boot.js"></script>
+  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.58.0/fonts.css">
+  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.css">
+  <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react.production.min.js"></script>
+  <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react-dom.production.min.js"></script>
+  <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.js"></script>
+  <script defer src="{% static 'ctm/app.js' %}"></script>
+</head>
+<body>
+  {{ boot|json_script:"ctm-config" }}
+  <div id="ctm-root" aria-live="polite"></div>
+  <noscript>Enable JavaScript to use CTM. يرجى تفعيل جافاسكريبت لاستخدام النظام.</noscript>
+</body>
+</html>

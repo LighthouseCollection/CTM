@@ -13,6 +13,41 @@ from .common import audit, lock_key, notify
 
 
 @transaction.atomic
+def save_preferences(actor, values):
+    active(actor)
+    allowed = {"ui_language", "notification_language"}
+    if (
+        not values
+        or set(values) - allowed
+        or any(
+            not isinstance(value, str) or value not in {"en", "ar"}
+            for value in values.values()
+        )
+    ):
+        raise ValidationError(
+            "Choose English or Arabic for the supported language preferences."
+        )
+    user = Account.objects.select_for_update().get(pk=actor.pk)
+    active(user)
+    before = {field: getattr(user, field) for field in allowed}
+    changed = [field for field, value in values.items() if before[field] != value]
+    for field in changed:
+        setattr(user, field, values[field])
+    if changed:
+        user.save(update_fields=changed)
+        audit(
+            actor,
+            "account_preferences_changed",
+            user,
+            metadata={
+                "before": before,
+                "after": {field: getattr(user, field) for field in allowed},
+            },
+        )
+    return user
+
+
+@transaction.atomic
 def enroll_council(
     actor, email, first_name, last_name, role="member", microsoft_subject=None
 ):

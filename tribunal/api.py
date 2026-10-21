@@ -12,6 +12,7 @@ from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 from django.utils import timezone
+from django.shortcuts import render
 from tribunal import models as m
 from tribunal.policy import (
     active,
@@ -110,18 +111,24 @@ def health(request):
 
 
 @require_GET
+@ensure_csrf_cookie
 def shell(request):
-    # No invented design-system controls while the pinned component docs are unavailable.
-    # The API is real; the documented React shell is implemented only against verified CDN exports.
-    response = JsonResponse(
-        {
-            "application": "CTM",
-            "status": "backend_foundation",
-            "ui_dependency": "Plenix0.58.0 component documentation unavailable during build",
-            "api": "/api/session/",
-            "authentication": "/accounts/",
-            "health": "/health/",
-        }
+    providers = []
+    for name in ("microsoft", "google", "apple"):
+        config = settings.SOCIALACCOUNT_PROVIDERS.get(name, {})
+        if not any(
+            app.get("client_id") and app.get("secret") for app in config.get("APPS", [])
+        ):
+            continue
+        if name == "microsoft" and (
+            not settings.MICROSOFT_TENANT_ID
+            or settings.MICROSOFT_TENANT_ID.lower()
+            in {"common", "organizations", "consumers"}
+        ):
+            continue
+        providers.append(name)
+    response = render(
+        request, "tribunal/shell.html", {"boot": {"providers": providers}}
     )
     response["Cache-Control"] = "no-store"
     return response
@@ -138,6 +145,7 @@ def session(request):
             "role": user.role,
             "portal": "applicant" if user.role == "applicant" else "council",
             "ui_language": user.ui_language,
+            "notification_language": user.notification_language,
             "csrf_token": get_token(request),
         }
     )
@@ -318,10 +326,14 @@ def case_detail(request, case_id):
             case,
             number=case.number,
             status=case.status,
+            can_message=request.user.role in {"applicant", "admin", "secretary"}
+            or case.assigned_member_id == request.user.pk,
             parties=[
                 encoded(
                     p,
                     name=p.name,
+                    is_self=p.account_id == request.user.pk,
+                    can_receive=p.account_id is not None,
                     reference=p.reference
                     if p.account_id == request.user.pk or request.user.is_staff
                     else None,
@@ -1045,16 +1057,11 @@ def templates(request):
 
 @endpoint(("GET", "POST"))
 def account_settings(request):
+    from tribunal.services.identity import save_preferences
+
     user = request.user
     if request.method == "POST":
-        data = body(request)
-        for key in ["ui_language", "notification_language"]:
-            if key in data:
-                if data[key] not in {"en", "ar"}:
-                    raise ValidationError("Unsupported language.")
-                setattr(user, key, data[key])
-        user.save(update_fields=["ui_language", "notification_language"])
-        audit(user, "account_preferences_changed", user)
+        user = save_preferences(request.user, body(request))
     return JsonResponse(
         {
             "ui_language": user.ui_language,
