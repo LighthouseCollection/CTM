@@ -280,3 +280,12 @@ A one-shot storage service prepares only the media directory's UID/GID/mode befo
 Pinned Plenix assets now return200 over public DNS/TLS without the LAN override. The full real-API browser script passed through this public CDN path, including report revision selection, saved attendance/messages, notification reads and applicant isolation. Provider login remains a separate acceptance gate.
 
 CI39686788415 passed185 PostgreSQL tests, built the production image and ran private-volume initialization twice with the configured restricted capabilities. It verified the non-root application user can write media, existing file ownership is preserved and the packaged app.js is present. A further CI HTTP smoke will launch that production image on the disposable runner's loopback address and compare the served app.js to the source. No operational VM application, database, volume or public upstream was changed.
+
+
+## Demo priorities and local Microsoft review - 2026-10-21
+
+User confirmed OCR and audio recording are low priority and clearly labelled placeholders are acceptable for this demo. They do not block delivery of sign-in and core case workflows. This does not relax private-file access or upload safety.
+
+A separate loopback-only Microsoft OAuth review server is available via scripts/local_microsoft.py. It reads provider configuration from protected SSH stdin into process memory, uses an isolated local database, preauthorizes the administrator by verified Microsoft subject and does not inject authenticated sessions. The Azure application has an additive localhost Web callback; production callback remains configured. Successful provider callback acceptance remains to be verified. The synthetic local preview remains separate at port18843.
+
+The requested Microsoft account is frraphaelmaher@lacopts.org; its tenant subject was verified via Microsoft Graph. The genuine local OAuth flow now reaches Microsoft password entry for that account. Completion awaits user authentication/MFA; no callback success is claimed. Browser testing exposed that no-referrer suppressed the Origin on same-origin form POSTs. Private responses now use same-origin referrer policy, retaining no external referrer while allowing normal CSRF checks. Five private-header tests pass.

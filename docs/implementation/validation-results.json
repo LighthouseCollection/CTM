@@ -39,7 +39,7 @@
   "implemented_domain_models": 58,
   "explicit_root_url_patterns": 64,
   "public_deployment_ready": false,
-  "github_hosted_ci": "passed:185 PostgreSQL tests, production image build and repeated private-volume initialization on1287979; https://github.com/LighthouseCollection/CTM/actions/runs/39686788415",
+  "github_hosted_ci": "passed:185 PostgreSQL tests, production image build, repeated private-volume initialization and production HTTP/static smoke on2d2b2e3; https://github.com/LighthouseCollection/CTM/actions/runs/39687237307",
   "limitations": [
     "Initial Plenix shell and document/evidence screens implemented; full workflow editors incomplete",
     "151-table contract reconciliation and forced RLS incomplete",
@@ -120,5 +120,24 @@
     "existing_file_ownership_preserved": true,
     "production_http_smoke": "queued next CI run",
     "operational_deployment": false
+  },
+  "demo_priorities": {
+    "ocr": "low priority; labelled placeholder accepted",
+    "audio_recording": "low priority; labelled placeholder accepted",
+    "file_safety": "unchanged"
+  },
+  "local_microsoft_login": {
+    "account": "frraphaelmaher@lacopts.org",
+    "identity_verified": true,
+    "provider_redirect": "passed in real browser after same-origin referrer fix",
+    "callback": "pending user password/MFA",
+    "local_url": "http://localhost:18844/",
+    "data": "isolated local database; no fixture authentication"
+  },
+  "local_real_api_latest": {
+    "status": "passed",
+    "artifact_directory": ".tmp/browser-integration-980276a255b14f749260da1cb7cf30da",
+    "provider_login": false,
+    "browser_errors": 0
   }
 }

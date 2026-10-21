@@ -13,7 +13,7 @@ def test_authenticated_and_rejected_api_responses_are_not_cacheable(client, peop
         response = client.get("/api/cases/")
         assert response.status_code == (200 if signed_in else 401)
         assert response["Cache-Control"] == "private, no-store"
-        assert response["Referrer-Policy"] == "no-referrer"
+        assert response["Referrer-Policy"] == "same-origin"
         assert response["X-Content-Type-Options"] == "nosniff"
 
 
@@ -23,7 +23,7 @@ def test_authenticated_and_rejected_api_responses_are_not_cacheable(client, peop
 def test_private_headers_also_cover_missing_and_capability_pages(client, url):
     response = client.get(url)
     assert response["Cache-Control"] == "private, no-store"
-    assert response["Referrer-Policy"] == "no-referrer"
+    assert response["Referrer-Policy"] == "same-origin"
 
 
 def test_csrf_rejections_keep_private_headers():

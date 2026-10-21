@@ -1,0 +1,86 @@
+"""Isolated localhost OAuth review server. Read provider configuration from stdin.
+
+No fixture login, passwords or operational database are used. Secrets remain in
+process memory; never run this development server on a public interface.
+"""
+
+import os
+import logging
+import secrets
+import sys
+import uuid
+from pathlib import Path
+from wsgiref.simple_server import make_server, WSGIRequestHandler
+
+root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(root))
+os.chdir(root)
+allowed = {
+    "MICROSOFT_CLIENT_ID",
+    "MICROSOFT_CLIENT_SECRET",
+    "MICROSOFT_TENANT_ID",
+}
+for line in sys.stdin.read().splitlines():
+    key, separator, value = line.strip().partition("=")
+    if separator and key in allowed:
+        os.environ[key] = value.strip().strip("\"'")
+if not all(os.environ.get(key) for key in allowed):
+    raise SystemExit("Microsoft configuration is incomplete; no server started.")
+os.environ["DJANGO_SETTINGS_MODULE"] = "ctm.settings_test"
+os.environ["DJANGO_SECRET_KEY"] = secrets.token_urlsafe(48)
+from django.conf import settings
+
+run_dir = root / ".tmp" / ("local-microsoft-" + uuid.uuid4().hex)
+run_dir.mkdir(parents=True)
+settings.DATABASES["default"]["NAME"] = str(run_dir / "isolated.sqlite3")
+settings.MEDIA_ROOT = run_dir / "media"
+settings.ALLOWED_HOSTS = ["localhost"]
+settings.CSRF_TRUSTED_ORIGINS = ["http://localhost:18844"]
+settings.SOCIALACCOUNT_STORE_TOKENS = False
+settings.SOCIALACCOUNT_PROVIDERS["microsoft"]["AUTH_PARAMS"] = {
+    "prompt": "select_account",
+    "login_hint": "frraphaelmaher@lacopts.org",
+}
+settings.SESSION_COOKIE_NAME = "ctm_local_microsoft_session"
+settings.DEBUG = False
+
+import django
+
+django.setup()
+logging.getLogger("django.security.csrf").addHandler(logging.StreamHandler())
+from django.core.management import call_command
+from django.contrib.staticfiles.handlers import StaticFilesHandler
+from django.core.wsgi import get_wsgi_application
+
+call_command("migrate", verbosity=0)
+call_command(
+    "bootstrap_admin",
+    email="frraphaelmaher@lacopts.org",
+    microsoft_subject="b3683bd7-2bd9-42ba-93f9-374252ed6ca5",
+    first_name="Fr. Raphael",
+    last_name="Maher",
+    verbosity=0,
+)
+application = StaticFilesHandler(get_wsgi_application())
+
+
+def csrf_failure(request, reason=""):
+    from django.http import HttpResponseForbidden
+
+    print(f"Local CSRF check: {reason}", flush=True)
+    return HttpResponseForbidden("Local sign-in CSRF verification failed.")
+
+
+settings.CSRF_FAILURE_VIEW = csrf_failure
+
+
+class Quiet(WSGIRequestHandler):
+    def log_message(self, *args):
+        # OAuth callback query strings contain temporary authorization codes.
+        pass
+
+
+print("Genuine Microsoft sign-in: http://localhost:18844/", flush=True)
+print("Isolated local data; no operational CTM records.", flush=True)
+with make_server("127.0.0.1", 18844, application, handler_class=Quiet) as server:
+    server.serve_forever()

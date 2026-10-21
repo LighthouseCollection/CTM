@@ -34,6 +34,8 @@ class PrivateResponseMiddleware:
             ("/api/", "/accounts/", "/external/reports/")
         ):
             response["Cache-Control"] = "private, no-store"
-            response["Referrer-Policy"] = "no-referrer"
+            # Preserve same-origin form POST Origin checks; external navigation
+            # still receives no referrer (including OAuth provider redirects).
+            response["Referrer-Policy"] = "same-origin"
             response["X-Content-Type-Options"] = "nosniff"
         return response
