@@ -1,0 +1,87 @@
+P001: Tribunal Office use only
+P002: Tribunal
+P003: 11 North B Street
+P004: Pensacola, FL 32502
+P005: (850) 435-3549
+P006: tribunal@ptdiocese.org
+P007: Petition for a Declaration of Marriage Nullity
+P008: LACK OF FORM
+P009: If any of the spaces are left blank, the petition may be returned, and you will be asked to resubmit it.
+P010: (Yourself)
+P011: Basic
+P012: Information
+P013: (Your Ex-Spouse)
+P014: Petitioner
+P015: Respondent or Co-Petitioner
+P016: Full Name (Current)
+P017: Other Name(s) or Woman’s Maiden Name
+P018: Current Address
+P019: (with Apartment #)
+P020: City and State
+P021: Zip Code
+P022: Daytime Phone
+P023: Email (optional)
+P024: Date of Birth (mm/dd/yyyy)
+P025: Place of Birth
+P026: Religion (denomination) at the time of the marriage
+P027: Date of Baptism (mm/dd/yyyy)
+P028: Parish of Baptism
+P029: and Denomination
+P030: Church Address
+P031: (for place of baptism or reception into the Catholic Church)
+P032: Father’s name
+P033: Father’s religion
+P034: Mother’s (maiden) name
+P035: Mother’s religion
+P036: Statements regarding your marriage outside of the Catholic Church
+P037: a. Location of the wedding ceremony: (name of the location, city, and state)
+P038: b. Date (mm/dd/yyyy)
+P039: a. Title of Officiant:
+P040: Civil Official
+P041: □
+P042: Minister
+P043: □
+P044: Rabbi
+P045: □
+P046: Other: (specify) ________________
+P047: □
+P048: b. Name of Officiant:
+P049: Dispensation –Was a dispensation or special permission granted by the diocesan bishop (or other Church authority) to have a non-Catholic marriage ceremony?
+P050: Yes □
+P051: No □
+P052: Convalidation – Was your non-Catholic wedding ceremony ever validated, blessed, or officially recognized by Catholic clergy?
+P053: Yes □
+P054: No □
+P055: Sanation – Did your non-Catholic wedding ceremony ever go through a radical sanation, which would validate the wedding according to the laws of the Catholic Church?
+P056: Yes □
+P057: No □
+P058: Briefly state why one or both Catholic parties did not seek to have a Catholic wedding.
+P059: You must include the following documents for a Lack of Form:
+P060: A certificate for Baptism (or Reception into Full Communion) for each Catholic party issued within the past 6 months.
+P061: A certified copy of the civil marriage license.
+P062: A certified copy of the divorce decree. Date of final divorce: _______________________________ (mm/dd/yyyy)
+P063: Petition
+P064: I do hereby petition the Marriage Tribunal of the Diocese of Pensacola-Tallahassee
+P065: to declare the nullity of the marriage between
+P066: _________________________
+P067: and
+P068: _________________________.
+P069: (the undersigned petitioner)
+P070: (the respondent)
+P071: I have provided the facts and proofs to support this petition according to the norms of the tribunal office and the help of my Advocate*, including the required documents.
+P072: Signature of Petitioner*                                         Date
+P073: Signature of Advocate                                       Date
+P074: Printed Name of Petitioner
+P075: *By means of this signature, I freely appoint the above-named Advocate.
+P076: Printed Name of Advocate/ Parish & City
+P077: For Tribunal Office use only:
+P078: □ Reviewed by Defender of the Bond   ____________________
+P079: □ Reviewed by Ecclesiastical Authority ___________________
+P080: □ Decision: Affirmative/ Negative
+P081: Notations:
+P082: Date__________
+P083: Date__________
+P084: Date__________
+P085: Prot #_________
+P086: P A R I S H
+P087: S E A L

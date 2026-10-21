@@ -1,0 +1,12 @@
+FROM python:3.12-slim-bookworm
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+WORKDIR /app
+COPY deploy/requirements.txt /app/requirements.txt
+RUN pip install -r requirements.txt pytest==8.4.2 pytest-django==4.14.0
+COPY manage.py pyproject.toml /app/
+COPY ctm /app/ctm
+COPY tribunal /app/tribunal
+COPY tests /app/tests
+COPY static /app/static
+RUN mkdir -p /app/staticfiles
+CMD ["python", "-m", "pytest", "-q", "--tb=short", "--ds=ctm.settings_postgres_test"]

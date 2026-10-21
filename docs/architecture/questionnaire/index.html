@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CTM · Architecture decisions</title>
+  <link rel="stylesheet" href="questionnaire.css">
+  <script src="questionnaire.js" defer></script>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">CTM / Architecture review / 20 October 2026</p>
+    <h1>The remaining decisions.</h1>
+    <p class="intro">Choose Yes or No, and add clarification wherever needed. Leave anything undecided blank. These are proposals for review—not approved requirements.</p>
+    <p>This is a local review worksheet, not the applicant portal. No answers are sent automatically. Your confirmed decisions stay in place; applicant-portal design, infrastructure and provider selection are reserved for later.</p>
+  </header>
+  <div class="toolbar">
+    <div class="progress"><strong id="count">0 answered</strong><progress id="progress" value="0" max="1" aria-label="Questions answered"></progress><span id="save-status" role="status" aria-live="polite">Loading questions…</span></div>
+    <div class="actions">
+      <button id="download" class="primary" type="button">Download answers</button>
+      <button id="copy" type="button">Copy for chat</button>
+      <button id="import" type="button">Load saved answers</button>
+      <input id="import-file" type="file" accept="application/json,.json" hidden>
+    </div>
+  </div>
+  <main>
+    <aside><h2>Sections</h2><nav id="sections" aria-label="Questionnaire sections"></nav><label class="filter"><input id="unanswered" type="checkbox"> Show unanswered only</label><p class="small">For a No answer, use the clarification box to describe your preferred rule. You can also add a note without choosing either answer.</p></aside>
+    <form id="questions" aria-label="Architecture decisions" onsubmit="return false"></form>
+  </main>
+  <section class="return-panel" aria-labelledby="return-title">
+    <h2 id="return-title">Send your decisions back</h2>
+    <p>Use <strong>Download answers</strong>, then attach the JSON file to this conversation. Or use <strong>Copy for chat</strong> and paste the text here. Partial answers are fine. I will reconcile your choices and clarifications before updating the architecture.</p>
+    <p class="small">Local browser saving can be unavailable or cleared. Download a copy before closing. Nothing in this worksheet updates CTM or the architecture files automatically.</p>
+    <label for="general-notes">Anything else to add?</label>
+    <textarea id="general-notes" rows="5" placeholder="Other scenarios, changes, or instructions…"></textarea>
+    <label for="transfer-text">Copyable answer text <span class="small">(also available if clipboard access is blocked)</span></label>
+    <textarea id="transfer-text" rows="8" readonly placeholder="Use Copy for chat to prepare your answer text here."></textarea>
+    <p id="action-status" role="status" aria-live="polite"></p>
+    <div class="actions"><button id="print" type="button">Print / Save as PDF</button><button id="reset" class="quiet" type="button">Clear this worksheet</button></div>
+  </section>
+  <footer>CTM planning worksheet · Local files only · No application or database has been built</footer>
+  <noscript>This worksheet requires JavaScript. Enable it or use the companion questions.md file.</noscript>
+</body>
+</html>

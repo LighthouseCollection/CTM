@@ -1,0 +1,554 @@
+{
+  "version": "ctm-interview-category-review-v1",
+  "status": "Structure confirmed by user; expanded detail wording is a review draft, not a published institutional questionnaire.",
+  "fixedBlocks": [
+    {
+      "id": "OPEN",
+      "title": "Opening and subject identification — always retained",
+      "questions": [
+        "State the interviewee’s full name and the spouse’s full name; identify the case, actual interviewer and date. Repeat identity opening for every newly started recording.",
+        "Where audio is used, record that the interviewee was informed about recording."
+      ]
+    },
+    {
+      "id": "BASIS",
+      "title": "Request and application confirmation — common core",
+      "questions": [
+        "What outcome are you seeking, and which specific facts do you want the council to consider in support of it?",
+        "Identify any submitted information needing clarification without rewriting the original application through the interview."
+      ]
+    },
+    {
+      "id": "CLOSE",
+      "title": "Closing clarification — always retained",
+      "questions": [
+        "What relevant fact has not yet been covered, and is anything you said today in need of clarification?"
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "id": "DEC",
+      "title": "Decision to marry",
+      "proposalRefs": [
+        "QT07",
+        "QT12"
+      ],
+      "scope": "Facts surrounding the decision; no canonical conclusion",
+      "pending": false,
+      "questions": [
+        {
+          "id": "DEC-01",
+          "text": "How did the decision to marry arise, and what were your reasons at that time?"
+        },
+        {
+          "id": "DEC-02",
+          "text": "What did you understand your responsibilities would be, and what had you actually discussed together?"
+        },
+        {
+          "id": "DEC-03",
+          "text": "Was a specific promise, agreement or condition important to your decision? Identify what was said, by whom and when."
+        },
+        {
+          "id": "DEC-04",
+          "text": "Did what you understood differ from what you later learned? Identify the fact, the discovery and supporting information."
+        }
+      ]
+    },
+    {
+      "id": "CHD",
+      "title": "Children",
+      "proposalRefs": [
+        "QT07",
+        "QT21",
+        "QT29"
+      ],
+      "scope": "Relevant agreements and lived facts; children never interviewed",
+      "pending": false,
+      "questions": [
+        {
+          "id": "CHD-01",
+          "text": "Before marriage, what did you discuss or agree about having children?"
+        },
+        {
+          "id": "CHD-02",
+          "text": "Were there differences about whether or when to have children? What was actually communicated?"
+        },
+        {
+          "id": "CHD-03",
+          "text": "Did those expectations change or did you learn something different later? When and how?"
+        },
+        {
+          "id": "CHD-04",
+          "text": "If relevant to this petition, describe a specific parenting responsibility or disagreement and what happened."
+        },
+        {
+          "id": "CHD-05",
+          "text": "What facts or documents support this account? Do not include unrelated private information about children."
+        }
+      ]
+    },
+    {
+      "id": "MON",
+      "title": "Money",
+      "proposalRefs": [
+        "QT07",
+        "QT12",
+        "QT21"
+      ],
+      "scope": "Relevant financial facts, not a new ground or financial audit",
+      "pending": false,
+      "questions": [
+        {
+          "id": "MON-01",
+          "text": "Before marriage, what did you discuss about work, income, debts and financial responsibilities?"
+        },
+        {
+          "id": "MON-02",
+          "text": "Was there an important financial fact or agreement you say was not disclosed or was represented differently?"
+        },
+        {
+          "id": "MON-03",
+          "text": "Describe a specific financial decision or disagreement relevant to this petition: when, who was involved and what happened."
+        },
+        {
+          "id": "MON-04",
+          "text": "What did you know then, what did you discover later and how did you discover it?"
+        },
+        {
+          "id": "MON-05",
+          "text": "Which evidence supports the particular fact, and what is uncertain or disputed?"
+        }
+      ]
+    },
+    {
+      "id": "INT",
+      "title": "Intimacy",
+      "proposalRefs": [
+        "QT07",
+        "QT28"
+      ],
+      "scope": "Narrow private inquiry where relevant; no blanket sexual-history inventory",
+      "pending": false,
+      "questions": [
+        {
+          "id": "INT-01",
+          "text": "Is there a specific intimate marital difficulty you wish to explain, including when it arose or became known?"
+        },
+        {
+          "id": "INT-02",
+          "text": "If relevant, what had been discussed or understood before marriage, and what was different afterward?"
+        },
+        {
+          "id": "INT-03",
+          "text": "How does this specific difficulty relate to your request? Include only the facts you wish to explain."
+        }
+      ]
+    },
+    {
+      "id": "PRS",
+      "title": "Pressure or threats",
+      "proposalRefs": [
+        "QT08",
+        "AF13"
+      ],
+      "scope": "Relevant freedom-of-decision facts, not presumed coercion",
+      "pending": false,
+      "questions": [
+        {
+          "id": "PRS-01",
+          "text": "What pressure, threat or circumstance affected the decision to marry?"
+        },
+        {
+          "id": "PRS-02",
+          "text": "Who or what was the source, when did it occur and what specifically happened?"
+        },
+        {
+          "id": "PRS-03",
+          "text": "How did it affect your decision and what did you communicate at the time?"
+        },
+        {
+          "id": "PRS-04",
+          "text": "What do you know directly and what evidence or contemporaneous information supports it?"
+        }
+      ]
+    },
+    {
+      "id": "DBT",
+      "title": "Doubts before marriage",
+      "proposalRefs": [
+        "QT09"
+      ],
+      "scope": "Specific reservations and what followed",
+      "pending": false,
+      "questions": [
+        {
+          "id": "DBT-01",
+          "text": "What serious reservations, if any, did you have before the wedding?"
+        },
+        {
+          "id": "DBT-02",
+          "text": "Did you discuss them? Identify what you said, to whom and what response or action followed."
+        },
+        {
+          "id": "DBT-03",
+          "text": "Why did you proceed at that time, and what relevant facts were known then?"
+        }
+      ]
+    },
+    {
+      "id": "WED",
+      "title": "Wedding circumstances",
+      "proposalRefs": [
+        "QT10"
+      ],
+      "scope": "Specific event at the ceremony; no separate civil/church supplement",
+      "pending": false,
+      "questions": [
+        {
+          "id": "WED-01",
+          "text": "Did a specific event immediately before or at the ceremony affect willingness or ability to proceed?"
+        },
+        {
+          "id": "WED-02",
+          "text": "Describe what happened, when and what you remember directly."
+        },
+        {
+          "id": "WED-03",
+          "text": "Was the event discussed at the time, and what other information supports your account?"
+        }
+      ]
+    },
+    {
+      "id": "CON",
+      "title": "Misrepresentation or concealment",
+      "proposalRefs": [
+        "QT11",
+        "AF12",
+        "AF14"
+      ],
+      "scope": "Already approved allegation type; assertions remain attributed",
+      "pending": false,
+      "questions": [
+        {
+          "id": "CON-01",
+          "text": "What important fact do you say was represented differently or not disclosed before marriage?"
+        },
+        {
+          "id": "CON-02",
+          "text": "What were you told, by whom and when?"
+        },
+        {
+          "id": "CON-03",
+          "text": "What did you believe when deciding to marry, and why was that fact important to the decision?"
+        },
+        {
+          "id": "CON-04",
+          "text": "When and how did you learn the difference?"
+        },
+        {
+          "id": "CON-05",
+          "text": "What evidence supports each part of this sequence, and what remains uncertain?"
+        }
+      ]
+    },
+    {
+      "id": "INF",
+      "title": "Infidelity",
+      "proposalRefs": [
+        "QT13"
+      ],
+      "scope": "Selected approved ground; no presumed guilt",
+      "pending": false,
+      "questions": [
+        {
+          "id": "INF-01",
+          "text": "Describe the alleged unfaithfulness relevant to the petition."
+        },
+        {
+          "id": "INF-02",
+          "text": "When did the conduct occur, and when did you first learn about it?"
+        },
+        {
+          "id": "INF-03",
+          "text": "What did you observe directly and what information came from another source?"
+        },
+        {
+          "id": "INF-04",
+          "text": "What specific evidence supports your account?"
+        }
+      ]
+    },
+    {
+      "id": "ABD",
+      "title": "Desertion or abandonment",
+      "proposalRefs": [
+        "QT14"
+      ],
+      "scope": "Known absence/contact facts, not assumed intention",
+      "pending": false,
+      "questions": [
+        {
+          "id": "ABD-01",
+          "text": "When did the separation or absence begin, and what circumstances do you know directly?"
+        },
+        {
+          "id": "ABD-02",
+          "text": "What relevant communication, contact or support continued, if any?"
+        },
+        {
+          "id": "ABD-03",
+          "text": "What attempts were made to communicate or reconcile, and what happened?"
+        },
+        {
+          "id": "ABD-04",
+          "text": "Which dates or reasons are known, estimated or unknown, and what supports them?"
+        }
+      ]
+    },
+    {
+      "id": "ABU",
+      "title": "Abuse",
+      "proposalRefs": [
+        "QT15"
+      ],
+      "scope": "Specific incidents/patterns; no child testimony or imposed diagnosis",
+      "pending": false,
+      "questions": [
+        {
+          "id": "ABU-01",
+          "text": "Describe the relevant incident or pattern you wish the council to consider."
+        },
+        {
+          "id": "ABU-02",
+          "text": "When did it happen, was it repeated, and what did you experience or observe directly?"
+        },
+        {
+          "id": "ABU-03",
+          "text": "What relevant effect did it have on married life or the decision to separate?"
+        },
+        {
+          "id": "ABU-04",
+          "text": "Are there existing court orders, reports or other evidence you wish to identify?"
+        }
+      ]
+    },
+    {
+      "id": "FTH",
+      "title": "Leaving or changing the faith",
+      "proposalRefs": [
+        "QT16",
+        "AF07"
+      ],
+      "scope": "Affiliation, change and source of knowledge kept distinct",
+      "pending": false,
+      "questions": [
+        {
+          "id": "FTH-01",
+          "text": "What was each party’s religious affiliation before you knew each other, to your knowledge?"
+        },
+        {
+          "id": "FTH-02",
+          "text": "What later change in affiliation or practice is relevant to this request, and when did it occur?"
+        },
+        {
+          "id": "FTH-03",
+          "text": "What do you know directly and what were you told?"
+        },
+        {
+          "id": "FTH-04",
+          "text": "How did the stated change affect married life, and what information supports that account?"
+        }
+      ]
+    },
+    {
+      "id": "ADD",
+      "title": "Addiction",
+      "proposalRefs": [
+        "QT17"
+      ],
+      "scope": "Reported conduct and effect; no diagnosis from labels",
+      "pending": false,
+      "questions": [
+        {
+          "id": "ADD-01",
+          "text": "Describe the behavior relevant to this petition rather than only giving it a label."
+        },
+        {
+          "id": "ADD-02",
+          "text": "When did it begin, when did you become aware of it and how?"
+        },
+        {
+          "id": "ADD-03",
+          "text": "How did the behavior affect married life?"
+        },
+        {
+          "id": "ADD-04",
+          "text": "What help was sought, if known, and what evidence or direct observations support your account?"
+        }
+      ]
+    },
+    {
+      "id": "BKG",
+      "title": "Relevant personal or family background",
+      "proposalRefs": [
+        "QT19"
+      ],
+      "scope": "Conditional relevance only, not a full biography",
+      "pending": false,
+      "questions": [
+        {
+          "id": "BKG-01",
+          "text": "Is there a specific earlier experience directly connected to an issue in this petition?"
+        },
+        {
+          "id": "BKG-02",
+          "text": "Explain the relevant event and connection, distinguishing your direct knowledge from what you were told."
+        },
+        {
+          "id": "BKG-03",
+          "text": "What information supports the connection, and what is unknown?"
+        }
+      ]
+    },
+    {
+      "id": "TIM",
+      "title": "When problems began",
+      "proposalRefs": [
+        "QT03",
+        "QT20",
+        "AF08",
+        "AF09"
+      ],
+      "scope": "Occurrence versus discovery; exact versus approximate dates",
+      "pending": false,
+      "questions": [
+        {
+          "id": "TIM-01",
+          "text": "When did the relevant difficulties first appear, and were they evident before or after marriage?"
+        },
+        {
+          "id": "TIM-02",
+          "text": "What did you know at the time, and what became known later?"
+        },
+        {
+          "id": "TIM-03",
+          "text": "Which important dates are exact, approximate or unknown? Relate each date to a specific event."
+        }
+      ]
+    },
+    {
+      "id": "SEP",
+      "title": "Separation history",
+      "proposalRefs": [
+        "QT24"
+      ],
+      "scope": "Interview only; rejected applicant separation-repeat proposal remains out",
+      "pending": false,
+      "questions": [
+        {
+          "id": "SEP-01",
+          "text": "Were there relevant temporary separations before the final one?"
+        },
+        {
+          "id": "SEP-02",
+          "text": "For each relevant period, describe approximate dates, reason and what led to resuming life together."
+        },
+        {
+          "id": "SEP-03",
+          "text": "Describe the final separation separately: when, circumstances and what you know directly."
+        },
+        {
+          "id": "SEP-04",
+          "text": "Identify supporting information and uncertain dates without treating separation as a new case."
+        }
+      ]
+    },
+    {
+      "id": "REC",
+      "title": "Reconciliation efforts",
+      "proposalRefs": [
+        "QT25"
+      ],
+      "scope": "Detailed interview; application still priest name only",
+      "pending": false,
+      "questions": [
+        {
+          "id": "REC-01",
+          "text": "What relevant attempts at reconciliation were made?"
+        },
+        {
+          "id": "REC-02",
+          "text": "Who participated, approximately when, and what happened?"
+        },
+        {
+          "id": "REC-03",
+          "text": "Distinguish the outcome you observed from information you received from someone else."
+        },
+        {
+          "id": "REC-04",
+          "text": "What information remains outstanding and what existing records are relevant?"
+        }
+      ]
+    },
+    {
+      "id": "EVD",
+      "title": "Evidence and factual clarification",
+      "proposalRefs": [
+        "QT04",
+        "QT05",
+        "AF16"
+      ],
+      "scope": "One fact/source structure reused across categories",
+      "pending": false,
+      "questions": [
+        {
+          "id": "EVD-01",
+          "text": "Which specific fact does each item support?"
+        },
+        {
+          "id": "EVD-02",
+          "text": "Who created it, when and how did you obtain it, if known?"
+        },
+        {
+          "id": "EVD-03",
+          "text": "What did you personally experience, observe or learn from another source?"
+        },
+        {
+          "id": "EVD-04",
+          "text": "What limitations, conflicting information or uncertainty should the council know? Do not disclose the other applicant’s private submission."
+        }
+      ]
+    },
+    {
+      "id": "MED",
+      "title": "Medical or psychological professional help",
+      "proposalRefs": [
+        "QT23"
+      ],
+      "scope": "Revised wording awaiting confirmation, not an active question category",
+      "pending": true,
+      "questions": [
+        {
+          "id": "MED-01",
+          "text": "Have you or your spouse received medical, psychological or psychiatric treatment relevant to the issue discussed?"
+        },
+        {
+          "id": "MED-02",
+          "text": "If so, what treatment or professional help, when, and how does it relate to the marriage?"
+        },
+        {
+          "id": "MED-03",
+          "text": "What do you know directly? No blanket medical-record release or unverified diagnosis is implied."
+        }
+      ]
+    }
+  ],
+  "excludedProposals": [
+    "QT22",
+    "QT26",
+    "QT27",
+    "QT30"
+  ],
+  "reportRule": "Assemble selected category questions and recorded answers/evidence; observations and transcript remain separate. No AI mapping into answers; no case export."
+}

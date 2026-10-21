@@ -1,0 +1,339 @@
+P001: Office use only
+P002: Tribunal
+P003: 11 North B Street
+P004: Pensacola, FL 32502
+P005: (850) 435-3549
+P006: tribunal@ptdiocese.org
+P007: FORMAL CASE - PRELIMINARY TESTIMONY
+P008: (Yourself)
+P009: Basic
+P010: Information
+P011: (Your Ex-Spouse)
+P012: Petitioner
+P013: Respondent or Co-Petitioner
+P014: Present Name
+P015: Full Name (maiden)
+P016: Street Number (with Apartment #)
+P017: City and State
+P018: Zip Code
+P019: Daytime Phone
+P020: Other Phone (optional)
+P021: Email (print clearly if not typed)
+P022: Occupation
+P023: Date of Birth (mm/dd/yyyy)
+P024: Place of Birth
+P025: Present Religion (denomination)
+P026: Previous Religion (if applicable)
+P027: Date of Baptism (mm/dd/yyyy)
+P028: Parish of Baptism
+P029: and Denomination
+P030: Church Address
+P031: (for place of baptism or reception into the Catholic Church)
+P032: Father’s name
+P033: Father’s religion
+P034: Mother’s (maiden) name
+P035: Mother’s religion
+P036: Courtship/Dating
+P037: Date (approximate) when you and your ex-spouse met:
+P038: Date (approximate) when you and your ex-spouse began dating:
+P039: Date (approximate) when you and your ex-spouse became engaged:
+P040: The Wedding
+P041: Date of Marriage (mm/dd/yyyy):
+P042: Place of Marriage: (name, address, and denomination of church or other location)
+P043: Ages at time of wedding:
+P044: Petitioner
+P045: Respondent
+P046: Total length of common life (years, months):
+P047: Separation and Divorce
+P048: Date when serious conflict(s) began:
+P049: Date of final separation:
+P050: Effective date of civil divorce:
+P051: Place of civil divorce:
+P052: Note: A copy of the divorce papers is requested as an attachment to the end of the petition
+P053: Children (from this union only)
+P054: List the full name(s) of child(ren) with his/her date(s) of birth (mm/dd/yyyy):
+P055: Marital History
+P056: G1 Briefly, what was/were the fundamental problem(s) in your marriage that led to the divorce?
+P057: Petitioner
+P058: G2 Were any of the following part of your family background? (if checked, then briefly explain)
+P059: Sexual abuse
+P060: □
+P061: Physical abuse
+P062: □
+P063: Infidelity
+P064: □
+P065: Alcoholism/drug use
+P066: □
+P067: Mental illness/suicide attempts
+P068: □
+P069: Divorce/separation
+P070: □
+P071: Financial problems
+P072: □
+P073: Imprisonment
+P074: □
+P075: Other serious issues: (please explain)
+P076: G3 Describe your personal background before marriage: (briefly answer each)
+P077: Education completed:
+P078: Work history:
+P079: Substance abuse issues:
+P080: Mental illness:
+P081: Serious financial issues:
+P082: Health issues:
+P083: Other serious issues: (please explain)
+P084: G4 In regards to your previous relationship history: (answer briefly)
+P085: Did you have previous serious dating experiences? (briefly explain, including the duration)
+P086: Were you ever in a previous engagement? (If yes, what was the reason for termination?)
+P087: Respondent
+P088: G5 Were any of the following part of your ex-spouse’s family background? (if checked, then briefly explain)
+P089: Sexual abuse
+P090: □
+P091: Physical abuse
+P092: □
+P093: Infidelity
+P094: □
+P095: Alcoholism/drug use
+P096: □
+P097: Mental illness/suicide attempts
+P098: □
+P099: Divorce/separation
+P100: □
+P101: Financial problems
+P102: □
+P103: Imprisonment
+P104: □
+P105: Other serious issues: (please explain)
+P106: □
+P107: G6 Describe your ex-spouse’s personal background before marriage: (briefly answer each)
+P108: Education completed:
+P109: Work history:
+P110: Substance abuse issues:
+P111: Mental illness:
+P112: Serious financial issues:
+P113: Health issues:
+P114: Other serious issues: (please explain)
+P115: G7 In regards to your ex-spouse’s previous relationship history: (answer briefly, if known)
+P116: Did your ex-spouse have previous serious dating experiences? (briefly explain, including the duration)
+P117: Was your ex-spouse ever in a previous engagement? (If yes, what was the reason for termination?)
+P118: G8 Were any of the following part of the courtship/dating process with your ex-spouse? (If checked, then briefly explain)
+P119: Breakups
+P120: □
+P121: Infidelity
+P122: □
+P123: Violence
+P124: □
+P125: Mistreatment
+P126: □
+P127: Other serious issues:
+P128: (please explain)
+P129: □
+P130: Previous Marriage(s) (if applicable)
+P131: Was this the first marriage for you?  (Including religious, civil, or even common law union)
+P132: Yes □
+P133: No □
+P134: Was this the first marriage for your ex-spouse?  (Including religious, civil, or even common law union)
+P135: Yes □
+P136: No □
+P137: If yes for both H1 and H2, ignore the rest of H and continue to the next page.
+P138: Otherwise, continue below.
+P139: Petitioner
+P140: Summary sheet
+P141: Respondent
+P142: Total number of marriages (including if you are married now and if any have deceased)
+P143: Name of spouse #1
+P144: (the earliest, or longest ago)
+P145: Date entered into marriage (mm/dd/yyyy)
+P146: Date marriage ended (mm/dd/yyyy)
+P147: Name of spouse #2
+P148: (next in sequence after #1)
+P149: Date entered into marriage (mm/dd/yyyy)
+P150: Date marriage ended (mm/dd/yyyy)
+P151: Name of spouse #3
+P152: (next in sequence after #2)
+P153: Date entered into marriage (mm/dd/yyyy)
+P154: Date marriage ended (mm/dd/yyyy)
+P155: If additional space is needed, □ check here AND attach an additional sheet of paper (labeled APPENDIX H) with each ex-spouse’s name, whether of the petitioner or the respondent, the date entered into marriage, and the date the marriage ended.
+P156: Additional questions are needed for each prior spouse, whether the petitioner’s or the respondent’s.
+P157: Repeat the Prior Spouse Report (HH) for each time the petitioner or the respondent was married.
+P158: How many total Prior Spouse Reports (HH) are included?  ___
+P159: Engagement
+P160: Why did you and your spouse decide to get married? (check all that apply and briefly explain)
+P161: Love
+P162: □
+P163: Immigration
+P164: □
+P165: Already living together
+P166: □
+P167: Legitimize children
+P168: □
+P169: Avoid premarital sex
+P170: □
+P171: Fear
+P172: □
+P173: Culturally arranged marriage
+P174: □
+P175: Desire to have a family
+P176: □
+P177: Age
+P178: □
+P179: Financial reasons (ex. tax purposes)
+P180: □
+P181: Insurance coverage
+P182: □
+P183: Force
+P184: □
+P185: Family pressure
+P186: □
+P187: Desire to leave home
+P188: □
+P189: Pregnancy
+P190: □
+P191: Convenience
+P192: □
+P193: Other reasons:
+P194: (please explain)
+P195: □
+P196: □
+P197: Which of the following had any influence in your decision to get married? (check all that apply and briefly explain)
+P198: Verbal external pressures to marry
+P199: □
+P200: (by whom?)
+P201: Nonverbal external pressures to marry
+P202: □
+P203: Doubts about the decision to marry
+P204: □
+P205: Advice against getting married
+P206: □
+P207: (ex. family, friends)
+P208: Family traditions/cultural  influence
+P209: □
+P210: Teachings of the Catholic Church
+P211: □
+P212: The practice of the petitioner’s faith
+P213: □
+P214: The practice of the respondent’s faith
+P215: □
+P216: Premarital sexual activity
+P217: □
+P218: (Was contraception used?)
+P219: Premarital pregnancy
+P220: □
+P221: (With your ex-spouse or a third party?)
+P222: Termination of premarital pregnancy
+P223: □
+P224: (Whose decision was this?)
+P225: Surgical procedure intended to prevent conception (e.g. vasectomy)
+P226: □
+P227: (Whose decision was this?)
+P228: Other serious influences (please explain)
+P229: □
+P230: Marriage
+P231: (between the petitioner and respondent)
+P232: Was there more than one marriage ceremony
+P233: (including Catholic, civil, non-Christian, etc.)?
+P234: (If yes, continue to a.-g. below, if no then answer J2)
+P235: Yes □
+P236: No □
+P237: What was the non-Catholic ceremony?
+P238: Which one occurred first?
+P239: At which point did you consider yourself married?
+P240: At which point did your spouse consider him/herself married?
+P241: Why did you have the non-Catholic ceremony (e.g. family pressures, etc.)?
+P242: Why did you have the Catholic ceremony/convalidation (e.g. family pressures, etc.)?
+P243: Were any ceremonies conducted outside the Catholic Church?
+P244: (If so, by whom?  Where?  Why?)
+P245: Petitioner
+P246: At the time of marriage did you: (answer each.)
+P247: Believe marriage was an exclusive relationship between one man and one woman?
+P248: Yes □
+P249: No □
+P250: Believe that if you divorced you could not marry a second time?
+P251: Yes □
+P252: No □
+P253: Remain open to children?
+P254: Yes □
+P255: No □
+P256: (if you answered no to any of J2, briefly explain)
+P257: Respondent
+P258: At the time of marriage did your ex-spouse: (answer each)
+P259: Believe marriage was an exclusive relationship between one man and one woman?
+P260: Yes □
+P261: No □
+P262: Believe that if you divorced he/she could not marry a second time?
+P263: Yes □
+P264: No □
+P265: Remain open to children?
+P266: Yes □
+P267: No □
+P268: (if you answered no to any of J3, briefly explain)
+P269: Did you and your ex-spouse plan to delay children?  (If yes, continue)
+P270: Yes □
+P271: No □
+P272: a. Was this a mutual decision?
+P273: Yes □
+P274: No □
+P275: 1. If no, whose decision was this?
+P276: b. What method was used to delay children (e.g. natural family planning, artificial contraception, abortion)?
+P277: c. If your spouse changed his/her mind and wanted children, would you consider it your sole decision whether to delay?
+P278: Yes □
+P279: No □
+P280: d. If you changed your mind and wanted children, would he/she consider it his/her sole decision whether to delay?
+P281: Yes □
+P282: No □
+P283: Did you or your spouse knowingly deceive the other regarding any of the following?
+P284: (If so, check all that apply and briefly explain)
+P285: Known inability to conceive children
+P286: □
+P287: Previous children
+P288: □
+P289: J5 (cont.) Education level
+P290: □
+P291: Debts
+P292: □
+P293: Serious contagious disease
+P294: □
+P295: Age
+P296: □
+P297: Income
+P298: □
+P299: Mental Illness:
+P300: □
+P301: Other:
+P302: □
+P303: Petitioner
+P304: During the marriage did either of you, either separately or together, see:
+P305: Respondent
+P306: Yes □ /No □
+P307: Psychologist
+P308: Yes □ /No □
+P309: Yes □ /No □
+P310: Psychiatrist
+P311: Yes □ /No □
+P312: Yes □ /No □
+P313: Marital counsellor
+P314: Yes □ /No □
+P315: Yes □ /No □
+P316: Personal counsellor
+P317: Yes □ /No □
+P318: Yes □ /No □
+P319: Clergy or pastoral minister for marriage counselling
+P320: Yes □ /No □
+P321: Yes □ /No □
+P322: Other type of counsellor/adviser:
+P323: Yes □ /No □
+P324: (If yes, include name and contact information)
+P325: (Also, if you have seen a counsellor, would you be willing to allow the tribunal to consider this information as it relates to your marital status in the Catholic Church?)
+P326: Yes □
+P327: No □
+P328: Were there temporary separations?  (If yes, continue)
+P329: Yes □
+P330: No □
+P331: Please provide approximate dates, length of time, reason for separation, and who initiated reconciliation:
+P332: For the final separation, who left and why?
+P333: What is your status now? (Check all that apply.)
+P334: □ Single (after the divorce)               □ Civilly remarried                                   □ In R.C.I.A. to become Catholic
+P335: □ Dating/Engaged                            □ Possibility to marry in the future
+P336: Note: Dates and arrangements to be married should not be made while the annulment process is still pending
+P337: Who or what motivated you to seek this annulment?
+P338: Signature of Petitioner                                              Date
+P339: Printed name of Petitioner

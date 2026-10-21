@@ -1,0 +1,28 @@
+name: CTM backend validation
+on: [push, pull_request]
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ctm_validation
+          POSTGRES_USER: ctm_validation
+          POSTGRES_PASSWORD: ci-isolated-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd 'pg_isready -U ctm_validation'
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      CTM_TEST_DATABASE_URL: postgres://ctm_validation:ci-isolated-only@localhost:5432/ctm_validation
+      DJANGO_SECRET_KEY: ci-only-not-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.8.22'
+      - run: uv sync --frozen --python 3.12
+      - run: uv run python manage.py makemigrations --check --dry-run --settings=ctm.settings_postgres_test
+      - run: uv run pytest --ds=ctm.settings_postgres_test -q
+      - run: uv run python docs/architecture/build-spec/validate_spec.py

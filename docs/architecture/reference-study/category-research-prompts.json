@@ -1,0 +1,416 @@
+{
+  "master": "You are helping refine CTM, an Orthodox church tribunal application, not providing a diagnosis, treatment plan, legal advice or a canonical judgment.\n\nUse the attached CTM question bank and accepted decisions as the source of existing coverage. We need precise, neutral factual-discovery prompts, not a counseling session or a full personal biography. Research counseling/marital relationship literature only where it adds a defensible factual distinction missing from this bank. Prefer primary peer-reviewed research or official professional/institutional sources; give direct links and distinguish research support from institutional/doctrinal applicability. Do not invent citations or present Catholic procedures as Orthodox rules.\n\nWorkflow: petition nature -> template -> reusable common question family -> detailed questions -> attributed answers/evidence -> assembled report. The same family is reused, not copied. Mandatory interview/recording identity opening and shared chronology/source/evidence prompts are already present. Children, Money and Intimacy are explicit families. Do not repeat these core questions inside every category. Medical/psychiatric testing and disclosure needs signed, scoped release; no blanket records request or diagnostic inference. Do not upload real case data or medical reports to an AI.\n\nApplicant submission, manual interview answer, original recording, reviewed transcript, submitted priest report and council finding are separate records. An affair statement is an allegation; a submitted date can be confirmed, not silently overwritten. Never disclose one applicant's private material to the other. No AI extraction into questionnaire answers is approved. No generic communication, multi-ceremony, full prior-marriage interview or separate appeal question module is to be reintroduced; those proposals were rejected. General witness/priest interviews are out of scope; a separately requested free-form priest testimony report is different.\n\nFirst test whether the existing question or another family already covers the fact. Return NO ADDITION if it does. At most three narrowly justified follow-ups for an identified gap. For each proposed follow-up give: exact wording; family and stable question reference; the concrete fact sought; trigger/skip condition; why it is not redundant; existing question to refine rather than duplicate; source/evidence limits; possible evidence links; and whether wording needs institutional review. No new required fields, grounds, third-party access, proof threshold, diagnosis or legal rule. Explain how a counseling-source idea differs from a neutral tribunal inquiry.\n\nReturn English review wording first. Optional Arabic translation must be labeled a draft. Never imply an unknown or unanswered fact is affirmative. Preserve exact versus approximate dates, occurrence versus discovery, direct versus reported knowledge, and statement versus finding. If a research question cannot be supported, say so. Recommendations remain proposals for human review.",
+  "categories": {
+    "DEC": "Separate the actual decision, reasons, communicated agreements and later knowledge; do not decide validity.",
+    "CHD": "Distinguish stated pre-marriage expectations, communication, later change and concrete relevant parenting events. No child testimony or universal reproductive history.",
+    "MON": "Distinguish what was discussed/disclosed, known debt/income facts, concrete decisions and alleged concealment. No general financial audit.",
+    "INT": "Stay within the voluntarily described specific intimate difficulty and its timing/relevance. No intrusive inventory or diagnosis.",
+    "PRS": "Distinguish specific conduct/threat, source/timing and described effect on decision. Do not label family participation coercion automatically.",
+    "DBT": "Distinguish a communicated serious reservation, response and subsequent choice from hindsight alone.",
+    "WED": "Investigate a specific relevant event near the ceremony, without creating a new clinical or canonical test.",
+    "CON": "Distinguish representation, fact allegedly concealed, importance at the time, discovery and corroboration; preserve different assertions.",
+    "INF": "Distinguish allegation, firsthand observation, hearsay and document provenance; avoid presuming guilt or adding irrelevant sexual detail.",
+    "ABD": "Distinguish known absence/contact/support from inferred intent; preserve unknowns and absent-spouse allowances.",
+    "ABU": "Use concrete relevant acts/patterns and source certainty. Do not compel a detailed traumatic biography, diagnose or question children.",
+    "FTH": "Distinguish earlier affiliation, later practice/affiliation change, evidence and described marital effect; no doctrinal conclusion from attendance.",
+    "ADD": "Distinguish reported behavior, timing, effect and known help, not a diagnosis from a checkbox.",
+    "BKG": "Allow only a demonstrable connection to the issue; no full childhood/sexual/family history.",
+    "TIM": "Refine time distinctions only if not covered already; occurrence/discovery and exact/approximate/unknown are core.",
+    "SEP": "Separate temporary intervals, final separation and reunion; do not copy an entire rejected application separation form.",
+    "REC": "Record actual assistance, participation and observed outcome without confessional disclosure or a psychiatric inference.",
+    "EVD": "Preserve provenance, asserted fact, exact source version, knowledge limits and contradictory material; do not require external witness accounts.",
+    "MED": "Topic approved: relevant medical/psychiatric evaluations with signed release. Exact question wording still pending. Be explicit about medical, psychological or psychiatric help without requesting blanket records or diagnosing."
+  },
+  "questionPrompts": [
+    {
+      "id": "DEC-01",
+      "family": "DEC",
+      "prompt": "Apply the CTM master prompt to DEC-01 in Decision to marry.\nCurrent wording: How did the decision to marry arise, and what were your reasons at that time?\nSpecific focus: Separate the actual decision, reasons, communicated agreements and later knowledge; do not decide validity.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "DEC-02",
+      "family": "DEC",
+      "prompt": "Apply the CTM master prompt to DEC-02 in Decision to marry.\nCurrent wording: What did you understand your responsibilities would be, and what had you actually discussed together?\nSpecific focus: Separate the actual decision, reasons, communicated agreements and later knowledge; do not decide validity.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "DEC-03",
+      "family": "DEC",
+      "prompt": "Apply the CTM master prompt to DEC-03 in Decision to marry.\nCurrent wording: Was a specific promise, agreement or condition important to your decision? Identify what was said, by whom and when.\nSpecific focus: Separate the actual decision, reasons, communicated agreements and later knowledge; do not decide validity.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "DEC-04",
+      "family": "DEC",
+      "prompt": "Apply the CTM master prompt to DEC-04 in Decision to marry.\nCurrent wording: Did what you understood differ from what you later learned? Identify the fact, the discovery and supporting information.\nSpecific focus: Separate the actual decision, reasons, communicated agreements and later knowledge; do not decide validity.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "CHD-01",
+      "family": "CHD",
+      "prompt": "Apply the CTM master prompt to CHD-01 in Children.\nCurrent wording: Before marriage, what did you discuss or agree about having children?\nSpecific focus: Distinguish stated pre-marriage expectations, communication, later change and concrete relevant parenting events. No child testimony or universal reproductive history.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "CHD-02",
+      "family": "CHD",
+      "prompt": "Apply the CTM master prompt to CHD-02 in Children.\nCurrent wording: Were there differences about whether or when to have children? What was actually communicated?\nSpecific focus: Distinguish stated pre-marriage expectations, communication, later change and concrete relevant parenting events. No child testimony or universal reproductive history.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "CHD-03",
+      "family": "CHD",
+      "prompt": "Apply the CTM master prompt to CHD-03 in Children.\nCurrent wording: Did those expectations change or did you learn something different later? When and how?\nSpecific focus: Distinguish stated pre-marriage expectations, communication, later change and concrete relevant parenting events. No child testimony or universal reproductive history.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "CHD-04",
+      "family": "CHD",
+      "prompt": "Apply the CTM master prompt to CHD-04 in Children.\nCurrent wording: If relevant to this petition, describe a specific parenting responsibility or disagreement and what happened.\nSpecific focus: Distinguish stated pre-marriage expectations, communication, later change and concrete relevant parenting events. No child testimony or universal reproductive history.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "CHD-05",
+      "family": "CHD",
+      "prompt": "Apply the CTM master prompt to CHD-05 in Children.\nCurrent wording: What facts or documents support this account? Do not include unrelated private information about children.\nSpecific focus: Distinguish stated pre-marriage expectations, communication, later change and concrete relevant parenting events. No child testimony or universal reproductive history.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "MON-01",
+      "family": "MON",
+      "prompt": "Apply the CTM master prompt to MON-01 in Money.\nCurrent wording: Before marriage, what did you discuss about work, income, debts and financial responsibilities?\nSpecific focus: Distinguish what was discussed/disclosed, known debt/income facts, concrete decisions and alleged concealment. No general financial audit.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "MON-02",
+      "family": "MON",
+      "prompt": "Apply the CTM master prompt to MON-02 in Money.\nCurrent wording: Was there an important financial fact or agreement you say was not disclosed or was represented differently?\nSpecific focus: Distinguish what was discussed/disclosed, known debt/income facts, concrete decisions and alleged concealment. No general financial audit.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "MON-03",
+      "family": "MON",
+      "prompt": "Apply the CTM master prompt to MON-03 in Money.\nCurrent wording: Describe a specific financial decision or disagreement relevant to this petition: when, who was involved and what happened.\nSpecific focus: Distinguish what was discussed/disclosed, known debt/income facts, concrete decisions and alleged concealment. No general financial audit.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "MON-04",
+      "family": "MON",
+      "prompt": "Apply the CTM master prompt to MON-04 in Money.\nCurrent wording: What did you know then, what did you discover later and how did you discover it?\nSpecific focus: Distinguish what was discussed/disclosed, known debt/income facts, concrete decisions and alleged concealment. No general financial audit.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "MON-05",
+      "family": "MON",
+      "prompt": "Apply the CTM master prompt to MON-05 in Money.\nCurrent wording: Which evidence supports the particular fact, and what is uncertain or disputed?\nSpecific focus: Distinguish what was discussed/disclosed, known debt/income facts, concrete decisions and alleged concealment. No general financial audit.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "INT-01",
+      "family": "INT",
+      "prompt": "Apply the CTM master prompt to INT-01 in Intimacy.\nCurrent wording: Is there a specific intimate marital difficulty you wish to explain, including when it arose or became known?\nSpecific focus: Stay within the voluntarily described specific intimate difficulty and its timing/relevance. No intrusive inventory or diagnosis.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "INT-02",
+      "family": "INT",
+      "prompt": "Apply the CTM master prompt to INT-02 in Intimacy.\nCurrent wording: If relevant, what had been discussed or understood before marriage, and what was different afterward?\nSpecific focus: Stay within the voluntarily described specific intimate difficulty and its timing/relevance. No intrusive inventory or diagnosis.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "INT-03",
+      "family": "INT",
+      "prompt": "Apply the CTM master prompt to INT-03 in Intimacy.\nCurrent wording: How does this specific difficulty relate to your request? Include only the facts you wish to explain.\nSpecific focus: Stay within the voluntarily described specific intimate difficulty and its timing/relevance. No intrusive inventory or diagnosis.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "PRS-01",
+      "family": "PRS",
+      "prompt": "Apply the CTM master prompt to PRS-01 in Pressure or threats.\nCurrent wording: What pressure, threat or circumstance affected the decision to marry?\nSpecific focus: Distinguish specific conduct/threat, source/timing and described effect on decision. Do not label family participation coercion automatically.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "PRS-02",
+      "family": "PRS",
+      "prompt": "Apply the CTM master prompt to PRS-02 in Pressure or threats.\nCurrent wording: Who or what was the source, when did it occur and what specifically happened?\nSpecific focus: Distinguish specific conduct/threat, source/timing and described effect on decision. Do not label family participation coercion automatically.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "PRS-03",
+      "family": "PRS",
+      "prompt": "Apply the CTM master prompt to PRS-03 in Pressure or threats.\nCurrent wording: How did it affect your decision and what did you communicate at the time?\nSpecific focus: Distinguish specific conduct/threat, source/timing and described effect on decision. Do not label family participation coercion automatically.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "PRS-04",
+      "family": "PRS",
+      "prompt": "Apply the CTM master prompt to PRS-04 in Pressure or threats.\nCurrent wording: What do you know directly and what evidence or contemporaneous information supports it?\nSpecific focus: Distinguish specific conduct/threat, source/timing and described effect on decision. Do not label family participation coercion automatically.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "DBT-01",
+      "family": "DBT",
+      "prompt": "Apply the CTM master prompt to DBT-01 in Doubts before marriage.\nCurrent wording: What serious reservations, if any, did you have before the wedding?\nSpecific focus: Distinguish a communicated serious reservation, response and subsequent choice from hindsight alone.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "DBT-02",
+      "family": "DBT",
+      "prompt": "Apply the CTM master prompt to DBT-02 in Doubts before marriage.\nCurrent wording: Did you discuss them? Identify what you said, to whom and what response or action followed.\nSpecific focus: Distinguish a communicated serious reservation, response and subsequent choice from hindsight alone.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "DBT-03",
+      "family": "DBT",
+      "prompt": "Apply the CTM master prompt to DBT-03 in Doubts before marriage.\nCurrent wording: Why did you proceed at that time, and what relevant facts were known then?\nSpecific focus: Distinguish a communicated serious reservation, response and subsequent choice from hindsight alone.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "WED-01",
+      "family": "WED",
+      "prompt": "Apply the CTM master prompt to WED-01 in Wedding circumstances.\nCurrent wording: Did a specific event immediately before or at the ceremony affect willingness or ability to proceed?\nSpecific focus: Investigate a specific relevant event near the ceremony, without creating a new clinical or canonical test.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "WED-02",
+      "family": "WED",
+      "prompt": "Apply the CTM master prompt to WED-02 in Wedding circumstances.\nCurrent wording: Describe what happened, when and what you remember directly.\nSpecific focus: Investigate a specific relevant event near the ceremony, without creating a new clinical or canonical test.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "WED-03",
+      "family": "WED",
+      "prompt": "Apply the CTM master prompt to WED-03 in Wedding circumstances.\nCurrent wording: Was the event discussed at the time, and what other information supports your account?\nSpecific focus: Investigate a specific relevant event near the ceremony, without creating a new clinical or canonical test.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "CON-01",
+      "family": "CON",
+      "prompt": "Apply the CTM master prompt to CON-01 in Misrepresentation or concealment.\nCurrent wording: What important fact do you say was represented differently or not disclosed before marriage?\nSpecific focus: Distinguish representation, fact allegedly concealed, importance at the time, discovery and corroboration; preserve different assertions.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "CON-02",
+      "family": "CON",
+      "prompt": "Apply the CTM master prompt to CON-02 in Misrepresentation or concealment.\nCurrent wording: What were you told, by whom and when?\nSpecific focus: Distinguish representation, fact allegedly concealed, importance at the time, discovery and corroboration; preserve different assertions.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "CON-03",
+      "family": "CON",
+      "prompt": "Apply the CTM master prompt to CON-03 in Misrepresentation or concealment.\nCurrent wording: What did you believe when deciding to marry, and why was that fact important to the decision?\nSpecific focus: Distinguish representation, fact allegedly concealed, importance at the time, discovery and corroboration; preserve different assertions.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "CON-04",
+      "family": "CON",
+      "prompt": "Apply the CTM master prompt to CON-04 in Misrepresentation or concealment.\nCurrent wording: When and how did you learn the difference?\nSpecific focus: Distinguish representation, fact allegedly concealed, importance at the time, discovery and corroboration; preserve different assertions.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "CON-05",
+      "family": "CON",
+      "prompt": "Apply the CTM master prompt to CON-05 in Misrepresentation or concealment.\nCurrent wording: What evidence supports each part of this sequence, and what remains uncertain?\nSpecific focus: Distinguish representation, fact allegedly concealed, importance at the time, discovery and corroboration; preserve different assertions.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "INF-01",
+      "family": "INF",
+      "prompt": "Apply the CTM master prompt to INF-01 in Infidelity.\nCurrent wording: Describe the alleged unfaithfulness relevant to the petition.\nSpecific focus: Distinguish allegation, firsthand observation, hearsay and document provenance; avoid presuming guilt or adding irrelevant sexual detail.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "INF-02",
+      "family": "INF",
+      "prompt": "Apply the CTM master prompt to INF-02 in Infidelity.\nCurrent wording: When did the conduct occur, and when did you first learn about it?\nSpecific focus: Distinguish allegation, firsthand observation, hearsay and document provenance; avoid presuming guilt or adding irrelevant sexual detail.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "INF-03",
+      "family": "INF",
+      "prompt": "Apply the CTM master prompt to INF-03 in Infidelity.\nCurrent wording: What did you observe directly and what information came from another source?\nSpecific focus: Distinguish allegation, firsthand observation, hearsay and document provenance; avoid presuming guilt or adding irrelevant sexual detail.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "INF-04",
+      "family": "INF",
+      "prompt": "Apply the CTM master prompt to INF-04 in Infidelity.\nCurrent wording: What specific evidence supports your account?\nSpecific focus: Distinguish allegation, firsthand observation, hearsay and document provenance; avoid presuming guilt or adding irrelevant sexual detail.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ABD-01",
+      "family": "ABD",
+      "prompt": "Apply the CTM master prompt to ABD-01 in Desertion or abandonment.\nCurrent wording: When did the separation or absence begin, and what circumstances do you know directly?\nSpecific focus: Distinguish known absence/contact/support from inferred intent; preserve unknowns and absent-spouse allowances.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ABD-02",
+      "family": "ABD",
+      "prompt": "Apply the CTM master prompt to ABD-02 in Desertion or abandonment.\nCurrent wording: What relevant communication, contact or support continued, if any?\nSpecific focus: Distinguish known absence/contact/support from inferred intent; preserve unknowns and absent-spouse allowances.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ABD-03",
+      "family": "ABD",
+      "prompt": "Apply the CTM master prompt to ABD-03 in Desertion or abandonment.\nCurrent wording: What attempts were made to communicate or reconcile, and what happened?\nSpecific focus: Distinguish known absence/contact/support from inferred intent; preserve unknowns and absent-spouse allowances.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ABD-04",
+      "family": "ABD",
+      "prompt": "Apply the CTM master prompt to ABD-04 in Desertion or abandonment.\nCurrent wording: Which dates or reasons are known, estimated or unknown, and what supports them?\nSpecific focus: Distinguish known absence/contact/support from inferred intent; preserve unknowns and absent-spouse allowances.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ABU-01",
+      "family": "ABU",
+      "prompt": "Apply the CTM master prompt to ABU-01 in Abuse.\nCurrent wording: Describe the relevant incident or pattern you wish the council to consider.\nSpecific focus: Use concrete relevant acts/patterns and source certainty. Do not compel a detailed traumatic biography, diagnose or question children.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ABU-02",
+      "family": "ABU",
+      "prompt": "Apply the CTM master prompt to ABU-02 in Abuse.\nCurrent wording: When did it happen, was it repeated, and what did you experience or observe directly?\nSpecific focus: Use concrete relevant acts/patterns and source certainty. Do not compel a detailed traumatic biography, diagnose or question children.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ABU-03",
+      "family": "ABU",
+      "prompt": "Apply the CTM master prompt to ABU-03 in Abuse.\nCurrent wording: What relevant effect did it have on married life or the decision to separate?\nSpecific focus: Use concrete relevant acts/patterns and source certainty. Do not compel a detailed traumatic biography, diagnose or question children.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ABU-04",
+      "family": "ABU",
+      "prompt": "Apply the CTM master prompt to ABU-04 in Abuse.\nCurrent wording: Are there existing court orders, reports or other evidence you wish to identify?\nSpecific focus: Use concrete relevant acts/patterns and source certainty. Do not compel a detailed traumatic biography, diagnose or question children.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "FTH-01",
+      "family": "FTH",
+      "prompt": "Apply the CTM master prompt to FTH-01 in Leaving or changing the faith.\nCurrent wording: What was each party’s religious affiliation before you knew each other, to your knowledge?\nSpecific focus: Distinguish earlier affiliation, later practice/affiliation change, evidence and described marital effect; no doctrinal conclusion from attendance.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "FTH-02",
+      "family": "FTH",
+      "prompt": "Apply the CTM master prompt to FTH-02 in Leaving or changing the faith.\nCurrent wording: What later change in affiliation or practice is relevant to this request, and when did it occur?\nSpecific focus: Distinguish earlier affiliation, later practice/affiliation change, evidence and described marital effect; no doctrinal conclusion from attendance.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "FTH-03",
+      "family": "FTH",
+      "prompt": "Apply the CTM master prompt to FTH-03 in Leaving or changing the faith.\nCurrent wording: What do you know directly and what were you told?\nSpecific focus: Distinguish earlier affiliation, later practice/affiliation change, evidence and described marital effect; no doctrinal conclusion from attendance.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "FTH-04",
+      "family": "FTH",
+      "prompt": "Apply the CTM master prompt to FTH-04 in Leaving or changing the faith.\nCurrent wording: How did the stated change affect married life, and what information supports that account?\nSpecific focus: Distinguish earlier affiliation, later practice/affiliation change, evidence and described marital effect; no doctrinal conclusion from attendance.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ADD-01",
+      "family": "ADD",
+      "prompt": "Apply the CTM master prompt to ADD-01 in Addiction.\nCurrent wording: Describe the behavior relevant to this petition rather than only giving it a label.\nSpecific focus: Distinguish reported behavior, timing, effect and known help, not a diagnosis from a checkbox.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ADD-02",
+      "family": "ADD",
+      "prompt": "Apply the CTM master prompt to ADD-02 in Addiction.\nCurrent wording: When did it begin, when did you become aware of it and how?\nSpecific focus: Distinguish reported behavior, timing, effect and known help, not a diagnosis from a checkbox.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ADD-03",
+      "family": "ADD",
+      "prompt": "Apply the CTM master prompt to ADD-03 in Addiction.\nCurrent wording: How did the behavior affect married life?\nSpecific focus: Distinguish reported behavior, timing, effect and known help, not a diagnosis from a checkbox.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "ADD-04",
+      "family": "ADD",
+      "prompt": "Apply the CTM master prompt to ADD-04 in Addiction.\nCurrent wording: What help was sought, if known, and what evidence or direct observations support your account?\nSpecific focus: Distinguish reported behavior, timing, effect and known help, not a diagnosis from a checkbox.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "BKG-01",
+      "family": "BKG",
+      "prompt": "Apply the CTM master prompt to BKG-01 in Relevant personal or family background.\nCurrent wording: Is there a specific earlier experience directly connected to an issue in this petition?\nSpecific focus: Allow only a demonstrable connection to the issue; no full childhood/sexual/family history.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "BKG-02",
+      "family": "BKG",
+      "prompt": "Apply the CTM master prompt to BKG-02 in Relevant personal or family background.\nCurrent wording: Explain the relevant event and connection, distinguishing your direct knowledge from what you were told.\nSpecific focus: Allow only a demonstrable connection to the issue; no full childhood/sexual/family history.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "BKG-03",
+      "family": "BKG",
+      "prompt": "Apply the CTM master prompt to BKG-03 in Relevant personal or family background.\nCurrent wording: What information supports the connection, and what is unknown?\nSpecific focus: Allow only a demonstrable connection to the issue; no full childhood/sexual/family history.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "TIM-01",
+      "family": "TIM",
+      "prompt": "Apply the CTM master prompt to TIM-01 in When problems began.\nCurrent wording: When did the relevant difficulties first appear, and were they evident before or after marriage?\nSpecific focus: Refine time distinctions only if not covered already; occurrence/discovery and exact/approximate/unknown are core.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "TIM-02",
+      "family": "TIM",
+      "prompt": "Apply the CTM master prompt to TIM-02 in When problems began.\nCurrent wording: What did you know at the time, and what became known later?\nSpecific focus: Refine time distinctions only if not covered already; occurrence/discovery and exact/approximate/unknown are core.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "TIM-03",
+      "family": "TIM",
+      "prompt": "Apply the CTM master prompt to TIM-03 in When problems began.\nCurrent wording: Which important dates are exact, approximate or unknown? Relate each date to a specific event.\nSpecific focus: Refine time distinctions only if not covered already; occurrence/discovery and exact/approximate/unknown are core.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "SEP-01",
+      "family": "SEP",
+      "prompt": "Apply the CTM master prompt to SEP-01 in Separation history.\nCurrent wording: Were there relevant temporary separations before the final one?\nSpecific focus: Separate temporary intervals, final separation and reunion; do not copy an entire rejected application separation form.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "SEP-02",
+      "family": "SEP",
+      "prompt": "Apply the CTM master prompt to SEP-02 in Separation history.\nCurrent wording: For each relevant period, describe approximate dates, reason and what led to resuming life together.\nSpecific focus: Separate temporary intervals, final separation and reunion; do not copy an entire rejected application separation form.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "SEP-03",
+      "family": "SEP",
+      "prompt": "Apply the CTM master prompt to SEP-03 in Separation history.\nCurrent wording: Describe the final separation separately: when, circumstances and what you know directly.\nSpecific focus: Separate temporary intervals, final separation and reunion; do not copy an entire rejected application separation form.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "SEP-04",
+      "family": "SEP",
+      "prompt": "Apply the CTM master prompt to SEP-04 in Separation history.\nCurrent wording: Identify supporting information and uncertain dates without treating separation as a new case.\nSpecific focus: Separate temporary intervals, final separation and reunion; do not copy an entire rejected application separation form.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "REC-01",
+      "family": "REC",
+      "prompt": "Apply the CTM master prompt to REC-01 in Reconciliation efforts.\nCurrent wording: What relevant attempts at reconciliation were made?\nSpecific focus: Record actual assistance, participation and observed outcome without confessional disclosure or a psychiatric inference.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "REC-02",
+      "family": "REC",
+      "prompt": "Apply the CTM master prompt to REC-02 in Reconciliation efforts.\nCurrent wording: Who participated, approximately when, and what happened?\nSpecific focus: Record actual assistance, participation and observed outcome without confessional disclosure or a psychiatric inference.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "REC-03",
+      "family": "REC",
+      "prompt": "Apply the CTM master prompt to REC-03 in Reconciliation efforts.\nCurrent wording: Distinguish the outcome you observed from information you received from someone else.\nSpecific focus: Record actual assistance, participation and observed outcome without confessional disclosure or a psychiatric inference.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "REC-04",
+      "family": "REC",
+      "prompt": "Apply the CTM master prompt to REC-04 in Reconciliation efforts.\nCurrent wording: What information remains outstanding and what existing records are relevant?\nSpecific focus: Record actual assistance, participation and observed outcome without confessional disclosure or a psychiatric inference.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "EVD-01",
+      "family": "EVD",
+      "prompt": "Apply the CTM master prompt to EVD-01 in Evidence and factual clarification.\nCurrent wording: Which specific fact does each item support?\nSpecific focus: Preserve provenance, asserted fact, exact source version, knowledge limits and contradictory material; do not require external witness accounts.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "EVD-02",
+      "family": "EVD",
+      "prompt": "Apply the CTM master prompt to EVD-02 in Evidence and factual clarification.\nCurrent wording: Who created it, when and how did you obtain it, if known?\nSpecific focus: Preserve provenance, asserted fact, exact source version, knowledge limits and contradictory material; do not require external witness accounts.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "EVD-03",
+      "family": "EVD",
+      "prompt": "Apply the CTM master prompt to EVD-03 in Evidence and factual clarification.\nCurrent wording: What did you personally experience, observe or learn from another source?\nSpecific focus: Preserve provenance, asserted fact, exact source version, knowledge limits and contradictory material; do not require external witness accounts.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "EVD-04",
+      "family": "EVD",
+      "prompt": "Apply the CTM master prompt to EVD-04 in Evidence and factual clarification.\nCurrent wording: What limitations, conflicting information or uncertainty should the council know? Do not disclose the other applicant’s private submission.\nSpecific focus: Preserve provenance, asserted fact, exact source version, knowledge limits and contradictory material; do not require external witness accounts.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "MED-01",
+      "family": "MED",
+      "prompt": "Apply the CTM master prompt to MED-01 in Medical or psychological professional help.\nCurrent wording: Have you or your spouse received medical, psychological or psychiatric treatment relevant to the issue discussed?\nSpecific focus: Topic approved: relevant medical/psychiatric evaluations with signed release. Exact question wording still pending. Be explicit about medical, psychological or psychiatric help without requesting blanket records or diagnosing.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "MED-02",
+      "family": "MED",
+      "prompt": "Apply the CTM master prompt to MED-02 in Medical or psychological professional help.\nCurrent wording: If so, what treatment or professional help, when, and how does it relate to the marriage?\nSpecific focus: Topic approved: relevant medical/psychiatric evaluations with signed release. Exact question wording still pending. Be explicit about medical, psychological or psychiatric help without requesting blanket records or diagnosing.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "MED-03",
+      "family": "MED",
+      "prompt": "Apply the CTM master prompt to MED-03 in Medical or psychological professional help.\nCurrent wording: What do you know directly? No blanket medical-record release or unverified diagnosis is implied.\nSpecific focus: Topic approved: relevant medical/psychiatric evaluations with signed release. Exact question wording still pending. Be explicit about medical, psychological or psychiatric help without requesting blanket records or diagnosing.\nCompare the sibling questions and common chronology/source/evidence questions in the supplied bank. Identify only a missing factual distinction. Propose a clearer replacement before adding a follow-up. Give NO CHANGE if adequate; otherwise provide exact wording, source link, trigger/skip rule, non-duplication rationale and institutional-review limits. Do not expand scope merely to generate more questions."
+    },
+    {
+      "id": "OPEN-01",
+      "family": "OPEN",
+      "prompt": "Apply the CTM master prompt to OPEN-01: State the interviewee’s full name and the spouse’s full name; identify the case, actual interviewer and date. Repeat identity opening for every newly started recording.\nKeep the mandatory identity/recording opening or common request/closing purpose intact. Do not duplicate any substantive family. Suggest only a concrete clarity correction supported by the source; otherwise return NO CHANGE. No new oath, signature, diagnosis, canonical rule or applicant disclosure."
+    },
+    {
+      "id": "OPEN-02",
+      "family": "OPEN",
+      "prompt": "Apply the CTM master prompt to OPEN-02: Where audio is used, record that the interviewee was informed about recording.\nKeep the mandatory identity/recording opening or common request/closing purpose intact. Do not duplicate any substantive family. Suggest only a concrete clarity correction supported by the source; otherwise return NO CHANGE. No new oath, signature, diagnosis, canonical rule or applicant disclosure."
+    },
+    {
+      "id": "BASIS-01",
+      "family": "BASIS",
+      "prompt": "Apply the CTM master prompt to BASIS-01: What outcome are you seeking, and which specific facts do you want the council to consider in support of it?\nKeep the mandatory identity/recording opening or common request/closing purpose intact. Do not duplicate any substantive family. Suggest only a concrete clarity correction supported by the source; otherwise return NO CHANGE. No new oath, signature, diagnosis, canonical rule or applicant disclosure."
+    },
+    {
+      "id": "BASIS-02",
+      "family": "BASIS",
+      "prompt": "Apply the CTM master prompt to BASIS-02: Identify any submitted information needing clarification without rewriting the original application through the interview.\nKeep the mandatory identity/recording opening or common request/closing purpose intact. Do not duplicate any substantive family. Suggest only a concrete clarity correction supported by the source; otherwise return NO CHANGE. No new oath, signature, diagnosis, canonical rule or applicant disclosure."
+    },
+    {
+      "id": "CLOSE-01",
+      "family": "CLOSE",
+      "prompt": "Apply the CTM master prompt to CLOSE-01: What relevant fact has not yet been covered, and is anything you said today in need of clarification?\nKeep the mandatory identity/recording opening or common request/closing purpose intact. Do not duplicate any substantive family. Suggest only a concrete clarity correction supported by the source; otherwise return NO CHANGE. No new oath, signature, diagnosis, canonical rule or applicant disclosure."
+    }
+  ]
+}

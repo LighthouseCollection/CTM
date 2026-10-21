@@ -1,0 +1,5 @@
+paddlepaddle==3.0.0
+paddleocr==2.9.1
+ocrmypdf==16.7.2
+docling==2.14.0
+python-magic==0.4.27

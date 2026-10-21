@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CTM · Assigned member interview workflow</title>
+  <style>
+:root{color-scheme:light;--paper:#f6f4ed;--ink:#242f35;--muted:#536168;--line:#d3d6ce;--accent:#215952;--soft:#e5eee8}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:135px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 'Segoe UI',sans-serif}header,main,.toolbar,.return-panel,footer{max-width:1240px;margin:auto}header{padding:55px 40px 30px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:700;color:var(--accent)}h1{font:normal clamp(36px,5vw,62px)/1.1 Georgia,serif;margin:16px 0 22px}.intro{font-size:20px;max-width:850px}header>p:not(.eyebrow){max-width:930px}h2{font:normal 27px/1.25 Georgia,serif}.toolbar{position:sticky;top:0;z-index:2;padding:16px 40px;background:var(--paper);border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;gap:22px;align-items:center;justify-content:space-between}.progress{display:grid;gap:3px;min-width:240px}.progress strong{font-size:14px}progress{accent-color:var(--accent);width:100%;height:7px}#save-status{font-size:12px;color:var(--muted)}.actions{display:flex;flex-wrap:wrap;gap:8px}button{font:600 14px/1.25 'Segoe UI',sans-serif;border:1px solid #8b9994;border-radius:4px;background:transparent;color:var(--ink);padding:11px 14px;cursor:pointer}button:hover{background:var(--soft)}button.primary{background:var(--accent);border-color:var(--accent);color:#fff}button.primary:hover{background:#17443f}button.quiet{border-color:transparent;color:var(--muted)}:focus-visible{outline:3px solid #b76c15;outline-offset:3px}main{display:grid;grid-template-columns:225px minmax(0,1fr);gap:45px;padding:35px 40px 60px}aside{align-self:start;position:sticky;top:145px}aside h2{font:700 12px/1.4 'Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:.08em}nav{display:grid}nav a{color:var(--muted);text-decoration:none;font-size:14px;padding:6px 0}nav a:hover{text-decoration:underline;color:var(--accent)}.filter{display:flex;align-items:start;gap:8px;margin:24px 0 14px;font-size:14px}.filter input{margin-top:6px;accent-color:var(--accent)}.small{font-size:13px;color:var(--muted)}.question-section{margin-bottom:45px}.section-head{padding-bottom:12px;border-bottom:2px solid var(--ink)}.section-head h2{margin:0 0 6px}.section-head p{margin:0;color:var(--muted);font-size:14px}fieldset{border:0;border-bottom:1px solid var(--line);padding:22px 0 26px;margin:0;min-width:0}legend{float:left;width:100%;padding:0;font-size:18px;font-weight:600;line-height:1.45}.qid{display:inline-block;color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.03em;margin-right:9px}.detail{clear:both;padding-top:8px;margin:0 0 14px;color:var(--muted);font-size:14px}.choices{display:flex;gap:10px;margin-bottom:14px}.choice{display:flex;align-items:center;gap:8px;min-width:95px;padding:8px 14px;border:1px solid #899b94;border-radius:4px;cursor:pointer}.choice:has(input:checked){background:var(--soft);border-color:var(--accent);color:#153e38}.choice input{accent-color:var(--accent);margin:0;width:17px;height:17px}.clear-answer{border:0;color:var(--muted);font-size:12px;padding:6px}.note-label{font-size:12px;color:var(--muted)}textarea{display:block;width:100%;font:15px/1.5 'Segoe UI',sans-serif;background:#fbfaf6;color:var(--ink);border:1px solid #adb6af;border-radius:4px;padding:10px 12px;resize:vertical;margin-top:5px}textarea:focus{border-color:var(--accent)}.return-panel{padding:30px 40px 45px;border-top:2px solid var(--ink)}.return-panel>label{display:block;margin-top:24px;font-weight:600}.return-panel h2{font-size:32px}.return-panel p{max-width:950px}footer{padding:20px 40px 35px;color:var(--muted);font-size:12px}#action-status{color:var(--accent);min-height:1.6em}[hidden]{display:none!important}
+@media(max-width:900px){main{grid-template-columns:1fr;gap:20px}aside{position:static}nav{grid-template-columns:repeat(2,minmax(0,1fr))}.toolbar{position:static;align-items:stretch;flex-direction:column}.progress{min-width:0}header,main,.toolbar,.return-panel,footer{padding-left:22px;padding-right:22px}html{scroll-padding-top:15px}}
+@media print{body{background:white;font-size:11pt}.toolbar,aside,.actions,.choices .clear-answer,#transfer-text,label[for=transfer-text],footer{display:none}main{display:block;padding:0}header,.return-panel{padding:10px 0}h1{font-size:28pt}fieldset{break-inside:avoid}textarea{border:0;background:transparent;min-height:40px}header p{font-size:11pt}.question-section{margin-bottom:25px}}
+
+.choices{flex-wrap:wrap}.baseline{padding:16px 0;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+</style>
+  
+</head>
+<body>
+  <header>
+    <p class="eyebrow">CTM / Assigned member interview workflow / Decision worksheet</p>
+    <h1>Assigned member interview workflow.</h1>
+    <p class="intro">Design how the assigned case owner interviews people, gathers information using templates, records audio and obtains transcripts. Choose Yes / No / Other and explain alternatives in the text area.</p><p class="baseline">Requested scope: template-based interviewing with in-application recording and automatic transcription. Prototype basis: admin-case-intake.html (person interviewed, interviewer, method, date/time, location, duration, notes and attachments). Existing council testimony is a separate event: do not silently apply its permissions or AI-provider approval to every private interview. Original audio, versions and actual authorship must be preserved.</p>
+    <p>This is a local review worksheet, not the applicant portal. No answers are sent automatically. Your confirmed decisions stay in place; these worksheet answers will be reviewed before they become architecture requirements. No CTM feature is being built here.</p>
+  </header>
+  <div class="toolbar">
+    <div class="progress"><strong id="count">0 answered</strong><progress id="progress" value="0" max="1" aria-label="Questions answered"></progress><span id="save-status" role="status" aria-live="polite">Loading questions…</span></div>
+    <div class="actions">
+      <button id="download" class="primary" type="button">Download answers</button>
+      <button id="copy" type="button">Copy for chat</button>
+      <button id="import" type="button">Load saved answers</button>
+      <input id="import-file" type="file" accept="application/json,.json" hidden>
+    </div>
+  </div>
+  <main>
+    <aside><h2>Sections</h2><nav id="sections" aria-label="Questionnaire sections"></nav><label class="filter"><input id="unanswered" type="checkbox"> Show unanswered only</label><p class="small">For Other, describe your preferred workflow in its text area. Clarifications may also qualify Yes or No. You can also add a note without choosing either answer.</p></aside>
+    <form id="questions" aria-label="Architecture decisions" onsubmit="return false"></form>
+  </main>
+  <section class="return-panel" aria-labelledby="return-title">
+    <h2 id="return-title">Send your decisions back</h2>
+    <p>Use <strong>Download answers</strong>, then attach the JSON file to this conversation. Or use <strong>Copy for chat</strong> and paste the text here. Partial answers are fine. I will reconcile your choices and clarifications before updating the architecture.</p>
+    <p class="small">Local browser saving can be unavailable or cleared. Download a copy before closing. Nothing in this worksheet updates CTM or the architecture files automatically.</p>
+    <label for="general-notes">Anything else to add?</label>
+    <textarea id="general-notes" rows="5" placeholder="Other scenarios, changes, or instructions…"></textarea>
+    <label for="transfer-text">Copyable answer text <span class="small">(also available if clipboard access is blocked)</span></label>
+    <textarea id="transfer-text" rows="8" readonly placeholder="Use Copy for chat to prepare your answer text here."></textarea>
+    <p id="action-status" role="status" aria-live="polite"></p>
+    <div class="actions"><button id="print" type="button">Print / Save as PDF</button><button id="reset" class="quiet" type="button">Clear this worksheet</button></div>
+  </section>
+  <footer>CTM planning worksheet · Local files only · No application or database has been built</footer>
+  <noscript>This worksheet requires JavaScript. Enable it or use the companion case-interview-questions.md file.</noscript>
+<script>
+'use strict';
+const VERSION="ctm-case-interview-review-v1";
+const STORAGE_KEY=VERSION;
+const REVIEW_TITLE="Assigned member interview workflow";
+const REVIEW_SLUG="case-interview";
+const sections=[
+  [
+    "scope",
+    "Interview scope & participants",
+    "Who can be interviewed and by whom.",
+    [
+      [
+        "C01",
+        "Should this interview workflow be separate from applicant testimony given during a council session?",
+        "Both link to the case/proceeding, but a case-owner interview is not automatically a council hearing or agenda item."
+      ],
+      [
+        "C02",
+        "Should only the assigned council member conduct and author these case-investigation interviews?",
+        "Use Other to name additional permitted interviewers. Prototype selection of any council member is not yet an approved permission."
+      ],
+      [
+        "C03",
+        "May admin or secretary enter or upload an interview record on the assigned member’s behalf?",
+        "Preserve the actual interviewer separately from the person entering the data. This does not authorize applicant appeal supplements on their behalf."
+      ],
+      [
+        "C04",
+        "Should the interviewee list include either applicant, their priest or Father of Confession, and adult witnesses?",
+        "These types appear in the prototype. No child interviews or child accounts are proposed."
+      ],
+      [
+        "C05",
+        "Should a witness or priest be recorded as a case-linked contact without creating a login account?",
+        "Store only the identity/contact details needed for the interview and preserve their relationship to the case."
+      ],
+      [
+        "C06",
+        "Should both applicants always be interviewed separately?",
+        "Use Other if the assigned member may sometimes conduct a joint interview; existing council testimony still never places both applicants together."
+      ]
+    ]
+  ],
+  [
+    "templates",
+    "Interview templates",
+    "Reusable questions without rewriting history.",
+    [
+      [
+        "C07",
+        "Should admin or secretary create and version the interview templates?",
+        "Each interview retains the exact template version used; publishing changes must not rewrite completed interviews."
+      ],
+      [
+        "C08",
+        "Should templates vary by interviewee type, such as applicant, spouse, priest or witness?",
+        "Use Other to prefer one common template or describe a simpler structure."
+      ],
+      [
+        "C09",
+        "Should interview templates support English and Arabic versions of the same questions?",
+        "Keep original answers in the language spoken/entered rather than replacing them with translations."
+      ],
+      [
+        "C10",
+        "Should the assigned member be able to add case-specific follow-up questions within an interview?",
+        "Keep the published template unchanged and record which questions were added for this case."
+      ],
+      [
+        "C11",
+        "Should the template allow both structured fields and rich-text answers?",
+        "For example dates or Yes/No plus detailed narrative. Use Other to prefer narrative-only interview notes."
+      ],
+      [
+        "C12",
+        "Should an interview show the selected applicant’s submitted answers beside the template for reference?",
+        "The interviewer may compare assertions but must not overwrite them through the interview record. Other party information remains separately attributed."
+      ]
+    ]
+  ],
+  [
+    "process",
+    "Conducting & saving the interview",
+    "Template-led information gathering.",
+    [
+      [
+        "C13",
+        "Should the interview preserve the prototype metadata: person, actual interviewer, method, date/time, location and duration?",
+        "Methods currently shown are in person, phone and virtual. Other may refine the list or fields."
+      ],
+      [
+        "C14",
+        "Should the assigned member be able to save an unfinished interview and resume later?",
+        "This is an investigation-record draft, separate from the no-draft Send action for a council-hearing update."
+      ],
+      [
+        "C15",
+        "Should each completed interview be an individual entry in a chronological case-interview log?",
+        "Allow multiple interviews of the same person without overwriting earlier interviews."
+      ],
+      [
+        "C16",
+        "Should evidence discussed during an interview be linked to specific questions or notes?",
+        "Reuse retained file versions. Do not duplicate source files or make the interviewee the owner of someone else’s evidence."
+      ],
+      [
+        "C17",
+        "Should the assigned member have a separate internal observations/recommendations area alongside the interviewee’s answers?",
+        "Do not blend council conclusions into the interviewee’s recorded statements."
+      ]
+    ]
+  ],
+  [
+    "recording",
+    "Audio recording",
+    "Recording inside the template workflow.",
+    [
+      [
+        "C18",
+        "Should recording be optional for ordinary case-owner interviews?",
+        "Recording capability is requested, but mandatory versus optional is undecided. Council-session applicant testimony remains mandatory audio recording."
+      ],
+      [
+        "C19",
+        "Should the interviewer record that the interviewee was informed about recording before audio capture starts?",
+        "This asks for a workflow record; exact institutional wording/policy remains to be supplied, not invented here."
+      ],
+      [
+        "C20",
+        "Should an interview support both microphone recording in CTM and uploading an existing audio file?",
+        "Open-source recorder requirement is already noted. Original bytes and the actual recorder/uploader remain recorded."
+      ],
+      [
+        "C21",
+        "Should interview recording support pause/resume and recovery of captured portions after an interruption?",
+        "Recovery must preserve the actual timeline and gaps, without inventing missing audio."
+      ],
+      [
+        "C22",
+        "Should the no-fixed-duration/file-size-cap rule for council testimony also apply to these investigation interview recordings?",
+        "This extends the testimony exception to interview recordings. Ordinary applicant audio attachments would retain their existing limit."
+      ],
+      [
+        "C23",
+        "Should the interviewer be able to mark the current template question while recording so transcript segments can link to it?",
+        "Markers guide navigation; they do not establish that every spoken statement is an answer to that question."
+      ]
+    ]
+  ],
+  [
+    "transcription",
+    "Transcription & translation",
+    "Keep generated text separate from reviewed facts.",
+    [
+      [
+        "C24",
+        "Should saving an interview recording automatically queue transcription through the approved-for-interviews AI API?",
+        "Testimony AI processing is already requested; this question explicitly extends external audio processing to case-owner interviews. Provider selection comes later."
+      ],
+      [
+        "C25",
+        "Should interview transcripts use the same language behavior as testimony: original transcript, English/Arabic translation, and all three versions for mixed speech?",
+        "Include timestamps and speaker labels; preserve the source recording and original AI output."
+      ],
+      [
+        "C26",
+        "Should AI suggest which transcript passages answer each template question, for the assigned member to review?",
+        "Suggestions never become verified interview answers automatically and must link back to timestamped source audio."
+      ],
+      [
+        "C27",
+        "Should the assigned member review and correct generated interview text before other council members can read it?",
+        "Use Other if admin/secretary should review instead or also. Every correction retains author/time and earlier versions."
+      ],
+      [
+        "C28",
+        "Should manually typed interview answers remain separate from the AI transcript even after review?",
+        "This avoids presenting edited summaries as verbatim testimony; both can reference the original audio."
+      ]
+    ]
+  ],
+  [
+    "access",
+    "Access, history & case use",
+    "Who sees working and completed interview material.",
+    [
+      [
+        "C29",
+        "Should unfinished interview records be visible only to the assigned member, admin and secretary?",
+        "Use Other if all council should see them immediately or if drafts should be author-only. Applicant drafts remain governed separately."
+      ],
+      [
+        "C30",
+        "Should completed interviews, audio and reviewed transcripts be visible to all authorized council members?",
+        "No applicant access is inferred. Use Other to specify a narrower audience."
+      ],
+      [
+        "C31",
+        "Should interview records, recordings and transcripts remain council-only, with any applicant-facing request sent through normal case messages?",
+        "This keeps internal investigation material separate from the applicant’s own form history."
+      ],
+      [
+        "C32",
+        "Should the original interviewer be the only person able to revise their completed interview narrative while the case is open?",
+        "Use Other to allow admin/secretary corrections or the newly assigned member. Preserve every version; closure freezes substantive source records."
+      ],
+      [
+        "C33",
+        "After reassignment, should the new assigned member add follow-up interviews rather than rewrite the earlier interviewer’s narrative?",
+        "Earlier authorship and recordings remain intact; they may be read under the approved council scope."
+      ],
+      [
+        "C34",
+        "Should the assigned member choose reviewed interview findings for the case-hearing briefing instead of automatically sharing the entire transcript?",
+        "Council source material remains accessible under its permission rules. No automatic decree content or applicant disclosure is implied."
+      ]
+    ]
+  ]
+];
+const questions = sections.flatMap(([sectionId, section, , rows]) => rows.map(([id,question,context]) => ({id,sectionId,section,question,context})));
+const byId = new Map(questions.map(q => [q.id,q]));
+let state = {answers:{},generalNotes:''};
+let storageAvailable = true;
+let saveTimer;
+const el = id => document.getElementById(id);
+function textNode(tag,text,className){const n=document.createElement(tag);n.textContent=text;if(className)n.className=className;return n;}
+function validAnswer(value){return value==='yes'||value==='no'||value==='other'||value===null;}
+function normalize(input){
+ if(!input||input.questionnaireVersion!==VERSION||!Array.isArray(input.answers))throw new Error('Choose an answer file exported by this version of the CTM questionnaire.');
+ const next={answers:{},generalNotes:typeof input.generalNotes==='string'?input.generalNotes:''};
+ const seen=new Set();
+ for(const row of input.answers){
+  if(!row||!byId.has(row.id)||seen.has(row.id)||!validAnswer(row.answer)||typeof row.clarification!=='string')throw new Error('The answer file contains an invalid or duplicate question response.');
+  seen.add(row.id);next.answers[row.id]={answer:row.answer,clarification:row.clarification};
+ }
+ return next;
+}
+function payload(){return {questionnaireVersion:VERSION,exportedAt:new Date().toISOString(),purpose:'Proposed CTM architecture decisions for review; not applied automatically',answers:questions.map(q=>({...q,answer:state.answers[q.id]?.answer??null,clarification:state.answers[q.id]?.clarification??''})),generalNotes:state.generalNotes};}
+function save(){
+ try{localStorage.setItem(STORAGE_KEY,JSON.stringify(payload()));storageAvailable=true;}catch{storageAvailable=false;}
+ el('save-status').textContent=storageAvailable?'Progress saved in this browser':'Browser saving unavailable — download a copy';
+}
+function update(){
+ const answered=questions.filter(q=>state.answers[q.id]?.answer).length;
+ el('count').textContent=`${answered} of ${questions.length} answered`;
+ el('progress').max=questions.length;el('progress').value=answered;
+ for(const q of questions)document.getElementById(`question-${q.id}`).hidden=el('unanswered').checked&&Boolean(state.answers[q.id]?.answer);
+ for(const [sid,,,rows] of sections){
+  const n=rows.filter(([id])=>state.answers[id]?.answer).length;
+  el(`nav-${sid}`).textContent=`${sections.find(s=>s[0]===sid)[1]} · ${n}/${rows.length}`;
+ }
+}
+function changed(id,key,value){state.answers[id]??={answer:null,clarification:''};state.answers[id][key]=value;update();clearTimeout(saveTimer);saveTimer=setTimeout(save,250);}
+function render(){
+ el('sections').replaceChildren();el('questions').replaceChildren();
+ for(const [sid,title,description,rows] of sections){
+  const link=textNode('a',title);link.href=`#section-${sid}`;link.id=`nav-${sid}`;el('sections').append(link);
+  const section=document.createElement('section');section.id=`section-${sid}`;section.className='question-section';
+  const heading=document.createElement('div');heading.className='section-head';heading.append(textNode('h2',title),textNode('p',description));section.append(heading);
+  for(const [id,question,context] of rows){
+   const field=document.createElement('fieldset');field.id=`question-${id}`;
+   const legend=document.createElement('legend');legend.append(textNode('span',id,'qid'),document.createTextNode(question));field.append(legend);
+   const detail=textNode('p',context,'detail');detail.id=`context-${id}`;field.append(detail);field.setAttribute('aria-describedby',detail.id);
+   const choices=document.createElement('div');choices.className='choices';
+   for(const value of ['yes','no','other']){const label=document.createElement('label');label.className='choice';const radio=document.createElement('input');radio.type='radio';radio.name=id;radio.value=value;radio.checked=state.answers[id]?.answer===value;radio.addEventListener('change',()=>{changed(id,'answer',value);if(value==='other')document.getElementById(`note-${id}`).focus();});label.append(radio,document.createTextNode(value==='yes'?'Yes':value==='no'?'No':'Other'));choices.append(label);}
+   const clear=textNode('button','Leave unanswered','clear-answer');clear.type='button';clear.setAttribute('aria-label',`Clear answer ${id}`);clear.addEventListener('click',()=>{field.querySelectorAll('input').forEach(r=>r.checked=false);changed(id,'answer',null);});choices.append(clear);field.append(choices);
+   const label=textNode('label','Other / clarification','note-label');label.htmlFor=`note-${id}`;
+   const note=document.createElement('textarea');note.id=label.htmlFor;note.rows=2;note.value=state.answers[id]?.clarification??'';note.placeholder='For Other, describe your preferred workflow here. You can also clarify Yes or No.';note.addEventListener('input',()=>changed(id,'clarification',note.value));field.append(label,note);section.append(field);
+  }
+  el('questions').append(section);
+ }
+ el('general-notes').value=state.generalNotes;update();
+}
+function chatText(){
+ const lines=[REVIEW_TITLE,`Version: ${VERSION}`,'Answers are for reconciliation; clarifications qualify Yes/No/Other choices.',''];
+ for(const q of questions){const a=state.answers[q.id];if(!a?.answer&&!a?.clarification)continue;lines.push(`${q.id} — ${a.answer?a.answer.toUpperCase():'UNDECIDED'}`,q.question);if(a.clarification)lines.push(`Clarification: ${a.clarification}`);lines.push('');}
+ if(state.generalNotes)lines.push('GENERAL NOTES',state.generalNotes);
+ lines.push(`Answered: ${questions.filter(q=>state.answers[q.id]?.answer).length}/${questions.length}. Unanswered questions remain unresolved.`);return lines.join('\n');
+}
+try{const stored=localStorage.getItem(STORAGE_KEY);if(stored)state=normalize(JSON.parse(stored));}catch{storageAvailable=false;}
+render();
+el('save-status').textContent=storageAvailable?'Ready — changes save locally':'Browser saving unavailable — download a copy';
+el('unanswered').addEventListener('change',update);
+el('general-notes').addEventListener('input',()=>{state.generalNotes=el('general-notes').value;clearTimeout(saveTimer);saveTimer=setTimeout(save,250);});
+el('download').addEventListener('click',()=>{
+ save();const blob=new Blob([JSON.stringify(payload(),null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`CTM-${REVIEW_SLUG}-answers-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);el('action-status').textContent='Answer download requested. Attach the JSON file to our conversation when ready.';
+});
+el('copy').addEventListener('click',async()=>{
+ const value=chatText();el('transfer-text').value=value;
+ try{await navigator.clipboard.writeText(value);el('action-status').textContent='Copied. Paste the answers into our conversation.';}
+ catch{el('transfer-text').focus();el('transfer-text').select();el('action-status').textContent='Automatic copying is unavailable. The answer text is selected below; press Ctrl+C (or Command+C) and paste it into our conversation.';}
+});
+el('import').addEventListener('click',()=>el('import-file').click());
+el('import-file').addEventListener('change',async()=>{
+ const file=el('import-file').files[0];if(!file)return;
+ try{if(file.size>5_000_000)throw new Error('Please choose an exported answer JSON file smaller than 5 MB.');const next=normalize(JSON.parse(await file.text()));if((Object.keys(state.answers).length||state.generalNotes)&&!window.confirm('Replace this worksheet’s current answers with the saved file?'))return;state=next;render();save();el('action-status').textContent='Saved answers loaded. You can continue editing.';}
+ catch(error){el('action-status').textContent=`Answers were not changed. ${error.message}`;}
+ finally{el('import-file').value='';}
+});
+el('reset').addEventListener('click',()=>{if(!window.confirm('Clear all answers and notes in this browser? Download a copy first if you want to keep them.'))return;clearTimeout(saveTimer);state={answers:{},generalNotes:''};el('transfer-text').value='';render();save();el('action-status').textContent='Worksheet cleared.';});
+el('print').addEventListener('click',()=>{el('unanswered').checked=false;update();window.print();});
+window.addEventListener('pagehide',save);
+
+</script>
+</body>
+</html>

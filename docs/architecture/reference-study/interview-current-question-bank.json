@@ -1,0 +1,2819 @@
+{
+  "version": "ctm-topic-group-planner-v3-reconciled",
+  "hierarchy": [
+    "Topic group",
+    "Question categories",
+    "Questions"
+  ],
+  "topicGroups": [
+    {
+      "id": "TG01",
+      "title": "Common applicant intake",
+      "categories": [],
+      "note": "Organization preview only; this does not add interview questions to the applicant application."
+    },
+    {
+      "id": "TG02",
+      "title": "Common guided interview",
+      "categories": [
+        "QC04",
+        "QC05",
+        "QC06",
+        "QC18",
+        "QC08",
+        "QC09",
+        "QC10",
+        "QC11",
+        "QC12",
+        "QC13",
+        "QC14",
+        "QC15",
+        "QC16"
+      ],
+      "note": ""
+    },
+    {
+      "id": "TG03",
+      "title": "Annulment-related factual inquiry",
+      "categories": [
+        "QC04",
+        "QC05",
+        "QC06",
+        "QC18",
+        "QC08",
+        "QC09",
+        "QC10"
+      ],
+      "note": "An organizational grouping; questions do not determine a canonical outcome."
+    },
+    {
+      "id": "TG04",
+      "title": "Divorce/dissolution grounds",
+      "categories": [
+        "QC10",
+        "QC11",
+        "QC12",
+        "QC13",
+        "QC15"
+      ],
+      "note": ""
+    },
+    {
+      "id": "TG05",
+      "title": "Multiple-ceremony supplement",
+      "categories": [],
+      "note": "The separate multiple-ceremony question supplement was not adopted. Use existing application confirmation where relevant."
+    },
+    {
+      "id": "TG06",
+      "title": "Prior-marriage factual supplement",
+      "categories": [],
+      "note": "The full prior-marriage interview supplement was not adopted. Use existing application confirmation where relevant."
+    },
+    {
+      "id": "TG07",
+      "title": "Appeal new-information supplement",
+      "categories": [],
+      "note": "The existing appeal process applies. No separate appeal question module has been added."
+    },
+    {
+      "id": "TG08",
+      "title": "Optional priest report",
+      "categories": [],
+      "note": "Council-requested priest testimony remains a separate free-form written or recorded report identifying the marriage and person concerned. It is not a mandatory guided interview."
+    }
+  ],
+  "categories": [
+    {
+      "id": "QC04",
+      "title": "Courtship / engagement",
+      "intro": "",
+      "questions": [
+        {
+          "id": "BKG-02",
+          "text": "How did your relationship develop from first meeting through engagement? Give a brief outline of the main events; describe issues covered in later sections there rather than repeating them here.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "BKG-03",
+          "text": "Were there any other circumstances during courtship or engagement relevant to your request that are not covered in the later sections? If so, describe them.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC05",
+      "title": "Decision to marry",
+      "intro": "",
+      "questions": [
+        {
+          "id": "DEC-01",
+          "text": "How did the decision to marry arise, and what were your reasons at that time?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "DEC-02",
+          "text": "Before marriage, what did you understand your responsibilities in married life would be? Describe any relevant expectations or agreements not covered in the questions about children, intimate life or finances.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "DEC-03",
+          "text": "Apart from matters already discussed or addressed in the questions about children, intimate life or finances, was any other specific promise, agreement or condition important to your decision to marry? What was said, by whom and when, and how did the other person respond? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "DEC-04",
+          "text": "Apart from matters already discussed, did you later learn anything that differed from your understanding when you decided to marry? Briefly identify the difference and when you learned it. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "If the response involves alleged false information or concealment, obtain the remaining details under CON. If another topic-specific section applies, obtain the remaining details there.",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "PRS-01",
+          "text": "Did any pressure, threat or other circumstance affect your decision to marry?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "PRS-02",
+          "text": "If so, identify the source and describe what happened and when. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "PRS-03",
+          "text": "How did that pressure, threat or circumstance affect your decision, and what did you communicate about it at the time?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "PRS-04",
+          "text": "What information or evidence from that time supports your account? Identify anything material that remains uncertain.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "DBT-01",
+          "text": "What serious doubts or concerns, if any, did you have before the wedding? If already described, identify them without repeating the account.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "DBT-02",
+          "text": "Did you discuss those doubts or concerns? Identify what you said, to whom and what response or action followed, to the extent not already explained.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "DBT-03",
+          "text": "Given those doubts or concerns, what led you to proceed with the wedding at that time?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC06",
+      "title": "Misrepresentation or concealment",
+      "intro": "Interviewer note: This section includes alleged false or withheld financial information. For separate allegations, repeat only the questions needed to obtain a distinct account.",
+      "questions": [
+        {
+          "id": "CON-01",
+          "text": "Before marriage, do you believe someone gave you false information or withheld an important fact, including financial information? If so, identify the fact and the person involved.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "CON-02",
+          "text": "What specifically were you told, by whom and when? If the fact was not disclosed, what, if anything, had been asked or discussed about that subject? Include any relevant financial statement or agreement. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "CON-03",
+          "text": "What did you believe about that matter when deciding to marry, and why was it important to your decision?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "CON-04",
+          "text": "What did you later learn that differed from your earlier understanding, and when and how did you learn it? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "CON-05",
+          "text": "What evidence supports this account, and what remains uncertain or disputed? Identify each supporting item and explain which fact it supports, without re-identifying items already recorded.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC08",
+      "title": "Wedding-day circumstances",
+      "intro": "",
+      "questions": [
+        {
+          "id": "WED-01",
+          "text": "Apart from circumstances already described, did anything immediately before or during the wedding affect your willingness or ability to proceed?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "WED-02",
+          "text": "If so, describe what happened, when it occurred and what you remember directly. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "WED-03",
+          "text": "Was the circumstance discussed at the time? If so, what was said and by whom? What other information supports your account?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC09",
+      "title": "Intimate matters",
+      "intro": "",
+      "questions": [
+        {
+          "id": "INT-01",
+          "text": "Is there a specific intimate marital difficulty you wish to explain? If so, describe it. When did it begin, if known, and when did you first become aware of it? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "INT-03",
+          "text": "How does this specific difficulty relate to your request? Include only additional facts needed to explain that connection.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC10",
+      "title": "When problems began",
+      "intro": "Interviewer note: Use this section as a timeline overview. Do not repeat detailed accounts obtained elsewhere.",
+      "questions": [
+        {
+          "id": "TIM-01",
+          "text": "In outline, when did the main difficulties first appear, and which were evident before marriage? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "TIM-02",
+          "text": "Are there any important differences between when those difficulties occurred and when you became aware of them that have not already been explained? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC11",
+      "title": "Infidelity",
+      "intro": "",
+      "questions": [
+        {
+          "id": "INF-01",
+          "text": "Describe the affair or adultery you are reporting, including the specific actions or communications. Who was involved, and when and where did it happen, if known? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "INF-02",
+          "text": "When and how did you first learn about the reported affair or adultery? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "INF-03",
+          "text": "Which parts of your account did you personally experience or observe, which came from another source, and which are your interpretation or suspicion? Clarify only what is not already clear.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "INF-04",
+          "text": "What specific evidence supports your account? Identify each supporting item and explain which fact it supports, using existing references for items already recorded.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC12",
+      "title": "Abuse / addiction",
+      "intro": "",
+      "questions": [
+        {
+          "id": "ABU-01",
+          "text": "Describe the abuse you are reporting. What happened, who was involved, and when and where did it happen? Was it a single incident or repeated behavior? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "ABU-02",
+          "text": "Which parts of your account did you experience or observe directly, and which did you learn from someone else? Clarify only what is not already clear.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "ABU-03",
+          "text": "What relevant effect did the reported abuse have on married life or the decision to separate?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "ABU-04",
+          "text": "Are there existing court orders, reports or other evidence you wish to identify? Explain which fact each item supports, using existing references for items already recorded.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "ADD-01",
+          "text": "Describe the behavior or pattern you are referring to as an addiction, rather than only giving it a label.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "ADD-02",
+          "text": "When did that behavior or pattern begin, if known, and how did it develop? When and how did you first become aware of it? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "ADD-03",
+          "text": "How did it affect married life?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "ADD-04",
+          "text": "What help was sought, if known? What additional observations or evidence support your account that have not already been described?",
+          "interviewerNote": "If relevant professional evaluation or treatment is identified, obtain any missing details under MED rather than repeating the account here.",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC13",
+      "title": "Religious affiliation and change",
+      "intro": "",
+      "questions": [
+        {
+          "id": "FTH-01",
+          "text": "What was each party’s religious affiliation before you knew each other, to your knowledge?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "FTH-02",
+          "text": "What change in your or your spouse’s church, faith or religious practice relates to your request? When did it happen? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "FTH-03",
+          "text": "Which parts of your account of that change do you know directly, and which were you told by someone else? Clarify only what is not already clear.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "FTH-04",
+          "text": "How did the change affect married life, and what information supports that account?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC14",
+      "title": "Finances",
+      "intro": "Interviewer note: Alleged false or withheld financial information belongs under CON. Use this section for financial decisions or disagreements, without repeating an account already obtained there.",
+      "questions": [
+        {
+          "id": "MON-03",
+          "text": "Describe a specific financial decision or disagreement relevant to this petition that has not already been covered. Who was involved, when did it occur and what happened? Identify any supporting information and anything material that remains uncertain or disputed. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC15",
+      "title": "Temporary and final separation",
+      "intro": "",
+      "questions": [
+        {
+          "id": "SEP-01",
+          "text": "Were there relevant temporary separations before the final one? If so, identify each period briefly. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "ABD-01",
+          "text": "When did the final separation or relevant absence begin, and what circumstances did you personally experience or observe? For any temporary separation identified above, describe only additional circumstances relevant to your request. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "ABD-02",
+          "text": "What relevant communication, contact or support continued during the separation or absence, if any?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "ABD-03",
+          "text": "Apart from the contact or support already described, what attempts were made to re-establish communication after the separation or absence, and what happened?",
+          "interviewerNote": "Obtain details of attempts specifically aimed at restoring the relationship under REC.",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC16",
+      "title": "Reconciliation efforts",
+      "intro": "",
+      "questions": [
+        {
+          "id": "REC-01",
+          "text": "What relevant attempts were made to reconcile or restore the relationship, whether before or after separation? Who participated, when did the attempts occur and what was the outcome? Do not repeat details already given. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC20",
+      "title": "Relevant professional evaluation or help",
+      "intro": "",
+      "questions": [
+        {
+          "id": "MED-01",
+          "text": "To your knowledge, did you or your spouse receive a medical, psychological or psychiatric evaluation, treatment or other professional help directly relevant to the issue being discussed? It is acceptable not to know.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "MED-02",
+          "text": "If so, identify the type of evaluation, treatment or help, when it occurred and its relevance to the marriage. Provide only details not already recorded elsewhere. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "MED-03",
+          "text": "Which parts of your account of that evaluation, treatment or help do you personally know, which were you told by someone else, and what is unknown to you? Clarify only what is not already clear.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    },
+    {
+      "id": "QC18",
+      "title": "Discussions before marriage and related later developments",
+      "intro": "",
+      "questions": [
+        {
+          "id": "CHD-01",
+          "text": "Before marriage, what did you discuss or agree about having children?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "INT-02",
+          "text": "Before marriage, what had you and your spouse discussed or understood about intimate married life?",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "MON-01",
+          "text": "Before marriage, what did you discuss or agree about work, income, debts and financial responsibilities?",
+          "interviewerNote": "If the response identifies alleged false or withheld financial information, obtain the remaining details under CON.",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "CHD-02",
+          "text": "Were there any differences about whether or when to have children that have not already been described? If so, what did each of you communicate, and when? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "CHD-03",
+          "text": "After marriage, did either person’s plans about children change, or did you learn that an earlier plan differed from what you had understood? Explain which occurred, when and how it became known, and what was communicated. Do not repeat details already given. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+          "interviewerNote": "If the response involves alleged false information or concealment, obtain any missing details under CON.",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "CHD-04",
+          "text": "If relevant to this petition, describe a specific parenting responsibility or disagreement and what happened.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        },
+        {
+          "id": "CHD-05",
+          "text": "What facts or documents support the account about children or parenting? Identify only supporting information not already recorded, or explain any additional fact an existing item supports. Do not include unrelated private information about children.",
+          "interviewerNote": "",
+          "pending": false,
+          "reviewDecision": "user-supplied-revision"
+        }
+      ]
+    }
+  ],
+  "fixed": [
+    {
+      "id": "OPEN-01",
+      "text": "Please state your full name and your spouse’s full name.",
+      "interviewerNote": "",
+      "pending": false,
+      "reviewDecision": "user-supplied-revision"
+    },
+    {
+      "id": "BASIS-01",
+      "text": "What are you asking the council to decide? Briefly identify the main facts supporting your request; the details will be addressed in the relevant sections.",
+      "interviewerNote": "",
+      "pending": false,
+      "reviewDecision": "user-supplied-revision"
+    }
+  ],
+  "guidance": {
+    "OPEN-01": {
+      "purpose": "Keep identity, source attribution and the original record intact.",
+      "when": "Repeat for every newly started recording; this is not a proposal for additional identity documents.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "",
+      "disposition": "",
+      "clarificationNote": ""
+    },
+    "OPEN-02": {
+      "purpose": "Keep identity, source attribution and the original record intact.",
+      "when": "Confirm applicable notice/authorization arrangements institutionally; this wording is not a universal compliance determination.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "",
+      "disposition": "",
+      "clarificationNote": ""
+    },
+    "BASIS-01": {
+      "purpose": "Keep identity, source attribution and the original record intact.",
+      "when": "Record the request and offered facts; do not coach the applicant to select a ground.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "",
+      "disposition": "",
+      "clarificationNote": ""
+    },
+    "BASIS-02": {
+      "purpose": "Keep identity, source attribution and the original record intact.",
+      "when": "Preserve the original and separately attribute any correction, confirmation or clarification.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "",
+      "disposition": "",
+      "clarificationNote": ""
+    },
+    "CLOSE-01": {
+      "purpose": "Keep identity, source attribution and the original record intact.",
+      "when": "Close within relevance; preserve corrections without silently rewriting earlier records.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "",
+      "disposition": "",
+      "clarificationNote": ""
+    },
+    "DEC-01": {
+      "purpose": "The decision process and the applicant’s reasons at the time.",
+      "when": "Use where the formation decision is relevant; skip the probe if reasons were already given.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "How did the decision to marry arise?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "DEC-02": {
+      "purpose": "Personal understanding, actual discussion and expressed agreement as distinct facts.",
+      "when": "Use in a relevant formation inquiry; ask only the components not already answered.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Before marriage, what did you understand your responsibilities in married life would be?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "DEC-03": {
+      "purpose": "The statement’s content, speaker, timing and any expressed response.",
+      "when": "Only pursue an identified important statement; skip response clarification if DEC-02 already covers it.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Was a specific promise, agreement or condition important to your decision?",
+      "disposition": "Retain with conditional clarification.",
+      "clarificationNote": ""
+    },
+    "DEC-04": {
+      "purpose": "The asserted discrepancy and the sequence of later knowledge.",
+      "when": "Use only if a difference is identified; reuse CON and EVD where already answered.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Did what you understood differ from what you later learned?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "CHD-01": {
+      "purpose": "Actual discussions and any reported agreement about having children.",
+      "when": "Use where this subject is relevant; do not require reproductive details.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Before marriage, what did you discuss or agree about having children?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "CHD-02": {
+      "purpose": "Whether a difference was expressed and what was said.",
+      "when": "Ask the probe if a difference is identified and its communication is unclear.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Were there differences about whether or when to have children?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "CHD-03": {
+      "purpose": "Actual change versus later discovery of an earlier position, with timing and source.",
+      "when": "Use the branch supported by the account; ask both only if both sequences are alleged.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Did those expectations change later, or did you later learn something different about an earlier expectation?",
+      "disposition": "Refine and branch.",
+      "clarificationNote": ""
+    },
+    "CHD-04": {
+      "purpose": "A particular relevant parenting event, not a parenting-quality assessment.",
+      "when": "Activate only for an identified connection to the petition.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "If relevant to this petition, describe a specific parenting responsibility or disagreement and what happened.",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "CHD-05": {
+      "purpose": "The identified support and its relevant scope.",
+      "when": "Skip repetition where the same support is already recorded in EVD.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What facts or documents support this account? Do not include unrelated private information about children.",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "MON-01": {
+      "purpose": "What was actually discussed before marriage.",
+      "when": "Use for a relevant financial issue; do not expand into a full audit.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Before marriage, what did you discuss about work, income, debts and financial responsibilities?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "MON-02": {
+      "purpose": "The specific alleged omission or representation, without assuming deliberate deception.",
+      "when": "Select the relevant branch; skip details already recorded in CON.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Was there an important financial fact or agreement you say was not disclosed or was represented differently?",
+      "disposition": "Retain with conditional branches.",
+      "clarificationNote": ""
+    },
+    "MON-03": {
+      "purpose": "The particular event, participants and timing.",
+      "when": "Ask only missing components of an identified relevant event.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Describe a specific financial decision or disagreement relevant to this petition.",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "MON-04": {
+      "purpose": "Contemporaneous knowledge versus later information and its source.",
+      "when": "Relate the answer to the financial event at issue; reuse TIM or CON.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What did you know at that time?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "MON-05": {
+      "purpose": "Item-to-assertion support and relevant limitations.",
+      "when": "Use EVD for already-recorded provenance and version details.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Which evidence supports the particular fact, and what is uncertain or disputed?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "INT-01": {
+      "purpose": "The difficulty and the separate occurrence/awareness sequence.",
+      "when": "Proceed only within the difficulty the applicant identifies; do not infer an affirmative answer.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Is there a specific intimate marital difficulty you wish to explain?",
+      "disposition": "Break down without expansion.",
+      "clarificationNote": ""
+    },
+    "INT-02": {
+      "purpose": "Earlier understanding and the claimed later difference.",
+      "when": "Use only if directly relevant; reuse DEC or CON where already covered.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "If relevant, what had been discussed or understood before marriage?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "INT-03": {
+      "purpose": "The applicant’s asserted connection between the specific difficulty and petition.",
+      "when": "Do not invite unrelated intimate information.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "How does this specific difficulty relate to your request? Include only the facts you wish to explain.",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "PRS-01": {
+      "purpose": "Whether the applicant identifies a relevant influence and what it was.",
+      "when": "If none is identified, skip PRS-02–04 unless an existing statement needs clarification.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Was there any pressure, threat or other circumstance that you say affected your decision to marry?",
+      "disposition": "Refine to remove presupposition.",
+      "clarificationNote": ""
+    },
+    "PRS-02": {
+      "purpose": "Concrete conduct, source and timing.",
+      "when": "Only for an identified relevant circumstance.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What specifically happened?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "PRS-03": {
+      "purpose": "Described decision effect and actual contemporaneous communication.",
+      "when": "Do not assume that an identified circumstance affected the decision in a particular way.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "How did it affect your decision?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "PRS-04": {
+      "purpose": "Knowledge basis and identified support.",
+      "when": "Reuse EVD; do not impose corroboration as a universal requirement.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What do you know directly?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "DBT-01": {
+      "purpose": "Any contemporaneous serious reservation identified by the applicant.",
+      "when": "A negative or unknown answer does not authorize speculative probing.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What serious reservations, if any, did you have before the wedding?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "DBT-02": {
+      "purpose": "Discussion content, recipient and response.",
+      "when": "Ask only unanswered components if discussion occurred.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Did you discuss those reservations?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "DBT-03": {
+      "purpose": "Reasons and knowledge at the time, not later retrospective judgment.",
+      "when": "Reuse DEC where the same reasons were already recorded.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Why did you proceed at that time?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "WED-01": {
+      "purpose": "Whether a particular relevant event is identified.",
+      "when": "If none, skip event-specific probes.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Did a specific event immediately before or at the ceremony affect willingness or ability to proceed?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "WED-02": {
+      "purpose": "Event content, timing and direct recollection.",
+      "when": "Only for the event identified under WED-01.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Describe what happened.",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "WED-03": {
+      "purpose": "Contemporaneous words/actions and supporting information.",
+      "when": "Skip response or evidence components already covered by WED-02 or EVD.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Was anything said or done at the time in response to this event?",
+      "disposition": "Refine while preserving support.",
+      "clarificationNote": ""
+    },
+    "CON-01": {
+      "purpose": "The particular alleged discrepancy or omission.",
+      "when": "Use only for an identified allegation, not a search for every undisclosed fact.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What important fact do you say was represented differently or not disclosed before marriage?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "CON-02": {
+      "purpose": "The actual representation and its context, or the relevant discussion where no statement is alleged.",
+      "when": "Do not force an answer to what was said where the account concerns only nondisclosure.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What were you told?",
+      "disposition": "Break down with omission branch.",
+      "clarificationNote": ""
+    },
+    "CON-03": {
+      "purpose": "Contemporaneous belief and stated importance.",
+      "when": "Reuse DEC; avoid replacing historical inquiry with a hypothetical present-day decision.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What did you believe when deciding to marry?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "CON-04": {
+      "purpose": "Discovery timing and source.",
+      "when": "Only if a difference is identified; preserve unknown occurrence dates.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "When did you learn the difference?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "CON-05": {
+      "purpose": "Support for each component rather than a global concealment label.",
+      "when": "Reuse EVD for exact items and limitations.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What evidence supports each part of this sequence?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "INF-01": {
+      "purpose": "The conduct alleged rather than a label alone.",
+      "when": "Let the initial account proceed before asking the probe; use the detailed dossier only for unresolved material facts.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Please describe, in your own words, the conduct you allege and its relevance to this petition.",
+      "disposition": "Refine for an open factual account.",
+      "clarificationNote": ""
+    },
+    "INF-02": {
+      "purpose": "Alleged occurrence separately from discovery.",
+      "when": "Accept unknown occurrence dates; reuse TIM for exact/approximate distinctions.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "When do you say the alleged conduct occurred?",
+      "disposition": "Refine and split.",
+      "clarificationNote": ""
+    },
+    "INF-03": {
+      "purpose": "Direct, reported and inferred knowledge.",
+      "when": "Ask only unresolved distinctions; a lack of direct observation does not mean no personal knowledge of a statement or document.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What did you experience or observe directly?",
+      "disposition": "Break down and clarify.",
+      "clarificationNote": ""
+    },
+    "INF-04": {
+      "purpose": "Specific support linked to particular assertions.",
+      "when": "Reuse EVD; do not ask for all devices, accounts or communications.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What specific evidence supports your account?",
+      "disposition": "Retain with conditional clarification.",
+      "clarificationNote": ""
+    },
+    "ABD-01": {
+      "purpose": "Beginning and directly known circumstances.",
+      "when": "Reuse SEP/TIM for an already-recorded period.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "When did the separation or absence begin?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "ABD-02": {
+      "purpose": "What continued, not merely what ceased.",
+      "when": "Permit none, unknown or a qualified account without inferred motives.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What relevant communication, contact or support continued, if any?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "ABD-03": {
+      "purpose": "Actual attempts and observed outcomes.",
+      "when": "Reuse REC where already recorded; no advice or requirement to make further contact.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What attempts were made to communicate or reconcile?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "ABD-04": {
+      "purpose": "Certainty and basis for material dates/reasons.",
+      "when": "Relate each answer to an identified event or explanation.",
+      "prompts": [
+        "What supports the particular date or stated reason?"
+      ],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Which dates or reasons are known, estimated or unknown?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "ABU-01": {
+      "purpose": "The relevant conduct or pattern the applicant identifies.",
+      "when": "Stay within the petition issue; do not compel a full biography.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Describe the relevant incident or pattern you wish the Council to consider.",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "ABU-02": {
+      "purpose": "Direct experience, timing and repetition.",
+      "when": "Only ask missing components; no requirement to date every incident exactly.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What did you experience or observe directly?",
+      "disposition": "Break down preserving all components.",
+      "clarificationNote": ""
+    },
+    "ABU-03": {
+      "purpose": "Concrete described effects relevant to the petition.",
+      "when": "Clarify an identifiable event/change only if the answer is general.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What relevant effect did it have on married life or the decision to separate?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "ABU-04": {
+      "purpose": "Existing relevant material and its actual nature.",
+      "when": "Do not imply records must exist or require a new report.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Are there existing court orders, reports or other evidence you wish to identify?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "FTH-01": {
+      "purpose": "Reported earlier affiliation with knowledge limits.",
+      "when": "Accept unknown information about the other party.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What was each party’s religious affiliation before you knew each other, to your knowledge?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "FTH-02": {
+      "purpose": "The particular stated change and timing.",
+      "when": "Do not substitute an attendance pattern for an established affiliation change.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What later change in affiliation or practice is relevant to this request?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "FTH-03": {
+      "purpose": "Direct and reported knowledge.",
+      "when": "Reuse EVD for source-chain clarification.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What do you know directly?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "FTH-04": {
+      "purpose": "Described concrete effect and support.",
+      "when": "Keep doctrinal conclusions for authorized institutional assessment.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "How did the stated change affect married life?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "ADD-01": {
+      "purpose": "Specific reported behavior.",
+      "when": "Do not convert this into a diagnostic screening checklist.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Describe the behavior relevant to this petition rather than only giving it a label.",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "ADD-02": {
+      "purpose": "Known onset versus first awareness and source.",
+      "when": "Accept unknown onset; do not use discovery as onset automatically.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "When did the behavior begin, if known?",
+      "disposition": "Refine and split.",
+      "clarificationNote": ""
+    },
+    "ADD-03": {
+      "purpose": "Relevant concrete events or changes attributed to the behavior.",
+      "when": "Clarify only if the claimed effect remains abstract.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "How did the behavior affect married life?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "ADD-04": {
+      "purpose": "Known help and support for the account.",
+      "when": "Use MED safeguards; no inference from lack of known treatment.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What help was sought, if known?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "BKG-01": {
+      "purpose": "An identified relevant earlier event.",
+      "when": "If no connection is identified, do not expand background questioning.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Is there a specific earlier experience directly connected to an issue in this petition?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "BKG-02": {
+      "purpose": "The event, asserted relevance and knowledge basis.",
+      "when": "Avoid repeating a source account already recorded under EVD.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Explain the relevant event and its connection to the issue.",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "BKG-03": {
+      "purpose": "Basis and limits of the claimed connection.",
+      "when": "Do not equate temporal sequence with demonstrated causation.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What information supports the connection?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "TIM-01": {
+      "purpose": "First appearance and its relationship to the marriage date.",
+      "when": "Ask the second part only if the sequence is unresolved.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "When did the relevant difficulties first appear?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "TIM-02": {
+      "purpose": "Contemporaneous knowledge versus later information.",
+      "when": "Attach the account to the relevant event, not a generic undated narrative.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What did you know at the time?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "TIM-03": {
+      "purpose": "Date certainty for identified material events.",
+      "when": "Reuse dates already clarified; do not require an exact day where none is known.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Which important dates are exact, approximate or unknown? Relate each date to a specific event.",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "SEP-01": {
+      "purpose": "Whether relevant earlier periods existed.",
+      "when": "If none, proceed to the final separation where relevant.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Were there relevant temporary separations before the final one?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "SEP-02": {
+      "purpose": "Dates, circumstances, actual resumption and its reported cause.",
+      "when": "Repeat only for relevant periods; ask reunion detail only if residence resumed.",
+      "prompts": [
+        "Did you resume living together afterward?",
+        "If yes: what led to resuming life together?"
+      ],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "For each relevant period, describe the approximate beginning and end dates and the circumstances that led to separation.",
+      "disposition": "Refine and break down.",
+      "clarificationNote": ""
+    },
+    "SEP-03": {
+      "purpose": "The final separation distinguished from prior periods.",
+      "when": "Ask only unresolved components; preserve uncertain final dates.",
+      "prompts": [
+        "When did it occur?",
+        "What were the circumstances?",
+        "What do you know directly?"
+      ],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Describe the final separation separately.",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "SEP-04": {
+      "purpose": "Support and limits for the separation account.",
+      "when": "Reuse TIM/EVD instead of a new application or separation-case module.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Identify supporting information and uncertain dates without treating separation as a new case.",
+      "disposition": "Retain instruction.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "REC-01": {
+      "purpose": "Actual relevant attempts.",
+      "when": "Do not advise or require another attempt.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What relevant attempts at reconciliation were made?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "REC-02": {
+      "purpose": "Attempt content, participants and timing.",
+      "when": "Ask only missing components of the same attempt.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What happened in that attempt?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "REC-03": {
+      "purpose": "Observed outcome versus reported outcome.",
+      "when": "No inference that attendance means reconciliation succeeded.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Distinguish the outcome you observed from information you received from someone else.",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "REC-04": {
+      "purpose": "Unresolved facts and identified existing records.",
+      "when": "Do not request confessional content or create a general priest interview.",
+      "prompts": [
+        "What existing records are relevant?"
+      ],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What information remains outstanding?",
+      "disposition": "Break down.",
+      "clarificationNote": ""
+    },
+    "EVD-01": {
+      "purpose": "The asserted item-to-fact relationship.",
+      "when": "Identify the item and assertion; avoid a global claim that evidence proves the entire account.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Which specific fact does each item support?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "EVD-02": {
+      "purpose": "Origin/acquisition and the form/version actually supplied.",
+      "when": "Ask version detail only if unclear; accept unknown and do not demand technical authentication.",
+      "prompts": [
+        "Is the item supplied complete, or is it a copy, extract, transcription, translation or another version?",
+        "Describe any changes you know of.",
+        "For each date mentioned here, say whether it is exact, approximate or unknown."
+      ],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Who created this item, when, and how did you obtain it, if known?",
+      "disposition": "Refine and break down.",
+      "clarificationNote": ""
+    },
+    "EVD-03": {
+      "purpose": "Knowledge basis for the particular assertion.",
+      "when": "Clarify the original source versus intermediaries only where material.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What did you personally experience, observe or learn from another source?",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "EVD-04": {
+      "purpose": "Limits, contrary information and uncertainty within disclosure boundaries.",
+      "when": "Do not expose private submissions to create a contradiction question.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "What limitations, conflicting information or uncertainty should the Council know? Do not disclose the other applicant’s private submission.",
+      "disposition": "Retain.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "MED-01": {
+      "purpose": "Known relevant evaluation/help, including evaluation without treatment.",
+      "when": "Activate only for a specific relevant issue; no general mental-health screening.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "To your knowledge, have you or your spouse received a medical, psychological or psychiatric evaluation, treatment or other professional help directly relevant to the issue being discussed? It is acceptable not to know.",
+      "disposition": "Replace pending wording.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    },
+    "MED-02": {
+      "purpose": "Relevant help, timing and asserted connection.",
+      "when": "Do not seek unrelated clinical detail; disclosure/testing remains separately authorized.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "If so, describe only the relevant evaluation, treatment or help.",
+      "disposition": "Replace pending wording and break down.",
+      "clarificationNote": ""
+    },
+    "MED-03": {
+      "purpose": "Direct/report-based knowledge and unknown information.",
+      "when": "Do not repeat EVD if answered; no response authorizes records access.",
+      "prompts": [],
+      "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+      "recommended": "Which parts of this account do you know directly, which were reported to you, and what remains unknown?",
+      "disposition": "Replace pending wording; preserve safeguard separately.",
+      "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+    }
+  },
+  "wordingProposals": {
+    "OPEN-01": "Please state your full name and your spouse’s full name. Who is conducting this interview, and what is today’s date and the case number?",
+    "BASIS-01": "What are you asking the council to decide, and what facts support your request?",
+    "BASIS-02": "Is any information in your application incorrect or in need of clarification? If so, what needs to be corrected or explained?",
+    "DEC-02": "Before marriage, what did you understand your responsibilities in married life would be, and what had you and your spouse discussed about them?",
+    "DEC-04": "What did you learn later that differed from what you understood when you decided to marry? When and how did you learn it, and what information supports your account?",
+    "CHD-03": "Did your or your spouse’s plans about children change after marriage, or did you later discover something about your spouse’s earlier plans? What changed or became known, and when and how did you learn about it?",
+    "MON-02": "Before marriage, was any important financial information kept from you or described differently from what you later learned? What was the information, what were you told, and by whom?",
+    "MON-05": "What evidence supports your account of the financial matter, and what is still uncertain or disputed?",
+    "PRS-01": "Was there any pressure, threat or other circumstance that affected your decision to marry? If so, what happened?",
+    "PRS-04": "What did you personally experience or observe, and what evidence or information from that time supports your account?",
+    "DBT-01": "What serious doubts or concerns, if any, did you have before the wedding?",
+    "WED-01": "Did anything happen immediately before or during the wedding that affected your willingness or ability to go ahead with it? If so, what happened?",
+    "CON-01": "Before marriage, do you believe someone gave you false information or kept an important fact from you? What was the fact, who was involved, and what were you told or not told?",
+    "CON-05": "What evidence supports the events you have described, and what is still uncertain?",
+    "INF-01": "Describe the affair or adultery you are reporting. Who was involved, what do you say happened, and when and where did it happen, if known?",
+    "INF-02": "When do you believe the affair or adultery occurred, if known? When and how did you first learn about it?",
+    "ABD-04": "Which dates and reasons for the absence or separation do you know, which are estimates, and which are unknown? What information supports the dates and reasons you have given?",
+    "ABU-01": "Describe the abuse you are reporting. What happened, who was involved, and when and where did it happen? Was it a single incident or repeated behavior?",
+    "FTH-01": "To your knowledge, what church, denomination or religion did each of you belong to before you knew each other?",
+    "FTH-02": "What change in your or your spouse’s church, faith or religious practice relates to your request? When did it happen?",
+    "BKG-01": "Did anything happen before marriage that directly relates to the issue you are asking the council to consider? If so, what happened and how does it relate?",
+    "BKG-02": "What happened, and how does it relate to the issue being discussed? What did you personally experience or observe, and what were you told by someone else?",
+    "SEP-02": "For each separation, when did it begin and end, approximately, and why did you separate? Did you later resume living together? If so, when and why?",
+    "SEP-04": "What information supports your account of the separations, and which dates are uncertain?",
+    "REC-03": "What outcome of the reconciliation attempt did you personally observe, and what did you learn from someone else?",
+    "REC-04": "What information is still missing, and what existing records could help clarify it?",
+    "EVD-04": "Is there any uncertainty, conflicting information or limitation in the evidence you have provided that the council should know about? If so, please explain.",
+    "MED-03": "What do you personally know about the relevant evaluation, treatment or professional help? What were you told by someone else, and what is unknown to you?"
+  },
+  "wordingFlags": {
+    "OPEN-01": "Long opening instruction with several tasks. Consider separating spoken identification from report metadata.",
+    "BASIS-01": "“Outcome” and “in support of it” may be formal. Ask what the person is seeking and why.",
+    "BASIS-02": "Mixes a question with a record-handling instruction. Keep the instruction out of the spoken question.",
+    "DEC-02": "Clarify that responsibilities means responsibilities in married life; retain both personal understanding and actual discussion.",
+    "DEC-04": "“The fact, the discovery and supporting information” is abstract. Clarify what changed, when and how it became known.",
+    "CHD-03": "“Those expectations” is vague; distinguish a later change from later discovery of an earlier position.",
+    "MON-02": "“Not disclosed or represented differently” is formal. Consider “not told to you, or described differently.”",
+    "MON-05": "“Particular fact” needs a clear reference to the financial event being discussed.",
+    "PRS-01": "Assumes pressure affected the decision. Ask whether there was any pressure first.",
+    "PRS-04": "“Contemporaneous” is difficult wording; use “information from that time.”",
+    "DBT-01": "“Serious reservations” could be “serious doubts or concerns.”",
+    "WED-01": "“Willingness or ability to proceed” is abstract; identify willingness or ability to go ahead with the wedding.",
+    "CON-01": "“Represented differently or not disclosed” is formal; distinguish a false statement from something not revealed.",
+    "CON-05": "“Each part of this sequence” needs a clear reference to the events already described.",
+    "INF-01": "“Unfaithfulness” is vague. Proposed wording uses “affair or adultery”; approval is still required.",
+    "INF-02": "Keep alleged occurrence separate from discovery; allow unknown dates rather than assuming the event is established.",
+    "ABD-04": "Combines dates, reasons, uncertainty and support. Ask each component separately if needed.",
+    "ABU-01": "“Relevant incident or pattern” is vague without naming the reported abuse or behavior.",
+    "FTH-01": "“Religious affiliation” may be simplified to church or denomination.",
+    "FTH-02": "“Affiliation or practice” is formal; clarify change of church, faith or religious practice.",
+    "BKG-01": "“Specific earlier experience directly connected to an issue” is abstract; identify the relevant experience and connection.",
+    "BKG-02": "Formal wording; ask what happened, how it relates, what was personally known and what was reported.",
+    "SEP-02": "Assumes living together resumed. First establish whether it did; retain dates and reasons.",
+    "SEP-04": "“Without treating separation as a new case” is a staff instruction, not an interview question.",
+    "REC-03": "An instruction rather than a direct question; clarify what the person observed versus was told.",
+    "REC-04": "“Remains outstanding” is formal; consider “What information is still missing?”",
+    "EVD-04": "Contains a privacy instruction alongside the question; keep it separate from the spoken question.",
+    "MED-03": "Contains policy language rather than a follow-up question. Medical wording remains pending review."
+  },
+  "reviewItems": [
+    {
+      "id": "OPEN-01",
+      "text": "State the interviewee’s full name and the spouse’s full name; identify the case, actual interviewer and date. Repeat identity opening for every newly started recording.",
+      "category": "Foundational questions"
+    },
+    {
+      "id": "OPEN-02",
+      "text": "Where audio is used, record that the interviewee was informed about recording.",
+      "category": "Foundational questions"
+    },
+    {
+      "id": "BASIS-01",
+      "text": "What outcome are you seeking, and which specific facts do you want the council to consider in support of it?",
+      "category": "Foundational questions"
+    },
+    {
+      "id": "BASIS-02",
+      "text": "Identify any submitted information needing clarification without rewriting the original application through the interview.",
+      "category": "Foundational questions"
+    },
+    {
+      "id": "CLOSE-01",
+      "text": "What relevant fact has not yet been covered, and is anything you said today in need of clarification?",
+      "category": "Foundational questions"
+    },
+    {
+      "id": "BKG-01",
+      "text": "Is there a specific earlier experience directly connected to an issue in this petition?",
+      "subtopic": "Relevant personal or family background",
+      "pending": false,
+      "category": "Courtship / engagement"
+    },
+    {
+      "id": "BKG-02",
+      "text": "Explain the relevant event and connection, distinguishing your direct knowledge from what you were told.",
+      "subtopic": "Relevant personal or family background",
+      "pending": false,
+      "category": "Courtship / engagement"
+    },
+    {
+      "id": "BKG-03",
+      "text": "What information supports the connection, and what is unknown?",
+      "subtopic": "Relevant personal or family background",
+      "pending": false,
+      "category": "Courtship / engagement"
+    },
+    {
+      "id": "DEC-01",
+      "text": "How did the decision to marry arise, and what were your reasons at that time?",
+      "subtopic": "Decision to marry",
+      "pending": false,
+      "category": "Reasons for marrying / pressure / doubts"
+    },
+    {
+      "id": "DEC-02",
+      "text": "What did you understand your responsibilities would be, and what had you actually discussed together?",
+      "subtopic": "Decision to marry",
+      "pending": false,
+      "category": "Reasons for marrying / pressure / doubts"
+    },
+    {
+      "id": "DEC-03",
+      "text": "Was a specific promise, agreement or condition important to your decision? Identify what was said, by whom and when.",
+      "subtopic": "Decision to marry",
+      "pending": false,
+      "category": "Reasons for marrying / pressure / doubts"
+    },
+    {
+      "id": "DEC-04",
+      "text": "Did what you understood differ from what you later learned? Identify the fact, the discovery and supporting information.",
+      "subtopic": "Decision to marry",
+      "pending": false,
+      "category": "Reasons for marrying / pressure / doubts"
+    },
+    {
+      "id": "PRS-01",
+      "text": "What pressure, threat or circumstance affected the decision to marry?",
+      "subtopic": "Pressure or threats",
+      "pending": false,
+      "category": "Reasons for marrying / pressure / doubts"
+    },
+    {
+      "id": "PRS-02",
+      "text": "Who or what was the source, when did it occur and what specifically happened?",
+      "subtopic": "Pressure or threats",
+      "pending": false,
+      "category": "Reasons for marrying / pressure / doubts"
+    },
+    {
+      "id": "PRS-03",
+      "text": "How did it affect your decision and what did you communicate at the time?",
+      "subtopic": "Pressure or threats",
+      "pending": false,
+      "category": "Reasons for marrying / pressure / doubts"
+    },
+    {
+      "id": "PRS-04",
+      "text": "What do you know directly and what evidence or contemporaneous information supports it?",
+      "subtopic": "Pressure or threats",
+      "pending": false,
+      "category": "Reasons for marrying / pressure / doubts"
+    },
+    {
+      "id": "DBT-01",
+      "text": "What serious reservations, if any, did you have before the wedding?",
+      "subtopic": "Doubts before marriage",
+      "pending": false,
+      "category": "Reasons for marrying / pressure / doubts"
+    },
+    {
+      "id": "DBT-02",
+      "text": "Did you discuss them? Identify what you said, to whom and what response or action followed.",
+      "subtopic": "Doubts before marriage",
+      "pending": false,
+      "category": "Reasons for marrying / pressure / doubts"
+    },
+    {
+      "id": "DBT-03",
+      "text": "Why did you proceed at that time, and what relevant facts were known then?",
+      "subtopic": "Doubts before marriage",
+      "pending": false,
+      "category": "Reasons for marrying / pressure / doubts"
+    },
+    {
+      "id": "CON-01",
+      "text": "What important fact do you say was represented differently or not disclosed before marriage?",
+      "subtopic": "Misrepresentation or concealment",
+      "pending": false,
+      "category": "Known and concealed facts"
+    },
+    {
+      "id": "CON-02",
+      "text": "What were you told, by whom and when?",
+      "subtopic": "Misrepresentation or concealment",
+      "pending": false,
+      "category": "Known and concealed facts"
+    },
+    {
+      "id": "CON-03",
+      "text": "What did you believe when deciding to marry, and why was that fact important to the decision?",
+      "subtopic": "Misrepresentation or concealment",
+      "pending": false,
+      "category": "Known and concealed facts"
+    },
+    {
+      "id": "CON-04",
+      "text": "When and how did you learn the difference?",
+      "subtopic": "Misrepresentation or concealment",
+      "pending": false,
+      "category": "Known and concealed facts"
+    },
+    {
+      "id": "CON-05",
+      "text": "What evidence supports each part of this sequence, and what remains uncertain?",
+      "subtopic": "Misrepresentation or concealment",
+      "pending": false,
+      "category": "Known and concealed facts"
+    },
+    {
+      "id": "CHD-01",
+      "text": "Before marriage, what did you discuss or agree about having children?",
+      "subtopic": "Children",
+      "pending": false,
+      "category": "Intentions / agreements at marriage"
+    },
+    {
+      "id": "CHD-02",
+      "text": "Were there differences about whether or when to have children? What was actually communicated?",
+      "subtopic": "Children",
+      "pending": false,
+      "category": "Intentions / agreements at marriage"
+    },
+    {
+      "id": "CHD-03",
+      "text": "Did those expectations change or did you learn something different later? When and how?",
+      "subtopic": "Children",
+      "pending": false,
+      "category": "Intentions / agreements at marriage"
+    },
+    {
+      "id": "CHD-04",
+      "text": "If relevant to this petition, describe a specific parenting responsibility or disagreement and what happened.",
+      "subtopic": "Children",
+      "pending": false,
+      "category": "Intentions / agreements at marriage"
+    },
+    {
+      "id": "CHD-05",
+      "text": "What facts or documents support this account? Do not include unrelated private information about children.",
+      "subtopic": "Children",
+      "pending": false,
+      "category": "Intentions / agreements at marriage"
+    },
+    {
+      "id": "WED-01",
+      "text": "Did a specific event immediately before or at the ceremony affect willingness or ability to proceed?",
+      "subtopic": "Wedding circumstances",
+      "pending": false,
+      "category": "Wedding-day circumstances"
+    },
+    {
+      "id": "WED-02",
+      "text": "Describe what happened, when and what you remember directly.",
+      "subtopic": "Wedding circumstances",
+      "pending": false,
+      "category": "Wedding-day circumstances"
+    },
+    {
+      "id": "WED-03",
+      "text": "Was the event discussed at the time, and what other information supports your account?",
+      "subtopic": "Wedding circumstances",
+      "pending": false,
+      "category": "Wedding-day circumstances"
+    },
+    {
+      "id": "INT-01",
+      "text": "Is there a specific intimate marital difficulty you wish to explain, including when it arose or became known?",
+      "subtopic": "Intimacy",
+      "pending": false,
+      "category": "Intimate matters"
+    },
+    {
+      "id": "INT-02",
+      "text": "If relevant, what had been discussed or understood before marriage, and what was different afterward?",
+      "subtopic": "Intimacy",
+      "pending": false,
+      "category": "Intimate matters"
+    },
+    {
+      "id": "INT-03",
+      "text": "How does this specific difficulty relate to your request? Include only the facts you wish to explain.",
+      "subtopic": "Intimacy",
+      "pending": false,
+      "category": "Intimate matters"
+    },
+    {
+      "id": "TIM-01",
+      "text": "When did the relevant difficulties first appear, and were they evident before or after marriage?",
+      "subtopic": "When problems began",
+      "pending": false,
+      "category": "Problem onset before versus after marriage"
+    },
+    {
+      "id": "TIM-02",
+      "text": "What did you know at the time, and what became known later?",
+      "subtopic": "When problems began",
+      "pending": false,
+      "category": "Problem onset before versus after marriage"
+    },
+    {
+      "id": "TIM-03",
+      "text": "Which important dates are exact, approximate or unknown? Relate each date to a specific event.",
+      "subtopic": "When problems began",
+      "pending": false,
+      "category": "Problem onset before versus after marriage"
+    },
+    {
+      "id": "INF-01",
+      "text": "Describe the alleged unfaithfulness relevant to the petition.",
+      "subtopic": "Infidelity",
+      "pending": false,
+      "category": "Infidelity"
+    },
+    {
+      "id": "INF-02",
+      "text": "When did the conduct occur, and when did you first learn about it?",
+      "subtopic": "Infidelity",
+      "pending": false,
+      "category": "Infidelity"
+    },
+    {
+      "id": "INF-03",
+      "text": "What did you observe directly and what information came from another source?",
+      "subtopic": "Infidelity",
+      "pending": false,
+      "category": "Infidelity"
+    },
+    {
+      "id": "INF-04",
+      "text": "What specific evidence supports your account?",
+      "subtopic": "Infidelity",
+      "pending": false,
+      "category": "Infidelity"
+    },
+    {
+      "id": "ABU-01",
+      "text": "Describe the relevant incident or pattern you wish the council to consider.",
+      "subtopic": "Abuse",
+      "pending": false,
+      "category": "Abuse / addiction"
+    },
+    {
+      "id": "ABU-02",
+      "text": "When did it happen, was it repeated, and what did you experience or observe directly?",
+      "subtopic": "Abuse",
+      "pending": false,
+      "category": "Abuse / addiction"
+    },
+    {
+      "id": "ABU-03",
+      "text": "What relevant effect did it have on married life or the decision to separate?",
+      "subtopic": "Abuse",
+      "pending": false,
+      "category": "Abuse / addiction"
+    },
+    {
+      "id": "ABU-04",
+      "text": "Are there existing court orders, reports or other evidence you wish to identify?",
+      "subtopic": "Abuse",
+      "pending": false,
+      "category": "Abuse / addiction"
+    },
+    {
+      "id": "ADD-01",
+      "text": "Describe the behavior relevant to this petition rather than only giving it a label.",
+      "subtopic": "Addiction",
+      "pending": false,
+      "category": "Abuse / addiction"
+    },
+    {
+      "id": "ADD-02",
+      "text": "When did it begin, when did you become aware of it and how?",
+      "subtopic": "Addiction",
+      "pending": false,
+      "category": "Abuse / addiction"
+    },
+    {
+      "id": "ADD-03",
+      "text": "How did the behavior affect married life?",
+      "subtopic": "Addiction",
+      "pending": false,
+      "category": "Abuse / addiction"
+    },
+    {
+      "id": "ADD-04",
+      "text": "What help was sought, if known, and what evidence or direct observations support your account?",
+      "subtopic": "Addiction",
+      "pending": false,
+      "category": "Abuse / addiction"
+    },
+    {
+      "id": "FTH-01",
+      "text": "What was each party’s religious affiliation before you knew each other, to your knowledge?",
+      "subtopic": "Leaving or changing the faith",
+      "pending": false,
+      "category": "Religious affiliation and change"
+    },
+    {
+      "id": "FTH-02",
+      "text": "What later change in affiliation or practice is relevant to this request, and when did it occur?",
+      "subtopic": "Leaving or changing the faith",
+      "pending": false,
+      "category": "Religious affiliation and change"
+    },
+    {
+      "id": "FTH-03",
+      "text": "What do you know directly and what were you told?",
+      "subtopic": "Leaving or changing the faith",
+      "pending": false,
+      "category": "Religious affiliation and change"
+    },
+    {
+      "id": "FTH-04",
+      "text": "How did the stated change affect married life, and what information supports that account?",
+      "subtopic": "Leaving or changing the faith",
+      "pending": false,
+      "category": "Religious affiliation and change"
+    },
+    {
+      "id": "MON-01",
+      "text": "Before marriage, what did you discuss about work, income, debts and financial responsibilities?",
+      "subtopic": "Money",
+      "pending": false,
+      "category": "Responsibilities / communication / finances"
+    },
+    {
+      "id": "MON-02",
+      "text": "Was there an important financial fact or agreement you say was not disclosed or was represented differently?",
+      "subtopic": "Money",
+      "pending": false,
+      "category": "Responsibilities / communication / finances"
+    },
+    {
+      "id": "MON-03",
+      "text": "Describe a specific financial decision or disagreement relevant to this petition: when, who was involved and what happened.",
+      "subtopic": "Money",
+      "pending": false,
+      "category": "Responsibilities / communication / finances"
+    },
+    {
+      "id": "MON-04",
+      "text": "What did you know then, what did you discover later and how did you discover it?",
+      "subtopic": "Money",
+      "pending": false,
+      "category": "Responsibilities / communication / finances"
+    },
+    {
+      "id": "MON-05",
+      "text": "Which evidence supports the particular fact, and what is uncertain or disputed?",
+      "subtopic": "Money",
+      "pending": false,
+      "category": "Responsibilities / communication / finances"
+    },
+    {
+      "id": "ABD-01",
+      "text": "When did the separation or absence begin, and what circumstances do you know directly?",
+      "subtopic": "Desertion or abandonment",
+      "pending": false,
+      "category": "Temporary and final separation"
+    },
+    {
+      "id": "ABD-02",
+      "text": "What relevant communication, contact or support continued, if any?",
+      "subtopic": "Desertion or abandonment",
+      "pending": false,
+      "category": "Temporary and final separation"
+    },
+    {
+      "id": "ABD-03",
+      "text": "What attempts were made to communicate or reconcile, and what happened?",
+      "subtopic": "Desertion or abandonment",
+      "pending": false,
+      "category": "Temporary and final separation"
+    },
+    {
+      "id": "ABD-04",
+      "text": "Which dates or reasons are known, estimated or unknown, and what supports them?",
+      "subtopic": "Desertion or abandonment",
+      "pending": false,
+      "category": "Temporary and final separation"
+    },
+    {
+      "id": "SEP-01",
+      "text": "Were there relevant temporary separations before the final one?",
+      "subtopic": "Separation history",
+      "pending": false,
+      "category": "Temporary and final separation"
+    },
+    {
+      "id": "SEP-02",
+      "text": "For each relevant period, describe approximate dates, reason and what led to resuming life together.",
+      "subtopic": "Separation history",
+      "pending": false,
+      "category": "Temporary and final separation"
+    },
+    {
+      "id": "SEP-03",
+      "text": "Describe the final separation separately: when, circumstances and what you know directly.",
+      "subtopic": "Separation history",
+      "pending": false,
+      "category": "Temporary and final separation"
+    },
+    {
+      "id": "SEP-04",
+      "text": "Identify supporting information and uncertain dates without treating separation as a new case.",
+      "subtopic": "Separation history",
+      "pending": false,
+      "category": "Temporary and final separation"
+    },
+    {
+      "id": "REC-01",
+      "text": "What relevant attempts at reconciliation were made?",
+      "subtopic": "Reconciliation efforts",
+      "pending": false,
+      "category": "Reconciliation and professional help"
+    },
+    {
+      "id": "REC-02",
+      "text": "Who participated, approximately when, and what happened?",
+      "subtopic": "Reconciliation efforts",
+      "pending": false,
+      "category": "Reconciliation and professional help"
+    },
+    {
+      "id": "REC-03",
+      "text": "Distinguish the outcome you observed from information you received from someone else.",
+      "subtopic": "Reconciliation efforts",
+      "pending": false,
+      "category": "Reconciliation and professional help"
+    },
+    {
+      "id": "REC-04",
+      "text": "What information remains outstanding and what existing records are relevant?",
+      "subtopic": "Reconciliation efforts",
+      "pending": false,
+      "category": "Reconciliation and professional help"
+    },
+    {
+      "id": "MED-01",
+      "text": "Have you or your spouse received medical, psychological or psychiatric treatment relevant to the issue discussed?",
+      "subtopic": "Medical or psychological professional help",
+      "pending": true,
+      "category": "Reconciliation and professional help"
+    },
+    {
+      "id": "MED-02",
+      "text": "If so, what treatment or professional help, when, and how does it relate to the marriage?",
+      "subtopic": "Medical or psychological professional help",
+      "pending": true,
+      "category": "Reconciliation and professional help"
+    },
+    {
+      "id": "MED-03",
+      "text": "What do you know directly? No blanket medical-record release or unverified diagnosis is implied.",
+      "subtopic": "Medical or psychological professional help",
+      "pending": true,
+      "category": "Reconciliation and professional help"
+    },
+    {
+      "id": "EVD-01",
+      "text": "Which specific fact does each item support?",
+      "subtopic": "Evidence and factual clarification",
+      "pending": false,
+      "category": "Source of knowledge / evidence"
+    },
+    {
+      "id": "EVD-02",
+      "text": "Who created it, when and how did you obtain it, if known?",
+      "subtopic": "Evidence and factual clarification",
+      "pending": false,
+      "category": "Source of knowledge / evidence"
+    },
+    {
+      "id": "EVD-03",
+      "text": "What did you personally experience, observe or learn from another source?",
+      "subtopic": "Evidence and factual clarification",
+      "pending": false,
+      "category": "Source of knowledge / evidence"
+    },
+    {
+      "id": "EVD-04",
+      "text": "What limitations, conflicting information or uncertainty should the council know? Do not disclose the other applicant’s private submission.",
+      "subtopic": "Evidence and factual clarification",
+      "pending": false,
+      "category": "Source of knowledge / evidence"
+    }
+  ],
+  "returnedDecisions": {
+    "DEC-01": {
+      "choice": "reject",
+      "text": ""
+    },
+    "DEC-02": {
+      "choice": "accept",
+      "text": ""
+    },
+    "DEC-03": {
+      "choice": "accept",
+      "text": ""
+    },
+    "DEC-04": {
+      "choice": "accept",
+      "text": ""
+    },
+    "CHD-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "CHD-02": {
+      "choice": "accept",
+      "text": ""
+    },
+    "CHD-03": {
+      "choice": "accept",
+      "text": ""
+    },
+    "CHD-04": {
+      "choice": "accept",
+      "text": ""
+    },
+    "CHD-05": {
+      "choice": "accept",
+      "text": ""
+    },
+    "MON-01": {
+      "choice": "other",
+      "text": "Separate before-marriage discussions into their own category: work, income, intimacy and related topics."
+    },
+    "MON-02": {
+      "choice": "accept",
+      "text": ""
+    },
+    "MON-03": {
+      "choice": "reject",
+      "text": ""
+    },
+    "MON-04": {
+      "choice": "reject",
+      "text": ""
+    },
+    "MON-05": {
+      "choice": "accept",
+      "text": ""
+    },
+    "INT-01": {
+      "choice": "reject",
+      "text": ""
+    },
+    "INT-02": {
+      "choice": "accept",
+      "text": ""
+    },
+    "INT-03": {
+      "choice": "accept",
+      "text": ""
+    },
+    "PRS-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "PRS-02": {
+      "choice": "reject",
+      "text": ""
+    },
+    "PRS-03": {
+      "choice": "reject",
+      "text": ""
+    },
+    "PRS-04": {
+      "choice": "accept",
+      "text": ""
+    },
+    "DBT-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "DBT-02": {
+      "choice": "reject",
+      "text": ""
+    },
+    "DBT-03": {
+      "choice": "reject",
+      "text": ""
+    },
+    "WED-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "WED-02": {
+      "choice": "reject",
+      "text": ""
+    },
+    "WED-03": {
+      "choice": "reject",
+      "text": ""
+    },
+    "CON-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "CON-02": {
+      "choice": "reject",
+      "text": ""
+    },
+    "CON-03": {
+      "choice": "accept",
+      "text": ""
+    },
+    "CON-04": {
+      "choice": "reject",
+      "text": ""
+    },
+    "CON-05": {
+      "choice": "accept",
+      "text": ""
+    },
+    "INF-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "INF-02": {
+      "choice": "accept",
+      "text": ""
+    },
+    "INF-03": {
+      "choice": "accept",
+      "text": ""
+    },
+    "INF-04": {
+      "choice": "accept",
+      "text": ""
+    },
+    "ABD-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "ABD-02": {
+      "choice": "accept",
+      "text": ""
+    },
+    "ABD-03": {
+      "choice": "accept",
+      "text": ""
+    },
+    "ABD-04": {
+      "choice": "other",
+      "text": "Remove this question."
+    },
+    "ABU-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "ABU-02": {
+      "choice": "reject",
+      "text": ""
+    },
+    "ABU-03": {
+      "choice": "accept",
+      "text": ""
+    },
+    "ABU-04": {
+      "choice": "reject",
+      "text": ""
+    },
+    "FTH-01": {
+      "choice": "reject",
+      "text": ""
+    },
+    "FTH-02": {
+      "choice": "accept",
+      "text": ""
+    },
+    "FTH-03": {
+      "choice": "reject",
+      "text": ""
+    },
+    "FTH-04": {
+      "choice": "reject",
+      "text": ""
+    },
+    "ADD-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "ADD-02": {
+      "choice": "other",
+      "text": "Name the behavior explicitly: abuse or addiction; ask when it began and how."
+    },
+    "ADD-03": {
+      "choice": "accept",
+      "text": ""
+    },
+    "ADD-04": {
+      "choice": "accept",
+      "text": ""
+    },
+    "BKG-01": {
+      "choice": "other",
+      "text": "Remove this question."
+    },
+    "BKG-02": {
+      "choice": "accept",
+      "text": ""
+    },
+    "BKG-03": {
+      "choice": "accept",
+      "text": ""
+    },
+    "TIM-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "TIM-02": {
+      "choice": "reject",
+      "text": ""
+    },
+    "TIM-03": {
+      "choice": "other",
+      "text": "Remove broad dates question; place date clarification with each question that needs a date."
+    },
+    "SEP-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "SEP-02": {
+      "choice": "other",
+      "text": "Remove this question."
+    },
+    "SEP-03": {
+      "choice": "other",
+      "text": "Remove this question."
+    },
+    "SEP-04": {
+      "choice": "other",
+      "text": "Remove this question."
+    },
+    "REC-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "REC-02": {
+      "choice": "reject",
+      "text": ""
+    },
+    "REC-03": {
+      "choice": "other",
+      "text": "Remove this question."
+    },
+    "REC-04": {
+      "choice": "other",
+      "text": "Remove this question."
+    },
+    "EVD-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "EVD-02": {
+      "choice": "accept",
+      "text": ""
+    },
+    "EVD-03": {
+      "choice": "accept",
+      "text": ""
+    },
+    "EVD-04": {
+      "choice": "accept",
+      "text": ""
+    },
+    "MED-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "MED-02": {
+      "choice": "reject",
+      "text": ""
+    },
+    "MED-03": {
+      "choice": "accept",
+      "text": ""
+    },
+    "OPEN-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "OPEN-02": {
+      "choice": "accept",
+      "text": ""
+    },
+    "BASIS-01": {
+      "choice": "accept",
+      "text": ""
+    },
+    "BASIS-02": {
+      "choice": "other",
+      "text": "Remove this question."
+    },
+    "CLOSE-01": {
+      "choice": "other",
+      "text": "Remove this question."
+    }
+  },
+  "evidenceQuestions": [],
+  "contextualEvidenceCategoryIds": [],
+  "removedEvidenceQuestions": [
+    {
+      "id": "EVD-01",
+      "text": "Which specific fact does each item support?",
+      "subtopic": "Evidence and factual clarification",
+      "pending": false,
+      "reviewDecision": "accept"
+    },
+    {
+      "id": "EVD-02",
+      "text": "Who created this item, when, and how did you obtain it, if known?",
+      "subtopic": "Evidence and factual clarification",
+      "pending": false,
+      "reviewDecision": "accept"
+    },
+    {
+      "id": "EVD-03",
+      "text": "What did you personally experience, observe or learn from another source?",
+      "subtopic": "Evidence and factual clarification",
+      "pending": false,
+      "reviewDecision": "accept"
+    },
+    {
+      "id": "EVD-04",
+      "text": "Is there any uncertainty, conflicting information or limitation in the evidence you have provided that the council should know about? If so, please explain.",
+      "subtopic": "Evidence and factual clarification",
+      "pending": false,
+      "reviewDecision": "accept"
+    }
+  ],
+  "followupPresentation": "Integrated into main question wording; no separate helper placeholders.",
+  "administrativeSections": [
+    {
+      "title": "Interviewer instructions",
+      "intro": "Ask each question only to the extent it has not already been answered. Where an earlier response addresses all or part of a later question, reference that response and ask only for missing information or clarification.\n\nRecord each event once. If the event is relevant to another section, refer to the earlier account and obtain only the additional details needed for that section.\n\nThroughout the interview, distinguish:\n\n- What the interviewee personally experienced or observed.\n- What someone else told the interviewee.\n- What the interviewee inferred or suspects.\n- What remains unknown or disputed.\n\nIdentify each supporting document or other item once. When it is relevant to another question, use its existing reference and explain any additional fact it supports.\n\nUse the concealment section for allegations of false or withheld information, including financial information. Use the finances section for premarital financial discussions and specific financial decisions or disagreements. Do not obtain the same account in both sections.",
+      "questions": []
+    },
+    {
+      "title": "Administrative record",
+      "intro": "Completed by the interviewer:\n\n- Interviewer’s full name.\n- Interview date.\n- Case number.\n- Where audio recording is used, record that the interviewee was informed about recording.",
+      "questions": []
+    }
+  ],
+  "contextPrompts": {
+    "OPEN-01": {
+      "questionId": "OPEN-01",
+      "existingWording": "Please state your full name and your spouse’s full name.",
+      "trigger": "Only if identity conflicts with an existing record.",
+      "prompts": [
+        "Which name appears on the relevant marriage or identity record?"
+      ],
+      "avoidReuse": "Administrative identity verification, not substantive questioning."
+    },
+    "BASIS-01": {
+      "questionId": "BASIS-01",
+      "existingWording": "What are you asking the council to decide? Briefly identify the main facts supporting your request; the details will be addressed in the relevant sections.",
+      "trigger": "If the request or core factual allegation is unclear.",
+      "prompts": [
+        "What specific event or circumstance is central to the decision you are requesting?",
+        "Which part of that account do you personally know?"
+      ],
+      "avoidReuse": "Route detailed facts to the appropriate substantive family."
+    },
+    "BKG-02": {
+      "questionId": "BKG-02",
+      "existingWording": "How did your relationship develop from first meeting through engagement? Give a brief outline of the main events; describe issues covered in later sections there rather than repeating them here.",
+      "trigger": "No routine follow-up.",
+      "prompts": [],
+      "avoidReuse": "Keep as a brief timeline outline; use DEC, PRS, DBT or CON for details."
+    },
+    "BKG-03": {
+      "questionId": "BKG-03",
+      "existingWording": "Were there any other circumstances during courtship or engagement relevant to your request that are not covered in the later sections? If so, describe them.",
+      "trigger": "Only if a new relevant circumstance is identified but not described elsewhere.",
+      "prompts": [
+        "What specific circumstance has not yet been covered, and when did it occur?"
+      ],
+      "avoidReuse": "Do not repeat already documented courtship events."
+    },
+    "DEC-01": {
+      "questionId": "DEC-01",
+      "existingWording": "How did the decision to marry arise, and what were your reasons at that time?",
+      "trigger": "If the origin of the decision or the interviewee’s contemporaneous reasons remain unclear.",
+      "prompts": [
+        "Who first proposed marriage, and what was your response at that time?",
+        "Was there a particular event that changed your decision?"
+      ],
+      "avoidReuse": "Pressure belongs in PRS; doubts in DBT; promises in DEC-03."
+    },
+    "DEC-02": {
+      "questionId": "DEC-02",
+      "existingWording": "Before marriage, what did you understand your responsibilities in married life would be? Describe any relevant expectations or agreements not covered in the questions about children, intimate life or finances.",
+      "trigger": "Only where a particular expectation is material and not yet specified.",
+      "prompts": [
+        "What did you understand was expected of you, and how did you come to that understanding?"
+      ],
+      "avoidReuse": "Use CHD, INT-02 and MON-01 for topic-specific expectations."
+    },
+    "DEC-03": {
+      "questionId": "DEC-03",
+      "existingWording": "Apart from matters already discussed or addressed in the questions about children, intimate life or finances, was any other specific promise, agreement or condition important to your decision to marry? What was said, by whom and when, and how did the other person respond? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If an identified promise or condition lacks specificity.",
+      "prompts": [
+        "What exactly was promised or required?",
+        "Was that expressed before the decision to marry, and what response followed?"
+      ],
+      "avoidReuse": "Do not reproduce CON questions unless misrepresentation or concealment is alleged."
+    },
+    "DEC-04": {
+      "questionId": "DEC-04",
+      "existingWording": "Apart from matters already discussed, did you later learn anything that differed from your understanding when you decided to marry? Briefly identify the difference and when you learned it. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If an asserted difference between prior understanding and later knowledge is vague.",
+      "prompts": [
+        "What was your understanding at the time, and what later fact differed?"
+      ],
+      "avoidReuse": "Collect detailed alleged concealment under CON; use topic-specific section otherwise."
+    },
+    "PRS-01": {
+      "questionId": "PRS-01",
+      "existingWording": "Did any pressure, threat or other circumstance affect your decision to marry?",
+      "trigger": "No separate prompt needed: screening question.",
+      "prompts": [],
+      "avoidReuse": "If yes, use PRS-02–04."
+    },
+    "PRS-02": {
+      "questionId": "PRS-02",
+      "existingWording": "If so, identify the source and describe what happened and when. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If described pressure is conclusory rather than an identifiable act.",
+      "prompts": [
+        "What exactly was said or done, and by whom?",
+        "What consequence, if any, was communicated if you refused or postponed the marriage?"
+      ],
+      "avoidReuse": "Dates already in the original question; do not ask again if supplied."
+    },
+    "PRS-03": {
+      "questionId": "PRS-03",
+      "existingWording": "How did that pressure, threat or circumstance affect your decision, and what did you communicate about it at the time?",
+      "trigger": "If the link between the conduct and the decision is unclear.",
+      "prompts": [
+        "What did you understand your available choices to be at that time?",
+        "Did you communicate a wish to refuse or postpone? What was said and how did the other person respond?"
+      ],
+      "avoidReuse": "Do not assume the person was unable to consent."
+    },
+    "PRS-04": {
+      "questionId": "PRS-04",
+      "existingWording": "What information or evidence from that time supports your account? Identify anything material that remains uncertain.",
+      "trigger": "If contemporaneous information is alluded to but not identified.",
+      "prompts": [
+        "Was your concern communicated or recorded at the time? If so, where is that account documented?"
+      ],
+      "avoidReuse": "Use existing evidence links; no compulsory corroboration threshold."
+    },
+    "DBT-01": {
+      "questionId": "DBT-01",
+      "existingWording": "What serious doubts or concerns, if any, did you have before the wedding? If already described, identify them without repeating the account.",
+      "trigger": "No routine follow-up.",
+      "prompts": [],
+      "avoidReuse": "Use DBT-02 and DBT-03 where a relevant doubt is reported."
+    },
+    "DBT-02": {
+      "questionId": "DBT-02",
+      "existingWording": "Did you discuss those doubts or concerns? Identify what you said, to whom and what response or action followed, to the extent not already explained.",
+      "trigger": "Only if an important contemporaneous discussion is unclear.",
+      "prompts": [
+        "What did you communicate, to whom, and what response did you receive?"
+      ],
+      "avoidReuse": "Avoid repeating PRS-03 where the same exchange is already documented."
+    },
+    "DBT-03": {
+      "questionId": "DBT-03",
+      "existingWording": "Given those doubts or concerns, what led you to proceed with the wedding at that time?",
+      "trigger": "If the stated reason for proceeding is too general to establish the decision at the time.",
+      "prompts": [
+        "What changed, if anything, between expressing the concern and proceeding with the wedding?"
+      ],
+      "avoidReuse": "Do not imply that proceeding proves free consent."
+    },
+    "CON-01": {
+      "questionId": "CON-01",
+      "existingWording": "Before marriage, do you believe someone gave you false information or withheld an important fact, including financial information? If so, identify the fact and the person involved.",
+      "trigger": "No routine follow-up: screening and allegation identification.",
+      "prompts": [],
+      "avoidReuse": "If yes, use CON-02–05; do not presume a falsehood occurred."
+    },
+    "CON-02": {
+      "questionId": "CON-02",
+      "existingWording": "What specifically were you told, by whom and when? If the fact was not disclosed, what, if anything, had been asked or discussed about that subject? Include any relevant financial statement or agreement. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If the alleged statement or omission has not been particularized.",
+      "prompts": [
+        "What words do you recall, as closely as possible?",
+        "What specifically was asked or discussed about the undisclosed subject before marriage?"
+      ],
+      "avoidReuse": "Do not demand an exact quote if memory is approximate."
+    },
+    "CON-03": {
+      "questionId": "CON-03",
+      "existingWording": "What did you believe about that matter when deciding to marry, and why was it important to your decision?",
+      "trigger": "If the claim of importance to consent is only a conclusion.",
+      "prompts": [
+        "What decision or expectation did you form because of that understanding?",
+        "What do you believe you would have decided if you had known the alleged fact at the time?"
+      ],
+      "avoidReuse": "Do not let a retrospective answer substitute for contemporaneous knowledge."
+    },
+    "CON-04": {
+      "questionId": "CON-04",
+      "existingWording": "What did you later learn that differed from your earlier understanding, and when and how did you learn it? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If the established fact, source, or date of discovery is unclear.",
+      "prompts": [
+        "What information first led you to believe your earlier understanding was inaccurate?",
+        "Does that information show the circumstance existed before marriage or only later?"
+      ],
+      "avoidReuse": "Use TIM for occurrence versus discovery if already recorded."
+    },
+    "CON-05": {
+      "questionId": "CON-05",
+      "existingWording": "What evidence supports this account, and what remains uncertain or disputed? Identify each supporting item and explain which fact it supports, without re-identifying items already recorded.",
+      "trigger": "If it is unclear which specific assertion an item supports.",
+      "prompts": [
+        "Which particular statement or date does this item support?",
+        "Is there contextual information that could affect its interpretation?"
+      ],
+      "avoidReuse": "Use exact existing EVD references; do not require new uploads."
+    },
+    "WED-01": {
+      "questionId": "WED-01",
+      "existingWording": "Apart from circumstances already described, did anything immediately before or during the wedding affect your willingness or ability to proceed?",
+      "trigger": "No routine follow-up: screening question.",
+      "prompts": [],
+      "avoidReuse": "If yes, use WED-02–03."
+    },
+    "WED-02": {
+      "questionId": "WED-02",
+      "existingWording": "If so, describe what happened, when it occurred and what you remember directly. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If the wedding-day occurrence is described only as a general feeling.",
+      "prompts": [
+        "What happened immediately before or during the ceremony that affected your willingness or ability to proceed?"
+      ],
+      "avoidReuse": "Refer back to PRS if the same pressure event was fully described."
+    },
+    "WED-03": {
+      "questionId": "WED-03",
+      "existingWording": "Was the circumstance discussed at the time? If so, what was said and by whom? What other information supports your account?",
+      "trigger": "If a relevant exchange or contemporaneous record needs clarification.",
+      "prompts": [
+        "What was said at the time, to whom, and what response followed?"
+      ],
+      "avoidReuse": "Do not repeat an earlier recorded conversation."
+    },
+    "INT-01": {
+      "questionId": "INT-01",
+      "existingWording": "Is there a specific intimate marital difficulty you wish to explain? If so, describe it. When did it begin, if known, and when did you first become aware of it? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "Only where the alleged difficulty needs a clearer non-graphic factual description.",
+      "prompts": [
+        "Are you describing an inability, a refusal, a disagreement, or another specific circumstance?",
+        "Was the difficulty present from the beginning of marriage or did it arise later?"
+      ],
+      "avoidReuse": "Do not demand explicit sexual detail; avoid diagnosis; clinical records belong under MED with releases."
+    },
+    "INT-03": {
+      "questionId": "INT-03",
+      "existingWording": "How does this specific difficulty relate to your request? Include only additional facts needed to explain that connection.",
+      "trigger": "If relevance to the petition is not explained.",
+      "prompts": [
+        "Which particular event or fact concerning the intimate difficulty do you ask the Council to consider?"
+      ],
+      "avoidReuse": "Do not turn this into compatibility or marital-counseling questions."
+    },
+    "TIM-01": {
+      "questionId": "TIM-01",
+      "existingWording": "In outline, when did the main difficulties first appear, and which were evident before marriage? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "No routine follow-up: overview only.",
+      "prompts": [],
+      "avoidReuse": "Use exact event references and specific family timelines."
+    },
+    "TIM-02": {
+      "questionId": "TIM-02",
+      "existingWording": "Are there any important differences between when those difficulties occurred and when you became aware of them that have not already been explained? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If an occurrence/discovery distinction remains unclear.",
+      "prompts": [
+        "Which date refers to the event, and which refers to when you learned about it?"
+      ],
+      "avoidReuse": "Do not repeat dates already clarified in INF, CON, ADD or other sections."
+    },
+    "INF-01": {
+      "questionId": "INF-01",
+      "existingWording": "Describe the affair or adultery you are reporting, including the specific actions or communications. Who was involved, and when and where did it happen, if known? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If conduct is alleged using only a label, or a reported admission/denial remains materially unclear.",
+      "prompts": [
+        "What specific actions or communications are you alleging?",
+        "Has your spouse acknowledged, denied, or explained the particular conduct? If so, what was said, when, and in what circumstances?",
+        "Does any part of the alleged conduct predate the church marriage? On what basis?"
+      ],
+      "avoidReuse": "Use INF-02 for discovery, INF-03 for source of knowledge, INF-04 for evidence. An admission report is not automatically a proven fact."
+    },
+    "INF-02": {
+      "questionId": "INF-02",
+      "existingWording": "When and how did you first learn about the reported affair or adultery? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If discovery and alleged occurrence have been conflated.",
+      "prompts": [
+        "What was the first information you encountered, and how did you encounter it?",
+        "Does the date you gave refer to discovery or to the alleged conduct itself?"
+      ],
+      "avoidReuse": "Use TIM if chronology is already resolved."
+    },
+    "INF-03": {
+      "questionId": "INF-03",
+      "existingWording": "Which parts of your account did you personally experience or observe, which came from another source, and which are your interpretation or suspicion? Clarify only what is not already clear.",
+      "trigger": "Only if the basis of a particular material allegation remains ambiguous.",
+      "prompts": [
+        "For that particular fact, what did you observe yourself, what did another person report, and what is your own inference?"
+      ],
+      "avoidReuse": "Do not ask the applicant to retell the whole INF-01 narrative."
+    },
+    "INF-04": {
+      "questionId": "INF-04",
+      "existingWording": "What specific evidence supports your account? Identify each supporting item and explain which fact it supports, using existing references for items already recorded.",
+      "trigger": "If the submitted item or the proposition it supports is unclear.",
+      "prompts": [
+        "Which exact message, document, or recording are you referring to?",
+        "What does it show directly, and what are you concluding from it?"
+      ],
+      "avoidReuse": "Use existing EVD source/version reference; avoid demanding duplicate files or assuming authenticity."
+    },
+    "ABU-01": {
+      "questionId": "ABU-01",
+      "existingWording": "Describe the abuse you are reporting. What happened, who was involved, and when and where did it happen? Was it a single incident or repeated behavior? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If a general label conceals distinct events or a possible pattern.",
+      "prompts": [
+        "Describe one specific incident in sequence: what happened first, next, and afterward?",
+        "For repeated behavior, which events can you place approximately in time?"
+      ],
+      "avoidReuse": "Safety first; do not press for graphic detail or create unsafe joint questioning."
+    },
+    "ABU-02": {
+      "questionId": "ABU-02",
+      "existingWording": "Which parts of your account did you experience or observe directly, and which did you learn from someone else? Clarify only what is not already clear.",
+      "trigger": "Only if an important assertion has no clear basis of knowledge.",
+      "prompts": [
+        "Which actions did you personally experience or observe, and what came from another person?"
+      ],
+      "avoidReuse": "Skip where ABU-01 already separates sources."
+    },
+    "ABU-03": {
+      "questionId": "ABU-03",
+      "existingWording": "What relevant effect did the reported abuse have on married life or the decision to separate?",
+      "trigger": "If an asserted effect remains unspecified.",
+      "prompts": [
+        "What particular change or event followed the reported conduct that is relevant to the petition?"
+      ],
+      "avoidReuse": "Do not require emotional or therapeutic narrative beyond relevant factual effects."
+    },
+    "ABU-04": {
+      "questionId": "ABU-04",
+      "existingWording": "Are there existing court orders, reports or other evidence you wish to identify? Explain which fact each item supports, using existing references for items already recorded.",
+      "trigger": "If an order or report is mentioned without its relevant meaning being identified.",
+      "prompts": [
+        "What date, event, or restriction does the item document?",
+        "Does any current order affect safe contact or disclosure?"
+      ],
+      "avoidReuse": "Respect protective orders and restricted records; existing evidence references only."
+    },
+    "ADD-01": {
+      "questionId": "ADD-01",
+      "existingWording": "Describe the behavior or pattern you are referring to as an addiction, rather than only giving it a label.",
+      "trigger": "If only a diagnostic or moral label is used.",
+      "prompts": [
+        "What particular actions or recurring behavior are you referring to?",
+        "Which of those did you observe directly?"
+      ],
+      "avoidReuse": "Do not diagnose substance-use or behavioral disorders."
+    },
+    "ADD-02": {
+      "questionId": "ADD-02",
+      "existingWording": "When did that behavior or pattern begin, if known, and how did it develop? When and how did you first become aware of it? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If alleged onset is confused with discovery.",
+      "prompts": [
+        "Which events indicate when the behavior occurred, as opposed to when you learned of it?"
+      ],
+      "avoidReuse": "TIM shared dates if already established."
+    },
+    "ADD-03": {
+      "questionId": "ADD-03",
+      "existingWording": "How did it affect married life?",
+      "trigger": "If impact is described only in general terms.",
+      "prompts": [
+        "What particular events affecting married life are you referring to?"
+      ],
+      "avoidReuse": "Avoid general relationship-counseling topics."
+    },
+    "ADD-04": {
+      "questionId": "ADD-04",
+      "existingWording": "What help was sought, if known? What additional observations or evidence support your account that have not already been described?",
+      "trigger": "If purported professional help is important but not identified.",
+      "prompts": [
+        "What type of help do you know was sought, and how do you know?",
+        "Does a relevant professional record exist that can be handled through the authorized MED process?"
+      ],
+      "avoidReuse": "No blanket medical records or diagnosis inference."
+    },
+    "FTH-01": {
+      "questionId": "FTH-01",
+      "existingWording": "What was each party’s religious affiliation before you knew each other, to your knowledge?",
+      "trigger": "No routine follow-up.",
+      "prompts": [],
+      "avoidReuse": "Use FTH-02 for relevant change; check documentary records if actually material."
+    },
+    "FTH-02": {
+      "questionId": "FTH-02",
+      "existingWording": "What change in your or your spouse’s church, faith or religious practice relates to your request? When did it happen? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If the alleged change is vague.",
+      "prompts": [
+        "What specific declaration, action, or change in affiliation do you mean?",
+        "When did that declaration or action occur?"
+      ],
+      "avoidReuse": "Do not equate reduced attendance or disagreement with a proven change of faith."
+    },
+    "FTH-03": {
+      "questionId": "FTH-03",
+      "existingWording": "Which parts of your account of that change do you know directly, and which were you told by someone else? Clarify only what is not already clear.",
+      "trigger": "Only when the source of a material assertion is unclear.",
+      "prompts": [
+        "Which part did you observe or hear yourself, and what was reported by someone else?"
+      ],
+      "avoidReuse": "Avoid repeating FTH-02."
+    },
+    "FTH-04": {
+      "questionId": "FTH-04",
+      "existingWording": "How did the change affect married life, and what information supports that account?",
+      "trigger": "If a particular factual effect or cited source is missing.",
+      "prompts": [
+        "What concrete event or change in married life followed?",
+        "What specific existing item supports the reported fact?"
+      ],
+      "avoidReuse": "Distinguish consequences from doctrinal conclusions."
+    },
+    "MON-03": {
+      "questionId": "MON-03",
+      "existingWording": "Describe a specific financial decision or disagreement relevant to this petition that has not already been covered. Who was involved, when did it occur and what happened? Identify any supporting information and anything material that remains uncertain or disputed. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "Only for a distinct financial event, not concealed premarital representations.",
+      "prompts": [
+        "What transaction, decision, or disagreement specifically occurred?",
+        "What was agreed or communicated at the time?"
+      ],
+      "avoidReuse": "Financial falsehood or omission belongs under CON; do not require full financial history."
+    },
+    "SEP-01": {
+      "questionId": "SEP-01",
+      "existingWording": "Were there relevant temporary separations before the final one? If so, identify each period briefly. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "No routine follow-up.",
+      "prompts": [],
+      "avoidReuse": "Use ABD-01 for circumstances and dates of final separation."
+    },
+    "ABD-01": {
+      "questionId": "ABD-01",
+      "existingWording": "When did the final separation or relevant absence begin, and what circumstances did you personally experience or observe? For any temporary separation identified above, describe only additional circumstances relevant to your request. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If the beginning of separation or the nature of the absence is disputed.",
+      "prompts": [
+        "What event marked the start of the final separation?",
+        "Was the absence agreed, temporary, or understood differently by either party at the time?"
+      ],
+      "avoidReuse": "Do not repeat SEP-01 temporary periods."
+    },
+    "ABD-02": {
+      "questionId": "ABD-02",
+      "existingWording": "What relevant communication, contact or support continued during the separation or absence, if any?",
+      "trigger": "Only if contact or support is described too generally.",
+      "prompts": [
+        "What specific contact or support occurred during the relevant period?",
+        "Was this based on personal receipt, communication, or another source?"
+      ],
+      "avoidReuse": "Use MON only if a distinct financial issue matters; avoid creating a financial disclosure demand."
+    },
+    "ABD-03": {
+      "questionId": "ABD-03",
+      "existingWording": "Apart from the contact or support already described, what attempts were made to re-establish communication after the separation or absence, and what happened?",
+      "trigger": "If factual contact attempts remain unclear.",
+      "prompts": [
+        "What attempts were made to establish or resume contact, on what dates, and what response followed?"
+      ],
+      "avoidReuse": "Reconciliation attempts aimed at restoring the relationship belong under REC-01."
+    },
+    "REC-01": {
+      "questionId": "REC-01",
+      "existingWording": "What relevant attempts were made to reconcile or restore the relationship, whether before or after separation? Who participated, when did the attempts occur and what was the outcome? Do not repeat details already given. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "Only if an identified reconciliation attempt lacks basic event details.",
+      "prompts": [
+        "What was proposed or attempted, who participated, and what response or outcome followed?"
+      ],
+      "avoidReuse": "Document past facts only; never use as an instruction to reconcile or to initiate contact."
+    },
+    "MED-01": {
+      "questionId": "MED-01",
+      "existingWording": "To your knowledge, did you or your spouse receive a medical, psychological or psychiatric evaluation, treatment or other professional help directly relevant to the issue being discussed? It is acceptable not to know.",
+      "trigger": "No routine follow-up: relevant evaluation screening only.",
+      "prompts": [],
+      "avoidReuse": "Do not solicit broad medical history; no disclosure without signed, scoped release."
+    },
+    "MED-02": {
+      "questionId": "MED-02",
+      "existingWording": "If so, identify the type of evaluation, treatment or help, when it occurred and its relevance to the marriage. Provide only details not already recorded elsewhere. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If a relevant professional assessment is asserted but timing, provider type, or relevance is uncertain.",
+      "prompts": [
+        "Was the evaluation performed before or after the wedding, as far as you know?",
+        "Are you describing a documented professional conclusion or your understanding of it?"
+      ],
+      "avoidReuse": "Request/report are distinct from signed release; never infer diagnosis or consent."
+    },
+    "MED-03": {
+      "questionId": "MED-03",
+      "existingWording": "Which parts of your account of that evaluation, treatment or help do you personally know, which were you told by someone else, and what is unknown to you? Clarify only what is not already clear.",
+      "trigger": "Only where claimed professional information is confused with firsthand observation.",
+      "prompts": [
+        "Did you see the professional report yourself, hear an account of it, or infer it from conduct?"
+      ],
+      "avoidReuse": "Do not expose the other applicant’s protected information. No external medical-document AI processing."
+    },
+    "CHD-01": {
+      "questionId": "CHD-01",
+      "existingWording": "Before marriage, what did you discuss or agree about having children?",
+      "trigger": "If a particular premarital understanding is materially relevant but ambiguous.",
+      "prompts": [
+        "What was each person’s stated understanding about having children, and when was it discussed?"
+      ],
+      "avoidReuse": "If alleged false or withheld representation, move detailed inquiry to CON."
+    },
+    "INT-02": {
+      "questionId": "INT-02",
+      "existingWording": "Before marriage, what had you and your spouse discussed or understood about intimate married life?",
+      "trigger": "Only where a particular premarital understanding is material and not specified.",
+      "prompts": [
+        "Was a specific expectation or agreement communicated before marriage? What was said?"
+      ],
+      "avoidReuse": "No graphic questioning; use CON for alleged concealment."
+    },
+    "MON-01": {
+      "questionId": "MON-01",
+      "existingWording": "Before marriage, what did you discuss or agree about work, income, debts and financial responsibilities?",
+      "trigger": "If a particular premarital financial agreement or representation is material.",
+      "prompts": [
+        "What specific responsibilities or arrangement were discussed, and when?"
+      ],
+      "avoidReuse": "Alleged misleading statement or omission belongs under CON."
+    },
+    "CHD-02": {
+      "questionId": "CHD-02",
+      "existingWording": "Were there any differences about whether or when to have children that have not already been described? If so, what did each of you communicate, and when? Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If the disagreement has not been identified as a concrete communication or event.",
+      "prompts": [
+        "What did each person actually communicate about whether or when to have children?"
+      ],
+      "avoidReuse": "Do not duplicate CHD-01 premarital agreement."
+    },
+    "CHD-03": {
+      "questionId": "CHD-03",
+      "existingWording": "After marriage, did either person’s plans about children change, or did you learn that an earlier plan differed from what you had understood? Explain which occurred, when and how it became known, and what was communicated. Do not repeat details already given. Give exact dates where known; otherwise, say whether the date is approximate or unknown.",
+      "trigger": "If postmarital change and discovery of an earlier plan are conflated.",
+      "prompts": [
+        "Are you describing a changed intention after marriage, or discovering an intention that existed beforehand?",
+        "What event or statement supports that distinction?"
+      ],
+      "avoidReuse": "Use CON for detailed alleged deception; TIM for dates already recorded."
+    },
+    "CHD-04": {
+      "questionId": "CHD-04",
+      "existingWording": "If relevant to this petition, describe a specific parenting responsibility or disagreement and what happened.",
+      "trigger": "Only for a specific parenting event material to the petition.",
+      "prompts": [
+        "What particular event occurred, when, and how do you know?",
+        "Does an existing order restrict contact, questioning, or sharing information?"
+      ],
+      "avoidReuse": "Avoid interviewing children or requesting unrelated children’s private details."
+    },
+    "CHD-05": {
+      "questionId": "CHD-05",
+      "existingWording": "What facts or documents support the account about children or parenting? Identify only supporting information not already recorded, or explain any additional fact an existing item supports. Do not include unrelated private information about children.",
+      "trigger": "If the fact supported by an item has not been identified.",
+      "prompts": [
+        "Which particular statement or event does that record support?"
+      ],
+      "avoidReuse": "Reuse EVD reference and protect children’s personal information."
+    }
+  },
+  "questionCount": 59
+}

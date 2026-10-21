@@ -1,0 +1,823 @@
+{
+  "OPEN-01": {
+    "purpose": "Keep identity, source attribution and the original record intact.",
+    "when": "Repeat for every newly started recording; this is not a proposal for additional identity documents.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "",
+    "disposition": "",
+    "clarificationNote": ""
+  },
+  "OPEN-02": {
+    "purpose": "Keep identity, source attribution and the original record intact.",
+    "when": "Confirm applicable notice/authorization arrangements institutionally; this wording is not a universal compliance determination.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "",
+    "disposition": "",
+    "clarificationNote": ""
+  },
+  "BASIS-01": {
+    "purpose": "Keep identity, source attribution and the original record intact.",
+    "when": "Record the request and offered facts; do not coach the applicant to select a ground.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "",
+    "disposition": "",
+    "clarificationNote": ""
+  },
+  "BASIS-02": {
+    "purpose": "Keep identity, source attribution and the original record intact.",
+    "when": "Preserve the original and separately attribute any correction, confirmation or clarification.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "",
+    "disposition": "",
+    "clarificationNote": ""
+  },
+  "CLOSE-01": {
+    "purpose": "Keep identity, source attribution and the original record intact.",
+    "when": "Close within relevance; preserve corrections without silently rewriting earlier records.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "",
+    "disposition": "",
+    "clarificationNote": ""
+  },
+  "DEC-01": {
+    "purpose": "The decision process and the applicant’s reasons at the time.",
+    "when": "Use where the formation decision is relevant; skip the probe if reasons were already given.",
+    "prompts": [
+      "What were your reasons for marrying at that time?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "How did the decision to marry arise?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "DEC-02": {
+    "purpose": "Personal understanding, actual discussion and expressed agreement as distinct facts.",
+    "when": "Use in a relevant formation inquiry; ask only the components not already answered.",
+    "prompts": [
+      "What had you actually discussed together about those responsibilities?",
+      "What, if anything, did you agree?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Before marriage, what did you understand your responsibilities in married life would be?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "DEC-03": {
+    "purpose": "The statement’s content, speaker, timing and any expressed response.",
+    "when": "Only pursue an identified important statement; skip response clarification if DEC-02 already covers it.",
+    "prompts": [
+      "What was said, by whom and when?",
+      "What, if anything, did the other person say in response?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Was a specific promise, agreement or condition important to your decision?",
+    "disposition": "Retain with conditional clarification.",
+    "clarificationNote": ""
+  },
+  "DEC-04": {
+    "purpose": "The asserted discrepancy and the sequence of later knowledge.",
+    "when": "Use only if a difference is identified; reuse CON and EVD where already answered.",
+    "prompts": [
+      "What was the difference?",
+      "When and how did you learn it?",
+      "What supporting information has not already been identified?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Did what you understood differ from what you later learned?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "CHD-01": {
+    "purpose": "Actual discussions and any reported agreement about having children.",
+    "when": "Use where this subject is relevant; do not require reproductive details.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Before marriage, what did you discuss or agree about having children?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "CHD-02": {
+    "purpose": "Whether a difference was expressed and what was said.",
+    "when": "Ask the probe if a difference is identified and its communication is unclear.",
+    "prompts": [
+      "What was actually communicated?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Were there differences about whether or when to have children?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "CHD-03": {
+    "purpose": "Actual change versus later discovery of an earlier position, with timing and source.",
+    "when": "Use the branch supported by the account; ask both only if both sequences are alleged.",
+    "prompts": [
+      "If expectations changed: what changed, when, and what was communicated?",
+      "If this concerns discovery: what did you learn, when, and how?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Did those expectations change later, or did you later learn something different about an earlier expectation?",
+    "disposition": "Refine and branch.",
+    "clarificationNote": ""
+  },
+  "CHD-04": {
+    "purpose": "A particular relevant parenting event, not a parenting-quality assessment.",
+    "when": "Activate only for an identified connection to the petition.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "If relevant to this petition, describe a specific parenting responsibility or disagreement and what happened.",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "CHD-05": {
+    "purpose": "The identified support and its relevant scope.",
+    "when": "Skip repetition where the same support is already recorded in EVD.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What facts or documents support this account? Do not include unrelated private information about children.",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "MON-01": {
+    "purpose": "What was actually discussed before marriage.",
+    "when": "Use for a relevant financial issue; do not expand into a full audit.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Before marriage, what did you discuss about work, income, debts and financial responsibilities?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "MON-02": {
+    "purpose": "The specific alleged omission or representation, without assuming deliberate deception.",
+    "when": "Select the relevant branch; skip details already recorded in CON.",
+    "prompts": [
+      "What particular fact or agreement are you referring to?",
+      "If represented differently: what were you told?",
+      "If not disclosed: what had been discussed about that subject, if anything?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Was there an important financial fact or agreement you say was not disclosed or was represented differently?",
+    "disposition": "Retain with conditional branches.",
+    "clarificationNote": ""
+  },
+  "MON-03": {
+    "purpose": "The particular event, participants and timing.",
+    "when": "Ask only missing components of an identified relevant event.",
+    "prompts": [
+      "When did it occur?",
+      "Who was involved?",
+      "What happened?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Describe a specific financial decision or disagreement relevant to this petition.",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "MON-04": {
+    "purpose": "Contemporaneous knowledge versus later information and its source.",
+    "when": "Relate the answer to the financial event at issue; reuse TIM or CON.",
+    "prompts": [
+      "What did you discover later?",
+      "How did you discover it?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What did you know at that time?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "MON-05": {
+    "purpose": "Item-to-assertion support and relevant limitations.",
+    "when": "Use EVD for already-recorded provenance and version details.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Which evidence supports the particular fact, and what is uncertain or disputed?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "INT-01": {
+    "purpose": "The difficulty and the separate occurrence/awareness sequence.",
+    "when": "Proceed only within the difficulty the applicant identifies; do not infer an affirmative answer.",
+    "prompts": [
+      "When did it arise, if known?",
+      "When did it become known to you?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Is there a specific intimate marital difficulty you wish to explain?",
+    "disposition": "Break down without expansion.",
+    "clarificationNote": ""
+  },
+  "INT-02": {
+    "purpose": "Earlier understanding and the claimed later difference.",
+    "when": "Use only if directly relevant; reuse DEC or CON where already covered.",
+    "prompts": [
+      "What was different afterward?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "If relevant, what had been discussed or understood before marriage?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "INT-03": {
+    "purpose": "The applicant’s asserted connection between the specific difficulty and petition.",
+    "when": "Do not invite unrelated intimate information.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "How does this specific difficulty relate to your request? Include only the facts you wish to explain.",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "PRS-01": {
+    "purpose": "Whether the applicant identifies a relevant influence and what it was.",
+    "when": "If none is identified, skip PRS-02–04 unless an existing statement needs clarification.",
+    "prompts": [
+      "If so, describe it."
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Was there any pressure, threat or other circumstance that you say affected your decision to marry?",
+    "disposition": "Refine to remove presupposition.",
+    "clarificationNote": ""
+  },
+  "PRS-02": {
+    "purpose": "Concrete conduct, source and timing.",
+    "when": "Only for an identified relevant circumstance.",
+    "prompts": [
+      "Who or what was the source?",
+      "When did it occur?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What specifically happened?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "PRS-03": {
+    "purpose": "Described decision effect and actual contemporaneous communication.",
+    "when": "Do not assume that an identified circumstance affected the decision in a particular way.",
+    "prompts": [
+      "What did you communicate at the time?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "How did it affect your decision?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "PRS-04": {
+    "purpose": "Knowledge basis and identified support.",
+    "when": "Reuse EVD; do not impose corroboration as a universal requirement.",
+    "prompts": [
+      "What evidence or contemporaneous information supports it?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What do you know directly?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "DBT-01": {
+    "purpose": "Any contemporaneous serious reservation identified by the applicant.",
+    "when": "A negative or unknown answer does not authorize speculative probing.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What serious reservations, if any, did you have before the wedding?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "DBT-02": {
+    "purpose": "Discussion content, recipient and response.",
+    "when": "Ask only unanswered components if discussion occurred.",
+    "prompts": [
+      "What did you say?",
+      "To whom did you say it?",
+      "What response or action followed?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Did you discuss those reservations?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "DBT-03": {
+    "purpose": "Reasons and knowledge at the time, not later retrospective judgment.",
+    "when": "Reuse DEC where the same reasons were already recorded.",
+    "prompts": [
+      "What relevant facts were known then?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Why did you proceed at that time?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "WED-01": {
+    "purpose": "Whether a particular relevant event is identified.",
+    "when": "If none, skip event-specific probes.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Did a specific event immediately before or at the ceremony affect willingness or ability to proceed?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "WED-02": {
+    "purpose": "Event content, timing and direct recollection.",
+    "when": "Only for the event identified under WED-01.",
+    "prompts": [
+      "When did it happen?",
+      "What do you remember directly?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Describe what happened.",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "WED-03": {
+    "purpose": "Contemporaneous words/actions and supporting information.",
+    "when": "Skip response or evidence components already covered by WED-02 or EVD.",
+    "prompts": [
+      "What other information supports your account, if not already identified?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Was anything said or done at the time in response to this event?",
+    "disposition": "Refine while preserving support.",
+    "clarificationNote": ""
+  },
+  "CON-01": {
+    "purpose": "The particular alleged discrepancy or omission.",
+    "when": "Use only for an identified allegation, not a search for every undisclosed fact.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What important fact do you say was represented differently or not disclosed before marriage?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "CON-02": {
+    "purpose": "The actual representation and its context, or the relevant discussion where no statement is alleged.",
+    "when": "Do not force an answer to what was said where the account concerns only nondisclosure.",
+    "prompts": [
+      "By whom and when?",
+      "If the allegation concerns only an omission: what had been discussed about that subject, if anything?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What were you told?",
+    "disposition": "Break down with omission branch.",
+    "clarificationNote": ""
+  },
+  "CON-03": {
+    "purpose": "Contemporaneous belief and stated importance.",
+    "when": "Reuse DEC; avoid replacing historical inquiry with a hypothetical present-day decision.",
+    "prompts": [
+      "Why was that fact important to your decision?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What did you believe when deciding to marry?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "CON-04": {
+    "purpose": "Discovery timing and source.",
+    "when": "Only if a difference is identified; preserve unknown occurrence dates.",
+    "prompts": [
+      "How did you learn it?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "When did you learn the difference?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "CON-05": {
+    "purpose": "Support for each component rather than a global concealment label.",
+    "when": "Reuse EVD for exact items and limitations.",
+    "prompts": [
+      "What remains uncertain?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What evidence supports each part of this sequence?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "INF-01": {
+    "purpose": "The conduct alleged rather than a label alone.",
+    "when": "Let the initial account proceed before asking the probe; use the detailed dossier only for unresolved material facts.",
+    "prompts": [
+      "What specific actions or communications are you referring to?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Please describe, in your own words, the conduct you allege and its relevance to this petition.",
+    "disposition": "Refine for an open factual account.",
+    "clarificationNote": ""
+  },
+  "INF-02": {
+    "purpose": "Alleged occurrence separately from discovery.",
+    "when": "Accept unknown occurrence dates; reuse TIM for exact/approximate distinctions.",
+    "prompts": [
+      "When did you first learn of it?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "When do you say the alleged conduct occurred?",
+    "disposition": "Refine and split.",
+    "clarificationNote": ""
+  },
+  "INF-03": {
+    "purpose": "Direct, reported and inferred knowledge.",
+    "when": "Ask only unresolved distinctions; a lack of direct observation does not mean no personal knowledge of a statement or document.",
+    "prompts": [
+      "What information came from another source?",
+      "Which parts are your interpretation or suspicion, if that remains unclear?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What did you experience or observe directly?",
+    "disposition": "Break down and clarify.",
+    "clarificationNote": ""
+  },
+  "INF-04": {
+    "purpose": "Specific support linked to particular assertions.",
+    "when": "Reuse EVD; do not ask for all devices, accounts or communications.",
+    "prompts": [
+      "Which submitted item do you mean, and what particular fact do you say it supports?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What specific evidence supports your account?",
+    "disposition": "Retain with conditional clarification.",
+    "clarificationNote": ""
+  },
+  "ABD-01": {
+    "purpose": "Beginning and directly known circumstances.",
+    "when": "Reuse SEP/TIM for an already-recorded period.",
+    "prompts": [
+      "What circumstances do you know directly?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "When did the separation or absence begin?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "ABD-02": {
+    "purpose": "What continued, not merely what ceased.",
+    "when": "Permit none, unknown or a qualified account without inferred motives.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What relevant communication, contact or support continued, if any?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "ABD-03": {
+    "purpose": "Actual attempts and observed outcomes.",
+    "when": "Reuse REC where already recorded; no advice or requirement to make further contact.",
+    "prompts": [
+      "What happened?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What attempts were made to communicate or reconcile?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "ABD-04": {
+    "purpose": "Certainty and basis for material dates/reasons.",
+    "when": "Relate each answer to an identified event or explanation.",
+    "prompts": [
+      "What supports the particular date or stated reason?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Which dates or reasons are known, estimated or unknown?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "ABU-01": {
+    "purpose": "The relevant conduct or pattern the applicant identifies.",
+    "when": "Stay within the petition issue; do not compel a full biography.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Describe the relevant incident or pattern you wish the Council to consider.",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "ABU-02": {
+    "purpose": "Direct experience, timing and repetition.",
+    "when": "Only ask missing components; no requirement to date every incident exactly.",
+    "prompts": [
+      "When did it happen?",
+      "Was this one incident or did something similar happen on other occasions?",
+      "If repetition is identified and remains unclear: describe the relevant pattern."
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What did you experience or observe directly?",
+    "disposition": "Break down preserving all components.",
+    "clarificationNote": ""
+  },
+  "ABU-03": {
+    "purpose": "Concrete described effects relevant to the petition.",
+    "when": "Clarify an identifiable event/change only if the answer is general.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What relevant effect did it have on married life or the decision to separate?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "ABU-04": {
+    "purpose": "Existing relevant material and its actual nature.",
+    "when": "Do not imply records must exist or require a new report.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Are there existing court orders, reports or other evidence you wish to identify?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "FTH-01": {
+    "purpose": "Reported earlier affiliation with knowledge limits.",
+    "when": "Accept unknown information about the other party.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What was each party’s religious affiliation before you knew each other, to your knowledge?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "FTH-02": {
+    "purpose": "The particular stated change and timing.",
+    "when": "Do not substitute an attendance pattern for an established affiliation change.",
+    "prompts": [
+      "When did it occur?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What later change in affiliation or practice is relevant to this request?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "FTH-03": {
+    "purpose": "Direct and reported knowledge.",
+    "when": "Reuse EVD for source-chain clarification.",
+    "prompts": [
+      "What were you told?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What do you know directly?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "FTH-04": {
+    "purpose": "Described concrete effect and support.",
+    "when": "Keep doctrinal conclusions for authorized institutional assessment.",
+    "prompts": [
+      "What information supports that account?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "How did the stated change affect married life?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "ADD-01": {
+    "purpose": "Specific reported behavior.",
+    "when": "Do not convert this into a diagnostic screening checklist.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Describe the behavior relevant to this petition rather than only giving it a label.",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "ADD-02": {
+    "purpose": "Known onset versus first awareness and source.",
+    "when": "Accept unknown onset; do not use discovery as onset automatically.",
+    "prompts": [
+      "When did you first become aware of it?",
+      "How did you become aware of it?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "When did the behavior begin, if known?",
+    "disposition": "Refine and split.",
+    "clarificationNote": ""
+  },
+  "ADD-03": {
+    "purpose": "Relevant concrete events or changes attributed to the behavior.",
+    "when": "Clarify only if the claimed effect remains abstract.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "How did the behavior affect married life?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "ADD-04": {
+    "purpose": "Known help and support for the account.",
+    "when": "Use MED safeguards; no inference from lack of known treatment.",
+    "prompts": [
+      "What evidence or direct observations support your account?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What help was sought, if known?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "BKG-01": {
+    "purpose": "An identified relevant earlier event.",
+    "when": "If no connection is identified, do not expand background questioning.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Is there a specific earlier experience directly connected to an issue in this petition?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "BKG-02": {
+    "purpose": "The event, asserted relevance and knowledge basis.",
+    "when": "Avoid repeating a source account already recorded under EVD.",
+    "prompts": [
+      "Which parts do you know directly?",
+      "Which parts were you told?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Explain the relevant event and its connection to the issue.",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "BKG-03": {
+    "purpose": "Basis and limits of the claimed connection.",
+    "when": "Do not equate temporal sequence with demonstrated causation.",
+    "prompts": [
+      "What is unknown?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What information supports the connection?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "TIM-01": {
+    "purpose": "First appearance and its relationship to the marriage date.",
+    "when": "Ask the second part only if the sequence is unresolved.",
+    "prompts": [
+      "Were they evident before or after marriage?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "When did the relevant difficulties first appear?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "TIM-02": {
+    "purpose": "Contemporaneous knowledge versus later information.",
+    "when": "Attach the account to the relevant event, not a generic undated narrative.",
+    "prompts": [
+      "What became known later?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What did you know at the time?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "TIM-03": {
+    "purpose": "Date certainty for identified material events.",
+    "when": "Reuse dates already clarified; do not require an exact day where none is known.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Which important dates are exact, approximate or unknown? Relate each date to a specific event.",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "SEP-01": {
+    "purpose": "Whether relevant earlier periods existed.",
+    "when": "If none, proceed to the final separation where relevant.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Were there relevant temporary separations before the final one?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "SEP-02": {
+    "purpose": "Dates, circumstances, actual resumption and its reported cause.",
+    "when": "Repeat only for relevant periods; ask reunion detail only if residence resumed.",
+    "prompts": [
+      "Did you resume living together afterward?",
+      "If yes: what led to resuming life together?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "For each relevant period, describe the approximate beginning and end dates and the circumstances that led to separation.",
+    "disposition": "Refine and break down.",
+    "clarificationNote": ""
+  },
+  "SEP-03": {
+    "purpose": "The final separation distinguished from prior periods.",
+    "when": "Ask only unresolved components; preserve uncertain final dates.",
+    "prompts": [
+      "When did it occur?",
+      "What were the circumstances?",
+      "What do you know directly?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Describe the final separation separately.",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "SEP-04": {
+    "purpose": "Support and limits for the separation account.",
+    "when": "Reuse TIM/EVD instead of a new application or separation-case module.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Identify supporting information and uncertain dates without treating separation as a new case.",
+    "disposition": "Retain instruction.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "REC-01": {
+    "purpose": "Actual relevant attempts.",
+    "when": "Do not advise or require another attempt.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What relevant attempts at reconciliation were made?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "REC-02": {
+    "purpose": "Attempt content, participants and timing.",
+    "when": "Ask only missing components of the same attempt.",
+    "prompts": [
+      "Who participated?",
+      "Approximately when did it occur?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What happened in that attempt?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "REC-03": {
+    "purpose": "Observed outcome versus reported outcome.",
+    "when": "No inference that attendance means reconciliation succeeded.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Distinguish the outcome you observed from information you received from someone else.",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "REC-04": {
+    "purpose": "Unresolved facts and identified existing records.",
+    "when": "Do not request confessional content or create a general priest interview.",
+    "prompts": [
+      "What existing records are relevant?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What information remains outstanding?",
+    "disposition": "Break down.",
+    "clarificationNote": ""
+  },
+  "EVD-01": {
+    "purpose": "The asserted item-to-fact relationship.",
+    "when": "Identify the item and assertion; avoid a global claim that evidence proves the entire account.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Which specific fact does each item support?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "EVD-02": {
+    "purpose": "Origin/acquisition and the form/version actually supplied.",
+    "when": "Ask version detail only if unclear; accept unknown and do not demand technical authentication.",
+    "prompts": [
+      "Is the item supplied complete, or is it a copy, extract, transcription, translation or another version?",
+      "Describe any changes you know of."
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Who created this item, when, and how did you obtain it, if known?",
+    "disposition": "Refine and break down.",
+    "clarificationNote": ""
+  },
+  "EVD-03": {
+    "purpose": "Knowledge basis for the particular assertion.",
+    "when": "Clarify the original source versus intermediaries only where material.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What did you personally experience, observe or learn from another source?",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "EVD-04": {
+    "purpose": "Limits, contrary information and uncertainty within disclosure boundaries.",
+    "when": "Do not expose private submissions to create a contradiction question.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "What limitations, conflicting information or uncertainty should the Council know? Do not disclose the other applicant’s private submission.",
+    "disposition": "Retain.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "MED-01": {
+    "purpose": "Known relevant evaluation/help, including evaluation without treatment.",
+    "when": "Activate only for a specific relevant issue; no general mental-health screening.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "To your knowledge, have you or your spouse received a medical, psychological or psychiatric evaluation, treatment or other professional help directly relevant to the issue being discussed? It is acceptable not to know.",
+    "disposition": "Replace pending wording.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  },
+  "MED-02": {
+    "purpose": "Relevant help, timing and asserted connection.",
+    "when": "Do not seek unrelated clinical detail; disclosure/testing remains separately authorized.",
+    "prompts": [
+      "Approximately when did it occur?",
+      "How do you say it relates to the issue in this petition?"
+    ],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "If so, describe only the relevant evaluation, treatment or help.",
+    "disposition": "Replace pending wording and break down.",
+    "clarificationNote": ""
+  },
+  "MED-03": {
+    "purpose": "Direct/report-based knowledge and unknown information.",
+    "when": "Do not repeat EVD if answered; no response authorizes records access.",
+    "prompts": [],
+    "source": "Perplexity review: optional editorial guidance; no external claims adopted.",
+    "recommended": "Which parts of this account do you know directly, which were reported to you, and what remains unknown?",
+    "disposition": "Replace pending wording; preserve safeguard separately.",
+    "clarificationNote": "No additional routine probe proposed. Use existing TIM/EVD only for a material unresolved distinction."
+  }
+}

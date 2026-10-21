@@ -1,0 +1,277 @@
+{
+  "questionnaireVersion": "ctm-applicant-portal-review-v1",
+  "source": "Transcribed from user message. Clarification text normalized for spelling; decision supplement records interpretations separately.",
+  "answers": [
+    {
+      "id": "P01",
+      "sectionId": "home",
+      "section": "Portal home & case navigation",
+      "question": "Should the portal home show the applicant’s current case, unfinished draft and any pending appeal together?",
+      "context": "Show only that applicant’s permitted records; a pending appeal may relate to the same case.",
+      "answer": null,
+      "clarification": "It can never be all at the same time; only one at a time."
+    },
+    {
+      "id": "P02",
+      "sectionId": "home",
+      "section": "Portal home & case navigation",
+      "question": "Should closed cases appear in a separate past-cases list?",
+      "context": "The list would show reference/status and permitted messages, appeals and released certificates, not unlock original closed questionnaire/evidence.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P03",
+      "sectionId": "home",
+      "section": "Portal home & case navigation",
+      "question": "Should each case have an applicant-facing timeline of key events?",
+      "context": "For example submitted, returned, accepted, assigned, hearing update, decision, appeal and closure. Exclude internal notes, votes and deliberations.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P04",
+      "sectionId": "home",
+      "section": "Portal home & case navigation",
+      "question": "Should the home page prioritize actions the applicant needs to take?",
+      "context": "For example complete a draft, address returned items, respond to an invitation or read a new request.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P05",
+      "sectionId": "home",
+      "section": "Portal home & case navigation",
+      "question": "Should an applicant see a clear “case is closed” explanation before the appeal option?",
+      "context": "Explain that an appeal is a new-information submission, not ordinary editing of the original case.",
+      "answer": "other",
+      "clarification": "Case is closed; appeal is available based on new information/evidence."
+    },
+    {
+      "id": "P06",
+      "sectionId": "applications",
+      "section": "Applications & corrections",
+      "question": "Should a draft show a section checklist of missing required answers and documents?",
+      "context": "The USD 250 fee remains disclosed before starting and payment stays at the completed-application end.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P07",
+      "sectionId": "applications",
+      "section": "Applications & corrections",
+      "question": "Should the applicant see a full review of their answers and attachments before signing and paying?",
+      "context": "This reviews only their own submission; neither spouse’s answers overwrite the other’s.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P08",
+      "sectionId": "applications",
+      "section": "Applications & corrections",
+      "question": "Should returned applications open directly to the reviewer’s correction instructions and relevant form areas?",
+      "context": "Keep original answers/history; do not add another filing fee or require a new signature for corrections.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P09",
+      "sectionId": "applications",
+      "section": "Applications & corrections",
+      "question": "Should an applicant’s post-submission correction to one field become an explicit Save action for that field or section?",
+      "context": "Use Other to prefer automatic saving. No reason or re-signing is required, and every committed change is retained.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P10",
+      "sectionId": "applications",
+      "section": "Applications & corrections",
+      "question": "Should draft-expiry warnings also appear inside the portal?",
+      "context": "The existing 180-day inactivity expiry and seven-day email warning remain; this asks only about an on-screen warning.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P11",
+      "sectionId": "requests",
+      "section": "Requests for information",
+      "question": "Should a council request for information appear as a separate actionable item with an applicant response area?",
+      "context": "The current message history remains authoritative; this would link responses to the request without creating a private chat feature.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P12",
+      "sectionId": "requests",
+      "section": "Requests for information",
+      "question": "Should the applicant be able to add documents directly when responding to a request while the case is open?",
+      "context": "Uploads stay inside the portal with existing ownership, limits and history; no email attachment submissions.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P13",
+      "sectionId": "requests",
+      "section": "Requests for information",
+      "question": "Should council mark a request resolved after reviewing the response?",
+      "context": "If No, the exchange can remain ordinary recorded correspondence with no separate request status.",
+      "answer": null,
+      "clarification": "Response of what? What type of response?"
+    },
+    {
+      "id": "P14",
+      "sectionId": "requests",
+      "section": "Requests for information",
+      "question": "Should applicants be able to send a new case message from the portal, in addition to replying to existing case emails?",
+      "context": "This would be recorded case correspondence, not live chat. The sender cannot contact the other applicant or expose their own private data to them.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P15",
+      "sectionId": "requests",
+      "section": "Requests for information",
+      "question": "Should portal replies and email replies appear in one private conversation history for that applicant?",
+      "context": "Use Other if you want portal read-only correspondence and email-only replies. Staff sees the authorized case communication record.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P16",
+      "sectionId": "files",
+      "section": "Documents & fees",
+      "question": "Should the document area group the applicant’s latest files by document category?",
+      "context": "Applicants still cannot browse older attachment versions or the other party’s files.",
+      "answer": "yes",
+      "clarification": "Attachments must be attached and shown in the correct place; follow the previously agreed naming convention."
+    },
+    {
+      "id": "P17",
+      "sectionId": "files",
+      "section": "Documents & fees",
+      "question": "Should a replacement upload clearly show which existing document it will replace?",
+      "context": "Preserve the original in council-only version history; ordinary replacement is available only in the permitted open proceeding.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P18",
+      "sectionId": "files",
+      "section": "Documents & fees",
+      "question": "Should the portal show the applicant’s own payment/waiver status and receipt for each filing?",
+      "context": "Do not show the other party’s payments or internal waiver administration; no applicant waiver-request option.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P19",
+      "sectionId": "files",
+      "section": "Documents & fees",
+      "question": "Should applicants be able to download their individual payment receipt?",
+      "context": "This is a receipt, not a case-record export. Use Other if the provider receipt alone is sufficient.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P20",
+      "sectionId": "hearings",
+      "section": "Appointments & notifications",
+      "question": "Should upcoming testimony invitations appear in a dedicated appointments area?",
+      "context": "Date, time, instructions and Confirm/Reject are already agreed; no applicant rescheduling and no private council agenda access.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P21",
+      "sectionId": "hearings",
+      "section": "Appointments & notifications",
+      "question": "Should the portal show a map/address or remote attendance link supplied by staff for testimony?",
+      "context": "Only for that applicant’s own appointment. CTM is not required to host video calls merely by storing a link.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P22",
+      "sectionId": "hearings",
+      "section": "Appointments & notifications",
+      "question": "Should the applicant receive an automatic reminder one day before their testimony appointment?",
+      "context": "Use Other to specify a different interval, channels or no reminders. Initial/change invitations already use portal/email.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P23",
+      "sectionId": "hearings",
+      "section": "Appointments & notifications",
+      "question": "Should notifications distinguish unread from read and allow the applicant to mark them read?",
+      "context": "This affects the applicant’s inbox state only, not proof of legal service or changes to case records.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P24",
+      "sectionId": "appeals",
+      "section": "Appeals & certificates",
+      "question": "Should the appeal page display the applicant’s appeal statement, additions, fee status and council Accept/Decline result together?",
+      "context": "Only their own appeal information; the other applicant’s appeal evidence remains private.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P25",
+      "sectionId": "appeals",
+      "section": "Appeals & certificates",
+      "question": "Should adding appeal information display a chronological list of the applicant’s prior supplements?",
+      "context": "These are retained additions, not edits to the originally submitted appeal statement.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P26",
+      "sectionId": "appeals",
+      "section": "Appeals & certificates",
+      "question": "Should withdrawal require a short confirmation screen before taking effect?",
+      "context": "No approval or withdrawal reason is added. The screen explains the applicable case/appeal effect and nonrefundable fee.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P27",
+      "sectionId": "appeals",
+      "section": "Appeals & certificates",
+      "question": "Should a decree notice show that the certificate is not yet available until staff releases it?",
+      "context": "No download link or certificate preview before explicit release; the detailed handover process remains a separate discussion.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P28",
+      "sectionId": "appeals",
+      "section": "Appeals & certificates",
+      "question": "Should a released certificate display its decree ID, language and release date next to View / Download?",
+      "context": "Access remains exact-recipient/current-released-version only; earlier certificate versions stay hidden.",
+      "answer": "yes",
+      "clarification": "It is a PDF."
+    },
+    {
+      "id": "P29",
+      "sectionId": "profile",
+      "section": "Profile & preferences",
+      "question": "Should applicants manage their notification language and verified email change inside an account settings page?",
+      "context": "English/Arabic preference and verified email changes are already approved; this asks where those actions live.",
+      "answer": "yes",
+      "clarification": ""
+    },
+    {
+      "id": "P30",
+      "sectionId": "profile",
+      "section": "Profile & preferences",
+      "question": "Should updating account contact information leave submitted case answers unchanged until the applicant explicitly corrects the permitted case fields?",
+      "context": "Keep account data and signed submission assertions distinct; no retroactive rewrite of past applications.",
+      "answer": null,
+      "clarification": "Not sure I understand."
+    }
+  ],
+  "generalNotes": ""
+}

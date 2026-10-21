@@ -1,0 +1,317 @@
+{
+  "version": "ctm-wording-review-v2",
+  "decisions": {
+    "DEC-01": {
+      "decision": "reject",
+      "note": ""
+    },
+    "DEC-02": {
+      "decision": "accept",
+      "note": ""
+    },
+    "DEC-03": {
+      "decision": "accept",
+      "note": ""
+    },
+    "DEC-04": {
+      "decision": "accept",
+      "note": ""
+    },
+    "CHD-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "CHD-02": {
+      "decision": "accept",
+      "note": ""
+    },
+    "CHD-03": {
+      "decision": "accept",
+      "note": ""
+    },
+    "CHD-04": {
+      "decision": "accept",
+      "note": ""
+    },
+    "CHD-05": {
+      "decision": "accept",
+      "note": ""
+    },
+    "MON-01": {
+      "decision": "custom",
+      "note": "Separate before-marriage discussions into their own category: work, income, intimacy and related topics."
+    },
+    "MON-02": {
+      "decision": "accept",
+      "note": ""
+    },
+    "MON-03": {
+      "decision": "reject",
+      "note": ""
+    },
+    "MON-04": {
+      "decision": "reject",
+      "note": ""
+    },
+    "MON-05": {
+      "decision": "accept",
+      "note": ""
+    },
+    "INT-01": {
+      "decision": "reject",
+      "note": ""
+    },
+    "INT-02": {
+      "decision": "accept",
+      "note": ""
+    },
+    "INT-03": {
+      "decision": "accept",
+      "note": ""
+    },
+    "PRS-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "PRS-02": {
+      "decision": "reject",
+      "note": ""
+    },
+    "PRS-03": {
+      "decision": "reject",
+      "note": ""
+    },
+    "PRS-04": {
+      "decision": "accept",
+      "note": ""
+    },
+    "DBT-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "DBT-02": {
+      "decision": "reject",
+      "note": ""
+    },
+    "DBT-03": {
+      "decision": "reject",
+      "note": ""
+    },
+    "WED-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "WED-02": {
+      "decision": "reject",
+      "note": ""
+    },
+    "WED-03": {
+      "decision": "reject",
+      "note": ""
+    },
+    "CON-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "CON-02": {
+      "decision": "reject",
+      "note": ""
+    },
+    "CON-03": {
+      "decision": "accept",
+      "note": ""
+    },
+    "CON-04": {
+      "decision": "reject",
+      "note": ""
+    },
+    "CON-05": {
+      "decision": "accept",
+      "note": ""
+    },
+    "INF-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "INF-02": {
+      "decision": "accept",
+      "note": ""
+    },
+    "INF-03": {
+      "decision": "accept",
+      "note": ""
+    },
+    "INF-04": {
+      "decision": "accept",
+      "note": ""
+    },
+    "ABD-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "ABD-02": {
+      "decision": "accept",
+      "note": ""
+    },
+    "ABD-03": {
+      "decision": "accept",
+      "note": ""
+    },
+    "ABD-04": {
+      "decision": "remove",
+      "note": ""
+    },
+    "ABU-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "ABU-02": {
+      "decision": "reject",
+      "note": ""
+    },
+    "ABU-03": {
+      "decision": "accept",
+      "note": ""
+    },
+    "ABU-04": {
+      "decision": "reject",
+      "note": ""
+    },
+    "FTH-01": {
+      "decision": "reject",
+      "note": ""
+    },
+    "FTH-02": {
+      "decision": "accept",
+      "note": ""
+    },
+    "FTH-03": {
+      "decision": "reject",
+      "note": ""
+    },
+    "FTH-04": {
+      "decision": "reject",
+      "note": ""
+    },
+    "ADD-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "ADD-02": {
+      "decision": "custom",
+      "note": "Name the behavior explicitly: abuse or addiction; ask when it began and how."
+    },
+    "ADD-03": {
+      "decision": "accept",
+      "note": ""
+    },
+    "ADD-04": {
+      "decision": "accept",
+      "note": ""
+    },
+    "BKG-01": {
+      "decision": "remove",
+      "note": ""
+    },
+    "BKG-02": {
+      "decision": "accept",
+      "note": ""
+    },
+    "BKG-03": {
+      "decision": "accept",
+      "note": ""
+    },
+    "TIM-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "TIM-02": {
+      "decision": "reject",
+      "note": ""
+    },
+    "TIM-03": {
+      "decision": "replace_with_contextual_dates",
+      "note": "Remove broad dates question; place date clarification with each question that needs a date."
+    },
+    "SEP-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "SEP-02": {
+      "decision": "remove",
+      "note": ""
+    },
+    "SEP-03": {
+      "decision": "remove",
+      "note": ""
+    },
+    "SEP-04": {
+      "decision": "remove",
+      "note": ""
+    },
+    "REC-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "REC-02": {
+      "decision": "reject",
+      "note": ""
+    },
+    "REC-03": {
+      "decision": "remove",
+      "note": ""
+    },
+    "REC-04": {
+      "decision": "remove",
+      "note": ""
+    },
+    "EVD-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "EVD-02": {
+      "decision": "accept",
+      "note": ""
+    },
+    "EVD-03": {
+      "decision": "accept",
+      "note": ""
+    },
+    "EVD-04": {
+      "decision": "accept",
+      "note": ""
+    },
+    "MED-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "MED-02": {
+      "decision": "reject",
+      "note": ""
+    },
+    "MED-03": {
+      "decision": "accept",
+      "note": ""
+    },
+    "OPEN-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "OPEN-02": {
+      "decision": "accept",
+      "note": ""
+    },
+    "BASIS-01": {
+      "decision": "accept",
+      "note": ""
+    },
+    "BASIS-02": {
+      "decision": "remove",
+      "note": ""
+    },
+    "CLOSE-01": {
+      "decision": "remove",
+      "note": ""
+    }
+  }
+}

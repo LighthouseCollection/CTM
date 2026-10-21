@@ -1,0 +1,118 @@
+P001: Tribunal
+P002: 11 North B Street, Pensacola, FL 32502
+P003: (850) 435-3549
+P004: tribunal@ptdiocese.org
+P005: Witness Testimony
+P006: Formal Cases of Marriage Validity
+P007: RE: ______________________________   / __________________________________   __________
+P008: Petitioner /Respondent                                                       Prot. #
+P009: You have been asked to provide testimony in the Catholic Marriage Tribunal of the Diocese of Pensacola-Tallahassee.  Your answers will be used to help determine the validity of the attempted marriage between the petitioner and the respondent.  The parties will be allowed to review your testimony, if they choose, after you have submitted it to the Tribunal.  Your testimony and the decision of this Tribunal have no bearing on civil legal matters.
+P010: Carefully follow these instructions:
+P011: Use your own words.  Do not ask the petitioner or respondent what to include.
+P012: Firsthand accounts are best.  Mere gossip or hearsay is not substantial.  If you provide information heard from another person that you think is relevant, describe the circumstances and reason why they shared this with you.
+P013: Avoid blaming, taking sides, and name-calling.  This process is not about the (good or bad) moral character of the petitioner or respondent, but rather about knowing truth and facts about the relationship. Be honest about what you know.  You will be required to make an oath at the end of the questionnaire.
+P014: About Yourself, the Witness (A)
+P015: What is your relationship to the petitioner?
+P016: ☐Family (Specify:______________________)  ☐Friend
+P017: ☐Co-worker ☐Other (Specify:____________)
+P018: How long have you known the petitioner? _______(years)
+P019: What is your relationship to the respondent?
+P020: ☐Family (Specify:______________________)  ☐Friend
+P021: ☐Co-worker ☐Other (Specify:____________)
+P022: How long have you known the respondent? _______(years)
+P023: What is your religion/faith practice?
+P024: ☐Catholic  ☐Non-Catholic Christian  ☐Other (Specify:____________)
+P025: How frequent/regular is the practice of your faith?
+P026: ☐At least weekly ☐At least monthly      ☐At least yearly
+P027: ☐Occasional      ☐Not practicing
+P028: Other than what is mentioned above, how do you know the petitioner and/or respondent?  (You may include the history of your relationship to the parties, your occupation, educational background, and faith beliefs.)   Click or tap here to enter text.
+P029: What would be the best way to contact you if the Tribunal requests clarification of one or more of your responses?
+P030: ☐ Phone ( _ _ _ ) _ _ _ - _ _ _ _
+P031: ☐ Email __________________________
+P032: ☐ Other __________________________
+P033: About the Petitioner (B)
+P034: Regarding suitability for marriage, what relevant background information can you provide about the petitioner?
+P035: Relationship with parents: Click or tap here to enter text.
+P036: Divorces in family: Click or tap here to enter text.
+P037: Religious practice: Click or tap here to enter text.
+P038: Social life: Click or tap here to enter text.
+P039: Work history: Click or tap here to enter text.
+P040: Military service: Click or tap here to enter text.
+P041: Trouble with the law or authority: Click or tap here to enter text.
+P042: Use of drugs or alcohol: Click or tap here to enter text.
+P043: Attitudes toward sex: Click or tap here to enter text.
+P044: Overall health (including mental & psychological): Click or tap here to enter text.
+P045: Maturity: Click or tap here to enter text.
+P046: Decision making: Click or tap here to enter text.
+P047: Describe any strengths/values (such as character, motivation, or habits) of the petitioner that would be suitable for married life.   Click or tap here to enter text.
+P048: Describe any weaknesses/obstacles (such as addictions, odd behaviors, or patterns) of the petitioner that would be unsuitable for married life.   Click or tap here to enter text.
+P049: How much/little dating experience did the petitioner have before marriage to the respondent? (Indicate how serious and the duration of any other relationships.) Click or tap here to enter text.
+P050: In what way(s) did the petitioner demonstrate a desire and intent to marry the respondent?  Click or tap here to enter text.
+P051: Describe whether or not you believe that the petitioner was capable of entering a faithful and lifelong marriage.  Click or tap here to enter text.
+P052: About the Respondent (C)
+P053: Regarding suitability for marriage, what relevant background information can you provide about the respondent?
+P054: Relationship with parents: Click or tap here to enter text.
+P055: Divorces in family: Click or tap here to enter text.
+P056: Religious practice: Click or tap here to enter text.
+P057: Social life: Click or tap here to enter text.
+P058: Work history: Click or tap here to enter text.
+P059: Military service: Click or tap here to enter text.
+P060: Trouble with the law or authority: Click or tap here to enter text.
+P061: Use of drugs or alcohol: Click or tap here to enter text.
+P062: Attitudes toward sex: Click or tap here to enter text.
+P063: Overall health (including mental & psychological): Click or tap here to enter text.
+P064: Maturity: Click or tap here to enter text.
+P065: Decision making: Click or tap here to enter text.
+P066: Describe any strengths/values (such as character, motivation, or habits) of the respondent that would be suitable for married life.   Click or tap here to enter text.
+P067: Describe any weaknesses/obstacles (such as addictions, odd behaviors, or patterns) of the respondent that would be unsuitable for married life.   Click or tap here to enter text.
+P068: How much/little dating experience did the respondent have before marriage to the petitioner? (Indicate how serious and the duration of any other relationships.) Click or tap here to enter text.
+P069: In what way(s) did the respondent demonstrate a desire and intent to marry the petitioner?  Click or tap here to enter text.
+P070: Describe whether or not you believe that the respondent was capable of entering a faithful and lifelong marriage.  Click or tap here to enter text.
+P071: About the dating/courtship/engagement of the Petitioner and Respondent (D)
+P072: When and under what circumstances did the couple meet?  Click or tap here to enter text.
+P073: Describe your impression as to whether this couple would be a good match.   Click or tap here to enter text.
+P074: What hesitations or doubts did you have regarding this couple’s compatibility?  Click or tap here to enter text.
+P075: Describe any unusual or distinct features about the courtship. Click or tap here to enter text.
+P076: Give details about formal marriage preparation plans that the couple made before marriage.  (Include meetings with a priest or minister, personality/psychological inventory, retreat, counseling, etc.) Click or tap here to enter text.
+P077: Did the Petitioner & Respondent live together (cohabitate) before marriage?  Click or tap here to enter text.
+P078: If so, were they encouraged to marry or expected to marry because they were living together? Click or tap here to enter text.
+P079: Was there anything pressuring the couple to enter marriage? (Please include factors such as pregnancy, military deployment, immigration status, financial situation, escape unfavorable living situation, peer pressure, etc.)  Click or tap here to enter text.
+P080: Describe whether you believe this marriage had any unresolved issues prior to the wedding that should have been dealt with earlier.  (Please include anything related to: differences of culture, views on family planning, substance abuse, mental illness, finances, or health.)   Click or tap here to enter text.
+P081: Did you support and encourage the petitioner and respondent to marry?  If so, why? Click or tap here to enter text.
+P082: Did you, or anyone else, advise the petitioner and respondent against marriage?  If so, why? Click or tap here to enter text.
+P083: About the Wedding Ceremony (E)
+P084: Note: If the couple was civilly married and then had the wedding “convalidated” or “blessed” or later celebrated in the Catholic Church, please respond to all of the following questions as pertaining to the CATHOLIC CEREMONY and not the civil ceremony or other religious ceremony.
+P085: Did you attend the wedding of the petitioner and respondent?
+P086: ☐Yes ☐No
+P087: Where did the wedding take place?
+P088: (Name of the location & city, if known:) ______________________________________
+P089: ☐Catholic church ☐Another church or place of worship
+P090: ☐Civil courthouse or government office ☐I don’t know
+P091: Who was the minister or official at the wedding?
+P092: ☐Catholic clergy ☐Christian minister☐Another religious minister
+P093: ☐Justice of the Peace or civil government official ☐I don’t know
+P094: Describe anything unusual or anything that stood out during the wedding day. Click or tap here to enter text.
+P095: About the Married Life, Separation, and Divorce (F)
+P096: What were their plans regarding children and raising a family?  Click or tap here to enter text.
+P097: How important was religion and/or faith to the parties at the time of marriage? Click or tap here to enter text.
+P098: Describe any major changes in behavior that you noticed in the couple after the wedding compared to how they were before the wedding. (Include balancing responsibilities, practice of religion, drug or alcohol abuse, social habits, spending money, etc.) Click or tap here to enter text.
+P099: What factors led to the breakdown of the marriage between the petitioner and the respondent?   Click or tap here to enter text.
+P100: Summary
+P101: If this marriage is annulled by the Catholic Tribunal, describe whether or not this decision would cause any sort of scandal or lead others into any kind of danger.  Click or tap here to enter text.
+P102: Who is the priest, deacon, or advocate that is working with Petitioner or Respondent, and which parish are they from? Click or tap here to enter text.
+P103: Has the petitioner remarried or intended to marry again? Click or tap here to enter text.
+P104: Has the respondent remarried or intended to marry again? Click or tap here to enter text.
+P105: Do you have anything further you would like to add about the relationship between the petitioner and the respondent?  Click or tap here to enter text.
+P106: Required: To authenticate your testimony, choose one of the two options (A or B):
+P107: A) At a local Catholic Parish, ask a priest or deacon (or authorized layperson) to verify your identity, administer the oath, and affix the parish seal to your testimony.  (This is usually free of charge.)
+P108: - or -
+P109: B) A public notary may administer the oath, verify your identity, and include the notary seal to your testimony.  (This may include a fee.)
+P110: Note to the person administering the oath:
+P111: If the witness is unknown to you personally, please ask to view a picture ID and verify the signature of the witness.
+P112: Oath: Knowing that an oath is sacred and that perjury is a grave offense, do you swear that the answers you provided are the truth, the whole truth, and nothing but the truth, so help you God?
+P113: □ I do.
+P114: Printed name of Witness
+P115: The witness testimony may not be accepted unless it includes either a Parish seal
+P116: or Notary stamp
+P117: Signature of Witness                                    Date
+P118: Printed name of Clergy, parish, and city; or Notary

@@ -1,0 +1,296 @@
+[
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-archived.html",
+    "beforeSha256": "77fdb65acfdadc7104ad64e5614930aa204e7ba25107569f4d1bca63671886ba",
+    "afterSha256": "e09a8076febae633b912acced86d278a1b382e58040185b9e8ee30f64c8eb4a9",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-audit.html",
+    "beforeSha256": "7116c3bf0c4f5b4ed1c828f3611e59fe706b2deb5dcdf8519c70f7f0f6bdbe99",
+    "afterSha256": "f787ca6be82e5fad7441122f22ff00818be475e916b911f2889994011aed2800",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-communications.html",
+    "beforeSha256": "0c46f2bd94093cd744f3321161a6325aeae45db267cbfd1b1033aefed628811c",
+    "afterSha256": "d0bbc6ecd131cc94e9b77cedbc43fc1a5513d1983243866016aafbd4e1b7735f",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-decree-view.html",
+    "beforeSha256": "fafd3d36988dabf5c0e9f90e5cec17c693c42b233b67eb6508f75d140239c77f",
+    "afterSha256": "61ecfc18de8327f5b74d7ad492039710b9de1057698491ee1f7bb7fad2a14a54",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-decree.html",
+    "beforeSha256": "0200fc1b5f5de501ee672b8d1159d0dc122e61d4f6fb5e95c55fa80eeff2d88a",
+    "afterSha256": "7b832d2c89ab518b11ac4f7d22dd4f27ab5a573408c2abfe8f0daba52c7ec9a2",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-documents.html",
+    "beforeSha256": "f54831d92d322c9c0fadde84837da8f9afb0bc14f3810db11484cfa24e592ae4",
+    "afterSha256": "0d83221a51149ef45c9bf52558b92cad534f030001fb81b3197f79b6e20d509a",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-evidence.html",
+    "beforeSha256": "6d8c65c2e0fa5e3bcdaa2afacd57e5dfb784121bb2c474c8e05bc67a1f651023",
+    "afterSha256": "eefe7d944b9f0736abb1d7c36f44c5bb9bfa0a7b2d5c3946206924728a7289f7",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-hearings-2.html",
+    "beforeSha256": "8fa1547da133b3f5c5cf0554d95676d549836bcba04302b7ab0bf84f0d689759",
+    "afterSha256": "485c0faf16fb9c457b89561fa3fbe1b20e4fee11fbf3ba56bcacc1d2600de352",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-hearings.html",
+    "beforeSha256": "51424e2d13b0988c7512a4267f5587d21b120282d8ac7d62c2cf51163236916c",
+    "afterSha256": "01855aa5c0cb39090dee403dd02f8d0461da9ca1a0454bda97ba9d5799771e46",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-intake.html",
+    "beforeSha256": "ce3b1108b80c8e12e829cba169f0606d55a2deff205a32b585a1701f2a960883",
+    "afterSha256": "b6e48973bd47e77dd564ab8872fd2f2880fdda42a653b69d41e29c530f7ffbef",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-marriage.html",
+    "beforeSha256": "4e2e7a59816e8c031aa53db6cc4fff12c0acfbd2bd421f7ef35a1af11b5ebd10",
+    "afterSha256": "16f4ad5183d95fc0c91d1626e8e6a72025e50e33f6026d18eab2c163c35bbfcc",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-notes.html",
+    "beforeSha256": "d4a7242490b6751464f0633695aea8823eb6c7303d9a9e7dbe5e6e3117f467f4",
+    "afterSha256": "7c0d5be75d458b7fd449ff4a6e5dd0f1d266b1409a5c47cb0c91ea883efd1596",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-parties.html",
+    "beforeSha256": "c9f08e6b068c976ab098d8bd12ee6647a62ace6a66b28f3b783bf8c338d8af95",
+    "afterSha256": "699114823b86a162a7c9ef92e9cd68685cb9c9b9d97331dfd6855bd3f79cca95",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-requisition.html",
+    "beforeSha256": "24fec5b7c78a357592be8823035208589dcc710429af9a82adc40b0df4e4e64d",
+    "afterSha256": "6d3ec51b027f3061fb8ff863517e5a20b1a0b00f737dbe6267a0d1dc14a75e4d",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-separation.html",
+    "beforeSha256": "67af4526135687125d298b4006ed73d8a93a11694b658ff5d68533b540d64455",
+    "afterSha256": "72ba01e7d6a3e098a81fec17721e8c729f50b167ed0dda4c3cd8dbe7fe64ffff",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-summary.html",
+    "beforeSha256": "63eb53a9615ac49bf306f79c6820dda169151bf51b6c15ee4cf2b11dcc0888d3",
+    "afterSha256": "494a0dfff791a6c56f31d5798d209933d6f10a654217f61930ac3b2e83126262",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-case-timeline.html",
+    "beforeSha256": "637e875c541fbdde7ba2a505bcbefb1b27be6e0dd66a35a3a33cc4edc5defaae",
+    "afterSha256": "1f54b9350c4f662104b3f62f1bb4558c2857b24272e60dd71cee6a803b35ec3a",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-cases.html",
+    "beforeSha256": "b171759143b23e33e9cb1af494780970fab51b0755bbf1201b2cb4aba889a88d",
+    "afterSha256": "10a894a3951df951c17eae95634a4865812ec99ce766bbc1221f714990633bbe",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-index.html",
+    "beforeSha256": "fc46d133edfb44db63d45e9135f75d46906555476de567d74b9974c3093b3619",
+    "afterSha256": "7ef7d7a73423f9200bcc694c536d1678a8beb0eb572d0fed92a20f02c612b0ad",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-management.html",
+    "beforeSha256": "bed870c0f2d4576844e83ce075b43f31cd987031854013bb9d6e4ff4c7dab744",
+    "afterSha256": "624672d4cfd0754be3ddfbf873ad2099c5e6ab200179215d77ba04345a0ccf45",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-member.html",
+    "beforeSha256": "8151dc2a2453e932c8074aa929f7dbf4df0286ce9b3b37f86b9248f78120cd9d",
+    "afterSha256": "861cd4b402261c6471a458f403008c6730f67692ea7a6797a046f92165bc6951",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-reports.html",
+    "beforeSha256": "855cf0e439c98ca706e76b00d42c9aeed589bcda0e9a4f65d26c72d9538baa89",
+    "afterSha256": "7af51f35c317e4f0ecb99691a15d9e28e1b072ac1d7cfb2376f44258d6985f51",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-search.html",
+    "beforeSha256": "3fa3c5662959fe451b74c5347aafd39e7715ccbe61170be00a8dc19816632e46",
+    "afterSha256": "310a938a82c6f02d97aef7947aeabb8b92e55eb82356116177b3cb689b750795",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-session-summary.html",
+    "beforeSha256": "53fbd3292858775832a11f7a4e793f7b780819c935356d09ca7d13aa3fe5c01d",
+    "afterSha256": "9a5b6ad0675b3264b1877a730f714867b6df8578516ac0420f2950d51d2466de",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-sessions-historical.html",
+    "beforeSha256": "6a60437811fa69f20211ab0f0f2e2a79aa8b83b4be25ebe36f61699aaec726d7",
+    "afterSha256": "c930c0f71653ae683cc7faf1889bc6e58bf451a4ebd384f3dba9f26fa4ba3714",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-sessions-upcoming.html",
+    "beforeSha256": "b25c9e18014672926a329553a9985af3b99dcee917d5c595735ff63fa7079370",
+    "afterSha256": "a7c4b9c8d0f9293df7804332d696627f797759d4f74548150e13dc26bd9aae6e",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-sessions.html",
+    "beforeSha256": "1e91085bd782993c5d025a8192adb52713126d17fe1c7c339152d687f756da82",
+    "afterSha256": "a410ae8883351b18d558010fad692ae8aaec8df320b1e93cb3400bc16e1a040c",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-support.html",
+    "beforeSha256": "7669ae251005ea90446b451a6eadb2e44729250e22c4bbf05c822b031a43afc8",
+    "afterSha256": "6f8513230dc86cb8dc818483f7ce7fd94c5668f60fdfd65b46cb78e9bf1ffae7",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\admin-user-account.html",
+    "beforeSha256": "76f445ed63cc9f2c79c0ba0d859038ce1b6ef77594bf48bc5056ffbdc9c59d2b",
+    "afterSha256": "b3eb8b4ad7e0ae618fd06a16ff5df466befb3d7da1105bbe5339908e49f5a0c8",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\consolidation-preview.html",
+    "beforeSha256": "e9244e6b88f37b5b9ae0f714f6923c57753a0e3c52b95800b577da97d401ca63",
+    "afterSha256": "b8e06b2ec98d04dddf50da328ae72c7dae1a38718bc2da60ba66bfd4bffa6e6e",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-admin\\design-preview.html",
+    "beforeSha256": "5120ed2c4b2aeaaad4cf82705aec5a1698670a1e5ba1fb84ce70dc0f5e72bfb2",
+    "afterSha256": "8e02880d5fb426eef9ecb8e656f21004aa1cf7bb73da30295c519afc69d66c09",
+    "stylesheet": "assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-about.html",
+    "beforeSha256": "3831e7f0c14b8d553daaf52064e4fd0e7aa0df5d6effbff5b6d4ed393983f2dd",
+    "afterSha256": "0d281c1fff0b2c019d86973647350be55b2933d7dacd823a17bbcd2274182303",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-admin-signin.html",
+    "beforeSha256": "3cd4a3d48d24626ddf158fa3943da8c9fcc4201ce6b5527d07ef11d886dc79e7",
+    "afterSha256": "5cad4b7a17c7deb5f02779f31ff2be2ea68604e680a53f03278b7f0ee38f029e",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-apply.html",
+    "beforeSha256": "d30a1f62a496c65d84898d565921cdf23c51638c4d914ff73161bd496b2c1eb4",
+    "afterSha256": "f3c7b620d719d9f22842b3f5eeb9230140f24b4dfbe2d71318fef670162edbfb",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-contact.html",
+    "beforeSha256": "e0cbe5207b632595b8d8f152046c8bafd36b95783c198b96e46750ec42008499",
+    "afterSha256": "2de04714b3d454388fa8ad4d7f5870c87c61db765f17045865f53049365cb474",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-crown-cert-impediment.html",
+    "beforeSha256": "ecb02161ab1a44935c6ea1ecef2fd3a038a57d55153d48513f4df3e8d12454c5",
+    "afterSha256": "a6944f8253e5a231a1c781998dd4202e7385fd4d6a06ebeb0a30a1dbb1392bac",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-crown-consanguinity.html",
+    "beforeSha256": "77f03bf24daff740d5d5b0e9c88ce87fbfa6483dc2e006b8537dcfb5af57b63b",
+    "afterSha256": "ec17a700c464d18b033342ddbad1f35c2bfb51a8a676f3f686bf5443fcba8b0b",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-crown-dashboard.html",
+    "beforeSha256": "694b7fd179779087978ff13baf902b637fc2fd079415c2a698b9885fbae11954",
+    "afterSha256": "76e54a398e4ea9d791245a66bcd8f3c9b63596a512dd984cb4bc4bc3e55f1136",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-crown-guidelines.html",
+    "beforeSha256": "8a5bff517d130f5788a968461fa0068099aa7f087a6984fa1294f91449cf2eae",
+    "afterSha256": "f863492faa93b0e56a4e8ae935f1244d3c493a63680214682194f105e75c8fc0",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-crown-login.html",
+    "beforeSha256": "007659cccb8fd81b74c90f143a5ad5dc2ceb4a46c8cb93a7a7315ff3809981c6",
+    "afterSha256": "16d2d4336cc3b39d6124f63952e1d965fa29d22b16139f037fc95b43536e1874",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-ctm-home.html",
+    "beforeSha256": "01da8c261df9413150eba63072acd7b37cd56593c2dfe179f8b6deb770ecdd51",
+    "afterSha256": "8ebdc73e28e22c7a7f41efeab447e06f26015bc64312c6b2aec6353b3803c7f7",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-determinations.html",
+    "beforeSha256": "c775523d42225d463e76e6d4e002ccc6ee7dbaad5a099fbf69f255676fe0b915",
+    "afterSha256": "34c91884439818ef34bd6cfa764a533058340b10909065052addeb09e421a032",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-dissolution-home.html",
+    "beforeSha256": "9a751a2e11a0d022d4764aedf947e7261d37c64e2e1a84d3f04b7ce1f2a78411",
+    "afterSha256": "a0c38b87b40c379473b694422eabea0e31b9c9ff8f8aac71a0f4dc4fe83a58bc",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-faq.html",
+    "beforeSha256": "27ff91de63dc57bed3af7ddca5bcbb5758443e49719766b3dae383c8ba79b8d9",
+    "afterSha256": "cc228881ea54791793c74e13ae18d7dae032c53a29905fa95b887e0e6d2e3bcb",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-matrimony.html",
+    "beforeSha256": "2c80e9d5bcdc7eede07b96dc178baa94221ac8bb2bd69b582aae7705bde06df3",
+    "afterSha256": "0414b672186820c104760a343fe74a0cf59285cb1202f38e60c7a10d6bf8b1f8",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-petition.html",
+    "beforeSha256": "91b155efad8c818ac71a7c9d718ac0e132e8a1b8c9baa8bcef7cebc125e23d47",
+    "afterSha256": "728e599580ea798a23fd698f2d898b8514f77b3700998ac6a48c7d1f4701c719",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-process.html",
+    "beforeSha256": "a96edc3cb4f4437db6976fa88652a146f8b5a29f7eda14bd9863ec214d1146b2",
+    "afterSha256": "647f2e8f8b401d92176b8ac6b6da8752037b91eb2d1cfbb9c5684bb7eed952d6",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-reconciliation-audit.html",
+    "beforeSha256": "d326c2ead93fbd58daa54fef3ff84c4c28794305e1ebbd528a4ab0c72548bf81",
+    "afterSha256": "19434989a4078f4950dd5d7b1a60be33b405944d211108f1f737c7fd0f8818ab",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  },
+  {
+    "path": "D:\\Documents\\Projects\\Projects_Applications\\CTM\\ctm-public\\public-signin.html",
+    "beforeSha256": "75b25420babf8693e29ae72495363685af37479140ef48860d3eec07482d0ddf",
+    "afterSha256": "c80689f581a4c678fc217b7c72773bd95a6af77b6aa021b73dd72c51452d20cd",
+    "stylesheet": "../ctm-admin/assets/localization/ctm-arabic-bridge.css"
+  }
+]

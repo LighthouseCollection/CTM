@@ -1,0 +1,34 @@
+P001: Prior Spouse Report (HH)
+P002: HH Instructions: Please complete this for only one prior spouse of the petitioner OR only one prior spouse of the respondent.  Copy this page as many times as necessary.
+P003: Ex-spouse’s Name
+P004: (including maiden name)
+P005: To which party did this person previously enter into marriage?
+P006: (Which order? #1 is the earliest)
+P007: □ Petitioner
+P008: (Is this prior spouse #1, #2,…?)  #___
+P009: □ Respondent
+P010: (Is this prior spouse #1, #2,…?)  #___
+P011: Date entered into marriage (mm/dd /yyyy)
+P012: Location and address of this wedding (include the denomination if a church)
+P013: Was this his/her first marriage?
+P014: □ Yes
+P015: □ No
+P016: How many previous marriages? ___
+P017: How did this union end?
+P018: □ Divorce
+P019: (If “divorce”, continue to f1-f3.)
+P020: □ Death
+P021: (If “death”, continue to f4-f5)
+P022: Date of divorce
+P023: (dd/mm/yyyy)
+P024: Date of death
+P025: (dd/mm/yyyy)
+P026: Location of divorce (state, county, or local civil court)
+P027: Please include a copy of the death certificate as an attachment to this petition.
+P028: □ Done
+P029: Was this marriage annulled by a Catholic tribunal?
+P030: □ Yes
+P031: (If yes, provide the case # and location.)
+P032: □ No
+P033: Now, repeat the Prior Spouse Report (HH) for each time you or the respondent was married.
+P034: Then, to the best of your knowledge, include a Prior Spouse Report (HH) for any of your (the petitioner’s) previous marriages or the respondent’s previous marriages.

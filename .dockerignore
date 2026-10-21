@@ -1,0 +1,49 @@
+# Credentials and secrets
+deploy/.env
+deploy/.env.*
+!deploy/.env.example
+*.pem
+*.key
+.env
+.env.*
+.venv
+private-media
+.test-media
+.tmp
+
+# Version control
+.git
+.gitignore
+
+# IDE and OS
+.vscode
+.idea
+*.swp
+*.swo
+*~
+Thumbs.db
+.DS_Store
+
+# Python caches
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+htmlcov
+.coverage
+
+# Node (if any frontend build assets)
+node_modules
+
+# Docker artifacts
+deploy/postgres/
+deploy/scripts/
+deploy/vm-config.md
+
+# Documentation not needed in images
+docs/
+*.md
+!requirements*.txt
+LICENSE

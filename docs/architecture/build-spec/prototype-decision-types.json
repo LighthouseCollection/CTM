@@ -1,0 +1,55 @@
+{
+  "source": "ctm-admin/admin-case-decree.html",
+  "types": [
+    {
+      "prototype_code": "diss-applicant",
+      "prototype_label": "Dissolution Granted — Permission to Remarry (Applicant)",
+      "implementation_disposition": "decision_type_with_party_entitlement"
+    },
+    {
+      "prototype_code": "diss-respondent",
+      "prototype_label": "Dissolution Granted — Permission to Remarry (Respondent)",
+      "implementation_disposition": "decision_type_with_party_entitlement"
+    },
+    {
+      "prototype_code": "diss-both",
+      "prototype_label": "Dissolution Granted — Permission to Remarry (Both Parties)",
+      "implementation_disposition": "decision_type_with_party_entitlement"
+    },
+    {
+      "prototype_code": "diss-conditional",
+      "prototype_label": "Dissolution Granted — Conditional Permission to Remarry",
+      "implementation_disposition": "decision_type_with_party_entitlement"
+    },
+    {
+      "prototype_code": "null-granted",
+      "prototype_label": "Declaration of Nullity — Permission to Remarry Granted",
+      "implementation_disposition": "decision_type_with_party_entitlement"
+    },
+    {
+      "prototype_code": "null-conditional",
+      "prototype_label": "Declaration of Nullity — Conditional Permission to Remarry",
+      "implementation_disposition": "decision_type_with_party_entitlement"
+    },
+    {
+      "prototype_code": "deferred",
+      "prototype_label": "Decision Deferred — Further Investigation Required",
+      "implementation_disposition": "hearing_pending_no_decree"
+    },
+    {
+      "prototype_code": "denied",
+      "prototype_label": "Petition Denied — No Permission to Remarry",
+      "implementation_disposition": "denial_no_certificate"
+    },
+    {
+      "prototype_code": "withdrawn",
+      "prototype_label": "Petition Withdrawn",
+      "implementation_disposition": "withdrawal_no_approval"
+    },
+    {
+      "prototype_code": "reconciled",
+      "prototype_label": "Reconciliation — Case Closed",
+      "implementation_disposition": "map_to_withdrawal_not_separate_outcome"
+    }
+  ]
+}

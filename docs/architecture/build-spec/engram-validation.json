@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "core_version": "3.5.1",
+  "mcp_server": {
+    "name": "engram",
+    "version": "3.5.1"
+  },
+  "tool_count": 22,
+  "current_project_check": "ctm",
+  "read_only_handshake": true,
+  "memory_writes_tested": false,
+  "desktop_reload_required": true
+}

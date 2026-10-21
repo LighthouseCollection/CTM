@@ -1,0 +1,22 @@
+{
+  "OPEN-01": "Please state your full name and your spouse's full name. Identify the interviewer, today's date and the case number at the start of the interview.",
+  "BKG-03": "What information supports the connection you have described, and what remains unknown?",
+  "DEC-02": "Before marriage, what did you understand your responsibilities in married life would be? What had you and your spouse discussed, and what, if anything, had you agreed?",
+  "DEC-03": "Was a specific promise, agreement or condition important to your decision to marry? What was said, by whom and when, and how did the other person respond?",
+  "CON-02": "What were you told, by whom and when? If an important fact was not revealed, what had been discussed about that subject, if anything?",
+  "CON-03": "What did you believe when deciding to marry, and why was that fact important to your decision?",
+  "INT-01": "Is there a specific intimate marital difficulty you wish to explain? When did it begin, if known, and when did you first become aware of it?",
+  "TIM-01": "When did the difficulties being discussed first appear? Were they evident before or after marriage?",
+  "INF-01": "Describe the affair or adultery you are reporting, including the specific actions or communications. Who was involved, and when and where did it happen, if known?",
+  "INF-03": "What did you personally experience or observe about the reported affair or adultery? What information came from another source, and which parts are your interpretation or suspicion?",
+  "INF-04": "What specific evidence supports your account of the affair or adultery? Identify each submitted item and explain which fact it supports.",
+  "ADD-02": "When did the addiction begin, if known, and how did it develop? When and how did you first become aware of it?",
+  "ADD-04": "What help was sought for the addiction, if known, and what evidence or direct observations support your account?",
+  "MON-02": "Before marriage, was important financial information kept from you or described differently from what you later learned? What was the fact or agreement, what were you told, and by whom? If it was not revealed, what had been discussed about that subject, if anything?",
+  "ABD-01": "When did the separation or absence begin, and what circumstances did you personally experience or observe?",
+  "ABD-03": "What attempts were made to communicate or reconcile after the separation or absence, and what happened?",
+  "INT-02": "Before marriage, what had you discussed or understood about intimate married life, and what was different afterward?",
+  "CHD-02": "Did you and your spouse differ about whether or when to have children? What did each of you actually communicate?",
+  "CHD-03": "Did your or your spouse's plans about children change after marriage, or did you later discover something about your spouse's earlier plans? What changed or became known, when and how did you learn about it, and what was communicated?",
+  "EVD-02": "Who created this item, when was it created, and how did you obtain it, if known? Is it complete, or is it a copy, extract, transcript, translation or another version? Describe any changes you know of."
+}

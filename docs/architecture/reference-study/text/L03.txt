@@ -1,0 +1,21 @@
+P001: Tribunal, Diocese of Cleveland
+P002: Preliminary Questions With Validation
+P003: Answer the questions completely in the Word document downloaded from the Tribunal website, with as much detail, description, and examples as you can. Yes or no answers are not acceptable.
+P004: Regarding prior relationships of both parties
+P005: Were either of you married previously? Did either of you live with another partner? If so, describe the relationships and how/why they ended.
+P006: Did either of you conceive any children with another party prior to your relationship? Please explain. How did this impact your relationship with each other?
+P007: Regarding the courtship prior to the civil ceremony
+P008: Did the two of you conceive any children with each other prior to the civil ceremony? If so, explain how it impacted your relationship and decision to celebrate a civil ceremony.
+P009: Describe your courtship. Did you live with each other prior to the civil ceremony? Who made the decisions? Describe any difficulties, for example, with employment, finances, drug and/or alcohol abuse, verbal and/or physical abuse, etc.
+P010: Compare your personalities during the time prior to the civil ceremony. Did either of you dominate the relationship? Did either of you change during the marriage? If so, how?
+P011: Regarding the engagement prior to the civil ceremony
+P012: When and why did the two of you decide to celebrate the civil ceremony rather than a Catholic ceremony? Was there any pressure caused by pregnancy, family, military obligations, etc.? Did either of you have any doubts?
+P013: Regarding the time after the civil ceremony and before the Catholic ceremony
+P014: Describe the difficulties encountered after the civil ceremony and before the Catholic ceremony. Who made the decisions? Describe any difficulties, for example, with employment, finances, drug/alcohol abuse, verbal and/or physical abuse, etc.
+P015: Regarding the time after the civil ceremony and before the Catholic ceremony
+P016: Why did you decide to celebrate the Catholic ceremony?
+P017: Describe the difficulties encountered after the Catholic ceremony. Who made the decisions? Describe any difficulties, for example, with employment, finances, drug/alcohol abuse, verbal and/or physical abuse, etc.
+P018: Describe any separations. How and why did you reconcile? What was the reason for the divorce? Who initiated divorce proceedings? At this time, is there any hope of resuming the marital relationship? Why or why not?
+P019: Regarding the family history of both parties
+P020: What in your family of origin may have affected your decision to marry and the quality of the relationship you had with your divorced spouse?
+P021: What in your divorced spouse’s family of origin may have affected his or her decision to marry and the quality of the relationship with you?

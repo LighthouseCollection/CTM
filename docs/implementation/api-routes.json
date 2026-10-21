@@ -1,0 +1,246 @@
+[
+  {
+    "route": "",
+    "handler": "shell"
+  },
+  {
+    "route": "health/",
+    "handler": "health"
+  },
+  {
+    "route": "api/session/",
+    "handler": "session"
+  },
+  {
+    "route": "api/applications/",
+    "handler": "applications"
+  },
+  {
+    "route": "api/applications/<uuid:app_id>/",
+    "handler": "application"
+  },
+  {
+    "route": "api/applications/<uuid:app_id>/history/",
+    "handler": "answer_history"
+  },
+  {
+    "route": "api/applications/<uuid:app_id>/submit/",
+    "handler": "submit"
+  },
+  {
+    "route": "api/applications/<uuid:app_id>/review/",
+    "handler": "review"
+  },
+  {
+    "route": "api/applications/<uuid:app_id>/waiver/",
+    "handler": "waiver"
+  },
+  {
+    "route": "api/applications/<uuid:app_id>/withdraw/",
+    "handler": "withdraw"
+  },
+  {
+    "route": "api/applications/<uuid:app_id>/checkout/",
+    "handler": "checkout"
+  },
+  {
+    "route": "integrations/stripe/",
+    "handler": "stripe_webhook"
+  },
+  {
+    "route": "api/cases/",
+    "handler": "cases"
+  },
+  {
+    "route": "api/cases/<uuid:case_id>/",
+    "handler": "case_detail"
+  },
+  {
+    "route": "api/cases/<uuid:case_id>/assignment/",
+    "handler": "assign"
+  },
+  {
+    "route": "api/council/members/",
+    "handler": "members"
+  },
+  {
+    "route": "api/council/enroll/",
+    "handler": "enroll"
+  },
+  {
+    "route": "api/sessions/",
+    "handler": "sessions"
+  },
+  {
+    "route": "api/sessions/<uuid:session_id>/agenda/",
+    "handler": "agenda"
+  },
+  {
+    "route": "api/sessions/<uuid:session_id>/close/",
+    "handler": "close_session"
+  },
+  {
+    "route": "api/agenda/<uuid:item_id>/hear/",
+    "handler": "hear"
+  },
+  {
+    "route": "api/cases/<uuid:case_id>/messages/",
+    "handler": "messages"
+  },
+  {
+    "route": "api/notifications/",
+    "handler": "notifications"
+  },
+  {
+    "route": "api/files/",
+    "handler": "upload"
+  },
+  {
+    "route": "api/files/<uuid:file_id>/",
+    "handler": "download"
+  },
+  {
+    "route": "api/report-questions/",
+    "handler": "report_questions"
+  },
+  {
+    "route": "api/cases/<uuid:case_id>/requests/",
+    "handler": "report_requests"
+  },
+  {
+    "route": "api/requests/<uuid:request_id>/send/",
+    "handler": "send_report_request"
+  },
+  {
+    "route": "api/requests/<uuid:request_id>/complete/",
+    "handler": "complete_report_request"
+  },
+  {
+    "route": "api/requests/<uuid:request_id>/release/",
+    "handler": "medical_release"
+  },
+  {
+    "route": "api/cases/<uuid:case_id>/reports/",
+    "handler": "reports"
+  },
+  {
+    "route": "api/proceedings/<uuid:proceeding_id>/notes/",
+    "handler": "notes"
+  },
+  {
+    "route": "api/proceedings/<uuid:proceeding_id>/decision/",
+    "handler": "decision"
+  },
+  {
+    "route": "api/decisions/<uuid:decision_id>/vote/",
+    "handler": "vote"
+  },
+  {
+    "route": "api/decisions/<uuid:decision_id>/approve/",
+    "handler": "approval"
+  },
+  {
+    "route": "api/decisions/<uuid:decision_id>/decree/",
+    "handler": "decree"
+  },
+  {
+    "route": "api/decrees/<uuid:decree_id>/release/",
+    "handler": "release_decree"
+  },
+  {
+    "route": "api/appeals/<uuid:app_id>/additions/",
+    "handler": "appeal_addition"
+  },
+  {
+    "route": "api/appeals/<uuid:app_id>/result/",
+    "handler": "appeal_result"
+  },
+  {
+    "route": "api/cases/<uuid:case_id>/audit/",
+    "handler": "case_audit"
+  },
+  {
+    "route": "api/system/audit/",
+    "handler": "system_audit"
+  },
+  {
+    "route": "external/reports/<uuid:request_id>/",
+    "handler": "external_report"
+  },
+  {
+    "route": "api/system/settings/",
+    "handler": "settings_endpoint"
+  },
+  {
+    "route": "api/templates/",
+    "handler": "templates"
+  },
+  {
+    "route": "api/account/settings/",
+    "handler": "account_settings"
+  },
+  {
+    "route": "api/search/",
+    "handler": "search"
+  },
+  {
+    "route": "api/applications/<uuid:app_id>/delete-draft/",
+    "handler": "delete_draft"
+  },
+  {
+    "route": "api/system/questionnaires/publish/",
+    "handler": "publish_questionnaire"
+  },
+  {
+    "route": "api/dashboard/",
+    "handler": "dashboard"
+  },
+  {
+    "route": "api/cases/<uuid:case_id>/calls/",
+    "handler": "calls"
+  },
+  {
+    "route": "api/cases/<uuid:case_id>/parties/",
+    "handler": "add_party"
+  },
+  {
+    "route": "api/files/<uuid:file_id>/signature/",
+    "handler": "signature"
+  },
+  {
+    "route": "api/hearings/<uuid:hearing_id>/outcome/",
+    "handler": "hearing_outcome"
+  },
+  {
+    "route": "api/agenda/<uuid:item_id>/testimony/",
+    "handler": "testimony"
+  },
+  {
+    "route": "api/appointments/<uuid:appointment_id>/response/",
+    "handler": "testimony_response"
+  },
+  {
+    "route": "api/recordings/",
+    "handler": "recording"
+  },
+  {
+    "route": "api/recordings/<uuid:recording_id>/finalize/",
+    "handler": "recording_finalize"
+  },
+  {
+    "route": "api/reports/<uuid:report_id>/revisions/",
+    "handler": "report_revision"
+  },
+  {
+    "route": "api/proceedings/<uuid:proceeding_id>/findings/",
+    "handler": "finding"
+  },
+  {
+    "route": "api/historical/",
+    "handler": "historical_stage"
+  },
+  {
+    "route": "api/historical/<uuid:workspace_id>/publish/",
+    "handler": "historical_publish"
+  }
+]

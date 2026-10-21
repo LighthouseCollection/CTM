@@ -1,0 +1,19 @@
+{
+  "date_utc": "2026-10-21",
+  "application_version": "0.1.0",
+  "postgresql_tests": {"passed":64,"failed":0,"skipped":0,"duration_seconds":9.99,"isolation":"ctm_validation role/database; ephemeral test_ctm_validation"},
+  "sqlite_tests": {"passed":60,"failed":0,"skipped":4,"note":"PostgreSQL-only invariants skipped; Windows interpreter intermittently crashes, Linux run authoritative"},
+  "django_system_check": "passed",
+  "migration_drift_check": "passed",
+  "compose_config_check": "passed_with_synthetic_environment_values",
+  "application_image_build": "passed_on_VM",
+  "private_container_health": {"status":"ok","application":"ctm","version":"0.1.0","public_route":false,"settings":"ctm.settings_postgres_test - validation only"},
+  "real_broker_worker_smoke": "passed: isolated Redis and worker consumed default queue and recorded durable retry; probe containers removed",
+  "question_bank": {"exact_English_questions":59,"institutional_declarations_published":false},
+  "build_contract_structural_checks": {"tables":151,"foreign_keys":354,"source_hashes_verified":50,"status":"passed structural checks only"},
+  "implemented_domain_models":58,
+  "explicit_root_url_patterns":61,
+  "public_deployment_ready":false,
+  "github_hosted_ci":"configured; run status not yet verified",
+  "limitations":["Plenix CDN documentation inaccessible; browser UI unimplemented","151-table contract reconciliation and forced RLS incomplete","Real identity/payment/email/transcription integrations unconfigured","Ten-user browser and restore/relocation acceptance pending"]
+}

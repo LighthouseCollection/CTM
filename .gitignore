@@ -1,0 +1,53 @@
+# Local credentials; commit examples only
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+
+# Python and frontend dependencies/build output
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+node_modules/
+dist/
+build/
+
+# Runtime records, evidence, logs, backups and private local memory
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-wal
+*.db-shm
+*.log
+media/
+staticfiles/
+backups/
+uploads/
+private-media/
+.test-media/
+.tmp/
+.engram/*
+!.engram/config.json
+
+# Editor / operating-system state
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~

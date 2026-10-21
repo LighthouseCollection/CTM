@@ -1,0 +1,542 @@
+[
+  {
+    "id": "AF01",
+    "category": "Petition purpose",
+    "nature": "All initial petitions",
+    "destination": "Applicant: beginning of petition",
+    "status": "Dedicated prompt missing",
+    "current": "Section 8 requests canonical grounds in a general Case Summary; no separate requested-outcome control.",
+    "proposed": "What are you asking the council to consider: divorce/dissolution, annulment/declaration of nullity, or clarification of the appropriate type? State the reason for your request.",
+    "reason": "Establish purpose before the narrative. This is the applicant request, not council approval or an Orthodox eligibility determination.",
+    "sources": [
+      {
+        "id": "L01",
+        "locator": "P056"
+      },
+      {
+        "id": "L07",
+        "locator": "P006–013"
+      },
+      {
+        "id": "R06",
+        "locator": "PDF p.7, petition; p.14, statement"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF02",
+    "category": "Petition purpose",
+    "nature": "All initial petitions",
+    "destination": "Applicant: statement instructions",
+    "status": "Wording replacement",
+    "current": "public-petition.html:419–424: “canonical grounds” and “Please provide a detailed account...”",
+    "proposed": "Explain what you are asking for and why. Give the important events in date order, say how you know them, and identify any supporting documents. Distinguish approximate dates from exact dates.",
+    "reason": "Plain factual guidance is more useful than requiring applicants to know canonical terminology. Typed statement OR PDF/DOCX remains unchanged.",
+    "sources": [
+      {
+        "id": "L07",
+        "locator": "P007–012"
+      },
+      {
+        "id": "L06",
+        "locator": "P011–013"
+      },
+      {
+        "id": "R05",
+        "locator": "PDF p.1, introduction"
+      }
+    ],
+    "action": "Replace wording"
+  },
+  {
+    "id": "AF03",
+    "category": "Petition purpose",
+    "nature": "All initial petitions",
+    "destination": "Applicant: statement instructions",
+    "status": "Optional narrative organization",
+    "current": "One unrestricted Case Summary textarea; no category prompts within it.",
+    "proposed": "Offer these optional narrative headings: request and reasons; relevant facts before marriage; events during marriage; separation and reconciliation efforts; supporting evidence; new or missing information.",
+    "reason": "Use a writing guide, not a mandatory long Catholic questionnaire. Keep a single statement/upload acceptable.",
+    "sources": [
+      {
+        "id": "L02",
+        "locator": "P004–018"
+      },
+      {
+        "id": "R02",
+        "locator": "PDF p.5, seven narrative headings"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF04",
+    "category": "Marriage records",
+    "nature": "Prior-marriage factual supplement",
+    "destination": "Applicant: optional repeatable marriage-history block",
+    "status": "Dedicated repeatable history missing",
+    "current": "Section 7 “Previously Applied for Ecclesiastical Marriage Permit?” records prior applications, not each prior marriage.",
+    "proposed": "Were you previously married to someone else? If yes, for each prior marriage provide the spouse name, ceremony date/place, how it ended and the relevant civil or church decision reference, if known.",
+    "reason": "A prior marriage and a prior tribunal application are different records. Do not automatically retrieve old case answers or require another open case.",
+    "sources": [
+      {
+        "id": "L08",
+        "locator": "P002–034"
+      },
+      {
+        "id": "L01",
+        "locator": "P130–158"
+      },
+      {
+        "id": "R08",
+        "locator": "PDF p.2, q.15"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF05",
+    "category": "Marriage records",
+    "nature": "Prior-marriage factual supplement",
+    "destination": "Applicant: other-party history, only if known",
+    "status": "Dedicated history missing",
+    "current": "Spouse section has identity and current church details, but no prior-marriage repeat.",
+    "proposed": "To your knowledge, was your spouse previously married? If yes, provide the known details of each prior marriage. Unknown or unavailable details may be stated as such.",
+    "reason": "Mirror relevant factual history without making absent-spouse information a submission blocker or asserting it is verified.",
+    "sources": [
+      {
+        "id": "L08",
+        "locator": "P029–034"
+      },
+      {
+        "id": "R03",
+        "locator": "PDF p.7, q.19d"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF06",
+    "category": "Marriage records",
+    "nature": "Civil/church chronology supplement",
+    "destination": "Applicant: marriage section",
+    "status": "Current ambiguity",
+    "current": "public-petition.html:306–323 combines “married outside the Coptic Orthodox Church” with one outside date and one church marriage date.",
+    "proposed": "Did you have more than one ceremony with this spouse? Record each ceremony separately: civil or church, date, place, officiant and certificate reference. Identify which record relates to this petition.",
+    "reason": "Separate civil and church facts. Do not import Catholic convalidation, dispense with required certificates or change the confirmed matching-date rule.",
+    "sources": [
+      {
+        "id": "L01",
+        "locator": "P230–244"
+      },
+      {
+        "id": "L03",
+        "locator": "P007–018"
+      },
+      {
+        "id": "R09",
+        "locator": "PDF pp.1–3, civil/church timeline"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF07",
+    "category": "Marriage records",
+    "nature": "All petitions where religious history is relevant",
+    "destination": "Applicant: small optional church-history field",
+    "status": "Current-vs-historical distinction missing",
+    "current": "public-petition.html:180–192,264–267 collects denomination/parish now; no separate denomination-at-marriage field.",
+    "proposed": "What was each party’s religious affiliation at the time of the church marriage? Record a later change separately, if relevant. Use Unknown for spouse details not known.",
+    "reason": "Avoid treating current denomination as proof of faith at marriage. No baptismal certificate requirement is reintroduced.",
+    "sources": [
+      {
+        "id": "L05",
+        "locator": "P026"
+      },
+      {
+        "id": "R04",
+        "locator": "PDF p.3, religious status at marriage"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF08",
+    "category": "Chronology",
+    "nature": "All petitions",
+    "destination": "Applicant: optional short relationship timeline",
+    "status": "Dedicated timeline missing",
+    "current": "No meeting, courtship or engagement controls in the current petition.",
+    "proposed": "If relevant to your request, give when you first met, began the relationship and became engaged. Approximate dates are acceptable for these background events.",
+    "reason": "Keep detailed discovery in the interview; avoid forcing exact dates for memories or deriving extra ID matches from these dates.",
+    "sources": [
+      {
+        "id": "L01",
+        "locator": "P036–039"
+      },
+      {
+        "id": "R06",
+        "locator": "PDF p.10, chronology"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF09",
+    "category": "Chronology",
+    "nature": "Marriage breakdown / divorce",
+    "destination": "Applicant: short narrative prompt",
+    "status": "Missing distinction",
+    "current": "public-petition.html:347 has Date of Separation; no separate first-serious-problem prompt.",
+    "proposed": "When did the difficulties relevant to this petition first become apparent? State whether this was before or after the church marriage, and explain briefly.",
+    "reason": "Distinguishes onset, discovery and final separation rather than assuming all are the same date.",
+    "sources": [
+      {
+        "id": "L01",
+        "locator": "P048"
+      },
+      {
+        "id": "L07",
+        "locator": "P159–165"
+      },
+      {
+        "id": "R05",
+        "locator": "PDF p.4, married life"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF10",
+    "category": "Chronology",
+    "nature": "Marriage breakdown / divorce",
+    "destination": "Applicant: optional separation entries",
+    "status": "Single date only",
+    "current": "Current separation area has one date, while temporary separations can be described only in the general summary.",
+    "proposed": "Were there earlier periods of separation before the final separation? For each relevant period record approximate dates, reason and whether you resumed living together.",
+    "reason": "A repeatable factual timeline supports later review without creating new cases or requiring a detailed biography.",
+    "sources": [
+      {
+        "id": "L02",
+        "locator": "P015"
+      },
+      {
+        "id": "L01",
+        "locator": "P328–332"
+      },
+      {
+        "id": "R13",
+        "locator": "PDF p.3, temporary separations"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF11",
+    "category": "Chronology",
+    "nature": "All new petitions requiring final civil decree",
+    "destination": "Applicant: existing civil-divorce question",
+    "status": "Wording replacement only",
+    "current": "public-petition.html:353 “Civil Divorce Filed?”; confirmed CTM policy already requires finalized civil decree before submission.",
+    "proposed": "Has a final civil divorce decree been issued? Provide its date, court and case number, and upload the final decree.",
+    "reason": "Align wording with the already-approved final-decree requirement; do not introduce extra civil process statuses.",
+    "sources": [
+      {
+        "id": "R08",
+        "locator": "PDF p.2, q.14"
+      },
+      {
+        "id": "L05",
+        "locator": "P061–062"
+      }
+    ],
+    "action": "Replace wording"
+  },
+  {
+    "id": "AF12",
+    "category": "Conditional factual prompts",
+    "nature": "Misrepresentation / concealment before marriage",
+    "destination": "Applicant: only when this ground selected",
+    "status": "Ground approved; factual subprompt missing",
+    "current": "The approved grounds include concealment; prototype only has a general Case Summary.",
+    "proposed": "What important fact do you say was misrepresented or not disclosed before marriage? What were you told, when did you discover the difference, and what supports your account?",
+    "reason": "Ask for an allegation and its basis, not a presumed finding that the spouse lied.",
+    "sources": [
+      {
+        "id": "L01",
+        "locator": "P283–302"
+      },
+      {
+        "id": "R03",
+        "locator": "PDF p.8, q.29"
+      },
+      {
+        "id": "R10",
+        "locator": "PDF p.10, J"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF13",
+    "category": "Conditional factual prompts",
+    "nature": "Possible annulment inquiry; not a new automatic ground",
+    "destination": "Applicant: short optional screen or move to interview via Other",
+    "status": "Not a dedicated question",
+    "current": "No explicit prompt about pressure at the decision to marry.",
+    "proposed": "Did pressure, threats or circumstances affect your freedom to decide to marry? If this is relevant to your request, explain who or what was involved and when.",
+    "reason": "A neutral factual screen only. Whether this affects an Orthodox decision is for the institution; no imported Catholic ground.",
+    "sources": [
+      {
+        "id": "L02",
+        "locator": "P012"
+      },
+      {
+        "id": "R04",
+        "locator": "PDF p.7, q.27–29"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF14",
+    "category": "Conditional factual prompts",
+    "nature": "Annulment-related factual discovery",
+    "destination": "Applicant: optional short prompt or interview-only via Other",
+    "status": "No dedicated prompt",
+    "current": "General summary can contain this, but there is no direct question.",
+    "proposed": "Before the marriage, was there an important agreement, promise or condition that you say was not disclosed or later proved different? Explain the fact and its importance to your decision.",
+    "reason": "Capture a concrete factual concern without importing a Catholic consent classification or diagnosing incapacity.",
+    "sources": [
+      {
+        "id": "L07",
+        "locator": "P078"
+      },
+      {
+        "id": "R03",
+        "locator": "PDF pp.9–10, q.32"
+      },
+      {
+        "id": "R05",
+        "locator": "PDF p.3, q.16"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF15",
+    "category": "Evidence presentation",
+    "nature": "All petitions",
+    "destination": "Applicant: attachment explanation next to each relevant item",
+    "status": "Evidence explanation missing",
+    "current": "Upload zones provide document categories; no general field explains which fact an evidence item supports.",
+    "proposed": "For additional evidence, briefly state what it shows and which part of your statement it relates to.",
+    "reason": "Keep correct-location attachments and the confirmed filename convention. This adds evidence meaning, not manual file acceptance.",
+    "sources": [
+      {
+        "id": "L06",
+        "locator": "P012"
+      },
+      {
+        "id": "L07",
+        "locator": "P151"
+      },
+      {
+        "id": "R06",
+        "locator": "PDF p.3, supporting reports"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF16",
+    "category": "Evidence presentation",
+    "nature": "All petitions",
+    "destination": "Applicant: narrative/source cue",
+    "status": "No explicit distinction",
+    "current": "The general Case Summary does not distinguish personal knowledge from information supplied by another person.",
+    "proposed": "When describing an event, say whether you personally experienced it, saw a document, or learned it from another person. If you do not know, say so.",
+    "reason": "Improve factual attribution without requiring witness accounts or making uncertain spouse details mandatory.",
+    "sources": [
+      {
+        "id": "L06",
+        "locator": "P011–013"
+      },
+      {
+        "id": "R14",
+        "locator": "PDF pp.6–7, q.19–25"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF17",
+    "category": "Evidence presentation",
+    "nature": "All petitions",
+    "destination": "Applicant: information instructions",
+    "status": "Optional help wording",
+    "current": "General instruction: “Please provide a detailed account...”",
+    "proposed": "Give specific events and examples relevant to your request. A concise, factual account is more useful than general labels about someone’s character.",
+    "reason": "Adopts the samples’ specificity while omitting blame-based or diagnostic labels; not a new legal declaration.",
+    "sources": [
+      {
+        "id": "L07",
+        "locator": "P007–012"
+      },
+      {
+        "id": "L06",
+        "locator": "P013"
+      }
+    ],
+    "action": "Replace help wording"
+  },
+  {
+    "id": "AF18",
+    "category": "Question labels",
+    "nature": "All petitions",
+    "destination": "Applicant: existing church fields",
+    "status": "Wording clarification",
+    "current": "“Denomination”, “Diocese”, “Name of Bishop of the Diocese”, “Father of Confession”.",
+    "proposed": "Keep current church membership together and label it “Current church membership”. Label any accepted historical field “At the time of marriage” separately.",
+    "reason": "Prevents historical/current answers being confused. Existing spouse parish/confessor additions are already approved, not new questions.",
+    "sources": [
+      {
+        "id": "R02",
+        "locator": "PDF p.3"
+      },
+      {
+        "id": "L01",
+        "locator": "P025–026"
+      }
+    ],
+    "action": "Replace section help"
+  },
+  {
+    "id": "AF19",
+    "category": "Question labels",
+    "nature": "All petitions",
+    "destination": "Applicant: marriage label",
+    "status": "Wording clarification",
+    "current": "public-petition.html:316 “Date of Church Marriage”.",
+    "proposed": "Date of the church marriage concerned in this petition.",
+    "reason": "Clarifies which event is being dated when civil and church ceremonies differ; retain exact-date matching rule.",
+    "sources": [
+      {
+        "id": "L03",
+        "locator": "P007–018"
+      },
+      {
+        "id": "R09",
+        "locator": "PDF p.1, ceremony distinction"
+      }
+    ],
+    "action": "Replace label"
+  },
+  {
+    "id": "AF20",
+    "category": "Question labels",
+    "nature": "All petitions",
+    "destination": "Applicant: reconciliation question",
+    "status": "Wording clarification",
+    "current": "public-petition.html:382 “Clergy Counseling / Reconciliation Attempted?”",
+    "proposed": "Were any attempts at reconciliation made with the help of a priest? If yes, provide the priest’s name.",
+    "reason": "Keeps the confirmed priest-name-only application requirement. Detailed counseling questions belong in a separate optional interview module.",
+    "sources": [
+      {
+        "id": "L02",
+        "locator": "P015"
+      },
+      {
+        "id": "R06",
+        "locator": "PDF p.16, q.21"
+      }
+    ],
+    "action": "Replace wording"
+  },
+  {
+    "id": "AF21",
+    "category": "Question labels",
+    "nature": "All petitions",
+    "destination": "Applicant: prior application label",
+    "status": "Wording clarification",
+    "current": "public-petition.html:393 “Previously Applied for Ecclesiastical Marriage Permit?”",
+    "proposed": "Have you previously submitted a church application concerning this marriage? List each application, its date, council or diocese, and outcome.",
+    "reason": "Avoids confusing a prior case/application with the separate prior-marriages proposal. Retain multiple prior applications already agreed.",
+    "sources": [
+      {
+        "id": "R08",
+        "locator": "PDF p.2, q.15"
+      },
+      {
+        "id": "R04",
+        "locator": "PDF p.8, prior tribunal"
+      }
+    ],
+    "action": "Replace wording"
+  },
+  {
+    "id": "AF22",
+    "category": "Instructions",
+    "nature": "All petitions",
+    "destination": "Applicant: introductory instructions",
+    "status": "Proposed explanatory wording",
+    "current": "No separately verified CTM no-guarantee statement is assumed in this comparison.",
+    "proposed": "Submitting a petition does not guarantee a particular decision or completion date. The council will consider the information and may request further details.",
+    "reason": "Useful expectation-setting; do not copy Catholic timing promises, witness quotas, fees or future-marriage prohibitions as CTM rules.",
+    "sources": [
+      {
+        "id": "R01",
+        "locator": "PDF p.3, policy"
+      },
+      {
+        "id": "R02",
+        "locator": "PDF p.1, directions"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF23",
+    "category": "Institution-review facts",
+    "nature": "Possible annulment factual inquiry",
+    "destination": "Applicant: optional screen, or interview via Other",
+    "status": "No dedicated relationship-of-parties question",
+    "current": "The current application does not ask whether the spouses are related by blood or adoption.",
+    "proposed": "To your knowledge, are you and your spouse related by blood or adoption? If yes, describe the relationship; if you do not know, say Unknown.",
+    "reason": "Offer the factual question for Orthodox institutional review. Do not import Catholic degrees of kinship, dispensation rules or an automatic invalidity decision.",
+    "sources": [
+      {
+        "id": "R04",
+        "locator": "PDF p.6, q.17–20"
+      },
+      {
+        "id": "L04",
+        "locator": "P048–051"
+      }
+    ],
+    "action": "Add / adapt"
+  },
+  {
+    "id": "AF24",
+    "category": "Institution-review facts",
+    "nature": "All petitions where spouse availability is relevant",
+    "destination": "Applicant: spouse details, optional screen",
+    "status": "No dedicated living/deceased/unknown field",
+    "current": "The existing application allows an absent spouse but has no specific living/deceased/unknown question.",
+    "proposed": "To your knowledge, is your spouse living, deceased, or is this unknown? If deceased, provide the date if known.",
+    "reason": "Do not infer a death-certificate requirement, automatic case closure or a new petition type; those would require separate decisions.",
+    "sources": [
+      {
+        "id": "R10",
+        "locator": "PDF p.3, spouse living"
+      },
+      {
+        "id": "R11",
+        "locator": "PDF p.4, spouse living"
+      }
+    ],
+    "action": "Add / adapt"
+  }
+]

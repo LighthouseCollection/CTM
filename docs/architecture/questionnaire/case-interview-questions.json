@@ -1,0 +1,219 @@
+{
+  "version": "ctm-case-interview-review-v1",
+  "title": "Assigned member interview workflow",
+  "baseline": "Requested scope: template-based interviewing with in-application recording and automatic transcription. Prototype basis: admin-case-intake.html (person interviewed, interviewer, method, date/time, location, duration, notes and attachments). Existing council testimony is a separate event: do not silently apply its permissions or AI-provider approval to every private interview. Original audio, versions and actual authorship must be preserved.",
+  "sections": [
+    [
+      "scope",
+      "Interview scope & participants",
+      "Who can be interviewed and by whom.",
+      [
+        [
+          "C01",
+          "Should this interview workflow be separate from applicant testimony given during a council session?",
+          "Both link to the case/proceeding, but a case-owner interview is not automatically a council hearing or agenda item."
+        ],
+        [
+          "C02",
+          "Should only the assigned council member conduct and author these case-investigation interviews?",
+          "Use Other to name additional permitted interviewers. Prototype selection of any council member is not yet an approved permission."
+        ],
+        [
+          "C03",
+          "May admin or secretary enter or upload an interview record on the assigned member’s behalf?",
+          "Preserve the actual interviewer separately from the person entering the data. This does not authorize applicant appeal supplements on their behalf."
+        ],
+        [
+          "C04",
+          "Should the interviewee list include either applicant, their priest or Father of Confession, and adult witnesses?",
+          "These types appear in the prototype. No child interviews or child accounts are proposed."
+        ],
+        [
+          "C05",
+          "Should a witness or priest be recorded as a case-linked contact without creating a login account?",
+          "Store only the identity/contact details needed for the interview and preserve their relationship to the case."
+        ],
+        [
+          "C06",
+          "Should both applicants always be interviewed separately?",
+          "Use Other if the assigned member may sometimes conduct a joint interview; existing council testimony still never places both applicants together."
+        ]
+      ]
+    ],
+    [
+      "templates",
+      "Interview templates",
+      "Reusable questions without rewriting history.",
+      [
+        [
+          "C07",
+          "Should admin or secretary create and version the interview templates?",
+          "Each interview retains the exact template version used; publishing changes must not rewrite completed interviews."
+        ],
+        [
+          "C08",
+          "Should templates vary by interviewee type, such as applicant, spouse, priest or witness?",
+          "Use Other to prefer one common template or describe a simpler structure."
+        ],
+        [
+          "C09",
+          "Should interview templates support English and Arabic versions of the same questions?",
+          "Keep original answers in the language spoken/entered rather than replacing them with translations."
+        ],
+        [
+          "C10",
+          "Should the assigned member be able to add case-specific follow-up questions within an interview?",
+          "Keep the published template unchanged and record which questions were added for this case."
+        ],
+        [
+          "C11",
+          "Should the template allow both structured fields and rich-text answers?",
+          "For example dates or Yes/No plus detailed narrative. Use Other to prefer narrative-only interview notes."
+        ],
+        [
+          "C12",
+          "Should an interview show the selected applicant’s submitted answers beside the template for reference?",
+          "The interviewer may compare assertions but must not overwrite them through the interview record. Other party information remains separately attributed."
+        ]
+      ]
+    ],
+    [
+      "process",
+      "Conducting & saving the interview",
+      "Template-led information gathering.",
+      [
+        [
+          "C13",
+          "Should the interview preserve the prototype metadata: person, actual interviewer, method, date/time, location and duration?",
+          "Methods currently shown are in person, phone and virtual. Other may refine the list or fields."
+        ],
+        [
+          "C14",
+          "Should the assigned member be able to save an unfinished interview and resume later?",
+          "This is an investigation-record draft, separate from the no-draft Send action for a council-hearing update."
+        ],
+        [
+          "C15",
+          "Should each completed interview be an individual entry in a chronological case-interview log?",
+          "Allow multiple interviews of the same person without overwriting earlier interviews."
+        ],
+        [
+          "C16",
+          "Should evidence discussed during an interview be linked to specific questions or notes?",
+          "Reuse retained file versions. Do not duplicate source files or make the interviewee the owner of someone else’s evidence."
+        ],
+        [
+          "C17",
+          "Should the assigned member have a separate internal observations/recommendations area alongside the interviewee’s answers?",
+          "Do not blend council conclusions into the interviewee’s recorded statements."
+        ]
+      ]
+    ],
+    [
+      "recording",
+      "Audio recording",
+      "Recording inside the template workflow.",
+      [
+        [
+          "C18",
+          "Should recording be optional for ordinary case-owner interviews?",
+          "Recording capability is requested, but mandatory versus optional is undecided. Council-session applicant testimony remains mandatory audio recording."
+        ],
+        [
+          "C19",
+          "Should the interviewer record that the interviewee was informed about recording before audio capture starts?",
+          "This asks for a workflow record; exact institutional wording/policy remains to be supplied, not invented here."
+        ],
+        [
+          "C20",
+          "Should an interview support both microphone recording in CTM and uploading an existing audio file?",
+          "Open-source recorder requirement is already noted. Original bytes and the actual recorder/uploader remain recorded."
+        ],
+        [
+          "C21",
+          "Should interview recording support pause/resume and recovery of captured portions after an interruption?",
+          "Recovery must preserve the actual timeline and gaps, without inventing missing audio."
+        ],
+        [
+          "C22",
+          "Should the no-fixed-duration/file-size-cap rule for council testimony also apply to these investigation interview recordings?",
+          "This extends the testimony exception to interview recordings. Ordinary applicant audio attachments would retain their existing limit."
+        ],
+        [
+          "C23",
+          "Should the interviewer be able to mark the current template question while recording so transcript segments can link to it?",
+          "Markers guide navigation; they do not establish that every spoken statement is an answer to that question."
+        ]
+      ]
+    ],
+    [
+      "transcription",
+      "Transcription & translation",
+      "Keep generated text separate from reviewed facts.",
+      [
+        [
+          "C24",
+          "Should saving an interview recording automatically queue transcription through the approved-for-interviews AI API?",
+          "Testimony AI processing is already requested; this question explicitly extends external audio processing to case-owner interviews. Provider selection comes later."
+        ],
+        [
+          "C25",
+          "Should interview transcripts use the same language behavior as testimony: original transcript, English/Arabic translation, and all three versions for mixed speech?",
+          "Include timestamps and speaker labels; preserve the source recording and original AI output."
+        ],
+        [
+          "C26",
+          "Should AI suggest which transcript passages answer each template question, for the assigned member to review?",
+          "Suggestions never become verified interview answers automatically and must link back to timestamped source audio."
+        ],
+        [
+          "C27",
+          "Should the assigned member review and correct generated interview text before other council members can read it?",
+          "Use Other if admin/secretary should review instead or also. Every correction retains author/time and earlier versions."
+        ],
+        [
+          "C28",
+          "Should manually typed interview answers remain separate from the AI transcript even after review?",
+          "This avoids presenting edited summaries as verbatim testimony; both can reference the original audio."
+        ]
+      ]
+    ],
+    [
+      "access",
+      "Access, history & case use",
+      "Who sees working and completed interview material.",
+      [
+        [
+          "C29",
+          "Should unfinished interview records be visible only to the assigned member, admin and secretary?",
+          "Use Other if all council should see them immediately or if drafts should be author-only. Applicant drafts remain governed separately."
+        ],
+        [
+          "C30",
+          "Should completed interviews, audio and reviewed transcripts be visible to all authorized council members?",
+          "No applicant access is inferred. Use Other to specify a narrower audience."
+        ],
+        [
+          "C31",
+          "Should interview records, recordings and transcripts remain council-only, with any applicant-facing request sent through normal case messages?",
+          "This keeps internal investigation material separate from the applicant’s own form history."
+        ],
+        [
+          "C32",
+          "Should the original interviewer be the only person able to revise their completed interview narrative while the case is open?",
+          "Use Other to allow admin/secretary corrections or the newly assigned member. Preserve every version; closure freezes substantive source records."
+        ],
+        [
+          "C33",
+          "After reassignment, should the new assigned member add follow-up interviews rather than rewrite the earlier interviewer’s narrative?",
+          "Earlier authorship and recordings remain intact; they may be read under the approved council scope."
+        ],
+        [
+          "C34",
+          "Should the assigned member choose reviewed interview findings for the case-hearing briefing instead of automatically sharing the entire transcript?",
+          "Council source material remains accessible under its permission rules. No automatic decree content or applicant disclosure is implied."
+        ]
+      ]
+    ]
+  ]
+}

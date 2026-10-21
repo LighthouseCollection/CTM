@@ -1,0 +1,311 @@
+services:
+  postgres:
+    image: postgres:16.6-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ctm}
+      POSTGRES_USER: ${POSTGRES_USER:-ctm_owner}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      CTM_APP_PASSWORD: ${CTM_APP_PASSWORD:?Set CTM_APP_PASSWORD}
+      CTM_WORKER_PASSWORD: ${CTM_WORKER_PASSWORD:?Set CTM_WORKER_PASSWORD}
+      ENGRAM_DB_PASSWORD: ${ENGRAM_DB_PASSWORD:-}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/00-init-roles.sh:/docker-entrypoint-initdb.d/00-init-roles.sh:ro
+      - ./postgres/02-engram-db.sh:/docker-entrypoint-initdb.d/02-engram-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ctm_owner} -d ${POSTGRES_DB:-ctm}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    shm_size: 256m
+    networks:
+      - ctm-internal
+
+  redis:
+    image: redis:7.4-bookworm
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD}
+      --maxmemory 512mb
+      --maxmemory-policy noeviction
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ctm-internal
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.52.4
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?Set MEILI_MASTER_KEY}
+      MEILI_ENV: production
+      MEILI_MAX_INDEXING_MEMORY: 1GiB
+      MEILI_LOG_LEVEL: WARN
+    volumes:
+      - meilidata:/meili_data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:7700/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ctm-internal
+
+  clamav:
+    image: clamav/clamav:1.4.6-debian
+    restart: unless-stopped
+    volumes:
+      - clamdata:/var/lib/clamav
+      - uploads:/srv/ctm/media:ro
+    ports:
+      - "127.0.0.1:3310:3310"
+    healthcheck:
+      test: ["CMD-SHELL", "echo PING | nc localhost 3310 | grep -q PONG"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    networks:
+      - ctm-internal
+      - ctm-egress
+
+  django:
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      DATABASE_URL: "postgres://ctm_app:${CTM_APP_PASSWORD}@postgres:5432/${POSTGRES_DB:-ctm}"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379/0"
+      MEILI_URL: "http://meilisearch:7700"
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: 3310
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-ctm.lighthouseway.org,localhost,10.0.0.40}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-https://ctm.lighthouseway.org}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
+      CTM_TRUST_PROXY_SSL: ${CTM_TRUST_PROXY_SSL:-false}
+      CTM_MEDIA_ROOT: /srv/ctm/media
+      CTM_STATIC_ROOT: /srv/ctm/static
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
+      MICROSOFT_TENANT_ID: ${MICROSOFT_TENANT_ID:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      APPLE_CLIENT_SECRET: ${APPLE_CLIENT_SECRET:-}
+      STRIPE_PUBLIC_KEY: ${STRIPE_PUBLIC_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-true}
+    volumes:
+      - uploads:/srv/ctm/media
+      - staticfiles:/srv/ctm/static
+    ports:
+      - "10.0.0.40:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ctm-internal
+      - ctm-egress
+
+  celery-default:
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    user: "1000:1000"
+    command: >
+      celery -A ctm worker
+      --loglevel=info
+      --queues=default,notifications,payments
+      --concurrency=4
+      --max-tasks-per-child=200
+    environment:
+      DATABASE_URL: "postgres://ctm_worker:${CTM_WORKER_PASSWORD}@postgres:5432/${POSTGRES_DB:-ctm}"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379/0"
+      MEILI_URL: "http://meilisearch:7700"
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: 3310
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      CTM_MEDIA_ROOT: /srv/ctm/media
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-true}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    volumes:
+      - uploads:/srv/ctm/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ctm-internal
+      - ctm-egress
+
+  celery-documents:
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile.docworker
+    restart: unless-stopped
+    user: "1000:1000"
+    command: >
+      celery -A ctm worker
+      --loglevel=info
+      --queues=ocr,transcription,documents
+      --concurrency=2
+      --max-tasks-per-child=50
+    environment:
+      DATABASE_URL: "postgres://ctm_worker:${CTM_WORKER_PASSWORD}@postgres:5432/${POSTGRES_DB:-ctm}"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379/0"
+      MEILI_URL: "http://meilisearch:7700"
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      CTM_MEDIA_ROOT: /srv/ctm/media
+    volumes:
+      - uploads:/srv/ctm/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+    networks:
+      - ctm-internal
+
+  celery-media:
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile.mediaworker
+    restart: unless-stopped
+    user: "1000:1000"
+    command: >
+      celery -A ctm worker
+      --loglevel=info
+      --queues=media,audio
+      --concurrency=2
+      --max-tasks-per-child=50
+    environment:
+      DATABASE_URL: "postgres://ctm_worker:${CTM_WORKER_PASSWORD}@postgres:5432/${POSTGRES_DB:-ctm}"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379/0"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      CTM_MEDIA_ROOT: /srv/ctm/media
+    volumes:
+      - uploads:/srv/ctm/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    networks:
+      - ctm-internal
+
+  celery-beat:
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    user: "1000:1000"
+    command: >
+      celery -A ctm beat
+      --loglevel=info
+      --scheduler=django_celery_beat.schedulers:DatabaseScheduler
+    environment:
+      DATABASE_URL: "postgres://ctm_worker:${CTM_WORKER_PASSWORD}@postgres:5432/${POSTGRES_DB:-ctm}"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379/0"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ctm-internal
+
+  engram:
+    profiles: [engram]
+    image: ${ENGRAM_IMAGE:-ghcr.io/gentleman-programming/engram:v2.0.0}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ENGRAM_DATABASE_URL: "postgres://engram_cloud:${ENGRAM_DB_PASSWORD:?Set a dedicated ENGRAM_DB_PASSWORD}@postgres:5432/engram_cloud?sslmode=disable"
+      ENGRAM_CLOUD_TOKEN: ${ENGRAM_CLOUD_TOKEN:?Set ENGRAM_CLOUD_TOKEN}
+      ENGRAM_CLOUD_ADMIN: ${ENGRAM_CLOUD_ADMIN:?Set ENGRAM_CLOUD_ADMIN}
+      ENGRAM_JWT_SECRET: ${ENGRAM_JWT_SECRET:?Set ENGRAM_JWT_SECRET}
+      ENGRAM_CLOUD_ALLOWED_PROJECTS: ${ENGRAM_CLOUD_ALLOWED_PROJECTS:-ctm}
+      ENGRAM_CLOUD_HOST: "0.0.0.0"
+      ENGRAM_PORT: "18080"
+      ENGRAM_CLOUD_MAX_PUSH_BYTES: "8388608"
+    ports:
+      - "127.0.0.1:18080:18080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:18080/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - ctm-internal
+      - ctm-egress
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+  meilidata:
+    driver: local
+  clamdata:
+    driver: local
+  uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /srv/ctm/media
+  staticfiles:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /srv/ctm/static
+
+networks:
+  ctm-internal:
+    driver: bridge
+    internal: true
+  ctm-egress:
+    driver: bridge

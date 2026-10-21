@@ -1,0 +1,18 @@
+{
+  "status": "passed_structural_checks",
+  "date": "2026-10-21",
+  "tables": 151,
+  "foreign_keys": 354,
+  "accepted_questions_exactly_preserved": 59,
+  "prototype_decision_options_reviewed": 10,
+  "source_hashes_verified": 50,
+  "local_markdown_links": "passed",
+  "postgresql_parse": "not_run_parser_unavailable",
+  "live_postgresql_execution": "not_run_no_postgres_or_running_docker_engine",
+  "runtime_permissions_RLS_lifecycle_tests": "not_run_application_not_built",
+  "limitations": [
+    "Structural DDL is not a deployed Django migration or complete security implementation.",
+    "RLS, cross-case constraints, lifecycle/immutability triggers and transactional mutation tests must be implemented before production runtime grants.",
+    "Provider, media, Arabic/Plenix and restore integration tests require implementation and deployment inputs."
+  ]
+}

@@ -1,0 +1,255 @@
+{
+  "captured_at": "2026-10-21",
+  "sources": [
+    {
+      "path": "CTM-applicant-application-workflow.md",
+      "sha256": "c564e815644c99a2fa86b5e6ced6d7c81bfe25d657418e48479946b2f3770b6b",
+      "bytes": 4735
+    },
+    {
+      "path": "CTM-arabic-styling-bridge.md",
+      "sha256": "0506b731b76572886f7defa3e316ff4e656b20b03e0098e5cf0caa817f61edef",
+      "bytes": 6810
+    },
+    {
+      "path": "CTM-case-session-workflow.md",
+      "sha256": "c3d5834c4825810633ee48e3c756956ee3c0dcc71a434007720b32b45d205ac5",
+      "bytes": 50928
+    },
+    {
+      "path": "CTM-category-research-prompts.md",
+      "sha256": "32a1887e488302463f2872dbc008d9a85d8435784a07d8b34db7262c2a0c3207",
+      "bytes": 76816
+    },
+    {
+      "path": "CTM-communications-workflow.md",
+      "sha256": "29f199264d7d8e0e04f0c1286684eebb7e5862cf38455eb02a0cdb458fc38584",
+      "bytes": 11040
+    },
+    {
+      "path": "CTM-confirmed-decisions.md",
+      "sha256": "081a5d443792c7949d5016ce03241c3c377c82bd129b8214f7688feb0023409a",
+      "bytes": 51022
+    },
+    {
+      "path": "CTM-context-sensitive-investigative-questions.md",
+      "sha256": "2ea114eb86d2ce190b351eae2115d4fa6465705d39c01844dee6060481eea751",
+      "bytes": 36498
+    },
+    {
+      "path": "CTM-council-home-dashboard.md",
+      "sha256": "153ba694563772c85893dd46c70525a3211ba1d86d75044671a40f3c38767035",
+      "bytes": 7039
+    },
+    {
+      "path": "CTM-council-navigation-and-layout.md",
+      "sha256": "6839f4bb9ae0cfb4da4c7442d81caf9fc4c6e9310cb7abb382fd0714141449c4",
+      "bytes": 4846
+    },
+    {
+      "path": "CTM-current-access-workflow-corrections.md",
+      "sha256": "54b6c687925ade0cddc5db8ad3fa223418ef4d943333a44af1b3a2728344b8ec",
+      "bytes": 5022
+    },
+    {
+      "path": "CTM-current-question-bank.md",
+      "sha256": "9180f659ccaed3a4728865048cd326e15ffb8a46c17366ee92fcc20685d31292",
+      "bytes": 15078
+    },
+    {
+      "path": "CTM-data-architecture.md",
+      "sha256": "616a7ab67fb5e61dc097cfd9b6569677aeb5738fe05e5b4739039d67ded78b87",
+      "bytes": 27775
+    },
+    {
+      "path": "CTM-database-tables.md",
+      "sha256": "473b6304f0328a6a9956b09444c50a240fc0ecd50f66bc877cf269b7b953cda0",
+      "bytes": 51092
+    },
+    {
+      "path": "CTM-Django-Plenix-integration.md",
+      "sha256": "f31f8180bbc1aad719f9b528eacdd9d7b405691978b24a8814ab4a17e6d3a37c",
+      "bytes": 6464
+    },
+    {
+      "path": "CTM-Django-vs-Rails-analysis.md",
+      "sha256": "a50defaef845a73ae6bddd852c77de7d26385d171a42e326f9702a4440496bda",
+      "bytes": 14451
+    },
+    {
+      "path": "CTM-Frappe-vs-Django-vs-Rails.md",
+      "sha256": "6cf4c20e4be78459fa043e42c7f6afc8d20fcdd25050094c4fcad8cfb7be06ae",
+      "bytes": 8961
+    },
+    {
+      "path": "CTM-guided-interview-template-draft.md",
+      "sha256": "a83922ab5a29a38a3098ac833963e7e2b97918681e14954438e7018ce716b03e",
+      "bytes": 6824
+    },
+    {
+      "path": "CTM-interview-category-bank.md",
+      "sha256": "2505ebdb99993463a2459dfa144b6d3b0427adf37e0512b5360178a68749e2c5",
+      "bytes": 12529
+    },
+    {
+      "path": "CTM-investigation-model.md",
+      "sha256": "381cc2093c27e10a0cd43d8feb2c3cd38909be269cd80076a3d668c2df1c1296",
+      "bytes": 16821
+    },
+    {
+      "path": "CTM-medical-psychological-report-workflow.md",
+      "sha256": "f7ff6b9febc6e4be4f85c3e425f35ff2b5f49c0961073c20534200cc987d9646",
+      "bytes": 11803
+    },
+    {
+      "path": "CTM-microsoft-council-sign-in.md",
+      "sha256": "7a674c4987ecd2a30560c5d6f4d04b40025f3b8b793a2fb5e7d95e858a792ade",
+      "bytes": 7587
+    },
+    {
+      "path": "CTM-permissions.md",
+      "sha256": "a25d98568cbb1452d327cfc49c8766bb3965532ef583948ebf6265d668ed0cd8",
+      "bytes": 35467
+    },
+    {
+      "path": "CTM-perplexity-question-bank-review.md",
+      "sha256": "bbb71ab236df383d827398b1e535216da669e95bbad35ee8896e20f2b55589fa",
+      "bytes": 7982
+    },
+    {
+      "path": "CTM-Plenix-CDN-contract.md",
+      "sha256": "fcdc9d595562be32713865226291ff9d01861d09a42c6ba1d9e1f261b4f445b0",
+      "bytes": 5732
+    },
+    {
+      "path": "CTM-portal-interview-decisions.md",
+      "sha256": "d8dedc8021118e1fd1846bcc8894ad8579c52db7092174f7e94fa2a3efca50c6",
+      "bytes": 15887
+    },
+    {
+      "path": "CTM-priest-testimony-template-draft.md",
+      "sha256": "c623720dff172a75de561da428729e30c846f2698815246598213e71f3ca0789",
+      "bytes": 4844
+    },
+    {
+      "path": "CTM-question-bank-wording-decisions-2026-10-20.md",
+      "sha256": "5c481324b2b1a39a320f27e708df54bcb206589a2bd33a701335e6231f27a79f",
+      "bytes": 1433
+    },
+    {
+      "path": "CTM-questionnaire-decisions-2026-10-20.md",
+      "sha256": "475628aa45e8943f2de74ab8ada1423a28ebb349880cf6e47632ab6e31066e11",
+      "bytes": 12209
+    },
+    {
+      "path": "CTM-reconciliation-report.md",
+      "sha256": "4f6ee574b2a2be2d72f55e9142853fe2e552ec43b3b5d2f41089cc5ca6bf58be",
+      "bytes": 16449
+    },
+    {
+      "path": "CTM-reference-review-decisions.md",
+      "sha256": "557e87e3f1d819b3907f5ecf39d4c7201edade52582ebaf806c4c2eea5137135",
+      "bytes": 16305
+    },
+    {
+      "path": "CTM-settings-translation-architecture.md",
+      "sha256": "15635cc61724d8a42a7e78f678e0326416948be3fed1fad9ad1024b030f5e64b",
+      "bytes": 16753
+    },
+    {
+      "path": "CTM-technology-and-open-source-stack.md",
+      "sha256": "99629bab0c401ca014b155847a99392ac31c8e4005aeafb55abc639b1e139825",
+      "bytes": 29724
+    },
+    {
+      "path": "CTM-template-management-workflow.md",
+      "sha256": "9acdf3af2ef156b887e59efb4e5cc7b66e86ca414f01ae816aee666e8e2c401f",
+      "bytes": 5872
+    },
+    {
+      "path": "CTM-third-party-tools-and-platforms.md",
+      "sha256": "9af00d6acc04c05eaf1ce8b158c813fb5ecc47e04d87625eeb85d3ffed43ca51",
+      "bytes": 11937
+    },
+    {
+      "path": "CTM-workflow-database.md",
+      "sha256": "e649165d0b771e06896bfc84fb521f904cce066d04e6a9c8728fc0339710ed3f",
+      "bytes": 34616
+    },
+    {
+      "path": "CTM-workflow-gap-review.md",
+      "sha256": "6610c098176368c06e8e6fb8ce87834c99b0eb342258566f48c50f3a62e68f04",
+      "bytes": 3110
+    },
+    {
+      "path": "prototype-inventory.md",
+      "sha256": "db60f3306972c1e1ce40dbb310c559060d97d9a1d6810be3615cbcad99db123d",
+      "bytes": 156002
+    },
+    {
+      "path": "prototype-to-data-map.md",
+      "sha256": "18d751b790cd3c413886cf470aabe22d47852d1539161295b7e82bc59e636659",
+      "bytes": 19462
+    },
+    {
+      "path": "questionnaire-council-reconciliation.md",
+      "sha256": "e39f0bc469d76807d92ad7c89b2f65e5db653cf4bfbd4e2aa87ed2b9481ae55c",
+      "bytes": 14790
+    },
+    {
+      "path": "CTM-translation-master-prompt.txt",
+      "sha256": "acf80eb18d744f6e4c2c0c978c9f3cd294b16436e4afc1467b1d63ef2e0b7454",
+      "bytes": 29411
+    },
+    {
+      "path": "reference-study/interview-adopted-context-prompts.json",
+      "sha256": "e28700c9ee661c27a32e39b1752bc15b53d1710dec613bb1195b4221f196d3c6",
+      "bytes": 34154
+    },
+    {
+      "path": "reference-study/interview-category-bank.json",
+      "sha256": "e991aafa6005c5a9bf348d7a1c3e4107a5f90795cadffa2032431b761b0be8a7",
+      "bytes": 17982
+    },
+    {
+      "path": "reference-study/interview-current-question-bank.json",
+      "sha256": "2467cc5aa52100127a2480cd95d0f3ff90d428051b68fbb9a60a1129f24691d4",
+      "bytes": 136707
+    },
+    {
+      "path": "reference-study/interview-integrated-question-wording.json",
+      "sha256": "7a413454a4b87b96e778fa6cd70dc75237a83da8c2b371d3d90363ba34729bbb",
+      "bytes": 3202
+    },
+    {
+      "path": "reference-study/interview-question-guidance.json",
+      "sha256": "ee3b5e6a76e49632dcb54e8f9b2938ecc4e66a9952180c2f56cf424ca516b816",
+      "bytes": 41662
+    },
+    {
+      "path": "reference-study/interview-revised-bank-2026-10-20.json",
+      "sha256": "b49428ddfa79a94e85c3c9ef9fa45354c05ed2d912932edfdbf5b6703b3bab7c",
+      "bytes": 36512
+    },
+    {
+      "path": "reference-study/interview-topic-group-model.json",
+      "sha256": "2467cc5aa52100127a2480cd95d0f3ff90d428051b68fbb9a60a1129f24691d4",
+      "bytes": 136707
+    },
+    {
+      "path": "reference-study/interview-wording-proposals.json",
+      "sha256": "01270e8d709adae143ffaca045f89d6df9d1200e7017ce1c90ef5b5584548e7d",
+      "bytes": 4186
+    },
+    {
+      "path": "reference-study/interview-wording-review.json",
+      "sha256": "666c6a935ee474601002254fdc7d329d97bd3e5e0f2a0e2e6af4bff69a1165be",
+      "bytes": 3249
+    },
+    {
+      "path": "reference-study/interview-wording-user-decisions-2026-10-20.json",
+      "sha256": "1ca846068366713258aefa754e3f6acfaf104f57a49d495256b810c40fcd852d",
+      "bytes": 5983
+    }
+  ]
+}

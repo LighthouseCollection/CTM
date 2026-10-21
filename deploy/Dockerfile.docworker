@@ -1,0 +1,32 @@
+FROM python:3.12-slim-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+        libgl1 \
+        libglib2.0-0 \
+        tesseract-ocr \
+        tesseract-ocr-eng \
+        tesseract-ocr-ara \
+        ghostscript \
+        poppler-utils \
+        libmagic1 \
+        qpdf \
+        unpaper \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -g 1000 ctm && useradd -u 1000 -g ctm -m ctm
+
+WORKDIR /app
+
+COPY deploy/requirements.txt deploy/requirements-docworker.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-docworker.txt
+
+COPY . .
+
+USER ctm

@@ -1,0 +1,983 @@
+{
+  "questionnaireVersion": "ctm-reference-template-review-v1",
+  "source": "User message; clarifications normalized for spelling, response values retained.",
+  "answers": [
+    {
+      "id": "QT01",
+      "proposal": {
+        "id": "QT01",
+        "category": "Common core",
+        "nature": "All petition interviews",
+        "destination": "CORE / opening",
+        "status": "Preserve existing confirmed opening",
+        "current": "OPEN-01/02 in draft v2 already establishes full name and spouse name at every interview/recording.",
+        "proposed": "Keep the identity opening as a reusable block, separate from all substantive questions; repeat it for each interview and newly started recording.",
+        "reason": "Retain the user-directed opening. No Catholic oath or notarization imported.",
+        "sources": [
+          {
+            "id": "L06",
+            "locator": "P014–032"
+          },
+          {
+            "id": "R14",
+            "locator": "PDF p.2, identification"
+          }
+        ],
+        "action": "Organize existing content"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Keep the identity opening as a reusable block, separate from all substantive questions; repeat it for each interview and newly started recording."
+    },
+    {
+      "id": "QT02",
+      "proposal": {
+        "id": "QT02",
+        "category": "Common core",
+        "nature": "All petition interviews",
+        "destination": "CORE / requested relief",
+        "status": "Draft SEEK-01",
+        "current": "“What are you asking the council to grant in this case...”",
+        "proposed": "What outcome are you seeking, and which specific facts do you want the council to consider in support of it?",
+        "reason": "Puts request before discovery and separates applicant claim from council decision. Keep type options in a staff-guided field.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P006–013"
+          },
+          {
+            "id": "R06",
+            "locator": "PDF p.7, petition"
+          }
+        ],
+        "action": "Replace wording"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: What outcome are you seeking, and which specific facts do you want the council to consider in support of it?"
+    },
+    {
+      "id": "QT03",
+      "proposal": {
+        "id": "QT03",
+        "category": "Common core",
+        "nature": "All petition interviews",
+        "destination": "CORE / chronology",
+        "status": "Draft TIME-01–03",
+        "current": "General first-difficulties / what-happened-next prompts.",
+        "proposed": "For each important event, record when it occurred, when you learned about it, and whether the date is exact or approximate.",
+        "reason": "Occurrence and discovery dates can differ, especially concealment. One event record, not repeated copies of one question.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P085–086,159–175"
+          },
+          {
+            "id": "L02",
+            "locator": "P009,014–015"
+          }
+        ],
+        "action": "Refine existing questions"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: For each important event, record when it occurred, when you learned about it, and whether the date is exact or approximate."
+    },
+    {
+      "id": "QT04",
+      "proposal": {
+        "id": "QT04",
+        "category": "Common core",
+        "nature": "All petition interviews",
+        "destination": "CORE / factual knowledge",
+        "status": "Draft FACT-02",
+        "current": "“What did you personally see, hear or experience, and what did you learn from another source?”",
+        "proposed": "Describe what you personally know. Identify any information you learned from someone else and how you learned it.",
+        "reason": "Clearer source attribution; do not turn the source into a required witness or share the other applicant’s private submission.",
+        "sources": [
+          {
+            "id": "L06",
+            "locator": "P011–013"
+          }
+        ],
+        "action": "Replace wording"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Describe what you personally know. Identify any information you learned from someone else and how you learned it."
+    },
+    {
+      "id": "QT05",
+      "proposal": {
+        "id": "QT05",
+        "category": "Common core",
+        "nature": "All petition interviews",
+        "destination": "CORE / evidence",
+        "status": "Draft EVID-01–04",
+        "current": "Existing evidence questions ask connection and provenance, but as separate broad prompts.",
+        "proposed": "For each disputed fact, identify the supporting item, its date/source if known, what it shows, and any limitations or conflicting information.",
+        "reason": "Tie evidence to a fact rather than collecting unrelated documents. Keep unknowns and allegations distinct.",
+        "sources": [
+          {
+            "id": "L06",
+            "locator": "P012"
+          },
+          {
+            "id": "L07",
+            "locator": "P151"
+          }
+        ],
+        "action": "Refine existing questions"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: For each disputed fact, identify the supporting item, its date/source if known, what it shows, and any limitations or conflicting information."
+    },
+    {
+      "id": "QT06",
+      "proposal": {
+        "id": "QT06",
+        "category": "Common core",
+        "nature": "All petition interviews",
+        "destination": "CORE / closing",
+        "status": "Draft CLOSE-01/02",
+        "current": "Two general closing questions.",
+        "proposed": "What relevant fact has not yet been covered, and is anything you said today in need of clarification?",
+        "reason": "Combine duplicate catch-all prompts into one closing question without a new signature.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P087,129,176,215"
+          },
+          {
+            "id": "R14",
+            "locator": "PDF p.12, q.50"
+          }
+        ],
+        "action": "Merge equivalent questions"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: What relevant fact has not yet been covered, and is anything you said today in need of clarification?"
+    },
+    {
+      "id": "QT07",
+      "proposal": {
+        "id": "QT07",
+        "category": "Before marriage",
+        "nature": "Possible annulment factual inquiry",
+        "destination": "NUL / decision to marry",
+        "status": "Draft begins events without a detailed decision block",
+        "current": "Draft SEEK/TIME has general grounds/sequence prompts; no focused courtship decision module.",
+        "proposed": "How did you decide to marry, what did each of you understand you were committing to, and what had you discussed before the wedding?",
+        "reason": "Factual exploration of that time; no assumption that Catholic nullity criteria determine an Orthodox outcome.",
+        "sources": [
+          {
+            "id": "L02",
+            "locator": "P007–012"
+          },
+          {
+            "id": "R05",
+            "locator": "PDF pp.2–3, courtship"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "Organize into explicit topics: Children, Money, Intimacy, etc.",
+      "reconciledTreatment": "Category-based decision-to-marry discovery, including explicit Children, Money and Intimacy topics."
+    },
+    {
+      "id": "QT08",
+      "proposal": {
+        "id": "QT08",
+        "category": "Before marriage",
+        "nature": "Possible annulment factual inquiry",
+        "destination": "NUL / pressure",
+        "status": "Draft generic FACT block",
+        "current": "Pressure is only mentioned in broad follow-up examples.",
+        "proposed": "Was there pressure affecting the decision to marry? Identify its source, what happened, when, and how it affected the decision.",
+        "reason": "Avoid yes/no-only screening and avoid treating ordinary family involvement as proven coercion.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P062–063,110–111"
+          },
+          {
+            "id": "L02",
+            "locator": "P012"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Was there pressure affecting the decision to marry? Identify its source, what happened, when, and how it affected the decision."
+    },
+    {
+      "id": "QT09",
+      "proposal": {
+        "id": "QT09",
+        "category": "Before marriage",
+        "nature": "Possible annulment factual inquiry",
+        "destination": "NUL / disclosed doubts",
+        "status": "No dedicated focused block",
+        "current": "Draft timeline does not specifically ask about doubts discussed before the wedding.",
+        "proposed": "Did you have serious reservations before the wedding? What were they, were they discussed, and what happened next?",
+        "reason": "Relevant stated facts, not automatic invalidity or a universal requirement to produce witnesses.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P066,096–098"
+          },
+          {
+            "id": "R14",
+            "locator": "PDF p.4, q.8"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Did you have serious reservations before the wedding? What were they, were they discussed, and what happened next?"
+    },
+    {
+      "id": "QT10",
+      "proposal": {
+        "id": "QT10",
+        "category": "Before marriage",
+        "nature": "Possible annulment factual inquiry",
+        "destination": "NUL / wedding-day events",
+        "status": "No dedicated wedding-day factual block",
+        "current": "Draft chronology covers events generally.",
+        "proposed": "Did a specific event at or immediately before the ceremony affect your ability or willingness to proceed? Describe the event and what you remember.",
+        "reason": "A conditional event question, not a medical diagnosis, broad sexual history or imported canonical test.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P103–118"
+          },
+          {
+            "id": "R05",
+            "locator": "PDF p.3, wedding"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Did a specific event at or immediately before the ceremony affect your ability or willingness to proceed? Describe the event and what you remember."
+    },
+    {
+      "id": "QT11",
+      "proposal": {
+        "id": "QT11",
+        "category": "Before marriage",
+        "nature": "Misrepresentation / concealment",
+        "destination": "CONCEALMENT / before marriage",
+        "status": "Draft pre-marriage follow-up is general",
+        "current": "FACT follow-up asks what was represented/not disclosed and discovered later.",
+        "proposed": "What fact was represented or withheld, what did you believe before marriage, when did you learn the difference, and what evidence supports that sequence?",
+        "reason": "Use a separate claim/evidence block for each alleged concealment; never label it established deception automatically.",
+        "sources": [
+          {
+            "id": "L01",
+            "locator": "P283–302"
+          },
+          {
+            "id": "R03",
+            "locator": "PDF p.8, q.29"
+          }
+        ],
+        "action": "Refine existing follow-up"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: What fact was represented or withheld, what did you believe before marriage, when did you learn the difference, and what evidence supports that sequence?"
+    },
+    {
+      "id": "QT12",
+      "proposal": {
+        "id": "QT12",
+        "category": "Before marriage",
+        "nature": "Possible annulment factual inquiry",
+        "destination": "NUL / pre-marriage agreement",
+        "status": "Broad grounds prompt only",
+        "current": "Draft no dedicated agreement question.",
+        "proposed": "Was there a specific agreement, promise or condition important to your decision to marry? What was agreed, by whom, when and how was it understood?",
+        "reason": "Neutral facts only; not wholesale import of Catholic simulation, permanence or procreation checkboxes.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P078"
+          },
+          {
+            "id": "R03",
+            "locator": "PDF pp.9–10, q.32"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Was there a specific agreement, promise or condition important to your decision to marry? What was agreed, by whom, when and how was it understood?"
+    },
+    {
+      "id": "QT13",
+      "proposal": {
+        "id": "QT13",
+        "category": "Divorce grounds",
+        "nature": "Infidelity",
+        "destination": "DIV / infidelity module",
+        "status": "Draft general per-ground questions",
+        "current": "FACT-01–05 are shared but do not specify infidelity timing/source.",
+        "proposed": "Describe the alleged unfaithfulness, when it occurred, when you learned of it, your source of knowledge and the supporting evidence.",
+        "reason": "Avoid assuming guilt or requiring identifying details unrelated to the council inquiry.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P138–140"
+          },
+          {
+            "id": "R14",
+            "locator": "PDF p.6, q.19–20"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Describe the alleged unfaithfulness, when it occurred, when you learned of it, your source of knowledge and the supporting evidence."
+    },
+    {
+      "id": "QT14",
+      "proposal": {
+        "id": "QT14",
+        "category": "Divorce grounds",
+        "nature": "Desertion / abandonment",
+        "destination": "DIV / abandonment module",
+        "status": "Draft short abandonment follow-up",
+        "current": "General absence/contact description.",
+        "proposed": "When did the separation begin, what contact or support continued, what efforts were made to communicate or reconcile, and which facts about the absence do you know directly?",
+        "reason": "Distinguish absence from known intention; do not require the absent spouse’s account or address.",
+        "sources": [
+          {
+            "id": "L02",
+            "locator": "P015"
+          },
+          {
+            "id": "L07",
+            "locator": "P166–169"
+          }
+        ],
+        "action": "Refine existing follow-up"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: When did the separation begin, what contact or support continued, what efforts were made to communicate or reconcile, and which facts about the absence do you know directly?"
+    },
+    {
+      "id": "QT15",
+      "proposal": {
+        "id": "QT15",
+        "category": "Divorce grounds",
+        "nature": "Abuse",
+        "destination": "DIV / abuse module",
+        "status": "Draft general event questions",
+        "current": "No dedicated incident structure.",
+        "proposed": "Describe the relevant incident or pattern, dates or periods, what you experienced directly, and any existing reports or evidence you wish to provide.",
+        "reason": "Prefer specific acts to character labels. Do not import foreign reporting procedures, demand unnecessary detail or reopen rejected child testimony.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P047,151"
+          },
+          {
+            "id": "R14",
+            "locator": "PDF pp.8–9, q.33–34"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Describe the relevant incident or pattern, dates or periods, what you experienced directly, and any existing reports or evidence you wish to provide."
+    },
+    {
+      "id": "QT16",
+      "proposal": {
+        "id": "QT16",
+        "category": "Divorce grounds",
+        "nature": "Leaving or changing the faith",
+        "destination": "DIV / faith-change module",
+        "status": "Draft general event questions",
+        "current": "Current denomination fields do not explain the alleged change and chronology.",
+        "proposed": "What change in religious affiliation or practice is relevant to your request, when did it occur, how do you know, and how did it affect married life?",
+        "reason": "Claim and chronology only; avoid equating occasional attendance with a formal finding of leaving the faith.",
+        "sources": [
+          {
+            "id": "L01",
+            "locator": "P025–026,210–214"
+          },
+          {
+            "id": "R14",
+            "locator": "PDF p.9, q.39"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: What change in religious affiliation or practice is relevant to your request, when did it occur, how do you know, and how did it affect married life?"
+    },
+    {
+      "id": "QT17",
+      "proposal": {
+        "id": "QT17",
+        "category": "Divorce grounds",
+        "nature": "Addiction",
+        "destination": "DIV / addiction module",
+        "status": "Draft general event questions",
+        "current": "No structured onset/discovery/course of alleged addiction.",
+        "proposed": "Describe the behavior you believe is relevant, when it began or became known, its effect on married life, and any help sought that you can factually describe.",
+        "reason": "Do not diagnose the spouse from a checkbox or require universal medical-record release.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P048–049"
+          },
+          {
+            "id": "R14",
+            "locator": "PDF p.9, q.35–37"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Describe the behavior you believe is relevant, when it began or became known, its effect on married life, and any help sought that you can factually describe."
+    },
+    {
+      "id": "QT18",
+      "proposal": {
+        "id": "QT18",
+        "category": "Divorce grounds",
+        "nature": "All selected grounds",
+        "destination": "DIV / repeatable factual blocks",
+        "status": "Draft per-ground repeat block exists",
+        "current": "One shared FACT block repeatable by ground.",
+        "proposed": "Use one factual block for each selected ground, with event date, discovery date, knowledge source and evidence links; show only the relevant approved follow-up prompts.",
+        "reason": "Organize without duplicating the same fact across six questionnaires or creating new grounds.",
+        "sources": [
+          {
+            "id": "L01",
+            "locator": "P118–129,283–302"
+          },
+          {
+            "id": "L07",
+            "locator": "P130–176"
+          }
+        ],
+        "action": "Organize existing content"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Use one factual block for each selected ground, with event date, discovery date, knowledge source and evidence links; show only the relevant approved follow-up prompts."
+    },
+    {
+      "id": "QT19",
+      "proposal": {
+        "id": "QT19",
+        "category": "Context only when relevant",
+        "nature": "Any petition",
+        "destination": "CONTEXT / relevant upbringing",
+        "status": "No broad biography required",
+        "current": "Draft does not require childhood, parents or sibling histories.",
+        "proposed": "Is there a specific earlier experience that directly helps explain a fact relevant to this petition? Describe only that connection.",
+        "reason": "Adapt common family-background theme into a conditional interview follow-up, not a compulsory lifelong biography.",
+        "sources": [
+          {
+            "id": "L02",
+            "locator": "P016–018"
+          },
+          {
+            "id": "R05",
+            "locator": "PDF pp.1–2, family background"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Is there a specific earlier experience that directly helps explain a fact relevant to this petition? Describe only that connection."
+    },
+    {
+      "id": "QT20",
+      "proposal": {
+        "id": "QT20",
+        "category": "Context only when relevant",
+        "nature": "Any petition",
+        "destination": "CONTEXT / pre-marriage knowledge",
+        "status": "No dedicated premarital problem comparison",
+        "current": "Draft general events only.",
+        "proposed": "Were the problems described already evident before marriage, or did they arise later? What did each party know at the time?",
+        "reason": "A frequently repeated temporal distinction. Keep absence of knowledge separate from proof of concealment.",
+        "sources": [
+          {
+            "id": "L02",
+            "locator": "P009,014"
+          },
+          {
+            "id": "L07",
+            "locator": "P165"
+          },
+          {
+            "id": "R06",
+            "locator": "PDF p.16, courtship vs married life"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Were the problems described already evident before marriage, or did they arise later? What did each party know at the time?"
+    },
+    {
+      "id": "QT21",
+      "proposal": {
+        "id": "QT21",
+        "category": "Context only when relevant",
+        "nature": "Any petition",
+        "destination": "CONTEXT / decision-making and responsibilities",
+        "status": "No detailed routine-life block",
+        "current": "Draft factual chronology does not explore financial/domestic conflict specifically.",
+        "proposed": "If relevant, give a concrete example of how an important financial, household or parenting decision was made and how the disagreement affected the marriage.",
+        "reason": "Conditional factual example, not a universal inventory of private spending or a civil custody determination.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P149–150,156"
+          },
+          {
+            "id": "R05",
+            "locator": "PDF p.4, household responsibilities"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: If relevant, give a concrete example of how an important financial, household or parenting decision was made and how the disagreement affected the marriage."
+    },
+    {
+      "id": "QT22",
+      "proposal": {
+        "id": "QT22",
+        "category": "Context only when relevant",
+        "nature": "Any petition",
+        "destination": "CONTEXT / communication",
+        "status": "No dedicated communication follow-up",
+        "current": "Draft events may not show how issues were raised and addressed.",
+        "proposed": "For a relevant disagreement, what was communicated, how did the other party respond, and what action followed?",
+        "reason": "Concrete sequence is more useful than judging general communication quality.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P152"
+          },
+          {
+            "id": "R13",
+            "locator": "PDF p.7, q.28"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "reject",
+      "clarification": "",
+      "reconciledTreatment": "Do not add/replace this proposal; preserve prior approved CTM policy."
+    },
+    {
+      "id": "QT23",
+      "proposal": {
+        "id": "QT23",
+        "category": "Context only when relevant",
+        "nature": "Any petition",
+        "destination": "CONTEXT / treatment, only relevant facts",
+        "status": "No mandatory psychological biography",
+        "current": "Draft does not request blanket medical history or release.",
+        "proposed": "Where directly relevant to the stated issue, describe any professional help actually sought, its dates if known, and the facts you are authorized and able to provide.",
+        "reason": "Keep medical/counseling material conditional and separate from clergy-name-only application field; no automatic third-party contact or records release.",
+        "sources": [
+          {
+            "id": "L01",
+            "locator": "P303–327"
+          },
+          {
+            "id": "L07",
+            "locator": "P148,167"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": null,
+      "clarification": "Proposed idea liked, wording too ambiguous; explicitly identify medical, psychological, etc. Revised wording remains for confirmation.",
+      "reconciledTreatment": "Draft explicit medical/psychological/psychiatric help wording separately; not finalized just because topic was liked."
+    },
+    {
+      "id": "QT24",
+      "proposal": {
+        "id": "QT24",
+        "category": "Separation and reconciliation",
+        "nature": "Divorce / any relevant petition",
+        "destination": "SEPARATION / temporary periods",
+        "status": "Draft timeline general",
+        "current": "No standardized repeated separation/reunion block.",
+        "proposed": "For each relevant temporary separation: when, why, for how long and what led to resuming life together? Then record final separation separately.",
+        "reason": "Merge repeated source variations into one repeatable block; do not require all dates to be exact.",
+        "sources": [
+          {
+            "id": "L02",
+            "locator": "P015"
+          },
+          {
+            "id": "L07",
+            "locator": "P166"
+          },
+          {
+            "id": "R05",
+            "locator": "PDF p.4, separation"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: For each relevant temporary separation: when, why, for how long and what led to resuming life together? Then record final separation separately."
+    },
+    {
+      "id": "QT25",
+      "proposal": {
+        "id": "QT25",
+        "category": "Separation and reconciliation",
+        "nature": "Any relevant petition",
+        "destination": "RECONCILIATION / efforts and outcomes",
+        "status": "Draft CONTEXT-01",
+        "current": "“What attempts at reconciliation were made, when, and what happened?”",
+        "proposed": "Identify each relevant reconciliation attempt, who participated, approximate date and outcome. Separate what you observed from what you were told.",
+        "reason": "Retain application priest-name-only requirement; this deeper block is council interview content.",
+        "sources": [
+          {
+            "id": "L02",
+            "locator": "P015"
+          },
+          {
+            "id": "L07",
+            "locator": "P167–174"
+          }
+        ],
+        "action": "Refine existing wording"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Identify each relevant reconciliation attempt, who participated, approximate date and outcome. Separate what you observed from what you were told."
+    },
+    {
+      "id": "QT26",
+      "proposal": {
+        "id": "QT26",
+        "category": "Multiple ceremonies and prior marriages",
+        "nature": "Civil/church chronology supplement",
+        "destination": "CEREMONIES / before and after each event",
+        "status": "Draft APP-02 general marriage confirmation",
+        "current": "No separate interview chronology for two ceremonies.",
+        "proposed": "Identify the civil and church ceremonies separately. What was known or occurring before each ceremony, between them and after the church marriage?",
+        "reason": "Borrow the useful time separation, not the Catholic convalidation process or its legal effects.",
+        "sources": [
+          {
+            "id": "L03",
+            "locator": "P007–018"
+          },
+          {
+            "id": "R09",
+            "locator": "PDF pp.1–3"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "reject",
+      "clarification": "",
+      "reconciledTreatment": "Do not add/replace this proposal; preserve prior approved CTM policy."
+    },
+    {
+      "id": "QT27",
+      "proposal": {
+        "id": "QT27",
+        "category": "Multiple ceremonies and prior marriages",
+        "nature": "Prior-marriage factual supplement",
+        "destination": "HISTORY / earlier unions",
+        "status": "No dedicated repeatable prior-marriage interview",
+        "current": "Earlier version has no prior-marriage supplement distinct from previous applications.",
+        "proposed": "For each relevant earlier marriage, identify the spouse, dates, ceremony type, how it ended and any existing church/civil decision reference you know.",
+        "reason": "Document history only; no imported ligamen decision, renewed fee, automatic record-prefill or second open case.",
+        "sources": [
+          {
+            "id": "L08",
+            "locator": "P002–034"
+          },
+          {
+            "id": "R05",
+            "locator": "PDF p.2, prior marriages"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "reject",
+      "clarification": "",
+      "reconciledTreatment": "Do not add/replace this proposal; preserve prior approved CTM policy."
+    },
+    {
+      "id": "QT28",
+      "proposal": {
+        "id": "QT28",
+        "category": "Sensitive or doctrine-dependent",
+        "nature": "Only if institution approves relevance",
+        "destination": "Conditional private interview; not application-wide",
+        "status": "Not in draft; do not assume required",
+        "current": "No required inquiry about ability to consummate or intimate marital difficulties.",
+        "proposed": "Only if directly relevant to the petition and the council asks: is there a specific intimate marital difficulty you wish to explain, including when it arose or became known?",
+        "reason": "Optional approval of a narrow interview topic, not adoption of Catholic consummation definitions, proof thresholds or a mandatory sexual-history survey.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P122–125,153–155"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "other",
+      "clarification": "Is there a specific intimate marital difficulty you wish to explain, including when it arose or became known?",
+      "reconciledTreatment": "Use user wording as a narrow intimate-difficulty question; no blanket intimate-history inventory."
+    },
+    {
+      "id": "QT29",
+      "proposal": {
+        "id": "QT29",
+        "category": "Sensitive or doctrine-dependent",
+        "nature": "Only if institution approves relevance",
+        "destination": "Conditional private interview; not new ground",
+        "status": "Not a new approved ground",
+        "current": "CTM already collects children; no blanket questions about intentions regarding children before marriage.",
+        "proposed": "If relevant, what did you and your spouse actually discuss or agree about having children before marriage, and what later changed or became known?",
+        "reason": "User may reject or narrow this topic. Do not import Catholic procreation exclusions, contraception rules or a new nullity ground.",
+        "sources": [
+          {
+            "id": "L07",
+            "locator": "P059–060,137,141"
+          },
+          {
+            "id": "L01",
+            "locator": "P269–282"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: If relevant, what did you and your spouse actually discuss or agree about having children before marriage, and what later changed or became known?"
+    },
+    {
+      "id": "QT30",
+      "proposal": {
+        "id": "QT30",
+        "category": "Appeal supplement",
+        "nature": "Accepted/pending appeal, within approved scope",
+        "destination": "APPEAL / new information",
+        "status": "Appeal form and section already approved",
+        "current": "Appeal asks for reason and new information/evidence; interviewer can otherwise repeat original discovery.",
+        "proposed": "Which earlier decision or finding are you challenging, what information is new, when did it become available and which earlier point does it affect?",
+        "reason": "Use an appeal-only question block, not another full biography. Original proceedings remain read-only and no new deadline is introduced.",
+        "sources": [
+          {
+            "id": "L06",
+            "locator": "P012"
+          },
+          {
+            "id": "L07",
+            "locator": "P175"
+          }
+        ],
+        "action": "Adapt factual-source structure; CTM appeal policy"
+      },
+      "answer": "reject",
+      "clarification": "",
+      "reconciledTreatment": "Do not add/replace this proposal; preserve prior approved CTM policy."
+    },
+    {
+      "id": "QT31",
+      "proposal": {
+        "id": "QT31",
+        "category": "Priest report requested by council",
+        "nature": "Optional report; not an applicant interview",
+        "destination": "PRIEST / author and knowledge",
+        "status": "New user-requested report concept; not approved form content",
+        "current": "Application currently records reconciliation priest names; no standardized priest-report template. Prior general priest/witness interview feature was rejected.",
+        "proposed": "Report author: name and parish; which party or parties you know; length and nature of contact; which periods of the relationship you know directly.",
+        "reason": "Separate a specifically requested priest report from mandatory witness lists, interviews, logins or case access.",
+        "sources": [
+          {
+            "id": "R02",
+            "locator": "PDF p.4, minister comments q.1"
+          },
+          {
+            "id": "R14",
+            "locator": "PDF p.2, q.1–2"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Superseded/enriched by direct priest testimony request: scoped link, identified subject, free-form writing or recording."
+    },
+    {
+      "id": "QT32",
+      "proposal": {
+        "id": "QT32",
+        "category": "Priest report requested by council",
+        "nature": "Optional priest report",
+        "destination": "PRIEST / observed facts",
+        "status": "No current report prompts",
+        "current": "No direct-knowledge structure for requested pastoral reports.",
+        "proposed": "Describe relevant facts you personally observed, with dates if known. Label information told to you by a party separately from your direct observations.",
+        "reason": "The witness samples contribute a source-of-knowledge structure, not a right to view parties’ case material.",
+        "sources": [
+          {
+            "id": "L06",
+            "locator": "P011–013"
+          },
+          {
+            "id": "R14",
+            "locator": "PDF pp.6–7, q.19–25"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: Describe relevant facts you personally observed, with dates if known. Label information told to you by a party separately from your direct observations."
+    },
+    {
+      "id": "QT33",
+      "proposal": {
+        "id": "QT33",
+        "category": "Priest report requested by council",
+        "nature": "Optional priest report",
+        "destination": "PRIEST / reconciliation",
+        "status": "No current report prompts",
+        "current": "Applicant reconciliation field asks priest name only.",
+        "proposed": "Describe relevant non-confessional reconciliation assistance you provided, approximate dates and observed outcome. State any limits on what you can report.",
+        "reason": "Do not request sacramental confession content or imply a blanket authorization to release pastoral/private information.",
+        "sources": [
+          {
+            "id": "R02",
+            "locator": "PDF p.4, minister comments"
+          },
+          {
+            "id": "R06",
+            "locator": "PDF p.22, sponsor questions"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Relevant non-confessional assistance only; preserve author and limits of knowledge."
+    },
+    {
+      "id": "QT34",
+      "proposal": {
+        "id": "QT34",
+        "category": "Priest report requested by council",
+        "nature": "Optional priest report",
+        "destination": "PRIEST / opinion versus fact",
+        "status": "No current report prompts",
+        "current": "The Catholic samples sometimes ask clergy to assess sincerity or case viability.",
+        "proposed": "If you offer an observation or recommendation, identify it as your opinion and state the facts on which it is based; do not make the council decision for it.",
+        "reason": "Prefer evidence-grounded observations to a broad character/sincerity score or copied canonical conclusion.",
+        "sources": [
+          {
+            "id": "R02",
+            "locator": "PDF p.4, q.3–5"
+          },
+          {
+            "id": "R06",
+            "locator": "PDF p.22, q.1–3"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Accept the proposal within its stated scope: If you offer an observation or recommendation, identify it as your opinion and state the facts on which it is based; do not make the council decision for it."
+    },
+    {
+      "id": "QT35",
+      "proposal": {
+        "id": "QT35",
+        "category": "Priest report requested by council",
+        "nature": "Optional priest report",
+        "destination": "PRIEST / report authentication",
+        "status": "No current report signature workflow",
+        "current": "No separate priest report author/date attestation is implemented.",
+        "proposed": "At the end of a requested report, record the author, date and signature or authenticated submission method, preserving the exact submitted version.",
+        "reason": "Approval chooses the data requirement only. Do not copy Catholic oath/notary/parish-seal rules or create a priest portal without a separate decision.",
+        "sources": [
+          {
+            "id": "R02",
+            "locator": "PDF p.4, signature"
+          },
+          {
+            "id": "R14",
+            "locator": "PDF p.12, signature area"
+          }
+        ],
+        "action": "Add / adapt"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Author/date/authenticated submission record accepted; signature/link-authentication mechanics not yet finalized."
+    },
+    {
+      "id": "QT36",
+      "proposal": {
+        "id": "QT36",
+        "category": "Template organization",
+        "nature": "All petition interviews",
+        "destination": "Routing and reuse",
+        "status": "One draft template with common questions and informal ground prompts",
+        "current": "Current draft INT-APPLICANT revision 2 is a single document.",
+        "proposed": "Use one common factual core plus only the relevant approved modules: annulment inquiry, selected divorce grounds, multiple ceremonies, prior marriages or appeal; keep a requested priest report as a separate template.",
+        "reason": "Avoid copying the same questions into every template. Council controls the process/type; applicant selection is not a decree. No Catholic process categories are imported.",
+        "sources": [
+          {
+            "id": "L02",
+            "locator": "P004–018"
+          },
+          {
+            "id": "L03",
+            "locator": "P007–018"
+          },
+          {
+            "id": "L07",
+            "locator": "P006–018"
+          }
+        ],
+        "action": "Organize/deduplicate; review first"
+      },
+      "answer": "accept",
+      "clarification": "",
+      "reconciledTreatment": "Use common core plus selected accepted categories. Exclude rejected QT22/26/27/30 despite their appearance in the original routing proposal."
+    }
+  ],
+  "generalNotes": "Category-based interview/report assembly and link-based priest free-form testimony specified separately in decision register."
+}
