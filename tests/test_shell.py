@@ -31,7 +31,7 @@ def test_public_shell_uses_pinned_cdn_in_required_order_and_csrf(client):
     positions = [html.index(base + name) for name in files]
     assert positions == sorted(positions)
     assert "csrftoken" in response.cookies
-    assert response["Cache-Control"] == "no-store"
+    assert response["Cache-Control"] == "private, no-store"
     assert "style=" not in html
 
 

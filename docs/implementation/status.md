@@ -234,3 +234,8 @@ PostgreSQL CI passed168 tests on083cb39 (https://github.com/LighthouseCollection
 The council Reports destination now uses a Plenix split list/reading pane for completed ordinary reports. It displays the sent question snapshots beside their attributed answers, completion date, revision number, internal observations and links to the original report for follow-ups. Medical/psychological records are reserved for their separate assessment section. This change does not add editing permissions or expose staff-authored reports to applicants. API projections omit invitation credentials and preserve existing applicant-only response filtering. Remaining report work includes request/editor UI, history, recording/transcript tabs and print/upload workflows.
 
 The real-CDN browser smoke now checks report selection, sent question text and internal observations using synthetic council fixtures. Local validation130 passed,41 PostgreSQL-only skipped; critical lint passed. Independent code review found no additional privacy/state issue in this reading slice. No operational deployment changed.
+
+
+## Private-response headers - 2026-10-21
+
+A middleware boundary now sets private/no-store caching, no-referrer and nosniff on CTM API, account/login, capability-report and root-shell responses. It also covers missing-resource and CSRF/access rejection responses, rather than relying on individual successful views. Static CDN assets remain outside this boundary. Local135 tests passed with41 PostgreSQL-only skips; the previous report-reading commit passed171 PostgreSQL tests in CI. Public deployment remains blocked on the documented integration and schema/security acceptance work.
