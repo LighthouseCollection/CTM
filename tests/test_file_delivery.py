@@ -21,14 +21,12 @@ def delivery(client, ready_application, settings, tmp_path):
 
 
 def response_bytes(response):
-    try:
-        return (
-            b"".join(response.streaming_content)
-            if response.streaming
-            else response.content
-        )
-    finally:
-        response.close()
+    # Django's test-client iterator closes the response with connection cleanup
+    # temporarily disconnected. Closing it again emits request_finished twice
+    # and closes PostgreSQL's enclosing test transaction.
+    return (
+        b"".join(response.streaming_content) if response.streaming else response.content
+    )
 
 
 @pytest.mark.parametrize(

@@ -1351,3 +1351,20 @@ def historical_publish(request, workspace_id):
 
     case = publish(request.user, workspace_id)
     return JsonResponse(encoded(case, number=case.number), status=201)
+
+
+@endpoint()
+def case_files(request, case_id):
+    from tribunal.services.files import case_file_listing
+
+    if request.GET.get("history", "0") not in {"0", "1"}:
+        raise ValidationError("History must be 0 or 1.")
+    result = case_file_listing(
+        request.user,
+        case_id,
+        history=request.GET.get("history") == "1",
+        offset=int(request.GET.get("offset", "0")),
+    )
+    response = JsonResponse(result)
+    response["Cache-Control"] = "private, no-store"
+    return response

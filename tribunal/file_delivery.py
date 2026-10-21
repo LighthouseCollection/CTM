@@ -8,22 +8,13 @@ from django.utils.http import (
     http_date,
     parse_http_date_safe,
 )
-from tribunal.services.files import authorized_file, private_path, display_filename
+from tribunal.services.files import (
+    authorized_file,
+    private_path,
+    display_filename,
+    INLINE_TYPES_FOR_LIST,
+)
 from tribunal.services.common import audit
-
-INLINE_TYPES = {
-    "application/pdf",
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "image/gif",
-    "audio/mpeg",
-    "audio/mp4",
-    "audio/wav",
-    "audio/ogg",
-    "video/mp4",
-    "video/webm",
-}
 
 
 def byte_range(value, size):
@@ -92,7 +83,9 @@ def deliver_file(request, file_id):
             and parse_http_date_safe(condition) != modified
         ):
             requested = ""
-        inline = request.GET.get("view") == "1" and source.mime_type in INLINE_TYPES
+        inline = (
+            request.GET.get("view") == "1" and source.mime_type in INLINE_TYPES_FOR_LIST
+        )
         try:
             selected = byte_range(requested, size)
         except ValueError:

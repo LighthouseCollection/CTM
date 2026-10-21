@@ -309,3 +309,88 @@ def authorized_file(actor, file_id):
             ):
                 raise PermissionDenied("Signed scoped medical disclosure is required.")
     return file
+
+
+def case_file_listing(actor, case_id, *, history=False, offset=0):
+    """Ordinary case evidence only; medical/report/decree sources have dedicated views."""
+    from django.db.models import Exists, OuterRef, Q, Subquery
+    from tribunal.policy import case_for
+
+    case = case_for(actor, case_id)
+    if history and actor.role == "applicant":
+        raise PermissionDenied("Version history is council-only.")
+    if not 0 <= offset <= 2**63 - 52:
+        raise ValidationError("Offset is outside the supported range.")
+    files = (
+        FileVersion.objects.select_related(
+            "attachment__case", "attachment__application"
+        )
+        .filter(
+            Q(attachment__case=case) | Q(attachment__application__case=case),
+            attachment__report_request__isnull=True,
+            decree__isnull=True,
+        )
+        .exclude(attachment__visibility="medical")
+    )
+    if actor.role == "applicant":
+        files = files.filter(attachment__owner=actor).exclude(
+            attachment__visibility="council"
+        )
+    else:
+        files = files.filter(
+            Q(attachment__application__isnull=True)
+            | Q(attachment__application__submitted_at__isnull=False)
+        )
+    if not history:
+        later = FileVersion.objects.filter(
+            attachment_id=OuterRef("attachment_id"), number__gt=OuterRef("number")
+        )
+        files = files.annotate(has_later=Exists(later)).filter(has_later=False)
+    scan = (
+        FileTechnicalEvent.objects.filter(file_id=OuterRef("pk"), task="scan")
+        .order_by("-created_at", "-id")
+        .values("result")[:1]
+    )
+    files = (
+        files.annotate(latest_scan=Subquery(scan))
+        .filter(latest_scan="clean")
+        .order_by("-created_at", "-id")
+    )
+    rows = list(files[offset : offset + 51])
+    return {
+        "items": [
+            {
+                "id": str(row.pk),
+                "attachment_id": str(row.attachment_id),
+                "name": display_filename(row),
+                "category": row.attachment.category,
+                "context": row.attachment.context,
+                "mime_type": row.mime_type,
+                "byte_count": row.byte_count,
+                "version": row.number,
+                "created_at": row.created_at.isoformat(),
+                "download_url": f"/api/files/{row.pk}/",
+                "preview_url": f"/api/files/{row.pk}/?view=1"
+                if row.mime_type in INLINE_TYPES_FOR_LIST
+                else None,
+            }
+            for row in rows[:50]
+        ],
+        "next_offset": offset + 50 if len(rows) > 50 else None,
+    }
+
+
+# Shared with delivery without importing the HTTP delivery module into services.
+INLINE_TYPES_FOR_LIST = {
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "audio/mpeg",
+    "audio/mp4",
+    "audio/wav",
+    "audio/ogg",
+    "video/mp4",
+    "video/webm",
+}
