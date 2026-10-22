@@ -603,6 +603,15 @@ function api(req, res, url, body) {
     }
     const rows = state.requests.filter((r) => r.case === c.id).map((r) => {
       const { token: _t, expires_at: _e, saved_response: _d, ...safe } = r; // never project the capability
+      if (pr7 && r.kind === "external_priest") {
+        // Backend c377706 council link projection; flags follow writer authority and an open case.
+        const writable = (admin() || c.assigned === me().id) && c.status === "open";
+        const state = r.state === "completed" || r.state === "cancelled" ? r.state : c.status !== "open" ? "closed"
+          : r.state === "draft" ? "not_issued" : r.token && r.expires_at ? (Date.now() < r.expires_at ? "active" : "expired") : "unavailable";
+        const unfinished = r.state === "draft" || r.state === "sent";
+        return { ...safe, request_version: 1, external_link: { priest_name: r.external_name || "", expires_at: r.expires_at ? new Date(r.expires_at).toISOString() : null, state,
+          can_issue: writable && unfinished && r.state === "draft", can_reissue: writable && unfinished && r.state === "sent", can_cancel: writable && unfinished } };
+      }
       if (pr7) return ["medical", "psychological"].includes(r.kind) ? { ...safe, release_status: "none", release_scope: null } : { ...safe, request_version: 1 };
       const { subject_party_id, subject_name, language, created_at, sent_at, parent_report_id, author, ...old } = r;
       return old;

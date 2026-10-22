@@ -108,3 +108,52 @@ test("the token is never stored, logged or put in messages by council code", () 
   const panelSrc = src.slice(src.indexOf("function ExternalLinkPanel("), src.indexOf("function RequestDetail("));
   assert.doesNotMatch(panelSrc, /unsavedDrafts|\/api\/cases\/[^`]*messages/);
 });
+
+// Backend c377706: council rows carry external_link {priest_name, expires_at, state, can_issue, can_reissue, can_cancel}.
+const projected = (link, state = "sent") => ({ ...draft, state, external_link: { priest_name: "Synthetic Priest", expires_at: null, can_issue: false, can_reissue: false, can_cancel: false, ...link } });
+
+test("link controls follow the server's projection, not the client's guess", () => {
+  const C = load(harness());
+  const c = C.linkControls(projected({ state: "active", expires_at: "2026-11-21T08:00:00Z", can_reissue: true, can_cancel: true }), false);
+  assert.deepEqual({ ...c }, { projected: true, state: "active", priestName: "Synthetic Priest", expiresAt: "2026-11-21T08:00:00Z", issue: false, reissue: true, cancel: true });
+  // canWrite=true on the client does not grant what the server withholds (e.g. closed case).
+  const closed = C.linkControls(projected({ state: "closed" }), true);
+  assert.equal(closed.reissue || closed.cancel || closed.issue, false);
+  // Older servers without the projection keep the request-state fallback.
+  assert.equal(C.linkControls({ ...draft, state: "sent" }, true).reissue, true);
+  assert.equal(C.linkControls({ ...draft, state: "sent" }, true).projected, false);
+});
+
+test("projected active link: priest, state and expiry shown; only permitted controls offered", () => {
+  const ui = panel(projected({ state: "active", expires_at: "2026-11-21T08:00:00Z", can_reissue: true, can_cancel: true }), () => ({}));
+  assert.match(ui.text(), /Synthetic Priest/);
+  assert.match(ui.text(), /Active/);
+  assert.match(ui.text(), /Expires/);
+  assert.ok(buttons(ui.tree, "Issue a new link")[0]);
+  assert.ok(buttons(ui.tree, "Cancel request")[0]);
+  assert.equal(buttons(ui.tree, "Issue private link").length, 0);
+});
+
+test("projected expired link explains itself; reissue only when the server allows it", () => {
+  const allowed = panel(projected({ state: "expired", expires_at: "2026-10-01T08:00:00Z", can_reissue: true, can_cancel: true }), () => ({}));
+  assert.match(notices(allowed.tree).join(" "), /This link has expired\. Issue a new link/);
+  assert.match(allowed.text(), /Expired on/);
+  assert.ok(buttons(allowed.tree, "Issue a new link")[0]);
+  const reader = panel(projected({ state: "expired", expires_at: "2026-10-01T08:00:00Z" }), () => ({}));
+  assert.match(notices(reader.tree).join(" "), /assigned case manager can issue a new link/);
+  assert.equal(buttons(reader.tree, "Issue a new link").length, 0);
+});
+
+test("projected terminal and unavailable states show no controls", () => {
+  for (const [state, pattern] of [["completed", /submitted/], ["cancelled", /request is closed/], ["closed", /request is closed/], ["unavailable", /cannot be used/]]) {
+    const ui = panel(projected({ state }), () => assert.fail("no call"));
+    assert.match(notices(ui.tree).join(" "), pattern, state);
+    assert.equal(buttons(ui.tree, "Issue private link").length + buttons(ui.tree, "Issue a new link").length + buttons(ui.tree, "Cancel request").length, 0, state);
+  }
+});
+
+test("Arabic link states", () => {
+  const ui = panel(projected({ state: "active", can_reissue: true }), () => ({}), { lang: "ar" });
+  assert.match(ui.text(), /نشط/);
+  assert.ok(buttons(ui.tree, "إصدار رابط جديد")[0]);
+});

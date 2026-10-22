@@ -174,6 +174,33 @@
   // The private link carries the token in the URL fragment, which browsers never send to the server,
   // proxies or referrers. The static boot page reads it, removes it from the address bar and calls the
   // capability-protected JSON route with a Bearer header.
+  // Link status and controls. Servers with the council link projection (backend c377706) send
+  // external_link {priest_name, expires_at, state, can_issue, can_reissue, can_cancel}; its flags already
+  // include writer authority and open case/proceeding. Older servers: derive from the request state.
+  function linkControls(request, canWrite) {
+    const link = request && request.external_link;
+    if (link && typeof link === "object")
+      return {
+        projected: true,
+        state: String(link.state || "unavailable"),
+        priestName: link.priest_name || "",
+        expiresAt: link.expires_at || null,
+        issue: link.can_issue === true,
+        reissue: link.can_reissue === true,
+        cancel: link.can_cancel === true,
+      };
+    const state = request.state === "draft" ? "not_issued" : request.state === "sent" ? null : request.state;
+    return {
+      projected: false,
+      state,
+      priestName: "",
+      expiresAt: null,
+      issue: Boolean(canWrite) && request.state === "draft",
+      reissue: Boolean(canWrite) && request.state === "sent",
+      cancel: Boolean(canWrite) && request.state === "sent",
+    };
+  }
+
   function priestLink(origin, requestId, token) {
     return `${origin}/static/ctm/external-report.html#r=${encodeURIComponent(requestId)}&t=${encodeURIComponent(token)}`;
   }
@@ -476,6 +503,19 @@
       startInterviewMessage: "The question list is frozen. The applicant is not notified.",
       interviewStarted: "The interview was started. Record the answers when ready.",
       recordInterview: "Record interview answers",
+      linkState: "Link",
+      link_not_issued: "Not issued",
+      link_active: "Active",
+      link_expired: "Expired",
+      link_completed: "Report submitted",
+      link_cancelled: "Cancelled",
+      link_closed: "Closed",
+      link_unavailable: "Unavailable",
+      linkExpiresOn: "Expires",
+      linkExpiredOn: "Expired on",
+      linkExpiredHint: "This link has expired. Issue a new link if the priest still needs to respond.",
+      linkExpiredNoAuthority: "This link has expired. The assigned case manager can issue a new link.",
+      linkUnavailableHint: "This link cannot be used. Issue a new link if the priest still needs to respond.",
       externalSubject: "Spouse named in the request",
       externalSubjectHelp: "The priest sees this name and the case number only.",
       priestInstructions: "Instructions to the priest (optional)",
@@ -753,6 +793,19 @@
       startInterviewMessage: "يتم تثبيت قائمة الأسئلة. ولا يتم إخطار مقدم الطلب.",
       interviewStarted: "بدأت المقابلة. سجّل الإجابات عندما تكون جاهزًا.",
       recordInterview: "تسجيل إجابات المقابلة",
+      linkState: "الرابط",
+      link_not_issued: "لم يصدر",
+      link_active: "نشط",
+      link_expired: "منتهي الصلاحية",
+      link_completed: "قُدّم التقرير",
+      link_cancelled: "ملغى",
+      link_closed: "مغلق",
+      link_unavailable: "غير متاح",
+      linkExpiresOn: "تنتهي صلاحيته",
+      linkExpiredOn: "انتهت صلاحيته في",
+      linkExpiredHint: "انتهت صلاحية هذا الرابط. أصدر رابطًا جديدًا إذا كان الكاهن لا يزال بحاجة إلى الرد.",
+      linkExpiredNoAuthority: "انتهت صلاحية هذا الرابط. ويمكن لمسؤول القضية المعيَّن إصدار رابط جديد.",
+      linkUnavailableHint: "لا يمكن استخدام هذا الرابط. أصدر رابطًا جديدًا إذا كان الكاهن لا يزال بحاجة إلى الرد.",
       externalSubject: "الزوج/الزوجة المذكور في الطلب",
       externalSubjectHelp: "لا يرى الكاهن إلا هذا الاسم ورقم القضية.",
       priestInstructions: "تعليمات للكاهن (اختياري)",
@@ -1271,14 +1324,14 @@
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [name, setName] = R.useState(() => priestFromTitle(request.title));
+    const controls = linkControls(request, canWrite);
+    const [name, setName] = R.useState(() => controls.priestName || priestFromTitle(request.title));
     const [email, setEmail] = R.useState("");
     const [link, setLink] = R.useState(null); // shown once, kept in memory only
     const [confirm, setConfirm] = R.useState(null); // "issue" | "reissue" | "cancel"
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [copied, setCopied] = R.useState(false);
-    const open = request.state === "draft" || request.state === "sent";
     async function issue() {
       setConfirm(null);
       setFailure(null);
@@ -1333,6 +1386,27 @@
         P.Stack,
         { gap: "md" },
         h(P.Text, { variant: "secondary" }, t("externalLinkHelp")),
+        controls.projected
+          ? h(
+              P.PropertyList,
+              null,
+              controls.priestName ? h(P.PropertyList.Item, { label: t("priestName") }, base.isolate(controls.priestName)) : null,
+              h(
+                P.PropertyList.Item,
+                { label: t("linkState") },
+                h(
+                  P.Badge,
+                  { tone: { active: "active", completed: "success", expired: "warning", cancelled: "neutral", closed: "neutral", unavailable: "danger" }[controls.state] || "neutral" },
+                  t(`link_${controls.state}`),
+                ),
+              ),
+              controls.expiresAt
+                ? h(P.PropertyList.Item, { label: t(controls.state === "expired" ? "linkExpiredOn" : "linkExpiresOn"), data: true }, base.formatWhen(controls.expiresAt, lang))
+                : null,
+            )
+          : null,
+        controls.state === "expired" ? h(P.Notice, { tone: "warning" }, t(controls.reissue ? "linkExpiredHint" : "linkExpiredNoAuthority")) : null,
+        controls.state === "unavailable" ? h(P.Notice, { tone: "warning" }, t("linkUnavailableHint")) : null,
         link
           ? h(
               P.Stack,
@@ -1343,7 +1417,7 @@
               h(P.Text, { variant: "secondary" }, t("linkNotEmailed")),
             )
           : null,
-        canWrite && open
+        controls.issue || controls.reissue || controls.cancel
           ? h(
               P.Stack,
               { gap: "sm" },
@@ -1356,18 +1430,22 @@
               h(
                 P.Inline,
                 { wrap: true },
-                h(
-                  P.Button,
-                  { variant: "primary", loading: pending, disabled: pending, onClick: () => setConfirm(request.state === "sent" ? "reissue" : "issue") },
-                  t(request.state === "sent" ? "reissueLink" : "issueLink"),
-                ),
-                request.state === "sent"
+                controls.issue || controls.reissue
+                  ? h(
+                      P.Button,
+                      { variant: "primary", loading: pending, disabled: pending, onClick: () => setConfirm(controls.reissue ? "reissue" : "issue") },
+                      t(controls.reissue ? "reissueLink" : "issueLink"),
+                    )
+                  : null,
+                controls.cancel
                   ? h(P.Button, { disabled: pending, onClick: () => setConfirm("cancel") }, t("cancelExternal"))
                   : null,
               ),
             )
           : null,
-        !open ? h(P.Notice, { tone: "info" }, t(request.state === "completed" ? "externalCompleted" : "externalClosed")) : null,
+        ["completed", "cancelled", "closed"].includes(controls.state)
+          ? h(P.Notice, { tone: "info" }, t(controls.state === "completed" ? "externalCompleted" : "externalClosed"))
+          : null,
         failure ? h(P.Notice, { tone: "danger" }, failure) : null,
       ),
       h(P.ConfirmDialog, {
@@ -3019,6 +3097,7 @@
     InterviewForm, // exported for the unsaved-text regression test
     ExternalLinkPanel,
     priestLink,
+    linkControls,
     priestTitle,
     priestFromTitle,
     RequestDetail,
