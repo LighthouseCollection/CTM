@@ -273,3 +273,37 @@ test("statistics are plain counts, flagged partial at the list limit, never rate
   const src = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.doesNotMatch(src.slice(src.indexOf("function caseStatistics"), src.indexOf("function StatisticsWorkspace")), /\/|percent|rate/i);
 });
+
+test("Los Angeles times carry the right daylight-saving offset", () => {
+  assert.equal(C.laIso("2026-11-05", "10:30"), "2026-11-05T10:30:00-08:00");
+  assert.equal(C.laIso("2026-10-20", "09:00"), "2026-10-20T09:00:00-07:00");
+  assert.equal(C.laIso("2026-03-09", "09:00"), "2026-03-09T09:00:00-07:00");
+  assert.equal(C.laIso("2026-03-07", "23:30"), "2026-03-07T23:30:00-08:00");
+  assert.equal(C.laIso("bad", "09:00"), null);
+});
+
+test("reschedule needs a new free date, a reason and non-overlapping times for every invitation", () => {
+  const items = [
+    { id: "i1", testimony: [{ id: "t1", state: "scheduled" }, { id: "t0", state: "cancelled" }] },
+    { id: "i2", testimony: [{ id: "t2", state: "scheduled" }] },
+  ];
+  const appts = C.activeAppointments(items);
+  assert.deepEqual(appts.map((a) => a.id), ["t1", "t2"]);
+  const sessions = [{ date: "2026-11-05" }, { date: "2026-11-12" }];
+  const ok = { date: "2026-11-19", reason: "Bishop travelling", times: { t1: { start: "10:00", end: "10:30" }, t2: { start: "10:30", end: "11:00" } } };
+  assert.equal(C.rescheduleProblem(ok, appts, sessions, "2026-11-05"), null);
+  assert.equal(C.rescheduleProblem({ ...ok, date: "2026-11-12" }, appts, sessions, "2026-11-05"), "dateTaken");
+  assert.equal(C.rescheduleProblem({ ...ok, date: "2026-11-05" }, appts, sessions, "2026-11-05"), "sameDate");
+  assert.equal(C.rescheduleProblem({ ...ok, reason: " " }, appts, sessions, "2026-11-05"), "reasonRequired");
+  assert.equal(C.rescheduleProblem({ ...ok, times: { t1: ok.times.t1 } }, appts, sessions, "2026-11-05"), "replacementTimes");
+  assert.equal(C.rescheduleProblem({ ...ok, times: { ...ok.times, t2: { start: "10:15", end: "10:45" } } }, appts, sessions, "2026-11-05"), "replacementOverlap");
+  const payload = JSON.parse(JSON.stringify(C.reschedulePayload(ok, appts)));
+  assert.deepEqual(payload, {
+    date: "2026-11-19",
+    reason: "Bishop travelling",
+    appointments: {
+      t1: { starts_at: "2026-11-19T10:00:00-08:00", ends_at: "2026-11-19T10:30:00-08:00" },
+      t2: { starts_at: "2026-11-19T10:30:00-08:00", ends_at: "2026-11-19T11:00:00-08:00" },
+    },
+  });
+});

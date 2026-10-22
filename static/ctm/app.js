@@ -1622,6 +1622,7 @@
           sessionId: selection,
           onCase: (id) => go("case", id),
           onBack: () => go("sessions"),
+          onSession: (id) => go("session", id),
           renderAttendance: ({ session, members, attendance, key }) =>
             h(SessionAttendance, {
               key,

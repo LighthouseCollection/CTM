@@ -361,7 +361,7 @@ function api(req, res, url, body) {
       return json(res, 201, { id: item.id });
     }
     const session = { id: s.id, date: s.date, state: s.state, can_record_attendance: admin() && s.state === "planned" };
-    if (pr7) Object.assign(session, { can_manage: admin() && s.state === "planned", can_close: admin() && s.state === "planned" });
+    if (pr7) Object.assign(session, { can_manage: admin() && s.state === "planned", can_close: admin() && s.state === "planned", can_reschedule: admin() && s.state === "planned" });
     return json(res, 200, { session, items: state.agenda.filter((x) => x.session === s.id).map((x) => agendaRow(x, s)) });
   }
   if ((m = p.match(/^\/api\/sessions\/([^/]+)\/attendance\/$/))) {
@@ -381,6 +381,30 @@ function api(req, res, url, body) {
       x.state = pr7 && x.part === 1 && c.assigned ? "assigned" : "unpresented";
     }
     return json(res, 200, { id: s.id });
+  }
+  if ((m = p.match(/^\/api\/sessions\/([^/]+)\/reschedule\/$/))) {
+    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const s = state.sessions.find((x) => x.id === m[1]);
+    if (!String(body.reason || "").trim()) return json(res, 422, { error: "validation", messages: ["Record the reason for rescheduling."] });
+    if (state.sessions.some((x) => x.date === body.date)) return json(res, 422, { error: "validation", messages: ["Another council session already uses this date."] });
+    const active = state.testimony.filter((t) => t.session === s.id && t.state !== "cancelled");
+    for (const t of active) {
+      const slot = (body.appointments || {})[t.id];
+      if (!slot || !/[+-]\d{2}:\d{2}$/.test(slot.starts_at) || !/[+-]\d{2}:\d{2}$/.test(slot.ends_at))
+        return json(res, 422, { error: "validation", messages: ["Provide explicit new times for every active testimony appointment."] });
+    }
+    const target = { id: "s-" + body.date, date: body.date, reference: "CS" + body.date.replace(/-/g, ""), state: "planned" };
+    state.sessions.push(target);
+    for (const item of state.agenda.filter((x) => x.session === s.id)) { item.session = target.id; item.id = "i-" + target.id + item.case_id; }
+    for (const t of active) Object.assign(t, { session: target.id, agenda: "i-" + target.id + state.agenda.find((x) => x.session === target.id)?.case_id, starts_at: body.appointments[t.id].starts_at, ends_at: body.appointments[t.id].ends_at, version: t.version + 1, response: null });
+    state.sessions = state.sessions.filter((x) => x.id !== s.id);
+    return json(res, 201, { id: target.id, date: target.date, reference: target.reference });
+  }
+  if ((m = p.match(/^\/api\/appointments\/([^/]+)\/cancel\/$/))) {
+    const t = state.testimony.find((x) => x.id === m[1]);
+    if (body.expected_version !== t.version) return json(res, 422, { error: "validation", messages: ["Reload the latest testimony invitation before cancelling."] });
+    t.state = "cancelled";
+    return json(res, 200, { id: t.id, version: t.version, state: t.state });
   }
   if ((m = p.match(/^\/api\/agenda\/([^/]+)\/hear\/$/))) {
     const item = state.agenda.find((x) => x.id === m[1]);

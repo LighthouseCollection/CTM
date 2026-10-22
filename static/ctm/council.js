@@ -120,6 +120,7 @@
       presentNeedsAttendance: !present && planned && scheduled && row.part === 2 && mine && typeof row.can_present === "boolean",
       outcome: row.can_record_outcome === true && Boolean(row.hearing_id),
       testimony: planned && scheduled && row.part === 2 && writerOf(user, row, caseRow),
+      cancelTestimony: planned && writerOf(user, row, caseRow),
     };
   }
 
@@ -298,6 +299,22 @@
       sessionClosed: "The council session was closed.",
       closedReadOnly: "This session is closed and read-only.",
       unknownParty: "Unknown spouse",
+      rescheduleAction: "Reschedule session",
+      rescheduleTitle: "Reschedule this council session",
+      rescheduleHelp: "Moves this planned session and its agenda to a new date. Each testimony invitation needs a new time; applicants receive a new invitation version to confirm or reject. The original session is removed from the list; its history is kept with each case.",
+      newSessionDate: "New session date",
+      sameDate: "Choose a different date.",
+      rescheduleReason: "Reason for rescheduling",
+      reasonRequired: "Record the reason for rescheduling.",
+      replacementTimesLegend: "New testimony times (Pacific time)",
+      replacementTimesHelp: "Enter a new time on the new date for every active invitation.",
+      replacementTimes: "Enter new start and end times for every invitation.",
+      replacementOverlap: "Two testimony times overlap. Applicants testify separately.",
+      cancelInvitation: "Cancel invitation",
+      cancelInvitationTitle: "Cancel this testimony invitation?",
+      cancelInvitationMessage: "The applicant is notified privately. The case stays on the agenda.",
+      keepInvitation: "Keep invitation",
+      invitationCancelled: "The testimony invitation was cancelled.",
       statsTitle: "Statistics and Reports",
       statsScope: "Operational counts for council planning. These are not rates: tribunal cases have no population denominator, so no divorce or approval rate is implied.",
       statsPartial: "Counts cover the most recent 100 cases or sessions returned to this view. Complete figures need a server summary.",
@@ -493,6 +510,22 @@
       sessionClosed: "تم إغلاق جلسة المجلس.",
       closedReadOnly: "هذه الجلسة مغلقة ومتاحة للقراءة فقط.",
       unknownParty: "زوج غير معروف",
+      rescheduleAction: "إعادة جدولة الجلسة",
+      rescheduleTitle: "إعادة جدولة جلسة المجلس هذه",
+      rescheduleHelp: "تنقل هذه الجلسة المجدولة وجدول أعمالها إلى تاريخ جديد. وتحتاج كل دعوة للإدلاء بالشهادة إلى موعد جديد؛ ويتلقى مقدمو الطلبات إصدارًا جديدًا من الدعوة لتأكيده أو رفضه. وتُحذف الجلسة الأصلية من القائمة مع الاحتفاظ بسجلها في كل قضية.",
+      newSessionDate: "تاريخ الجلسة الجديد",
+      sameDate: "اختر تاريخًا مختلفًا.",
+      rescheduleReason: "سبب إعادة الجدولة",
+      reasonRequired: "سجّل سبب إعادة الجدولة.",
+      replacementTimesLegend: "المواعيد الجديدة للشهادة (توقيت المحيط الهادئ)",
+      replacementTimesHelp: "أدخل موعدًا جديدًا في التاريخ الجديد لكل دعوة سارية.",
+      replacementTimes: "أدخل وقتَي البدء والانتهاء الجديدين لكل دعوة.",
+      replacementOverlap: "يتداخل موعدان للشهادة. يدلي مقدمو الطلبات بشهاداتهم بشكل منفصل.",
+      cancelInvitation: "إلغاء الدعوة",
+      cancelInvitationTitle: "هل تريد إلغاء دعوة الإدلاء بالشهادة هذه؟",
+      cancelInvitationMessage: "يُخطَر مقدم الطلب بشكل خاص. وتبقى القضية في جدول الأعمال.",
+      keepInvitation: "الإبقاء على الدعوة",
+      invitationCancelled: "تم إلغاء دعوة الإدلاء بالشهادة.",
       statsTitle: "الإحصاءات والتقارير",
       statsScope: "أعداد تشغيلية لتخطيط عمل المجلس. وهي ليست نسبًا: فقضايا المجلس ليس لها مقام سكاني، لذلك لا يُستنتج منها أي معدل للطلاق أو للموافقة.",
       statsPartial: "تشمل الأعداد أحدث ١٠٠ قضية أو جلسة معروضة في هذه الصفحة. وتحتاج الأرقام الكاملة إلى ملخص من الخادم.",
@@ -1021,7 +1054,7 @@
     );
   }
 
-  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onCase, onOutcome, onTestimony }) {
+  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onCase, onOutcome, onTestimony, onCancelTestimony }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1070,9 +1103,16 @@
         flags.presentNeedsAttendance ? h(P.Text, { variant: "secondary" }, t("presentNeedsAttendance")) : null,
         ...(row.testimony || []).map((a) =>
           h(
-            P.Text,
-            { key: a.id, variant: "secondary" },
-            `${t("testimony")}: ${a.party_name} · ${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)} · ${t(a.state === "cancelled" ? "cancelled" : a.response ? "response_" + a.response : "awaitingResponse")}`,
+            P.Inline,
+            { key: a.id, wrap: true, gap: "xs" },
+            h(
+              P.Text,
+              { variant: "secondary" },
+              `${t("testimony")}: ${a.party_name} · ${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)} · ${t(a.state === "cancelled" ? "cancelled" : a.response ? "response_" + a.response : "awaitingResponse")}`,
+            ),
+            flags.cancelTestimony && a.state !== "cancelled" && onCancelTestimony
+              ? h(P.Button, { size: "2xs", onClick: () => onCancelTestimony(a) }, t("cancelInvitation"))
+              : null,
           ),
         ),
       ),
@@ -1299,9 +1339,156 @@
     );
   }
 
+  // Los Angeles wall-clock time on a date as an ISO timestamp with its UTC offset
+  // (daylight saving aware), e.g. laIso("2026-11-05", "10:30") -> "2026-11-05T10:30:00-08:00".
+  function laIso(date, time) {
+    if (!DATE.test(date || "") || !/^\d{2}:\d{2}$/.test(time || "")) return null;
+    const [y, mo, d] = date.split("-").map(Number);
+    const [hh, mm] = time.split(":").map(Number);
+    const wall = Date.UTC(y, mo - 1, d, hh, mm);
+    const offsetAt = (instant) => {
+      const parts = Object.fromEntries(
+        new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Los_Angeles",
+          hourCycle: "h23",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+          .formatToParts(new Date(instant))
+          .map((p) => [p.type, p.value]),
+      );
+      const seen = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour % 24, +parts.minute);
+      return (seen - instant) / 60000;
+    };
+    let offset = offsetAt(wall - offsetAt(wall) * 60000);
+    const sign = offset <= 0 ? "-" : "+";
+    const abs = Math.abs(offset);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${date}T${time}:00${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+  }
+
+  function activeAppointments(items) {
+    return (items || []).flatMap((item) => (item.testimony || []).filter((a) => a.state !== "cancelled").map((a) => ({ ...a, agenda_id: item.id })));
+  }
+
+  function rescheduleProblem(form, appointments, existing, currentDate) {
+    const dateIssue = sessionDateProblem(form.date, (existing || []).filter((s) => s.date !== currentDate));
+    if (dateIssue) return dateIssue;
+    if (form.date === currentDate) return "sameDate";
+    if (!String(form.reason || "").trim()) return "reasonRequired";
+    for (const a of appointments || []) {
+      const slot = form.times?.[a.id] || {};
+      if (!/^\d{2}:\d{2}$/.test(slot.start || "") || !/^\d{2}:\d{2}$/.test(slot.end || "")) return "replacementTimes";
+      if (slot.end <= slot.start) return "endAfterStart";
+    }
+    const slots = (appointments || []).map((a) => form.times[a.id]).sort((x, y) => x.start.localeCompare(y.start));
+    for (let i = 1; i < slots.length; i++) if (slots[i].start < slots[i - 1].end) return "replacementOverlap";
+    return null;
+  }
+
+  function reschedulePayload(form, appointments) {
+    const out = {};
+    for (const a of appointments || []) {
+      const slot = form.times[a.id];
+      out[a.id] = { starts_at: laIso(form.date, slot.start), ends_at: laIso(form.date, slot.end) };
+    }
+    return { date: form.date, reason: form.reason.trim(), appointments: out };
+  }
+
+  function RescheduleDialog({ api, lang, session, items, sessions, onClose, onDone }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const appointments = activeAppointments(items);
+    const [form, setForm] = R.useState({ date: "", reason: "", times: {} });
+    const [problem, setProblem] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const update = (patch) => {
+      setForm((old) => ({ ...old, ...patch }));
+      setProblem(null);
+    };
+    const setTime = (id, key, value) => update({ times: { ...form.times, [id]: { ...(form.times[id] || {}), [key]: value } } });
+    async function save() {
+      const issue = rescheduleProblem(form, appointments, sessions, session.date);
+      setProblem(issue);
+      if (issue) return;
+      setPending(true);
+      setFailure(null);
+      try {
+        const target = await api(`/api/sessions/${encodeURIComponent(session.id)}/reschedule/`, {
+          method: "POST",
+          body: JSON.stringify(reschedulePayload(form, appointments)),
+        });
+        onDone(target.id);
+      } catch (error) {
+        setFailure(serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    return h(
+      P.Dialog,
+      {
+        open: true,
+        size: "lg",
+        title: t("rescheduleTitle"),
+        description: t("rescheduleHelp"),
+        closeLabel: t("cancel"),
+        onClose: () => !pending && onClose(),
+        footer: h(
+          P.Inline,
+          null,
+          h(P.Button, { disabled: pending, onClick: onClose }, t("cancel")),
+          h(P.Button, { variant: "primary", loading: pending, disabled: pending, onClick: save }, t("rescheduleAction")),
+        ),
+      },
+      h(
+        P.Stack,
+        { gap: "md" },
+        h(
+          P.Field,
+          {
+            label: t("newSessionDate"),
+            required: true,
+            error: ["dateRequired", "dateTaken", "sameDate"].includes(problem) ? t(problem) : undefined,
+          },
+          h(P.Input, { type: "date", width: "sm", value: form.date, disabled: pending, onChange: (e) => update({ date: e.target.value }) }),
+        ),
+        h(
+          P.Field,
+          { label: t("rescheduleReason"), required: true, error: problem === "reasonRequired" ? t("reasonRequired") : undefined },
+          h(P.Textarea, { rows: 3, value: form.reason, maxLength: 2000, disabled: pending, onChange: (e) => update({ reason: e.target.value }) }),
+        ),
+        appointments.length
+          ? h(
+              P.Fieldset,
+              { legend: t("replacementTimesLegend") },
+              h(P.Text, { variant: "secondary" }, t("replacementTimesHelp")),
+              ...appointments.map((a) =>
+                h(
+                  P.Inline,
+                  { key: a.id, wrap: true, align: "end" },
+                  h(P.Text, { variant: "strong" }, `${a.party_name} · ${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)}`),
+                  h(P.Field, { label: t("startTime") }, h(P.Input, { type: "time", width: "sm", value: form.times[a.id]?.start || "", disabled: pending, onChange: (e) => setTime(a.id, "start", e.target.value) })),
+                  h(P.Field, { label: t("endTime") }, h(P.Input, { type: "time", width: "sm", value: form.times[a.id]?.end || "", disabled: pending, onChange: (e) => setTime(a.id, "end", e.target.value) })),
+                ),
+              ),
+              ["replacementTimes", "endAfterStart", "replacementOverlap"].includes(problem) ? h(P.Notice, { tone: "danger" }, t(problem)) : null,
+            )
+          : null,
+        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+      ),
+    );
+  }
+
   // renderAttendance({ session, members, attendance, key }) lets the shell keep its
   // existing attendance component while this module supplies fresh data after each action.
-  function SessionWorkspace({ api, lang, user, sessionId, renderAttendance, onCase, onBack }) {
+  function SessionWorkspace({ api, lang, user, sessionId, renderAttendance, onCase, onBack, onSession }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1459,6 +1646,10 @@
                 setFailure(null);
                 setDialog({ kind: "testimony", row: item });
               },
+              onCancelTestimony: (appointment) => {
+                setFailure(null);
+                setDialog({ kind: "cancelTestimony", appointment });
+              },
             }),
           ),
           !groups[n].length ? h(P.EmptyState, { title: t(`part${n}Empty`) }) : null,
@@ -1474,6 +1665,9 @@
         P.Inline,
         { justify: "between", wrap: true },
         h(P.Text, { as: "h1", variant: "title" }, sessionLabel(session.date, t)),
+        session.can_reschedule === true
+          ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }, t("rescheduleAction"))
+          : null,
         (typeof session.can_close === "boolean" ? session.can_close : manage && planned)
           ? h(P.Button, { variant: "danger-secondary", disabled: pending, onClick: () => setDialog({ kind: "close" }) }, t("closeSession"))
           : null,
@@ -1513,6 +1707,43 @@
             },
           })
         : null,
+      dialog?.kind === "reschedule"
+        ? h(RescheduleDialog, {
+            api,
+            lang,
+            session,
+            items: data.items,
+            sessions: data.sessions,
+            onClose: () => setDialog(null),
+            onDone: (targetId) => {
+              setDialog(null);
+              if (onSession) onSession(targetId);
+            },
+          })
+        : null,
+      h(
+        P.ConfirmDialog,
+        {
+          open: dialog?.kind === "cancelTestimony",
+          title: t("cancelInvitationTitle"),
+          message: t("cancelInvitationMessage"),
+          confirmLabel: t("cancelInvitation"),
+          cancelLabel: t("keepInvitation"),
+          destructive: true,
+          onConfirm: () =>
+            run(
+              () =>
+                api(`/api/appointments/${encodeURIComponent(dialog.appointment.id)}/cancel/`, {
+                  method: "POST",
+                  body: JSON.stringify({ expected_version: dialog.appointment.version }),
+                }),
+              "invitationCancelled",
+            ),
+          onCancel: () => !pending && setDialog(null),
+        },
+        dialog?.kind === "cancelTestimony" ? h(P.Text, { as: "p", variant: "strong" }, dialog.appointment.party_name) : null,
+        failure && dialog?.kind === "cancelTestimony" ? h(P.Notice, { tone: "danger" }, failure) : null,
+      ),
       dialog?.kind === "testimony"
         ? h(TestimonyDialog, {
             api,
@@ -1945,6 +2176,10 @@
     groupAgenda,
     agendaActions,
     testimonyProblem,
+    laIso,
+    activeAppointments,
+    rescheduleProblem,
+    reschedulePayload,
     writerOf,
     serverMessage,
     answerText,
