@@ -38,6 +38,9 @@ COUPLES = [
     ("Alexander Reed", "Grace Reed", "decision"),
     ("Henry Collins", "Isabella Collins", "closed"),
     ("Samuel Morgan", "Victoria Morgan", "appeal"),
+    ("Nathan Foster", "Lauren Foster", "closed"),
+    ("Ethan Mitchell", "Megan Mitchell", "appeal"),
+    ("Christopher Allen", "Hannah Allen", "closed"),
 ]
 
 
@@ -107,25 +110,48 @@ def placeholder_png():
 
 
 class Command(BaseCommand):
-    help = "Populate an opted-in isolated SQLite review DB with Western-name workflow snapshots."
+    help = "Populate an explicitly opted-in fictitious Western-name workflow dataset."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--live-fictitious",
+            action="store_true",
+            help="Permit this synthetic fixture in a designated live demo database.",
+        )
+        parser.add_argument(
+            "--confirmation",
+            default="",
+            help="Required literal confirmation for the live fictitious dataset.",
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
-        if (
-            os.environ.get("CTM_SYNTHETIC_DEMO") != "true"
-            or os.environ.get("CTM_ENVIRONMENT") != "test"
-        ):
+        live_fictitious = options["live_fictitious"]
+        isolated_demo = (
+            os.environ.get("CTM_SYNTHETIC_DEMO") == "true"
+            and os.environ.get("CTM_ENVIRONMENT") == "test"
+            and connection.vendor == "sqlite"
+        )
+        if live_fictitious:
+            if options["confirmation"] != "FICTITIOUS-DEMO-DATA-ONLY":
+                raise CommandError("Live fixture confirmation did not match.")
+            if connection.vendor != "postgresql":
+                raise CommandError("The live fictitious fixture requires PostgreSQL.")
+            if m.Case.objects.exclude(origin__in={"synthetic", "demo"}).exists():
+                raise CommandError("Refusing to mix live fixtures with non-demo cases.")
+        elif not isolated_demo:
             raise CommandError("Explicit isolated synthetic demo environment required.")
-        if connection.vendor != "sqlite":
+        if not live_fictitious and connection.vendor != "sqlite":
             raise CommandError(
                 "This review seed only supports isolated SQLite; no operational database writes."
             )
-        if m.Case.objects.exclude(origin="synthetic").exists():
+        allowed_origins = {"synthetic", "demo"} if live_fictitious else {"synthetic"}
+        if m.Case.objects.exclude(origin__in=allowed_origins).exists():
             raise CommandError("Refusing to mix workflow fixtures with non-demo cases.")
         roster = []
         for first, last, email, role in ROSTER:
             account = m.Account.objects.filter(email__iexact=email).first()
-            if account and account.role != role:
+            if account and account.role != role and not live_fictitious:
                 raise CommandError(
                     f"Existing staff role conflict: {email}; no automatic role changes."
                 )
@@ -133,6 +159,9 @@ class Command(BaseCommand):
                 account = m.Account.objects.create_user(
                     email=email, first_name=first, last_name=last, role=role
                 )
+            elif account.role != role:
+                account.role = role
+                account.save(update_fields=["role"])
             roster.append(account)
         president, secretary = roster[:2]
         admin = roster[-1]
@@ -203,6 +232,27 @@ class Command(BaseCommand):
             hour=10,
             location="St. Mary Coptic Orthodox Church, Los Angeles, California",
         )
+        # Keep each session workspace populated during live review: Current,
+        # Upcoming, and Archived each show at least five fictitious records.
+        for offset in range(1, 5):
+            session_at(
+                today - timedelta(days=offset),
+                state="planned",
+                hour=10,
+                location="St. George Coptic Orthodox Church, Bellflower, California",
+            )
+            session_at(
+                today + timedelta(days=7 * (offset + 1)),
+                state="planned",
+                hour=10,
+                location="St. Mark Coptic Orthodox Church, Los Angeles, California",
+            )
+            session_at(
+                today - timedelta(days=14 * (offset + 1)),
+                state="closed",
+                hour=10,
+                location="St. Mary Coptic Orthodox Church, Los Angeles, California",
+            )
 
         def profile_answers(owner):
             """Fictional submitted answers used by the profile and marriage projections."""
@@ -551,31 +601,31 @@ class Command(BaseCommand):
                     kind="applicant_changed",
                     payload={"demo_only": True},
                 )
-            if stage == "accepted" or stage in ("hearing", "decision", "appeal"):
+            if stage in ("accepted", "investigation", "hearing", "decision", "appeal"):
                 agenda = m.AgendaItem.objects.create(
                     session=session,
                     case=case,
                     part=1 if stage == "accepted" else 2,
                     position=index,
                 )
-                if stage == "decision":
+                if stage in ("decision", "appeal"):
                     agenda.state = "presented"
                     agenda.save(update_fields=["state"])
-                    hearing = m.Hearing.objects.create(
-                        agenda=agenda, proceeding=proceeding, presenter=manager
-                    )
-                    m.HearingOutcome.objects.create(
-                        hearing=hearing,
-                        actor=manager,
-                        internal_text="The assigned member reviewed the marriage history and submitted documents with the council.",
-                        recommendations="Decision ready for presidential consideration.",
-                    )
-            if stage in ("investigation", "hearing"):
+                hearing = m.Hearing.objects.create(
+                    agenda=agenda, proceeding=proceeding, presenter=manager or secretary
+                )
+                m.HearingOutcome.objects.create(
+                    hearing=hearing,
+                    actor=manager or secretary,
+                    internal_text="The assigned member reviewed the marriage history and submitted documents with the council.",
+                    recommendations="Decision ready for presidential consideration.",
+                )
+            if stage in ("accepted", "investigation", "hearing", "decision", "appeal"):
                 request = m.ReportRequest.objects.create(
                     case=case,
                     proceeding=proceeding,
                     subject=parties[0],
-                    author=manager,
+                    author=manager or secretary,
                     title="Marriage circumstances interview",
                     kind="interview",
                     state="completed",
@@ -589,13 +639,13 @@ class Command(BaseCommand):
                 )
                 report = m.Report.objects.create(
                     request=request,
-                    author=manager,
+                    author=manager or secretary,
                     identifier=f"{case.number}-REPORT-{timezone.localdate():%Y%m%d}",
                 )
                 m.ReportRevision.objects.create(
                     report=report,
                     number=1,
-                    actor=manager,
+                    actor=manager or secretary,
                     answers={"DEMO-IDENTITY": name_a},
                     observations="The applicant confirmed the marriage details. Further clarification of the separation chronology is recommended.",
                 )

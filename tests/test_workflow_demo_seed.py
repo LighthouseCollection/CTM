@@ -30,7 +30,7 @@ def test_workflow_demo_is_repeatable_private_and_delivery_free(
     count = Case.objects.count()
     file_count = FileVersion.objects.count()
     call_command("seed_workflow_demo")
-    assert Case.objects.count() == count == 8
+    assert Case.objects.count() == count == 11
     assert FileVersion.objects.count() == file_count
     assert Account.objects.filter(
         role="president", email="bishopserapion@lacopts.org"
