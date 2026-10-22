@@ -351,6 +351,18 @@ test("case summary leaves case-section navigation to the secondary pane", () => 
   assert.doesNotMatch(summary, /link\("communications", "communicationsLink"\)/);
 });
 
+test("petition is limited to submitted petition material and notes have their own workspace", () => {
+  const source = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const petitionStart = source.indexOf("function PetitionWorkspace(");
+  const notesStart = source.indexOf("function CaseNotesWorkspace(");
+  const petition = source.slice(petitionStart, notesStart);
+  assert.ok(notesStart > petitionStart);
+  assert.doesNotMatch(petition, /\/findings\//);
+  assert.doesNotMatch(petition, /\/notes\//);
+  assert.doesNotMatch(petition, /internalNotes/);
+  assert.match(source, /CaseNotesWorkspace: base\.guarded\(CaseNotesWorkspace\)/);
+});
+
 test("exported council pages are wrapped in an error boundary", () => {
   for (const name of ["CaseSummary", "DecisionWorkspace", "ReportsWorkspace", "SessionWorkspace", "ReviewWorkspace"])
     assert.match(C[name].displayName || "", /^Guarded\(/, name);

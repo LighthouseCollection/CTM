@@ -83,6 +83,14 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
         "spouse_diocese": "Los Angeles, Southern California and Hawaii",
         "spouse_parish": "St. George Coptic Orthodox Church, Bellflower",
         "spouse_confessor": "Fr. Antony Attallah",
+        "married_outside_coptic_church": "No",
+        "religious_denomination_officiating": "",
+        "date_of_marriage_outside_coptic_church": "",
+        "church_marriage_date": "2010-06-12",
+        "officiating_priest": "Fr. Antony Attallah",
+        "church_name": "St. Mark Coptic Orthodox Church",
+        "church_location": "Los Angeles, CA",
+        "diocese": "Diocese of Los Angeles",
     }
     revision.__class__.objects.filter(pk=revision.pk).update(answers=revision.answers)
     submit_application(app.owner, app.pk, "case-profile", {"accepted": True, "name": "John Smith"})
@@ -107,7 +115,8 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
     login = lambda actor: client.force_login(actor, backend="allauth.account.auth_backends.AuthenticationBackend")
     login(people["secretary"])
 
-    parties = client.get(f"/api/cases/{app.case_id}/").json()["parties"]
+    detail = client.get(f"/api/cases/{app.case_id}/").json()
+    parties = detail["parties"]
     applicant = next(row for row in parties if row["id"] == str(app.party_id))
     respondent = next(row for row in parties if row["id"] == str(spouse.pk))
     assert applicant["profile"]["contact"]["address"] == "1842 Maple Dr, Bellflower, California, 90706, United States"
@@ -116,3 +125,13 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
     assert respondent["profile"]["personal"]["other_names"] == "Jess"
     assert respondent["profile"]["career"]["occupation"] == "Teacher"
     assert respondent["profile"]["church_affiliation"]["parish"] == "St. George Coptic Orthodox Church, Bellflower"
+    assert detail["marriage"] == {
+        "outside_coptic_church": "No",
+        "outside_denomination": None,
+        "outside_marriage_date": None,
+        "church_marriage_date": "2010-06-12",
+        "officiating_priest": "Fr. Antony Attallah",
+        "church_name": "St. Mark Coptic Orthodox Church",
+        "church_location": "Los Angeles, CA",
+        "diocese": "Diocese of Los Angeles",
+    }

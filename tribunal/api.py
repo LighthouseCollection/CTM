@@ -522,6 +522,21 @@ def _submitted_party_profile(answers, prefix=""):
     }
 
 
+def _submitted_marriage(answers, case):
+    """Project marriage facts from the accepted filing, falling back only to case facts."""
+    value = lambda *keys: _profile_value(answers, *keys)
+    return {
+        "outside_coptic_church": value("married_outside_coptic_church", "outside_coptic_church"),
+        "outside_denomination": value("religious_denomination_officiating", "outside_denomination"),
+        "outside_marriage_date": value("date_of_marriage_outside_coptic_church", "outside_marriage_date"),
+        "church_marriage_date": value("church_marriage_date", "marriage_date") or (case.marriage_date.isoformat() if case.marriage_date else None),
+        "officiating_priest": value("officiating_priest", "marriage_officiant"),
+        "church_name": value("church_name", "marriage_church_name"),
+        "church_location": value("church_location", "church_address", "marriage_church_location"),
+        "diocese": value("marriage_diocese", "church_diocese", "diocese"),
+    }
+
+
 def _application_photo_url(application, category):
     if not application:
         return None
@@ -530,6 +545,16 @@ def _application_photo_url(application, category):
         return None
     photo = attachment.versions.filter(scan_state="clean").order_by("-number").first()
     return f"/api/files/{photo.pk}/?view=1" if photo else None
+
+
+def _submitted_answers(application):
+    if not application:
+        return {}
+    revision = next(
+        (row for row in application.revisions.all() if row.number == application.current_version),
+        None,
+    )
+    return revision.answers if revision else {}
 
 
 def _council_party_profiles(case, parties):
@@ -541,23 +566,14 @@ def _council_party_profiles(case, parties):
     )
     by_party_id = {app.party_id: app for app in applications if app.party_id}
 
-    def answers_for(application):
-        if not application:
-            return {}
-        revision = next(
-            (row for row in application.revisions.all() if row.number == application.current_version),
-            None,
-        )
-        return revision.answers if revision else {}
-
     result = {}
     for party in parties:
         direct = by_party_id.get(party.pk)
         source = direct or next((app for app in applications if app.party_id != party.pk), None)
         if direct:
-            answers, prefix, photo_category = answers_for(direct), "", "PHOTO"
+            answers, prefix, photo_category = _submitted_answers(direct), "", "PHOTO"
         else:
-            answers, prefix, photo_category = answers_for(source), "spouse_", "SPOUSE_PHOTO"
+            answers, prefix, photo_category = _submitted_answers(source), "spouse_", "SPOUSE_PHOTO"
         result[party.pk] = {
             "profile": _submitted_party_profile(answers, prefix),
             "photo_url": _application_photo_url(direct or source, photo_category),
@@ -571,6 +587,12 @@ def case_detail(request, case_id):
     case = case_for(request.user, case_id)
     parties = list(case.parties.all().order_by("slot", "id"))
     council_profiles = _council_party_profiles(case, parties) if request.user.role != "applicant" else {}
+    marriage_application = (
+        m.Application.objects.filter(case=case, kind="petition", submitted_at__isnull=False)
+        .prefetch_related("revisions")
+        .order_by("created_at", "id")
+        .first()
+    )
     party_data = [encoded(
         p,
         name=p.name,
@@ -595,6 +617,7 @@ def case_detail(request, case_id):
             can_message=request.user.role in {"applicant", "admin", "secretary"}
             or case.assigned_member_id == request.user.pk,
             parties=party_data,
+            marriage=_submitted_marriage(_submitted_answers(marriage_application), case),
             proceedings=[
                 encoded(p, kind=p.kind, status=p.status, sequence=p.sequence)
                 for p in case.proceedings.all()

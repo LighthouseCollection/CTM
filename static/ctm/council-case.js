@@ -372,9 +372,19 @@
       timelineHelp: "Key case events, oldest first. Every recorded action is listed in Case Audit.",
       noTimeline: "No key events are recorded yet.",
       petitionTitle: "Petition",
-      petitionReadOnly: "Each spouse's formal submission is shown as submitted. Council notes below are separate and never change it.",
+      petitionReadOnly: "The formal petition is shown as submitted. Spouse profiles and marriage information are available from the case menu.",
       petition: "Petition",
       noPetitions: "No submitted petition is available for this case.",
+      marriageTitle: "Marriage",
+      churchMarriage: "Church Marriage",
+      marriedOutsideCoptic: "Were You Married Outside the Coptic Orthodox Church?",
+      outsideDenomination: "Religious Denomination Officiating",
+      outsideMarriageDate: "Date of Marriage Outside Coptic Church",
+      churchMarriageDate: "Date of Church Marriage",
+      officiatingPriest: "Officiating Priest",
+      marriageDuration: "Marriage Duration",
+      churchName: "Church Name",
+      churchLocation: "Church Address / Location",
       internalNotes: "Internal notes",
       internalNotesHelp: "Council only. Never shown to applicants.",
       note: "Note",
@@ -635,9 +645,19 @@
       timelineHelp: "الأحداث الرئيسية للقضية من الأقدم إلى الأحدث. وتُعرض جميع الإجراءات المسجلة في سجل تدقيق القضية.",
       noTimeline: "لم تُسجَّل أحداث رئيسية بعد.",
       petitionTitle: "الطلب",
-      petitionReadOnly: "يُعرض ما قدّمه كل من الزوجين كما قُدِّم. وملاحظات المجلس أدناه منفصلة ولا تغيّره أبدًا.",
+      petitionReadOnly: "يُعرض الطلب الرسمي كما قُدِّم. تتوفر ملفات الزوجين ومعلومات الزواج من قائمة القضية.",
       petition: "الطلب",
       noPetitions: "لا يوجد طلب مقدَّم متاح لهذه القضية.",
+      marriageTitle: "الزواج",
+      churchMarriage: "الزواج الكنسي",
+      marriedOutsideCoptic: "هل تم الزواج خارج الكنيسة القبطية الأرثوذكسية؟",
+      outsideDenomination: "الطائفة الدينية التي أجرت الزواج",
+      outsideMarriageDate: "تاريخ الزواج خارج الكنيسة القبطية",
+      churchMarriageDate: "تاريخ الزواج الكنسي",
+      officiatingPriest: "الكاهن الذي أجرى الزواج",
+      marriageDuration: "مدة الزواج",
+      churchName: "اسم الكنيسة",
+      churchLocation: "عنوان / موقع الكنيسة",
       internalNotes: "ملاحظات داخلية",
       internalNotesHelp: "للمجلس فقط. لا تُعرض أبدًا على مقدمي الطلبات.",
       note: "ملاحظة",
@@ -2528,12 +2548,31 @@
     );
   }
 
-  // ---------- Petition and internal notes ----------
-  // Each spouse's formal submission is shown read-only. Council notes are a separate,
-  // council-only record and never change what either spouse submitted.
+  // ---------- Petition and council notes ----------
+  // Formal petitions preserve only petition material. Identity and application profile
+  // details are presented in Spouses from the immutable case-detail projection.
+
+  const PETITION_PROFILE_CODES = new Set([
+    "first_name", "last_name", "birth_date", "gender", "marriage_date",
+    "spouse_name", "spouse_birth_date", "spouse_gender",
+    "other_names", "aliases", "birth_country", "place_of_birth", "nationality",
+    "aware_of_application", "awareness_of_application", "address", "mobile", "mobile_number",
+    "email", "email_address", "immigration_status", "residing_with", "education",
+    "graduation_year", "year_of_graduation", "occupation", "denomination", "bishop",
+    "name_of_bishop", "diocese", "parish", "parish_name", "confessor", "father_of_confession",
+    "married_outside_coptic_church", "outside_coptic_church", "religious_denomination_officiating",
+    "outside_denomination", "date_of_marriage_outside_coptic_church", "outside_marriage_date",
+    "church_marriage_date", "officiating_priest", "marriage_officiant", "church_name",
+    "marriage_church_name", "church_location", "church_address", "marriage_church_location",
+    "marriage_diocese", "church_diocese",
+  ]);
 
   function casePetitions(items, caseId) {
     return (items || []).filter((row) => row && row.kind === "petition" && row.case_id === caseId);
+  }
+
+  function petitionAnswers(answers) {
+    return Object.entries(answers || {}).filter(([code]) => !PETITION_PROFILE_CODES.has(code) && !code.startsWith("spouse_"));
   }
 
   // Latest revision of each note, newest note first by first appearance order.
@@ -2555,30 +2594,36 @@
     return [...byCode.values()].sort((a, b) => String(a.fact_code).localeCompare(String(b.fact_code)));
   }
 
-  function PetitionWorkspace({ api, lang, user, caseId }) {
-    const R = window.React,
-      P = window.Plenix,
-      h = R.createElement,
-      t = translator(lang);
-    const bt = base.translator(lang);
-    const [state, retry] = base.useLoad(
-      () =>
-        Promise.all([api("/api/applications/"), api(`/api/cases/${encodeURIComponent(caseId)}/`)]).then(async ([apps, record]) => {
-          const proceeding = openProceeding(record) || [...(record.proceedings || [])].sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0] || null;
-          const notes = proceeding ? await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`) : { items: [] };
-          let findings = null;
-          if (proceeding) {
-            try {
-              findings = latestFindings((await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`)).items);
-            } catch (error) {
-              // Older servers have no findings read (405); findings are then not shown.
-              if (error.status !== 405) throw error;
-            }
-          }
-          return { petitions: casePetitions(apps.items, caseId), record, proceeding, notes: latestNotes(notes.items), findings };
-        }),
-      [caseId],
+  function PetitionWorkspace({ api, lang, caseId }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
+    const [state, retry] = base.useLoad(() => api("/api/applications/").then((apps) => ({ petitions: casePetitions(apps.items, caseId) })), [caseId]);
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const { petitions } = state.data;
+    return h(P.Stack, { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("petitionTitle")),
+      h(P.Notice, { tone: "info" }, t("petitionReadOnly")),
+      ...petitions.map((row) => {
+        const answers = petitionAnswers(row.answers);
+        const labelled = answers.every(([code]) => base.fieldLabel(row, code, lang));
+        return h(P.Panel, { icon: "doc-text", key: row.id, title: t("petition"), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
+          h(P.Stack, { gap: "sm" },
+            !labelled ? h(P.Notice, { tone: "info" }, bt("codesNotice")) : null,
+            answers.length ? h(P.PropertyList, { layout: "stacked" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
+          ),
+        );
+      }),
+      !petitions.length ? h(P.EmptyState, { title: t("noPetitions") }) : null,
     );
+  }
+
+  function CaseNotesWorkspace({ api, lang, user, caseId }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`).then(async (record) => {
+      const proceeding = openProceeding(record) || [...(record.proceedings || [])].sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0] || null;
+      const notes = proceeding ? await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`) : { items: [] };
+      return { record, proceeding, notes: latestNotes(notes.items) };
+    }), [caseId]);
     const [text, setText] = R.useState("");
     const [editing, setEditing] = R.useState(null);
     const [pending, setPending] = R.useState(false);
@@ -2586,124 +2631,59 @@
     const [notice, setNotice] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const { petitions, record, proceeding, notes, findings } = state.data;
+    const { record, proceeding, notes } = state.data;
     const canWrite = writerFor(user, null, record) && proceeding && proceeding.status === "open";
     async function save(event) {
       event.preventDefault();
-      if (!text.trim()) {
-        setFailure(t("noteRequired"));
-        return;
-      }
-      setPending(true);
-      setFailure(null);
+      if (!text.trim()) { setFailure(t("noteRequired")); return; }
+      setPending(true); setFailure(null);
       try {
-        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`, {
-          method: "POST",
-          body: JSON.stringify(editing ? { text: text.trim(), note_id: editing } : { text: text.trim() }),
-        });
-        setText("");
-        setEditing(null);
-        setNotice("noteSaved");
-        retry();
-      } catch (error) {
-        setFailure(base.serverMessage(error, t));
-      } finally {
-        setPending(false);
-      }
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`, { method: "POST", body: JSON.stringify(editing ? { text: text.trim(), note_id: editing } : { text: text.trim() }) });
+        setText(""); setEditing(null); setNotice("noteSaved"); retry();
+      } catch (error) { setFailure(base.serverMessage(error, t)); }
+      finally { setPending(false); }
     }
-    return h(
-      P.Stack,
-      { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("petitionTitle")),
-      h(P.Notice, { tone: "info" }, t("petitionReadOnly")),
-      ...petitions.map((row) => {
-        const answers = Object.entries(row.answers || {});
-        const labelled = answers.every(([code]) => base.fieldLabel(row, code, lang));
-        return h(
-          P.Panel,
-          { icon: "doc-text",
-            key: row.id,
-            title: row.applicant_name || t("petition"),
-            description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "),
-            collapsible: true,
-          },
-          h(
-            P.Stack,
-            { gap: "sm" },
-            !labelled ? h(P.Notice, { tone: "info" }, bt("codesNotice")) : null,
-            answers.length
-              ? h(
-                  P.PropertyList,
-                  { layout: "stacked" },
-                  ...answers.map(([code, value]) =>
-                    h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)),
-                  ),
-                )
-              : h(P.EmptyState, { title: bt("noAnswers") }),
-          ),
-        );
-      }),
-      !petitions.length ? h(P.EmptyState, { title: t("noPetitions") }) : null,
-      findings
-        ? h(
-            P.Panel,
-            { icon: "doc-text", title: t("findingsTitle"), description: t("findingsHelp") },
-            findings.length
-              ? h(
-                  P.PropertyList,
-                  { layout: "stacked" },
-                  ...findings.map((f) =>
-                    h(
-                      P.PropertyList.Item,
-                      { key: f.fact_code, label: f.fact_code, description: `${f.actor} · ${base.formatWhen(f.timestamp, lang)} · ${t("version")} ${f.version}` },
-                      typeof f.value === "string" ? f.value : JSON.stringify(f.value),
-                    ),
-                  ),
-                )
-              : h(P.EmptyState, { title: t("noFindings") }),
-          )
-        : null,
-      h(
-        P.Panel,
-        { icon: "doc-text", title: t("internalNotes"), description: t("internalNotesHelp") },
-        h(
-          P.Stack,
-          { gap: "md" },
-          notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-          notes.length
-            ? h(
-                P.Stack,
-                { gap: "sm" },
-                ...notes.map((note) =>
-                  h(
-                    P.Card,
-                    { icon: "doc-text",
-                      key: note.note_id,
-                      title: note.author ? `${note.author} · ${base.formatWhen(note.timestamp, lang)}` : t("note"),
-                      meta: `${t("version")} ${note.version}`,
-                      actions: note.can_edit && canWrite
-                        ? h(P.Button, { size: "xs", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); } }, t("editNote"))
-                        : null,
-                    },
-                    h(P.Text, { as: "p" }, note.text),
-                  ),
-                ),
-              )
-            : h(P.EmptyState, { title: t("noNotes") }),
-          canWrite
-            ? h(
-                P.Form,
-                { onSubmit: save, label: t("addNote"), noValidate: true },
-                h(P.Field, { label: t(editing ? "editingNote" : "addNote"), description: editing ? t("editNoteHelp") : undefined }, h(P.Textarea, { rows: 4, autoGrow: true, value: text, maxLength: 50000, disabled: pending, onChange: (e) => { setText(e.target.value); setFailure(null); } })),
-                failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-                h(
-                  P.FormActions,
-                  { sticky: false },
-                  editing ? h(P.Button, { disabled: pending, onClick: () => { setEditing(null); setText(""); } }, t("cancel")) : null,
-                  h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t(editing ? "saveRevision" : "saveNote")),
-                ),
-              )
-            : null,
+    return h(P.Stack, { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("internalNotes")),
+      h(P.Text, { as: "p", variant: "secondary" }, t("internalNotesHelp")),
+      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+      notes.length ? h(P.Stack, { gap: "sm" }, ...notes.map((note) => h(P.Card, { icon: "doc-text", key: note.note_id, title: note.author ? `${note.author} · ${base.formatWhen(note.timestamp, lang)}` : t("note"), meta: `${t("version")} ${note.version}`, actions: note.can_edit && canWrite ? h(P.Button, { size: "xs", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); } }, t("editNote")) : null }, h(P.Text, { as: "p" }, note.text)))) : h(P.EmptyState, { title: t("noNotes") }),
+      canWrite ? h(P.Form, { onSubmit: save, label: t("addNote"), noValidate: true },
+        h(P.Field, { label: t(editing ? "editingNote" : "addNote"), description: editing ? t("editNoteHelp") : undefined }, h(P.Textarea, { rows: 4, autoGrow: true, value: text, maxLength: 50000, disabled: pending, onChange: (e) => { setText(e.target.value); setFailure(null); } })),
+        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+        h(P.FormActions, { sticky: false }, editing ? h(P.Button, { disabled: pending, onClick: () => { setEditing(null); setText(""); } }, t("cancel")) : null, h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t(editing ? "saveRevision" : "saveNote"))),
+      ) : null,
+    );
+  }
+  function marriageDuration(dateValue, lang) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateValue || ""))) return null;
+    const start = new Date(`${dateValue}T00:00:00`), today = new Date();
+    let months = (today.getFullYear() - start.getFullYear()) * 12 + today.getMonth() - start.getMonth();
+    if (today.getDate() < start.getDate()) months -= 1;
+    if (months < 0) return null;
+    const years = Math.floor(months / 12), remainder = months % 12;
+    return lang === "ar" ? `${years} سنة و${remainder} شهر` : `${years} years, ${remainder} months`;
+  }
+
+  function CaseMarriage({ api, lang, caseId }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`), [caseId]);
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const marriage = state.data.marriage || {}, value = (item) => item || "—";
+    return h(P.Stack, { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("marriageTitle")),
+      h(P.Panel, { icon: "settings-users", title: t("churchMarriage") },
+        h(P.PropertyList, { columns: 3 },
+          h(P.PropertyList.Item, { label: t("marriedOutsideCoptic") }, value(marriage.outside_coptic_church)),
+          h(P.PropertyList.Item, { label: t("outsideDenomination") }, value(marriage.outside_denomination)),
+          h(P.PropertyList.Item, { label: t("outsideMarriageDate") }, value(marriage.outside_marriage_date)),
+          h(P.PropertyList.Item, { label: t("churchMarriageDate") }, value(marriage.church_marriage_date)),
+          h(P.PropertyList.Item, { label: t("officiatingPriest") }, value(marriage.officiating_priest)),
+          h(P.PropertyList.Item, { label: t("marriageDuration") }, value(marriageDuration(marriage.church_marriage_date, lang))),
+          h(P.PropertyList.Item, { label: t("churchName") }, value(marriage.church_name)),
+          h(P.PropertyList.Item, { label: t("churchLocation") }, value(marriage.church_location)),
+          h(P.PropertyList.Item, { label: t("diocese") }, value(marriage.diocese)),
         ),
       ),
     );
@@ -2979,9 +2959,13 @@
     CaseParties: base.guarded(CaseParties),
     CaseHearings: base.guarded(CaseHearings),
     casePetitions,
+    petitionAnswers,
     latestNotes,
     latestFindings,
     PetitionWorkspace: base.guarded(PetitionWorkspace),
+    CaseNotesWorkspace: base.guarded(CaseNotesWorkspace),
+    marriageDuration,
+    CaseMarriage: base.guarded(CaseMarriage),
     timelineRows,
     summaryFacts,
     CaseSummary: base.guarded(CaseSummary),

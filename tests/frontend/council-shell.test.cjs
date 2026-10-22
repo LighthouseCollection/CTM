@@ -119,6 +119,13 @@ test("case back navigation retains the workspace that opened the case", () => {
   assert.match(app, /page: "session", selection, labelKey: "backTribunalSession"/);
 });
 
+test("case navigation gives notes and marriage their own workspaces", () => {
+  assert.match(app, /notes: "Notes"/);
+  assert.match(app, /items: \["case", "timeline", "parties", "marriage", "separation", "notes"\]/);
+  assert.match(app, /page === "notes" && council && councilModule\?\.CaseNotesWorkspace/);
+  assert.match(app, /page === "marriage" && council && councilModule\?\.CaseMarriage/);
+});
+
 test("api() keeps CSRF on every request and lets FormData set its own type", () => {
   const start = app.indexOf("async function api(");
   const body = app.slice(start, app.indexOf("function MessageComposer", start));

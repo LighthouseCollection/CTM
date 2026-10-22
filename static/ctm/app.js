@@ -20,7 +20,7 @@
     parties: "settings-users", marriage: "settings-users", separation: "move", petition: "doc-text",
     reports: "document", hearings: "list-lines", evidence: "image-a-2", documents: "folder",
     medical: "lock", decision: "checklist", decree: "file-pdf", appeals: "progress",
-    communications: "message", audit: "list-lines",
+    communications: "message", notes: "message", audit: "list-lines",
   };
   const navigationIcon = (id) => h(P.Icon, { name: navigationIcons[id] });
   const words = {
@@ -168,6 +168,7 @@
       timeline: "Timeline",
       parties: "Spouses",
       marriage: "Marriage",
+      notes: "Notes",
       separation: "Separation",
       reports: "Reports",
       hearings: "Hearings",
@@ -372,6 +373,7 @@
       timeline: "التسلسل الزمني",
       parties: "الزوجان",
       marriage: "الزواج",
+      notes: "ملاحظات",
       separation: "الانفصال",
       reports: "التقارير",
       hearings: "مناقشات القضية",
@@ -1382,12 +1384,14 @@
         "hearings",
         "petition",
         "timeline",
+        "marriage",
+        "notes",
       ].includes(page) && selection;
     const caseGroups = [
       {
         heading: t("overview"),
         icon: navigationIcon("case"),
-        items: ["case", "timeline", "parties", "marriage", "separation"].map(
+        items: ["case", "timeline", "parties", "marriage", "separation", "notes"].map(
           (id) => ({
             id,
             icon: navigationIcon(id),
@@ -1395,7 +1399,9 @@
             disabled: !(
               id === "case" ||
               (id === "parties" && councilModule?.CaseParties && council) ||
-              (id === "timeline" && councilModule?.CaseTimeline && council)
+              (id === "timeline" && councilModule?.CaseTimeline && council) ||
+              (id === "marriage" && councilModule?.CaseMarriage && council) ||
+              (id === "notes" && councilModule?.CaseNotesWorkspace && council)
             ),
           }),
         ),
@@ -1694,6 +1700,10 @@
         return h(councilModule.PetitionWorkspace, { key: selection, api, lang, user, caseId: selection });
       if (page === "parties" && council && councilModule?.CaseParties)
         return h(councilModule.CaseParties, { key: selection, api, lang, user, caseId: selection });
+      if (page === "notes" && council && councilModule?.CaseNotesWorkspace)
+        return h(councilModule.CaseNotesWorkspace, { key: selection, api, lang, user, caseId: selection });
+      if (page === "marriage" && council && councilModule?.CaseMarriage)
+        return h(councilModule.CaseMarriage, { key: selection, api, lang, caseId: selection });
       if (page === "hearings" && council && councilModule?.CaseHearings)
         return h(councilModule.CaseHearings, {
           key: selection,
@@ -2018,7 +2028,7 @@
     }
     return h(
       P.AppShell,
-      { header, sideNav: nav, page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit"].includes(page) ? "master-detail" : "workspace", strings: { skip: t("skip") } },
+          { header, sideNav: nav, page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes"].includes(page) ? "master-detail" : "workspace", strings: { skip: t("skip") } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       h("div", { className: "plx-page-panes" }, caseNav,
         h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
