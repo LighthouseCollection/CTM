@@ -1,5 +1,25 @@
 # VM-FRM backend progress
 
+## Next twenty report authoring/configuration batches
+
+All20 implemented: D19 required edited-version report saves, explicit409 conflicts,
+proceeding serialization and exact receipt recovery; bounded narrative/frozen
+question/current safe evidence/disclosure checks; authoritative history capabilities;
+typed personal/shared templates; valid bilingual questionnaire definitions, choices,
+conditions and document requirements; bounded secret-safe settings and optional
+compare-and-save; retained PostgreSQL notification provenance/first-read evidence.
+
+Full isolated PostgreSQL: **487 passed, 1 skipped**; no model drift; migration
+rollback/reapply through0032. Independent runtime-role report recovery and raw
+notification denial checks pass; concurrent narrative/settings saves retain one
+winner and report conflicts, and closure prevents later narrative publication.
+No domain models/routes/RLS tables added: **63 models,88 routes,56 forced-RLS**.
+Seven core policy reviews, semantic schema/identity reconciliation and independent
+browser/institution/provider acceptance remain. Exact contracts, compatibility and
+numbered20 delivery: [authoring-continuation.md](authoring-continuation.md).
+Protected specification/accepted question seed unchanged. No operational migrations,
+credential changes, merge or deployment.
+
 ## Next twenty communication/delivery/integrity batches
 
 Completed all20: typed/replay-safe messages, own first acknowledgement/private

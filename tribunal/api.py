@@ -24,6 +24,7 @@ from tribunal.policy import (
     case_for,
 )
 from tribunal.services.common import audit
+from tribunal.validation import VersionConflict
 
 
 def endpoint(methods=("GET",)):
@@ -43,6 +44,8 @@ def endpoint(methods=("GET",)):
                 )
             except (ObjectDoesNotExist, ValueError, TypeError, KeyError):
                 return JsonResponse({"error": "resource_or_input_invalid"}, status=404)
+            except VersionConflict as exc:
+                return JsonResponse({"error": "version_conflict", "current_version": exc.current_version}, status=409)
             except ValidationError as exc:
                 return JsonResponse(
                     {"error": "validation", "messages": exc.messages}, status=422
@@ -1349,9 +1352,9 @@ def settings_endpoint(request):
     from tribunal.services.configuration import save_setting
 
     data = body(request)
-    return JsonResponse(
-        encoded(save_setting(request.user, data["key"], data["value"])), status=201
-    )
+    row = save_setting(request.user, data["key"], data["value"],
+                       **({"expected_version": data["expected_version"]} if "expected_version" in data else {}))
+    return JsonResponse(encoded(row, version=row.number), status=201)
 
 
 @endpoint(("GET", "POST"))
@@ -1695,23 +1698,22 @@ def recording_finalize(request, recording_id):
 
 @endpoint(("GET", "POST"))
 def report_revision(request, report_id):
-    from tribunal.services.reports import revise_report
+    from tribunal.services.reports import revise_report, require_report_disclosure
 
     if request.method == "GET":
         staff(request.user)
         report = m.Report.objects.select_related("request__subject").get(pk=report_id)
         case_for(request.user, report.request.case_id)
-        if (
-            report.request.kind in {"medical", "psychological"}
-            and not m.MedicalRelease.objects.filter(
-                request=report.request,
-                subject=report.request.subject.account,
-                scope__council=True,
-            ).exists()
-        ):
-            raise PermissionDenied("Signed scoped medical disclosure is required.")
+        require_report_disclosure(report.request)
+        rows = list(report.revisions.select_related("actor").order_by("-number"))
+        can_revise = (report.author_id == request.user.pk and request.user.role != "applicant"
+                      and report.request.proceeding.status == "open" and report.request.case.status == "open"
+                      and (request.user.role in {"admin", "secretary"}
+                           or report.request.case.assigned_member_id == request.user.pk))
         return JsonResponse(
             {
+                "current_version": rows[0].number if rows else 0,
+                "can_revise": can_revise,
                 "items": [
                     encoded(
                         row,
@@ -1723,22 +1725,17 @@ def report_revision(request, report_id):
                         else None,
                         timestamp=row.created_at.isoformat(),
                     )
-                    for row in report.revisions.select_related("actor").order_by(
-                        "-number"
-                    )
+                    for row in rows
                 ]
             }
         )
 
     data = body(request)
-    return JsonResponse(
-        encoded(
-            revise_report(
-                request.user, report_id, data["answers"], data.get("observations", "")
-            )
-        ),
-        status=201,
+    row = revise_report(
+        request.user, report_id, data["answers"], data.get("observations", ""),
+        expected_version=filing_version(data),
     )
+    return JsonResponse(encoded(row, version=row.number), status=201)
 
 
 @endpoint()

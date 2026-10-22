@@ -26,7 +26,7 @@ def test_council_can_read_all_report_revisions_but_applicant_cannot(
         people["admin"], request.pk, {"answer": "Original"}, "Original observation"
     )
     revise_report(
-        people["admin"], report.pk, {"answer": "Corrected"}, "Corrected observation"
+        people["admin"], report.pk, {"answer": "Corrected"}, "Corrected observation", expected_version=1
     )
     client.force_login(
         people["member"], backend="allauth.account.auth_backends.AuthenticationBackend"

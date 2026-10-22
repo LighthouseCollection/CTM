@@ -3,6 +3,7 @@
 from contextlib import contextmanager
 import pytest
 from django.db import connection, transaction
+from django.core.exceptions import ValidationError
 from tribunal.models import (
     Account,
     Application,
@@ -119,6 +120,51 @@ def test_missing_actor_context_fails_closed(runtime, ready_application):
         assert Application.objects.count() == 0
         assert AnswerRevision.objects.count() == 0
         assert FileVersion.objects.count() == 0
+
+
+def test_notification_source_and_first_read_cannot_be_rewritten(runtime, people):
+    from django.utils import timezone
+    from django.db import DatabaseError
+    row = Notification.objects.create(recipient=people["applicant"], key="retained-notification",
+                                      kind="report_requested", payload={"synthetic": True})
+    for change in [{"recipient": people["member"]}, {"payload": {}}, {"key": "rebound"}, {"kind": "different"}]:
+        with pytest.raises(DatabaseError):
+            with runtime(people["applicant"]):
+                Notification.objects.filter(pk=row.pk).update(**change)
+    with runtime(people["member"]):
+        assert Notification.objects.filter(pk=row.pk).update(read_at=timezone.now()) == 0
+    with runtime(people["applicant"]):
+        assert Notification.objects.filter(pk=row.pk).update(read_at=timezone.now()) == 1
+    row.refresh_from_db()
+    first = row.read_at
+    with pytest.raises(DatabaseError):
+        with runtime(people["applicant"]):
+            Notification.objects.filter(pk=row.pk).update(read_at=None)
+    with pytest.raises(DatabaseError):
+        with transaction.atomic():
+            Notification.objects.filter(pk=row.pk).delete()
+    row.refresh_from_db()
+    assert row.read_at == first and row.payload == {"synthetic": True}
+
+
+def test_report_version_gate_and_closed_receipt_recovery_under_rls(runtime, ready_application, people):
+    from tribunal.models import Proceeding
+    from tribunal.services.reports import create_request, send_request, complete_request, revise_report
+    from tribunal.validation import VersionConflict
+    submit_application(ready_application.owner, ready_application.pk, "rls-report-revision", {"accepted": True, "name": "John Smith"})
+    ready_application.refresh_from_db()
+    with runtime(people["admin"]):
+        request = create_request(people["admin"], ready_application.proceeding_id, ready_application.party_id, "interview", "Synthetic interview", [])
+        send_request(people["admin"], request.pk)
+        report = complete_request(people["admin"], request.pk, {"answer": "Original"})
+        revision = revise_report(people["admin"], report.pk, {"answer": "Corrected"}, expected_version=1)
+        with pytest.raises(VersionConflict):
+            revise_report(people["admin"], report.pk, {"answer": "Stale"}, expected_version=1)
+    Proceeding.objects.filter(pk=ready_application.proceeding_id).update(status="closed")
+    with runtime(people["admin"]):
+        assert revise_report(people["admin"], report.pk, revision.answers, expected_version=1).pk == revision.pk
+        with pytest.raises(ValidationError):
+            revise_report(people["admin"], report.pk, {"answer": "New"}, expected_version=2)
 
 
 def test_returned_filing_projection_with_non_owner_database_role(runtime, ready_application, people):
@@ -686,7 +732,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0031_delivery_and_numbering_guards")])
+        MigrationExecutor(connection).migrate([("tribunal", "0032_notification_evidence")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"

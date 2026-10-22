@@ -279,21 +279,92 @@ def complete_request(actor, request_id, answers, observations="", completion_dat
     return report
 
 
+def require_report_disclosure(request):
+    if request.kind in ASSESSMENTS and not any(
+            isinstance(release.scope, dict) and release.scope.get("council") is True
+            for release in MedicalRelease.objects.filter(request=request, subject=request.subject.account)):
+        raise PermissionDenied("A signed scoped medical disclosure is required.")
+
+
+def validate_revision_content(request, answers, observations):
+    from tribunal.validation import validate_json_value
+    import uuid
+    if not isinstance(answers, dict) or not answers:
+        raise ValidationError("Provide a response object.")
+    validate_json_value(answers)
+    if not isinstance(observations, str) or len(observations) > 100_000:
+        raise ValidationError("Observations must be text of at most100000 characters.")
+    for question in request.questions:
+        value = answers.get(question["code"])
+        if value is None or value == [] or (isinstance(value, str) and not value.strip()):
+            raise ValidationError("Answer every requested question.")
+    if request.kind in ASSESSMENTS:
+        if not answers.get("files"):
+            raise ValidationError("Upload the completed assessment report.")
+    identifiers = answers.get("files", [])
+    if not isinstance(identifiers, list) or len(identifiers) > 100:
+        raise ValidationError("Provide at most100 distinct file identifiers.")
+    try:
+        ids = [uuid.UUID(item) for item in identifiers if isinstance(item, str)]
+    except (ValueError, AttributeError):
+        raise ValidationError("Provide valid file identifiers.")
+    if len(ids) != len(identifiers) or len(set(ids)) != len(ids):
+        raise ValidationError("Provide distinct valid file identifiers.")
+    for identifier in ids:
+        file = FileVersion.objects.select_related("attachment").get(pk=identifier)
+        attachment = file.attachment
+        if (attachment.case_id != request.case_id or attachment.proceeding_id != request.proceeding_id
+                or attachment.owner_id != request.subject.account_id or attachment.report_request_id != request.pk
+                or attachment.category == "CONSENT"
+                or attachment.visibility != ("medical" if request.kind in ASSESSMENTS else "own")):
+            raise PermissionDenied("Report file has wrong owner, purpose or scope.")
+        if not safe_file(file) or attachment.versions.order_by("-number").first().pk != file.pk:
+            raise ValidationError("Await technical file validation for the current source.")
+
+
 @transaction.atomic
-def revise_report(actor, report_id, answers, observations=""):
+def revise_report(actor, report_id, answers, observations="", *, expected_version):
+    staff(actor)
+    request_id = Report.objects.values_list("request_id", flat=True).get(pk=report_id)
+    proceeding_id = ReportRequest.objects.values_list("proceeding_id", flat=True).get(pk=request_id)
+    # Every narrative writer and closure takes this stable lock. Do not request an
+    # UPDATE lock on a closed report/request: RLS intentionally denies mutation,
+    # while exact receipt recovery needs only the readable retained source.
+    Proceeding.objects.select_for_update(of=("self",)).get(pk=proceeding_id)
+    request = ReportRequest.objects.select_related("case", "proceeding__case", "subject__account").get(pk=request_id)
     report = (
-        Report.objects.select_for_update(of=("self",))
+        Report.objects
         .select_related("request__case", "request__proceeding")
         .get(pk=report_id)
     )
-    staff(actor)
     writer(actor, report.request.case)
-    open_proceeding(report.request.proceeding)
     if report.author_id != actor.pk or report.author.role == "applicant":
         raise PermissionDenied(
             "Only the original authorized council author can revise this report."
         )
-    number = (report.revisions.aggregate(n=Max("number"))["n"] or 0) + 1
+    from tribunal.validation import validate_json_value
+    import json
+    if not isinstance(answers, dict) or not answers or not isinstance(observations, str) or len(observations) > 100_000:
+        raise ValidationError("Provide response answers and bounded observation text.")
+    validate_json_value(answers)
+    require_report_disclosure(request)
+    validate_json_value(observations)
+    latest = report.revisions.order_by("-number").first()
+    current = latest.number if latest else 0
+    if type(expected_version) is not int or expected_version < 1:
+        raise ValidationError("expected_version must be a positive integer.")
+    # A lost acknowledgement may be recovered without changing retained content,
+    # including after closure. A later/different revision cannot be replayed.
+    if (latest and current == expected_version + 1 and latest.actor_id == actor.pk
+            and json.dumps(latest.answers, sort_keys=True, ensure_ascii=False) == json.dumps(answers, sort_keys=True, ensure_ascii=False)
+            and latest.observations == observations):
+        return latest
+    if expected_version != current:
+        from tribunal.validation import VersionConflict
+        raise VersionConflict(current)
+    open_proceeding(request.proceeding)
+    validate_revision_content(request, answers, observations)
+    number = current + 1
     revision = ReportRevision.objects.create(
         report=report,
         number=number,
