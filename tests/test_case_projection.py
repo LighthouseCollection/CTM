@@ -238,3 +238,11 @@ def test_council_case_detail_prefers_the_latest_council_photo_for_each_party(
     detail = client.get(f"/api/cases/{app.case_id}/").json()
     party = next(row for row in detail["parties"] if row["id"] == str(app.party_id))
     assert party["photo_url"] == f"/api/files/{uploaded.json()['id']}/?view=1"
+
+
+def test_council_display_text_removes_retired_presidential_wording():
+    from tribunal.projections import council_display_text
+
+    assert council_display_text("Decision ready for presidential consideration.") == (
+        "Decision ready for Metropolitan consideration."
+    )

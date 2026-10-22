@@ -4,6 +4,7 @@ from tribunal import models as m
 from functools import lru_cache
 from pathlib import Path
 import json
+import re
 from zoneinfo import ZoneInfo
 from django.db import connection
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
@@ -41,6 +42,14 @@ def question_taxonomy():
 
 def name(account):
     return f"{account.first_name} {account.last_name}".strip()
+
+
+_LEGACY_PRESIDENTIAL_WORDING = re.compile(r"\bpresidential\b", re.IGNORECASE)
+
+
+def council_display_text(value):
+    """Keep immutable history intact while removing retired terminology from council UI."""
+    return _LEGACY_PRESIDENTIAL_WORDING.sub("Metropolitan", value) if value else value
 
 
 def questionnaire_data(questionnaire):
@@ -257,7 +266,7 @@ def agenda_item_data(item, actor, attendance):
             "hearing_id": str(hearing.pk) if hearing else None,
             "assigned_member_id": str(case.assigned_member_id) if case.assigned_member_id else None,
             "assigned_member_name": name(case.assigned_member) if case.assigned_member_id else None,
-            "previous_recommendation": previous_outcome.recommendations or None if previous_outcome else None,
+            "previous_recommendation": council_display_text(previous_outcome.recommendations) if previous_outcome else None,
             "party_names": list(case.parties.order_by("slot").values_list("name", flat=True)),
             "applicant_name": applicant_name or None,
             "applicant_gender": applicant_gender,
@@ -280,7 +289,7 @@ def hearing_data(hearing, actor):
             "presenter_id": str(hearing.presenter_id),
             "can_record_outcome": hearing_writable(hearing, actor),
             "outcomes": [{"id": str(row.pk), "internal_text": row.internal_text,
-                          "recommendations": row.recommendations, "actor": name(row.actor),
+                          "recommendations": council_display_text(row.recommendations), "actor": name(row.actor),
                           "actor_id": str(row.actor_id), "timestamp": row.created_at.isoformat()}
                          for row in m.HearingOutcome.objects.filter(hearing=hearing).select_related("actor").order_by("created_at", "id")]}
 
