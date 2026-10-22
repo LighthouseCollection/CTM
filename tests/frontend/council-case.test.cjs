@@ -245,3 +245,14 @@ test("adding the other party needs first name, last name and a valid email", () 
   assert.equal(C.partyProblem({ ...ok, last: "" }), "lastRequired");
   assert.equal(C.partyProblem({ ...ok, email: "not-an-email" }), "emailInvalid");
 });
+
+test("petition page shows this case's petitions and the latest note revisions", () => {
+  const apps = [{ id: "a", kind: "petition", case_id: "c" }, { id: "b", kind: "appeal", case_id: "c" }, { id: "d", kind: "petition", case_id: "x" }];
+  assert.deepEqual(plain(C.casePetitions(apps, "c").map((a) => a.id)), ["a"]);
+  const notes = C.latestNotes([
+    { note_id: "n1", version: 1, text: "old" },
+    { note_id: "n2", version: 1, text: "second" },
+    { note_id: "n1", version: 2, text: "new" },
+  ]);
+  assert.deepEqual(plain(notes.map((n) => n.text)), ["second", "new"]);
+});

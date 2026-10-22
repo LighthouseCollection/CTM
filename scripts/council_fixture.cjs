@@ -242,6 +242,18 @@ function api(req, res, url, body) {
     return json(res, 200, { items: state.calls.filter((x) => x.case === m[1]) });
   }
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/messages\/$/))) return json(res, 200, { items: [] });
+  if ((m = p.match(/^\/api\/proceedings\/([^/]+)\/notes\/$/))) {
+    if (!state.notes) state.notes = [];
+    if (req.method === "POST") {
+      const c = state.cases.find((x) => "p-" + x.id === m[1]);
+      if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+      if (!String(body.text || "").trim()) return json(res, 422, { error: "validation", messages: ["Note cannot be empty."] });
+      const id = "n-" + (state.notes.length + 1);
+      state.notes.push({ id: "nr-" + id, note_id: id, version: 1, text: body.text, proceeding: m[1] });
+      return json(res, 201, { id });
+    }
+    return json(res, 200, { items: state.notes.filter((n) => n.proceeding === m[1]) });
+  }
   if (p === "/api/dashboard/")
     return json(res, 200, {
       my_cases: state.cases.filter((c) => c.status === "open" && c.assigned === me().id).length,

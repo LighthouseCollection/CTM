@@ -228,3 +228,16 @@ test("My cases are the open cases shown as assigned to the signed-in member", ()
   ];
   assert.deepEqual([...C.myCases(cases, member)].map((c) => c.id), ["1"]);
 });
+
+test("word tables have no duplicate keys that would silently override text", () => {
+  for (const file of ["council.js", "council-case.js", "council-decree.js"]) {
+    const src = fs.readFileSync(`static/ctm/${file}`, "utf8");
+    for (const lang of ["en", "ar"]) {
+      const start = src.indexOf(`    ${lang}: {`, src.indexOf("const words = {"));
+      const end = src.indexOf("\n    },", start);
+      const keys = [...src.slice(start, end).matchAll(/^      ([A-Za-z0-9_]+):/gm)].map((m) => m[1]);
+      const dupes = keys.filter((k, i) => keys.indexOf(k) !== i);
+      assert.deepEqual(dupes, [], `${file} ${lang}`);
+    }
+  }
+});

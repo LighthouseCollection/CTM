@@ -1061,7 +1061,7 @@
       else if (
         councilModule &&
         user.portal === "council" &&
-        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings"].includes(page)
+        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings", "petition"].includes(page)
       )
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
@@ -1209,6 +1209,7 @@
         "medical",
         "parties",
         "hearings",
+        "petition",
       ].includes(page) && selection;
     const caseGroups = [
       {
@@ -1237,6 +1238,7 @@
           label: t(id),
           disabled: !(
             ["documents", "evidence", "reports"].includes(id) ||
+            (id === "petition" && councilModule?.PetitionWorkspace) ||
             (id === "medical" && councilModule?.AssessmentsWorkspace) ||
             (id === "hearings" && councilModule?.CaseHearings)
           ),
@@ -1404,6 +1406,8 @@
           renderReports: () =>
             h(ReportReader, { key: selection, rows: data.items, t, lang }),
         });
+      if (page === "petition" && council && councilModule?.PetitionWorkspace)
+        return h(councilModule.PetitionWorkspace, { key: selection, api, lang, user, caseId: selection });
       if (page === "parties" && council && councilModule?.CaseParties)
         return h(councilModule.CaseParties, { key: selection, api, lang, user, caseId: selection });
       if (page === "hearings" && council && councilModule?.CaseHearings)

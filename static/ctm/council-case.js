@@ -305,6 +305,18 @@
         "Only the assigned case manager, or the administrator or secretary, enters the decision type and grounds.",
       actionFailed: "The action could not be completed. Nothing was changed.",
       back: "Back",
+      petitionTitle: "Petition",
+      petitionReadOnly: "Each spouse's formal submission is shown as submitted. Council notes below are separate and never change it.",
+      petition: "Petition",
+      noPetitions: "No submitted petition is available for this case.",
+      internalNotes: "Internal notes",
+      internalNotesHelp: "Council only. Never shown to applicants.",
+      note: "Note",
+      noNotes: "No internal notes yet.",
+      addNote: "Add an internal note",
+      saveNote: "Save note",
+      noteSaved: "The note was saved.",
+      noteRequired: "Write the note before saving.",
       partiesTitle: "Spouses",
       ctmReference: "CTM reference",
       portalAccount: "Portal account",
@@ -487,6 +499,18 @@
       writerDecision: "يُدخل نوع القرار وأسبابه مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط.",
       actionFailed: "تعذر إتمام الإجراء. لم يتم تغيير أي شيء.",
       back: "رجوع",
+      petitionTitle: "الطلب",
+      petitionReadOnly: "يُعرض ما قدّمه كل من الزوجين كما قُدِّم. وملاحظات المجلس أدناه منفصلة ولا تغيّره أبدًا.",
+      petition: "الطلب",
+      noPetitions: "لا يوجد طلب مقدَّم متاح لهذه القضية.",
+      internalNotes: "ملاحظات داخلية",
+      internalNotesHelp: "للمجلس فقط. لا تُعرض أبدًا على مقدمي الطلبات.",
+      note: "ملاحظة",
+      noNotes: "لا توجد ملاحظات داخلية بعد.",
+      addNote: "إضافة ملاحظة داخلية",
+      saveNote: "حفظ الملاحظة",
+      noteSaved: "تم حفظ الملاحظة.",
+      noteRequired: "اكتب الملاحظة قبل الحفظ.",
       partiesTitle: "الزوجان",
       ctmReference: "مرجع النظام",
       portalAccount: "حساب البوابة",
@@ -2103,6 +2127,123 @@
     );
   }
 
+  // ---------- Petition and internal notes ----------
+  // Each spouse's formal submission is shown read-only. Council notes are a separate,
+  // council-only record and never change what either spouse submitted.
+
+  function casePetitions(items, caseId) {
+    return (items || []).filter((row) => row && row.kind === "petition" && row.case_id === caseId);
+  }
+
+  // Latest revision of each note, newest note first by first appearance order.
+  function latestNotes(revisions) {
+    const byNote = new Map();
+    for (const row of revisions || []) {
+      const prior = byNote.get(row.note_id);
+      if (!prior || prior.version < row.version) byNote.set(row.note_id, row);
+    }
+    return [...byNote.values()].reverse();
+  }
+
+  function PetitionWorkspace({ api, lang, user, caseId }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const bt = base.translator(lang);
+    const [state, retry] = base.useLoad(
+      () =>
+        Promise.all([api("/api/applications/"), api(`/api/cases/${encodeURIComponent(caseId)}/`)]).then(async ([apps, record]) => {
+          const proceeding = openProceeding(record) || [...(record.proceedings || [])].sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0] || null;
+          const notes = proceeding ? await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`) : { items: [] };
+          return { petitions: casePetitions(apps.items, caseId), record, proceeding, notes: latestNotes(notes.items) };
+        }),
+      [caseId],
+    );
+    const [text, setText] = R.useState("");
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const [notice, setNotice] = R.useState(null);
+    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const { petitions, record, proceeding, notes } = state.data;
+    const canWrite = writerFor(user, null, record) && proceeding && proceeding.status === "open";
+    async function save(event) {
+      event.preventDefault();
+      if (!text.trim()) {
+        setFailure(t("noteRequired"));
+        return;
+      }
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`, { method: "POST", body: JSON.stringify({ text: text.trim() }) });
+        setText("");
+        setNotice("noteSaved");
+        retry();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("petitionTitle")),
+      h(P.Notice, { tone: "info" }, t("petitionReadOnly")),
+      ...petitions.map((row) => {
+        const answers = Object.entries(row.answers || {});
+        const labelled = answers.every(([code]) => base.fieldLabel(row, code, lang));
+        return h(
+          P.Panel,
+          {
+            key: row.id,
+            title: row.applicant_name || t("petition"),
+            description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "),
+            collapsible: true,
+          },
+          h(
+            P.Stack,
+            { gap: "sm" },
+            !labelled ? h(P.Notice, { tone: "info" }, bt("codesNotice")) : null,
+            answers.length
+              ? h(
+                  P.PropertyList,
+                  { layout: "stacked" },
+                  ...answers.map(([code, value]) =>
+                    h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)),
+                  ),
+                )
+              : h(P.EmptyState, { title: bt("noAnswers") }),
+          ),
+        );
+      }),
+      !petitions.length ? h(P.EmptyState, { title: t("noPetitions") }) : null,
+      h(
+        P.Panel,
+        { title: t("internalNotes"), description: t("internalNotesHelp") },
+        h(
+          P.Stack,
+          { gap: "md" },
+          notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+          notes.length
+            ? h(P.Stack, { gap: "sm" }, ...notes.map((note) => h(P.Card, { key: note.note_id, title: `${t("note")} · ${t("version")} ${note.version}` }, h(P.Text, { as: "p" }, note.text))))
+            : h(P.EmptyState, { title: t("noNotes") }),
+          canWrite
+            ? h(
+                P.Form,
+                { onSubmit: save, label: t("addNote"), noValidate: true },
+                h(P.Field, { label: t("addNote") }, h(P.Textarea, { rows: 4, autoGrow: true, value: text, maxLength: 50000, disabled: pending, onChange: (e) => { setText(e.target.value); setFailure(null); } })),
+                failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+                h(P.FormActions, { sticky: false }, h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveNote"))),
+              )
+            : null,
+        ),
+      ),
+    );
+  }
+
   Object.assign(window.CTMCouncil, {
     caseWords: words,
     caseTranslator: translator,
@@ -2141,5 +2282,8 @@
     partyProblem,
     CaseParties,
     CaseHearings,
+    casePetitions,
+    latestNotes,
+    PetitionWorkspace,
   });
 })();
