@@ -4,12 +4,12 @@ from pathlib import Path
 from playwright.sync_api import expect
 
 
-def run(browser,page,context,staff,base,csrf,staff_csrf,case_id,case_number,party_id,outsider_cookie,settings,fixture_db,output):
+def run(browser,page,context,staff,base,csrf,staff_csrf,case_id,case_number,party_id,outsider_cookie,settings,fixture_db,output,admin_id):
     from tribunal import models as m
     checks=[]
     def seed():
         from tribunal.services.communications import send_message
-        admin=m.Account.objects.get(email="admin@example.test")
+        admin=m.Account.objects.get(pk=admin_id)
         return [str(send_message(admin,case_id,f"Synthetic private paginated message {index}",[party_id],idempotency_key=f"pagination-{index}").pk) for index in range(51)]
     private_ids=set(fixture_db(seed))
     page.goto(base,wait_until="networkidle")

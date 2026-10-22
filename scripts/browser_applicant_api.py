@@ -23,6 +23,7 @@ SOURCE = Path(__file__).resolve().parents[1]
 BACKEND_REF = os.environ.get("CTM_APPLICANT_BACKEND_REF", "origin/work/vm-frm-backend")
 INTEGRATED = os.environ.get("CTM_APPLICANT_INTEGRATED", "false") == "true"
 CHECK_RETURNED_PRIVACY = os.environ.get("CTM_APPLICANT_ACCEPTANCE", "returned_privacy") == "returned_privacy"
+SHARED_LOOPBACK = len(sys.argv) >= 2 and sys.argv[1] == "--shared-loopback"
 
 if len(sys.argv) == 1:
     backend_sha = subprocess.check_output(["git","rev-parse",BACKEND_REF],cwd=SOURCE,text=True).strip()
@@ -40,6 +41,32 @@ if len(sys.argv) == 1:
     result=subprocess.run([sys.executable,__file__,"--run",str(target)],cwd=target,env=environment)
     raise SystemExit(result.returncode)
 
+if len(sys.argv) != 3 or sys.argv[1] not in {"--run", "--shared-loopback"}:
+    raise RuntimeError("Use --run <isolated archive> or --shared-loopback <immutable release>.")
+
+shared_config = None
+image_evidence = {}
+if SHARED_LOOPBACK:
+    from applicant_shared_loopback import (
+        build_config,
+        inspect_image_evidence,
+        redact_runtime_environment,
+        safe_preflight_evidence,
+    )
+    shared_config = build_config(os.environ)
+    if Path(sys.argv[2]).resolve() != shared_config.source_dir:
+        raise RuntimeError("Shared-loopback argument must match the guarded immutable release.")
+    image_evidence = inspect_image_evidence(shared_config)
+    owner_database_url = shared_config.owner_url
+    app_database_url = shared_config.app_url
+    sanitized_environment = redact_runtime_environment(os.environ)
+    os.environ.clear()
+    os.environ.update(sanitized_environment)
+    os.environ["CTM_TEST_BACKEND_SHA"] = shared_config.expected_sha
+else:
+    owner_database_url = os.environ.get("CTM_APPLICANT_POSTGRES_OWNER_URL")
+    app_database_url = os.environ.get("CTM_APPLICANT_POSTGRES_APP_URL")
+
 ROOT=Path(sys.argv[2]).resolve()
 if Path.cwd().resolve()!=ROOT:
     raise RuntimeError("Run isolated acceptance from its archive directory to prevent mixed imports.")
@@ -47,15 +74,17 @@ sys.path.insert(0,str(ROOT))
 os.environ["DJANGO_SETTINGS_MODULE"]="ctm.settings_test"
 from django.conf import settings
 
-POSTGRES_OWNER=os.environ.get("CTM_APPLICANT_POSTGRES_OWNER_URL")
+POSTGRES_OWNER=owner_database_url
 if POSTGRES_OWNER:
     import dj_database_url
     settings.DATABASES={"default":dj_database_url.parse(POSTGRES_OWNER)}
 else:
     settings.DATABASES["default"]["NAME"]=str(ROOT/"isolated.sqlite3")
-settings.MEDIA_ROOT=ROOT/"test-media"
-settings.DEBUG=True
-settings.ALLOWED_HOSTS=["127.0.0.1","localhost","testserver"]
+ARTIFACT_ROOT=shared_config.acceptance_root if shared_config else ROOT
+OUTPUT_PATH=shared_config.output_path if shared_config else ROOT/"result.json"
+settings.MEDIA_ROOT=shared_config.media_dir if shared_config else ROOT/"test-media"
+settings.DEBUG=not SHARED_LOOPBACK
+settings.ALLOWED_HOSTS=["127.0.0.1"] if SHARED_LOOPBACK else ["127.0.0.1","localhost","testserver"]
 import django
 django.setup()
 import tribunal.models as isolated_models
@@ -67,11 +96,12 @@ from django.test import Client
 from tribunal.models import Account,QuestionnaireVersion
 
 call_command("migrate",verbosity=0,interactive=False)
-owner=Account.objects.create_user(email="applicant@example.test",email_verified=True,first_name="Synthetic",last_name="Applicant")
-outsider=Account.objects.create_user(email="outsider@example.test",email_verified=True)
-admin=Account.objects.create_user(email="admin@example.test",email_verified=True,role="admin")
-member=Account.objects.create_user(email="member@example.test",email_verified=True,role="member")
-president=Account.objects.create_user(email="president@example.test",email_verified=True,role="president")
+fixture_tag=(shared_config.run_id if shared_config else uuid.uuid4().hex).lower()
+owner=Account.objects.create_user(email=f"applicant-{fixture_tag}@example.invalid",email_verified=True,first_name="Synthetic",last_name="Applicant")
+outsider=Account.objects.create_user(email=f"outsider-{fixture_tag}@example.invalid",email_verified=True)
+admin=Account.objects.create_user(email=f"admin-{fixture_tag}@example.invalid",email_verified=True,role="admin")
+member=Account.objects.create_user(email=f"member-{fixture_tag}@example.invalid",email_verified=True,role="member")
+president=Account.objects.create_user(email=f"president-{fixture_tag}@example.invalid",email_verified=True,role="president")
 fields=[{"code":code,"type":kind,"required":True,"label_en":en,"label_ar":ar}
         for code,kind,en,ar in [
             ("first_name","text","First name","الاسم الأول"),
@@ -93,14 +123,18 @@ fields.append({"code":"restraining_orders","type":"list","label_en":"Restraining
     {"code":"number","type":"text","label_en":"Order case number","label_ar":"رقم قضية الأمر"},
     {"code":"status","type":"choice","label_en":"Order status","label_ar":"حالة الأمر","choices":["active"],
      "choice_labels":{"active":{"label_en":"Active","label_ar":"ساري"}}}]})
-QuestionnaireVersion.objects.create(purpose="petition",number=1,published=True,
+def next_questionnaire_number(purpose):
+    latest=QuestionnaireVersion.objects.filter(purpose=purpose).order_by("-number").values_list("number",flat=True).first()
+    return (latest or 0)+1
+
+QuestionnaireVersion.objects.create(purpose="petition",number=next_questionnaire_number("petition"),published=True,
     definition={"fields":fields,"required_document_categories":["CMC"]},
     declaration_en="Synthetic test declaration only",declaration_ar="إقرار تجريبي للاختبار فقط")
-QuestionnaireVersion.objects.create(purpose="appeal",number=1,published=True,
+QuestionnaireVersion.objects.create(purpose="appeal",number=next_questionnaire_number("appeal"),published=True,
     definition={"fields":[{"code":"new_information","type":"textarea","required":True,
         "label_en":"New information for consideration","label_ar":"معلومات جديدة للنظر فيها"}]},
     declaration_en="Synthetic appeal declaration only",declaration_ar="إقرار استئناف تجريبي للاختبار فقط")
-release_definition=QuestionnaireVersion.objects.create(purpose="medical_release",number=1,published=True,definition={},
+release_definition=QuestionnaireVersion.objects.create(purpose="medical_release",number=next_questionnaire_number("medical_release"),published=True,definition={},
     declaration_en="Synthetic bound professional disclosure only",declaration_ar="تفويض إفصاح مهني تجريبي مرتبط فقط")
 
 def session_cookie(account):
@@ -124,7 +158,7 @@ def runtime_application(environ,start_response):
         if connection.settings_dict["USER"]!="ctm_app":
             connection.close()
             # Change only this HTTP thread's wrapper, never the fixture/setup connection.
-            connection.settings_dict={**connection.settings_dict,**dj_database_url.parse(os.environ["CTM_APPLICANT_POSTGRES_APP_URL"])}
+            connection.settings_dict={**connection.settings_dict,**dj_database_url.parse(app_database_url)}
         if runtime_database["mode"]!="postgresql_runtime":
             with connection.cursor() as cursor:
                 cursor.execute("SELECT current_user,session_user,rolsuper,rolbypassrls,rolinherit FROM pg_roles WHERE rolname=current_user")
@@ -135,7 +169,7 @@ def runtime_application(environ,start_response):
                 total,forced,owned=cursor.fetchone();assert total==forced and owned==0
             runtime_database.update(mode="postgresql_runtime",current_user=user,session_user=session,superuser=superuser,bypass_rls=bypass,inherit=inherit,domain_tables=total,forced_rls_tables=forced,owner_memberships=owned)
     return application(environ,start_response)
-server=make_server("127.0.0.1",0,runtime_application,handler_class=Quiet)
+server=make_server(shared_config.bind_host if shared_config else "127.0.0.1",shared_config.bind_port if shared_config else 0,runtime_application,handler_class=Quiet)
 threading.Thread(target=server.serve_forever,daemon=True).start()
 BASE=f"http://127.0.0.1:{server.server_port}"
 from playwright.sync_api import sync_playwright,expect
@@ -212,9 +246,9 @@ try:
         checks.append("Real concurrent save rejects stale editor write and explicit reload preserves immutable prior answer history")
         if POSTGRES_OWNER:
             from applicant_postgres_acceptance import run as run_postgres_focus
-            run_postgres_focus(browser,BASE,settings,fixture_db,session_cookie,cookies["admin"],ROOT,runtime_database,errors)
+            run_postgres_focus(browser,BASE,settings,fixture_db,session_cookie,cookies["admin"],ARTIFACT_ROOT,runtime_database,errors)
         from applicant_history_notice_acceptance import history_checks
-        checks.extend(history_checks(browser,page,context,BASE,app_id,cookies,settings,ROOT))
+        checks.extend(history_checks(browser,page,context,BASE,app_id,cookies,settings,ARTIFACT_ROOT))
         for name in ("outsider","admin"):
             other=browser.new_context()
             other.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies[name],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
@@ -279,7 +313,12 @@ try:
         assert latest.attachment_id==original.attachment_id and latest.number==original.number+1
         assert private_path(original.object_key).read_bytes()==original_bytes
         assert private_path(latest.object_key).read_bytes()==replacement
-        assert context.request.get(f"{BASE}/api/files/{file_id}/").status==403
+        superseded_original=context.request.get(f"{BASE}/api/files/{file_id}/")
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            absent_original=context.request.get(f"{BASE}/api/files/{uuid.uuid4()}/")
+            assert superseded_original.status==absent_original.status==404,(superseded_original.status,absent_original.status)
+            assert superseded_original.json()==absent_original.json(),(superseded_original.text(),absent_original.text())
+        else:assert superseded_original.status==403,superseded_original.text()
         checks.append("Browser original correction retains original bytes/version and exposes only the current same-context original")
         # Synthetic technical events exercise projection/download gates, not a live scanner.
         fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=replacement_id,task="scan",result="pending"))
@@ -401,7 +440,8 @@ try:
             finally:settings.STRIPE_SECRET_KEY=original
         retained_intent=fixture_db(retained_checkout_fixture)
         retained=context.request.get(f"{BASE}/api/applications/{app_id}/")
-        original_checkout=retained.json()["pending_checkout"]
+        retained_payload=retained.json()
+        original_checkout=retained_payload["pending_checkout"]
         assert "no-store" in retained.headers["cache-control"] and retained.json()["can_resume_checkout"]
         assert not retained.json()["can_checkout"] and not retained.json()["can_delete_draft"]
         assert original_checkout["id"]==retained_intent and original_checkout["version"]==ready_version
@@ -415,7 +455,7 @@ try:
         expect(page.get_by_text(original_checkout["declaration_ar"],exact=True)).to_be_visible()
         expect(page.get_by_role("button",name="استئناف محاولة الدفع الآمنة القائمة",exact=True)).to_be_visible()
         assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
-        page.screenshot(path=str(ROOT/"ar-retained-checkout-390.png"),full_page=True,caret="initial")
+        page.screenshot(path=str(ARTIFACT_ROOT/"ar-retained-checkout-390.png"),full_page=True,caret="initial")
         page.get_by_role("button",name="English",exact=True).click();page.set_viewport_size({"width":1280,"height":1000})
         checkout_posts=[]
         page.on("request",lambda request:checkout_posts.append(request.url) if request.method=="POST" and "/checkout/" in request.url else None)
@@ -436,14 +476,62 @@ try:
             assert hidden_app.status==absent_app.status==404 and hidden_app.json()==absent_app.json()
         else:assert hidden_app.status==403
         probe.close()
-        for payment_state in ["processing","paid","needs_review"]:
-            fixture_db(lambda state=payment_state:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state=state))
-            page.get_by_role("button",name="Refresh application status",exact=True).click()
-            expect(page.get_by_text("An existing payment attempt must be resolved",exact=False)).to_be_visible()
-            expect(page.get_by_role("button",name="Resume existing secure checkout",exact=True)).to_have_count(0)
-            assert page.get_by_label("Your full name",exact=True).count()==0 and not checkout_posts
-        checks.append("Actual processing/paid/reconciliation candidates remove resume and fresh signature; foreign owner cannot read original checkout")
-        fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state="pending"))
+        if POSTGRES_OWNER:
+            # Finance states are monotonic in PostgreSQL. Exercise each terminal or
+            # in-flight projection on its own clone-only synthetic application
+            # instead of rewinding a successful payment candidate.
+            def finance_candidate_fixture():
+                import hashlib
+                from tribunal.models import Application,AnswerRevision,Attachment,FeeObligation,FileVersion,FileTechnicalEvent
+                from tribunal.services.applications import required_documents
+                from tribunal.services.files import private_path,write_private_original
+                source=Application.objects.select_related("questionnaire").get(pk=app_id)
+                actor=Account.objects.create_user(email=f"finance-{uuid.uuid4().hex}@example.invalid",email_verified=True)
+                candidate=Application.objects.create(owner=actor,kind="petition",status="draft",current_version=1,questionnaire=source.questionnaire)
+                FeeObligation.objects.create(application=candidate)
+                revision=AnswerRevision.objects.create(application=candidate,number=1,answers=retained_payload["answers"],actor=actor,questionnaire=source.questionnaire)
+                for source_file in required_documents(source,retained_payload["answers"]):
+                    payload=private_path(source_file.object_key).read_bytes()
+                    attachment=Attachment.objects.create(application=candidate,owner=actor,category=source_file.attachment.category,
+                        context=source_file.attachment.context,visibility="own")
+                    copied=FileVersion.objects.create(attachment=attachment,number=1,object_key=f"synthetic-finance/{uuid.uuid4().hex}",
+                        original_name=source_file.original_name,display_name=source_file.display_name,mime_type=source_file.mime_type,
+                        byte_count=len(payload),sha256=hashlib.sha256(payload).hexdigest(),actor=actor)
+                    FileTechnicalEvent.objects.create(file=copied,task="scan",result="clean")
+                    write_private_original(private_path(copied.object_key),payload)
+                return str(candidate.pk),str(revision.pk),actor
+            def finance_state_fixture(candidate_id,revision_id,state):
+                from tribunal.models import Application,AnswerRevision,CheckoutIntent
+                from tribunal.services.applications import required_documents
+                candidate=Application.objects.get(pk=candidate_id);revision=AnswerRevision.objects.get(pk=revision_id)
+                manifest=[{"id":str(file.pk),"sha256":file.sha256} for file in required_documents(candidate,revision.answers)]
+                intent=CheckoutIntent.objects.create(application=candidate,revision=revision,attestation={"accepted":True,"name":"Synthetic finance state"},manifest=manifest,
+                    provider_reference=f"cs_{state}_{uuid.uuid4().hex}",state=state)
+                return str(intent.pk)
+            for payment_state in ["processing","paid","needs_review"]:
+                candidate_id,candidate_revision,candidate_actor=fixture_db(finance_candidate_fixture)
+                candidate_context=browser.new_context()
+                try:
+                    candidate_cookie=fixture_db(lambda actor=candidate_actor:session_cookie(actor))
+                    candidate_context.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":candidate_cookie,"url":BASE}])
+                    ready_candidate=candidate_context.request.get(f"{BASE}/api/applications/{candidate_id}/").json()
+                    assert ready_candidate["can_checkout"] and not ready_candidate["can_resume_checkout"]
+                    candidate_intent=fixture_db(lambda state=payment_state:finance_state_fixture(candidate_id,candidate_revision,state))
+                    candidate_projection=candidate_context.request.get(f"{BASE}/api/applications/{candidate_id}/").json()
+                    assert not candidate_projection["can_resume_checkout"] and candidate_projection["pending_checkout"] is None
+                    assert not candidate_projection["can_checkout"]
+                    assert fixture_db(lambda intent=candidate_intent:isolated_models.CheckoutIntent.objects.get(pk=intent).state)==payment_state
+                finally:candidate_context.close()
+        else:
+            for payment_state in ["processing","paid","needs_review"]:
+                fixture_db(lambda state=payment_state:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state=state))
+                page.get_by_role("button",name="Refresh application status",exact=True).click()
+                expect(page.get_by_text("An existing payment attempt must be resolved",exact=False)).to_be_visible()
+                expect(page.get_by_role("button",name="Resume existing secure checkout",exact=True)).to_have_count(0)
+                assert page.get_by_label("Your full name",exact=True).count()==0 and not checkout_posts
+            fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state="pending"))
+        assert fixture_db(lambda:isolated_models.CheckoutIntent.objects.get(pk=retained_intent).state)=="pending"
+        checks.append("Actual processing/paid/reconciliation candidates remove checkout/resume capability from otherwise-ready filings while preserving exact immutable states; foreign owner cannot read original checkout")
         from unittest.mock import patch
         from django.utils import timezone
         future=timezone.now()+timezone.timedelta(hours=2)
@@ -452,7 +540,7 @@ try:
         assert expired_projection["pending_checkout"] is None and not expired_projection["can_resume_checkout"] and not expired_projection["can_checkout"]
         assert fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.get(pk=retained_intent).state)=="pending"
         checks.append("Authoritative provider-expiry read hides resume while preserving pending candidate and blocking fresh charge; elapsed time is not payment reconciliation")
-        changed_answers={**retained.json()["answers"],"statement":"Changed after original checkout"}
+        changed_answers={**retained_payload["answers"],"statement":"Changed after original checkout"}
         changed=context.request.post(f"{BASE}/api/applications/{app_id}/",data={"answers":changed_answers,"expected_version":ready_version},headers={"X-CSRFToken":csrf})
         assert changed.status==201,changed.text()
         changed_projection=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
@@ -594,11 +682,65 @@ try:
                     "checks":privacy,"owner_checks":owner_checks,"pending_scan_checks":pending_scan_checks,
                     "remaining_surfaces":["live search integration","live email delivery","PostgreSQL RLS"],
                     "scope":"Isolated SQLite/browser API fixtures; no actual case data"}
-            (ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
             print(json.dumps(report,indent=2))
             assert all(privacy.values()) and all(owner_checks.values()),"Returned privacy acceptance failed; see returned-privacy-result.json"
             checks.append("Returned privacy isolates pending answers/originals/audit/alerts while owner retains corrections and council retains formal snapshot")
-        page.get_by_role("button",name="Review answers",exact=True).click()
+        ready_to_resubmit=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
+        assert ready_to_resubmit["status"]=="returned" and ready_to_resubmit["can_resubmit"]
+        ready_files=context.request.get(f"{BASE}/api/applications/{app_id}/files/").json()
+        required_keys={(row["category"],row.get("context") or "") for row in ready_files["requirements"] if row["required"]}
+        current_items=ready_files["items"]
+        current_safe_items=[item for item in current_items if item["scan_state"]=="clean"]
+        current_safe_keys={(item["category"],item.get("context") or "") for item in current_safe_items}
+        assert required_keys<=current_safe_keys and len(current_safe_items)==len(current_items)
+        assert {item["context"] for item in current_safe_items if item["category"]=="RO"}==set(contexts)
+        detail_url=f"{BASE}/api/applications/{app_id}/"
+        files_url=f"{BASE}/api/applications/{app_id}/files/"
+        refresh_responses=[]
+        def record_readiness_response(response):
+            if response.url in {detail_url,files_url} and response.request.method=="GET":
+                refresh_responses.append({"url":response.url,"status":response.status})
+        page.on("response",record_readiness_response)
+        readiness_trace={"before_refresh":{
+            "application":{"status":ready_to_resubmit["status"],"can_resubmit":ready_to_resubmit["can_resubmit"],"version":ready_to_resubmit["version"]},
+            "required_keys":sorted(required_keys),"current_safe_keys":sorted(current_safe_keys),"current_original_count":len(current_safe_items)}}
+        try:
+            with page.expect_response(lambda response:response.url==detail_url and response.request.method=="GET") as refreshed_detail_received, \
+                    page.expect_response(lambda response:response.url==files_url and response.request.method=="GET") as refreshed_files_received:
+                page.get_by_role("button",name="Refresh application status",exact=True).click()
+            refreshed_detail=refreshed_detail_received.value
+            refreshed_files=refreshed_files_received.value
+            refreshed_detail_payload=refreshed_detail.json()
+            refreshed_files_payload=refreshed_files.json()
+            readiness_trace["reload_responses"]={
+                "application":{"status_code":refreshed_detail.status,"status":refreshed_detail_payload.get("status"),
+                    "can_resubmit":refreshed_detail_payload.get("can_resubmit"),"version":refreshed_detail_payload.get("version")},
+                "files":{"status_code":refreshed_files.status,"item_count":len(refreshed_files_payload.get("items",[])),
+                    "requirement_count":len(refreshed_files_payload.get("requirements",[]))}}
+            assert refreshed_detail.status==200 and refreshed_detail_payload["status"]=="returned" and refreshed_detail_payload["can_resubmit"]
+            assert refreshed_files.status==200 and len(refreshed_files_payload["items"])==len(current_safe_items)
+            review_button=page.get_by_role("button",name="Review answers",exact=True)
+            expect(review_button).to_be_enabled()
+            expect(page.get_by_role("link",name="Download original",exact=True)).to_have_count(len(current_safe_items))
+            review_button.click()
+            expect(page.get_by_text("Review your answers. Submission and payment are separate steps.",exact=True)).to_be_visible()
+            expect(page.get_by_role("button",name="Resubmit corrections",exact=True)).to_be_enabled()
+        except Exception:
+            readiness_trace["observed_responses"]=refresh_responses
+            readiness_trace["failure_state"]={
+                "review_buttons":page.get_by_role("button",name="Review answers",exact=True).count(),
+                "edit_buttons":page.get_by_role("button",name="Continue editing",exact=True).count(),
+                "resubmit_buttons":page.get_by_role("button",name="Resubmit corrections",exact=True).count(),
+                "resubmit_enabled":page.get_by_role("button",name="Resubmit corrections",exact=True).count()==1 and
+                    page.get_by_role("button",name="Resubmit corrections",exact=True).is_enabled(),
+                "download_links":page.get_by_role("link",name="Download original",exact=True).count()}
+            (ARTIFACT_ROOT/"resubmit-readiness-failure.json").write_text(json.dumps(readiness_trace,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"resubmit-readiness-failure.html").write_text(page.content(),encoding="utf-8")
+            page.screenshot(path=str(ARTIFACT_ROOT/"resubmit-readiness-failure.png"),full_page=True)
+            raise
+        finally:
+            page.remove_listener("response",record_readiness_response)
         with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{app_id}/submit/" and response.request.method=="POST") as received:
             page.get_by_role("button",name="Resubmit corrections",exact=True).click()
         response=received.value
@@ -619,7 +761,7 @@ try:
                 "council_can_download_resubmitted_original":staff.request.get(f"{BASE}/api/files/{pending_file}/").status==200,
                 "earlier_submitted_original_retained":private_path(latest.object_key).read_bytes()==replacement,
             }
-            (ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
             assert all(report["post_resubmission_checks"].values()),"Formal resubmission visibility failed"
             checks.append("Formal resubmission publishes corrected answers/exact current original while retaining prior submitted bytes")
         assert context.request.get(f"{BASE}/api/applications/{app_id}/").json()["fee"]["status"]=="waived"
@@ -681,7 +823,18 @@ try:
         assert forbidden.status==422,forbidden.text()
         stranger.request.get(BASE+"/api/session/")
         stranger_csrf=next(cookie["value"] for cookie in stranger.cookies() if cookie["name"]=="csrftoken")
-        assert stranger.request.post(f"{BASE}/api/appointments/{invitation_id}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf}).status==403
+        def appointment_snapshot():
+            from tribunal.models import AppointmentResponse,TestimonyAppointment
+            return (TestimonyAppointment.objects.filter(pk=invitation_id).values("version","state").get(),
+                AppointmentResponse.objects.filter(appointment_id=invitation_id).count())
+        before_foreign_response=fixture_db(appointment_snapshot)
+        foreign_response=stranger.request.post(f"{BASE}/api/appointments/{invitation_id}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf})
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            missing_response=stranger.request.post(f"{BASE}/api/appointments/{uuid.uuid4()}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf})
+            assert foreign_response.status==missing_response.status==404,(foreign_response.status,missing_response.status)
+            assert foreign_response.json()==missing_response.json(),(foreign_response.text(),missing_response.text())
+        else:assert foreign_response.status==403,foreign_response.text()
+        assert fixture_db(appointment_snapshot)==before_foreign_response
         stranger.close()
         checks.append("Actual cancellation removes browser response actions; cancelled and outsider responses are denied by server")
         def own_requests_fixture():
@@ -697,7 +850,17 @@ try:
                         "en":"Own bound request question" if title=="Own sent intake" else "Unresolved bound question",
                         "ar":"سؤال خاص بالطلب"}] if kind=="intake" else [])
         fixture_db(own_requests_fixture)  # Synthetic sent snapshots; not institution wording/send acceptance.
-        own_requests=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"]
+        def own_request_items(stage):
+            response=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/")
+            try:payload=response.json()
+            except Exception:payload={"non_json_body":response.text()[:5000]}
+            if response.status!=200 or not isinstance(payload,dict) or not isinstance(payload.get("items"),list):
+                diagnostic={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"stage":stage,
+                    "status":response.status,"payload":payload,"runtime_database":runtime_database}
+                (ARTIFACT_ROOT/f"request-list-{stage}-failure.json").write_text(json.dumps(diagnostic,indent=2),encoding="utf-8")
+                raise AssertionError(f"Own request list failed at {stage}: HTTP {response.status} {json.dumps(payload)[:1000]}")
+            return payload["items"]
+        own_requests=own_request_items("initial")
         assert {row["title"] for row in own_requests}=={"Own sent intake","Own unresolved intake","Own assessment"}
         assert all(isinstance(row["can_respond"],bool) and len(row["request_version"])==64 for row in own_requests)
         intake_request=next(row for row in own_requests if row["title"]=="Own sent intake")
@@ -780,7 +943,7 @@ try:
         assert consent_payload=={"expected_version":assessment_request["request_version"],"declaration_id":str(release_definition.pk),
             "accepted":True,"file_id":consent_original["id"],"scope":{"council":True}}
         expect(page.get_by_text("A signed release for this request and purpose is recorded.",exact=True)).to_be_visible()
-        own_after_sign=next(row for row in context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"] if row["id"]==assessment_request["id"])
+        own_after_sign=next(row for row in own_request_items("after-release") if row["id"]==assessment_request["id"])
         assert own_after_sign["can_respond"] and not own_after_sign["can_sign_release"]
         assert own_after_sign["signed_releases"][0]["scope"]=={"council":True,"purpose":"medical","request_id":assessment_request["id"],"proceeding_id":assessment_request["proceeding_id"]}
         assert staff.request.get(f"{BASE}/api/files/{report_original['id']}/").status==200
@@ -857,7 +1020,7 @@ try:
         assert context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["status"]=="closed"
         checks.append("Browser appeal evidence/declaration and actual authorized waiver submit to same closed case without reopening or mutating original proceeding")
         from applicant_supplement_acceptance import run as run_supplement_acceptance
-        checks.extend(run_supplement_acceptance(page,context,staff,BASE,csrf,staff_csrf,appeal_id,uploaded[0][0],fixture_db,ROOT,cookies["outsider"],settings.SESSION_COOKIE_NAME))
+        checks.extend(run_supplement_acceptance(page,context,staff,BASE,csrf,staff_csrf,appeal_id,uploaded[0][0],fixture_db,ARTIFACT_ROOT,cookies["outsider"],settings.SESSION_COOKIE_NAME))
         def sibling_reopened_fixture():
             from tribunal.models import Case,Proceeding,Party,OpenCaseClaim
             Case.objects.filter(pk=current["case_id"]).update(status="open")
@@ -968,13 +1131,13 @@ try:
                 from tribunal.services.decisions import close_case
                 close_case(admin,Case.objects.get(pk=current["case_id"]),"synthetic_request_closure_audit",notify_parties=False)
             fixture_db(close_requests_fixture)
-            closed_requests=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"]
+            closed_requests=own_request_items("after-case-closure")
             closure_report={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],
                 "scope":"Isolated synthetic request closure privacy diagnostic",
                 "preceding_scenario_groups_passed":len(checks),
                 "unsent_staff_draft_excluded":not any(row["title"]=="Private staff draft" for row in closed_requests),
                 "sent_request_retained":any(row["title"]=="Own unresolved intake" and row["state"]=="closed" for row in closed_requests)}
-            (ROOT/"request-closure-privacy-result.json").write_text(json.dumps(closure_report,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"request-closure-privacy-result.json").write_text(json.dumps(closure_report,indent=2),encoding="utf-8")
             print(json.dumps(closure_report,indent=2))
             assert closure_report["unsent_staff_draft_excluded"],"Backend request closure exposes unsent staff draft; see request-closure-privacy-result.json"
             assert closure_report["sent_request_retained"]
@@ -986,9 +1149,9 @@ try:
         from applicant_filing_acceptance import run as run_filing_acceptance
         checks.extend(run_filing_acceptance(browser,BASE,settings,fixture_db,session_cookie,staff,staff_csrf,errors))
         from applicant_message_acceptance import run as run_message_acceptance
-        checks.extend(run_message_acceptance(browser,page,context,staff,BASE,csrf,staff_csrf,current["case_id"],current["case_number"],party_id,cookies["outsider"],settings,fixture_db,ROOT))
+        checks.extend(run_message_acceptance(browser,page,context,staff,BASE,csrf,staff_csrf,current["case_id"],current["case_number"],party_id,cookies["outsider"],settings,fixture_db,ARTIFACT_ROOT,admin.pk))
         from applicant_history_notice_acceptance import notification_checks
-        checks.extend(notification_checks(browser,page,context,BASE,str(owner.pk),cookies,settings,fixture_db,ROOT))
+        checks.extend(notification_checks(browser,page,context,BASE,str(owner.pk),cookies,settings,fixture_db,ARTIFACT_ROOT))
         staff.close()
         assert page.locator("[style]").count()==0
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
@@ -996,11 +1159,19 @@ try:
         browser.close()
 except Exception as failure:
     partial={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"completed_groups":len(checks),"checks":checks,"page_errors":errors,"runtime_database":runtime_database,"failure":{"type":type(failure).__name__,"message":str(failure)[:5000]},"scope":"Interrupted isolated acceptance; completed groups are not a full-suite pass"}
-    (ROOT/"partial-result.json").write_text(json.dumps(partial,indent=2),encoding="utf-8")
+    if shared_config:partial["preflight"]=safe_preflight_evidence(shared_config,image_evidence)
+    (ARTIFACT_ROOT/"partial-result.json").write_text(json.dumps(partial,indent=2),encoding="utf-8")
     raise
 finally:
     server.shutdown()
 result={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"passed":len(checks),"checks":checks,
         "page_errors":errors,"runtime_database":runtime_database,"scope":"Real Django APIs, isolated "+("PostgreSQL runtime role" if POSTGRES_OWNER else "SQLite")+"/synthetic sessions; authorized fixture waiver; scanner bypass test policy; no live provider payment/antivirus acceptance"}
-(ROOT/"result.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
+if shared_config:
+    from applicant_shared_loopback import source_tree_sha256
+    ending_source_hash=source_tree_sha256(shared_config.source_dir)
+    if ending_source_hash!=shared_config.expected_source_tree_sha256:
+        raise RuntimeError("Immutable source tree changed during shared-loopback acceptance.")
+    result["preflight"]=safe_preflight_evidence(shared_config,image_evidence)
+    result["source_tree_sha256_after"]=ending_source_hash
+OUTPUT_PATH.write_text(json.dumps(result,indent=2),encoding="utf-8")
 print(json.dumps(result,indent=2))
