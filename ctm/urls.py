@@ -1,5 +1,6 @@
 from django.urls import path, include
 from tribunal import api
+from tribunal import priest_pdf_api
 
 urlpatterns = [
     path("", api.shell),
@@ -56,6 +57,7 @@ urlpatterns = [
     path("api/cases/<uuid:case_id>/requests/", api.report_requests),
     path("api/requests/<uuid:request_id>/send/", api.send_report_request),
     path("api/requests/<uuid:request_id>/print/", api.print_priest_request),
+    path("api/requests/<uuid:request_id>/print.pdf", priest_pdf_api.download_priest_request_pdf),
     path("api/requests/<uuid:request_id>/cancel/", api.report_request_cancel),
     path("api/pending-party-links/<uuid:pending_id>/cancel/", api.pending_link_cancel),
     path("api/requests/<uuid:request_id>/complete/", api.complete_report_request),

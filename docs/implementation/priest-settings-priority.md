@@ -12,8 +12,9 @@ migrations; independent QA accepts the exact integrated successor SHA.
 - Paper-completion API through0049: clean current request-bound council PDF,
   actual recorder/received date, explicit completion, retained original and
   idempotent recovery. Upload/scan alone does not complete a request.
-- Blank council request print view using stored wording. Browser print/save as
-  PDF; direct server PDF generation remains unfinished.
+- Blank council request print view and direct downloadable PDF using stored
+  wording. Council UI integration and content acceptance remain pending; see
+  priest-request-pdf.md.
 - Existing report/appointment recording association, finalization, processing
   state and exact-transcript review contracts. These do not yet establish a
   complete external-priest recording journey.
@@ -25,8 +26,8 @@ migrations; independent QA accepts the exact integrated successor SHA.
    scan, source association, designated reviewer and exact-version approval.
    `deliver()` currently rejects transcription jobs as provider unconfigured;
    recording finalization is not successful transcription.
-2. Printable request: council link/browser integration and direct generated PDF
-   if required by acceptance. Verify approved content and Arabic print output.
+2. Printable request: council link/download integration and approved-content
+   acceptance. Browser print and direct generated PDF are implemented.
 3. Wrong-upload correction: narrow exception to remove the wrong original and
    its derivatives while preserving correction evidence; coordinate retained
    source and capability state with council. No universal deletion endpoint.
@@ -39,10 +40,11 @@ migrations; independent QA accepts the exact integrated successor SHA.
    Implement protected recoverable delivery, current-link source evidence,
    stale/reissued/cancelled suppression and truthful provider acknowledgement.
    Do not put plaintext capabilities into general audit or queue projections.
-6. Settings consumers: translation prompt/routing, tribunal contact and
-   recommended doctors, plus broader configured email kinds. Current consumers
-   are account status email templates and filing document labels. Saving typed
-   settings alone does not activate those unfinished runtime paths.
+6. Settings allocation: B-S1 issue24 assigns tribunal_contact and
+   recommended_doctors consumers exclusively to Desktop-R on a separate branch.
+   Translation prompt/routing and broader configured email kinds remain
+   unassigned by that order. Existing consumers are account status email
+   templates and filing document labels; storage alone is not runtime activation.
 
 These are backend implementation gaps, not all credential blockers.
 
