@@ -1,20 +1,36 @@
 {
-  "backend_sha": "7684169d998cd2678757f8431378eaec8fdd1258",
+  "backend_sha": "e2f714a711b3bd84880c537fabb743628181ec00",
   "acceptance": "F08/F25 direct-owner returned privacy",
   "checks": {
-    "council_detail_keeps_formal_answers": false,
-    "council_version_keeps_formal_revision": false,
-    "council_history_excludes_pending_answers": false,
-    "council_case_files_exclude_pending_original": false,
-    "council_direct_download_denies_pending_original": false,
-    "council_range_denies_pending_original": false,
-    "council_preview_denies_pending_original": false,
-    "council_manifest_keeps_submitted_original": true
+    "council_detail_keeps_formal_answers": true,
+    "council_version_keeps_formal_revision": true,
+    "council_history_excludes_pending_answers": true,
+    "council_case_files_exclude_pending_original": true,
+    "council_direct_download_denies_pending_original": true,
+    "council_range_denies_pending_original": true,
+    "council_preview_denies_pending_original": true,
+    "council_manifest_keeps_submitted_original": true,
+    "council_head_denies_pending_original": true,
+    "council_listing_keeps_formal_original": true,
+    "council_formal_original_download_survives": true,
+    "council_audit_excludes_pending_sources": true,
+    "assigned_manager_receives_no_early_correction_alert": true
+  },
+  "owner_checks": {
+    "owner_keeps_saved_answers": true,
+    "owner_keeps_pending_original": true
   },
   "remaining_surfaces": [
-    "search",
-    "notification routing/content",
+    "search integration",
+    "legacy queued alert delivery",
     "PostgreSQL RLS"
   ],
-  "scope": "Isolated SQLite/browser API fixtures; no actual case data"
+  "scope": "Isolated SQLite/browser API fixtures; no actual case data",
+  "post_resubmission_checks": {
+    "council_sees_formally_resubmitted_answers": true,
+    "new_manifest_binds_resubmitted_original": true,
+    "new_manifest_does_not_bind_superseded_original": true,
+    "council_can_download_resubmitted_original": true,
+    "earlier_submitted_original_retained": true
+  }
 }

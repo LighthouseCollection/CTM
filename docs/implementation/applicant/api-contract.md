@@ -28,6 +28,15 @@ older requests, different sessions or different answer versions. Missing/mismatc
 refreshes block filing instead of retaining stale ready capabilities. Server-provided
 status and case reference are displayed without inferring either from browser URLs.
 
+Returned-correction privacy is enforced by backend `e2f714a`: council receives the
+last formal answers/version and exact submitted file manifest until resubmission.
+Saved pending answer/file corrections remain available to the owner while council
+detail/history/current listing/audit and direct/range/preview/HEAD byte delivery
+exclude them. Early correction alerts are not queued to the assigned manager.
+Resubmission publishes the corrected formal snapshot while preserving prior
+submitted originals. The default real API runner verifies these boundaries; search
+integration, legacy queued-alert delivery and PostgreSQL policies remain separate.
+
 Definition fields: `code`, `type`, `label_en`, `label_ar`, `required`, optional
 `when:{field,equals}` matching the existing strict backend predicate. Supported
 types: text, textarea, date, choice, boolean, list of choices. Choices may be

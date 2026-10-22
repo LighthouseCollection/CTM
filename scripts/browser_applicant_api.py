@@ -6,6 +6,7 @@ applies the proposed shell patch only there. No branch merge/source backend edit
 Synthetic accounts/forms and test-client sessions only; no production providers.
 """
 import io
+import http.client
 import logging
 import json
 import os
@@ -20,6 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 SOURCE = Path(__file__).resolve().parents[1]
 BACKEND_REF = os.environ.get("CTM_APPLICANT_BACKEND_REF", "origin/work/vm-frm-backend")
+CHECK_RETURNED_PRIVACY = os.environ.get("CTM_APPLICANT_ACCEPTANCE", "returned_privacy") == "returned_privacy"
 
 if len(sys.argv) == 1:
     backend_sha = subprocess.check_output(["git","rev-parse",BACKEND_REF],cwd=SOURCE,text=True).strip()
@@ -56,6 +58,8 @@ call_command("migrate",verbosity=0,interactive=False)
 owner=Account.objects.create_user(email="applicant@example.test",email_verified=True,first_name="Synthetic",last_name="Applicant")
 outsider=Account.objects.create_user(email="outsider@example.test",email_verified=True)
 admin=Account.objects.create_user(email="admin@example.test",email_verified=True,role="admin")
+member=Account.objects.create_user(email="member@example.test",email_verified=True,role="member")
+president=Account.objects.create_user(email="president@example.test",email_verified=True,role="president")
 fields=[{"code":code,"type":kind,"required":True,"label_en":en,"label_ar":ar}
         for code,kind,en,ar in [
             ("first_name","text","First name","الاسم الأول"),
@@ -374,8 +378,17 @@ try:
         checks.append("Returned resubmit rechecks latest safety event; pending required original rejects atomically without a new submission or fee change")
         page.get_by_role("button",name="Refresh application status",exact=True).click()
         expect(page.get_by_text("Synthetic correction instruction",exact=True)).to_be_visible()
-        if os.environ.get("CTM_APPLICANT_ACCEPTANCE")=="returned_privacy":
-            # Separate acceptance probe: intentionally fails until direct-owner F08 is enforced.
+        if CHECK_RETURNED_PRIVACY:
+            # Separate acceptance probe: fails if any direct-owner F08 boundary regresses.
+            assigned=staff.request.post(f"{BASE}/api/cases/{current['case_id']}/assignment/",data={
+                "member_id":str(member.pk),"president_id":str(president.pk)},headers={"X-CSRFToken":staff_csrf})
+            assert assigned.status==201,assigned.text()
+            def correction_notice_counts():
+                from tribunal.models import Notification,Outbox
+                kinds=["answer_changed","file_uploaded"]
+                return (Notification.objects.filter(recipient=member,kind__in=kinds).count(),
+                        Outbox.objects.filter(recipient=member,kind__in=kinds).count())
+            notice_counts=fixture_db(correction_notice_counts)
             formal=staff.request.get(f"{BASE}/api/applications/{app_id}/").json()
             marker="Private pending returned correction"
             page.get_by_label("First name",exact=False).fill(marker)
@@ -391,6 +404,14 @@ try:
             staff_detail=staff.request.get(f"{BASE}/api/applications/{app_id}/").json()
             staff_history=staff.request.get(f"{BASE}/api/applications/{app_id}/history/").json()
             case_files=staff.request.get(f"{BASE}/api/cases/{current['case_id']}/files/").json()
+            staff_audit=staff.request.get(f"{BASE}/api/cases/{current['case_id']}/audit/").json()
+            owner_revision=context.request.get(f"{BASE}/api/applications/{app_id}/history/").json()["items"][-1]["id"]
+            # wsgiref may emit a body on HEAD errors; use a HEAD-aware reader and close it.
+            head_connection=http.client.HTTPConnection("127.0.0.1",server.server_port)
+            try:
+                head_connection.request("HEAD",f"/api/files/{pending_file}/",headers={"Cookie":f"{settings.SESSION_COOKIE_NAME}={cookies['admin']}"})
+                pending_head_status=head_connection.getresponse().status
+            finally:head_connection.close()
             privacy={
                 "council_detail_keeps_formal_answers":staff_detail["answers"].get("first_name")==formal["answers"].get("first_name"),
                 "council_version_keeps_formal_revision":staff_detail["version"]==formal["version"],
@@ -400,13 +421,21 @@ try:
                 "council_range_denies_pending_original":staff.request.get(f"{BASE}/api/files/{pending_file}/",headers={"Range":"bytes=0-3"}).status in {403,404},
                 "council_preview_denies_pending_original":staff.request.get(f"{BASE}/api/files/{pending_file}/?view=1").status in {403,404},
                 "council_manifest_keeps_submitted_original":replacement_id in json.dumps(staff_detail.get("manifest",[])) and pending_file not in json.dumps(staff_detail.get("manifest",[])),
+                "council_head_denies_pending_original":pending_head_status in {403,404},
+                "council_listing_keeps_formal_original":replacement_id in json.dumps(case_files),
+                "council_formal_original_download_survives":staff.request.get(f"{BASE}/api/files/{replacement_id}/").status==200,
+                "council_audit_excludes_pending_sources":pending_file not in json.dumps(staff_audit) and owner_revision not in json.dumps(staff_audit),
+                "assigned_manager_receives_no_early_correction_alert":fixture_db(correction_notice_counts)==notice_counts,
             }
+            owner_checks={"owner_keeps_saved_answers":context.request.get(f"{BASE}/api/applications/{app_id}/").json()["answers"]["first_name"]==marker,
+                          "owner_keeps_pending_original":context.request.get(f"{BASE}/api/files/{pending_file}/").status==200}
             report={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"acceptance":"F08/F25 direct-owner returned privacy",
-                    "checks":privacy,"remaining_surfaces":["search","notification routing/content","PostgreSQL RLS"],
+                    "checks":privacy,"owner_checks":owner_checks,"remaining_surfaces":["search integration","legacy queued alert delivery","PostgreSQL RLS"],
                     "scope":"Isolated SQLite/browser API fixtures; no actual case data"}
             (ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
             print(json.dumps(report,indent=2))
-            assert all(privacy.values()),"Returned privacy acceptance failed; see returned-privacy-result.json"
+            assert all(privacy.values()) and all(owner_checks.values()),"Returned privacy acceptance failed; see returned-privacy-result.json"
+            checks.append("Returned privacy isolates pending answers/originals/audit/alerts while owner retains corrections and council retains formal snapshot")
         page.get_by_role("button",name="Review answers",exact=True).click()
         with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{app_id}/submit/" and response.request.method=="POST") as received:
             page.get_by_role("button",name="Resubmit corrections",exact=True).click()
@@ -419,6 +448,18 @@ try:
         assert correction_submission.attestation=={"original_submission":str(formal_submission.pk)}
         assert fixture_db(lambda:Submission.objects.get(pk=formal_submission_id).attestation)==formal_submission.attestation
         assert fixture_db(lambda:Submission.objects.filter(application_id=app_id).count())==2
+        if CHECK_RETURNED_PRIVACY:
+            published=staff.request.get(f"{BASE}/api/applications/{app_id}/").json()
+            report["post_resubmission_checks"]={
+                "council_sees_formally_resubmitted_answers":published["answers"]["first_name"]==marker,
+                "new_manifest_binds_resubmitted_original":pending_file in json.dumps(published.get("manifest",[])),
+                "new_manifest_does_not_bind_superseded_original":replacement_id not in json.dumps(published.get("manifest",[])),
+                "council_can_download_resubmitted_original":staff.request.get(f"{BASE}/api/files/{pending_file}/").status==200,
+                "earlier_submitted_original_retained":private_path(latest.object_key).read_bytes()==replacement,
+            }
+            (ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+            assert all(report["post_resubmission_checks"].values()),"Formal resubmission visibility failed"
+            checks.append("Formal resubmission publishes corrected answers/exact current original while retaining prior submitted bytes")
         assert context.request.get(f"{BASE}/api/applications/{app_id}/").json()["fee"]["status"]=="waived"
         checks.append("Real return instructions and resubmission reuse original fee/signature without new attestation")
         page.get_by_role("button",name="Refresh application status",exact=True).click()
