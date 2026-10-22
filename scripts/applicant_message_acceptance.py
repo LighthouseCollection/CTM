@@ -1,5 +1,5 @@
 """Real private-message browser/API acceptance on an isolated synthetic case."""
-import uuid
+import os,uuid
 from pathlib import Path
 from playwright.sync_api import expect
 
@@ -34,7 +34,12 @@ def run(browser,page,context,staff,base,csrf,staff_csrf,case_id,case_number,part
     received=read.value.json();assert received["id"]==first["id"] and received["read_at"]
     repeated=context.request.post(f"{base}/api/messages/{first['id']}/read/",data={},headers={"X-CSRFToken":csrf})
     assert repeated.status==200 and repeated.json()==received
+    def recipient_snapshot():
+        row=m.MessageRecipient.objects.get(message_id=first["id"],party_id=party_id)
+        return {"id":str(row.pk),"read_at":row.read_at.isoformat() if row.read_at else None}
+    retained_receipt=fixture_db(recipient_snapshot)
     assert staff.request.post(f"{base}/api/messages/{first['id']}/read/",data={},headers={"X-CSRFToken":staff_csrf}).status==403
+    assert fixture_db(recipient_snapshot)==retained_receipt
     checks.append("Explicit browser own-copy read acknowledgement retains first timestamp on exact repeat; council sender cannot mark the applicant copy read")
     stranger=browser.new_context()
     try:
@@ -50,9 +55,17 @@ def run(browser,page,context,staff,base,csrf,staff_csrf,case_id,case_number,part
             assert all(row["id"]!=first["id"] for row in hidden["items"])
             if hidden["next_offset"] is None:break
             offset=hidden["next_offset"]
-        assert stranger.request.post(f"{base}/api/messages/{first['id']}/read/",data={},headers={"X-CSRFToken":other_csrf}).status==403
+        foreign_read=stranger.request.post(f"{base}/api/messages/{first['id']}/read/",data={},headers={"X-CSRFToken":other_csrf})
+        if os.environ.get("CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT")=="hidden404":
+            absent_read=stranger.request.post(f"{base}/api/messages/{uuid.uuid4()}/read/",data={},headers={"X-CSRFToken":other_csrf})
+            assert foreign_read.status==absent_read.status==404,(foreign_read.status,absent_read.status)
+            assert foreign_read.json()==absent_read.json(),(foreign_read.text(),absent_read.text())
+        else:assert foreign_read.status==403,foreign_read.text()
+        before_forged=fixture_db(lambda:(m.Message.objects.filter(case_id=case_id).count(),m.Notification.objects.count()))
         forged=stranger.request.post(f"{base}/api/cases/{case_id}/messages/",data={"body":"Foreign thread","party_ids":[party_id],"idempotency_key":str(uuid.uuid4())},headers={"X-CSRFToken":other_csrf})
         assert forged.status==403,forged.text()
+        assert fixture_db(recipient_snapshot)==retained_receipt
+        assert fixture_db(lambda:(m.Message.objects.filter(case_id=case_id).count(),m.Notification.objects.count()))==before_forged
     finally:stranger.close()
     checks.append("Actual linked spouse sees no other-thread message or receipt, cannot acknowledge it, and cannot send into the other party's thread")
     body="Own private message <script>literal text</script>"

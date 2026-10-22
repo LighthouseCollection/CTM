@@ -1121,8 +1121,19 @@ try:
             assert hidden_appeal.status==absent_appeal.status==404 and hidden_appeal.json()==absent_appeal.json()
         else:assert hidden_appeal.status==403
         sibling_csrf=next(cookie["value"] for cookie in sibling.cookies() if cookie["name"]=="csrftoken")
-        assert sibling.request.post(f"{BASE}/api/appeals/{appeal_id}/additions/",data={"text":"Not my supplement","file_ids":[],
-            "expected_version":pending_appeal["version"],"idempotency_key":str(uuid.uuid4())},headers={"X-CSRFToken":sibling_csrf}).status==403
+        def sibling_denial_state():
+            from tribunal.models import Application,AppealSupplement
+            app=Application.objects.get(pk=appeal_id)
+            return {"status":app.status,"version":app.current_version,"supplements":AppealSupplement.objects.filter(application=app).count()}
+        before_sibling_denial=fixture_db(sibling_denial_state)
+        sibling_payload={"text":"Not my supplement","file_ids":[],"expected_version":pending_appeal["version"],"idempotency_key":str(uuid.uuid4())}
+        sibling_addition=sibling.request.post(f"{BASE}/api/appeals/{appeal_id}/additions/",data=sibling_payload,headers={"X-CSRFToken":sibling_csrf})
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            absent_addition=sibling.request.post(f"{BASE}/api/appeals/{uuid.uuid4()}/additions/",data=sibling_payload,headers={"X-CSRFToken":sibling_csrf})
+            assert sibling_addition.status==absent_addition.status==404,(sibling_addition.status,absent_addition.status)
+            assert sibling_addition.json()==absent_addition.json(),(sibling_addition.text(),absent_addition.text())
+        else:assert sibling_addition.status==403,sibling_addition.text()
+        assert fixture_db(sibling_denial_state)==before_sibling_denial
         checks.append("Linked spouse cannot read another applicant's requests or supplement history, or author additions")
         expect(sibling_page.get_by_role("button",name="Start or resume appeal",exact=True)).to_be_visible()
         sibling_page.get_by_role("button",name="Start or resume appeal",exact=True).click()
@@ -1152,7 +1163,12 @@ try:
             Case.objects.filter(pk=current["case_id"]).update(status="closed")
             return str(decree.pk),str(file.pk)
         decree_id,signed_file=fixture_db(decree_access_fixture)  # Synthetic stored signed bytes/closed state only, not issuance/signature acceptance.
-        assert context.request.get(f"{BASE}/api/files/{signed_file}/").status==403
+        missing_signed_file=str(uuid.uuid4())
+        unreleased=context.request.get(f"{BASE}/api/files/{signed_file}/")
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            absent_unreleased=context.request.get(f"{BASE}/api/files/{missing_signed_file}/")
+            assert unreleased.status==absent_unreleased.status==404 and unreleased.json()==absent_unreleased.json()
+        else:assert unreleased.status==403,unreleased.text()
         release=staff.request.post(f"{BASE}/api/decrees/{decree_id}/release/",data={"party_id":party_id,"action":"release"},headers={"X-CSRFToken":staff_csrf})
         assert release.status==201,release.text()
         case_detail=context.request.get(f"{BASE}/api/cases/{current['case_id']}/")
@@ -1177,7 +1193,11 @@ try:
         other_recipient=browser.new_context()
         other_recipient.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["outsider"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
         assert other_recipient.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["released_decrees"]==[]
-        assert other_recipient.request.get(f"{BASE}/api/files/{signed_file}/").status==403
+        foreign_certificate=other_recipient.request.get(f"{BASE}/api/files/{signed_file}/")
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            absent_certificate=other_recipient.request.get(f"{BASE}/api/files/{missing_signed_file}/")
+            assert foreign_certificate.status==absent_certificate.status==404 and foreign_certificate.json()==absent_certificate.json()
+        else:assert foreign_certificate.status==403,foreign_certificate.text()
         other_recipient.close()
         checks.append("Actual own release list renders bilingual certificate metadata and exact PDF action while linked spouse receives no release or bytes")
         released=context.request.get(f"{BASE}/api/files/{signed_file}/")
@@ -1191,12 +1211,24 @@ try:
         expect(certificate).to_have_count(0)
         assert context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["released_decrees"]==[]
         for suffix,headers in [("",{}),("",{"Range":"bytes=0-3"}),("?view=1",{})]:
-            assert context.request.get(f"{BASE}/api/files/{signed_file}/{suffix}",headers=headers).status==403
+            revoked_file=context.request.get(f"{BASE}/api/files/{signed_file}/{suffix}",headers=headers)
+            if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+                absent_file=context.request.get(f"{BASE}/api/files/{missing_signed_file}/{suffix}",headers=headers)
+                assert revoked_file.status==absent_file.status==404,(revoked_file.status,absent_file.status)
+                assert revoked_file.json()==absent_file.json(),(revoked_file.text(),absent_file.text())
+            else:assert revoked_file.status==403,revoked_file.text()
         head=http.client.HTTPConnection("127.0.0.1",server.server_port)
         try:
             head.request("HEAD",f"/api/files/{signed_file}/",headers={"Cookie":f"{settings.SESSION_COOKIE_NAME}={cookies['owner']}"})
-            assert head.getresponse().status==403
+            revoked_head=head.getresponse().status
         finally:head.close()
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            absent_head=http.client.HTTPConnection("127.0.0.1",server.server_port)
+            try:
+                absent_head.request("HEAD",f"/api/files/{missing_signed_file}/",headers={"Cookie":f"{settings.SESSION_COOKIE_NAME}={cookies['owner']}"})
+                assert revoked_head==absent_head.getresponse().status==404
+            finally:absent_head.close()
+        else:assert revoked_head==403
         checks.append("Real explicit decree release grants exact stored synthetic PDF; withdrawal revokes retained full/range/preview/HEAD URLs with no-store delivery")
         # Default acceptance includes closure privacy. Explicit 0 is a baseline-only run.
         if os.environ.get("CTM_APPLICANT_REQUEST_CLOSURE_AUDIT","1")=="1":
