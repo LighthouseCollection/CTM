@@ -2399,12 +2399,12 @@
     return null;
   }
 
-  function spouseProfileSection(P, h, t, title, icon, values) {
+  function spouseProfileSection(P, h, t, title, icon, values, twoColumns = false) {
     const fields = values.filter(([, value]) => value);
     if (!fields.length) return null;
     return h(
       P.Stack,
-      { gap: "sm", key: title, className: "ctm-spouse-profile-section" },
+      { gap: "sm", key: title, className: `ctm-spouse-profile-section${twoColumns ? " ctm-spouse-profile-section--two-columns" : ""}` },
       h(
         P.Inline,
         { gap: "sm", align: "center", className: "ctm-spouse-profile-section__heading" },
@@ -2529,7 +2529,7 @@
                 ["emailAddress", party.profile?.contact?.email],
                 ["immigrationStatus", party.profile?.contact?.immigration_status],
                 ["residingWith", party.profile?.contact?.residing_with],
-              ]),
+              ], true),
               spouseProfileSection(P, h, t, t("career"), "document", [
                 ["education", party.profile?.career?.education],
                 ["yearOfGraduation", party.profile?.career?.graduation_year],

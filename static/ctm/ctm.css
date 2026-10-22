@@ -30,3 +30,34 @@
   flex: 1 1 auto;
   min-inline-size: 0;
 }
+
+/* The expanded contact profile mirrors the two-column case information layout. */
+.ctm-spouse-profile-section--two-columns .plx-property-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--plx-sys-space-inline-2xl);
+  row-gap: var(--plx-sys-space-stack-md);
+}
+
+.ctm-spouse-profile-section--two-columns .plx-property-list__item {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--plx-sys-space-stack-2xs);
+}
+
+/* xl avatars are 48px; the case profile photograph needs 10px more on each side. */
+.ctm-spouse-photo {
+  inline-size: 68px;
+  block-size: 68px;
+}
+
+.ctm-spouse-photo .plx-avatar__image {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 42rem) {
+  .ctm-spouse-profile-section--two-columns .plx-property-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

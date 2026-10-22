@@ -113,6 +113,11 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.doesNotMatch(councilCase, /spouseIdentity\(P, h, t, party\)/);
   assert.match(councilCase, /collapsible: true/);
   assert.match(councilCase, /profile\?\.contact/);
+  assert.match(councilCase, /function spouseProfileSection\(P, h, t, title, icon, values, twoColumns = false\)/);
+  assert.match(councilCase, /t\("contact"\), "message", \[\s*[\s\S]*?\], true\)/);
+  const councilCss = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  assert.match(councilCss, /ctm-spouse-profile-section--two-columns/);
+  assert.match(councilCss, /inline-size: 68px/);
   assert.match(councilCase, /t\("personalDetails"\), "person", \[/);
   assert.doesNotMatch(councilCase, /t\("personalDetails"\), "user", \[/);
   assert.match(councilCase, /P\.SectionHeading, \{ level: 2 \}/);
