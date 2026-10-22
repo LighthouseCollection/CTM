@@ -76,6 +76,8 @@ urlpatterns = [
     path("external/reports/<uuid:request_id>/", api.external_report),
     path("external/reports/<uuid:request_id>/status/", api.external_report_status),
     path("api/system/settings/", api.settings_endpoint),
+    path("api/runtime/tribunal-contact/", api.runtime_tribunal_contact),
+    path("api/cases/<uuid:case_id>/recommended-doctors/", api.runtime_recommended_doctors),
     path("api/templates/", api.templates),
     path("api/templates/<uuid:template_id>/publish/", api.template_publish),
     path("api/templates/<uuid:template_id>/retire/", api.template_retire),

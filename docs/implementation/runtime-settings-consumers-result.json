@@ -1,0 +1,75 @@
+{
+  "status": "implemented_and_locally_verified",
+  "issue": 24,
+  "branch": "work/desktop-r-settings-consumers",
+  "base_commit": "1fea78fa9585c5e454b604674a6932ff4b376c4b",
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/api/runtime/tribunal-contact/",
+      "authorization": "active authenticated account"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cases/{case_id}/recommended-doctors/?specialty=medical|psychological",
+      "authorization": "current council account with existing case visibility"
+    }
+  ],
+  "migration": {
+    "name": "0051_runtime_settings_consumers",
+    "dependency": "0050_member_administration",
+    "functions": [
+      "ctm_runtime_tribunal_contact()",
+      "ctm_case_recommended_doctors(uuid,text)"
+    ],
+    "runtime_grants": [
+      "ctm_app"
+    ],
+    "worker_grant": false,
+    "general_settingrevision_select": false
+  },
+  "validation": {
+    "postgresql_full": {
+      "passed": 928,
+      "skipped": 1,
+      "failed": 0
+    },
+    "postgresql_focused": {
+      "passed": 26,
+      "failed": 0
+    },
+    "sqlite_focused": {
+      "passed": 15,
+      "postgresql_only_skipped": 11,
+      "failed": 0
+    },
+    "sqlite_related": {
+      "passed": 47,
+      "postgresql_only_skipped": 32,
+      "failed": 0
+    },
+    "sqlite_full": {
+      "passed": 519,
+      "skipped": 401,
+      "failed": 5,
+      "same_targeted_failures_on_untouched_base": true
+    },
+    "migration_round_trip_passed": true,
+    "physical_runtime_role": "ctm_app",
+    "forced_rls_settingrevision": true
+  },
+  "applicant_doctor_directory": false,
+  "applicant_association_gap": "No approved persisted request-to-recommendation association exists.",
+  "institutional_data_seeded": false,
+  "integrated": false,
+  "main_merged": false,
+  "operational_migration_applied": false,
+  "deployed": false,
+  "remaining": [
+    "governance exact-successor integration and migration sequencing",
+    "independent QA against the exact combined commit",
+    "UI consumption of the bounded endpoints",
+    "approved persisted request association before any applicant recommendation projection",
+    "institutional contact and doctor data approval"
+  ]
+}

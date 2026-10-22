@@ -1494,6 +1494,30 @@ def settings_endpoint(request):
     return JsonResponse(encoded(row, version=row.number, schema_version=1), status=201)
 
 
+@endpoint()
+def runtime_tribunal_contact(request):
+    from tribunal.services.runtime_settings import tribunal_contact
+
+    response = JsonResponse(tribunal_contact(request.user))
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
+@endpoint()
+def runtime_recommended_doctors(request, case_id):
+    from tribunal.services.runtime_settings import recommended_doctors
+
+    staff(request.user)
+    specialties = request.GET.getlist("specialty")
+    if len(specialties) != 1 or set(request.GET) != {"specialty"}:
+        raise ValidationError("Provide one specialty query parameter.")
+    response = JsonResponse(
+        recommended_doctors(request.user, case_id, specialties[0])
+    )
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
 @endpoint(("GET", "POST"))
 def templates(request):
     from tribunal.projections import template_data

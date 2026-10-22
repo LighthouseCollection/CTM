@@ -1,6 +1,6 @@
 # Runtime settings consumers: tribunal contact and recommended doctors
 
-Status: approved B-S1 design for issue #24. This work starts from backend commit
+Status: implemented and locally verified for issue #24. This work starts from backend commit
 `1fea78fa9585c5e454b604674a6932ff4b376c4b` on the separate
 `work/desktop-r-settings-consumers` branch. Applicant PR #5 remains unchanged.
 
@@ -77,3 +77,36 @@ for the HTTP contract but do not establish acceptance.
 
 Governance owns integration, operational migration application and exact-candidate
 acceptance. This branch will open a separate draft PR and will not merge or deploy.
+
+## Implementation and evidence
+
+The implementation uses `tribunal/services/runtime_settings.py`, two additive API
+wrappers and routes, the two declared runtime-consumer descriptors, and migration
+`0051_runtime_settings_consumers`. The migration does not add a table, model or
+general settings grant. Its `grant_runtime` hook grants only the two function
+signatures to an existing `ctm_app`; later-created roles use the same hook.
+
+Local verification on an isolated PostgreSQL 16 database completed with:
+
+- 928 full-suite tests passed and one skipped under
+  `ctm.settings_postgres_test`;
+- 26 focused PostgreSQL runtime-consumer tests passed, including physical
+  `ctm_app`, `NOSUPERUSER`/`NOBYPASSRLS` role behavior, forced RLS on
+  `tribunal_settingrevision`, applicant and worker denial, no settings writes,
+  malformed-latest handling, Django-valid email variants, Python whitespace
+  parity and migration rollback/reapply;
+- 15 focused SQLite HTTP/service contract tests passed, with 11 PostgreSQL-only
+  checks skipped; and
+- 47 related SQLite tests passed with 32 PostgreSQL-only checks skipped.
+
+The optional full SQLite run retained five failures already present on the untouched
+`1fea78f` base: three tests expecting PostgreSQL trigger errors, one historical
+source-retention trigger test and one readiness-command mocking test. The complete
+PostgreSQL suite passes those tests and is the acceptance database for this slice.
+
+No institution-supplied contact or doctor data was added. No doctor is asserted to
+be approved, verified or tested. Applicant doctor recommendations remain unavailable
+until an approved persisted request association exists. Governance integration,
+operational migration, independent QA, merge and deployment remain pending.
+
+[Download the machine-readable result](runtime-settings-consumers-result.json).

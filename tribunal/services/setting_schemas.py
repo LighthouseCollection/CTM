@@ -124,6 +124,13 @@ def validate_setting_value(key, value, *, schema_version=SCHEMA_VERSION):
 
 
 def schema_descriptors(current_versions):
+    consumers={
+        'email_templates':['account_status_email'],
+        'document_categories':['filing_document_labels'],
+        'tribunal_contact':['authenticated_tribunal_contact'],
+        'recommended_doctors':['council_case_recommended_doctors'],
+    }
     return {key:{'schema_version':SCHEMA_VERSION,'value_schema':value,
         'current_version':current_versions.get(key,0), 'expected_version_required':True,
-        'activation_supported':False,'runtime_consumers':(['account_status_email'] if key=='email_templates' else ['filing_document_labels'] if key=='document_categories' else []),'max_json_bytes':100_000,'max_json_depth':20} for key,value in schemas().items()}
+        'activation_supported':False,'runtime_consumers':consumers.get(key,[]),
+        'max_json_bytes':100_000,'max_json_depth':20} for key,value in schemas().items()}
