@@ -40,7 +40,7 @@
       : id === "separation"
       ? h(P.Icon, { name: "person_cancel", "aria-hidden": true })
       : id === "decision" || id === "hearings"
-        ? decisionBalanceIcon()
+        ? h(P.Icon, { name: "gavel", "aria-hidden": true })
         : id === "decree"
           ? decreeCertificateIcon()
           : id === "appeals"
