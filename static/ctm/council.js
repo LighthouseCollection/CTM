@@ -470,6 +470,10 @@
         "The assigned presenter is recorded absent. The hearing is deferred and awaits manual placement.",
       openCase: "Open case",
       closeSession: "Close session",
+      deleteSession: "Delete",
+      deleteSessionTitle: "Delete this draft session?",
+      deleteSessionMessage: "This removes the unassigned draft session. Sessions with agenda items or retained history cannot be deleted.",
+      sessionDeleted: "The draft session was deleted.",
       closeTitle: "Close this council session?",
       closeMessage:
         "Unpresented cases carry over to the next already scheduled session, or await manual placement if none exists. Deferred and presenter-absent cases always await manual placement. Messages set to “Send after council session” are released.",
@@ -765,6 +769,10 @@
       absentNotice: "سُجِّل المقدِّم المعيَّن غائبًا. تم تأجيل النظر وهو في انتظار الجدولة اليدوية.",
       openCase: "فتح القضية",
       closeSession: "إغلاق الجلسة",
+      deleteSession: "حذف",
+      deleteSessionTitle: "حذف جلسة المسودة؟",
+      deleteSessionMessage: "يُحذف فقط مشروع الجلسة غير المعيّن. لا يمكن حذف الجلسات التي تحتوي على بنود جدول أعمال أو سجل محفوظ.",
+      sessionDeleted: "تم حذف مشروع الجلسة.",
       closeTitle: "هل تريد إغلاق جلسة المجلس هذه؟",
       closeMessage:
         "تنتقل القضايا التي لم تُعرض إلى الجلسة المجدولة التالية، أو تنتظر الجدولة اليدوية إن لم توجد جلسة. أما القضايا المؤجلة أو التي غاب مقدِّمها فتنتظر دائمًا الجدولة اليدوية. ويتم إرسال الرسائل المحددة بخيار «الإرسال بعد جلسة المجلس».",
@@ -1308,6 +1316,7 @@
     const [failure, setFailure] = R.useState(null);
     const [created, setCreated] = R.useState(false);
     const [formOpen, setFormOpen] = R.useState(false);
+    const [deleteTarget, setDeleteTarget] = R.useState(null);
     const loaded = state.data?.sessions?.items || [];
     const presidingMembers = assignmentAuthorizers(state.data?.members?.items || []);
     const defaultPresiding = presidingMembers.find((row) => row.name === "H.E. Metropolitan Serapion")
@@ -1358,6 +1367,23 @@
       setFormOpen(false);
     }
 
+    async function deleteSession() {
+      if (!deleteTarget) return;
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/sessions/${encodeURIComponent(deleteTarget.id)}/`, { method: "DELETE" });
+        if (selected === deleteTarget.id) cancelSessionForm();
+        setDeleteTarget(null);
+        setCreated("sessionDeleted");
+        retry();
+      } catch (error) {
+        setFailure(serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+
     async function create(event) {
       event.preventDefault();
       const issue = sessionDateProblem(date, loaded, selectedSession?.id);
@@ -1398,7 +1424,6 @@
       mode === "upcoming" && canManage(user)
         ? h(P.Toolbar, { label: t("tribunalSession") },
             h(P.Button, { icon: "add", onClick: startCreate, disabled: pending }, t("createSession")),
-            h(P.Button, { icon: "pencil", onClick: () => selectedSession && editSession(selectedSession), disabled: pending || !selectedSession }, t("editSession")),
             formOpen ? h(P.Button, { icon: "close", onClick: cancelSessionForm, disabled: pending }, t("cancel")) : null,
             formOpen ? h(P.Toolbar.Spacer) : null,
             formOpen ? h(P.Button, { icon: "save", type: "submit", form: "ctm-session-form", variant: "primary", disabled: pending, loading: pending }, t("saveSession")) : null,
@@ -1453,8 +1478,17 @@
             { title: t("caseHearings"), field: "hearing_case_count", minWidth: "8rem", pill: false, render: (row) => String(row.hearing_case_count ?? 0) },
           ] : []),
           { title: t("statusLabel"), field: "state", minWidth: "8rem", pill: false, render: (row) => t(sessionStatusKey(row.state)) },
+          ...(mode === "upcoming" && canManage(user) ? [{ title: t("actions"), field: "session_actions", minWidth: "10rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
+            h(P.Button, { size: "xs", icon: "pencil", disabled: pending, onClick: () => editSession(row) }, t("editSession")),
+            h(P.Button, { size: "xs", icon: "trash", disabled: pending || row.state !== "draft", onClick: () => setDeleteTarget(row) }, t("deleteSession")),
+          ) }] : []),
         ],
       }),
+      h(P.ConfirmDialog, {
+        open: Boolean(deleteTarget), title: t("deleteSessionTitle"), message: t("deleteSessionMessage"),
+        confirmLabel: t("deleteSession"), cancelLabel: t("cancel"), onConfirm: deleteSession,
+        onCancel: () => !pending && setDeleteTarget(null),
+      }, failure && deleteTarget ? h(P.Notice, { tone: "danger" }, failure) : null),
       mode === "archived" && selectedSession
         ? h(P.Stack, { gap: "md" },
             h(P.Text, { as: "h2", variant: "heading" }, t("archivedSessionDetails")),

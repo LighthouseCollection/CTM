@@ -209,6 +209,23 @@ def create_session(actor, session_date, *, starts_at=None, presiding_member=None
 
 
 @transaction.atomic
+def delete_draft_session(actor, session_id):
+    """Remove an unassigned draft session before it becomes a tribunal record."""
+    administrator(actor)
+    session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    if session.state != "draft":
+        raise ValidationError("Only a draft session can be deleted.")
+    if AgendaItem.objects.filter(session=session).exists():
+        raise ValidationError("A session with agenda items is retained and cannot be deleted.")
+    if Attendance.objects.filter(session=session).exists():
+        raise ValidationError("A session with attendance history cannot be deleted.")
+    if Message.objects.filter(session=session).exists() or AgendaTransferEvent.objects.filter(to_session=session).exists():
+        raise ValidationError("A session with retained history cannot be deleted.")
+    with database_actor(actor), database_settings({"ctm.delete_draft_session": str(session.pk)}):
+        session.delete()
+
+
+@transaction.atomic
 def update_session(actor, session_id, session_date, *, starts_at=None, presiding_member=None, location=""):
     administrator(actor)
     session = CouncilSession.objects.select_for_update().get(pk=session_id)

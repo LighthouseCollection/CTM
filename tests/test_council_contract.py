@@ -4,11 +4,11 @@ import json
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.management import call_command
-from tribunal.models import Account, AgendaItem, AgendaTransferEvent, Notification, Party, ReportQuestion, ReportRequest
+from tribunal.models import Account, AgendaItem, AgendaTransferEvent, CouncilSession, Notification, Party, ReportQuestion, ReportRequest
 from tribunal.services.applications import submit_application, review_application, save_answers
 from tribunal.services.council import (
     assign_case, create_session, place_agenda, record_attendance, hear_case,
-    save_hearing_outcome, close_session, transfer_agenda_item, update_session,
+    save_hearing_outcome, close_session, delete_draft_session, transfer_agenda_item, update_session,
 )
 from tribunal.services.decisions import record_decision, cast_vote, approve_decision
 from tribunal.services.reports import create_request, send_request, complete_request
@@ -643,3 +643,19 @@ def test_council_member_roster_excludes_administrators(client, people):
     assert {row["role"] for row in rows} <= {"president", "secretary", "member"}
     assert all(row["email"] if "email" in row else True for row in rows)
     assert str(people["admin"].pk) not in {row["id"] for row in rows}
+
+
+def test_administrator_can_delete_an_unassigned_draft_session(people):
+    session = create_session(people["admin"], date(2030, 5, 2), state="draft")
+
+    delete_draft_session(people["admin"], session.pk)
+
+    assert not CouncilSession.objects.filter(pk=session.pk).exists()
+
+
+def test_draft_session_with_agenda_is_retained(people, filed):
+    session = create_session(people["admin"], date(2030, 5, 2), state="draft")
+    place_agenda(people["member"], session.pk, filed.case_id)
+
+    with pytest.raises(ValidationError, match="agenda"):
+        delete_draft_session(people["admin"], session.pk)

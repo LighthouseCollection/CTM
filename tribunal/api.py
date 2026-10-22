@@ -1055,9 +1055,13 @@ def sessions(request):
     return JsonResponse(encoded(session, **session_data(session, request.user)), status=201)
 
 
-@endpoint(("PATCH",))
+@endpoint(("PATCH", "DELETE"))
 def update_session(request, session_id):
     from tribunal.projections import session_data
+    if request.method == "DELETE":
+        from tribunal.services.council import delete_draft_session
+        delete_draft_session(request.user, session_id)
+        return JsonResponse({}, status=204)
     from tribunal.services.council import update_session as command
 
     data = body(request)

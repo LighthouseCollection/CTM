@@ -497,16 +497,19 @@ test("tribunal session lists do not show date filters", () => {
 });
 
 
-test("upcoming sessions expose create edit and save actions in a Plenix toolbar", () => {
+test("upcoming session actions live in each row instead of the toolbar", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const source = council.slice(council.indexOf("function SessionList"), council.indexOf("function AgendaItemCard"));
-  assert.match(source, /h\(P\.Toolbar, \{ label: t\("tribunalSession"\) \}/);
-  assert.match(source, /icon: "add"/);
-  assert.match(source, /icon: "pencil"/);
-  assert.match(source, /icon: "save"/);
+  const toolbar = source.slice(source.indexOf('h(P.Toolbar'), source.indexOf('mode === "upcoming" && canManage(user) && formOpen'));
+  assert.match(toolbar, /icon: "add"/);
+  assert.doesNotMatch(toolbar, /icon: "pencil"/);
+  assert.match(source, /field: "session_actions"/);
+  assert.match(source, /onClick: \(\) => editSession\(row\)/);
+  assert.match(source, /onClick: \(\) => setDeleteTarget\(row\)/);
+  assert.match(source, /method: "DELETE"/);
+  assert.match(source, /P\.ConfirmDialog/);
   assert.match(source, /form: "ctm-session-form"/);
   assert.match(source, /t\("saveSession"\)/);
-  assert.doesNotMatch(source, /SessionFilters/);
 });
 
 test("case list workspaces are table-only and open cases from their action column", () => {
