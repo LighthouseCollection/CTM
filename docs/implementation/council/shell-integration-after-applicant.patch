@@ -1,0 +1,379 @@
+diff --git a/static/ctm/app.js b/static/ctm/app.js
+index b4b4300..636ab35 100644
+--- a/static/ctm/app.js
++++ b/static/ctm/app.js
+@@ -11,6 +11,8 @@
+     P = window.Plenix,
+     h = R.createElement;
+   const config = JSON.parse(document.getElementById("ctm-config").textContent);
++  // Separately loaded council workspace module (static/ctm/council.js), if present.
++  const councilModule = window.CTMCouncil || null;
+   const words = {
+     en: {
+       event_report_requested: "A report has been requested.",
+@@ -127,15 +129,16 @@
+       assessment: "Case Review",
+       decision: "Decision",
+       timeline: "Timeline",
+-      parties: "Parties",
++      parties: "Spouses",
+       marriage: "Marriage",
+       separation: "Separation",
+       reports: "Reports",
+       hearings: "Hearings",
+       evidence: "Evidence",
+       documents: "Documents",
+-      medical: "Medical & Psychological Reports",
++      medical: "Professional Assessments",
+       decree: "Decree",
++      decisionVoting: "Decision & Voting",
+       appeals: "Appeals",
+       audit: "Case Audit",
+       backCases: "Back to cases",
+@@ -154,7 +157,7 @@
+       unpresented: "Not presented",
+       planned: "Planned",
+       status: "Status",
+-      members: "Parties",
++      members: "Spouses",
+       view: "Open",
+       profile: "Profile",
+       council: "Council portal",
+@@ -292,15 +295,16 @@
+       assessment: "دراسة القضية",
+       decision: "القرار",
+       timeline: "التسلسل الزمني",
+-      parties: "أطراف القضية",
++      parties: "الزوجان",
+       marriage: "الزواج",
+       separation: "الانفصال",
+       reports: "التقارير",
+       hearings: "مناقشات القضية",
+       evidence: "الأدلة",
+       documents: "المستندات",
+-      medical: "التقارير الطبية والنفسية",
++      medical: "التقييمات المهنية",
+       decree: "الشهادة",
++      decisionVoting: "القرار والتصويت",
+       appeals: "التماسات إعادة النظر",
+       audit: "سجل القضية",
+       backCases: "العودة إلى القضايا",
+@@ -319,7 +323,7 @@
+       unpresented: "لم تُناقش",
+       planned: "محددة",
+       status: "الحالة",
+-      members: "أطراف القضية",
++      members: "الزوجان",
+       view: "فتح",
+       profile: "الملف الشخصي",
+       council: "بوابة المجلس",
+@@ -369,6 +373,7 @@
+     const response = await fetch(url, {
+       ...options,
+       credentials: "same-origin",
++      // FormData sets its own multipart boundary; JSON bodies keep the JSON type.
+       headers: {
+         Accept: "application/json",
+         ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+@@ -384,6 +389,11 @@
+     if (!response.ok) {
+       const error = new Error("request_failed");
+       error.status = response.status;
++      try {
++        error.data = await response.json();
++      } catch {
++        error.data = null;
++      }
+       throw error;
+     }
+     return response.json();
+@@ -1046,7 +1056,7 @@
+           messages: messages.items,
+           sessions: sessions.items,
+         }));
+-      else if (page === "session" && selection)
++      else if (page === "session" && selection && !(councilModule && user.portal === "council"))
+         request = Promise.all([
+           api(`/api/sessions/${selection}/agenda/`),
+           api("/api/council/members/"),
+@@ -1056,6 +1066,12 @@
+           members: members.items,
+           attendance: attendance.items,
+         }));
++      else if (
++        councilModule &&
++        user.portal === "council" &&
++        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings", "petition", "timeline", "statistics"].includes(page)
++      )
++        request = Promise.resolve({});
+       else if (page === "sessions") request = api("/api/sessions/");
+       else if (page === "applications") request = api("/api/applications/");
+       else if (["home", "cases", "archived", "past"].includes(page)) {
+@@ -1188,11 +1204,29 @@
+     const navItems = council
+       ? ["home", "sessions", "cases", "search", "archived", "statistics"]
+       : ["home", "applications", "appointments", "past"];
+-    const unavailable = new Set(["search", "statistics"]);
++    const unavailable = new Set(
++      [
++        ...(councilModule?.SearchWorkspace ? [] : ["search"]),
++        ...(councilModule?.StatisticsWorkspace ? [] : ["statistics"]),
++      ],
++    );
+     const caseContext =
+-      ["case", "communications", "documents", "evidence", "reports"].includes(
+-        page,
+-      ) && selection;
++      [
++        "case",
++        "communications",
++        "documents",
++        "evidence",
++        "reports",
++        "decision",
++        "decree",
++        "appeals",
++        "audit",
++        "medical",
++        "parties",
++        "hearings",
++        "petition",
++        "timeline",
++      ].includes(page) && selection;
+     const caseGroups = [
+       {
+         heading: t("overview"),
+@@ -1200,7 +1234,11 @@
+           (id) => ({
+             id,
+             label: t(id === "case" ? "summary" : id),
+-            disabled: id !== "case",
++            disabled: !(
++              id === "case" ||
++              (id === "parties" && councilModule?.CaseParties && council) ||
++              (id === "timeline" && councilModule?.CaseTimeline && council)
++            ),
+           }),
+         ),
+       },
+@@ -1218,15 +1256,24 @@
+         ].map((id) => ({
+           id,
+           label: t(id),
+-          disabled: !["documents", "evidence", "reports"].includes(id),
++          disabled: !(
++            ["documents", "evidence", "reports"].includes(id) ||
++            (id === "petition" && councilModule?.PetitionWorkspace) ||
++            (id === "medical" && councilModule?.AssessmentsWorkspace) ||
++            (id === "hearings" && councilModule?.CaseHearings)
++          ),
+         })),
+       },
+       {
+         heading: t("decision"),
+-        items: ["decree", "appeals"].map((id) => ({
++        items: ["decision", "decree", "appeals"].map((id) => ({
+           id,
+-          label: t(id),
+-          disabled: true,
++          label: t(id === "decision" ? "decisionVoting" : id),
++          disabled: !(
++            (id === "decision" && councilModule?.DecisionWorkspace) ||
++            (id === "decree" && councilModule?.DecreeWorkspace) ||
++            (id === "appeals" && councilModule?.AppealsWorkspace)
++          ),
+         })),
+       },
+     ];
+@@ -1265,6 +1312,14 @@
+                 groups: reviewGroups,
+               })
+             : null,
++          council && councilModule?.CaseAudit
++            ? h(P.NavList, {
++                label: t("audit"),
++                value: page,
++                onSelect: (id) => go(id, selection),
++                items: [{ id: "audit", label: t("audit") }],
++              })
++            : null,
+         )
+       : h(
+           P.NavPane,
+@@ -1372,6 +1427,69 @@
+           lang,
+           onCase: (id) => go("case", id),
+         });
++      if (page === "reports" && council && councilModule?.ReportsWorkspace)
++        return h(councilModule.ReportsWorkspace, {
++          key: selection,
++          api,
++          lang,
++          user,
++          caseId: selection,
++          reports: data.items,
++          renderReports: () =>
++            h(ReportReader, { key: selection, rows: data.items, t, lang }),
++        });
++      if (page === "timeline" && council && councilModule?.CaseTimeline)
++        return h(councilModule.CaseTimeline, { key: selection, api, lang, caseId: selection });
++      if (page === "petition" && council && councilModule?.PetitionWorkspace)
++        return h(councilModule.PetitionWorkspace, { key: selection, api, lang, user, caseId: selection });
++      if (page === "parties" && council && councilModule?.CaseParties)
++        return h(councilModule.CaseParties, { key: selection, api, lang, user, caseId: selection });
++      if (page === "hearings" && council && councilModule?.CaseHearings)
++        return h(councilModule.CaseHearings, {
++          key: selection,
++          api,
++          lang,
++          caseId: selection,
++          onSession: (id) => go("session", id),
++        });
++      if (page === "home" && council && councilModule?.CouncilHome)
++        return h(councilModule.CouncilHome, {
++          api,
++          lang,
++          user,
++          onCase: (id) => go("case", id),
++          onSession: (id) => go("session", id),
++          onReview: () => go("review"),
++          onNotifications: () => go("notifications"),
++        });
++      if (page === "medical" && council && councilModule?.AssessmentsWorkspace)
++        return h(councilModule.AssessmentsWorkspace, { key: selection, api, lang, user, caseId: selection });
++      if (page === "audit" && council && councilModule?.CaseAudit)
++        return h(councilModule.CaseAudit, { key: selection, api, lang, caseId: selection });
++      if (page === "appeals" && council && councilModule?.AppealsWorkspace)
++        return h(councilModule.AppealsWorkspace, {
++          key: selection,
++          api,
++          lang,
++          user,
++          caseId: selection,
++        });
++      if (page === "decree" && council && councilModule?.DecreeWorkspace)
++        return h(councilModule.DecreeWorkspace, {
++          key: selection,
++          api,
++          lang,
++          user,
++          caseId: selection,
++        });
++      if (page === "decision" && council && councilModule?.DecisionWorkspace)
++        return h(councilModule.DecisionWorkspace, {
++          key: selection,
++          api,
++          lang,
++          user,
++          caseId: selection,
++        });
+       if (page === "reports")
+         return h(ReportReader, { key: selection, rows: data.items, t, lang });
+       if (["documents", "evidence"].includes(page))
+@@ -1455,6 +1573,15 @@
+                 onSent: () => reload((n) => n + 1),
+               })
+             : null,
++          council && councilModule?.CallLog
++            ? h(councilModule.CallLog, {
++                key: `calls-${selection}`,
++                api,
++                lang,
++                user,
++                caseId: selection,
++              })
++            : null,
+         );
+       if (page === "case")
+         return h(
+@@ -1486,6 +1613,49 @@
+             }),
+           ),
+         );
++      if (councilModule?.StatisticsWorkspace && council && page === "statistics")
++        return h(councilModule.StatisticsWorkspace, { api, lang });
++      if (councilModule?.SearchWorkspace && council && page === "search")
++        return h(councilModule.SearchWorkspace, {
++          api,
++          lang,
++          user,
++          onCase: (id) => go("case", id),
++        });
++      if (councilModule && council && page === "review")
++        return h(councilModule.ReviewWorkspace, {
++          api,
++          lang,
++          user,
++          onCase: (id) => go("documents", id),
++          onBack: () => go("home"),
++        });
++      if (councilModule && council && page === "sessions")
++        return h(councilModule.SessionList, {
++          api,
++          lang,
++          user,
++          onOpen: (id) => go("session", id),
++        });
++      if (councilModule && council && page === "session")
++        return h(councilModule.SessionWorkspace, {
++          key: selection,
++          api,
++          lang,
++          user,
++          sessionId: selection,
++          onCase: (id) => go("case", id),
++          onBack: () => go("sessions"),
++          renderAttendance: ({ session, members, attendance, key }) =>
++            h(SessionAttendance, {
++              key,
++              sessionId: selection,
++              session,
++              members,
++              initial: attendance,
++              t,
++            }),
++        });
+       if (page === "session")
+         return h(
+           P.Stack,
+@@ -1571,11 +1741,26 @@
+               : h(P.EmptyState, { title: t("noCurrent") }),
+         );
+       }
++      if (council && councilModule?.CasesTable && ["cases", "archived"].includes(page))
++        return h(councilModule.CasesTable, {
++          cases: data.items,
++          archived: page === "archived",
++          lang,
++          onOpen: (id) => go("case", id),
++        });
+       if (["home", "cases", "archived", "past"].includes(page))
+         return h(
+           P.Stack,
+           null,
+           heading(t(page)),
++          councilModule && council && page === "home"
++            ? h(councilModule.ReviewQueuePanel, {
++                api,
++                lang,
++                user,
++                onOpen: () => go("review"),
++              })
++            : null,
+           caseList(
+             data.items.filter((row) =>
+               ["archived", "past"].includes(page)
+diff --git a/tribunal/templates/tribunal/shell.html b/tribunal/templates/tribunal/shell.html
+index d5aa0a5..b57b56e 100644
+--- a/tribunal/templates/tribunal/shell.html
++++ b/tribunal/templates/tribunal/shell.html
+@@ -15,6 +15,9 @@
+   <script defer src="{% static 'ctm/applicant-appointments.js' %}"></script>
+   <script defer src="{% static 'ctm/applicant-payments.js' %}"></script>
+   <script defer src="{% static 'ctm/applicant.js' %}"></script>
++  <script defer src="{% static 'ctm/council.js' %}"></script>
++  <script defer src="{% static 'ctm/council-case.js' %}"></script>
++  <script defer src="{% static 'ctm/council-decree.js' %}"></script>
+   <script defer src="{% static 'ctm/app.js' %}"></script>
+ </head>
+ <body>
