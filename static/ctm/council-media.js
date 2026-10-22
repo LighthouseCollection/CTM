@@ -343,8 +343,13 @@
       noFiles: "No technically cleared files are available in this section.",
       chooseFile: "Select a file",
       download: "Download",
-      openPdf: "Open PDF",
-      pdfExternal: "The PDF opens in the browser's viewer through the protected file link. The embedded viewer becomes available once its viewer files are configured.",
+      openPdf: "Open in browser",
+      failedEngine: "The document viewer could not start. Open the PDF in the browser instead.",
+      failedAccess: "This document can't be opened: it is missing, or your access to it was withdrawn.",
+      failedParse: "This file is not a readable PDF. Download it or open it in the browser instead.",
+      failedRender: "A page could not be drawn. Try again, or open the PDF in the browser.",
+      pdfFallbackHint: "The browser's own PDF viewer uses the same protected link.",
+      pdfAccessHint: "Opening it in the browser uses the same protected link and will be refused too if access was withdrawn.",
       wordDownload: "Word documents open in a compatible application after download.",
       fullScreen: "Full screen",
       imageAlt: "Evidence image",
@@ -542,8 +547,13 @@
       noFiles: "لا توجد ملفات اجتازت فحص الأمان في هذا القسم.",
       chooseFile: "اختر ملفًا",
       download: "تنزيل",
-      openPdf: "فتح ملف PDF",
-      pdfExternal: "يُفتح ملف PDF في عارض المتصفح عبر رابط الملف المحمي. ويصبح العارض المضمَّن متاحًا بعد إعداد ملفاته.",
+      openPdf: "فتح في المتصفح",
+      failedEngine: "تعذر تشغيل عارض المستندات. افتح ملف PDF في المتصفح بدلًا من ذلك.",
+      failedAccess: "لا يمكن فتح هذا المستند: إما أنه غير موجود أو سُحب حق اطلاعك عليه.",
+      failedParse: "هذا الملف ليس ملف PDF قابلًا للقراءة. نزّله أو افتحه في المتصفح بدلًا من ذلك.",
+      failedRender: "تعذر عرض إحدى الصفحات. حاول مجددًا أو افتح ملف PDF في المتصفح.",
+      pdfFallbackHint: "يستخدم عارض PDF الخاص بالمتصفح الرابط المحمي نفسه.",
+      pdfAccessHint: "يستخدم الفتح في المتصفح الرابط المحمي نفسه، وسيُرفض كذلك إذا سُحب حق الاطلاع.",
       wordDownload: "تُفتح مستندات Word في تطبيق متوافق بعد تنزيلها.",
       fullScreen: "ملء الشاشة",
       imageAlt: "صورة دليل",
@@ -596,6 +606,9 @@
         .map((k) => [k, t(k)])
         .concat([["failed", t("failed")]]),
     );
+  const PDF_FAILURES = ["failedEngine", "failedAccess", "failedParse", "failedRender"];
+  const pdfStrings = (t) =>
+    Object.fromEntries(["previous", "next", "page", "zoom", "thumbnails", "loading", "empty", "retry", ...PDF_FAILURES].map((k) => [k, t(k)]));
   const documentStrings = (t) =>
     Object.fromEntries(["previous", "next", "page", "zoom", "thumbnails", "loading", "failed", "empty", "retry"].map((k) => [k, t(k)]));
 
@@ -1924,6 +1937,35 @@
 
   // ---------- Evidence and documents ----------
 
+  // Embedded PDF (Plenix 0.60.1 DocumentViewer; PDF.js from the CDN vendor folder via vendorBase()). The document is
+  // fetched from the protected /api/files/{id}/?view=1 route with the session; the server sends private, no-store.
+  // Nothing is written to browser storage. A page already drawn stays on screen until the viewer closes: withdrawing
+  // access stops later loads, it cannot erase what was already shown or downloaded.
+  function PdfPreview({ file, lang, inline }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [reason, setReason] = R.useState(null);
+    const override = window.CTM_PDF_VIEWER || null; // optional { moduleUrl, workerUrl } when served separately
+    return h(
+      P.Stack,
+      { gap: "sm" },
+      h(P.DocumentViewer, {
+        key: file.id,
+        kind: "pdf",
+        src: inline,
+        label: file.name,
+        strings: pdfStrings(t),
+        onError: (e) => setReason((e && e.reason) || "engine"),
+        ...(override && override.moduleUrl ? { pdfModuleUrl: override.moduleUrl, pdfWorkerUrl: override.workerUrl } : {}),
+      }),
+      reason && reason !== "access" ? h(P.Text, { variant: "secondary" }, t("pdfFallbackHint")) : null,
+      reason === "access" ? h(P.Text, { variant: "secondary" }, t("pdfAccessHint")) : null,
+      h(P.Inline, { wrap: true }, h(P.Button, { size: "sm", href: inline, target: "_blank", rel: "noopener noreferrer" }, t("openPdf"))),
+    );
+  }
+
   function FilePreview({ file, lang, images, onFullScreen }) {
     const R = window.React,
       P = window.Plenix,
@@ -1931,7 +1973,6 @@
       t = translator(lang);
     const kind = viewerKind(file);
     const urls = fileUrls(file);
-    const pdfConfig = window.CTM_PDF_VIEWER || null; // { moduleUrl, workerUrl } supplied by governance packaging
     let viewer;
     if (kind === "image" && urls.inline)
       viewer = h(
@@ -1949,23 +1990,7 @@
     else if (kind === "audio" || kind === "video")
       // Authorized download route; media elements stream it with byte ranges.
       viewer = h(P.MediaPlayer, { key: file.id, src: urls.download, kind, label: file.name, strings: mediaStrings(t) });
-    else if (kind === "pdf" && urls.inline && pdfConfig && pdfConfig.moduleUrl)
-      viewer = h(P.DocumentViewer, {
-        key: file.id,
-        kind: "pdf",
-        src: urls.inline,
-        label: file.name,
-        pdfModuleUrl: pdfConfig.moduleUrl,
-        pdfWorkerUrl: pdfConfig.workerUrl,
-        strings: documentStrings(t),
-      });
-    else if (kind === "pdf" && urls.inline)
-      viewer = h(
-        P.Stack,
-        { gap: "sm" },
-        h(P.Text, { variant: "secondary" }, t("pdfExternal")),
-        h(P.Inline, null, h(P.Button, { href: urls.inline, target: "_blank", rel: "noopener noreferrer" }, t("openPdf"))),
-      );
+    else if (kind === "pdf" && urls.inline) viewer = h(PdfPreview, { key: file.id, file, lang, inline: urls.inline });
     else viewer = h(P.Text, { variant: "secondary" }, t("wordDownload"));
     return h(
       P.Stack,
@@ -2100,6 +2125,9 @@
     RecordingStatusList,
     TranscriptsPanel,
     TranscriptViewer,
+    PdfPreview,
+    FilePreview,
+    pdfStrings,
     answerEntries,
     extensionFor,
     sizeLimitBytes,
