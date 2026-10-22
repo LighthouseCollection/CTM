@@ -1540,6 +1540,8 @@
           onBack: () => go("applications", null, true),
           onNavigationGuard: registerApplicantGuard,
         });
+      if (page === "notifications" && !council && window.CTMApplicantNotifications)
+        return h(window.CTMApplicantNotifications.Inbox, { api, lang, onCase: id => go("case", id), onNavigationGuard: registerApplicantGuard });
       if (page === "notifications")
         return h(NotificationInbox, {
           key: revision,
