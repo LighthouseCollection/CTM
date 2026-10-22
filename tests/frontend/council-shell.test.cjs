@@ -607,3 +607,10 @@ test("council-facing copy never uses presidential terminology", () => {
   for (const file of ["static/ctm/council-case.js", "static/ctm/council-decree.js"])
     assert.doesNotMatch(fs.readFileSync(file, "utf8"), /presidential/i, file);
 });
+
+
+test("scheduled hearing numbers are sequential within the hearing tab", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(council, /hearing_number: first \? null : index \+ 1/);
+  assert.match(council, /field: "hearing_number"/);
+});

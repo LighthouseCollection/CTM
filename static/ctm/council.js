@@ -2312,8 +2312,10 @@
       const first = n === 1;
       // DataTable supplies renderers with its declared row fields. Keep a person's
       // name and gender in the same declared value so the CDN DataPill receives both.
-      const rows = groups[n].map((row) => ({
+      const rows = groups[n].map((row, index) => ({
         ...row,
+        // Hearing numbers are scoped to the cases presented in this session.
+        hearing_number: first ? null : index + 1,
         applicant: { name: row.applicant_name, gender: row.applicant_gender === "M" ? "male" : row.applicant_gender === "F" ? "female" : undefined },
         respondent: { name: row.respondent_name, gender: row.respondent_gender === "M" ? "male" : row.respondent_gender === "F" ? "female" : undefined },
       }));
@@ -2330,7 +2332,7 @@
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ]
         : [
-            { title: "#", field: "position", kind: "name", width: "3rem" },
+            { title: "#", field: "hearing_number", kind: "name", width: "3rem" },
             { title: t("applicant"), field: "applicant", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
             { title: t("respondent"), field: "respondent", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
