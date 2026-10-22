@@ -64,6 +64,8 @@ def _assign_case(actor, case_id, member_id, president_id):
     if not assignment_president(president):
         raise PermissionDenied("An active president must authorize the assignment.")
     staff(member)
+    if member.role == "president":
+        raise ValidationError("The council president cannot be assigned as a case manager.")
     previous = case.assigned_member
     case.assigned_member = member
     case.save(update_fields=["assigned_member"])

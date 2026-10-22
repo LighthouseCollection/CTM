@@ -74,7 +74,7 @@ def populate_current_session_dummy_agenda(apps, schema_editor):
         return
     presenter = (
         Account.objects.filter(
-            is_active=True, role__in=["member", "secretary", "president", "admin"]
+            is_active=True, role__in=["member", "secretary"]
         )
         .order_by("email")
         .first()
