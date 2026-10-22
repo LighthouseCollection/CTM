@@ -440,6 +440,7 @@ test("upcoming sessions use a full table and load the selected session into the 
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const source = council.slice(council.indexOf("function SessionList"), council.indexOf("function AgendaItemCard"));
   assert.doesNotMatch(source, /P\.SplitView/);
+  assert.match(source, /const \[selected, select\] = R\.useState\(""\)/);
   assert.match(source, /function editSession\(row\)/);
   assert.match(source, /rows, selected, onSelect: select, empty: t\(emptyKey\), isStatic: true/);
   assert.match(source, /empty: t\(emptyKey\), isStatic: true/);

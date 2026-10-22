@@ -1296,6 +1296,7 @@
       () => Promise.all([api("/api/sessions/"), api("/api/council/members/")]).then(([sessions, members]) => ({ sessions, members })),
       [user?.id],
     );
+    const [selected, select] = R.useState("");
     const [archiveAgendaState] = useLoad(
       () => selected && mode === "archived" ? api(`/api/sessions/${encodeURIComponent(selected)}/agenda/`) : Promise.resolve({ items: [] }),
       [selected, mode],
