@@ -129,6 +129,11 @@
     );
   }
 
+  function casePlacementLabel(row) {
+    const names = (row?.party_names || []).filter((name) => String(name || "").trim());
+    return names.join(" | ") || row?.number || "";
+  }
+
   function presidents(members) {
     return (members || []).filter((row) => row.role === "president");
   }
@@ -1923,15 +1928,21 @@
       { label: t("casesToAssign"), value: String(pendingAssignments), data: true },
       { label: t("scheduledCasesForHearing"), value: String(scheduledHearings), data: true },
     ];
-    // EntityHeader owns its action aside and divider. Its documented actions
-    // are icon buttons, with the translated label exposed as the tooltip and
-    // accessible name.
-    const sessionHeaderActions = [
+    // The current-session header needs labeled capability actions and its state
+    // control in the aside. EntityHeader only accepts icon-only entity actions,
+    // so this uses its documented structural classes and tokenized anatomy.
+    const sessionHeaderActions = (current ? [
       planned && manage ? { icon: "folder-open", label: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) } : null,
       planned ? { icon: "calendar", label: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) } : null,
       { icon: "settings-users", label: t("attendance"), disabled: pending, onClick: () => setDialog({ kind: "attendance" }) },
-    ].filter(Boolean);
+    ] : []).filter(Boolean);
     const sessionStatus = session.state === "closed" ? "adjourned" : session.state === "draft" ? "draft" : "in-session";
+    const headerFact = (fact, index) => h(
+      "div",
+      { key: `${fact.label}-${index}`, className: "plx-entity-header__fact" },
+      h("dt", { className: "plx-entity-header__fact-label" }, fact.label),
+      h("dd", { className: "plx-entity-header__fact-value" }, fact.data ? h(P.Text, { variant: "data" }, fact.value) : fact.value),
+    );
 
     async function run(action, success, extra) {
       setPending(true);
@@ -1995,7 +2006,7 @@
                 onChange: (event) => setChoice((old) => ({ ...old, [`part${part}`]: event.target.value })),
                 options: [
                   { value: "", label: candidates.length ? t("chooseCase") : t("noCandidates") },
-                  ...candidates.map((row) => ({ value: row.id, label: row.number })),
+                  ...candidates.map((row) => ({ value: row.id, label: casePlacementLabel(row) })),
                 ],
               }),
             ),
@@ -2120,28 +2131,55 @@
       P.Stack,
       { gap: "lg" },
       !current && onBack ? h(P.Inline, null, h(P.Button, { variant: "ghost", onClick: onBack }, t("backSessions"))) : null,
-      h(P.EntityHeader, {
-        headingLevel: 1,
-        title: sessionLabel(session.date, t),
-        subtitle: formatSessionStart(session.starts_at, lang) || t("timeNotRecorded"),
-        media: { icon: "calendar", hue: "blue" },
-        facts: sessionFacts,
-        actions: sessionHeaderActions,
-      }),
-      current
-        ? h(
-            P.SegmentedControl, {
-              label: t("tribunalSession"),
-              size: "sm",
-              value: sessionStatus,
-              options: [
-                { value: "draft", label: t("sessionStatusDraft"), icon: "edit" },
-                { value: "in-session", label: t("sessionStatusInSession"), icon: "calendar" },
-                { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "pause" },
-              ],
-              onChange: (value) => value === "adjourned" && planned && manage && setDialog({ kind: "adjourn" }),
-            })
-        : null,
+      h(
+        "header",
+        { className: `plx-entity-header${current ? "" : " plx-entity-header--solo"}` },
+        h(
+          "div",
+          { className: "plx-entity-header__layout" },
+          h(
+            "div",
+            { className: "plx-entity-header__main" },
+            h(
+              "div",
+              { className: "plx-entity-header__lead" },
+              h(
+                "div",
+                { className: "plx-entity-header__heading" },
+                h("span", { className: "plx-entity-header__media" }, h("span", { className: "plx-entity-header__tile", "data-plx-media-hue": "blue", "aria-hidden": true }, h(P.Icon, { name: "calendar", size: "lg" }))),
+                h("div", { className: "plx-entity-header__text" },
+                  h("h1", { className: "plx-entity-header__title" }, sessionLabel(session.date, t)),
+                  h("p", { className: "plx-entity-header__subtitle" }, formatSessionStart(session.starts_at, lang) || t("timeNotRecorded")),
+                ),
+              ),
+              h("div", { className: "plx-entity-header__rule", "aria-hidden": true }),
+              h("dl", { className: "plx-entity-header__details" }, ...sessionFacts.map(headerFact)),
+            ),
+          ),
+          current ? h(
+            "div",
+            { className: "plx-entity-header__aside" },
+            h(
+              P.Stack,
+              { gap: "sm" },
+              h("div", { className: "plx-entity-header__actions" },
+                ...sessionHeaderActions.map((action) => h(P.Button, { key: action.label, size: "sm", icon: action.icon, variant: action.primary ? "primary" : "secondary", disabled: action.disabled, onClick: action.onClick }, action.label)),
+              ),
+              current ? h(P.SegmentedControl, {
+                label: t("tribunalSession"),
+                size: "sm",
+                value: sessionStatus,
+                options: [
+                  { value: "draft", label: t("sessionStatusDraft"), icon: "edit" },
+                  { value: "in-session", label: t("sessionStatusInSession"), icon: "calendar" },
+                  { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "pause" },
+                ],
+                onChange: (value) => value === "adjourned" && planned && manage && setDialog({ kind: "adjourn" }),
+              }) : null,
+            ),
+          ) : null,
+        ),
+      ),
       !planned ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
@@ -2727,6 +2765,7 @@
     hearingTitle,
     part1Candidates,
     part2Candidates,
+        casePlacementLabel,
     presidents,
     assignmentAuthorizers,
     canRecordAssignment,

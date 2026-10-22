@@ -44,18 +44,15 @@ test("session lifecycle changes refresh their parent destination list", () => {
   assert.match(council, /onChanged: retry/);
 });
 
-test("the current session uses the default EntityHeader actions and non-resizable agenda grids", () => {
+test("the current session keeps labeled actions and its status control inside the CDN header anatomy", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /mode === "current"/);
-  assert.match(council, /h\(P\.EntityHeader/);
-  assert.doesNotMatch(council, /h\(P\.RecordPage\.Header/);
-  assert.match(council, /media: \{ icon: "calendar"/);
-  assert.match(council, /facts: sessionFacts/);
-  assert.match(council, /actions: sessionHeaderActions/);
-  assert.match(council, /const sessionHeaderActions = \[/);
-  assert.match(council, /icon: "folder-open", label: t\("addAssignmentCase"\)/);
-  assert.match(council, /icon: "calendar", label: t\("addHearingCase"\)/);
-  assert.match(council, /icon: "settings-users", label: t\("attendance"\)/);
+  assert.match(council, /plx-entity-header\$\{current/);
+  assert.match(council, /className: "plx-entity-header__aside"/);
+  assert.match(council, /className: "plx-entity-header__actions"/);
+  assert.match(council, /name: "calendar", size: "lg"/);
+  assert.match(council, /sessionHeaderActions\.map/);
+  assert.match(council, /h\(P\.Button, \{ key: action\.label, size: "sm", icon: action\.icon/);
   for (const key of ["addAssignmentCase", "addHearingCase", "attendance"])
     assert.match(council, new RegExp(`t\\("${key}"\\)`), key);
   assert.match(council, /t\("casesToAssign"\)/);

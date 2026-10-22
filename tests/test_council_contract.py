@@ -100,6 +100,13 @@ def test_session_workspace_projects_saved_header_and_assignment_facts(client, fi
     assert row["previous_recommendation"] is None
 
 
+def test_case_listing_exposes_party_names_for_session_placement_choices(client, filed, people):
+    Party.objects.create(case=filed.case, slot="B", name="Mary Smith")
+    login(client, people["secretary"])
+    row = next(row for row in client.get("/api/cases/").json()["items"] if row["id"] == str(filed.case_id))
+    assert row["party_names"] == ["John Smith", "Mary Smith"]
+
+
 def test_session_workspace_exposes_the_last_recorded_hearing_recommendation(client, hearing, filed, people):
     save_hearing_outcome(people["member"], hearing.pk, "Private notes", "Proceed with reconciliation")
     following = create_session(people["admin"], date(2030, 1, 9))

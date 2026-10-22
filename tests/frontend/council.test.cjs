@@ -125,6 +125,12 @@ test("Part 2 offers assigned open cases; members see only their own", () => {
   assert.deepEqual([...C.part2Candidates(cases, [{ case_id: "c1" }], member)].map((c) => c.id), []);
 });
 
+test("session placement choices use the parties' names while retaining the case ID as their value", () => {
+  assert.equal(C.casePlacementLabel({ number: "20261020-02", party_names: ["Mickey Mouse", "Minnie Mouse"] }), "Mickey Mouse | Minnie Mouse");
+  assert.equal(C.casePlacementLabel({ number: "20261020-02", party_names: ["Mickey Mouse"] }), "Mickey Mouse");
+  assert.equal(C.casePlacementLabel({ number: "20261020-02", party_names: [] }), "20261020-02");
+});
+
 test("assignment requires a council member and an authorizing President", () => {
   const members = [
     { id: "m1", role: "member" },

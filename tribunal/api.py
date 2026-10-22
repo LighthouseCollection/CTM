@@ -456,12 +456,13 @@ def cases(request):
     if request.user.role == "applicant":
         qs = qs.filter(parties__account=request.user).distinct()
     return JsonResponse(page_records(
-        qs.select_related("assigned_member").order_by("-created_at", "-id"), request,
+        qs.select_related("assigned_member").prefetch_related("parties").order_by("-created_at", "-id"), request,
         default_limit=100,
         serialize=lambda c: encoded(c, number=c.number, status=c.status,
             assigned_member_id=str(c.assigned_member_id) if c.assigned_member_id else None,
             assigned_member=f"{c.assigned_member.first_name} {c.assigned_member.last_name}".strip()
-            if c.assigned_member else None),
+            if c.assigned_member else None,
+            party_names=[party.name for party in sorted(c.parties.all(), key=lambda party: party.slot)]),
     ))
 
 
