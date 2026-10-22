@@ -24,6 +24,14 @@ test("a decree needs the current, presidentially approved certificate decision",
   assert.equal(C.decreeEligibility({ ...approved, type: "deferred" }), "deferredNoCertificate");
 });
 
+test("the decree editor selects its template from the recorded decision type", () => {
+  assert.equal(C.decreeTemplateFor({ type: "diss-applicant" }).kind, "dissolution");
+  assert.equal(C.decreeTemplateFor({ type: "null-granted" }).kind, "nullity");
+  assert.match(source, /function DecreeTemplateDraft\(/);
+  assert.match(source, /ctm-decree-workspace/);
+  assert.doesNotMatch(source.slice(source.indexOf("function DecreeWorkspace"), source.indexOf("// ---------- Appeals")), /window\.CTMShell\.Workspace/);
+});
+
 test("decree ID follows DCR-[case] and the appeal proceeding suffix", () => {
   assert.equal(C.decreeReference("20261020-01", { kind: "initial", sequence: 1 }), "DCR-20261020-01");
   assert.equal(C.decreeReference("20261020-01", { kind: "appeal", sequence: 1 }), "DCR-20261020-01-A1");

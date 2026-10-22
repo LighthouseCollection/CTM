@@ -328,3 +328,13 @@
   .ctm-council-vote-table__row > div,
   .ctm-council-vote-table__row > label { padding: .5rem; }
 }
+/* The decree editor follows the decision-specific template selected by the current decision. */
+.ctm-decree-template {
+  display: grid;
+  gap: var(--plx-space-md, 1rem);
+  margin-block-start: var(--plx-space-md, 1rem);
+}
+
+.ctm-decree-template .plx-panel {
+  background: var(--plx-color-surface-subtle, #f8fafc);
+}
