@@ -2618,10 +2618,8 @@
       h(P.Text, { as: "h1", variant: "title" }, t("petitionTitle")),
       ...petitions.map((row) => {
         const answers = petitionAnswers(row.answers);
-        const labelled = answers.every(([code]) => base.fieldLabel(row, code, lang));
         return h(P.Panel, { icon: "doc-text", key: row.id, title: t("petition"), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
           h(P.Stack, { gap: "sm" },
-            !labelled ? h(P.Notice, { tone: "info" }, bt("codesNotice")) : null,
             answers.length ? h(P.PropertyList, { layout: "stacked" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
           ),
         );

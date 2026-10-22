@@ -151,4 +151,5 @@ test("assessment reports are excluded from the ordinary report reader", () => {
 test("petition view shows the submitted petition without a redundant navigation notice", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.doesNotMatch(councilCase, /petitionReadOnly/);
+  assert.doesNotMatch(councilCase, /codesNotice/);
 });
