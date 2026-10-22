@@ -33,8 +33,10 @@
       ? h(P.Icon, { name: "person_cancel", "aria-hidden": true })
       : id === "marriage"
         ? h(P.Icon, { name: "wedding", "aria-hidden": true })
-      : id === "decision" || id === "hearings"
+      : id === "decision"
         ? h(P.Icon, { name: "gavel", "aria-hidden": true })
+      : id === "hearings"
+        ? h(P.Icon, { name: "balance", "aria-hidden": true })
         : id === "decree"
           ? h(P.Icon, { name: "approval", "aria-hidden": true })
           : id === "appeals"

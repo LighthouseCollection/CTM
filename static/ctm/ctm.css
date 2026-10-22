@@ -24,6 +24,12 @@
 
 .ctm-spouse-profile-section__heading {
   inline-size: 100%;
+  color: var(--plx-sys-color-primary, var(--plx-color-primary));
+}
+
+.ctm-spouse-profile-section__heading .plx-icon,
+.ctm-spouse-profile-section__heading .plx-section-heading {
+  color: inherit;
 }
 
 .ctm-spouse-profile-section__divider {

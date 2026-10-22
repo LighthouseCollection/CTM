@@ -434,6 +434,8 @@ ${ar}` : en;
       notRegistered: "Not registered",
       personalDetails: "Personal Details",
       contact: "Contact",
+      editContact: "Edit contact",
+      saveContact: "Save contact",
       career: "Career",
       churchAffiliation: "Church Affiliation",
       otherNamesKnownBy: "Other Names Known By",
@@ -761,6 +763,8 @@ ${ar}` : en;
       notRegistered: "غير مسجَّل",
       personalDetails: "البيانات الشخصية",
       contact: "التواصل",
+      editContact: "تعديل بيانات التواصل",
+      saveContact: "حفظ بيانات التواصل",
       career: "العمل والتعليم",
       churchAffiliation: "الانتماء الكنسي",
       otherNamesKnownBy: "أسماء أخرى معروفة بها",
@@ -2319,6 +2323,69 @@ ${ar}` : en;
     );
   }
 
+  function SpouseContactSection({ api, P, h, t, user, record, party, onSaved }) {
+    const R = window.React;
+    const [editing, setEditing] = R.useState(false);
+    const [form, setForm] = R.useState({});
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const proceeding = openProceeding(record);
+    const canWrite = writerFor(user, null, record) && proceeding?.status === "open";
+    const submitted = party.profile?.contact || {};
+    const edited = record.council_edits?.[`contact_${party.id}`]?.value;
+    const values = edited && typeof edited === "object" && !Array.isArray(edited) ? { ...submitted, ...edited } : submitted;
+    const fields = [
+      ["address", t("address")],
+      ["mobile", t("mobileNumber")],
+      ["email", t("emailAddress"), "email"],
+      ["immigration_status", t("immigrationStatus")],
+      ["residing_with", t("residingWith")],
+    ];
+    const startEditing = () => {
+      setForm(Object.fromEntries(fields.map(([key]) => [key, values[key] || ""])));
+      setFailure(null);
+      setEditing(true);
+    };
+    const save = async (event) => {
+      event.preventDefault();
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`, {
+          method: "POST",
+          body: JSON.stringify({ fact_code: `case_card.contact_${party.id}`, value: form }),
+        });
+        setEditing(false);
+        onSaved();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    };
+    return h(
+      P.Stack,
+      { gap: "sm", className: "ctm-spouse-profile-section ctm-spouse-profile-section--two-columns" },
+      h(
+        P.Inline,
+        { gap: "sm", align: "center", className: "ctm-spouse-profile-section__heading" },
+        h(P.Icon, { name: "message", label: t("contact") }),
+        h(P.SectionHeading, { level: 2 }, t("contact")),
+        h(P.Divider, { className: "ctm-spouse-profile-section__divider" }),
+        canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, t("editContact")) : null,
+      ),
+      editing
+        ? h(
+            P.Form,
+            { onSubmit: save, label: t("contact"), noValidate: true },
+            h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+            failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+            h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveContact"))),
+          )
+        : h(P.PropertyList, { layout: "stacked" }, ...fields.map(([key, label]) => h(P.PropertyList.Item, { key, label }, values[key] || "—"))),
+    );
+  }
+
   function spousePhoto(P, h, party) {
     // Avatar preserves the intended photograph and falls back to initials when a
     // submitted file is unavailable; it never renders an error message in the card.
@@ -2422,13 +2489,7 @@ ${ar}` : en;
                 ["nationality", party.profile?.personal?.nationality],
                 ["awarenessOfApplication", party.profile?.personal?.awareness_of_application],
               ]),
-              spouseProfileSection(P, h, t, t("contact"), "message", [
-                ["address", party.profile?.contact?.address],
-                ["mobileNumber", party.profile?.contact?.mobile],
-                ["emailAddress", party.profile?.contact?.email],
-                ["immigrationStatus", party.profile?.contact?.immigration_status],
-                ["residingWith", party.profile?.contact?.residing_with],
-              ], true),
+              h(SpouseContactSection, { api, P, h, t, user, record, party, onSaved: retry }),
               spouseProfileSection(P, h, t, t("career"), "document", [
                 ["education", party.profile?.career?.education],
                 ["yearOfGraduation", party.profile?.career?.graduation_year],
@@ -2529,8 +2590,7 @@ ${ar}` : en;
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, notice) : null,
       failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
     ) : h(P.EmptyState, { title: t("noHearings") });
-    const currentContent = current ? h(P.Stack, { gap: "lg" },
-      h("header", { className: "plx-entity-header ctm-hearing-header" }, h("div", { className: "plx-entity-header__layout" },
+    const currentHeader = current ? h("header", { className: "plx-entity-header ctm-hearing-header" }, h("div", { className: "plx-entity-header__layout" },
         h("div", { className: "plx-entity-header__main" }, h("div", { className: "plx-entity-header__lead" },
           h("div", { className: "plx-entity-header__heading" },
             h("span", { className: "plx-entity-header__media" }, h("span", { className: "plx-entity-header__tile", "data-plx-media-hue": "green", "aria-hidden": true }, h(P.Icon, { name: "calendar", size: "lg" }))),
@@ -2541,13 +2601,14 @@ ${ar}` : en;
           h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "calendar", disabled: !current.session.can_reschedule, onClick: () => onSession(current.session.id) }, t("rescheduleHearing")),
           h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "settings-users", onClick: () => setAttendanceOpen((open) => !open) }, t("councilAttendance")),
         )),
-      )),
+      )) : null;
+    const currentContent = current ? h(P.Stack, { gap: "lg" },
       attendance,
       outcome,
     ) : h(P.EmptyState, { title: t("noHearings") });
     const pastContent = past.length ? h(P.Stack, { gap: "md" }, ...past.map((row) => h(P.Panel, { key: row.item.id, icon: "calendar", title: title(row), description: `${bt("councilSession")} ${row.session.date}` }, h(P.Inline, { justify: "end" }, h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open")))))) : h(P.EmptyState, { title: t("noHearings") });
-    return h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
-      items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] });
+    return h(P.Stack, { gap: "lg" }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
+      items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] }));
   }
 
   function HearingAttendance({ api, lang, user, sessionId, hearingId, onClose }) {

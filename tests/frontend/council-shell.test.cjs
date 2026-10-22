@@ -304,7 +304,8 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /collapsible: true/);
   assert.match(councilCase, /profile\?\.contact/);
   assert.match(councilCase, /function spouseProfileSection\(P, h, t, title, icon, values, twoColumns = false\)/);
-  assert.match(councilCase, /t\("contact"\), "message", \[\s*[\s\S]*?\], true\)/);
+  assert.match(councilCase, /function SpouseContactSection\(\{ api, P, h, t, user, record, party, onSaved \}\)/);
+  assert.match(councilCase, /h\(SpouseContactSection, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
   const councilCss = fs.readFileSync("static/ctm/ctm.css", "utf8");
   assert.match(councilCss, /ctm-spouse-profile-section--two-columns/);
   assert.match(councilCss, /grid-column: 1 \/ -1/);
@@ -314,10 +315,11 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /P\.SectionHeading, \{ level: 2 \}/);
   assert.match(councilCase, /P\.Divider, \{ className: "ctm-spouse-profile-section__divider" \}/);
   assert.doesNotMatch(councilCase, /ctm-spouse-profile-columns/);
-  const personal = councilCase.indexOf('t("personalDetails")');
-  const contact = councilCase.indexOf('t("contact")');
-  const career = councilCase.indexOf('t("career")');
-  const church = councilCase.indexOf('t("churchAffiliation")');
+  const spouseCards = councilCase.slice(councilCase.indexOf("function CaseParties"));
+  const personal = spouseCards.indexOf('t("personalDetails")');
+  const contact = spouseCards.indexOf("h(SpouseContactSection");
+  const career = spouseCards.indexOf('t("career")');
+  const church = spouseCards.indexOf('t("churchAffiliation")');
   assert.ok(personal < contact && contact < career && career < church, "spouse profile sections stay in the requested vertical order");
   assert.match(councilCase, /manage && record\.status === "open" && record\.parties\.length < 2/);
 });
@@ -395,11 +397,11 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(councilCase, /"Reconciliation"/);
   assert.match(app, /const collaborationGroups = \[/);
   assert.match(app, /items: ["notes", "communications"]/);
-  assert.match(app, /id === "decision" \|\| id === "hearings"/);
+  assert.match(app, /id === "decision"\s*\? h\(P\.Icon, \{ name: "gavel"/);
   assert.match(app, /name: "gavel"/);
   assert.match(app, /id === "marriage"\s*\? h\(P\.Icon, \{ name: "wedding"/);
   assert.match(app, /id === "decree"\s*\? h\(P\.Icon, \{ name: "approval"/);
-  assert.match(app, /id === "decision" \|\| id === "hearings"/);
+  assert.match(app, /id === "hearings"\s*\? h\(P\.Icon, \{ name: "balance"/);
   assert.match(app, /groups: collaborationGroups/);
   assert.match(app, /page === "notes" && council && councilModule\?\.CaseNotesWorkspace/);
   assert.match(app, /onGoDecision: \(\) => go\(\"decision\"\)/);
@@ -549,6 +551,24 @@ test("case hearings use full-width current and past tabs with an in-progress hea
   assert.match(councilCase, /decisionMade: "Decision Made — Go to Decision tab"/);
   assert.match(councilCase, /recommendationOnly: "Recommendation \(no final decision yet\)"/);
   assert.doesNotMatch(councilCase.slice(councilCase.indexOf("function CaseHearings"), councilCase.indexOf("// ---------- Petition")), /CTMShell\.Workspace/);
+});
+
+test("case hearing header is rendered above its tabs and Hearings uses the balance icon", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const app = fs.readFileSync("static/ctm/app.js", "utf8");
+  const hearing = councilCase.slice(councilCase.indexOf("function CaseHearings"), councilCase.indexOf("function HearingAttendance"));
+  assert.match(hearing, /const currentHeader = current \? h\("header", \{ className: "plx-entity-header ctm-hearing-header" \}/);
+  assert.match(hearing, /return h\(P\.Stack, \{ gap: "lg" \}, currentHeader, h\(P\.Tabs/);
+  assert.match(app, /id === "hearings"\s*\? h\(P\.Icon, \{ name: "balance"/);
+});
+
+test("council can edit a spouse contact through a versioned case finding", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  assert.match(councilCase, /function SpouseContactSection\(/);
+  assert.match(councilCase, /fact_code: `case_card\.contact_\$\{party\.id\}`/);
+  assert.match(councilCase, /h\(SpouseContactSection, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
+  assert.match(css, /\.ctm-spouse-profile-section__heading \{[\s\S]*color: var\(--plx-sys-color-primary/);
 });
 
 test("case navigation uses the requested Material folder icons", () => {
