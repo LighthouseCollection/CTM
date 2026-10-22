@@ -1,5 +1,17 @@
 # Remaining applicant work
 
+## Private-resource oracle and local Docker blocker
+
+Foreign application detail/history/files/payments and foreign original range access match nonexistent resources with exact `404` bodies under restricted RLS. The broader rerun passed those corrected assertions, then the local unblocked account-query stall recurred and owned-container stop failed. Full-suite acceptance remains incomplete; no further local container may start until governance recovery. [Report](postgres-private-oracle-report.md) | [Stall JSON](postgres-private-oracle-stall.json).
+
+## Returned-correction fix verified
+
+Exact combinedb3de51e passes7focused PostgreSQL browser groups under physical restrictedctm_app login, including formerly failing optional-spouse-DOB-absent resubmission. Broader suite later hits separate draft-detail403/404 status mismatch. [Report](postgres-bound-return-fix-report.md) | [Focused JSON](postgres-bound-return-fix-focused-result.json). Earlier failure reports remain historical.
+
+## Fresh recovered PostgreSQL run
+
+Infrastructure recovery verified; new owned containers both removed. Current candidate reaches submission but returns500 on tribunal_party RLS update at backend applications.py:445. Backend correction is the next dependency; full PG acceptance remains incomplete. [Report](postgres-recovered-report.md) | [Evidence](postgres-recovered-focused-result.json). Historical recovery/stall entries below retain prior state.
+
 ## Standalone fixture CDN alignment
 
 Twelve applicant fixture scripts now pin0.60.1 and each has a successful run. Initial supplement disabled-review timeout and unchanged rerun are both recorded. Shared CI pin failure remains governance-owned. [Report](plenix0601-fixtures-report.md) | [JSON](plenix0601-fixtures-result.json).

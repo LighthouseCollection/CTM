@@ -1,5 +1,5 @@
 """Own answer history and notification acceptance on isolated real Django APIs."""
-import json,uuid
+import json,os,uuid
 from pathlib import Path
 from playwright.sync_api import expect
 
@@ -45,7 +45,11 @@ def history_checks(browser,page,context,base,app_id,cookies,settings,output):
         other=browser.new_context()
         try:
             other.add_cookies([{'name':settings.SESSION_COOKIE_NAME,'value':cookies[name],'url':base}])
-            assert other.request.get(f"{base}/api/applications/{app_id}/history/").status==403
+            denied=other.request.get(f"{base}/api/applications/{app_id}/history/")
+            if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+                missing=other.request.get(f"{base}/api/applications/{uuid.uuid4()}/history/")
+                assert denied.status==missing.status==404 and denied.json()==missing.json()
+            else:assert denied.status==403
         finally:other.close()
     page.get_by_role('button',name='Refresh application status',exact=True).click();page.get_by_role('button',name='Discard unsaved changes',exact=True).click()
     expect(page.get_by_role('textbox',name='First name',exact=False)).to_have_value(before['answers']['first_name'])

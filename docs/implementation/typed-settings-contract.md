@@ -1,3 +1,10 @@
+Current continuation: email_templates now supplies frozen account_suspended and
+account_reactivated messages only; other kinds retain existing generic delivery.
+Descriptors expose runtime_consumers (email_templates: account_status_email; other
+families: empty). Subjects reject CR/LF. activation_supported remains false because
+there is no separate activation operation. See account-administration-contract.md.
+The647-test/0039 evidence below describes the earlier storage-only checkpoint.
+
 # Typed settings editing contract
 
 **Final isolated PostgreSQL: 647 passed, 1 skipped.** No model drift; migration
@@ -45,7 +52,7 @@ it and the mandatory HTTP contract have conflict detection.
 | translation_prompt | Object with required nonblank text, up to100000 characters and the shared JSON byte bound. Text is retained verbatim, never trimmed or executed. |
 | translation_routing | Required mode ai/local. Optional primary/fallback slots each require provider/model text, enabled boolean, timeout_seconds integer1–300 and max_retries integer0–5. ai requires an explicitly enabled primary; local rejects enabled external slots. No endpoint, credential, header or secret locator is accepted. |
 | tribunal_contact | Nonempty object with supported display, email, phone, address text fields; email syntax checked. No arbitrary profile/role/provider data. |
-| email_templates | Required templates array; each record requires distinct supported notification code plus nonblank subject_en/subject_ar/body_en/body_ar. This stores versions; worker delivery currently keeps its existing generic message and does not consume these templates. |
+| email_templates | Required templates array; each record requires distinct supported notification code plus nonblank subject_en/subject_ar/body_en/body_ar. This stores versions; only account status notices now consume these templates; other worker messages remain generic. |
 | document_categories | Required categories array; distinct supported code plus nonblank label_en/label_ar. No requiredness, permissions, byte limits or arbitrary new categories. Filing rules and the MC church/CMC civil meanings cannot be relaxed through this setting. Stored labels do not yet replace the authoritative filing labels. |
 | recommended_doctors | Required doctors array; each record requires stable UUID id, name, specialty (medical/psychological/both), contact and active boolean. UUID duplicates are rejected even when spelled differently. No patient data, doctor portal or clinical automation is added. |
 

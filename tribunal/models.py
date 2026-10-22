@@ -471,6 +471,9 @@ class AuditEvent(Immutable):
     source_id = models.UUIDField(null=True)
     metadata = models.JSONField(default=dict)
 
+    class Meta:
+        indexes = [models.Index(fields=["source", "source_id", "action"], name="account_status_events_idx")]
+
 
 class Outbox(Root):
     queued_by = models.ForeignKey(Account, null=True, editable=False, on_delete=models.PROTECT, related_name="queued_actions")

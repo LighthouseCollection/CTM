@@ -1,0 +1,16 @@
+{
+  "review_scope": "Structural coverage and selected high-risk claim verification; not full semantic acceptance",
+  "matrix_rows": 151,
+  "contract_rows": 151,
+  "statuses": {
+    "partial": 110,
+    "missing": 37,
+    "implemented": 3,
+    "decision_needed": 1
+  },
+  "basis": {
+    "verified_in_code": 141,
+    "inferred": 10
+  },
+  "missing_names": []
+}
