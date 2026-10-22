@@ -9,7 +9,7 @@ deployment or production-readiness acceptance is represented by these checks.
 | `node --test tests/frontend/*.test.cjs` | 28 passed | Bound definitions, repeat stable IDs/opaque fields, incomplete save, optimistic versions, errors/permission lock, boolean false/unanswered, conditional retention, start/reuse, filing eligibility, immutable signature/idempotency retry, private download paths, context replacement, size gates, malformed current-file projection |
 | `uv run --group browser python scripts/browser_applicant.py` | 16 scenario groups passed; no page errors | Real Plenix 0.58.0 CDN, synthetic API; escaped review, save, language/RTL, unsaved guards, declaration/fee/signature layout, waived filing, read-only returned resubmission, unsafe checkout, uncertain upload/readiness, boolean conditional save, automatic checklist/capability refresh, repeat add/correct/review/remove in RTL |
 | `uv run --group browser python scripts/browser_applicant_shell.py` | 8 scenario groups passed; no page errors | Proposed shell patch applied only to temporary copies; actual helper, sidebar/back, preference success/failure, 403/404 lock, multipart boundary/context/replacement, pending-scan links, Arabic layout, start/reuse/eligibility error |
-| `uv run --group browser python scripts/browser_applicant_api.py` | 6 scenario groups passed; no page errors | Real Django APIs against backend `07c35ededfcae1c58a4700eb239b7b50be92bc2c`, isolated SQLite/synthetic accounts; start/form/save/preferences, stale conflict and retained history, outsider/council draft denial, actual missing-file-route blocker |
+| `uv run --group browser python scripts/browser_applicant_api.py` | 10 scenario groups passed; no page errors | Real Django APIs against backend `07c35ededfcae1c58a4700eb239b7b50be92bc2c`, isolated SQLite/synthetic accounts; start/form/repeat save/preferences, stale history, draft/file privacy, required multipart uploads, authorized fixture waiver, idempotent submit, returned resubmit, actual status refresh, missing-file-list blocker |
 | `uv run pytest tests/test_workflows.py tests/test_input_validation.py tests/test_row_security.py tests/test_shell.py -q` | 15 passed; 37 skipped | SQLite local regression; PostgreSQL-only checks skipped, not passed |
 | `git apply --check docs/implementation/applicant/shell-integration.patch` | Passed | Clean base shared shell; governance must recheck when integrating |
 | `git diff --check` | Passed | Whitespace validation |
@@ -46,9 +46,14 @@ The real-API runner archives the exact backend ref into a fresh ignored temporar
 directory, copies applicant assets and applies the proposed shell patch there. It
 does not merge branches or modify backend/shared sources in this checkout. There
 are no mocked HTTP API responses in this runner. Synthetic test-client sessions
-do not verify provider sign-in. The file-list endpoint currently returns 404 there;
-the frontend displays unavailable access and keeps filing disabled. No live payment,
-antivirus, production database or deployment acceptance is claimed.
+do not verify provider sign-in. Existing HTTP APIs perform required document uploads,
+an authorized administrator waiver, first submission/key replay, a completeness
+return and resubmission without a new signature/fee. This uses the isolated
+`settings_test` scanner bypass policy, not a live antivirus success claim. These
+backend filing actions are exercised through real HTTP requests; the browser filing
+control remains blocked because its own file-list endpoint currently returns 404.
+Status refresh displays the real submitted state and allocated synthetic case number.
+No live provider payment, antivirus, production database or deployment acceptance is claimed.
 
 ## Open dependencies
 

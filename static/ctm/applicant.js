@@ -149,6 +149,8 @@
       status:"Application status", draft:"Draft", submitted:"Submitted", returned:"Returned for corrections", accepted:"Accepted for processing",
       withdrawn:"Withdrawn", expiredStatus:"Expired", deleted:"Deleted", declined:"Declined", statusUnknown:"Status unavailable", caseReference:"Case reference",
       addRecord:"Add another entry",removeRecord:"Remove this entry",noRecords:"No entries added",
+      refreshApplication:"Refresh application status",
+      correctionNotice:"Corrections preserve your previous submissions. Save your changes, review answers and documents, then resubmit if requested.",
     },
     ar: {
       title: "طلبي", loading: "جارٍ تحميل الطلب…", back: "رجوع",
@@ -175,6 +177,8 @@
       status:"حالة الطلب", draft:"مسودة", submitted:"تم الإرسال", returned:"أعيد للتصحيح", accepted:"مقبول للمعالجة",
       withdrawn:"مسحوب", expiredStatus:"منتهي الصلاحية", deleted:"محذوف", declined:"مرفوض", statusUnknown:"الحالة غير متاحة", caseReference:"رقم القضية",
       addRecord:"إضافة سجل آخر",removeRecord:"إزالة هذا السجل",noRecords:"لم تتم إضافة سجلات",
+      refreshApplication:"تحديث حالة الطلب",
+      correctionNotice:"تُحفظ طلباتك السابقة عند التصحيح. احفظ التغييرات وراجع الإجابات والمستندات، ثم أعد الإرسال إذا طُلب منك ذلك.",
     },
   };
 
@@ -352,8 +356,8 @@
         text(`${t("status")}: ${t(record.status === "expired" ? "expiredStatus" :
           ["draft","submitted","returned","accepted","withdrawn","deleted","declined"].includes(record.status) ? record.status : "statusUnknown")}`),
         record.case_number ? text(`${t("caseReference")}: ${record.case_number}`, {variant:"secondary"}) : null,
-        h(P.Notice, null, t("fee")),
-        !state.editable ? h(P.Notice, null, t("readOnly")) : text(t("draftNotice")),
+        record.status === "draft" ? h(P.Notice, null, t("fee")) : null,
+        !state.editable ? h(P.Notice, null, t("readOnly")) : text(t(record.status === "draft" ? "draftNotice" : "correctionNotice")),
         state.error ? h(P.Notice, { tone: "danger", role: "alert",
           actions: button("reload", reloadAnswers) }, t(state.error)) : null,
         projectionFailure ? h(P.Notice, {tone:"warning",actions:button("reload",reloadAnswers)},t("refreshFailed")) : null,
@@ -384,7 +388,9 @@
     }
     return h(P.LocaleProvider, { locale: lang === "ar" ? "ar" : "en", dir: lang === "ar" ? "rtl" : "ltr" },
       h(P.Stack, { as: "section", gap: "lg", lang, dir: lang === "ar" ? "rtl" : "ltr" },
-      button("back", () => navigate(onBack), { variant: "ghost" }),
+      h(P.Inline,{wrap:true},
+        button("back", () => navigate(onBack), { variant: "ghost" }),
+        button("refreshApplication",reloadAnswers,{variant:"ghost"})),
       text(t("title"), { as: "h1", variant: "display" }),
       pending ? h(P.Notice, { tone: "warning", role: "alert", actions: h(P.Inline, { wrap: true },
         button("discard", () => { const action = pending; setPending(null); action(); }),

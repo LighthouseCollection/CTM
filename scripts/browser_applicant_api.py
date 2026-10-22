@@ -156,6 +156,59 @@ try:
                 assert other.request.get(f"{BASE}/api/applications/{app_id}/{suffix}").status==403
             other.close()
         checks.append("Real API denies outsider and council draft/detail/history access")
+        uploaded=[]
+        for category in ("MC","CMC","CDD","PHOTO"):
+            # The isolated settings_test scanner bypass is explicit test policy;
+            # this verifies API/storage gates, not a live antivirus engine.
+            content=(b"\x89PNG\r\n\x1a\nsynthetic-image-only" if category=="PHOTO" else b"%PDF-1.7 synthetic-document-only")
+            response=context.request.post(BASE+"/api/files/",headers={"X-CSRFToken":csrf},multipart={
+                "application_id":app_id,"category":category,"context":"","visibility":"own",
+                "file":{"name":"synthetic.png" if category=="PHOTO" else "synthetic.pdf",
+                        "mimeType":"image/png" if category=="PHOTO" else "application/pdf","buffer":content}})
+            assert response.status==201,response.text()
+            uploaded.append((response.json()["id"],content))
+        ready=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
+        assert ready["can_checkout"] and not ready["can_submit"]
+        file_id,content=uploaded[0]
+        own_file=context.request.get(f"{BASE}/api/files/{file_id}/")
+        assert own_file.status==200 and own_file.body()==content
+        stranger=browser.new_context()
+        stranger.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["outsider"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
+        assert stranger.request.get(f"{BASE}/api/files/{file_id}/",headers={"Range":"bytes=0-3"}).status==403
+        stranger.close()
+        checks.append("Real multipart required-file upload and owner download work; outsider range request denied")
+        staff=browser.new_context()
+        staff.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["admin"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
+        staff.request.get(BASE+"/api/session/")
+        staff_csrf=next(cookie["value"] for cookie in staff.cookies() if cookie["name"]=="csrftoken")
+        waiver=staff.request.post(f"{BASE}/api/applications/{app_id}/waiver/",data={},headers={"X-CSRFToken":staff_csrf})
+        assert waiver.status==201,waiver.text()
+        ready=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
+        assert ready["fee"]["status"]=="waived" and ready["can_submit"] and not ready["can_checkout"]
+        payload={"expected_version":ready["version"],"idempotency_key":"synthetic-first-"+uuid.uuid4().hex,
+                 "attestation":{"accepted":True,"name":"Synthetic Applicant"}}
+        submitted=context.request.post(f"{BASE}/api/applications/{app_id}/submit/",data=payload,headers={"X-CSRFToken":csrf})
+        replay=context.request.post(f"{BASE}/api/applications/{app_id}/submit/",data=payload,headers={"X-CSRFToken":csrf})
+        assert submitted.status==201,submitted.text()
+        assert replay.status==201 and replay.json()["id"]==submitted.json()["id"]
+        current=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
+        assert current["status"]=="submitted" and current["case_number"]
+        checks.append("Real authorized waiver and version-bound submission finalize once without provider payment")
+        returned=staff.request.post(f"{BASE}/api/applications/{app_id}/review/",data={"result":"reject","instructions":"Synthetic correction instruction"},
+            headers={"X-CSRFToken":staff_csrf})
+        assert returned.status==201,returned.text()
+        current=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
+        assert current["can_resubmit"] and not current["can_checkout"] and current["return_instructions"]=="Synthetic correction instruction"
+        response=context.request.post(f"{BASE}/api/applications/{app_id}/submit/",data={
+            "expected_version":current["version"],"idempotency_key":"synthetic-resubmit-"+uuid.uuid4().hex},headers={"X-CSRFToken":csrf})
+        assert response.status==201,response.text()
+        assert context.request.get(f"{BASE}/api/applications/{app_id}/").json()["fee"]["status"]=="waived"
+        staff.close()
+        checks.append("Real return instructions and resubmission reuse original fee/signature without new attestation")
+        page.get_by_role("button",name="Refresh application status",exact=True).click()
+        expect(page.get_by_text("Application status: Submitted",exact=True)).to_be_visible()
+        expect(page.get_by_text("Case reference:",exact=False)).to_be_visible()
+        checks.append("Explicit status refresh displays actual submitted state and allocated case reference")
         assert page.locator("[style]").count()==0
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         assert not errors,errors
@@ -163,6 +216,6 @@ try:
 finally:
     server.shutdown()
 result={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"passed":len(checks),"checks":checks,
-        "page_errors":errors,"scope":"Real Django APIs, isolated SQLite and synthetic test-client sessions; no provider/payment/antivirus acceptance"}
+        "page_errors":errors,"scope":"Real Django APIs, isolated SQLite/synthetic sessions; authorized fixture waiver; scanner bypass test policy; no live provider payment/antivirus acceptance"}
 (ROOT/"result.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
 print(json.dumps(result,indent=2))
