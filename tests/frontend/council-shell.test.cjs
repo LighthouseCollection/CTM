@@ -133,11 +133,11 @@ test("spouse cards use the submitted council profile projection and remain colla
 });
 
 test("marriage card saves council-owned edits through the shared card finding layer", () => {
-  const app = read("static/ctm/council-case.js");
-  assert.match(app, /function councilCardValues\(record, scope, submitted\)/);
-  assert.match(app, /fact_code: "case_card\.marriage"/);
-  assert.match(app, /\/findings\//);
-  assert.match(app, /ctm-case-edit-grid/);
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(councilCase, /function councilCardValues\(record, scope, submitted\)/);
+  assert.match(councilCase, /fact_code: "case_card\.marriage"/);
+  assert.match(councilCase, /\/findings\//);
+  assert.match(councilCase, /ctm-case-edit-grid/);
 });
 
 test("case back navigation retains the workspace that opened the case", () => {
