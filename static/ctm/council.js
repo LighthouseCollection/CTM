@@ -1264,7 +1264,6 @@
       [user?.id],
     );
     const [selected, select] = R.useState(null);
-    const [filters, setFilters] = R.useState({});
     const [date, setDate] = R.useState("");
     const [time, setTime] = R.useState("");
     const [presiding, setPresiding] = R.useState("");
@@ -1284,7 +1283,7 @@
     }, [presiding, defaultPresiding?.id]);
     const today = todayInLosAngeles();
     const buckets = sessionBuckets(loaded, today);
-    const rows = window.CTMUI.filterSessions(buckets[mode] || [], { ...filters, view: "all" }, today);
+    const rows = buckets[mode] || [];
     const titleKey = mode === "upcoming" ? "sessionsUpcoming" : mode === "archived" ? "sessionsArchived" : "sessions";
     const emptyKey = mode === "upcoming" ? "noUpcomingSessions" : mode === "archived" ? "noArchivedSessions" : "noSessions";
 
@@ -1346,7 +1345,6 @@
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t(titleKey)),
-      h(window.CTMUI.SessionFilters, { filters, onChange: setFilters, lang, showView: false }),
       mode === "upcoming" && canManage(user)
         ? h(
             P.Panel,

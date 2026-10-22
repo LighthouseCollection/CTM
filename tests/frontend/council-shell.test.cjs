@@ -280,3 +280,11 @@ test("new session form defaults the Bellflower location and uses a responsive tw
   assert.match(css, /\.ctm-session-form-grid[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.ctm-session-form \.plx-form-actions[\s\S]*background: transparent/);
 });
+
+
+test("tribunal session lists do not show date filters", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const source = council.slice(council.indexOf("function SessionList"), council.indexOf("function AgendaItemCard"));
+  assert.doesNotMatch(source, /SessionFilters/);
+  assert.match(source, /const rows = buckets\[mode\] \|\| \[\]/);
+});
