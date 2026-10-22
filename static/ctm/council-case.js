@@ -2803,7 +2803,7 @@
     );
   }
 
-  function CouncilEditablePanel({ api, P, h, t, user, record, scope, title, icon, fields, values }) {
+  function CouncilEditablePanel({ api, P, h, t, user, record, scope, title, icon, fields, values, onSaved }) {
     const R = window.React;
     const [editing, setEditing] = R.useState(false);
     const [form, setForm] = R.useState({});
@@ -2819,7 +2819,7 @@
         await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`, {
           method: "POST", body: JSON.stringify({ fact_code: `case_card.${scope}`, value: form }),
         });
-        setEditing(false); window.location.reload();
+        setEditing(false); onSaved();
       } catch (error) { setFailure(base.serverMessage(error, t)); }
       finally { setPending(false); }
     };
@@ -2847,10 +2847,10 @@
     const order = councilCardValues(record, "restraining_order", separation.restraining_orders?.[0] || {});
     return h(P.Stack, { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("separation")),
-      h(CouncilEditablePanel, { api, P, h, t, user, record, scope: "separation_details", title: "Separation Details", icon: "move", values: details, fields: [["marital_status", "Current Marital Status"], ["separation_date", "Date of Separation", "date"], ["initiated_by", "Initiated By"], ["reason", "Reason for Divorce"]] }),
-      h(CouncilEditablePanel, { api, P, h, t, user, record, scope: "civil_divorce", title: "Civil Divorce", icon: "document", values: civil, fields: [["filed", "Civil Divorce Filed?"], ["date", "Date of Civil Divorce", "date"], ["court", "Name of Court"], ["location", "Court Street Address / Location"], ["case_number", "Civil Case Number"], ["status", "Civil Divorce Status"]] }),
-      h(CouncilEditablePanel, { api, P, h, t, user, record, scope: "restraining_order", title: "Restraining Order", icon: "shield", values: order, fields: [["filed", "Restraining Order Filed?"], ["date", "Date of Restraining Order", "date"], ["expiration_date", "Restraining Order Expiration Date", "date"], ["name_listed", "Name Listed on Order"], ["court", "Name of Court"], ["case_number", "Restraining Order Case Number"], ["status", "Restraining Order Status"]] }),
-      h(CouncilEditablePanel, { api, P, h, t, user, record, scope: "reconciliation", title: "Reconciliation", icon: "settings-users", values: reconciliation, fields: [["attempted", "Clergy Counseling / Reconciliation Attempted?"], ["previously_applied", "Previously Applied for Ecclesiastical Marriage Permit?"], ["when", "When Did You Previously Apply?"], ["where", "Where Did You Previously Apply?"], ["outcome", "Decision Outcome"]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "separation_details", title: "Separation Details", icon: "move", values: details, fields: [["marital_status", "Current Marital Status"], ["separation_date", "Date of Separation", "date"], ["initiated_by", "Initiated By"], ["reason", "Reason for Divorce"]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "civil_divorce", title: "Civil Divorce", icon: "document", values: civil, fields: [["filed", "Civil Divorce Filed?"], ["date", "Date of Civil Divorce", "date"], ["court", "Name of Court"], ["location", "Court Street Address / Location"], ["case_number", "Civil Case Number"], ["status", "Civil Divorce Status"]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "restraining_order", title: "Restraining Order", icon: "shield", values: order, fields: [["filed", "Restraining Order Filed?"], ["date", "Date of Restraining Order", "date"], ["expiration_date", "Restraining Order Expiration Date", "date"], ["name_listed", "Name Listed on Order"], ["court", "Name of Court"], ["case_number", "Restraining Order Case Number"], ["status", "Restraining Order Status"]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "reconciliation", title: "Reconciliation", icon: "settings-users", values: reconciliation, fields: [["attempted", "Clergy Counseling / Reconciliation Attempted?"], ["previously_applied", "Previously Applied for Ecclesiastical Marriage Permit?"], ["when", "When Did You Previously Apply?"], ["where", "Where Did You Previously Apply?"], ["outcome", "Decision Outcome"]] }),
     );
   }
 
