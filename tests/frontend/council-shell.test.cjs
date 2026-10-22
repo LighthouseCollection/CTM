@@ -396,6 +396,16 @@ test("My Account does not link to CTM Settings", () => {
   assert.doesNotMatch(workspaces, /preferences: "Account Settings"/);
   assert.match(app, /page === "settings" && window\.CTMUI\?\.canAdminister\(user\)/);
 });
+test("CTM Settings users directory supports active, previous, and account-management actions", () => {
+  const workspaces = fs.readFileSync("static/ctm/ui-workspaces.js", "utf8");
+  assert.match(workspaces, /function MemberDirectory/);
+  assert.match(workspaces, /label: "Active Members"/);
+  assert.match(workspaces, /label: "Previous Members"/);
+  assert.match(workspaces, /Add staff user/);
+  assert.match(workspaces, /\/api\/system\/members\//);
+  assert.match(workspaces, /\/api\/system\/accounts\/\$\{encodeURIComponent\(archiveTarget\.id\)\}\/status\//);
+  assert.match(workspaces, /Manage access/);
+});
 test("CTM Settings opens the complete administration workspace for administrators", () => {
   assert.match(app, /if \(page === "settings" && window\.CTMUI\?\.canAdminister\(user\)\)\s*return h\(window\.CTMUI\.Administration/);
 });

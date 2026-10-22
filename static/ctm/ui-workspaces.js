@@ -211,7 +211,62 @@
         failure ? h(P.Notice, { tone: "danger" }, failure) : null,
         h(P.FormActions, { sticky: false }, h(P.Button, { type: "submit", variant: "primary", disabled: pending, loading: pending }, t("save")))), guard.dialog);
   }
-  function Administration({ api, user, lang, onNavigationGuard, onCase }) {
+  function MemberDirectory({ api, user, lang, rows, pending, retry, onNavigationGuard, onAdded }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [view, setView] = R.useState("active"), [enrolling, setEnrolling] = R.useState(false), [editing, setEditing] = R.useState(null), [archiveTarget, setArchiveTarget] = R.useState(null), [saving, setSaving] = R.useState(false), [failure, setFailure] = R.useState(null);
+    const visibleRows = rows.filter((row) => view === "active" ? row.active : !row.active);
+    const updateMember = async (event) => {
+      event.preventDefault();
+      if (!editing || saving) return;
+      setSaving(true); setFailure(null);
+      try {
+        await api(`/api/system/members/${encodeURIComponent(editing.id)}/`, { method: "POST", body: JSON.stringify({ first_name: editing.first_name.trim(), last_name: editing.last_name.trim(), expected_version: editing.profile_version }) });
+        setEditing(null); retry();
+      } catch (error) { setFailure(window.CTMCouncil.serverMessage(error, t)); }
+      finally { setSaving(false); }
+    };
+    const changeStatus = async () => {
+      if (!archiveTarget || saving) return;
+      setSaving(true); setFailure(null);
+      try {
+        await api(`/api/system/accounts/${encodeURIComponent(archiveTarget.id)}/status/`, { method: "POST", body: JSON.stringify({ enabled: !archiveTarget.active, expected_version: archiveTarget.status_version }) });
+        setArchiveTarget(null); retry();
+      } catch (error) { setFailure(window.CTMCouncil.serverMessage(error, t)); }
+      finally { setSaving(false); }
+    };
+    const columns = [
+      { title: "Name", field: "name", kind: "name", render: (row) => `${row.first_name} ${row.last_name}`.trim() },
+      { title: "Role", field: "role", render: (row) => t(row.role) },
+      { title: "Email", field: "email", kind: "data" },
+      { title: "Active cases", field: "active_case_count", type: "number", kind: "data" },
+      { title: "Status", field: "status", render: (row) => row.active ? "Active" : "Archived" },
+      { title: "Actions", field: "actions", kind: "actions", minWidth: "20rem", render: (row) => h(P.Inline, { gap: "xs", wrap: true },
+        h(P.Button, { size: "xs", icon: "pencil", disabled: saving, onClick: () => setEditing({ ...row }) }, "Edit"),
+        h(P.Button, { size: "xs", icon: "key", disabled: saving, onClick: () => setEditing({ ...row }) }, "Manage access"),
+        row.active && row.can_suspend ? h(P.Button, { size: "xs", icon: "archive", variant: "danger-secondary", disabled: saving, onClick: () => setArchiveTarget(row) }, "Archive") : null,
+        !row.active && row.can_reactivate ? h(P.Button, { size: "xs", icon: "restore", disabled: saving, onClick: () => setArchiveTarget(row) }, "Restore") : null,
+      ) },
+    ];
+    return h(P.Stack, { gap: "md" },
+      h(P.Inline, { align: "between", wrap: true }, h(P.Text, { as: "h2", variant: "heading" }, "Users"), h(P.Button, { icon: "add", onClick: () => setEnrolling(true) }, "Add staff user")),
+      h(P.Tabs, { variant: "contained", label: "Users", value: view, onChange: setView, items: [
+        { value: "active", label: "Active Members", content: h(window.CTMShell.Table, { label: "Active members", rows: visibleRows, columns, empty: "No active members." }) },
+        { value: "previous", label: "Previous Members", content: h(window.CTMShell.Table, { label: "Previous members", rows: visibleRows, columns, empty: "No previous members." }) },
+      ] }),
+      enrolling ? h(P.Dialog, { open: true, title: "Add staff user", size: "lg", onClose: () => !saving && setEnrolling(false) }, h(Enrollment, { api, user, lang, onNavigationGuard, onAdded: () => { setEnrolling(false); onAdded(); } })) : null,
+      editing ? h(P.Dialog, { open: true, title: "Edit staff user", size: "sm", onClose: () => !saving && setEditing(null) }, h(P.Form, { label: "Edit staff user", onSubmit: updateMember, noValidate: true },
+        h(P.Stack, { gap: "md" },
+          h(P.Field, { label: "First name", required: true }, h(P.Input, { value: editing.first_name, maxLength: 150, disabled: saving, onChange: (event) => setEditing({ ...editing, first_name: event.target.value }) })),
+          h(P.Field, { label: "Last name", required: true }, h(P.Input, { value: editing.last_name, maxLength: 150, disabled: saving, onChange: (event) => setEditing({ ...editing, last_name: event.target.value }) })),
+          h(P.Field, { label: "Email" }, h(P.Input, { value: editing.email, disabled: true })),
+          h(P.Text, { variant: "secondary" }, "Account access uses the member’s verified lacopts.org Microsoft sign-in."),
+          failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+          h(P.FormActions, { sticky: false }, h(P.Button, { type: "submit", variant: "primary", loading: saving, disabled: saving }, "Save changes"))
+        )
+      )) : null,
+      h(P.ConfirmDialog, { open: Boolean(archiveTarget), title: archiveTarget?.active ? "Archive staff user" : "Restore staff user", message: archiveTarget?.active ? `Archive ${archiveTarget.first_name} ${archiveTarget.last_name}? Their account access will be disabled.` : `Restore ${archiveTarget?.first_name || "this user"}? Their account access will be enabled.`, confirmLabel: archiveTarget?.active ? "Archive" : "Restore", cancelLabel: "Cancel", onConfirm: changeStatus, onCancel: () => !saving && setArchiveTarget(null) }, failure ? h(P.Notice, { tone: "danger" }, failure) : null)
+    );
+  }  function Administration({ api, user, lang, onNavigationGuard, onCase }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), base = window.CTMCouncil;
     const [section, setSection] = R.useState("members"), [filters, setFilters] = R.useState({}), [notice, setNotice] = R.useState(false);
     const sectionGuard = R.useRef(null);
@@ -219,7 +274,7 @@
     const allowed = canAdminister(user);
     const [state, retry] = base.useLoad(
       () => allowed && section !== "historical"
-        ? api({ members: "/api/council/members/", configuration: "/api/system/settings/", audit: "/api/system/audit/" }[section])
+        ? api({ members: "/api/system/members/", configuration: "/api/system/settings/", audit: "/api/system/audit/" }[section])
         : Promise.resolve({ items: [] }),
       [section, allowed]
     );
@@ -243,10 +298,8 @@
     };
     const memberContent = h(R.Fragment, null,
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(false) }, t("added")) : null,
-      h(Enrollment, { api, user, lang, onNavigationGuard: registerGuard, onAdded: () => { setNotice(true); retry(); } }),
-      table((row) => h(Properties, { lang, entries: [["name", row.name], ["role", row.role], ["active", row.active], ["can_authorize_assignment", row.can_authorize_assignment], ["can_record_assignment", row.can_record_assignment]] }))
-    );
-    const configurationContent = table((row) => h(ConfigurationValue, { value: row.value, lang }));
+      h(MemberDirectory, { api, user, lang, rows, pending: state.pending, retry, onNavigationGuard: registerGuard, onAdded: () => { setNotice(true); retry(); } })
+    );    const configurationContent = table((row) => h(ConfigurationValue, { value: row.value, lang }));
     const auditContent = h(R.Fragment, null,
       h(AuditFilters, { rows, filters, onChange: setFilters, lang, includeActor: false }),
       table((row) => h(Properties, { lang, entries: [["action", row.action], ["source", row.source], ["date", base.formatWhen(row.timestamp, lang)]] }))

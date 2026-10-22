@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce
-from tribunal.models import Account, AuditEvent, StaffMembership, StaffRole, Tribunal
+from tribunal.models import Account, AuditEvent, Case, StaffMembership, StaffRole, Tribunal
 from tribunal.db.context import core_operation
 from tribunal.validation import VersionConflict, validate_json_value
 from .common import audit, lock_key
@@ -32,9 +32,14 @@ def profile_version(account_id):
 def member_queryset():
     versions = AuditEvent.objects.filter(source='tribunal.account', source_id=OuterRef('pk'),
         action='council_member_profile_changed').order_by().values('source_id').annotate(n=Count('pk')).values('n')
-    return Account.objects.filter(role__in=COUNCIL_ROLES).annotate(_profile_version=Coalesce(
-        Subquery(versions, output_field=IntegerField()), Value(0)))
-
+    open_cases = Case.objects.filter(assigned_member_id=OuterRef('pk'), status='open').order_by().values('assigned_member_id').annotate(n=Count('pk')).values('n')
+    status_versions = AuditEvent.objects.filter(source='tribunal.account', source_id=OuterRef('pk'),
+        action__in=['account_suspended', 'account_reactivated']).order_by().values('source_id').annotate(n=Count('pk')).values('n')
+    return Account.objects.filter(role__in=COUNCIL_ROLES).annotate(
+        _profile_version=Coalesce(Subquery(versions, output_field=IntegerField()), Value(0)),
+        _active_case_count=Coalesce(Subquery(open_cases, output_field=IntegerField()), Value(0)),
+        _status_version=Coalesce(Subquery(status_versions, output_field=IntegerField()), Value(0)),
+    )
 
 def member_data(actor, account):
     existing_admin(actor)
@@ -43,7 +48,9 @@ def member_data(actor, account):
         account = member_queryset().get(pk=account.pk)
     return {'id': str(account.pk), 'first_name': account.first_name, 'last_name': account.last_name,
             'email': account.email, 'role': account.role, 'active': account.is_active,
-            'email_verified': account.email_verified, 'profile_version': account._profile_version}
+            'email_verified': account.email_verified, 'profile_version': account._profile_version,
+            'active_case_count': account._active_case_count, 'status_version': account._status_version,
+            'can_suspend': account.is_active and account.pk != actor.pk, 'can_reactivate': not account.is_active}
 
 
 @transaction.atomic
