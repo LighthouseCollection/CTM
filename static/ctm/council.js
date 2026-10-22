@@ -2854,8 +2854,8 @@
       R.Fragment,
       null,
       h(P.Text, { as: "h1", variant: "title" }, title || t(archived ? "archivedTitle" : "casesTitle")),
-      h(P.Inline, { gap: "md", align: "end" },
-        h(P.Field, { label: t("searchCases") }, h(P.Input, { type: "search", width: "md", value: query, onChange: (e) => setQuery(e.target.value) })),
+      h(P.Inline, { gap: "md", align: "end", wrap: true },
+        h(P.Field, { label: t("searchCases") }, h(P.Input, { type: "search", width: "lg", value: query, onChange: (e) => setQuery(e.target.value) })),
         !archived ? h(P.Checkbox, { label: t("showClosedCases"), checked: includeClosed, onChange: (event) => setIncludeClosed(event.target.checked) }) : null,
       ),
       rows.length

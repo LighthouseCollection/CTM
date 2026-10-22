@@ -511,6 +511,7 @@ test("case list workspaces are table-only and open cases from their action colum
   const source = council.slice(council.indexOf("function CasesTable"), council.indexOf("// Operational counts"));
   assert.doesNotMatch(source, /P\.SplitView/);
   assert.doesNotMatch(source, /P\.ReadingPane/);
+  assert.match(source, /h\(P\.Inline, \{ gap: "md", align: "end", wrap: true \},[\s\S]*P\.Input, \{ type: "search", width: "lg"[\s\S]*showClosedCases/);
   assert.match(source, /title: t\("actions"\), field: "open_action"/);
   assert.match(source, /onClick: \(\) => onOpen\(row\.id\)/);
 });
