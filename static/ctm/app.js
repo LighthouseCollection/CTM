@@ -14,7 +14,7 @@
   // Separately loaded council workspace module (static/ctm/council.js), if present.
   const councilModule = window.CTMCouncil || null;
   const navigationIcons = {
-    home: "home", sessions: "calendar", cases: "folder-open", search: "search",
+    home: "home", sessions: "calendar", sessionsUpcoming: "calendar", sessionsArchived: "archive", cases: "folder-open", search: "search",
     archived: "archive", statistics: "chart", applications: "doc-text",
     appointments: "schedule", past: "archive", case: "document", timeline: "progress",
     parties: "settings-users", marriage: "settings-users", separation: "move", petition: "doc-text",
@@ -64,7 +64,9 @@
       language: "العربية",
       home: "Home",
       cases: "Cases",
-      sessions: "Tribunal Sessions",
+      sessions: "Tribunal Sessions - Current",
+      sessionsUpcoming: "Tribunal Sessions - Upcoming",
+      sessionsArchived: "Tribunal Sessions - Archived",
       councilSession: "Council Session",
       archived: "Archived",
       search: "Search",
@@ -297,7 +299,9 @@
       language: "English",
       home: "الرئيسية",
       cases: "القضايا",
-      sessions: "جلسات المجلس",
+      sessions: "جلسات المجلس - الحالية",
+      sessionsUpcoming: "جلسات المجلس - القادمة",
+      sessionsArchived: "جلسات المجلس - المؤرشفة",
       councilSession: "جلسة المجلس",
       archived: "الأرشيف",
       search: "البحث",
@@ -1175,7 +1179,7 @@
       else if (
         councilModule &&
         user.portal === "council" &&
-        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings", "petition", "timeline", "statistics"].includes(page)
+        ["review", "sessions", "sessionsUpcoming", "sessionsArchived", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings", "petition", "timeline", "statistics"].includes(page)
       )
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
@@ -1308,7 +1312,7 @@
     }
     const council = user.portal === "council";
     const navItems = council
-      ? ["home", "sessions", "cases", "search", "archived", "statistics"]
+      ? ["home", "sessions", "sessionsUpcoming", "sessionsArchived", "cases", "search", "archived", "statistics"]
       : ["home", "applications", "appointments", "past"];
     const unavailable = new Set(
       [
@@ -1765,11 +1769,13 @@
           onCase: (id) => go("documents", id),
           onBack: () => go("home"),
         });
-      if (councilModule && council && page === "sessions")
+      if (councilModule && council && ["sessions", "sessionsUpcoming", "sessionsArchived"].includes(page))
         return h(councilModule.SessionList, {
+          key: page,
           api,
           lang,
           user,
+          mode: page === "sessions" ? "current" : page === "sessionsUpcoming" ? "upcoming" : "archived",
           onOpen: (id) => go("session", id),
           onCase: (id) => go("case", id),
           renderAttendance: ({ session, members, attendance, key, onSaved }) => h(SessionAttendance, {
@@ -1915,7 +1921,7 @@
     }
     return h(
       P.AppShell,
-      { header, sideNav: nav, page: ["sessions", "cases", "archived", "search", "communications", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit"].includes(page) ? "master-detail" : "workspace", strings: { skip: t("skip") } },
+      { header, sideNav: nav, page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit"].includes(page) ? "master-detail" : "workspace", strings: { skip: t("skip") } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       h("div", { className: "plx-page-panes" }, caseNav,
         h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },

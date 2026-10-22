@@ -391,6 +391,21 @@ test("sessions split into upcoming (soonest first) and past (latest first)", () 
   assert.match(C.todayInLosAngeles(new Date("2026-10-22T05:00:00Z")), /^2026-10-21$/);
 });
 
+test("sessions are separated into current, upcoming, and archived destinations", () => {
+  const rows = [
+    { id: "future-near", date: "2026-11-05", state: "planned" },
+    { id: "archived-old", date: "2026-10-01", state: "closed" },
+    { id: "current-old", date: "2026-10-15", state: "planned" },
+    { id: "future-far", date: "2026-12-03", state: "planned" },
+    { id: "current-today", date: "2026-10-21", state: "planned" },
+    { id: "archived-new", date: "2026-10-20", state: "closed" },
+  ];
+  const buckets = C.sessionBuckets(rows, "2026-10-21");
+  assert.deepEqual(buckets.current.map((row) => row.id), ["current-today", "current-old"]);
+  assert.deepEqual(buckets.upcoming.map((row) => row.id), ["future-near", "future-far"]);
+  assert.deepEqual(buckets.archived.map((row) => row.id), ["archived-new", "archived-old"]);
+});
+
 test("every notification kind the backend sends has EN and AR labels in the shell", () => {
   const app = fs.readFileSync("static/ctm/app.js", "utf8");
   const kinds = ["report_requested", "report_received", "file_uploaded", "answer_changed", "applicant_message", "case_message", "assignment_changed",

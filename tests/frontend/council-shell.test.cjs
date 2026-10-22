@@ -12,8 +12,19 @@ test("council modules load in order before app.js with the pinned Plenix CDN", (
   assert.doesNotMatch(shell, /cdn\/(?!0\.60\.1)\d+\.\d+\.\d+/);
 });
 
-test("locked council navigation keeps its six top-level destinations", () => {
-  assert.match(app, /\["home", "sessions", "cases", "search", "archived", "statistics"\]/);
+test("council navigation exposes current, upcoming, and archived tribunal sessions", () => {
+  assert.match(app, /\["home", "sessions", "sessionsUpcoming", "sessionsArchived", "cases", "search", "archived", "statistics"\]/);
+  assert.match(app, /sessions: "Tribunal Sessions - Current"/);
+  assert.match(app, /sessionsUpcoming: "Tribunal Sessions - Upcoming"/);
+  assert.match(app, /sessionsArchived: "Tribunal Sessions - Archived"/);
+  assert.match(app, /mode: page === "sessions" \? "current" : page === "sessionsUpcoming" \? "upcoming" : "archived"/);
+});
+
+test("session lifecycle changes refresh their parent destination list", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(council, /function SessionWorkspace\(\{[^}]*onChanged/);
+  assert.match(council, /"sessionClosed",\s*onChanged/);
+  assert.match(council, /onChanged: retry/);
 });
 
 test("council pages are enabled only when their module is loaded", () => {

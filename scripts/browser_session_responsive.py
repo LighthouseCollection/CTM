@@ -31,7 +31,8 @@ with sync_playwright() as p:
             if language == "en" and width == 1253:
                 page.screenshot(path=".tmp/session-full-record-header.png", full_page=True)
             page.get_by_role("button", name="Back to sessions" if language == "en" else "العودة إلى الجلسات", exact=True).click()
-            page.get_by_role("button", name="Tribunal Sessions" if language == "en" else "جلسات المجلس", exact=True).first.click()
+            page.get_by_role("button", name="Tribunal Sessions - Upcoming" if language == "en" else "جلسات المجلس - القادمة", exact=True).first.click()
+            page.get_by_role("heading", name="New council session" if language == "en" else "جلسة مجلس جديدة", exact=True).wait_for()
             page.get_by_role("grid").first.get_by_role("row").nth(1).click()
             header = page.locator(".plx-record-page__header--lg.plx-record-page__header--card")
             header.wait_for()
@@ -55,6 +56,9 @@ with sync_playwright() as p:
             expand = f"Expand {title}" if language == "en" else f"توسيع {title}"
             panel.get_by_role("button", name=collapse, exact=True).click()
             panel.get_by_role("button", name=expand, exact=True).click()
+            page.get_by_role("button", name="Tribunal Sessions - Archived" if language == "en" else "جلسات المجلس - المؤرشفة", exact=True).first.click()
+            page.get_by_role("grid").first.get_by_role("row").nth(1).get_by_text("2026-10-08", exact=True).wait_for()
+            assert page.get_by_role("heading", name="New council session" if language == "en" else "جلسة مجلس جديدة", exact=True).count() == 0, "Archived sessions must not expose session creation"
             assert page.locator("html").get_attribute("dir") == ("rtl" if language == "ar" else "ltr")
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), "page overflow"
             reader = page.locator(".plx-reading-pane").bounding_box()

@@ -68,10 +68,10 @@
         (!filters.from || row.date >= filters.from) && (!filters.to || row.date <= filters.to);
     });
   }
-  function SessionFilters({ filters, onChange, lang }) {
+  function SessionFilters({ filters, onChange, lang, showView = true }) {
     const P = window.Plenix, h = window.React.createElement, t = translator(lang);
     return h(P.Inline, { wrap: true, align: "end" },
-      h(P.Field, { label: t("sessions") }, h(P.Select, { value: filters.view || "all", onChange: (event) => onChange({ ...filters, view: event.target.value }), options: ["all", "upcoming", "past"].map((value) => ({ value, label: t(value === "all" ? "allSessions" : value) })) })),
+      showView ? h(P.Field, { label: t("sessions") }, h(P.Select, { value: filters.view || "all", onChange: (event) => onChange({ ...filters, view: event.target.value }), options: ["all", "upcoming", "past"].map((value) => ({ value, label: t(value === "all" ? "allSessions" : value) })) })) : null,
       ...["from", "to"].map((key) => h(P.Field, { key, label: t(key) }, h(P.Input, { type: "date", value: filters[key] || "", onChange: (event) => onChange({ ...filters, [key]: event.target.value }) }))),
       h(P.Button, { variant: "ghost", onClick: () => onChange({}) }, t("reset")),
       filters.from && filters.to && filters.from > filters.to ? h(P.Notice, { tone: "warning" }, t("dateOrder")) : null);

@@ -66,6 +66,21 @@
     return { upcoming, past };
   }
 
+  function sessionBuckets(rows, today) {
+    const records = rows || [];
+    return {
+      current: records
+        .filter((session) => session.state === "planned" && session.date <= today)
+        .sort((a, b) => b.date.localeCompare(a.date)),
+      upcoming: records
+        .filter((session) => session.state === "planned" && session.date > today)
+        .sort((a, b) => a.date.localeCompare(b.date)),
+      archived: records
+        .filter((session) => session.state === "closed")
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    };
+  }
+
   function sessionDateProblem(value, existing) {
     if (!DATE.test(value || "")) return "dateRequired";
     const parsed = new Date(`${value}T00:00:00Z`);
@@ -296,8 +311,12 @@
       retry: "Try again",
       reviewOnlyAdmin:
         "Only the tribunal administrator or secretary can accept or return applications.",
-      sessions: "Tribunal Sessions",
-      noSessions: "No council sessions are scheduled.",
+      sessions: "Tribunal Sessions - Current",
+      sessionsUpcoming: "Tribunal Sessions - Upcoming",
+      sessionsArchived: "Tribunal Sessions - Archived",
+      noSessions: "No current council sessions are available.",
+      noUpcomingSessions: "No upcoming council sessions are scheduled.",
+      noArchivedSessions: "No archived council sessions are available.",
       newSession: "New council session",
       sessionDate: "Session date",
       createSession: "Create session",
@@ -529,8 +548,12 @@
       loadFailed: "تعذر تحميل هذه المعلومات.",
       retry: "إعادة المحاولة",
       reviewOnlyAdmin: "يقتصر قبول الطلبات أو إعادتها على مسؤول المجلس أو السكرتير.",
-      sessions: "جلسات المجلس",
-      noSessions: "لا توجد جلسات مجلس مجدولة.",
+      sessions: "جلسات المجلس - الحالية",
+      sessionsUpcoming: "جلسات المجلس - القادمة",
+      sessionsArchived: "جلسات المجلس - المؤرشفة",
+      noSessions: "لا توجد جلسات مجلس حالية.",
+      noUpcomingSessions: "لا توجد جلسات مجلس قادمة مجدولة.",
+      noArchivedSessions: "لا توجد جلسات مجلس مؤرشفة.",
       newSession: "جلسة مجلس جديدة",
       sessionDate: "تاريخ الجلسة",
       createSession: "إنشاء الجلسة",
@@ -1102,7 +1125,7 @@
     );
   }
 
-  function SessionList({ api, lang, user, onOpen, onCase, renderAttendance }) {
+  function SessionList({ api, lang, user, mode = "current", onOpen, onCase, renderAttendance }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1117,8 +1140,10 @@
     const [created, setCreated] = R.useState(false);
     const loaded = state.data?.items || [];
     const today = todayInLosAngeles();
-    const groups = splitSessions(loaded, today);
-    const rows = window.CTMUI.filterSessions([...groups.upcoming, ...groups.past], filters, today);
+    const buckets = sessionBuckets(loaded, today);
+    const rows = window.CTMUI.filterSessions(buckets[mode] || [], { ...filters, view: "all" }, today);
+    const titleKey = mode === "upcoming" ? "sessionsUpcoming" : mode === "archived" ? "sessionsArchived" : "sessions";
+    const emptyKey = mode === "upcoming" ? "noUpcomingSessions" : mode === "archived" ? "noArchivedSessions" : "noSessions";
 
     async function create(event) {
       event.preventDefault();
@@ -1143,9 +1168,9 @@
     return h(
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
-      h(P.Text, { as: "h1", variant: "title" }, t("sessions")),
-      h(window.CTMUI.SessionFilters, { filters, onChange: setFilters, lang }),
-      canManage(user)
+      h(P.Text, { as: "h1", variant: "title" }, t(titleKey)),
+      h(window.CTMUI.SessionFilters, { filters, onChange: setFilters, lang, showView: false }),
+      mode === "upcoming" && canManage(user)
         ? h(
             P.Panel,
             { icon: "calendar", title: t("newSession") },
@@ -1181,15 +1206,15 @@
         : state.error
           ? loadFailure(P, h, t, retry, state.error)
           : h(P.SplitView, {
-              label: t("sessions"), firstLabel: t("sessions"),
+              label: t(titleKey), firstLabel: t(titleKey),
               first: h(window.CTMShell.Table, {
-                label: t("sessions"), rows, selected, onSelect: select, empty: t("noSessions"),
+                label: t(titleKey), rows, selected, onSelect: select, empty: t(emptyKey),
                 columns: [{ title: t("sessionDate"), field: "date", kind: "name" }, { title: t("statusLabel"), field: "state", render: (row) => t(row.state) }],
               }),
-              second: h(P.ReadingPane, { label: t("sessions") },
+              second: h(P.ReadingPane, { label: t(titleKey) },
                 rows.some((row) => row.id === selected) ? h(SessionWorkspace, { key: selected, api, lang, user, sessionId: selected, compact: true,
-                  onCase, onBack: () => select(null), onSession: select, renderAttendance })
-                  : h(P.EmptyState, { title: t("sessions") }),
+                  onCase, onBack: () => select(null), onSession: select, onChanged: retry, renderAttendance })
+                  : h(P.EmptyState, { title: t(titleKey) }),
               ),
             }),
     );
@@ -1723,7 +1748,7 @@
 
   // renderAttendance({ session, members, attendance, key }) lets the shell keep its
   // existing attendance component while this module supplies fresh data after each action.
-  function SessionWorkspace({ api, lang, user, sessionId, renderAttendance, onCase, onBack, onSession, compact = false }) {
+  function SessionWorkspace({ api, lang, user, sessionId, renderAttendance, onCase, onBack, onSession, onChanged, compact = false }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1838,6 +1863,7 @@
       run(
         () => api(`/api/sessions/${encodeURIComponent(sessionId)}/close/`, { method: "POST", body: "{}" }),
         "sessionClosed",
+        onChanged,
       );
 
     const addControl = (part, candidates) =>
@@ -1977,6 +2003,7 @@
             onClose: () => setDialog(null),
             onDone: (targetId) => {
               setDialog(null);
+              if (onChanged) onChanged();
               if (onSession) onSession(targetId);
             },
           })
@@ -2461,6 +2488,7 @@
     sessionDateProblem,
     todayInLosAngeles,
     splitSessions,
+    sessionBuckets,
     hearingTitle,
     part1Candidates,
     part2Candidates,
