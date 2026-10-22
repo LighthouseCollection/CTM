@@ -81,28 +81,54 @@ def enroll_council(
 
 @transaction.atomic
 @core_operation("account_status")
-def set_account_status(actor, target_id, enabled):
+def set_account_status(actor, target_id, enabled, *, expected_version=None):
+    from tribunal.validation import VersionConflict
+    from .account_administration import status_version, notice_template, queue_status_notice
     administrator(actor)
     if type(enabled) is not bool:
         raise ValidationError("Account enabled must be a literal boolean.")
-    lock_key("account-administration")
-    target = Account.objects.select_for_update(of=("self",)).get(pk=target_id)
-    if target.pk == actor.pk and not enabled:
-        raise ValidationError("Cannot suspend your own administrator session.")
-    if target.role == "admin" and not enabled and not Account.objects.filter(role="admin", is_active=True).exclude(pk=target.pk).exists():
-        raise ValidationError("The last active administrator cannot be suspended.")
-    target.is_active = bool(enabled)
-    target.save(update_fields=["is_active"])
-    if not enabled:
-        from django.contrib.sessions.models import Session
-
-        for session in Session.objects.filter(
-            expire_date__gte=__import__("django").utils.timezone.now()
-        ):
-            if session.get_decoded().get("_auth_user_id") == str(target.pk):
-                session.delete()
-    audit(actor, "account_reactivated" if enabled else "account_suspended", target)
-    return target
+    if expected_version is not None and (type(expected_version) is not int or expected_version<0):
+        raise ValidationError("expected_version must be a non-negative status version.")
+    with database_actor(actor):
+        lock_key("account-administration")
+        # Match the setting writer's lock order before taking recipient FK locks.
+        lock_key("setting:email_templates")
+        target = Account.objects.select_for_update(of=("self",)).get(pk=target_id)
+        version=status_version(target.pk)
+        if expected_version is not None and expected_version!=version:
+            raise VersionConflict(version)
+        if target.pk == actor.pk and not enabled:
+            raise ValidationError("Cannot suspend your own administrator session.")
+        if target.role == "admin" and not enabled and not Account.objects.filter(role="admin", is_active=True).exclude(pk=target.pk).exists():
+            raise ValidationError("The last active administrator cannot be suspended.")
+        changed=target.is_active!=enabled
+        action="account_reactivated" if enabled else "account_suspended"
+        template=notice_template(target,action) if changed and target.role=='applicant' else None
+        before=target.is_active
+        if changed:
+            target.is_active=enabled
+            target.save(update_fields=["is_active"])
+        revoked=0
+        if not enabled:
+            from django.contrib.sessions.models import Session
+            from django.utils import timezone
+            for session in Session.objects.filter(expire_date__gte=timezone.now()).iterator():
+                if session.get_decoded().get("_auth_user_id") == str(target.pk):
+                    session.delete()
+                    revoked+=1
+        target.revoked_sessions=revoked
+        target.notice_queued=False
+        if not changed and revoked:
+            audit(actor,"account_sessions_revoked",target,metadata={'sessions_revoked':revoked})
+        if changed:
+            event=audit(actor,action,target,metadata={'before':before,'after':enabled,
+                'status_version':version+1,'sessions_revoked':revoked,
+                'notification_language':target.notification_language,
+                'template_version':template['template_version'] if template else None})
+            if template:
+                queue_status_notice(target,event,template)
+                target.notice_queued=True
+        return target
 
 
 @transaction.atomic

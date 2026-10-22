@@ -1,3 +1,13 @@
+## Account administration / returned resubmission continuation
+
+Completed account directory/detail/status/history, status CAS and session revocation,
+configured frozen applicant status mail, stable assigned member UUID,0040 restricted
+queue proofs/index and0041 bound returned-filing policy correction. Full PostgreSQL
+verification:669 passed,1 skipped; roundtrip through0041. See
+account-administration-contract.md and backend-status.md for acceptance and remaining
+work. Governance owns integration; no merge/deployment/operational migration by us.
+Publication status and exact SHA are recorded on issue #2 after branch confirmation.
+
 # VM-FRM backend progress
 
 ## Typed settings schemas and conflict-safe HTTP editing

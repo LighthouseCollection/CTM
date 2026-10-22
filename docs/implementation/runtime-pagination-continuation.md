@@ -68,3 +68,11 @@ No model, route, grant or migration is added. Inventory remains63 domain models,
 continuation fields and governance must integrate/retest the exact delivered SHA.
 The unproven external stall and applicant Docker recovery remain separate from
 approved content, normalized-schema work and live-service acceptance dependencies.
+
+## Subsequent acceptance coordination
+
+Governance authorizes coordinated testing on the existing fictional CTM VM database.
+Disposable Docker recovery is not an acceptance prerequisite. Governance alone
+serializes shared migrations/deployment; physical provider-authenticated acceptance
+requires its designated identity/private harness. Historical stall evidence above
+is preserved; passing isolated SQL-session tests does not establish its root cause.

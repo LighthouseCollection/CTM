@@ -458,6 +458,7 @@ def cases(request):
         qs.select_related("assigned_member").order_by("-created_at", "-id"), request,
         default_limit=100,
         serialize=lambda c: encoded(c, number=c.number, status=c.status,
+            assigned_member_id=str(c.assigned_member_id) if c.assigned_member_id else None,
             assigned_member=f"{c.assigned_member.first_name} {c.assigned_member.last_name}".strip()
             if c.assigned_member else None),
     ))
@@ -529,6 +530,64 @@ def members(request):
             ]
         }
     )
+
+
+@endpoint()
+def system_accounts(request):
+    from tribunal.pagination import page_records
+    from tribunal.services.account_administration import account_data, account_queryset
+    administrator(request.user)
+    qs=account_queryset()
+    for key in ['role','active']:
+        if len(request.GET.getlist(key))>1:
+            raise ValidationError("Use a single account filter value.")
+    role=request.GET.get('role')
+    if role is not None:
+        if role not in {'applicant','member','president','admin','secretary'}:
+            raise ValidationError("Unsupported account role filter.")
+        qs=qs.filter(role=role)
+    enabled=request.GET.get('active')
+    if enabled is not None:
+        if enabled not in {'true','false'}:
+            raise ValidationError("Use true or false for the active filter.")
+        qs=qs.filter(is_active=enabled=='true')
+    active_admins=m.Account.objects.filter(role='admin',is_active=True).count()
+    return JsonResponse(page_records(qs.order_by('-created_at','-id'),request,
+        default_limit=100,serialize=lambda row:account_data(request.user,row,active_admin_count=active_admins)))
+
+
+@endpoint()
+def system_account(request, account_id):
+    from tribunal.services.account_administration import account_data
+    administrator(request.user)
+    return JsonResponse(account_data(request.user,m.Account.objects.get(pk=account_id)))
+
+
+@endpoint(("POST",))
+def system_account_status(request, account_id):
+    from tribunal.services.account_administration import account_data
+    from tribunal.services.identity import set_account_status
+    administrator(request.user)
+    data=body(request)
+    if set(data)!={'enabled','expected_version'}:
+        raise ValidationError("Provide enabled and expected_version only.")
+    row=set_account_status(request.user,account_id,data['enabled'],expected_version=filing_version(data))
+    return JsonResponse({'account':account_data(request.user,row),
+        'revoked_sessions':row.revoked_sessions,'notice_queued':row.notice_queued})
+
+
+@endpoint()
+def system_account_history(request, account_id):
+    from tribunal.pagination import page_records
+    from tribunal.services.account_administration import status_events
+    administrator(request.user)
+    m.Account.objects.get(pk=account_id)
+    return JsonResponse(page_records(status_events(account_id).order_by('-created_at','-id'),request,
+        default_limit=50,serialize=lambda row:encoded(row,action=row.action,
+            actor_id=str(row.actor_id) if row.actor_id else None,timestamp=row.created_at.isoformat(),
+            before=row.metadata.get('before'),after=row.metadata.get('after'),
+            status_version=row.metadata.get('status_version'),
+            sessions_revoked=row.metadata.get('sessions_revoked'))))
 
 
 @endpoint(("GET", "POST"))

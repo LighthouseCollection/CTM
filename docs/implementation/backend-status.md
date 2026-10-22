@@ -5,8 +5,8 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **647 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
-reapply through0039. Protected151-table specification and accepted questions unchanged.
+Validation: **669 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+reapply through0041. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
   domain tables forced RLS; queue provenance in0036.
@@ -44,12 +44,21 @@ while unsafe legacy values are redacted. This is typed version storage; provider
 consumer activation and approved bilingual content remain separate unfinished work.
 [Wire contract, compatibility and acceptance](typed-settings-contract.md).
 
+## Account administration and returned filing continuation
+
+Account directory/detail/status/history APIs, compare-and-save status changes,
+target session revocation, source-bound configured bilingual status notices and
+stable assigned_member_id are implemented.0040 adds the audit index and restricted
+notice proofs;0041 corrects bound returned-petition resubmission with optional or
+corrected DOB. Current adapter:63 domain models,95 routes,63 forced-RLS tables.
+[Contract and remaining work](account-administration-contract.md).
+
 ## Unfinished
 
 UI's other requested backend contracts remain unfinished: approved own-profile/
 contact/portrait mutations, verified email/provider/session administration, member
 contact/appointment/history projections, formal-source factual discrepancy views,
-and consumer integration of stored settings. Pagination and per-family settings
+and consumer integration of stored settings beyond account status notices. Pagination and per-family settings
 edit schemas are addressed in these continuations;
 those separate contracts are not claimed complete or all blocked by credentials.
 
