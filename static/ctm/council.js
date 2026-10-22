@@ -2281,7 +2281,7 @@
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", render: (row) => personPill(row.assigned_member_name, "clergy") },
             { title: t("actions"), field: "open_action", minWidth: "7rem", render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
-              row.can_transfer && transferSessions.length ? h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase")) : null) },
+              h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ]
         : [
             { title: "#", field: "position", kind: "name", width: "3rem" },
@@ -2291,7 +2291,7 @@
             { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "11rem", render: (row) => row.previous_recommendation || t("notRecorded") },
             { title: t("actions"), field: "open_action", minWidth: "7rem", render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
-              row.can_transfer && transferSessions.length ? h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase")) : null) },
+              h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ];
       return h(P.Panel, {
         key: n,
