@@ -316,6 +316,14 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
                 "body":withdrawal_response.text()[:4000]}
             withdrawal_trace["after_response"]=detail(one,first_id)
             assert withdrawal_response.status==200 and withdrawal_response.request.post_data_json==withdrawal_trace["expected_payload"]
+            with first_page.expect_response(lambda r:r.url==f"{base}/api/applications/{first_id}/" and r.request.method=="GET") as refreshed:
+                first_page.get_by_role("button",name="Refresh application status",exact=True).click()
+            refreshed_response=refreshed.value;refreshed_payload=refreshed_response.json()
+            withdrawal_trace["refresh"]={"status":refreshed_response.status,"application":refreshed_payload}
+            assert refreshed_response.status==200 and refreshed_payload["status"]=="withdrawn"
+            assert refreshed_payload["version"]==original["version"] and refreshed_payload["can_withdraw"] is False
+            expect(first_page.get_by_text("Application status: Withdrawn",exact=True)).to_be_visible()
+            expect(first_page.get_by_role("button",name="Withdraw my filing",exact=True)).to_have_count(0)
         except Exception:
             artifact=Path(output);artifact.mkdir(parents=True,exist_ok=True)
             withdrawal_trace["failure_state"]={"server_application":detail(one,first_id),"url":first_page.url,
@@ -327,9 +335,7 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
             (artifact/"returned-withdrawal-failure.html").write_text(first_page.content(),encoding="utf-8")
             first_page.screenshot(path=str(artifact/"returned-withdrawal-failure.png"),full_page=True,caret="initial")
             raise
-        first_page.get_by_role("button",name="Refresh application",exact=True).click()
-        expect(first_page.get_by_role("button",name="Withdraw my filing",exact=True)).to_have_count(0)
-        assert detail(one,first_id)["status"]=="withdrawn"
+        assert detail(one,first_id)==refreshed_payload
         assert one.request.get(f"{base}/api/applications/{first_id}/history/").json()==before_history
         assert detail(one,first_id)["fee"]==original["fee"]
         checks.append("Actual returned-filing withdrawal is owner/version bound; browser hides draft deletion, preserves fee/history and removes action after refresh")
