@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "date": "2026-10-22",
+  "scope": "fresh isolated PostgreSQL applicant browser/API acceptance",
+  "integration_sha": "f315dc7cddfbfe63b0ec419a431446556fb41c63",
+  "applicant_sha": "197c8e6c965808de96bad9ea1af9a59ab6d2b51e",
+  "governance_pr": 23,
+  "run_id": "applicant-20261022T114843Z-5b5cb7d5",
+  "clone_name": "ctm_accept_applicant_20261022t114843z_5b5cb7d5",
+  "protected_artifact_path": "/srv/ctm/acceptance/applicant-20261022T114843Z-5b5cb7d5",
+  "full": {
+    "passed": 75,
+    "total": 75,
+    "exit_code": 0,
+    "page_errors": []
+  },
+  "focused": {
+    "passed": 7,
+    "total": 7
+  },
+  "runtime_database": {
+    "current_user": "ctm_app",
+    "session_user": "ctm_app",
+    "role_attributes": [
+      "NOSUPERUSER",
+      "NOBYPASSRLS",
+      "NOINHERIT"
+    ],
+    "owner_role_memberships": 0,
+    "forced_rls_domain_tables": 63,
+    "inspected_domain_tables": 63
+  },
+  "migrations": {
+    "verified_from": "0042",
+    "verified_through": "0048"
+  },
+  "source_tree_sha256_before": "839b622283d46c8bc8912d75574c757a63b82e52e1c2244de3fb3f619e023f32",
+  "source_tree_sha256_after": "839b622283d46c8bc8912d75574c757a63b82e52e1c2244de3fb3f619e023f32",
+  "covered_regressions": [
+    "linked spouse first submission",
+    "joint withdrawal",
+    "decree closure",
+    "request author display projection",
+    "private message pagination and sender display",
+    "known foreign recipient returns 403 and absent recipient returns 422 without side effects",
+    "lost draft deletion acknowledgement recovery"
+  ],
+  "not_claimed": [
+    "approved institutional content",
+    "live external service acceptance",
+    "independent QA",
+    "merge",
+    "deployment"
+  ],
+  "remaining_dependencies": [
+    "approved bilingual institutional application wording, field mapping and validation",
+    "genuine Google and Apple applicant authentication acceptance",
+    "live payment, email, antivirus and other external-service acceptance",
+    "independent QA against f315dc7cddfbfe63b0ec419a431446556fb41c63",
+    "governance merge and deployment decisions"
+  ],
+  "merge_deploy": {
+    "merged": false,
+    "deployed": false,
+    "public_shared_sha": "dccbd63"
+  }
+}

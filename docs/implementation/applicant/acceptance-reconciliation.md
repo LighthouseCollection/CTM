@@ -1,5 +1,14 @@
 # Applicant acceptance reconciliation
 
+## Full PostgreSQL applicant acceptance (2026-10-22)
+
+Exact governance successor `f315dc7cddfbfe63b0ec419a431446556fb41c63`
+passes all 75 fresh-clone PostgreSQL applicant checks and all seven focused regressions,
+with no browser page errors. Restricted physical `ctm_app` execution and forced RLS on
+63/63 inspected domain tables were verified. Older sections below remain historical.
+
+[Report](postgres-full-acceptance-report.md) | [Download JSON](postgres-full-acceptance-result.json).
+
 ## Current backend validation alignment
 
 At ff85717:17 direct probes,30 archived backend SQLite recursive tests,76 applicant SQLite API/browser groups,96 frontend tests and nine row/repeat browser fixture groups pass. F02/F04 and English MC/CMC technical gaps are addressed; approved content, normalized schema and PostgreSQL/integration acceptance remain. [Successor report](backend-validation-report.md) | [Resolution JSON](field-mapping/backend-resolution.json). Earlier status snapshots below are historical.

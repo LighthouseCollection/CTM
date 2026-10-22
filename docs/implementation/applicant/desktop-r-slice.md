@@ -1,5 +1,16 @@
 # Applicant workflow implementation slice
 
+## Full PostgreSQL applicant acceptance (2026-10-22)
+
+Exact governance successor `f315dc7cddfbfe63b0ec419a431446556fb41c63`
+passes 75/75 fresh-clone PostgreSQL applicant checks and 7/7 focused regressions,
+with no browser page errors. Applicant implementation and integrated PostgreSQL
+acceptance are complete within the synthetic tested scope. Institutional bilingual
+content, genuine Google/Apple authentication, live external services, independent QA,
+and governance merge/deployment remain external dependencies.
+
+[Report](postgres-full-acceptance-report.md) | [Download JSON](postgres-full-acceptance-result.json).
+
 ## Current linked first-petition checkpoint
 
 Linked-spouse first-petition entry is implemented; actual two-filer and closed-case first-petition submission coverage replaces prior constructed-filing state.94 frontend tests, six entry fixture groups and nine shell groups pass. Unmodified integration104e4fd passes75 applicant API/browser groups; the explicit local review candidate with the named module/minimal hook passes76. This is not an integrated successor or institutional acceptance. [Report and blockers](linked-petition-report.md) | [Candidate JSON](linked-petition-api-result.json). Earlier counts and fixture gaps below are historical snapshots.
