@@ -2917,15 +2917,14 @@
         h(P.Input, { type: "search", width: "lg", "aria-label": t("searchCases"), value: query, onChange: (e) => setQuery(e.target.value) }),
         !archived ? h(P.Checkbox, { label: t("showClosedCases"), checked: includeClosed, onChange: (event) => setIncludeClosed(event.target.checked) }) : null,
       ),
-      rows.length
-        ? h(P.DataGrid, {
-            density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
-            label: title || t(archived ? "archivedTitle" : "casesTitle"), data: rows, index: "id",
-            mode: "pages", pageSize: 25, headerMenu: true, rowMenuButton: false, narrow: "table",
-            keyColumns: columns.map((column) => column.field), columns,
-            strings: { perPage: t("tablePerPage"), range: t("tableRange"), count: t("tableCount"), pages: t("tablePages"), empty: t("noMatchingCases"), failed: t("loadFailed"), retry: t("retry") },
-          })
-        : h(P.EmptyState, { title: t(query ? "noMatchingCases" : archived ? "noArchived" : "noOpenCases") }),
+      h(P.DataGrid, {
+        density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
+        label: title || t(archived ? "archivedTitle" : "casesTitle"), data: rows, index: "id",
+        mode: "pages", pageSize: 25, headerMenu: true, rowMenuButton: false, narrow: "table",
+        keyColumns: columns.map((column) => column.field), columns,
+        empty: t(query ? "noMatchingCases" : archived ? "noArchived" : "noOpenCases"),
+        strings: { perPage: t("tablePerPage"), range: t("tableRange"), count: t("tableCount"), pages: t("tablePages"), empty: t("noMatchingCases"), failed: t("loadFailed"), retry: t("retry") },
+      }),
     );
     return h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
       table,
