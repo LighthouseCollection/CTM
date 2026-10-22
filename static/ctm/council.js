@@ -149,7 +149,7 @@
       answers: "Submitted answers",
       notAnswered: "Not answered",
       codesNotice:
-        "Approved question labels are not yet provided to this view, so answer codes are shown exactly as stored.",
+        "Approved question wording is not yet available here, so answer codes are shown exactly as stored.",
       noAnswers: "No answers are stored for this version.",
       documents: "Open case documents",
       accept: "Accept application",
@@ -238,7 +238,7 @@
       versus: "vs.",
       onSession: "on",
       outcomeDependency:
-        "Hearing recommendations and the applicant update open from the hearing record once the server exposes it.",
+        "Hearing recommendations and the applicant update are not yet available from this view.",
     },
     ar: {
       councilSession: "جلسة المجلس",
@@ -345,7 +345,7 @@
       versus: "ضد",
       onSession: "في",
       outcomeDependency:
-        "تُفتح توصيات الجلسة والتحديث الموجَّه لمقدم الطلب من سجل الجلسة بمجرد أن يتيحه الخادم.",
+        "توصيات الجلسة والتحديث الموجَّه لمقدم الطلب غير متاحة بعد من هذه الصفحة.",
     },
   };
 
@@ -688,7 +688,7 @@
             { title: t("newSession") },
             h(
               P.Form,
-              { onSubmit: create, label: t("newSession") },
+              { onSubmit: create, label: t("newSession"), noValidate: true },
               h(
                 P.Field,
                 { label: t("sessionDate"), required: true, error: problem ? t(problem) : undefined },
@@ -1070,6 +1070,8 @@
     groupAgenda,
     serverMessage,
     answerText,
+    useLoad,
+    loadFailure,
     ReviewQueuePanel,
     ReviewWorkspace,
     SessionList,
