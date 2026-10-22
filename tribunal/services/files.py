@@ -186,10 +186,11 @@ def upload(
                 raise ValidationError("The signed disclosure original is retained.")
         case = request.case
         proceeding = request.proceeding
-        owner = request.subject.account
-        visibility = (
-            "medical" if request.kind in {"medical", "psychological"} else "own"
-        )
+        if request.kind in {"external_priest", "interview"}:
+            owner, visibility = None, "council"
+        else:
+            owner = request.subject.account
+            visibility = "medical" if request.kind in {"medical", "psychological"} else "own"
     elif app_id:
         app = application_for(actor, app_id)
         from tribunal.models import Application, Case
@@ -359,6 +360,11 @@ def authorized_file(actor, file_id, *, require_safe=True):
         "attachment__application", "attachment__case"
     ).get(pk=file_id)
     attachment = file.attachment
+    if actor.role == "applicant" and attachment.report_request_id:
+        from tribunal.models import ReportRequest
+        source = ReportRequest.objects.filter(pk=attachment.report_request_id).values("kind").first()
+        if source is None or source["kind"] in {"external_priest", "interview"}:
+            raise PermissionDenied("Request attachment is council-only.")
     if require_safe and not safe_file(file):
         raise PermissionDenied("File has not passed technical validation.")
     if actor.role == "applicant":

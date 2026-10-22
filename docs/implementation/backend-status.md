@@ -5,8 +5,8 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **718 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
-reapply through0041. Protected151-table specification and accepted questions unchanged.
+Validation: **739 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+reapply through0042. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
   domain tables forced RLS; queue provenance in0036.
@@ -94,12 +94,23 @@ only from actual audit evidence. Current scope/grant flags do not widen authorit
 No historical appointment or baseline role grant is invented.
 [Projection, provenance and limits](member-history-projection.md).
 
+## Council request original privacy correction
+
+Reproduced council C05 subject-applicant HTTP200 after clean scan for an external
+priest upload. New external_priest/interview uploads are council-visible with no
+owner; service and0042 read/write policy guards also protect retained legacy wrong
+scope and derived scan/text rows. Original evidence is not rewritten. External-link
+responses consistently use no-referrer. Twenty-one targeted regressions and full suite
+pass; independent exact-successor negative-access acceptance remains required.
+[Root cause, migration coordination and limits](council-request-file-privacy.md).
+
 ## Unfinished
 
 UI's other requested backend contracts remain unfinished: approved own-profile/
 contact/portrait mutations, verified email/provider administration, broader normalized/admin session history, member
 contact/portrait editing and broader institutional history, formal-source factual discrepancy views,
-and consumer integration of stored settings beyond account status notices. Pagination and per-family settings
+and consumer integration of stored settings beyond account status notices. Council C05 external
+boot/link-state/recording/paper-completion/projection/invitation contracts remain unfinished. Pagination and per-family settings
 edit schemas are addressed in these continuations;
 those separate contracts are not claimed complete or all blocked by credentials.
 

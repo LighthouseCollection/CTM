@@ -1,3 +1,15 @@
+## C05 council request attachment privacy correction
+
+Reproduced restrictedctm_app subject GET200 for clean priest original. Fixed new
+external_priest/interview owner/visibility plus service and0042 SQL read/write
+scope, protecting retained legacy rows and derived text without rewriting evidence.
+No-referrer now covers failed external-link responses. Twenty-one focused regressions;
+full PostgreSQL739 passed/1skip, rollback/reapply through0042.99routes/63models/
+63forced tables unchanged. See council-request-file-privacy.md; governance owns
+0042 rollout and separate UI competing0040 reconciliation. C05 remaining capability/
+paper/invitation contracts and settings-label consumer are not claimed complete.
+Exact publication SHA recorded issue #2; no merge/deploy by backend.
+
 ## Council appointment / assignment-role history projection
 
 Completed admin/secretary paginated memberships and role-history for existing
