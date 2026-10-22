@@ -473,6 +473,9 @@
       deleteSession: "Delete",
       deleteSessionTitle: "Delete this draft session?",
       deleteSessionMessage: "This removes the unassigned draft session. Sessions with agenda items or retained history cannot be deleted.",
+      deleteCase: "Delete",
+      deleteCaseTitle: "Delete this case?",
+      deleteCaseMessage: "This permanently removes the case and all of its related records. This cannot be undone.",
       sessionDeleted: "The draft session was deleted.",
       closeTitle: "Close this council session?",
       closeMessage:
@@ -772,6 +775,9 @@
       deleteSession: "حذف",
       deleteSessionTitle: "حذف جلسة المسودة؟",
       deleteSessionMessage: "يُحذف فقط مشروع الجلسة غير المعيّن. لا يمكن حذف الجلسات التي تحتوي على بنود جدول أعمال أو سجل محفوظ.",
+      deleteCase: "حذف",
+      deleteCaseTitle: "حذف هذه القضية؟",
+      deleteCaseMessage: "يؤدي هذا إلى حذف القضية وجميع سجلاتها المرتبطة نهائياً. لا يمكن التراجع عن ذلك.",
       sessionDeleted: "تم حذف مشروع الجلسة.",
       closeTitle: "هل تريد إغلاق جلسة المجلس هذه؟",
       closeMessage:
@@ -2842,13 +2848,31 @@
         .some((value) => String(value).toLowerCase().includes(q)));
   }
 
-  function CasesTable({ cases, archived, view, title, lang, onOpen }) {
+  function CasesTable({ api, user, cases, archived, view, title, lang, onOpen }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
     const [query, setQuery] = R.useState("");
     const [includeClosed, setIncludeClosed] = R.useState(false);
+    const [deleteTarget, setDeleteTarget] = R.useState(null);
+    const [deleting, setDeleting] = R.useState(false);
+    const [deleteFailure, setDeleteFailure] = R.useState(null);
+    const canDelete = user?.role === "admin";
+    async function deleteCase() {
+      if (!deleteTarget) return;
+      setDeleting(true);
+      setDeleteFailure(null);
+      try {
+        await api(`/api/cases/${encodeURIComponent(deleteTarget.id)}/`, { method: "DELETE" });
+        setDeleteTarget(null);
+        window.location.reload();
+      } catch (error) {
+        setDeleteFailure(serverMessage(error, t));
+      } finally {
+        setDeleting(false);
+      }
+    }
     const rows = caseRows(cases, archived, query, includeClosed).map((row) => ({
       id: row.id,
       number: row.number,
@@ -2878,8 +2902,11 @@
           { title: t("statusLabel"), field: "status", maxWidth: "--plx-ref-size-240px", sorter: "string" },
         ]),
       {
-        title: t("actions"), field: "open_action", minWidth: "6rem", pill: false,
-        render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onOpen(row.id) }, t("open")),
+        title: t("actions"), field: "open_action", minWidth: canDelete ? "11rem" : "6rem", pill: false,
+        render: (row) => h(P.Inline, { gap: "xs" },
+          h(P.Button, { size: "xs", icon: "open", onClick: () => onOpen(row.id) }, t("open")),
+          canDelete ? h(P.Button, { size: "xs", icon: "trash", onClick: () => setDeleteTarget(row) }, t("deleteCase")) : null,
+        ),
       },
     ];
     const table = h(
@@ -2900,7 +2927,14 @@
           })
         : h(P.EmptyState, { title: t(query ? "noMatchingCases" : archived ? "noArchived" : "noOpenCases") }),
     );
-    return h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" }, table);
+    return h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
+      table,
+      h(P.ConfirmDialog, {
+        open: Boolean(deleteTarget), title: t("deleteCaseTitle"), message: t("deleteCaseMessage"),
+        confirmLabel: t("deleteCase"), cancelLabel: t("cancel"), onConfirm: deleteCase,
+        onCancel: () => !deleting && setDeleteTarget(null),
+      }, deleteFailure && deleteTarget ? h(P.Notice, { tone: "danger" }, deleteFailure) : null),
+    );
   }
 
   // Operational counts only. No rates: tribunal cases have no valid population

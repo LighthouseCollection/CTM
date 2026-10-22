@@ -772,8 +772,12 @@ def _council_case_edits(case):
     return latest
 
 
-@endpoint()
+@endpoint(("GET", "DELETE"))
 def case_detail(request, case_id):
+    if request.method == "DELETE":
+        from tribunal.services.admin_purge import purge_case
+        purge_case(request.user, case_id)
+        return JsonResponse({}, status=204)
     from tribunal.projections import case_capabilities
     case = case_for(request.user, case_id)
     parties = list(case.parties.select_related("person").all().order_by("slot", "id"))
