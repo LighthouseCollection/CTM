@@ -180,6 +180,17 @@
       audit: "Case Audit",
       backCases: "Back to cases",
       backSessions: "Back to sessions",
+      backHome: "Back to Home",
+      backNotifications: "Back to Notifications",
+      backAdministration: "Back to Administration",
+      backSearchResults: "Back to search results",
+      backMyCases: "Back to My Cases",
+      backAllCases: "Back to All Cases",
+      backArchivedCases: "Back to Archived Cases",
+      backCurrentSessions: "Back to Current Tribunal Sessions",
+      backUpcomingSessions: "Back to Upcoming Tribunal Sessions",
+      backArchivedSessions: "Back to Archived Tribunal Sessions",
+      backTribunalSession: "Back to Tribunal Session",
       account: "My Profile",
       settings: "Account Settings",
       system: "CTM Settings",
@@ -373,6 +384,17 @@
       audit: "سجل القضية",
       backCases: "العودة إلى القضايا",
       backSessions: "العودة إلى الجلسات",
+      backHome: "العودة إلى الصفحة الرئيسية",
+      backNotifications: "العودة إلى الإشعارات",
+      backAdministration: "العودة إلى الإدارة",
+      backSearchResults: "العودة إلى نتائج البحث",
+      backMyCases: "العودة إلى قضاياي",
+      backAllCases: "العودة إلى جميع القضايا",
+      backArchivedCases: "العودة إلى القضايا المؤرشفة",
+      backCurrentSessions: "العودة إلى جلسات المجلس الحالية",
+      backUpcomingSessions: "العودة إلى جلسات المجلس القادمة",
+      backArchivedSessions: "العودة إلى جلسات المجلس المؤرشفة",
+      backTribunalSession: "العودة إلى جلسة المجلس",
       account: "ملفي الشخصي",
       settings: "إعدادات الحساب",
       system: "إعدادات النظام",
@@ -1117,6 +1139,7 @@
     const [saving, setSaving] = R.useState(false);
     const [preferenceFailure, setPreferenceFailure] = R.useState(null);
     const [caseDetailOpen, setCaseDetailOpen] = R.useState(true);
+    const [caseOrigin, setCaseOrigin] = R.useState(null);
     R.useEffect(() => setCaseDetailOpen(true), [page, selection]);
     const applicantGuard = R.useRef(null);
     const registerApplicantGuard = R.useCallback((guard) => {
@@ -1325,6 +1348,15 @@
       );
     }
     const council = user.portal === "council";
+    const openCase = (id, origin) => {
+      setCaseOrigin(origin || { page: council ? "cases" : "past", labelKey: "backCases" });
+      go("case", id);
+    };
+    const returnToCaseOrigin = () => {
+      const origin = caseOrigin || { page: council ? "cases" : "past", labelKey: "backCases" };
+      setCaseOrigin(null);
+      go(origin.page, origin.selection || null);
+    };
     const navItems = council
       ? ["home", "sessions", "sessionsUpcoming", "sessionsArchived", "myCases", "cases", "search", "archived", "statistics"]
       : ["home", "applications", "appointments", "past"];
@@ -1463,9 +1495,9 @@
               P.Button,
               {
                 variant: "ghost",
-                onClick: () => go(council ? "cases" : "past"),
+                onClick: returnToCaseOrigin,
               },
-              t("backCases"),
+              t(caseOrigin?.labelKey || "backCases"),
             ),
           h(P.NavList, {
             label: t("overview"),
@@ -1589,7 +1621,7 @@
           key: row.id,
           title: row.number,
           meta: t(row.status),
-          onOpen: () => go("case", row.id),
+          onOpen: () => openCase(row.id, { page: "home", labelKey: "backHome" }),
         },
         text(`${t("assigned")}: ${row.assigned_member || t("unassigned")}`, {
           variant: "secondary",
@@ -1628,14 +1660,14 @@
           onNavigationGuard: registerApplicantGuard,
         });
       if (page === "notifications" && !council && window.CTMApplicantNotifications)
-        return h(window.CTMApplicantNotifications.Inbox, { api, lang, onCase: id => go("case", id), onNavigationGuard: registerApplicantGuard });
+        return h(window.CTMApplicantNotifications.Inbox, { api, lang, onCase: id => openCase(id, { page: "notifications", labelKey: "backNotifications" }), onNavigationGuard: registerApplicantGuard });
       if (page === "notifications")
         return h(NotificationInbox, {
           key: revision,
           initial: data,
           t,
           lang,
-          onCase: (id) => go("case", id),
+          onCase: (id) => openCase(id, { page: "notifications", labelKey: "backNotifications" }),
         });
       if (page === "reports" && council && councilModule?.ReportsWorkspace)
         return h(councilModule.ReportsWorkspace, {
@@ -1676,7 +1708,7 @@
           api,
           lang,
           user,
-          onCase: (id) => go("case", id),
+          onCase: (id) => openCase(id, { page: "home", labelKey: "backHome" }),
           onSession: (id) => go("session", id),
           onReview: () => go("review"),
           onNotifications: () => go("notifications"),
@@ -1729,7 +1761,7 @@
           t,
         });
       if (page === "administration" && window.CTMUI)
-        return h(window.CTMUI.Administration, { api, user, lang, onNavigationGuard: registerApplicantGuard, onCase: (id) => go("case", id) });
+        return h(window.CTMUI.Administration, { api, user, lang, onNavigationGuard: registerApplicantGuard, onCase: (id) => openCase(id, { page: "administration", labelKey: "backAdministration" }) });
       if (page === "profile" && window.CTMUI)
         return h(window.CTMUI.Profile, { user, lang, onSettings: () => go("settings") });
       if (page === "profile")
@@ -1824,7 +1856,7 @@
           api,
           lang,
           user,
-          onCase: (id) => go("case", id),
+          onCase: (id) => openCase(id, { page: "search", labelKey: "backSearchResults" }),
         });
       if (councilModule && council && page === "review")
         return h(councilModule.ReviewWorkspace, {
@@ -1842,7 +1874,7 @@
           user,
           mode: page === "sessions" ? "current" : page === "sessionsUpcoming" ? "upcoming" : "archived",
           onOpen: (id) => go("session", id),
-          onCase: (id) => go("case", id),
+          onCase: (id, origin) => openCase(id, origin || { page, labelKey: page === "sessionsUpcoming" ? "backUpcomingSessions" : page === "sessionsArchived" ? "backArchivedSessions" : "backCurrentSessions" }),
           renderAttendance: ({ session, members, attendance, key, onSaved }) => h(SessionAttendance, {
             key, onSaved, sessionId: session.id, session, members, initial: attendance, t,
           }),
@@ -1854,7 +1886,7 @@
           lang,
           user,
           sessionId: selection,
-          onCase: (id) => go("case", id),
+          onCase: (id) => openCase(id, { page: "session", selection, labelKey: "backTribunalSession" }),
           onBack: () => go("sessions"),
           onSession: (id) => go("session", id),
           renderAttendance: ({ session, members, attendance, key, onSaved }) =>
@@ -1898,7 +1930,7 @@
                     key: row.id,
                     title: row.case_number,
                     meta: t(row.state),
-                    onOpen: () => go("case", row.case_id),
+                    onOpen: () => openCase(row.case_id, { page: "session", selection, labelKey: "backTribunalSession" }),
                   }),
                 ),
             ),
@@ -1960,7 +1992,7 @@
           archived: page === "archived",
           title: page === "myCases" ? t("myCases") : page === "archived" ? t("archivedCases") : t("allCases"),
           lang,
-          onOpen: (id) => go("case", id),
+          onOpen: (id) => openCase(id, { page, labelKey: page === "myCases" ? "backMyCases" : page === "archived" ? "backArchivedCases" : "backAllCases" }),
         });
       if (["home", "cases", "archived", "past"].includes(page))
         return h(

@@ -109,6 +109,16 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /profile\?\.contact/);
 });
 
+test("case back navigation retains the workspace that opened the case", () => {
+  assert.match(app, /const \[caseOrigin, setCaseOrigin\] = R\.useState\(null\)/);
+  assert.match(app, /const openCase = \(id, origin\) =>/);
+  assert.match(app, /const returnToCaseOrigin = \(\) =>/);
+  assert.match(app, /onClick: returnToCaseOrigin/);
+  assert.match(app, /page: "search", labelKey: "backSearchResults"/);
+  assert.match(app, /onOpen: \(id\) => openCase\(id, \{ page, labelKey:/);
+  assert.match(app, /page: "session", selection, labelKey: "backTribunalSession"/);
+});
+
 test("api() keeps CSRF on every request and lets FormData set its own type", () => {
   const start = app.indexOf("async function api(");
   const body = app.slice(start, app.indexOf("function MessageComposer", start));
