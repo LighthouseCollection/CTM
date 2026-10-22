@@ -26,7 +26,7 @@ test("workspaces retain native keyboard row opening and selection", () => {
   assert.equal(opened,"two");
   assert.deepEqual(Array.from(result.props.selected),["one"]);
   assert.equal(result.props.density,"compact");
-  assert.equal(result.props.typeIcons,false);
+  assert.equal(result.props.typeIcons,true);
 });
 test("custom cells retain documented column sizing and are not double wrapped", () => {
   const render=()=>"action";
