@@ -2678,7 +2678,7 @@
           { wrap: true, align: "end" },
           h(
             P.Field,
-            { label: t("searchLabel"), error: problem ? t(problem) : undefined },
+            { error: problem ? t(problem) : undefined },
             h(P.Input, { type: "search", width: "lg", value: query, maxLength: 200, disabled: pending, onChange: (e) => { setQuery(e.target.value); setProblem(null); } }),
           ),
           h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("searchAction")),

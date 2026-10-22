@@ -516,10 +516,10 @@ test("case list workspaces are table-only and open cases from their action colum
   assert.match(source, /onClick: \(\) => onOpen\(row\.id\)/);
 });
 
-test("document search omits the redundant helper copy", () => {
+test("document search omits redundant helper and field-label copy", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const source = council.slice(council.indexOf("function SearchWorkspace"), council.indexOf("// Council Home"));
-  assert.match(source, /label: t\("searchLabel"\)/);
+  assert.doesNotMatch(source, /searchLabel/);
   assert.doesNotMatch(source, /description: t\("searchHelp"\)/);
 });
 
