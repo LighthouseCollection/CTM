@@ -472,3 +472,12 @@ test("upcoming sessions expose create edit and save actions in a Plenix toolbar"
   assert.match(source, /t\("saveSession"\)/);
   assert.doesNotMatch(source, /SessionFilters/);
 });
+
+test("case list workspaces are table-only and open cases from their action column", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const source = council.slice(council.indexOf("function CasesTable"), council.indexOf("// Operational counts"));
+  assert.doesNotMatch(source, /P\.SplitView/);
+  assert.doesNotMatch(source, /P\.ReadingPane/);
+  assert.match(source, /title: t\("actions"\), field: "open_action"/);
+  assert.match(source, /onClick: \(\) => onOpen\(row\.id\)/);
+});

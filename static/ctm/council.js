@@ -2824,12 +2824,11 @@
         .some((value) => String(value).toLowerCase().includes(q)));
   }
 
-  function CasesTable({ cases, archived, view, title, lang, api, user, onOpen }) {
+  function CasesTable({ cases, archived, view, title, lang, onOpen }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [selected, select] = R.useState(null);
     const [query, setQuery] = R.useState("");
     const [includeClosed, setIncludeClosed] = R.useState(false);
     const rows = caseRows(cases, archived, query, includeClosed).map((row) => ({
@@ -2842,7 +2841,8 @@
       status: t(row.status === "closed" ? "closed" : "open"),
       closedAt: row.closed_at ? row.closed_at.slice(0, 10) : "—",
     }));
-    const columns = archived
+    const columns = [
+      ...(archived
       ? [
           { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
           { title: t("caseApplicant"), field: "applicant", type: "person", kind: "name", sorter: "string" },
@@ -2858,7 +2858,12 @@
           { title: t("caseReason"), field: "reason", sorter: "string" },
           ...(view === "active" ? [{ title: t("caseAssignee"), field: "manager", type: "person", kind: "name", sorter: "string" }] : []),
           { title: t("statusLabel"), field: "status", maxWidth: "--plx-ref-size-240px", sorter: "string" },
-        ];
+        ]),
+      {
+        title: t("actions"), field: "open_action", minWidth: "6rem", pill: false,
+        render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onOpen(row.id) }, t("open")),
+      },
+    ];
     const table = h(
       R.Fragment,
       null,
@@ -2870,24 +2875,14 @@
       rows.length
         ? h(P.DataGrid, {
             density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
-            label: title || t(archived ? "archivedTitle" : "casesTitle"), data: rows, index: "id", selected: selected ? [selected] : [],
+            label: title || t(archived ? "archivedTitle" : "casesTitle"), data: rows, index: "id",
             mode: "pages", pageSize: 25, headerMenu: true, rowMenuButton: false, narrow: "table",
             keyColumns: columns.map((column) => column.field), columns,
             strings: { perPage: t("tablePerPage"), range: t("tableRange"), count: t("tableCount"), pages: t("tablePages"), empty: t("noMatchingCases"), failed: t("loadFailed"), retry: t("retry") },
-            onRowClick: (row) => select(row.id),
           })
         : h(P.EmptyState, { title: t(query ? "noMatchingCases" : archived ? "noArchived" : "noOpenCases") }),
     );
-    return h(P.SplitView, {
-      label: title || t(archived ? "archivedTitle" : "casesTitle"), firstLabel: title || t("casesTitle"),
-      first: h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" }, table),
-      second: h(P.ReadingPane, { label: t("casesTitle") },
-        rows.some((row) => row.id === selected) ? h(P.Stack, null,
-          h(P.Button, { onClick: () => onOpen(selected) }, t("openCase")),
-          h(window.CTMCouncil.CaseSummary, { key: selected, api, lang, user, caseId: selected }),
-        ) : h(P.EmptyState, { title: t("casesTitle") }),
-      ),
-    });
+    return h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" }, table);
   }
 
   // Operational counts only. No rates: tribunal cases have no valid population
