@@ -408,5 +408,6 @@
       "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
       "acceptance": "unfinished"
     }
-  ]
+  ],
+  "superseded_by": "ui-full-reconciliation.json"
 }

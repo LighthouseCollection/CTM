@@ -1,0 +1,2638 @@
+{
+  "base_commit": "0b10a61220f29feeefd89f4779138c2f78d85b04",
+  "ui_previous_checkpoint": "554dcf68bba63695bf8657c7579508e2a24379dc",
+  "coverage": "All45 screen-map rows reconciled; runtime prototype42pages855controls47safe triggers7conditional/repeat interactions. Not full functional/institutional/provider acceptance.",
+  "screens": [
+    {
+      "portal": "Shared",
+      "screen": "Sign-in",
+      "source_module": "app.js + allauth",
+      "access": "Public login; preauthorized council identity",
+      "data_source": "Account/identity provider",
+      "gap_ids": "",
+      "ui_review_id": "UI-01",
+      "prototype_pages": [
+        "public-signin.html",
+        "public-admin-signin.html"
+      ],
+      "controls_reconciled": "Provider entry/routing and unavailable provider states; no CTM password UI.",
+      "remaining_ui_or_acceptance": "Live identity/provider acceptance remains.",
+      "dependencies": [
+        "AUTH"
+      ],
+      "current_modules": [
+        "app.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/app.js",
+          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Universal entry, provider routing; genuine Microsoft local review setup retained",
+        "remaining": "Live Google/Apple and production Microsoft acceptance; full identity/role reconciliation",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Microsoft previously verified; integrated root HTTP200",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Provider entry/routing and unavailable provider states; no CTM password UI.",
+      "remaining": "Live identity/provider acceptance remains.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Home/current work",
+      "source_module": "app.js",
+      "access": "Own account",
+      "data_source": "Own applications/cases",
+      "gap_ids": "",
+      "ui_review_id": "UI-02",
+      "prototype_pages": [
+        "public-dissolution-home.html"
+      ],
+      "controls_reconciled": "Current filing/case priority and navigation.",
+      "remaining_ui_or_acceptance": "Applicant dashboard/action acceptance remains with issue1.",
+      "dependencies": [
+        "APPLICANT"
+      ],
+      "current_modules": [
+        "app.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/app.js",
+          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Current filing or open case prioritized",
+        "remaining": "Full approved dashboard/action completeness",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Actual API browser suite within synthetic scope",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Current filing/case priority and navigation.",
+      "remaining": "Applicant dashboard/action acceptance remains with issue1.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Application questionnaire",
+      "source_module": "applicant.js",
+      "access": "Own application",
+      "data_source": "QuestionnaireVersion/AnswerRevision",
+      "gap_ids": "PA28",
+      "ui_review_id": "UI-03",
+      "prototype_pages": [
+        "public-petition.html"
+      ],
+      "controls_reconciled": "Section navigation, conditional questions, repeat rows and validation.",
+      "remaining_ui_or_acceptance": "Latest repeat-condition renderer must be integrated; approved field coverage is not published.",
+      "dependencies": [
+        "APPLICANT",
+        "FORM"
+      ],
+      "current_modules": [
+        "applicant.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant.js",
+          "sha256": "4bec78b436f887f64343804c61cbde98108294ca70943f90e5e38455478bbddc",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Versioned editing, conditional fields, explicit saving, draft checklist/requirements",
+        "remaining": "Full approved bilingual form content and exact prototype field mapping",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Actual API browser suite",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Section navigation, conditional questions, repeat rows and validation.",
+      "remaining": "Latest repeat-condition renderer must be integrated; approved field coverage is not published.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Application documents",
+      "source_module": "applicant-files.js",
+      "access": "Own attachments",
+      "data_source": "Attachment/FileVersion/scan events",
+      "gap_ids": "PA25",
+      "ui_review_id": "UI-04",
+      "prototype_pages": [
+        "public-petition.html"
+      ],
+      "controls_reconciled": "Contextual file slots, upload state and original/version access.",
+      "remaining_ui_or_acceptance": "Large upload/device/storage acceptance remains.",
+      "dependencies": [
+        "FILES"
+      ],
+      "current_modules": [
+        "applicant-files.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant-files.js",
+          "sha256": "ff0515b45adbacc48c04370402c75db2fc2febb6507116b1bb5c47f7a4a34ba2",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Contextual originals, replacements, safe-file states and interrupted-upload guard",
+        "remaining": "Live ClamAV/storage and large resumable uploads",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Actual API browser suite; scan policy controlled",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Contextual file slots, upload state and original/version access.",
+      "remaining": "Large upload/device/storage acceptance remains.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Review/declaration/submission",
+      "source_module": "applicant-filing.js",
+      "access": "Own filing",
+      "data_source": "Submission/CheckoutIntent/FeeObligation",
+      "gap_ids": "",
+      "ui_review_id": "UI-05",
+      "prototype_pages": [
+        "public-petition.html"
+      ],
+      "controls_reconciled": "Review/declaration, paid-or-waived submission and recovery states.",
+      "remaining_ui_or_acceptance": "Approved declaration and live payment acceptance remain.",
+      "dependencies": [
+        "FORM",
+        "PAYMENT"
+      ],
+      "current_modules": [
+        "applicant-filing.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant-filing.js",
+          "sha256": "7627cfb578c77b0a7477a360d102cc6de4df1cfbfbccaae6243487e2603c49b3",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Review, declaration binding, version/fee gating and formal submission",
+        "remaining": "Institutional declaration approval and live payment callbacks",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Actual API browser suite; fixture waiver/provider",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Review/declaration, paid-or-waived submission and recovery states.",
+      "remaining": "Approved declaration and live payment acceptance remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Returned corrections",
+      "source_module": "applicant.js + filing",
+      "access": "Own answers; council formal snapshots only",
+      "data_source": "CompletenessReview/AnswerRevision/Submission",
+      "gap_ids": "",
+      "ui_review_id": "UI-06",
+      "prototype_pages": [
+        "public-petition.html"
+      ],
+      "controls_reconciled": "Returned correction editing, history presentation and resubmission.",
+      "remaining_ui_or_acceptance": "Exact latest applicant modules and full field-history visual acceptance remain.",
+      "dependencies": [
+        "APPLICANT",
+        "FORM"
+      ],
+      "current_modules": [
+        "applicant.js",
+        "applicant-history.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant.js",
+          "sha256": "4bec78b436f887f64343804c61cbde98108294ca70943f90e5e38455478bbddc",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/applicant-history.js",
+          "sha256": "5bfedda83a8412b5241bf70fcac806af170cc6624f8c4c5cdf5f20eeefeb7b0a",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Original submission retained; private saved corrections and resubmission",
+        "remaining": "Full field-history presentation acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Privacy regression + actual API browser suite",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Returned correction editing, history presentation and resubmission.",
+      "remaining": "Exact latest applicant modules and full field-history visual acceptance remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Payment history/checkout recovery",
+      "source_module": "applicant-payments.js + recovery",
+      "access": "Own obligations/attempts",
+      "data_source": "FeeObligation/PaymentEvent/CheckoutIntent",
+      "gap_ids": "",
+      "ui_review_id": "UI-07",
+      "prototype_pages": [
+        "public-petition.html"
+      ],
+      "controls_reconciled": "Payment list, expiry/recovery and retry states.",
+      "remaining_ui_or_acceptance": "Actual receipts/refunds/callback and delivery acceptance remain.",
+      "dependencies": [
+        "PAYMENT"
+      ],
+      "current_modules": [
+        "applicant-payments.js",
+        "applicant-recovery.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant-payments.js",
+          "sha256": "b61dcb866ed49b32a4f3fa19d3f9beedb356423e880ba4f4550e339bb16e82fc",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/applicant-recovery.js",
+          "sha256": "d84e12a032b35f93ba04d0252d5185e0ea790f1f14a72a18864a4ca364310410",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Own events/receipts, original checkout binding, expiry and safe resume",
+        "remaining": "Real Stripe receipts/refunds/reversals and delivery acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Actual API suite; controlled provider output",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Payment list, expiry/recovery and retry states.",
+      "remaining": "Actual receipts/refunds/callback and delivery acceptance remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Draft deletion/withdrawal",
+      "source_module": "applicant-lifecycle.js",
+      "access": "Own permitted filing only",
+      "data_source": "Application/party withdrawal state",
+      "gap_ids": "",
+      "ui_review_id": "UI-08",
+      "prototype_pages": [
+        "public-dissolution-home.html"
+      ],
+      "controls_reconciled": "Draft removal/withdrawal confirmation and error states.",
+      "remaining_ui_or_acceptance": "Combined institutional acceptance remains; no submitted-case purge.",
+      "dependencies": [
+        "APPLICANT"
+      ],
+      "current_modules": [
+        "applicant-lifecycle.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant-lifecycle.js",
+          "sha256": "09b60d3e8075c768bd1e11453c5e932ca62bb0ac40b05ff58631e3dada834deb",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Capability/version checks, explicit confirmation and recovery",
+        "remaining": "Combined institutional workflow acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Actual API browser suite",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Draft removal/withdrawal confirmation and error states.",
+      "remaining": "Combined institutional acceptance remains; no submitted-case purge.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Communications",
+      "source_module": "applicant-messages.js",
+      "access": "Own spouse-specific channel",
+      "data_source": "Message/MessageRecipient/Outbox",
+      "gap_ids": "PA21",
+      "ui_review_id": "UI-09",
+      "prototype_pages": [
+        "admin-case-communications.html"
+      ],
+      "controls_reconciled": "Own private thread, composer, read receipts and load-more.",
+      "remaining_ui_or_acceptance": "Inbound delivery and attachment-return acceptance remain.",
+      "dependencies": [
+        "COMM"
+      ],
+      "current_modules": [
+        "applicant-messages.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant-messages.js",
+          "sha256": "c72758ed6521f9e2bdf39c57d9f2cc05d9326158b36fb8fedc62ceaa24d68e72",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Private send/history/read receipt, pagination, idempotency and recovery",
+        "remaining": "Actual SMTP/inbound reply/attachment-return integration",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Actual API browser suite; no live email",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Own private thread, composer, read receipts and load-more.",
+      "remaining": "Inbound delivery and attachment-return acceptance remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Testimony appointments",
+      "source_module": "applicant-appointments.js",
+      "access": "Own appointments",
+      "data_source": "TestimonyAppointment/versions/responses",
+      "gap_ids": "",
+      "ui_review_id": "UI-10",
+      "prototype_pages": [
+        "admin-sessions-upcoming.html"
+      ],
+      "controls_reconciled": "Appointment invitations, confirm/reject and explanation.",
+      "remaining_ui_or_acceptance": "Real invitation delivery/device acceptance remains.",
+      "dependencies": [
+        "DELIVERY"
+      ],
+      "current_modules": [
+        "applicant-appointments.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant-appointments.js",
+          "sha256": "db5b691a719945e0bbc6d76f8225c368b133c4d9cd21ecf080d7dc4fd1a5ee93",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Private invitations, confirm/reject and optional rejection explanation",
+        "remaining": "Live invitation/reminder delivery and devices",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Actual API coverage; no live email",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Appointment invitations, confirm/reject and explanation.",
+      "remaining": "Real invitation delivery/device acceptance remains.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Requests/intake responses",
+      "source_module": "applicant-requests.js + responses",
+      "access": "Own sent requests",
+      "data_source": "ReportRequest/ReportRevision",
+      "gap_ids": "",
+      "ui_review_id": "UI-11",
+      "prototype_pages": [
+        "admin-case-intake.html"
+      ],
+      "controls_reconciled": "Own requests and responses with bound question/file context.",
+      "remaining_ui_or_acceptance": "Approved templates and live response delivery remain.",
+      "dependencies": [
+        "FORM",
+        "DELIVERY"
+      ],
+      "current_modules": [
+        "applicant-requests.js",
+        "applicant-responses.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant-requests.js",
+          "sha256": "b892aac3d62b3c5420fa71e1f566ed45dc702faabcaefc452d2a87747d122e00",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/applicant-responses.js",
+          "sha256": "09a07e36d4f4bdf6e6812bff44c80ccba747d0d77b87447639ce49952b457b8f",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Own bound questions, scoped evidence, response receipts/replay",
+        "remaining": "Full approved templates and actual mail delivery",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Actual API browser suite",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Own requests and responses with bound question/file context.",
+      "remaining": "Approved templates and live response delivery remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Professional release/assessment response",
+      "source_module": "applicant-assessments.js",
+      "access": "Own request/subject scope",
+      "data_source": "MedicalRelease/ReportRequest/files",
+      "gap_ids": "",
+      "ui_review_id": "UI-12",
+      "prototype_pages": [
+        "admin-case-intake.html"
+      ],
+      "controls_reconciled": "Own scoped release and assessment upload states.",
+      "remaining_ui_or_acceptance": "Institutional signed release wording and real scan acceptance remain.",
+      "dependencies": [
+        "RELEASE",
+        "FILES"
+      ],
+      "current_modules": [
+        "applicant-assessments.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant-assessments.js",
+          "sha256": "1d0d5dbb78b8e780e8ca35e9f423bfd4732c0d8a9a1abd2175bbc1e314fda9b4",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Explicit bound declaration/scope, separate consent file and assessment response",
+        "remaining": "Institution-approved signed release wording and live scan acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Actual API synthetic declaration only",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Own scoped release and assessment upload states.",
+      "remaining": "Institutional signed release wording and real scan acceptance remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Appeal filing/additions",
+      "source_module": "applicant-appeals.js + supplements",
+      "access": "Own appeal; other spouse private",
+      "data_source": "Application/AppealSupplement/Disposition",
+      "gap_ids": "",
+      "ui_review_id": "UI-13",
+      "prototype_pages": [
+        "admin-case-decree.html"
+      ],
+      "controls_reconciled": "Appeal filing/additions and saved/submitted states.",
+      "remaining_ui_or_acceptance": "Latest validation modules and full two-spouse journey acceptance remain.",
+      "dependencies": [
+        "APPLICANT",
+        "PAYMENT"
+      ],
+      "current_modules": [
+        "applicant-appeals.js",
+        "applicant-supplements.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant-appeals.js",
+          "sha256": "ce13026f63eef0f429368d2b1b1a7121580004d868acd5fc1cf3f0136740db51",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/applicant-supplements.js",
+          "sha256": "77dcd806109fb799f222279b93dd6c335e3e625ca58f91f901af312d748222aa",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Draft/start, paid-or-waived submission, own history/additions/replay",
+        "remaining": "Full real later-petition and council disposition journey",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Actual API/browser; some sibling states fixtures",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Appeal filing/additions and saved/submitted states.",
+      "remaining": "Latest validation modules and full two-spouse journey acceptance remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Past cases/released certificates",
+      "source_module": "applicant-decrees.js + app.js",
+      "access": "Own cases and explicitly released certificate",
+      "data_source": "Case/Decree/DecreeRelease",
+      "gap_ids": "",
+      "ui_review_id": "UI-14",
+      "prototype_pages": [
+        "public-dissolution-home.html"
+      ],
+      "controls_reconciled": "Own past cases and explicitly released certificates.",
+      "remaining_ui_or_acceptance": "Institutional signed PDFs and revocation/access acceptance remain.",
+      "dependencies": [
+        "CERT",
+        "FILES"
+      ],
+      "current_modules": [
+        "applicant-decrees.js",
+        "app.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant-decrees.js",
+          "sha256": "330e0c072d4878ec072a4b5c460d00524a118c12774a0059e2cd9a7f16987372",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/app.js",
+          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Closed-case list and current recipient release reader",
+        "remaining": "Actual signed institutional certificates and full access/revocation acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Partial API scope; no institutional certificate approval",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Own past cases and explicitly released certificates.",
+      "remaining": "Institutional signed PDFs and revocation/access acceptance remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Shared",
+      "screen": "Notifications",
+      "source_module": "app.js",
+      "access": "Own notifications",
+      "data_source": "Notification/Outbox",
+      "gap_ids": "",
+      "ui_review_id": "UI-15",
+      "prototype_pages": [
+        "admin-index.html"
+      ],
+      "controls_reconciled": "Own notifications, read state, paging and target navigation.",
+      "remaining_ui_or_acceptance": "Latest applicant inbox integration and actual delivery/template acceptance remain.",
+      "dependencies": [
+        "APPLICANT",
+        "DELIVERY"
+      ],
+      "current_modules": [
+        "applicant-notifications.js",
+        "app.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/applicant-notifications.js",
+          "sha256": "8980a8f99f7ea230447a66a8b01554c98ee36877713daf934a5bea75cb64ad8e",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/app.js",
+          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Own notification list and read-state controls",
+        "remaining": "Live delivery/template/language completeness",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "API coded; combined manual acceptance partial",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Own notifications, read state, paging and target navigation.",
+      "remaining": "Latest applicant inbox integration and actual delivery/template acceptance remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Home dashboard",
+      "source_module": "council.js CouncilHome",
+      "access": "All council; role-scoped actions",
+      "data_source": "Dashboard/cases/notifications",
+      "gap_ids": "PA10",
+      "ui_review_id": "UI-16",
+      "prototype_pages": [
+        "admin-index.html"
+      ],
+      "controls_reconciled": "Upcoming session, attention and assigned-work sections.",
+      "remaining_ui_or_acceptance": "Outstanding request/prior summary/latest submission sections require dashboard projections; assigned-case identity needs stable IDs.",
+      "dependencies": [
+        "DASHBOARD",
+        "PAGING"
+      ],
+      "current_modules": [
+        "council.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council.js",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Upcoming dates, review/unread/consideration counts and own cases",
+        "remaining": "Outstanding requests, fuller session context/prior summary, workload/recent submissions and visual acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read-only actual API smoke",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Upcoming session, attention and assigned-work sections.",
+      "remaining": "Outstanding request/prior summary/latest submission sections require dashboard projections; assigned-case identity needs stable IDs.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Cases",
+      "source_module": "council.js CasesTable",
+      "access": "All council submitted cases",
+      "data_source": "GET cases capped100",
+      "gap_ids": "PA07 PA08",
+      "ui_review_id": "UI-17",
+      "prototype_pages": [
+        "admin-cases.html"
+      ],
+      "controls_reconciled": "Table/detail, search, assignee/status columns and keyboard entry.",
+      "remaining_ui_or_acceptance": "Filtered-out actionable preview fixed. Operational queues and spouse/factual columns require projections; full list inaccessible past server cap.",
+      "dependencies": [
+        "PAGING",
+        "FACTS"
+      ],
+      "current_modules": [
+        "council.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council.js",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_case_filters.py"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Sortable/pageable returned-array table and case opening",
+        "remaining": "Spouse/factual columns, operational tabs, advanced filters and server pagination",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read-only actual API smoke",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Table/detail, search, assignee/status columns and keyboard entry.",
+      "remaining": "Filtered-out actionable preview fixed. Operational queues and spouse/factual columns require projections; full list inaccessible past server cap.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_case_filters.py"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Archived",
+      "source_module": "council.js CasesTable",
+      "access": "All council",
+      "data_source": "Closed Case list",
+      "gap_ids": "PA07 PA08",
+      "ui_review_id": "UI-18",
+      "prototype_pages": [
+        "admin-archived.html"
+      ],
+      "controls_reconciled": "Closed table/detail, search and assignee/status columns.",
+      "remaining_ui_or_acceptance": "Full closure/outcome columns and all-record navigation require server fields/continuation.",
+      "dependencies": [
+        "PAGING",
+        "FACTS"
+      ],
+      "current_modules": [
+        "council.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council.js",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_case_filters.py"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Closed case list and read navigation",
+        "remaining": "Richer outcome/closure columns and complete pagination",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read-only actual API smoke",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Closed table/detail, search and assignee/status columns.",
+      "remaining": "Full closure/outcome columns and all-record navigation require server fields/continuation.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_case_filters.py"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Completeness review",
+      "source_module": "council.js ReviewWorkspace",
+      "access": "Authorized reviewer; submitted filings only",
+      "data_source": "Submission/CompletenessReview",
+      "gap_ids": "",
+      "ui_review_id": "UI-19",
+      "prototype_pages": [
+        "admin-cases.html"
+      ],
+      "controls_reconciled": "Completeness reader, accept/return dialog and mandatory explanation.",
+      "remaining_ui_or_acceptance": "Full combined reviewer/applicant lifecycle/visual acceptance remains with council/applicant QA.",
+      "dependencies": [
+        "COUNCIL"
+      ],
+      "current_modules": [
+        "council.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council.js",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Submitted queue, formal answers/files, return instructions and accept",
+        "remaining": "Full combined reviewer/applicant visual acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Backend tests; read smoke not write acceptance",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Completeness reader, accept/return dialog and mandatory explanation.",
+      "remaining": "Full combined reviewer/applicant lifecycle/visual acceptance remains with council/applicant QA.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Tribunal Sessions/agenda",
+      "source_module": "council.js SessionList/Workspace",
+      "access": "Council read; authorized session writers",
+      "data_source": "CouncilSession/Agenda/Attendance/Hearing",
+      "gap_ids": "PA16 PA17 PA18",
+      "ui_review_id": "UI-20",
+      "prototype_pages": [
+        "admin-sessions.html",
+        "admin-sessions-upcoming.html",
+        "admin-sessions-historical.html",
+        "admin-session-summary.html"
+      ],
+      "controls_reconciled": "Table/detail, upcoming/past/date filters, create/reschedule/close, attendance and two agenda tables.",
+      "remaining_ui_or_acceptance": "Attendance/table/filter regressions fixed; timing/location/presiding/minutes projections and all action-journey acceptance remain.",
+      "dependencies": [
+        "SESSION",
+        "PAGING",
+        "COUNCIL"
+      ],
+      "current_modules": [
+        "council.js",
+        "app.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council.js",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/app.js",
+          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_attendance_ui.py",
+        "scripts/browser_session_responsive.py",
+        "scripts/browser_case_filters.py"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Assignment/hearing phases, attendance, reschedule, testimony and carryover",
+        "remaining": "Session metadata, richer historical filters, complete summary/minutes decisions",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read smoke + backend tests; full UI journey pending",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Table/detail, upcoming/past/date filters, create/reschedule/close, attendance and two agenda tables.",
+      "remaining": "Attendance/table/filter regressions fixed; timing/location/presiding/minutes projections and all action-journey acceptance remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_attendance_ui.py",
+        "scripts/browser_session_responsive.py",
+        "scripts/browser_case_filters.py"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Case Summary",
+      "source_module": "council-case.js CaseSummary",
+      "access": "Council",
+      "data_source": "Case detail/requests/decision",
+      "gap_ids": "PA05",
+      "ui_review_id": "UI-21",
+      "prototype_pages": [
+        "admin-case-summary.html"
+      ],
+      "controls_reconciled": "Case/assignee, spouse/proceeding and pending request/decision links.",
+      "remaining_ui_or_acceptance": "Shared factual overview/children/key dates cannot be reconstructed from private drafts or guessed question codes.",
+      "dependencies": [
+        "FACTS"
+      ],
+      "current_modules": [
+        "council-case.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-case.js",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Status, assignee, spouses, proceeding, requests and decision links",
+        "remaining": "Filing/grounds/marriage/children/last hearing/key-date factual summary",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read-only actual API smoke",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Case/assignee, spouse/proceeding and pending request/decision links.",
+      "remaining": "Shared factual overview/children/key dates cannot be reconstructed from private drafts or guessed question codes.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Timeline",
+      "source_module": "council-case.js CaseTimeline",
+      "access": "Council",
+      "data_source": "Audit/assignment history",
+      "gap_ids": "PA06",
+      "ui_review_id": "UI-22",
+      "prototype_pages": [
+        "admin-case-timeline.html"
+      ],
+      "controls_reconciled": "Business milestones and assignment history.",
+      "remaining_ui_or_acceptance": "Marriage/family chronology and filters depend on factual projection; audit is not a substitute.",
+      "dependencies": [
+        "FACTS"
+      ],
+      "current_modules": [
+        "council-case.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-case.js",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Audit milestones and assignment history",
+        "remaining": "Marriage/family chronology, factual dates and filters",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read-only actual API smoke",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Business milestones and assignment history.",
+      "remaining": "Marriage/family chronology and filters depend on factual projection; audit is not a substitute.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Spouses",
+      "source_module": "council-case.js CaseParties",
+      "access": "Council; admin/secretary onboarding per current contract",
+      "data_source": "Case parties; profile assertions not projected",
+      "gap_ids": "PA03 PA04",
+      "ui_review_id": "UI-23",
+      "prototype_pages": [
+        "admin-case-parties.html"
+      ],
+      "controls_reconciled": "Spouse identity/reference/registration and authorized second-party entry.",
+      "remaining_ui_or_acceptance": "Rich personal details, children, portrait and discrepancy projection missing from authorized case response.",
+      "dependencies": [
+        "FACTS",
+        "ACCOUNT"
+      ],
+      "current_modules": [
+        "council-case.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-case.js",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Names, reference, registration and authorized add-spouse form",
+        "remaining": "Rich sourced personal facts, children and accepted shared-fact discrepancy projection",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read-only actual API smoke",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Spouse identity/reference/registration and authorized second-party entry.",
+      "remaining": "Rich personal details, children, portrait and discrepancy projection missing from authorized case response.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Marriage",
+      "source_module": "None",
+      "access": "Council view; source-specific correction policy",
+      "data_source": "Marriage/application assertions; projection missing",
+      "gap_ids": "PA01 PA25",
+      "ui_review_id": "UI-24",
+      "prototype_pages": [
+        "admin-case-marriage.html"
+      ],
+      "controls_reconciled": "Missing structured shared marriage view and contextual documents; navigation remains disabled.",
+      "remaining_ui_or_acceptance": "Implement when first-formal-source facts/provenance/discrepancy contract is supplied; do not fabricate fields.",
+      "dependencies": [
+        "FACTS"
+      ],
+      "current_modules": [
+        "app.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/app.js",
+          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Navigation label only, disabled",
+        "remaining": "Full shared-fact view, discrepancy flags and contextual documents",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Missing",
+        "working": "Not implemented",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Missing structured shared marriage view and contextual documents; navigation remains disabled.",
+      "remaining": "Implement when first-formal-source facts/provenance/discrepancy contract is supplied; do not fabricate fields.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Missing UI, contract-dependent",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Separation",
+      "source_module": "None",
+      "access": "Council view; source-specific correction policy",
+      "data_source": "Separation/repeat assertions; projection missing",
+      "gap_ids": "PA02 PA25",
+      "ui_review_id": "UI-25",
+      "prototype_pages": [
+        "admin-case-separation.html"
+      ],
+      "controls_reconciled": "Missing shared separation/divorce/repeated-orders view and contextual documents; navigation remains disabled.",
+      "remaining_ui_or_acceptance": "Implement with authorized factual/document projection and source correction rule.",
+      "dependencies": [
+        "FACTS"
+      ],
+      "current_modules": [
+        "app.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/app.js",
+          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Navigation label only, disabled",
+        "remaining": "Full separation/civil divorce/repeated orders/prior-records and discrepancy view",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Missing",
+        "working": "Not implemented",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Missing shared separation/divorce/repeated-orders view and contextual documents; navigation remains disabled.",
+      "remaining": "Implement with authorized factual/document projection and source correction rule.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Missing UI, contract-dependent",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Petition/notes/findings",
+      "source_module": "council-case.js PetitionWorkspace",
+      "access": "Council read; permitted case writers",
+      "data_source": "Application/Submission/CaseNote/Finding",
+      "gap_ids": "PA25",
+      "ui_review_id": "UI-26",
+      "prototype_pages": [
+        "admin-case-requisition.html",
+        "admin-case-notes.html"
+      ],
+      "controls_reconciled": "Attributed petitions, notes/history and findings read.",
+      "remaining_ui_or_acceptance": "Approved fact-code creation and complete contextual evidence mapping remain.",
+      "dependencies": [
+        "FACTS",
+        "FORM",
+        "COUNCIL"
+      ],
+      "current_modules": [
+        "council-case.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-case.js",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Formal questionnaires and internal notes/history; findings read",
+        "remaining": "Approved fact-code finding creation and full contextual evidence",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read smoke + backend notes/findings tests",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Attributed petitions, notes/history and findings read.",
+      "remaining": "Approved fact-code creation and complete contextual evidence mapping remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Reports/intake/templates",
+      "source_module": "council-case.js + council-media.js",
+      "access": "Council read; original authorized author writes",
+      "data_source": "ReportRequest/Report/ReportRevision",
+      "gap_ids": "PA19",
+      "ui_review_id": "UI-27",
+      "prototype_pages": [
+        "admin-case-intake.html"
+      ],
+      "controls_reconciled": "Report/request tabs, question/template filters, revisions/history and selected reader.",
+      "remaining_ui_or_acceptance": "Council S10/C-02 fixes require serial integration and QA15; external priest metadata/delivery remain.",
+      "dependencies": [
+        "COUNCIL",
+        "EXTERNAL"
+      ],
+      "current_modules": [
+        "council-case.js",
+        "council-media.js",
+        "app.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-case.js",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/council-media.js",
+          "sha256": "c5923375eb92943d8479eaf0a120531ccd84c9d408e06b18851fe4a98cbe4c09",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/app.js",
+          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Template/category selection, questions, requests, report reader and author revision UI",
+        "remaining": "Full report metadata and external priest workflow; broader author/reassignment UI acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read smoke + shipped JS payload against PostgreSQL HTTP write/replay/conflict; QA01 separate",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Report/request tabs, question/template filters, revisions/history and selected reader.",
+      "remaining": "Council S10/C-02 fixes require serial integration and QA15; external priest metadata/delivery remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Recording/transcripts",
+      "source_module": "council-media.js",
+      "access": "Council only; scoped reviewer",
+      "data_source": "Recording/ProcessingRun/Transcript",
+      "gap_ids": "",
+      "ui_review_id": "UI-28",
+      "prototype_pages": [
+        "admin-case-intake.html"
+      ],
+      "controls_reconciled": "Recorder, original playback, recovery, transcript/version/retry surfaces.",
+      "remaining_ui_or_acceptance": "Council issue3 owns active D20 status/view/correction/retry implementation against existing APIs; worker unavailable is not a UI blocker.",
+      "dependencies": [
+        "D20"
+      ],
+      "current_modules": [
+        "council-media.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-media.js",
+          "sha256": "c5923375eb92943d8479eaf0a120531ccd84c9d408e06b18851fe4a98cbe4c09",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Whole-report recorder/local recovery and original playback; status placeholder",
+        "remaining": "D20 status/review/retry UI wiring, real worker, server streaming, device/long-audio acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Fixture-tested UI; live transcription unavailable",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Recorder, original playback, recovery, transcript/version/retry surfaces.",
+      "remaining": "Council issue3 owns active D20 status/view/correction/retry implementation against existing APIs; worker unavailable is not a UI blocker.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Hearings",
+      "source_module": "council-case.js + council.js",
+      "access": "Assigned presenter and authorized writers",
+      "data_source": "Agenda/Hearing/Outcome",
+      "gap_ids": "PA16",
+      "ui_review_id": "UI-29",
+      "prototype_pages": [
+        "admin-case-hearings.html",
+        "admin-case-hearings-2.html"
+      ],
+      "controls_reconciled": "Selected hearing/session details and existing outcome/testimony dialogs.",
+      "remaining_ui_or_acceptance": "All dialog/lifecycle acceptance and richer session metadata remain.",
+      "dependencies": [
+        "SESSION",
+        "COUNCIL"
+      ],
+      "current_modules": [
+        "council-case.js",
+        "council.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-case.js",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/council.js",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Agenda appearances, presenter/attendance/outcome and applicant update",
+        "remaining": "Combined real full session/decision journey and metadata",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read smoke; backend tests",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Selected hearing/session details and existing outcome/testimony dialogs.",
+      "remaining": "All dialog/lifecycle acceptance and richer session metadata remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Evidence/Documents",
+      "source_module": "council-media.js",
+      "access": "Council authorized sources",
+      "data_source": "Attachment/FileVersion/context",
+      "gap_ids": "PA25",
+      "ui_review_id": "UI-30",
+      "prototype_pages": [
+        "admin-case-evidence.html",
+        "admin-case-documents.html"
+      ],
+      "controls_reconciled": "Safe-file list/version/load-more, selection and media/browser PDF fallback.",
+      "remaining_ui_or_acceptance": "Context links depend on factual pages; embedded PDF remains CDN defect; live range/scan/OCR acceptance remains.",
+      "dependencies": [
+        "FACTS",
+        "FILES",
+        "CDN"
+      ],
+      "current_modules": [
+        "council-media.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-media.js",
+          "sha256": "c5923375eb92943d8479eaf0a120531ccd84c9d408e06b18851fe4a98cbe4c09",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Split read/view, image/audio/video and browser-native PDF fallback",
+        "remaining": "CDN embedded PDF repair; live safe-file range/playback/OCR acceptance; missing factual-page contexts",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read-only API smoke; renderer interactions need further acceptance",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Safe-file list/version/load-more, selection and media/browser PDF fallback.",
+      "remaining": "Context links depend on factual pages; embedded PDF remains CDN defect; live range/scan/OCR acceptance remains.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Professional Assessments",
+      "source_module": "council-case.js AssessmentsWorkspace",
+      "access": "Council with release scope; authorized writers",
+      "data_source": "MedicalRelease/ReportRequest",
+      "gap_ids": "",
+      "ui_review_id": "UI-31",
+      "prototype_pages": [
+        "admin-case-intake.html"
+      ],
+      "controls_reconciled": "Separate requests/reports, restricted status, release-aware reads and composer.",
+      "remaining_ui_or_acceptance": "Signed release wording, recommendation workflow and actual disclosure acceptance remain.",
+      "dependencies": [
+        "RELEASE",
+        "COUNCIL"
+      ],
+      "current_modules": [
+        "council-case.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-case.js",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Separate requests/scope-gated read",
+        "remaining": "Approved signed release text, recommendations workflow and real acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read smoke; backend scope tests",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Separate requests/reports, restricted status, release-aware reads and composer.",
+      "remaining": "Signed release wording, recommendation workflow and actual disclosure acceptance remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Decision & Voting",
+      "source_module": "council-case.js DecisionWorkspace",
+      "access": "Council reads; server-authorized votes/approval",
+      "data_source": "DecisionRevision/Vote/PresidentialApproval",
+      "gap_ids": "",
+      "ui_review_id": "UI-32",
+      "prototype_pages": [
+        "admin-case-decree.html"
+      ],
+      "controls_reconciled": "Decision form, full roster/tally, approval and earlier versions.",
+      "remaining_ui_or_acceptance": "Full real approval journey and approved Arabic type labels remain; preserve existing version fixes.",
+      "dependencies": [
+        "COUNCIL",
+        "FORM"
+      ],
+      "current_modules": [
+        "council-case.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-case.js",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Catalog/grounds/named entitlements, roster/votes/approval/history",
+        "remaining": "Full combined decision approval journey and approved Arabic labels",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read smoke; backend/unit tests",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Decision form, full roster/tally, approval and earlier versions.",
+      "remaining": "Full real approval journey and approved Arabic type labels remain; preserve existing version fixes.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Decree",
+      "source_module": "council-decree.js",
+      "access": "Admin/secretary management; President signature",
+      "data_source": "Decree/signature/release/decision",
+      "gap_ids": "PA23 PA24",
+      "ui_review_id": "UI-33",
+      "prototype_pages": [
+        "admin-case-decree.html",
+        "admin-case-decree-view.html"
+      ],
+      "controls_reconciled": "Signed PDF upload/attestation, issuance/closure, explicit release/withdrawal and structured read.",
+      "remaining_ui_or_acceptance": "Type-specific approved template authoring/generation service and institutional certificate acceptance remain.",
+      "dependencies": [
+        "CERT",
+        "COUNCIL"
+      ],
+      "current_modules": [
+        "council-decree.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-decree.js",
+          "sha256": "1289aca9c7b18ef3227f76b939efd315beb66b9652deaa880934780c3ff6eb1f",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Signed PDF upload/signature record/issue/release/withdraw access",
+        "remaining": "Approved type-specific templates and certificate authoring/generation",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read smoke; backend lifecycle tests",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Signed PDF upload/attestation, issuance/closure, explicit release/withdrawal and structured read.",
+      "remaining": "Type-specific approved template authoring/generation service and institutional certificate acceptance remain.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Appeals/later petitions",
+      "source_module": "council-decree.js AppealsWorkspace",
+      "access": "Authorized assigned case writer",
+      "data_source": "Application/Disposition/Proceeding",
+      "gap_ids": "",
+      "ui_review_id": "UI-34",
+      "prototype_pages": [
+        "admin-case-decree.html"
+      ],
+      "controls_reconciled": "Appeal/later-filing selection, statements/additions, fee/result and hearing links.",
+      "remaining_ui_or_acceptance": "Complete actual two-spouse reopened/decree cycle acceptance remains.",
+      "dependencies": [
+        "COUNCIL",
+        "APPLICANT"
+      ],
+      "current_modules": [
+        "council-decree.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-decree.js",
+          "sha256": "1289aca9c7b18ef3227f76b939efd315beb66b9652deaa880934780c3ff6eb1f",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Queue/detail, hearing eligibility and per-filing accept/decline",
+        "remaining": "Combined actual two-spouse reopening/decree cycle acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read smoke + backend tests",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Appeal/later-filing selection, statements/additions, fee/result and hearing links.",
+      "remaining": "Complete actual two-spouse reopened/decree cycle acceptance remains.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Communications/calls",
+      "source_module": "app.js + council-case.js CallLog",
+      "access": "Assigned case writer; approved closed-case communication policy",
+      "data_source": "Message/Recipient/CallRecord",
+      "gap_ids": "PA20 PA21",
+      "ui_review_id": "UI-35",
+      "prototype_pages": [
+        "admin-case-communications.html"
+      ],
+      "controls_reconciled": "Selected message, composer and manual calls.",
+      "remaining_ui_or_acceptance": "Subject/contact/external recipient/inbound/duration fields are not in current mutation/read contract.",
+      "dependencies": [
+        "COMM"
+      ],
+      "current_modules": [
+        "app.js",
+        "council-case.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/app.js",
+          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/council-case.js",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Private recipient messages and manual call log",
+        "remaining": "Inbound/live email, full subject/contact/duration mapping",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read-only API smoke; backend delivery tests",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Selected message, composer and manual calls.",
+      "remaining": "Subject/contact/external recipient/inbound/duration fields are not in current mutation/read contract.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_case_sections_responsive.py (read/layout/limited selection only)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Case Audit",
+      "source_module": "council-case.js CaseAudit",
+      "access": "All council",
+      "data_source": "AuditEvent",
+      "gap_ids": "PA22",
+      "ui_review_id": "UI-36",
+      "prototype_pages": [
+        "admin-case-audit.html"
+      ],
+      "controls_reconciled": "Search, actor/action/source/date filters, reset and selected target context.",
+      "remaining_ui_or_acceptance": "Structured filters restored; all-record pagination and richer target projection still need backend continuation.",
+      "dependencies": [
+        "PAGING"
+      ],
+      "current_modules": [
+        "council-case.js",
+        "ui-workspaces.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council-case.js",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/ui-workspaces.js",
+          "sha256": "f6d58b1418074a1dedf291823d30bdc44f2141c1109bca838228a1703a697ba0",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_case_filters.py"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Case event list/search",
+        "remaining": "Structured filters, full pagination and target context",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read-only API smoke",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Search, actor/action/source/date filters, reset and selected target context.",
+      "remaining": "Structured filters restored; all-record pagination and richer target projection still need backend continuation.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_case_filters.py"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Search",
+      "source_module": "council.js SearchWorkspace",
+      "access": "Council; source reauthorization",
+      "data_source": "Meilisearch + DocumentText",
+      "gap_ids": "PA09",
+      "ui_review_id": "UI-37",
+      "prototype_pages": [
+        "admin-search.html"
+      ],
+      "controls_reconciled": "POST phrase, history option, keyboard result selection and accurate initial/loading/empty/error states.",
+      "remaining_ui_or_acceptance": "Unified case/person/session results and advanced facets are absent from document search contract.",
+      "dependencies": [
+        "SEARCH"
+      ],
+      "current_modules": [
+        "council.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council.js",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_search_states.py"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Document query and history toggle",
+        "remaining": "Unified case/person/session results and advanced filters; live index acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Screen renders; live query not accepted",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "POST phrase, history option, keyboard result selection and accurate initial/loading/empty/error states.",
+      "remaining": "Unified case/person/session results and advanced facets are absent from document search contract.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_search_states.py"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Statistics and Reports",
+      "source_module": "council.js StatisticsWorkspace",
+      "access": "Council",
+      "data_source": "Cases/sessions list",
+      "gap_ids": "PA11",
+      "ui_review_id": "UI-38",
+      "prototype_pages": [
+        "admin-reports.html"
+      ],
+      "controls_reconciled": "Operational counts/workload and explicit cap limitation.",
+      "remaining_ui_or_acceptance": "Period/metric/outcome aggregate APIs and approved denominators required for full reporting; no fabricated charts.",
+      "dependencies": [
+        "METRICS",
+        "PAGING"
+      ],
+      "current_modules": [
+        "council.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/council.js",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Open/closed/unassigned/workload/session counts",
+        "remaining": "Complete server metrics/periods/charts; max100 limitation",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Read-only API smoke",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Operational counts/workload and explicit cap limitation.",
+      "remaining": "Period/metric/outcome aggregate APIs and approved denominators required for full reporting; no fabricated charts.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Council",
+      "screen": "Member profile/history",
+      "source_module": "None",
+      "access": "Council",
+      "data_source": "Staff memberships/assignment history",
+      "gap_ids": "PA12",
+      "ui_review_id": "UI-39",
+      "prototype_pages": [
+        "admin-member.html",
+        "admin-management.html"
+      ],
+      "controls_reconciled": "Active council directory and selected role/capabilities now implemented.",
+      "remaining_ui_or_acceptance": "Member contact/photo/appointment/departure and current/past assignment history require authorized projection.",
+      "dependencies": [
+        "MEMBER",
+        "ACCOUNT"
+      ],
+      "current_modules": [
+        "ui-workspaces.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/ui-workspaces.js",
+          "sha256": "f6d58b1418074a1dedf291823d30bdc44f2141c1109bca838228a1703a697ba0",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_ui_administration.py (synthetic roles/EN-AR)",
+        "scripts/browser_ui_actual_api.py (actual isolated Django/SQLite; not PostgreSQL/provider acceptance)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Roster only",
+        "remaining": "Member details/current/past assignment workspace",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Missing",
+        "working": "Not implemented",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Active council directory and selected role/capabilities now implemented.",
+      "remaining": "Member contact/photo/appointment/departure and current/past assignment history require authorized projection.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_ui_administration.py (synthetic roles/EN-AR)",
+        "scripts/browser_ui_actual_api.py (actual isolated Django/SQLite; not PostgreSQL/provider acceptance)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Shared",
+      "screen": "My Profile",
+      "source_module": "app.js",
+      "access": "Own profile",
+      "data_source": "Account + unfinalized portrait mapping",
+      "gap_ids": "PA15",
+      "ui_review_id": "UI-40",
+      "prototype_pages": [
+        "admin-user-account.html"
+      ],
+      "controls_reconciled": "Actual signed-in name/email/role/portal/languages and settings link now implemented.",
+      "remaining_ui_or_acceptance": "Profile/contact/photo editing and own activity require account contract. No hardcoded portraits/people.",
+      "dependencies": [
+        "ACCOUNT"
+      ],
+      "current_modules": [
+        "ui-workspaces.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/ui-workspaces.js",
+          "sha256": "f6d58b1418074a1dedf291823d30bdc44f2141c1109bca838228a1703a697ba0",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_ui_administration.py (synthetic roles/EN-AR)",
+        "scripts/browser_ui_actual_api.py (actual isolated Django/SQLite; not PostgreSQL/provider acceptance)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Name/portal display",
+        "remaining": "Editable profile/contact/photo relationship and own activity",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Stub",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Actual signed-in name/email/role/portal/languages and settings link now implemented.",
+      "remaining": "Profile/contact/photo editing and own activity require account contract. No hardcoded portraits/people.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_ui_administration.py (synthetic roles/EN-AR)",
+        "scripts/browser_ui_actual_api.py (actual isolated Django/SQLite; not PostgreSQL/provider acceptance)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "Shared",
+      "screen": "Account Settings",
+      "source_module": "app.js",
+      "access": "Own account",
+      "data_source": "Account settings API",
+      "gap_ids": "PA15",
+      "ui_review_id": "UI-41",
+      "prototype_pages": [
+        "admin-user-account.html"
+      ],
+      "controls_reconciled": "Own interface/notification preferences and authenticated identity navigation.",
+      "remaining_ui_or_acceptance": "Provider email verification/link/security/session management lack endpoints. Superseded CTM password/SMS/idle controls excluded.",
+      "dependencies": [
+        "ACCOUNT"
+      ],
+      "current_modules": [
+        "app.js",
+        "ui-workspaces.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/app.js",
+          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        },
+        {
+          "file": "static/ctm/ui-workspaces.js",
+          "sha256": "f6d58b1418074a1dedf291823d30bdc44f2141c1109bca838228a1703a697ba0",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Interface/notification language",
+        "remaining": "Consolidated account fields, provider email/security/session workflow",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Partial",
+        "working": "Partial",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Own interface/notification preferences and authenticated identity navigation.",
+      "remaining": "Provider email verification/link/security/session management lack endpoints. Superseded CTM password/SMS/idle controls excluded.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "System",
+      "screen": "CTM Settings/account management",
+      "source_module": "None",
+      "access": "Existing admin enrollment; settings-specific authorization",
+      "data_source": "Settings/staff/identity integrations",
+      "gap_ids": "PA13 PA14",
+      "ui_review_id": "UI-42",
+      "prototype_pages": [
+        "admin-management.html"
+      ],
+      "controls_reconciled": "Admin/secretary directory/configuration reads, admin-only enrollment and explicit save errors now implemented.",
+      "remaining_ui_or_acceptance": "Role/status lifecycle, previous members, settings-specific validated editing and provider-secret inventory remain dependencies.",
+      "dependencies": [
+        "MEMBER",
+        "CONFIG",
+        "ACCOUNT"
+      ],
+      "current_modules": [
+        "ui-workspaces.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/ui-workspaces.js",
+          "sha256": "f6d58b1418074a1dedf291823d30bdc44f2141c1109bca838228a1703a697ba0",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_ui_administration.py (synthetic roles/EN-AR)",
+        "scripts/browser_ui_actual_api.py (actual isolated Django/SQLite; not PostgreSQL/provider acceptance)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Selected enrollment/configuration APIs exist",
+        "remaining": "Consolidated admin/settings screens, roles/lifecycle/photo/secrets inventory",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Missing",
+        "working": "No complete screen",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Admin/secretary directory/configuration reads, admin-only enrollment and explicit save errors now implemented.",
+      "remaining": "Role/status lifecycle, previous members, settings-specific validated editing and provider-secret inventory remain dependencies.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_ui_administration.py (synthetic roles/EN-AR)",
+        "scripts/browser_ui_actual_api.py (actual isolated Django/SQLite; not PostgreSQL/provider acceptance)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "System",
+      "screen": "System Audit/security history",
+      "source_module": "None",
+      "access": "Admin/secretary",
+      "data_source": "Audit/account/session sources",
+      "gap_ids": "PA14",
+      "ui_review_id": "UI-43",
+      "prototype_pages": [
+        "admin-management.html"
+      ],
+      "controls_reconciled": "Role-gated system audit table/detail, action/source/date filters and reset now implemented.",
+      "remaining_ui_or_acceptance": "No actor/session/login/security payload is returned; full audit paging and session revocation need contracts.",
+      "dependencies": [
+        "ACCOUNT",
+        "PAGING"
+      ],
+      "current_modules": [
+        "ui-workspaces.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/ui-workspaces.js",
+          "sha256": "f6d58b1418074a1dedf291823d30bdc44f2141c1109bca838228a1703a697ba0",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_ui_administration.py (synthetic roles/EN-AR)",
+        "scripts/browser_ui_actual_api.py (actual isolated Django/SQLite; not PostgreSQL/provider acceptance)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "System audit API exists",
+        "remaining": "Complete system audit/login/session management UI",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Missing",
+        "working": "No complete screen",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Role-gated system audit table/detail, action/source/date filters and reset now implemented.",
+      "remaining": "No actor/session/login/security payload is returned; full audit paging and session revocation need contracts.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_ui_administration.py (synthetic roles/EN-AR)",
+        "scripts/browser_ui_actual_api.py (actual isolated Django/SQLite; not PostgreSQL/provider acceptance)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "System",
+      "screen": "Historical case entry",
+      "source_module": "None",
+      "access": "System-level authorized staff",
+      "data_source": "HistoricalWorkspace",
+      "gap_ids": "PA26",
+      "ui_review_id": "UI-44",
+      "prototype_pages": [
+        "admin-management.html"
+      ],
+      "controls_reconciled": "Admin-owned stage/resume/version-conflict/publish form with original references and unknown-data preservation now implemented.",
+      "remaining_ui_or_acceptance": "Richer factual/file historical capture and discoverable owned-workspace listing require API projection; no invented account associations.",
+      "dependencies": [
+        "HISTORICAL"
+      ],
+      "current_modules": [
+        "historical-entry.js"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [
+        {
+          "file": "static/ctm/historical-entry.js",
+          "sha256": "0fb6ae07a6b3ffd1c55dc00216c8b629508d949d0f4497cfb9799d05f8d3fb53",
+          "review_anchor": 1,
+          "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
+        }
+      ],
+      "runtime_evidence": [
+        "scripts/browser_ui_administration.py (synthetic roles/EN-AR)",
+        "scripts/browser_ui_actual_api.py (actual isolated Django/SQLite; not PostgreSQL/provider acceptance)"
+      ],
+      "baseline_snapshot": {
+        "implemented": "Staging/publish API exists",
+        "remaining": "Authorized historical entry form, missing-data workflow, retained identifiers",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Missing",
+        "working": "API tested; screen missing",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "Admin-owned stage/resume/version-conflict/publish form with original references and unknown-data preservation now implemented.",
+      "remaining": "Richer factual/file historical capture and discoverable owned-workspace listing require API projection; no invented account associations.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Partial; current UI/source and owning-stream integration requirements recorded.",
+      "working": [
+        "scripts/browser_ui_administration.py (synthetic roles/EN-AR)",
+        "scripts/browser_ui_actual_api.py (actual isolated Django/SQLite; not PostgreSQL/provider acceptance)"
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    },
+    {
+      "portal": "External",
+      "screen": "Priest report capability page",
+      "source_module": "None",
+      "access": "Only scoped unexpired recipient link",
+      "data_source": "ReportRequest token scope",
+      "gap_ids": "",
+      "ui_review_id": "UI-45",
+      "prototype_pages": [
+        "admin-case-intake.html"
+      ],
+      "controls_reconciled": "External priest response page is absent; no fake signed-in substitute created.",
+      "remaining_ui_or_acceptance": "Public shell route/token-delivery contract needed alongside existing bearer-protected external JSON endpoint; preserve 30-day scope/reissue/lock rules.",
+      "dependencies": [
+        "EXTERNAL"
+      ],
+      "current_modules": [
+        "None"
+      ],
+      "completion": "partial / awaiting dependencies or acceptance",
+      "evidence_scope": "Source reconciliation; runtime evidence only where named below",
+      "source_references": [],
+      "runtime_evidence": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "baseline_snapshot": {
+        "implemented": "Backend capability endpoints exist",
+        "remaining": "External page/delivery and actual acceptance",
+        "workflow": "Defined; exceptions in linked gap review",
+        "schema": "Planned; full semantic reconciliation open",
+        "database": "Partial adapter implemented",
+        "coded": "Missing",
+        "working": "No complete user-facing workflow",
+        "UI": "Not accepted; no redesign performed",
+        "testing_QA": "Partial; evidence scope below"
+      },
+      "implemented": "External priest response page is absent; no fake signed-in substitute created.",
+      "remaining": "Public shell route/token-delivery contract needed alongside existing bearer-protected external JSON endpoint; preserve 30-day scope/reissue/lock rules.",
+      "workflow": "Reconciled against approved workflow; superseded prototype controls excluded; unresolved dependencies identified.",
+      "schema": "Backend-owned; no schema changes or semantic equivalence acceptance claimed.",
+      "database": "No operational changes. Isolated SQLite tests only where runtime evidence names them.",
+      "coded": "Missing UI, contract-dependent",
+      "working": [
+        "No new full-action acceptance claimed in this pass; see owning stream tests and exact candidate requirement."
+      ],
+      "UI": "Source and limited runtime review; not full visual/action acceptance.",
+      "testing_QA": "Independent exact-successor PostgreSQL/provider/institutional/visual acceptance remains."
+    }
+  ],
+  "validation": {
+    "frontend_tests": 236,
+    "focused_django_tests": 14,
+    "synthetic_admin_role_language_combinations": 10,
+    "actual_sqlite_admin_roles": [
+      "admin",
+      "member",
+      "applicant"
+    ],
+    "scope": "Separate test scopes; counts must not be added into a total or a completion percentage. Actual SQLite historical/enrollment/config/audit acceptance is not PostgreSQL or provider acceptance.",
+    "current_successor_checks": [
+      "236 frontend tests",
+      "actual Django SQLite admin/member/applicant: no API mocks",
+      "10 role/language administration browser cases",
+      "6 EN/AR session layouts with native record header",
+      "persistent case row highlight after blur",
+      "0.60.1 white bordered avatar, Card.icon, council-owned PDF rendering"
+    ],
+    "login_branding": "Anonymous login: supplied seal outside CDN Panel, CTM logo inside, exact office lines; EN/AR switching at390/768/1440; decoded images; no overflow/errors; provider POST preserved. Synthetic provider availability, not live provider acceptance."
+  }
+}

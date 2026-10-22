@@ -25,11 +25,19 @@ with sync_playwright() as p:
         grid = reader.get_by_role("grid", name=label, exact=True)
         grid.wait_for()
         assert grid.locator("xpath=ancestor::*[contains(concat(' ', normalize-space(@class), ' '), ' plx-panel ')]").count() == 0
-    page.get_by_label("Add accepted case for assignment", exact=True).select_option("c-1")
+    candidate = page.get_by_label("Add accepted case for assignment", exact=True)
+    candidate.select_option(candidate.locator("option").nth(1).get_attribute("value"))
     reader.get_by_role("button", name="Add case", exact=True).first.click()
     reader.get_by_role("button", name="Open case", exact=True).first.wait_for()
     reader.get_by_role("button", name="Record assignment", exact=True).first.click()
     page.get_by_role("dialog").wait_for()
+    page.get_by_role("dialog").get_by_role("button", name="Cancel", exact=True).last.click()
+    for action in ["Reschedule session", "Close session"]:
+        reader.get_by_role("button", name=action, exact=True).click()
+        dialog = page.locator('[role="dialog"], [role="alertdialog"]')
+        dialog.wait_for()
+        dialog.get_by_role("button", name="Cancel", exact=True).last.click()
+        assert not dialog.is_visible()
     assert not errors, errors
     print("PASS: attendance options/collapse; two unwrapped agenda tables; add-case and assignment dialog; no browser errors")
     browser.close()

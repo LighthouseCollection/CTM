@@ -1,3 +1,5 @@
+Current consolidated workstream record: [Full45-screen reconciliation](ui-full-reconciliation.md). The entries below are chronological slice evidence, not the current task queue.
+
 # UI reconciliation: session slice
 
 Base reviewed: `104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc`. The owner-approved current UI requirements override older architecture text that described a single navigation scope or undecided split destinations.

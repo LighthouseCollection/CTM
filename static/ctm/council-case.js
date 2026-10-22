@@ -1274,7 +1274,7 @@
         ? h(P.Inline, null, h(P.Button, { variant: "primary", size: "sm", onClick: () => { setComposing(true); select(null); setNotice(null); } }, t("newRequest")))
         : h(P.Notice, { tone: "info" }, t(proceeding ? "writerOnly" : "noOpenProceeding")),
       ...requests.map((row) =>
-        h(P.Card, {
+        h(P.Card, { icon: "doc-text",
           key: row.id,
           title: row.title,
           meta: [t(row.kind), base.isolate(row.subject_name), t(row.state)].filter(Boolean).join(" · "),
@@ -1881,6 +1881,9 @@
       action: row.action,
       label: auditLabel(row.action, lang),
       actor: row.actor ? names[row.actor] || null : "system",
+      actor_id: row.actor,
+      source: row.source,
+      source_id: row.source_id,
     }));
   }
 
@@ -1912,15 +1915,16 @@
         ),
       [caseId],
     );
-    const [query, setQuery] = R.useState("");
+    const [filters, setFilters] = R.useState({});
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const rows = filterAudit(auditRows(state.data.items, state.data.members, lang), query);
+    const loaded = auditRows(state.data.items, state.data.members, lang);
+    const rows = window.CTMUI.filterAudit(loaded, filters);
     return h(
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("caseAudit")),
-      h(P.Field, { label: t("searchAudit") }, h(P.Input, { type: "search", value: query, onChange: (e) => setQuery(e.target.value) })),
+      h(window.CTMUI.AuditFilters, { rows: loaded, filters, onChange: setFilters, lang }),
       h(P.Text, { variant: "secondary" }, t("auditCount", { n: rows.length })),
       h(window.CTMShell.Workspace, {
         label: t("caseAudit"), rows, empty: t("noAudit"),
@@ -1930,6 +1934,8 @@
         h(P.Text, null, row.actor === "system" ? t("systemActor") : row.actor || t("otherAccount")),
         h(P.Text, null, base.formatWhen(row.timestamp, lang)),
         h(P.Text, { variant: "data" }, row.action),
+        row.source ? h(P.Text, null, row.source) : null,
+        row.source_id ? h(P.Text, { variant: "data" }, row.source_id) : null,
       )),
     );
   }
@@ -2002,7 +2008,7 @@
               ...calls.map((call) =>
                 h(
                   P.Card,
-                  { key: call.id, title: `${base.isolate(partyName(call.party_id))} · ${base.formatWhen(call.occurred_at, lang)}`, meta: `${t("recordedAt")}: ${base.formatWhen(call.recorded_at, lang)}` },
+                  { icon: "message", key: call.id, title: `${base.isolate(partyName(call.party_id))} · ${base.formatWhen(call.occurred_at, lang)}`, meta: `${t("recordedAt")}: ${base.formatWhen(call.recorded_at, lang)}` },
                   h(P.Text, { as: "p", variant: "strong" }, call.outcome),
                   call.notes ? h(P.Text, { as: "p" }, call.notes) : null,
                 ),
@@ -2210,7 +2216,7 @@
           ...requests.filter((row) => row.id === selected).map((row) =>
             h(
               P.Card,
-              {
+              { icon: "doc-text",
                 key: row.id,
                 title: row.title,
                 meta: [t(row.kind), base.isolate(row.subject_name), t(row.state), row.release_status ? t("release_" + row.release_status) : null].filter(Boolean).join(" · "),
@@ -2235,10 +2241,10 @@
               { gap: "sm" },
               ...reports.filter((row) => row.id === selected).map((row) =>
                 row.restricted
-                  ? h(P.Card, { key: row.id, title: t("restrictedAssessment"), meta: t("restrictedAssessmentHelp") })
+                  ? h(P.Card, { icon: "lock", key: row.id, title: t("restrictedAssessment"), meta: t("restrictedAssessmentHelp") })
                   : h(
                       P.Card,
-                      { key: row.id, title: row.title, meta: [t(row.kind), row.subject, row.date].filter(Boolean).join(" · ") },
+                      { icon: "doc-text", key: row.id, title: row.title, meta: [t(row.kind), row.subject, row.date].filter(Boolean).join(" · ") },
                       ...((row.answers && Array.isArray(row.answers.files) ? row.answers.files : []).map((id) =>
                         h(P.Button, { key: id, size: "xs", href: `/api/files/${encodeURIComponent(id)}/` }, t("download")),
                       )),
@@ -2562,7 +2568,7 @@
                 ...notes.map((note) =>
                   h(
                     P.Card,
-                    {
+                    { icon: "doc-text",
                       key: note.note_id,
                       title: note.author ? `${note.author} · ${base.formatWhen(note.timestamp, lang)}` : t("note"),
                       meta: `${t("version")} ${note.version}`,

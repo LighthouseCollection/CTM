@@ -814,7 +814,7 @@
           P.Stack,
           null,
           ...reports.map((row) =>
-            h(P.Card, {
+            h(P.Card, { icon: "doc-text",
               key: row.id,
               title: row.title,
               meta: `${row.date}${row.parent_report_id ? " · " + t("followUp") : ""}`,
@@ -914,7 +914,7 @@
           })
         : null,
       ...visible.map((row) =>
-        h(P.Card, {
+        h(P.Card, { icon: "doc-text",
           key: row.id,
           title: row.name,
           meta: `${row.category} · ${t("version")} ${row.version}`,
@@ -1271,37 +1271,50 @@
       return h(
         P.AppShell,
         { page: "form", strings: { skip: t("skip") } },
-        h(
-          P.PageContent,
-          null,
-          h(
-            P.Center,
-            { maxWidth: "sm", vertical: true },
-            h(
-              P.Stack,
-              { gap: "lg", inset: "lg" },
-              h(
-                P.Inline,
-                { justify: "between" },
-                text("CTM", { variant: "eyebrow" }),
-                language,
-              ),
-              text(t("signIn"), { as: "h1", variant: "display" }),
-              text(t("welcome"), { variant: "lead" }),
-              ...config.providers.map((name) =>
-                h(
-                  P.Button,
-                  {
-                    key: name,
-                    variant: name === "microsoft" ? "primary" : "secondary",
-                    onClick: () => postForm(`/accounts/${name}/login/`),
-                  },
-                  t(name),
+        h(P.PageContent, null,
+          h(P.Center, { maxWidth: "lg" },
+            h(P.Stack, { gap: "lg", inset: "lg" },
+              h("header", null,
+                h(P.Inline, { justify: "center", align: "center", wrap: true, gap: "lg" },
+                  h(P.Image, {
+                    src: "/static/ctm/diocese-seal.png", alt: "Diocese of Los Angeles seal",
+                    width: 458, height: 458, className: "plx-u-w-100px plx-u-bg-transparent",
+                    fit: "contain", placeholder: "none", priority: true,
+                    fallback: h(P.Image, { src: "/static/ctm/diocese-seal.svg", alt: "Diocese of Los Angeles seal", width: 458, height: 458, fit: "contain", placeholder: "none" }),
+                  }),
+                  h(P.Stack, { gap: "sm" },
+                    text("Coptic Orthodox Church - Diocese of Los Angeles", { as: "h1", variant: "title" }),
+                    text("Office of the Ecclesiastical Council for Family Affairs", { variant: "secondary" }),
+                  ),
                 ),
               ),
-              config.providers.length
-                ? text(t("councilLogin"), { variant: "secondary" })
-                : h(P.Notice, { tone: "warning" }, t("noProviders")),
+              h(P.Center, { maxWidth: "sm" },
+                h(P.Panel, null,
+                  h(P.Stack, { gap: "lg", inset: "lg" },
+                    h(P.Inline, { justify: "between", align: "center" },
+                      h(P.Image, {
+                        src: "/static/ctm/tribunal-logo-cropped.svg", alt: "CTM",
+                        width: 1104, height: 1050, className: "plx-u-w-72px plx-u-bg-transparent",
+                        fit: "contain", placeholder: "none", priority: true,
+                      }),
+                      language,
+                    ),
+                    h(P.Stack, { gap: "sm" },
+                      text(t("signIn"), { as: "h2", variant: "display" }),
+                      text(t("welcome"), { variant: "secondary" }),
+                    ),
+                    h(P.Stack, { gap: "sm" },
+                      ...config.providers.map((name) => h(P.Button, {
+                        key: name, variant: name === "microsoft" ? "primary" : "secondary",
+                        onClick: () => postForm(`/accounts/${name}/login/`),
+                      }, t(name))),
+                    ),
+                    config.providers.length
+                      ? text(t("councilLogin"), { variant: "secondary" })
+                      : h(P.Notice, { tone: "warning" }, t("noProviders")),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -1516,7 +1529,7 @@
     const caseCard = (row) =>
       h(
         P.Card,
-        {
+        { icon: "folder-open",
           key: row.id,
           title: row.number,
           meta: t(row.status),
@@ -1611,6 +1624,7 @@
           onSession: (id) => go("session", id),
           onReview: () => go("review"),
           onNotifications: () => go("notifications"),
+          onCases: () => go("cases"),
         });
       if (page === "medical" && council && councilModule?.AssessmentsWorkspace)
         return h(councilModule.AssessmentsWorkspace, { key: selection, api, lang, user, caseId: selection });
@@ -1658,6 +1672,10 @@
           council,
           t,
         });
+      if (page === "administration" && window.CTMUI)
+        return h(window.CTMUI.Administration, { api, user, lang, onNavigationGuard: registerApplicantGuard, onCase: (id) => go("case", id) });
+      if (page === "profile" && window.CTMUI)
+        return h(window.CTMUI.Profile, { user, lang, onSettings: () => go("settings") });
       if (page === "profile")
         return h(
           P.Stack,
@@ -1671,6 +1689,7 @@
           P.Stack,
           null,
           heading(t("settings")),
+          window.CTMUI?.canAdminister(user) ? h(P.Button, { onClick: () => go("administration") }, window.CTMUI.translator(lang)("administration")) : null,
           h(P.Panel, { icon: "fields", title: t("interfaceLanguage") }, language),
           h(
             P.Panel,
@@ -1817,7 +1836,7 @@
               ...data.items
                 .filter((row) => row.part === part)
                 .map((row) =>
-                  h(P.Card, {
+                  h(P.Card, { icon: "doc-text",
                     key: row.id,
                     title: row.case_number,
                     meta: t(row.state),
@@ -1834,7 +1853,7 @@
           heading(t(page)),
           data.items.length
             ? data.items.map((row) =>
-                h(P.Card, {
+                h(P.Card, { icon: "calendar",
                   key: row.id,
                   title: `${t("councilSession")} ${row.date}`,
                   meta: t(row.state),
