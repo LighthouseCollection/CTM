@@ -151,7 +151,8 @@
 
 /* Card-local editing actions remain on the card surface. */
 #ctm-root .plx-panel .plx-form-actions {
-  background: transparent;
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 /* The CDN inserts a generic text-type icon before every column header. It is
@@ -186,3 +187,4 @@
 @media (max-width: 820px) {
   .ctm-session-form-grid { grid-template-columns: 1fr; }
 }
+
