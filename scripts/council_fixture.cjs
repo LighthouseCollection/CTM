@@ -7,7 +7,10 @@
    role: secretary (default) | member | president
    --contract=pr7 adds the council projections proposed in backend PR #7
    (review projection, agenda capabilities, hearing read, decision read,
-   question taxonomy, request metadata, interview boundary). */
+   question taxonomy, request metadata, interview boundary, D19 report
+   authorship and can_revise). Report revisions are stateful; POST
+   /__revise_fail/ {mode:"403"|"500"} fails the next revision save and
+   /__revise_bump/ {report} adds a concurrent revision by another actor. */
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -28,6 +31,19 @@ const people = {
 const nameOf = (id) => Object.values(people).find((p) => p.id === id)?.name || null;
 const now = () => new Date().toISOString();
 const state = {
+  reports: [
+    { id: "rep-int-1", title: "In-person interview", kind: "interview", subject: "Synthetic Applicant", date: "2026-10-16", case: "c-4",
+      parent_report_id: null, questions: [{ code: "DM-01", en: "Synthetic question one?", ar: "سؤال تجريبي أول؟" }, { code: "DM-03", en: "Synthetic question three?", ar: "سؤال تجريبي ثالث؟" }],
+      author_id: "u-mem", author: "Fr. Synthetic Member", author_role: "member", submitted_at: "2026-10-16T18:00:00Z", method: "written" },
+    { id: "rep-int-2", title: "Applicant intake", kind: "intake", subject: "Synthetic Spouse", date: "2026-10-12", case: "c-4",
+      parent_report_id: null, questions: [{ code: "DM-02", en: "Synthetic question two?", ar: "" }],
+      author_id: "u-app", author: "Synthetic Spouse", author_role: "applicant", submitted_at: "2026-10-12T17:00:00Z", method: "written" },
+  ],
+  revisions: {
+    "rep-int-1": [{ id: "rv-1", version: 1, answers: { "DM-01": "Synthetic answer.", files: ["f-synthetic"] }, observations: "Synthetic council observation.", actor: "Fr. Synthetic Member", timestamp: "2026-10-16T18:00:00Z" }],
+    "rep-int-2": [{ id: "rv-1", version: 1, answers: { "DM-02": "Spouse answer." }, observations: "", actor: "Synthetic Spouse", timestamp: "2026-10-12T17:00:00Z" }],
+  },
+  reviseFail: null,
   applications: [
     {
       id: "a-1", kind: "petition", status: "submitted", case_id: "c-1", case_number: "20261020-01", version: 2,
@@ -125,6 +141,18 @@ const json = (res, status, body) => {
 };
 const admin = () => ["secretary", "admin"].includes(role);
 const me = () => people[role];
+// Mirrors backend D19 (PR #7): original non-applicant author, current writer authority, open case.
+function canRevise(report) {
+  const c = state.cases.find((x) => x.id === report.case);
+  return report.author_id === me().id && report.author_role !== "applicant" && c.status === "open" && (admin() || c.assigned === me().id);
+}
+function reportRow(report) {
+  const list = state.revisions[report.id];
+  const last = list[list.length - 1];
+  const { case: _case, author_role: _role, author_id, author, submitted_at, method, ...row } = report;
+  return { ...row, version: last.version, answers: last.answers, observations: last.observations,
+    ...(pr7 ? { author_id, author, submitted_at, method, can_revise: canRevise(report) } : {}) };
+}
 const caseRow = (c) => ({ id: c.id, number: c.number, status: c.status, assigned_member: nameOf(c.assigned) });
 
 function applicationRow(a) {
@@ -422,19 +450,29 @@ function api(req, res, url, body) {
   }
   // Council projection of a medical report without a council-scope release.
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/)))
-    return json(res, 200, {
-      items: m[1] === "c-4"
-        ? [
-            { id: "rep-med-1", restricted: true },
-            { id: "rep-int-1", title: "In-person interview", kind: "interview", subject: "Synthetic Applicant", version: 1, date: "2026-10-16",
-              parent_report_id: null, questions: [{ code: "DM-01", en: "Synthetic question one?", ar: "" }], answers: { "DM-01": "Synthetic answer." }, observations: "Synthetic council observation." },
-            { id: "rep-int-2", title: "Applicant intake", kind: "intake", subject: "Synthetic Spouse", version: 1, date: "2026-10-12",
-              parent_report_id: null, questions: [{ code: "DM-02", en: "Synthetic question two?", ar: "" }], answers: { "DM-02": "Spouse answer." }, observations: null },
-          ]
-        : [],
-    });
-  if ((m = p.match(/^\/api\/reports\/([^/]+)\/revisions\/$/)))
-    return json(res, 200, { items: [{ id: "rv-1", version: 1, answers: { "DM-01": "Synthetic answer." }, observations: "Synthetic council observation.", actor: "Fr. Synthetic Member", timestamp: "2026-10-16T18:00:00Z" }] });
+    return json(res, 200, { items: m[1] === "c-4" ? [{ id: "rep-med-1", restricted: true }, ...state.reports.map(reportRow)] : [] });
+  if (p === "/__revise_fail/") { state.reviseFail = body.mode || null; return json(res, 200, { mode: state.reviseFail }); }
+  if (p === "/__revise_bump/") {
+    const list = state.revisions[body.report || "rep-int-1"];
+    const last = list[list.length - 1];
+    list.push({ ...last, id: "rv-" + (list.length + 1), version: last.version + 1, answers: { ...last.answers, "DM-01": "Concurrent edit by another session." }, actor: "Synthetic Secretary", timestamp: now() });
+    return json(res, 200, { version: last.version + 1 });
+  }
+  if ((m = p.match(/^\/api\/reports\/([^/]+)\/revisions\/$/))) {
+    const report = state.reports.find((r) => r.id === m[1]);
+    if (!report) return json(res, 404, { error: "resource_or_input_invalid" });
+    const list = state.revisions[report.id];
+    if (req.method === "POST") {
+      if (state.reviseFail === "500") { state.reviseFail = null; return json(res, 500, { error: "server_error" }); }
+      if (state.reviseFail === "403" || !canRevise(report))
+        return json(res, 403, { error: "forbidden", detail: "Only the original authorized council author can revise this report." });
+      if (!body || typeof body.answers !== "object") return json(res, 400, { error: "resource_or_input_invalid" });
+      const rev = { id: "rv-" + (list.length + 1), version: list.length + 1, answers: body.answers, observations: body.observations || "", actor: me().name, timestamp: now() };
+      list.push(rev);
+      return json(res, 201, { id: rev.id });
+    }
+    return json(res, 200, { items: [...list].reverse() });
+  }
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/assignment\/$/))) {
     if (!admin() && !(pr7 && role === "president")) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
     const c = state.cases.find((x) => x.id === m[1]);

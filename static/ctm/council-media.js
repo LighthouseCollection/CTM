@@ -243,6 +243,27 @@
       version: "Version",
       response: "Response",
       revisionPending: "Revising a report is available to its original author once the server identifies report authorship.",
+      revisionNotAllowed: "Only the report's original council author can revise it, while the case and proceeding are open.",
+      revise: "Revise report",
+      reviseTitle: "Revise report narrative",
+      reviseHelp:
+        "Saving creates a new version. Earlier versions are kept and stay in the revision history. To investigate further, request a follow-up report instead.",
+      saveRevision: "Save as new version",
+      revisionSaved: "Saved as version {version}.",
+      revisionNoChange: "Nothing has changed from the current version.",
+      revisionStale:
+        "Version {version} was saved by {actor} after you started editing. Your text is kept below. Review the latest version in the revision history, then save your text as a new version or discard it.",
+      saveAnyway: "Save my text as a new version",
+      discardChanges: "Discard my changes",
+      revisionDenied: "This revision was not allowed. Your text is still shown so you can copy it.",
+      revisionKept: "Your text is kept; try again.",
+      nonTextKept: "Attached files and other non-text answers are kept unchanged.",
+      unsavedRevision: "A report revision has not been saved.",
+      reportAuthor: "Author",
+      reportSubmitted: "Submitted",
+      reportMethod: "Method",
+      method_written: "Entered in CTM",
+      method_external: "External source link",
       evidenceTitle: "Evidence",
       documentsTitle: "Documents",
       olderVersions: "Include older versions",
@@ -346,6 +367,27 @@
       version: "الإصدار",
       response: "الرد",
       revisionPending: "يتاح تعديل التقرير لكاتبه الأصلي بمجرد أن يحدد الخادم كاتب التقرير.",
+      revisionNotAllowed: "لا يعدّل التقرير إلا كاتبه الأصلي من المجلس، ما دامت القضية والإجراء مفتوحين.",
+      revise: "تعديل التقرير",
+      reviseTitle: "تعديل نص التقرير",
+      reviseHelp:
+        "يُنشئ الحفظ إصدارًا جديدًا. وتُحفظ الإصدارات السابقة وتبقى في سجل التعديلات. ولإجراء تحقيق إضافي، اطلب تقرير متابعة بدلًا من ذلك.",
+      saveRevision: "الحفظ كإصدار جديد",
+      revisionSaved: "تم الحفظ كالإصدار {version}.",
+      revisionNoChange: "لا يوجد أي تغيير عن الإصدار الحالي.",
+      revisionStale:
+        "حفظ {actor} الإصدار {version} بعد أن بدأت التعديل. وما زال نصك محفوظًا أدناه. راجع أحدث إصدار في سجل التعديلات، ثم احفظ نصك كإصدار جديد أو تجاهله.",
+      saveAnyway: "حفظ نصي كإصدار جديد",
+      discardChanges: "تجاهل تغييراتي",
+      revisionDenied: "لم يُسمح بهذا التعديل. وما زال نصك معروضًا لتتمكن من نسخه.",
+      revisionKept: "نصك محفوظ؛ حاول مجددًا.",
+      nonTextKept: "تبقى الملفات المرفقة والإجابات غير النصية دون تغيير.",
+      unsavedRevision: "يوجد تعديل على التقرير لم يُحفظ.",
+      reportAuthor: "الكاتب",
+      reportSubmitted: "تاريخ التقديم",
+      reportMethod: "الطريقة",
+      method_written: "أُدخل في النظام",
+      method_external: "رابط مصدر خارجي",
       evidenceTitle: "الأدلة",
       documentsTitle: "المستندات",
       olderVersions: "تضمين الإصدارات السابقة",
@@ -790,9 +832,180 @@
     );
   }
 
+  // ---------- Report revisions (D19) ----------
+
+  // The server's can_revise flag is the only source of revise authority; no role or name inference.
+  function revisionAccess(report) {
+    if (!report || !Object.prototype.hasOwnProperty.call(report, "can_revise")) return "unknown";
+    return report.can_revise === true ? "allowed" : "denied";
+  }
+
+  // Editable text fields: every question of the request plus any other text answer. Files and other
+  // structured answers are not editable and are carried into the new version unchanged.
+  function revisionFields(report, latest) {
+    const answers = (latest && latest.answers) || {};
+    const codes = (report.questions || []).map((q) => q.code);
+    for (const [code, value] of Object.entries(answers)) if (typeof value === "string" && !codes.includes(code)) codes.push(code);
+    return codes.filter((code) => answers[code] === undefined || typeof answers[code] === "string");
+  }
+
+  function revisionDraft(report, latest) {
+    const answers = (latest && latest.answers) || {};
+    return {
+      answers: Object.fromEntries(revisionFields(report, latest).map((code) => [code, answers[code] || ""])),
+      observations: (latest && latest.observations) || "",
+    };
+  }
+
+  function revisionPayload(latest, draft) {
+    const answers = { ...((latest && latest.answers) || {}) };
+    for (const [code, value] of Object.entries(draft.answers || {})) {
+      if (answers[code] !== undefined && typeof answers[code] !== "string") continue;
+      if (answers[code] === undefined && !value) continue;
+      answers[code] = value;
+    }
+    return { answers, observations: draft.observations || "" };
+  }
+
+  function revisionChanged(latest, draft) {
+    const before = { answers: (latest && latest.answers) || {}, observations: (latest && latest.observations) || "" };
+    const after = revisionPayload(latest, draft);
+    const keys = new Set([...Object.keys(before.answers), ...Object.keys(after.answers)]);
+    for (const key of keys) if (JSON.stringify(before.answers[key] ?? "") !== JSON.stringify(after.answers[key] ?? "")) return true;
+    return before.observations !== after.observations;
+  }
+
+  function ReportRevisionEditor({ api, lang, report, latest, onCancel, onSaved, onHistory }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [draft, setDraft] = R.useState(() => revisionDraft(report, latest));
+    const [base0, setBase0] = R.useState(latest);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const [denied, setDenied] = R.useState(false);
+    const [stale, setStale] = R.useState(null);
+    const [problem, setProblem] = R.useState(null);
+    const dirty = revisionChanged(base0, draft);
+    R.useEffect(() => {
+      if (!dirty) return undefined;
+      const guard = (event) => {
+        event.preventDefault();
+        event.returnValue = t("unsavedRevision");
+        return event.returnValue;
+      };
+      window.addEventListener("beforeunload", guard);
+      return () => window.removeEventListener("beforeunload", guard);
+    }, [dirty]);
+    const url = `/api/reports/${encodeURIComponent(report.id)}/revisions/`;
+    async function save(event, force) {
+      if (event && event.preventDefault) event.preventDefault();
+      setFailure(null);
+      setProblem(null);
+      if (!force && !revisionChanged(base0, draft)) return setProblem("revisionNoChange");
+      setPending(true);
+      try {
+        // The write route has no version check, so confirm nobody saved a newer version first.
+        const current = await api(url);
+        const newest = (current.items || [])[0] || null;
+        onHistory(current.items || []);
+        if (!force && newest && base0 && newest.version !== base0.version) {
+          setStale(newest);
+          return;
+        }
+        await api(url, { method: "POST", body: JSON.stringify(revisionPayload(newest || base0, draft)) });
+        const after = await api(url).catch(() => null);
+        if (after) onHistory(after.items || []);
+        onSaved(after?.items?.[0]?.version ?? null);
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+        if (error && error.status === 403) setDenied(true);
+      } finally {
+        setPending(false);
+      }
+    }
+    function adoptLatest() {
+      setBase0(stale);
+      setStale(null);
+      save(null, true);
+    }
+    const questions = report.questions || [];
+    const kept = Object.entries((latest && latest.answers) || {}).some(([, v]) => typeof v !== "string");
+    return h(
+      P.Form,
+      { onSubmit: (e) => save(e, false), label: t("reviseTitle"), noValidate: true },
+      h(
+        P.FormSection,
+        { title: t("reviseTitle"), description: t("reviseHelp") },
+        ...revisionFields(report, latest).map((code) => {
+          const q = questions.find((x) => x.code === code);
+          return h(
+            P.Field,
+            { key: code, label: q ? `${code} — ${(lang === "ar" && q.ar) || q.en || code}` : code },
+            h(P.Textarea, {
+              rows: 3,
+              autoGrow: true,
+              value: draft.answers[code] || "",
+              maxLength: 50000,
+              disabled: pending,
+              onChange: (e) => {
+                const value = e.target.value;
+                setDraft((old) => ({ ...old, answers: { ...old.answers, [code]: value } }));
+                setProblem(null);
+              },
+            }),
+          );
+        }),
+        h(
+          P.Field,
+          { label: t("observations") },
+          h(P.Textarea, {
+            rows: 4,
+            autoGrow: true,
+            value: draft.observations,
+            maxLength: 50000,
+            disabled: pending,
+            onChange: (e) => {
+              const value = e.target.value;
+              setDraft((old) => ({ ...old, observations: value }));
+              setProblem(null);
+            },
+          }),
+        ),
+        kept ? h(P.Text, { variant: "secondary" }, t("nonTextKept")) : null,
+      ),
+      stale
+        ? h(
+            P.Notice,
+            { tone: "warning" },
+            h(
+              P.Stack,
+              { gap: "sm" },
+              h(P.Text, { as: "p" }, t("revisionStale", { version: String(stale.version), actor: stale.actor ? base.isolate(stale.actor) : "—" })),
+              h(
+                P.Inline,
+                null,
+                h(P.Button, { size: "sm", disabled: pending, onClick: adoptLatest }, t("saveAnyway")),
+                h(P.Button, { size: "sm", disabled: pending, onClick: onCancel }, t("discardChanges")),
+              ),
+            ),
+          )
+        : null,
+      problem ? h(P.Notice, { tone: "info" }, t(problem)) : null,
+      failure ? h(P.Notice, { tone: "danger" }, `${failure} ${t(denied ? "revisionDenied" : "revisionKept")}`) : null,
+      h(
+        P.FormActions,
+        { sticky: false },
+        h(P.Button, { disabled: pending, onClick: onCancel }, t("cancel")),
+        denied || stale ? null : h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveRevision")),
+      ),
+    );
+  }
+
   // ---------- Completed reports reader ----------
 
-  function ReportDetailTabs({ api, lang, user, report, record, onOriginal }) {
+  function ReportDetailTabs({ api, lang, user, report, record, onOriginal, onRevised }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -801,20 +1014,60 @@
     const [history, setHistory] = R.useState(null);
     const [version, setVersion] = R.useState(null);
     const [failure, setFailure] = R.useState(null);
+    const [editing, setEditing] = R.useState(null); // latest revision the edit started from
+    const [opening, setOpening] = R.useState(false);
+    const [saved, setSaved] = R.useState(null);
+    const historyUrl = `/api/reports/${encodeURIComponent(report.id)}/revisions/`;
+    function showHistory(items) {
+      setHistory(items);
+      setVersion(items[0]?.version ?? null);
+    }
     async function loadHistory() {
       setFailure(null);
       try {
-        const data = await api(`/api/reports/${encodeURIComponent(report.id)}/revisions/`);
-        setHistory(data.items || []);
-        setVersion(data.items?.[0]?.version ?? null);
+        const data = await api(historyUrl);
+        showHistory(data.items || []);
       } catch (error) {
         setFailure(base.serverMessage(error, t));
+      }
+    }
+    async function startRevision() {
+      setFailure(null);
+      setSaved(null);
+      setOpening(true);
+      try {
+        // Always edit from the newest stored version, never from a possibly stale list row.
+        const data = await api(historyUrl);
+        const items = data.items || [];
+        showHistory(items);
+        setEditing(items[0] || { version: report.version, answers: report.answers, observations: report.observations });
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setOpening(false);
       }
     }
     const shown = history?.find((row) => row.version === version) || report;
     const proceeding = base.openProceeding(record);
     const writer = base.writerFor(user, null, record) && Boolean(proceeding);
-    const answers = h(
+    const access = revisionAccess(report);
+    const latestShown = !history || version === history[0]?.version;
+    const methodLabel = report.method ? t(`method_${report.method}`) : null;
+    const answers = editing
+      ? h(ReportRevisionEditor, {
+          api,
+          lang,
+          report,
+          latest: editing,
+          onCancel: () => setEditing(null),
+          onHistory: showHistory,
+          onSaved: (newVersion) => {
+            setEditing(null);
+            setSaved(newVersion);
+            if (onRevised) onRevised();
+          },
+        })
+      : h(
       P.Stack,
       { gap: "md" },
       h(
@@ -822,8 +1075,15 @@
         null,
         h(P.PropertyList.Item, { label: t("reportFor") }, report.subject || ""),
         h(P.PropertyList.Item, { label: t("version") }, String(shown.version ?? report.version ?? "")),
+        report.author ? h(P.PropertyList.Item, { label: t("reportAuthor") }, base.isolate(report.author)) : null,
+        report.submitted_at ? h(P.PropertyList.Item, { label: t("reportSubmitted"), data: true }, base.formatWhen(report.submitted_at, lang)) : null,
+        methodLabel ? h(P.PropertyList.Item, { label: t("reportMethod") }, methodLabel.startsWith("method_") ? report.method : methodLabel) : null,
       ),
+      saved !== null && saved !== undefined ? h(P.Notice, { tone: "success" }, t("revisionSaved", { version: String(saved) })) : null,
       report.parent_report_id ? h(P.Inline, null, h(P.Button, { size: "sm", onClick: onOriginal }, t("openOriginal"))) : null,
+      access === "allowed" && latestShown
+        ? h(P.Inline, null, h(P.Button, { size: "sm", variant: "primary", loading: opening, disabled: opening, onClick: startRevision }, t("revise")))
+        : null,
       history
         ? h(
             P.Field,
@@ -845,7 +1105,8 @@
         return h(P.Panel, { key: code, title: label }, h(P.Text, { as: "p" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
       }),
       shown.observations ? h(P.Panel, { title: t("observations") }, h(P.Text, { as: "p" }, shown.observations)) : null,
-      h(P.Text, { variant: "secondary" }, t("revisionPending")),
+      access === "unknown" ? h(P.Text, { variant: "secondary" }, t("revisionPending")) : null,
+      access === "denied" ? h(P.Text, { variant: "secondary" }, t("revisionNotAllowed")) : null,
     );
     const interview = report.kind === "interview";
     const recording = interview
@@ -878,7 +1139,13 @@
       t = translator(lang);
     const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => base.withAssignee(api, r)), [caseId]);
     const [selected, select] = R.useState(null);
-    const rows = base.ordinaryReports(reports);
+    const [fresh, setFresh] = R.useState(null); // reloaded after a revision so rows carry the new version
+    const rows = base.ordinaryReports(fresh || reports);
+    function reloadReports() {
+      api(`/api/cases/${encodeURIComponent(caseId)}/reports/`)
+        .then((data) => setFresh(data.items || []))
+        .catch(() => {});
+    }
     const chosen = rows.find((row) => row.id === selected);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
@@ -912,6 +1179,7 @@
               report: chosen,
               record: state.data,
               onOriginal: () => select(chosen.parent_report_id),
+              onRevised: reloadReports,
             })
           : null,
       ),
@@ -1084,6 +1352,11 @@
     mediaWords: words,
     mediaTranslator: translator,
     chooseMimeType,
+    revisionAccess,
+    revisionFields,
+    revisionDraft,
+    revisionPayload,
+    revisionChanged,
     extensionFor,
     sizeLimitBytes,
     microphoneProblem,

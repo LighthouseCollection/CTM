@@ -100,3 +100,41 @@ test("media words cover both languages, every used key, and Plenix rules", () =>
   assert.doesNotMatch(source, /#[0-9a-fA-F]{3,8}\b/);
   assert.doesNotMatch(source, /innerHTML/);
 });
+
+test("D19: revise authority comes only from the server's can_revise flag", () => {
+  assert.equal(C.revisionAccess({ id: "r" }), "unknown"); // server without authorship
+  assert.equal(C.revisionAccess({ can_revise: true }), "allowed");
+  assert.equal(C.revisionAccess({ can_revise: false, author_id: "me" }), "denied");
+  assert.equal(C.revisionAccess({ can_revise: "true" }), "denied"); // only literal true
+  const tabs = source.slice(source.indexOf("function ReportDetailTabs("), source.indexOf("function ReportsReader("));
+  assert.match(tabs, /access === "allowed" && latestShown/);
+  assert.doesNotMatch(tabs, /author_id\s*===|role\s*===\s*"admin"/);
+});
+
+test("D19: text answers are editable; files and structured answers are carried unchanged", () => {
+  const report = { questions: [{ code: "Q1" }, { code: "Q2" }, { code: "Q3" }] };
+  const latest = { version: 2, answers: { Q1: "old one", Q2: "kept", files: ["f1"], extra: "loose text" }, observations: "obs" };
+  assert.deepEqual([...C.revisionFields(report, latest)], ["Q1", "Q2", "Q3", "extra"]);
+  const draft = C.revisionDraft(report, latest);
+  assert.equal(draft.answers.Q3, "");
+  assert.equal(C.revisionChanged(latest, draft), false);
+  draft.answers.Q1 = "new one";
+  draft.answers.files = "forged"; // never overrides a structured answer
+  const payload = JSON.parse(JSON.stringify(C.revisionPayload(latest, draft)));
+  assert.deepEqual(payload, { answers: { Q1: "new one", Q2: "kept", files: ["f1"], extra: "loose text" }, observations: "obs" });
+  assert.equal(C.revisionChanged(latest, draft), true);
+  assert.equal("Q3" in payload.answers, false); // an empty unanswered question is not added
+  assert.equal(C.revisionChanged(latest, { answers: {}, observations: "obs 2" }), true);
+});
+
+test("D19: save re-reads history first and stops on a newer version; failures keep the text", () => {
+  const editor = source.slice(source.indexOf("function ReportRevisionEditor("), source.indexOf("// ---------- Completed reports reader"));
+  const read = editor.indexOf("const current = await api(url)");
+  const staleCheck = editor.indexOf("newest.version !== base0.version");
+  const post = editor.indexOf('method: "POST"');
+  assert.ok(read > 0 && staleCheck > read && post > staleCheck);
+  assert.match(editor, /error\.status === 403\) setDenied\(true\)/);
+  // The draft is never cleared on failure; only onSaved closes the editor.
+  assert.doesNotMatch(editor, /setDraft\(\s*revisionDraft[^)]*\)\s*;\s*\}\s*catch/);
+  assert.match(editor, /beforeunload/);
+});

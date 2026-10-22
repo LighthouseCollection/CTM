@@ -22,6 +22,18 @@ Original audio is never altered: the uploaded bytes are the captured container a
 
 Submission calls the existing finalize route, which creates the transcription processing run and outbox job exactly once. There is no read route yet for recordings, processing state, retries or transcript versions, so the **Transcripts** tab states that status is not available and that the original audio is stored. Contract requested on issue #2 as D20 (recordings list with processing state, retry creating a new run, transcript versions with the review gate). The agreed language/version behavior (original, mixed, English and Arabic versions; review before wider visibility; edits preserved) is left to that contract; the UI does not invent it.
 
+## Report revisions (D19)
+
+Where: Case → Reports → Completed reports → a report → **Report** tab. Contract: backend PR #7 (checked by reading code at `d724ba5`). Council report rows carry `author_id`, `author`, `submitted_at`, `method` and `can_revise`. `GET /api/reports/{id}/revisions/` lists every version, newest first, and `POST` with `{answers, observations}` appends one.
+
+- **Authority:** the Revise button appears only when the row has `can_revise: true` (literal) and the newest version is being viewed. Authority is never inferred from role, author ID or name. When the flag is `false`, the tab says only the original council author can revise while the case and proceeding are open. On a server without the flag (current main), it says revising waits for report authorship.
+- **Editor:** a Plenix Form with one Textarea per request question (EN/AR wording from the request's own question data, unchanged) plus council observations. Files and other non-text answers are carried into the new version exactly. Unanswered questions stay absent unless text is entered.
+- **History:** each save creates a new version; nothing is overwritten or removed. The version picker shows every version with its date and author. Further investigation is still a separate linked follow-up report.
+- **Stale state:** the write route has no expected-version check, so before saving the editor re-reads the history. If someone saved a newer version after editing began, it stops, keeps the text, and offers "Save my text as a new version" or "Discard my changes". A server-side check is requested on #2.
+- **Failures:** on a 403 the server's message is shown, the text stays visible to copy and Save is hidden. Other failures show the server's message and keep the text for retry. Unsaved text triggers the browser's leave-page warning. "No change" is caught before any request.
+
+Testing: unit tests (authority, payload, stale order) and the fixture (`--contract=pr7`, member author) in the built-in Chromium browser. Verified: author fields, Revise visible only for the author on the newest version, unchanged save caught, save creates version 2 with the file answer kept, list and history refresh, stale warning and force save, 500 and 403 keep text, applicant-authored intake and secretary (non-author) get no Revise, Arabic RTL at 390 px with no overflow or inline styles. **Not yet tested against the actual PR #7 backend:** this machine has no Python, PostgreSQL or Docker. Screenshots were unavailable while the app window was hidden, so visual review was by DOM inspection.
+
 ## Evidence viewers
 
 Case → Evidence and Case → Documents (council). Split list/detail, optional earlier versions, load more.
@@ -54,4 +66,4 @@ Only `/api/files/…` routes are ever used; a listing URL that is not an `/api/f
 
 ## Open dependencies
 
-D19 report authorship/`can_revise` (revisions), D20 recordings/transcript read and retry, D21 recording category, worker format acceptance, resumable upload, duration/notice detail (issue #2); PDF.js packaging (issue #4). OCR stays with the backend stream; council processing status and retry displays will follow D20.
+D19 server-side expected-version check on report revisions (UI done, see above), D20 recordings/transcript read and retry (published in PR #7, UI not yet built), D21 recording category, worker format acceptance, resumable upload, duration/notice detail (issue #2); PDF.js packaging (issue #4). OCR stays with the backend stream; council processing status and retry displays will follow D20.
