@@ -446,3 +446,10 @@ test("adjournment requires an editable end time and sends it to the session endp
   assert.match(source, /label: t\("adjournEndTime"\)/);
   assert.match(source, /JSON\.stringify\(\{ adjourned: true, ended_at:/);
 });
+
+
+test("session status names reflect the council lifecycle", () => {
+  assert.equal(C.sessionStatusKey("draft"), "sessionStatusPlanned");
+  assert.equal(C.sessionStatusKey("planned"), "sessionStatusInProgress");
+  assert.equal(C.sessionStatusKey("closed"), "sessionStatusAdjourned");
+});

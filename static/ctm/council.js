@@ -88,6 +88,12 @@
     };
   }
 
+  function sessionStatusKey(state) {
+    if (state === "closed") return "sessionStatusAdjourned";
+    if (state === "planned") return "sessionStatusInProgress";
+    return "sessionStatusPlanned";
+  }
+
   function sessionDateProblem(value, existing, ignoreId = null) {
     if (!DATE.test(value || "")) return "dateRequired";
     const parsed = new Date(`${value}T00:00:00Z`);
@@ -363,8 +369,8 @@
       resumeHearing: "Resume Hearing",
       hearingAdjournedNotice: "The hearing has been adjourned.",
       hearingResumedNotice: "The hearing has resumed.",
-      sessionStatusDraft: "Draft",
-      sessionStatusInSession: "In session",
+      sessionStatusPlanned: "Planned",
+      sessionStatusInProgress: "In progress",
       sessionStatusAdjourned: "Adjourned",
       sessionActivated: "The tribunal session is now in session.",
       moveCase: "Move",
@@ -652,8 +658,8 @@
       resumeHearing: "استئناف الجلسة",
       hearingAdjournedNotice: "تم تأجيل الجلسة.",
       hearingResumedNotice: "تم استئناف الجلسة.",
-      sessionStatusDraft: "مسودة",
-      sessionStatusInSession: "قيد الجلسة",
+      sessionStatusPlanned: "مخططة",
+      sessionStatusInProgress: "قيد التنفيذ",
       sessionStatusAdjourned: "مؤجلة",
       sessionActivated: "جلسة المجلس الآن قيد الانعقاد.",
       moveCase: "نقل",
@@ -1416,7 +1422,7 @@
             { title: t("assignedCases"), field: "assigned_case_count", minWidth: "8rem", render: (row) => String(row.assigned_case_count ?? 0) },
             { title: t("caseHearings"), field: "hearing_case_count", minWidth: "8rem", render: (row) => String(row.hearing_case_count ?? 0) },
           ] : []),
-          { title: t("statusLabel"), field: "state", minWidth: "8rem", render: (row) => t(row.state) },
+          { title: t("statusLabel"), field: "state", minWidth: "8rem", render: (row) => t(sessionStatusKey(row.state)) },
         ],
       }),
     );
@@ -2285,8 +2291,8 @@
                   size: "sm",
                   value: sessionStatus,
                   options: [
-                    { value: "draft", label: t("sessionStatusDraft"), icon: "document" },
-                    { value: "in-session", label: t("sessionStatusInSession"), icon: "calendar" },
+                    { value: "draft", label: t("sessionStatusPlanned"), icon: "document" },
+                    { value: "in-session", label: t("sessionStatusInProgress"), icon: "calendar" },
                     { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "stop" },
                   ],
                   onChange: (value) => {
@@ -2893,6 +2899,7 @@
     reviewProblem,
     sessionLabel,
     sessionReference,
+    sessionStatusKey,
     sessionDateProblem,
     todayInLosAngeles,
     splitSessions,
