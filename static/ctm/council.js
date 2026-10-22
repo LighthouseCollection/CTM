@@ -2118,13 +2118,13 @@
       const title = first ? t("casesToAssign") : t("scheduledCasesForHearing");
       const columns = first
         ? [
-            { title: "", field: "record" },
+            { title: "\u00a0", field: "record" },
             { title: t("applicant"), field: "applicant_name", kind: "name", render: (row) => personPill(row.applicant_name, "applicant", row.applicant_gender) },
             { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent", row.respondent_gender) },
             { title: t("reason"), field: "reason" },
             { title: t("yearsMarried"), field: "married_years", render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
             { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
+            { title: "\u00a0", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
           ]
         : [
             { title: "#", field: "position", kind: "name" },
@@ -2132,7 +2132,7 @@
             { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent", row.respondent_gender) },
             { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
             { title: t("previousRecommendation"), field: "previous_recommendation", render: (row) => row.previous_recommendation || t("notRecorded") },
-            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
+            { title: "\u00a0", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
           ];
       return h(P.Panel, {
         key: n,

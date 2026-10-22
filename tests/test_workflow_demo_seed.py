@@ -47,6 +47,12 @@ def test_workflow_demo_is_repeatable_private_and_delivery_free(
     from tribunal.services.files import authorized_file
 
     returned = Application.objects.filter(status="returned").first()
+    accepted = Application.objects.filter(status="accepted", kind="petition").first()
+    answers = accepted.revisions.get(number=accepted.current_version).answers
+    assert answers["church_marriage_date"] == "2010-06-12"
+    assert answers["church_name"] == "St. Mark Coptic Orthodox Church"
+    assert answers["married_outside_coptic_church"] == "No"
+    assert answers["spouse_occupation"] == "Teacher"
     original = FileVersion.objects.filter(attachment__application=returned).first()
     reviewer = Account.objects.get(email="frraphaelmaher@lacopts.org")
     assert original is not None

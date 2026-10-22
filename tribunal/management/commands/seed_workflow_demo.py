@@ -203,11 +203,73 @@ class Command(BaseCommand):
             hour=10,
             location="St. Mary Coptic Orthodox Church, Los Angeles, California",
         )
+
+        def profile_answers(owner):
+            """Fictional submitted answers used by the profile and marriage projections."""
+            return {
+                "other_names": "—",
+                "birth_country": "Egypt",
+                "nationality": "Egyptian",
+                "awareness_of_application": "—",
+                "address": "1842 Maple Dr, Bellflower, California, 90706, United States",
+                "mobile": "(562) 555-1042",
+                "email": owner.email,
+                "immigration_status": "Citizen",
+                "residing_with": "Alone",
+                "education": "Bachelor of Business Administration",
+                "graduation_year": "2007",
+                "occupation": "Registered Nurse",
+                "denomination": "Coptic Orthodox",
+                "name_of_bishop": "H.E. Metropolitan Serapion",
+                "diocese": "Los Angeles, Southern California and Hawaii",
+                "parish_name": "St. Mary Coptic Orthodox Church, Bellflower",
+                "father_of_confession": "Fr. Abraam Mikhail",
+                "spouse_other_names": "—",
+                "spouse_birth_country": "Egypt",
+                "spouse_nationality": "Egyptian",
+                "spouse_awareness_of_application": "—",
+                "spouse_address": "88 Park Ave, Anaheim, California, 92805, United States",
+                "spouse_mobile": "(714) 555-0142",
+                "spouse_email": "spouse@example.test",
+                "spouse_immigration_status": "Citizen",
+                "spouse_residing_with": "Alone",
+                "spouse_education": "Bachelor of Arts in Education",
+                "spouse_graduation_year": "2011",
+                "spouse_occupation": "Teacher",
+                "spouse_denomination": "Coptic Orthodox",
+                "spouse_name_of_bishop": "H.E. Metropolitan Serapion",
+                "spouse_diocese": "Los Angeles, Southern California and Hawaii",
+                "spouse_parish_name": "St. Mary Coptic Orthodox Church, Bellflower",
+                "spouse_father_of_confession": "Fr. Abraam Mikhail",
+                "married_outside_coptic_church": "No",
+                "religious_denomination_officiating": "—",
+                "date_of_marriage_outside_coptic_church": "—",
+                "church_marriage_date": "2010-06-12",
+                "officiating_priest": "Fr. Antony Attallah",
+                "church_name": "St. Mark Coptic Orthodox Church",
+                "church_location": "Los Angeles, CA",
+                "marriage_diocese": "Diocese of Los Angeles",
+            }
+
         if m.AuditEvent.objects.filter(
             action="demo_dataset_created", metadata__dataset=DATASET
         ).exists():
+            # A fixture upgrade may add fields to the immutable-source projection.
+            # This database is explicitly synthetic and isolated; production filings
+            # are never updated by this command.
+            for app in m.Application.objects.filter(
+                case__origin="synthetic", kind="petition"
+            ).select_related("owner"):
+                revision = app.revisions.filter(number=app.current_version).first()
+                if revision:
+                    answers = {**revision.answers, **profile_answers(app.owner)}
+                    if answers != revision.answers:
+                        # AnswerRevision intentionally blocks normal historical writes.
+                        # This direct fixture repair is reachable only after the isolated
+                        # synthetic-dataset guard above has already passed.
+                        m.AnswerRevision.objects.filter(pk=revision.pk).update(answers=answers)
             ensure_session_agenda(current_session, archived_session)
-            self.stdout.write("Dataset already exists; synthetic session scenarios refreshed.")
+            self.stdout.write("Dataset already exists; synthetic session scenarios and profile fixtures refreshed.")
             return
         fields = [
             {
@@ -300,7 +362,7 @@ class Command(BaseCommand):
                 context="demo",
                 visibility="own",
             )
-            image = category == "PHOTO"
+            image = category in {"PHOTO", "SPOUSE_PHOTO"}
             data = (
                 placeholder_png()
                 if image
@@ -359,6 +421,9 @@ class Command(BaseCommand):
                 "marriage_date": case.marriage_date.isoformat()
                 if case
                 else "2014-06-15",
+                # Profile answers are supplied by the seeded filing rather than
+                # synthesized by the council view.
+                **profile_answers(owner),
                 "grounds": ["desertion"],
                 "statement": "I request council consideration following our separation. We have been living apart since March 2025 despite attempts at reconciliation.",
                 "new_information": "Additional correspondence was located after the original decision.",
@@ -378,7 +443,7 @@ class Command(BaseCommand):
             if status != "draft":
                 files = [
                     source(app, category, f"{category}")
-                    for category in ("MC", "CMC", "CDD", "PHOTO")
+                    for category in ("MC", "CMC", "CDD", "PHOTO", "SPOUSE_PHOTO")
                 ]
                 submission = m.Submission.objects.create(
                     application=app,
