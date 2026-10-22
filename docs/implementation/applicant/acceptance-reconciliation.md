@@ -1,6 +1,6 @@
 # Applicant acceptance reconciliation
 
-Checked 2026-10-21 Pacific against backend `e2f714a711b3bd84880c537fabb743628181ec00`.
+Checked 2026-10-21 Pacific against backend `c16976cb5d7719ec623fe638d5a0c8a5107756a9`.
 References: GitHub #9, original Fxx/AS-Fxx acceptance review and later direct-owner
 clarifications on main. External review findings are hypotheses until verified.
 All checks below use isolated synthetic records; no live provider/antivirus claim.
@@ -36,8 +36,8 @@ manifest/download while earlier submitted original bytes are retained.
 
 [JSON evidence](returned-privacy-result.json) records exact predicates and backend
 SHA without personal records or credentials. The original7/8 failure was reproduced
-on7684169 and is fixed in this test on e2f714a. The backend privacy test file was also independently executed in the exact isolated
-archive using settings_test SQLite:4 passed. It covers controlled search-hit filtering
+on7684169 and is fixed in this test on e2f714a. The backend privacy and search test files were also independently executed in the
+exact c16976c archive using settings_test SQLite:10 passed. It covers controlled search-hit filtering
 and index suppression, private intermediate corrections, and obsolete queued-alert
 discard with EmailMessage.send mocked and never called. Live search service, live
 mail delivery and PostgreSQL RLS remain separate acceptance surfaces.

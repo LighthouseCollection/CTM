@@ -370,6 +370,25 @@ try:
         page.reload(wait_until="networkidle")
         expect(page.get_by_text("Your application is awaiting identity review. Payment and submission remain unavailable until the tribunal completes this review.",exact=True)).to_be_visible()
         assert page.get_by_text("Your application is awaiting identity review. You can save your answers, but payment and submission remain unavailable until the tribunal completes this review.",exact=True).count()==0
+        app=fixture()
+        documents={"can_upload":True,"items":[],"requirements":[{
+            "category":"RO","context":"order-a","label_en":"Order copy","label_ar":"نسخة الأمر","required":True}]}
+        pending_uploads=[]
+        page.unroute("**/api/files/",uncertain_upload)
+        page.route("**/api/files/",lambda route:pending_uploads.append(route))
+        page.reload(wait_until="networkidle")
+        expect(page.locator('input[type="file"]')).to_be_attached()
+        leave_guard="() => { const event=new Event('beforeunload',{cancelable:true}); return !window.dispatchEvent(event); }"
+        assert page.evaluate(leave_guard) is False
+        page.locator('input[type="file"]').set_input_files({"name":"order.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.7 upload-in-flight"})
+        page.get_by_role("button",name="Upload original",exact=True).click()
+        expect(page.get_by_role("button",name="Back",exact=True)).to_be_disabled()
+        page.wait_for_function(leave_guard)
+        assert len(pending_uploads)==1
+        pending_uploads[0].fulfill(status=201,json={"id":"synthetic-upload","scan_state":"pending"})
+        expect(page.get_by_text("The file was received.",exact=False)).to_be_visible()
+        page.wait_for_function("() => { const event=new Event('beforeunload',{cancelable:true}); return window.dispatchEvent(event); }")
+        checks.append("In-flight upload installs unload prevention even with clean answers and releases it after acknowledgement")
         assert not errors, errors
         browser.close()
 finally:

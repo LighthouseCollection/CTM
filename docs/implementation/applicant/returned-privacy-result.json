@@ -1,5 +1,5 @@
 {
-  "backend_sha": "e2f714a711b3bd84880c537fabb743628181ec00",
+  "backend_sha": "c16976cb5d7719ec623fe638d5a0c8a5107756a9",
   "acceptance": "F08/F25 direct-owner returned privacy",
   "checks": {
     "council_detail_keeps_formal_answers": true,
@@ -41,9 +41,9 @@
     "earlier_submitted_original_retained": true
   },
   "supplemental_validation": {
-    "backend_returned_privacy_pytest": {
-      "passed": 4,
-      "scope": "Independently executed exact e2f714a backend archive, settings_test SQLite; controlled search candidates and mocked never-called mail send; not live provider acceptance"
+    "backend_privacy_and_search_pytest": {
+      "passed": 10,
+      "scope": "Independently executed exact c16976c backend archive, settings_test SQLite; controlled search candidates and mocked never-called mail send; not live provider acceptance"
     }
   }
 }

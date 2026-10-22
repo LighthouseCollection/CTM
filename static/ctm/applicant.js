@@ -267,11 +267,11 @@
       version: state?.version ?? record.version,
     }), [record, state?.version, documentRevision]);
     R.useEffect(() => {
-      if (!state?.dirty) return;
+      if (!state?.dirty && !state?.saving && !uploadBusy) return;
       const warn = event => { event.preventDefault(); event.returnValue = ""; };
       window.addEventListener("beforeunload", warn);
       return () => window.removeEventListener("beforeunload", warn);
-    }, [state?.dirty]);
+    }, [state?.dirty, state?.saving, uploadBusy]);
     const text = (value, props = {}) => h(P.Text, props, value);
     const button = (key, action, props = {}) => h(P.Button, {
       onClick: action, disabled: state?.saving || filingBusy || uploadBusy || projectionPending, ...props,
