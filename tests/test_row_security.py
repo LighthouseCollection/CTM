@@ -67,6 +67,8 @@ def runtime():
             "ctm_assessment_release_metadata(uuid)",
             "ctm_request_author_names(uuid[])",
             "ctm_document_category_labels()",
+            "ctm_withdrawal_can_close(uuid)",
+            "ctm_closed_case_cleanup(uuid)",
             "ctm_reference_readable(text,jsonb)",
             "ctm_reference_writable(text,jsonb)",
             "ctm_staff_readable()",
@@ -785,7 +787,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0045_linked_first_filing")])
+        MigrationExecutor(connection).migrate([("tribunal", "0046_withdrawal_case_scope")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -1757,7 +1759,8 @@ def test_call_record_runtime_scope_and_retained_provenance(runtime, ready_applic
     with runtime(people["admin"]):
         assert CallRecord.objects.filter(pk=record.pk).update(notes="rewrite") == 0
         assert CallRecord.objects.filter(pk=record.pk).delete()[0] == 0
-    close_case(people["admin"], app.case, "synthetic_close")
+    from tribunal.services.decisions import withdraw_application
+    withdraw_application(app.owner, app.pk)
     with runtime(people["secretary"]):
         assert log_call(people["secretary"], app.case_id, app.party_id, timezone.now(), "Closed-case communication").pk
 

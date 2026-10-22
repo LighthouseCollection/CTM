@@ -1,3 +1,7 @@
+Current validation: **797 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0046. Nine new restricted-role withdrawal regressions;17focused withdrawal/appeal checks passed.
+
+Withdrawal500 correction:0046 uses an authorized global participation decision without revealing other Party rows, then bounded authorized closed-case cleanup of hidden claims/unfinished requests. See withdrawal-case-scope.md. Exact-successor applicant and QA reruns remain pending; UI metadata successor proposal now0047after0046.
+
 Current validation: **788 PostgreSQL passed, 1 skipped**, including migration rollback/reapply through0045. Fifteen new physical-role council link projection regressions. No model/route/migration/grant changes in this continuation.
 
 Council C05 link projection: council-only priest name, expiry, current lifecycle state and writer-bound management flags; no capability/email/testimony disclosure or migration. See external-link-projection.md.
