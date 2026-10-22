@@ -1388,6 +1388,7 @@
         "timeline",
         "marriage",
         "notes",
+        "separation",
       ].includes(page) && selection;
     const caseGroups = [
       {
@@ -2044,7 +2045,7 @@
     }
     return h(
       P.AppShell,
-          { header, sideNav: nav, page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes"].includes(page) ? "master-detail" : "workspace", strings: { skip: t("skip") } },
+          { header, sideNav: nav, page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", strings: { skip: t("skip") } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       h("div", { className: "plx-page-panes" }, caseNav,
         h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },

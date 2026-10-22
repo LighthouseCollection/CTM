@@ -170,6 +170,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(app, /caseCollaboration: "Notes & Communications"/);
   assert.match(app, /items: \["case", "timeline", "parties", "marriage", "separation"\]/);
   assert.match(app, /page === "separation" && council && councilModule\?\.CaseSeparation/);
+  assert.match(app, /"marriage",\s*"notes",\s*"separation"/);
   assert.match(councilCase, /function CaseSeparation\(\{ api, lang, caseId \}\)/);
   assert.match(councilCase, /"Separation Details"/);
   assert.match(councilCase, /"Civil Divorce"/);
