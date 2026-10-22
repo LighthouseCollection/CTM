@@ -275,7 +275,7 @@ test("upcoming sessions use a full table and load the selected session into the 
   const source = council.slice(council.indexOf("function SessionList"), council.indexOf("function AgendaItemCard"));
   assert.doesNotMatch(source, /P\.SplitView/);
   assert.match(source, /function editSession\(row\)/);
-  assert.match(source, /onSelect: \(id\) => editSession\(rows\.find/);
+  assert.match(source, /rows, selected, onSelect: select, empty: t\(emptyKey\), isStatic: true/);
   assert.match(source, /empty: t\(emptyKey\), isStatic: true/);
   assert.match(source, /method: editing \? "PATCH" : "POST"/);
   assert.match(source, /const \[formOpen, setFormOpen\] = R\.useState\(false\)/);
