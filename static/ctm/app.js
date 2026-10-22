@@ -19,19 +19,25 @@
     appointments: "schedule", past: "archive", case: "document", timeline: "progress",
     parties: "settings-users", marriage: "settings-users", separation: "move", petition: "doc-text",
     reports: "document", hearings: "list-lines", evidence: "image-a-2", documents: "folder",
-    medical: "lock", decree: "certificate", appeals: "progress",
+    medical: "lock", appeals: "progress",
     communications: "mail", notes: "message", audit: "list-lines",
   };
   const decisionBalanceIcon = () =>
     h("svg", { className: "ctm-decision-nav-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
       h("path", { d: "M12 3v17M5 7h14M4 7l-3 6h6L4 7zm16 0-3 6h6l-3-6zM7 21h10" }),
     );
+  const decreeCertificateIcon = () =>
+    h("svg", { className: "ctm-decree-nav-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
+      h("path", { d: "M6 3h9l3 3v15H6zM15 3v4h4M9 11h6M9 15h3M15 16.5a2.5 2.5 0 1 0-2 0v2l2-1 2 1v-2a2.5 2.5 0 0 0-2 0z" }),
+    );
   const navigationIcon = (id) =>
     id === "separation"
       ? h("span", { className: "ctm-separation-nav-icon", "aria-hidden": true }, h(P.Icon, { name: "person" }), h(P.Icon, { name: "close" }))
       : id === "decision"
         ? decisionBalanceIcon()
-        : h(P.Icon, { name: navigationIcons[id] });
+        : id === "decree"
+          ? decreeCertificateIcon()
+          : h(P.Icon, { name: navigationIcons[id] });
   const words = {
     en: {
       event_report_requested: "A report has been requested.",

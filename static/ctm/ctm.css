@@ -63,6 +63,13 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+.ctm-decree-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 /* Contact is a balanced two-column details grid; the long address has its own row. */
 .ctm-spouse-profile-section--two-columns .plx-property-list {
   display: grid;
