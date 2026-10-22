@@ -45,16 +45,30 @@ def run(page,context,staff,base,csrf,staff_csrf,app_id,source_file_id,fixture_db
     for payload in [{k:v for k,v in baseline.items() if k!="idempotency_key"},{**baseline,"expected_version":version-1},
         {**baseline,"file_ids":"not-a-list"},{**baseline,"file_ids":[evidence["id"],evidence["id"]]}]:
         response=post(payload);assert response.status==422,response.text()
-    assert post({**baseline,"file_ids":[source_file_id]}).status==403
+    def source_snapshot():
+        from tribunal.services.files import private_path
+        source=m.FileVersion.objects.select_related("attachment").get(pk=source_file_id)
+        return {"attachment_id":str(source.attachment_id),"application_id":str(source.attachment.application_id),
+            "owner_id":str(source.attachment.owner_id),"number":source.number,"bytes":private_path(source.object_key).read_bytes()}
+    retained_source=fixture_db(source_snapshot)
+    cross_application=post({**baseline,"file_ids":[source_file_id]})
+    assert cross_application.status==403,cross_application.text()
     staff_denied=staff.request.post(url,data=baseline,headers={"X-CSRFToken":staff_csrf});assert staff_denied.status==403
     assert detail().json()["supplements"]==[]
+    assert fixture_db(source_snapshot)==retained_source
     checks.append("Actual supplement append rejects absent key, stale version, malformed/duplicate evidence, other-application file and staff authorship")
     replaced=evidence
     replacement=context.request.post(base+"/api/files/",multipart={"application_id":app_id,"category":evidence["category"],"attachment_id":evidence["attachment_id"],
         "file":{"name":"supplement-current.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.7 synthetic current supplement evidence"}},headers={"X-CSRFToken":csrf})
     assert replacement.status==201,replacement.text()
     current_id=replacement.json()["id"]
-    assert post({**baseline,"file_ids":[replaced["id"]]}).status==403
+    superseded=post({**baseline,"file_ids":[replaced["id"]]})
+    if os.environ.get("CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT")=="hidden404":
+        absent_file=post({**baseline,"file_ids":[str(uuid.uuid4())]})
+        assert superseded.status==absent_file.status==404,(superseded.status,absent_file.status)
+        assert superseded.json()==absent_file.json(),(superseded.text(),absent_file.text())
+    else:assert superseded.status==403,superseded.text()
+    assert detail().json()["supplements"]==[]
     fixture_db(lambda:m.FileTechnicalEvent.objects.create(file_id=current_id,task="scan",result="pending"))
     assert post({**baseline,"file_ids":[current_id]}).status==403
     pending_file=next(file for file in context.request.get(f"{base}/api/applications/{app_id}/files/").json()["items"] if file["id"]==current_id)

@@ -1094,7 +1094,7 @@ try:
         assert context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["status"]=="closed"
         checks.append("Browser appeal evidence/declaration and actual authorized waiver submit to same closed case without reopening or mutating original proceeding")
         from applicant_supplement_acceptance import run as run_supplement_acceptance
-        checks.extend(run_supplement_acceptance(page,context,staff,BASE,csrf,staff_csrf,appeal_id,uploaded[0][0],fixture_db,ARTIFACT_ROOT,cookies["outsider"],settings.SESSION_COOKIE_NAME))
+        checks.extend(run_supplement_acceptance(page,context,staff,BASE,csrf,staff_csrf,appeal_id,uploaded[1][0],fixture_db,ARTIFACT_ROOT,cookies["outsider"],settings.SESSION_COOKIE_NAME))
         def sibling_reopened_fixture():
             from tribunal.models import Case,Proceeding,Party,OpenCaseClaim
             Case.objects.filter(pk=current["case_id"]).update(status="open")
