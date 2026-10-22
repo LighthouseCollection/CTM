@@ -1814,7 +1814,7 @@ ${ar}` : en;
             }),
           )
         : null,
-      proceeding
+      proceeding && !current
         ? canWrite
           ? h(DecisionForm, {
               api,
