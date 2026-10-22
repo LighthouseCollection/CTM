@@ -161,6 +161,11 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(api, /"kind": "council_record", "record_type": "hearing"/);
   assert.doesNotMatch(api, /case\.created_at\.isoformat\(\)/);
   assert.match(councilCase, /if \(summary\.filing_date\) summaryTimeline\.push\(\{/);
+  assert.match(councilCase, /const applicationDates = \[/);
+  assert.match(councilCase, /record\.marriage\?\.church_marriage_date/);
+  assert.match(councilCase, /record\.separation\?\.separation_date/);
+  assert.match(councilCase, /record\.separation\?\.civil_divorce\?\.date/);
+  assert.match(councilCase, /record\.separation\?\.restraining_orders/);
   assert.match(api, /gender=p\.person\.gender if p\.person_id else None/);
 });
 

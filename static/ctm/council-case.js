@@ -407,6 +407,10 @@
       outsideDenomination: "Religious Denomination Officiating",
       outsideMarriageDate: "Date of Marriage Outside Coptic Church",
       churchMarriageDate: "Date of Church Marriage",
+      dateOfSeparation: "Date of Separation",
+      dateOfCivilDivorce: "Date of Civil Divorce",
+      dateOfRestrainingOrder: "Date of Restraining Order",
+      restrainingOrderExpirationDate: "Restraining Order Expiration Date",
       officiatingPriest: "Officiating Priest",
       marriageDuration: "Marriage Duration",
       churchName: "Church Name",
@@ -706,6 +710,10 @@
       outsideDenomination: "الطائفة الدينية التي أجرت الزواج",
       outsideMarriageDate: "تاريخ الزواج خارج الكنيسة القبطية",
       churchMarriageDate: "تاريخ الزواج الكنسي",
+      dateOfSeparation: "تاريخ الانفصال",
+      dateOfCivilDivorce: "تاريخ الطلاق المدني",
+      dateOfRestrainingOrder: "تاريخ أمر التقييد",
+      restrainingOrderExpirationDate: "تاريخ انتهاء أمر التقييد",
       officiatingPriest: "الكاهن الذي أجرى الزواج",
       marriageDuration: "مدة الزواج",
       churchName: "اسم الكنيسة",
@@ -2967,6 +2975,22 @@
     if (summary.filing_date) summaryTimeline.push({
       id: "filed", title: t("caseFiled"), time: summaryDate(filed?.timestamp || summary.filing_date, lang), description: t("caseFiledDescription"), badge: timelineBadge("active", t("completed")),
     });
+    const applicationDates = [
+      { id: "church-marriage", title: t("churchMarriageDate"), date: record.marriage?.church_marriage_date },
+      { id: "outside-marriage", title: t("outsideMarriageDate"), date: record.marriage?.outside_marriage_date },
+      { id: "separation", title: t("dateOfSeparation"), date: record.separation?.separation_date },
+      { id: "civil-divorce", title: t("dateOfCivilDivorce"), date: record.separation?.civil_divorce?.date },
+      ...(record.separation?.restraining_orders || []).flatMap((order, index) => [
+        { id: `restraining-order-${index}`, title: t("dateOfRestrainingOrder"), date: order.date },
+        { id: `restraining-order-expiration-${index}`, title: t("restrainingOrderExpirationDate"), date: order.expiration_date },
+      ]),
+    ];
+    for (const applicationDate of applicationDates.filter((item) => item.date))
+      summaryTimeline.push({
+        ...applicationDate,
+        time: summaryDate(applicationDate.date, lang),
+        badge: timelineBadge("active", t("completed")),
+      });
     const recordAssignment = async () => {
       if (!assignment?.memberId || !assignment.presidentId) return;
       setAssignmentPending(true);
