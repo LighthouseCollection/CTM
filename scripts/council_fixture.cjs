@@ -15,6 +15,8 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 const pr7 = process.argv.includes("--contract=pr7");
+// --decree-read adds a decree object to decision rows (requested dependency D12).
+const decreeRead = process.argv.includes("--decree-read");
 const port = Number(args[0] || 18850);
 let role = args[1] || "secretary";
 
@@ -56,6 +58,9 @@ const state = {
   decisions: [],
   votes: [],
   approvals: [],
+  files: [],
+  attestations: [],
+  decrees: [],
   questions: [
     { id: "q1", code: "OPEN-01", version: 1, category: "Foundational questions", wording_en: "Please state your full name and your spouse’s full name.", wording_ar: "", foundational: true, guidance: {} },
     { id: "q2", code: "DM-01", version: 1, category: "Decision to marry", wording_en: "Synthetic question one?", wording_ar: "", foundational: false, guidance: {} },
@@ -130,6 +135,7 @@ function decisionRow(d) {
     ...d, votes: Object.values(effective), vote_history: state.votes.filter((v) => v.decision === d.id),
     approval: approvals[approvals.length - 1] || null, approval_history: approvals, current,
     can_vote: current, can_approve: current && (role === "president" || admin()),
+    ...(decreeRead ? { decree: state.decrees.find((x) => x.decision === d.id) || null } : {}),
   };
 }
 
@@ -166,7 +172,52 @@ function api(req, res, url, body) {
       : {};
     return json(res, 200, { ...caseRow(c), ...extra, can_message: true, parties: parties(c), proceedings: [{ id: "p-" + c.id, kind: "initial", status: c.status, sequence: 1 }] });
   }
-  if ((m = p.match(/^\/api\/cases\/([^/]+)\/files\/$/))) return json(res, 200, { items: [], next_offset: null });
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/files\/$/))) {
+    // Simulates the asynchronous safety check finishing before the next listing.
+    for (const f of state.files.filter((f) => f.case === m[1])) {
+      if (f.scan_state === "pending" && f.checked) f.scan_state = "clean";
+      f.checked = true;
+    }
+    const rows = state.files.filter((f) => f.case === m[1] && f.scan_state === "clean" && !state.decrees.some((d) => d.signed_file_id === f.id));
+    return json(res, 200, {
+      items: rows.map((f) => ({ id: f.id, name: f.name, category: f.category, version: 1, mime_type: "application/pdf", download_url: `/api/files/${f.id}/` })),
+      next_offset: null,
+    });
+  }
+  if (p === "/api/files/") {
+    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    const f = { id: "f-" + (state.files.length + 1), case: body.case_id, category: body.category, name: `${body.case_number}-${body.category}-20261021-1800.pdf`, scan_state: state.files.length ? "clean" : "pending" };
+    state.files.push(f);
+    return json(res, 201, { id: f.id, name: f.name, scan_state: f.scan_state, sha256: "synthetic" });
+  }
+  if ((m = p.match(/^\/api\/files\/([^/]+)\/signature\/$/))) {
+    if (role !== "president" && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    if (!body.evidence || body.evidence.confirmed_signed !== true || !["digital", "signed_scan"].includes(body.method))
+      return json(res, 422, { error: "validation", messages: ["Record digital signature or uploaded signed scan evidence."] });
+    state.attestations.push({ file: m[1], signer: body.signer_id, method: body.method });
+    return json(res, 201, { id: "att-" + m[1] });
+  }
+  if ((m = p.match(/^\/api\/decisions\/([^/]+)\/decree\/$/))) {
+    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const d = state.decisions.find((x) => x.id === m[1]);
+    if (!state.approvals.some((a) => a.decision === d.id && a.president_id === body.signer_id))
+      return json(res, 422, { error: "validation", messages: ["Matching presidential approval is required."] });
+    if (!state.attestations.some((a) => a.file === body.file_id && a.signer === body.signer_id))
+      return json(res, 422, { error: "validation", messages: ["Record the president signature evidence/method for this exact stored PDF before issuance."] });
+    const c = state.cases.find((x) => "p-" + x.id === d.proceeding);
+    const decree = { id: "dcr-" + c.id, decision: d.id, reference: "DCR-" + c.number, language: body.language, issued_at: now(), signer: nameOf(body.signer_id), signed_file_id: body.file_id, releases: [] };
+    state.decrees.push(decree);
+    c.status = "closed";
+    return json(res, 201, { id: decree.id });
+  }
+  if ((m = p.match(/^\/api\/decrees\/([^/]+)\/release\/$/))) {
+    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const decree = state.decrees.find((x) => x.id === m[1]);
+    const d = state.decisions.find((x) => x.id === decree.decision);
+    if ((d.entitlements || {})[body.party_id] !== "certificate") return json(res, 403, { error: "forbidden", detail: "Party is entitled to notice only." });
+    decree.releases.push({ party_id: body.party_id, action: body.action, actor: me().name, timestamp: now() });
+    return json(res, 201, { id: "rel-" + decree.releases.length });
+  }
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/))) return json(res, 200, { items: [] });
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/assignment\/$/))) {
     if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
@@ -343,7 +394,16 @@ http
       req.on("data", (c) => (raw += c));
       req.on("end", () => {
         let body = {};
-        try { body = raw ? JSON.parse(raw) : {}; } catch { return json(res, 400, {}); }
+        if ((req.headers["content-type"] || "").startsWith("multipart/form-data")) {
+          // Loose multipart read of the text fields only; file bytes are ignored.
+          for (const field of ["case_id", "category", "visibility"]) {
+            const hit = raw.match(new RegExp(`name="${field}"\\r\\n\\r\\n([^\\r]*)`));
+            if (hit) body[field] = hit[1];
+          }
+          body.case_number = state.cases.find((x) => x.id === body.case_id)?.number || "case";
+        } else {
+          try { body = raw ? JSON.parse(raw) : {}; } catch { return json(res, 400, {}); }
+        }
         api(req, res, url, body);
       });
       return;
