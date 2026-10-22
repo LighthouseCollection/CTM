@@ -622,3 +622,11 @@ def test_session_date_can_be_corrected_after_a_held_hearing(hearing, people):
     assert updated.date == date(2030, 1, 9)
     hearing.refresh_from_db()
     assert hearing.agenda.session_id == updated.pk
+
+
+def test_council_member_roster_excludes_administrators(client, people):
+    login(client, people["admin"])
+    rows = client.get("/api/members/").json()["items"]
+    assert {row["role"] for row in rows} <= {"president", "secretary", "member"}
+    assert all(row["email"] if "email" in row else True for row in rows)
+    assert str(people["admin"].pk) not in {row["id"] for row in rows}

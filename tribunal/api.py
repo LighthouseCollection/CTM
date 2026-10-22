@@ -852,9 +852,9 @@ def members(request):
                         president=x.role == "president", active=x.is_active,
                         can_authorize_assignment=assignment_president(x),
                         can_record_assignment=assignment_recorder(x))
-                for x in m.Account.objects.filter(is_active=True).exclude(
-                    role="applicant"
-                )
+                for x in m.Account.objects.filter(
+                    is_active=True, role__in=["president", "secretary", "member"]
+                ).order_by("created_at")
             ]
         }
     )
