@@ -89,8 +89,27 @@
     return "sessionStatusPlanned";
   }
 
+  function agendaDisplayStatus(row) {
+    if (row?.state === "heard") return "closed";
+    if (row?.part === 1 && !row?.assigned_member_id) return "toBeAssigned";
+    return "inProgress";
+  }
+
   function archivedAgendaRows(items) {
-    const rows = items || [];
+    const rows = (items || []).map((row) => ({
+      ...row,
+      applicant: {
+        name: row.applicant_name || "—",
+        gender: row.applicant_gender === "M" || row.applicant_gender === "male" ? "male"
+          : row.applicant_gender === "F" || row.applicant_gender === "female" ? "female" : undefined,
+      },
+      respondent: {
+        name: row.respondent_name || "—",
+        gender: row.respondent_gender === "M" || row.respondent_gender === "male" ? "male"
+          : row.respondent_gender === "F" || row.respondent_gender === "female" ? "female" : undefined,
+      },
+      status: agendaDisplayStatus(row),
+    }));
     return {
       assigned: rows.filter((row) => row.part === 1),
       presented: rows.filter((row) => row.part === 2),
@@ -440,6 +459,8 @@
       noCandidates: "No eligible cases are available.",
       placed: "The case was added to the agenda.",
       scheduled: "Scheduled",
+      toBeAssigned: "To be assigned",
+      inProgress: "In Progress",
       heard: "Heard",
       presented: "Presented",
       presenter_absent: "Presenter absent — awaiting manual placement",
@@ -744,6 +765,8 @@
       noCandidates: "لا توجد قضايا مؤهلة متاحة.",
       placed: "تمت إضافة القضية إلى جدول الأعمال.",
       scheduled: "مجدولة",
+      toBeAssigned: "بانتظار التعيين",
+      inProgress: "قيد الإجراء",
       heard: "تم نظرها",
       presented: "عُرضت",
       presenter_absent: "المقدِّم غائب — في انتظار الجدولة اليدوية",
@@ -1504,11 +1527,11 @@
                 label: t("assignedCases"), rows: archivedItems.assigned, empty: t("part1Empty"), isStatic: true,
                 columns: [
                   { title: t("caseNumber"), field: "case_number", kind: "name", minWidth: "8rem" },
-                  { title: t("applicant"), field: "applicant_name", minWidth: "10rem" },
-                  { title: t("respondent"), field: "respondent_name", minWidth: "10rem" },
+                  { title: t("applicant"), field: "applicant", type: "person", minWidth: "10rem" },
+                  { title: t("respondent"), field: "respondent", type: "person", minWidth: "10rem" },
                   { title: t("reason"), field: "reason", minWidth: "9rem", pill: false, render: (row) => row.reason || t("notRecorded") },
                   { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
-                  { title: t("statusLabel"), field: "state", minWidth: "9rem", pill: false, render: (row) => t(row.state) },
+                  { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
                   { title: t("actions"), field: "case_id", minWidth: "6rem", pill: false, render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
                 ],
               }),
@@ -1518,10 +1541,10 @@
                 label: t("casesPresented"), rows: archivedItems.presented, empty: t("part2Empty"), isStatic: true,
                 columns: [
                   { title: t("caseNumber"), field: "case_number", kind: "name", minWidth: "8rem" },
-                  { title: t("applicant"), field: "applicant_name", minWidth: "10rem" },
-                  { title: t("respondent"), field: "respondent_name", minWidth: "10rem" },
+                  { title: t("applicant"), field: "applicant", type: "person", minWidth: "10rem" },
+                  { title: t("respondent"), field: "respondent", type: "person", minWidth: "10rem" },
                   { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
-                  { title: t("statusLabel"), field: "state", minWidth: "9rem", pill: false, render: (row) => t(row.state) },
+                  { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
                   { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, render: (row) => row.previous_recommendation || t("notRecorded") },
                   { title: t("actions"), field: "case_id", minWidth: "6rem", pill: false, render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
                 ],
@@ -3018,6 +3041,7 @@
     sessionReference,
     sessionStatusKey,
     archivedAgendaRows,
+    agendaDisplayStatus,
     sessionDateProblem,
     todayInLosAngeles,
     splitSessions,

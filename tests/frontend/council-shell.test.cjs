@@ -538,6 +538,19 @@ test("session agenda person pills preserve normalized gender styling", () => {
   assert.match(source, /gender === "F" \|\| gender === "female"/);
 });
 
+test("archived agenda rows retain gender metadata and use approved case statuses", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const rows = council.slice(council.indexOf("function agendaDisplayStatus"), council.indexOf("function sessionDateProblem"));
+  assert.match(rows, /applicant_gender === "M" \|\| row\.applicant_gender === "male"/);
+  assert.match(rows, /respondent_gender === "F" \|\| row\.respondent_gender === "female"/);
+  assert.match(rows, /row\?\.state === "heard"\) return "closed"/);
+  assert.match(rows, /row\?\.part === 1 && !row\?\.assigned_member_id\) return "toBeAssigned"/);
+  assert.match(rows, /return "inProgress"/);
+  const archive = council.slice(council.indexOf("mode === \"archived\" && selectedSession"), council.indexOf("function AgendaItemCard"));
+  assert.match(archive, /field: "applicant", type: "person"/);
+  assert.match(archive, /field: "respondent", type: "person"/);
+});
+
 test("case hearings use full-width current and past tabs with an in-progress hearing header", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(councilCase, /function CaseHearings\(\{ api, lang, user, caseId, onSession, onDecision \}\)/);
