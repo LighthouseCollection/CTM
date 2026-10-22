@@ -23,6 +23,7 @@ SOURCE = Path(__file__).resolve().parents[1]
 BACKEND_REF = os.environ.get("CTM_APPLICANT_BACKEND_REF", "origin/work/vm-frm-backend")
 INTEGRATED = os.environ.get("CTM_APPLICANT_INTEGRATED", "false") == "true"
 CHECK_RETURNED_PRIVACY = os.environ.get("CTM_APPLICANT_ACCEPTANCE", "returned_privacy") == "returned_privacy"
+SHARED_LOOPBACK = len(sys.argv) >= 2 and sys.argv[1] == "--shared-loopback"
 
 if len(sys.argv) == 1:
     backend_sha = subprocess.check_output(["git","rev-parse",BACKEND_REF],cwd=SOURCE,text=True).strip()
@@ -40,6 +41,32 @@ if len(sys.argv) == 1:
     result=subprocess.run([sys.executable,__file__,"--run",str(target)],cwd=target,env=environment)
     raise SystemExit(result.returncode)
 
+if len(sys.argv) != 3 or sys.argv[1] not in {"--run", "--shared-loopback"}:
+    raise RuntimeError("Use --run <isolated archive> or --shared-loopback <immutable release>.")
+
+shared_config = None
+image_evidence = {}
+if SHARED_LOOPBACK:
+    from applicant_shared_loopback import (
+        build_config,
+        inspect_image_evidence,
+        redact_runtime_environment,
+        safe_preflight_evidence,
+    )
+    shared_config = build_config(os.environ)
+    if Path(sys.argv[2]).resolve() != shared_config.source_dir:
+        raise RuntimeError("Shared-loopback argument must match the guarded immutable release.")
+    image_evidence = inspect_image_evidence(shared_config)
+    owner_database_url = shared_config.owner_url
+    app_database_url = shared_config.app_url
+    sanitized_environment = redact_runtime_environment(os.environ)
+    os.environ.clear()
+    os.environ.update(sanitized_environment)
+    os.environ["CTM_TEST_BACKEND_SHA"] = shared_config.expected_sha
+else:
+    owner_database_url = os.environ.get("CTM_APPLICANT_POSTGRES_OWNER_URL")
+    app_database_url = os.environ.get("CTM_APPLICANT_POSTGRES_APP_URL")
+
 ROOT=Path(sys.argv[2]).resolve()
 if Path.cwd().resolve()!=ROOT:
     raise RuntimeError("Run isolated acceptance from its archive directory to prevent mixed imports.")
@@ -47,15 +74,17 @@ sys.path.insert(0,str(ROOT))
 os.environ["DJANGO_SETTINGS_MODULE"]="ctm.settings_test"
 from django.conf import settings
 
-POSTGRES_OWNER=os.environ.get("CTM_APPLICANT_POSTGRES_OWNER_URL")
+POSTGRES_OWNER=owner_database_url
 if POSTGRES_OWNER:
     import dj_database_url
     settings.DATABASES={"default":dj_database_url.parse(POSTGRES_OWNER)}
 else:
     settings.DATABASES["default"]["NAME"]=str(ROOT/"isolated.sqlite3")
-settings.MEDIA_ROOT=ROOT/"test-media"
-settings.DEBUG=True
-settings.ALLOWED_HOSTS=["127.0.0.1","localhost","testserver"]
+ARTIFACT_ROOT=shared_config.acceptance_root if shared_config else ROOT
+OUTPUT_PATH=shared_config.output_path if shared_config else ROOT/"result.json"
+settings.MEDIA_ROOT=shared_config.media_dir if shared_config else ROOT/"test-media"
+settings.DEBUG=not SHARED_LOOPBACK
+settings.ALLOWED_HOSTS=["127.0.0.1"] if SHARED_LOOPBACK else ["127.0.0.1","localhost","testserver"]
 import django
 django.setup()
 import tribunal.models as isolated_models
@@ -67,11 +96,12 @@ from django.test import Client
 from tribunal.models import Account,QuestionnaireVersion
 
 call_command("migrate",verbosity=0,interactive=False)
-owner=Account.objects.create_user(email="applicant@example.test",email_verified=True,first_name="Synthetic",last_name="Applicant")
-outsider=Account.objects.create_user(email="outsider@example.test",email_verified=True)
-admin=Account.objects.create_user(email="admin@example.test",email_verified=True,role="admin")
-member=Account.objects.create_user(email="member@example.test",email_verified=True,role="member")
-president=Account.objects.create_user(email="president@example.test",email_verified=True,role="president")
+fixture_tag=(shared_config.run_id if shared_config else uuid.uuid4().hex).lower()
+owner=Account.objects.create_user(email=f"applicant-{fixture_tag}@example.invalid",email_verified=True,first_name="Synthetic",last_name="Applicant")
+outsider=Account.objects.create_user(email=f"outsider-{fixture_tag}@example.invalid",email_verified=True)
+admin=Account.objects.create_user(email=f"admin-{fixture_tag}@example.invalid",email_verified=True,role="admin")
+member=Account.objects.create_user(email=f"member-{fixture_tag}@example.invalid",email_verified=True,role="member")
+president=Account.objects.create_user(email=f"president-{fixture_tag}@example.invalid",email_verified=True,role="president")
 fields=[{"code":code,"type":kind,"required":True,"label_en":en,"label_ar":ar}
         for code,kind,en,ar in [
             ("first_name","text","First name","الاسم الأول"),
@@ -93,14 +123,18 @@ fields.append({"code":"restraining_orders","type":"list","label_en":"Restraining
     {"code":"number","type":"text","label_en":"Order case number","label_ar":"رقم قضية الأمر"},
     {"code":"status","type":"choice","label_en":"Order status","label_ar":"حالة الأمر","choices":["active"],
      "choice_labels":{"active":{"label_en":"Active","label_ar":"ساري"}}}]})
-QuestionnaireVersion.objects.create(purpose="petition",number=1,published=True,
+def next_questionnaire_number(purpose):
+    latest=QuestionnaireVersion.objects.filter(purpose=purpose).order_by("-number").values_list("number",flat=True).first()
+    return (latest or 0)+1
+
+QuestionnaireVersion.objects.create(purpose="petition",number=next_questionnaire_number("petition"),published=True,
     definition={"fields":fields,"required_document_categories":["CMC"]},
     declaration_en="Synthetic test declaration only",declaration_ar="إقرار تجريبي للاختبار فقط")
-QuestionnaireVersion.objects.create(purpose="appeal",number=1,published=True,
+QuestionnaireVersion.objects.create(purpose="appeal",number=next_questionnaire_number("appeal"),published=True,
     definition={"fields":[{"code":"new_information","type":"textarea","required":True,
         "label_en":"New information for consideration","label_ar":"معلومات جديدة للنظر فيها"}]},
     declaration_en="Synthetic appeal declaration only",declaration_ar="إقرار استئناف تجريبي للاختبار فقط")
-release_definition=QuestionnaireVersion.objects.create(purpose="medical_release",number=1,published=True,definition={},
+release_definition=QuestionnaireVersion.objects.create(purpose="medical_release",number=next_questionnaire_number("medical_release"),published=True,definition={},
     declaration_en="Synthetic bound professional disclosure only",declaration_ar="تفويض إفصاح مهني تجريبي مرتبط فقط")
 
 def session_cookie(account):
@@ -124,7 +158,7 @@ def runtime_application(environ,start_response):
         if connection.settings_dict["USER"]!="ctm_app":
             connection.close()
             # Change only this HTTP thread's wrapper, never the fixture/setup connection.
-            connection.settings_dict={**connection.settings_dict,**dj_database_url.parse(os.environ["CTM_APPLICANT_POSTGRES_APP_URL"])}
+            connection.settings_dict={**connection.settings_dict,**dj_database_url.parse(app_database_url)}
         if runtime_database["mode"]!="postgresql_runtime":
             with connection.cursor() as cursor:
                 cursor.execute("SELECT current_user,session_user,rolsuper,rolbypassrls,rolinherit FROM pg_roles WHERE rolname=current_user")
@@ -135,7 +169,7 @@ def runtime_application(environ,start_response):
                 total,forced,owned=cursor.fetchone();assert total==forced and owned==0
             runtime_database.update(mode="postgresql_runtime",current_user=user,session_user=session,superuser=superuser,bypass_rls=bypass,inherit=inherit,domain_tables=total,forced_rls_tables=forced,owner_memberships=owned)
     return application(environ,start_response)
-server=make_server("127.0.0.1",0,runtime_application,handler_class=Quiet)
+server=make_server(shared_config.bind_host if shared_config else "127.0.0.1",shared_config.bind_port if shared_config else 0,runtime_application,handler_class=Quiet)
 threading.Thread(target=server.serve_forever,daemon=True).start()
 BASE=f"http://127.0.0.1:{server.server_port}"
 from playwright.sync_api import sync_playwright,expect
@@ -212,9 +246,9 @@ try:
         checks.append("Real concurrent save rejects stale editor write and explicit reload preserves immutable prior answer history")
         if POSTGRES_OWNER:
             from applicant_postgres_acceptance import run as run_postgres_focus
-            run_postgres_focus(browser,BASE,settings,fixture_db,session_cookie,cookies["admin"],ROOT,runtime_database,errors)
+            run_postgres_focus(browser,BASE,settings,fixture_db,session_cookie,cookies["admin"],ARTIFACT_ROOT,runtime_database,errors)
         from applicant_history_notice_acceptance import history_checks
-        checks.extend(history_checks(browser,page,context,BASE,app_id,cookies,settings,ROOT))
+        checks.extend(history_checks(browser,page,context,BASE,app_id,cookies,settings,ARTIFACT_ROOT))
         for name in ("outsider","admin"):
             other=browser.new_context()
             other.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies[name],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
@@ -415,7 +449,7 @@ try:
         expect(page.get_by_text(original_checkout["declaration_ar"],exact=True)).to_be_visible()
         expect(page.get_by_role("button",name="استئناف محاولة الدفع الآمنة القائمة",exact=True)).to_be_visible()
         assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
-        page.screenshot(path=str(ROOT/"ar-retained-checkout-390.png"),full_page=True,caret="initial")
+        page.screenshot(path=str(ARTIFACT_ROOT/"ar-retained-checkout-390.png"),full_page=True,caret="initial")
         page.get_by_role("button",name="English",exact=True).click();page.set_viewport_size({"width":1280,"height":1000})
         checkout_posts=[]
         page.on("request",lambda request:checkout_posts.append(request.url) if request.method=="POST" and "/checkout/" in request.url else None)
@@ -594,7 +628,7 @@ try:
                     "checks":privacy,"owner_checks":owner_checks,"pending_scan_checks":pending_scan_checks,
                     "remaining_surfaces":["live search integration","live email delivery","PostgreSQL RLS"],
                     "scope":"Isolated SQLite/browser API fixtures; no actual case data"}
-            (ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
             print(json.dumps(report,indent=2))
             assert all(privacy.values()) and all(owner_checks.values()),"Returned privacy acceptance failed; see returned-privacy-result.json"
             checks.append("Returned privacy isolates pending answers/originals/audit/alerts while owner retains corrections and council retains formal snapshot")
@@ -619,7 +653,7 @@ try:
                 "council_can_download_resubmitted_original":staff.request.get(f"{BASE}/api/files/{pending_file}/").status==200,
                 "earlier_submitted_original_retained":private_path(latest.object_key).read_bytes()==replacement,
             }
-            (ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
             assert all(report["post_resubmission_checks"].values()),"Formal resubmission visibility failed"
             checks.append("Formal resubmission publishes corrected answers/exact current original while retaining prior submitted bytes")
         assert context.request.get(f"{BASE}/api/applications/{app_id}/").json()["fee"]["status"]=="waived"
@@ -857,7 +891,7 @@ try:
         assert context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["status"]=="closed"
         checks.append("Browser appeal evidence/declaration and actual authorized waiver submit to same closed case without reopening or mutating original proceeding")
         from applicant_supplement_acceptance import run as run_supplement_acceptance
-        checks.extend(run_supplement_acceptance(page,context,staff,BASE,csrf,staff_csrf,appeal_id,uploaded[0][0],fixture_db,ROOT,cookies["outsider"],settings.SESSION_COOKIE_NAME))
+        checks.extend(run_supplement_acceptance(page,context,staff,BASE,csrf,staff_csrf,appeal_id,uploaded[0][0],fixture_db,ARTIFACT_ROOT,cookies["outsider"],settings.SESSION_COOKIE_NAME))
         def sibling_reopened_fixture():
             from tribunal.models import Case,Proceeding,Party,OpenCaseClaim
             Case.objects.filter(pk=current["case_id"]).update(status="open")
@@ -974,7 +1008,7 @@ try:
                 "preceding_scenario_groups_passed":len(checks),
                 "unsent_staff_draft_excluded":not any(row["title"]=="Private staff draft" for row in closed_requests),
                 "sent_request_retained":any(row["title"]=="Own unresolved intake" and row["state"]=="closed" for row in closed_requests)}
-            (ROOT/"request-closure-privacy-result.json").write_text(json.dumps(closure_report,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"request-closure-privacy-result.json").write_text(json.dumps(closure_report,indent=2),encoding="utf-8")
             print(json.dumps(closure_report,indent=2))
             assert closure_report["unsent_staff_draft_excluded"],"Backend request closure exposes unsent staff draft; see request-closure-privacy-result.json"
             assert closure_report["sent_request_retained"]
@@ -986,9 +1020,9 @@ try:
         from applicant_filing_acceptance import run as run_filing_acceptance
         checks.extend(run_filing_acceptance(browser,BASE,settings,fixture_db,session_cookie,staff,staff_csrf,errors))
         from applicant_message_acceptance import run as run_message_acceptance
-        checks.extend(run_message_acceptance(browser,page,context,staff,BASE,csrf,staff_csrf,current["case_id"],current["case_number"],party_id,cookies["outsider"],settings,fixture_db,ROOT))
+        checks.extend(run_message_acceptance(browser,page,context,staff,BASE,csrf,staff_csrf,current["case_id"],current["case_number"],party_id,cookies["outsider"],settings,fixture_db,ARTIFACT_ROOT,admin.pk))
         from applicant_history_notice_acceptance import notification_checks
-        checks.extend(notification_checks(browser,page,context,BASE,str(owner.pk),cookies,settings,fixture_db,ROOT))
+        checks.extend(notification_checks(browser,page,context,BASE,str(owner.pk),cookies,settings,fixture_db,ARTIFACT_ROOT))
         staff.close()
         assert page.locator("[style]").count()==0
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
@@ -996,11 +1030,19 @@ try:
         browser.close()
 except Exception as failure:
     partial={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"completed_groups":len(checks),"checks":checks,"page_errors":errors,"runtime_database":runtime_database,"failure":{"type":type(failure).__name__,"message":str(failure)[:5000]},"scope":"Interrupted isolated acceptance; completed groups are not a full-suite pass"}
-    (ROOT/"partial-result.json").write_text(json.dumps(partial,indent=2),encoding="utf-8")
+    if shared_config:partial["preflight"]=safe_preflight_evidence(shared_config,image_evidence)
+    (ARTIFACT_ROOT/"partial-result.json").write_text(json.dumps(partial,indent=2),encoding="utf-8")
     raise
 finally:
     server.shutdown()
 result={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"passed":len(checks),"checks":checks,
         "page_errors":errors,"runtime_database":runtime_database,"scope":"Real Django APIs, isolated "+("PostgreSQL runtime role" if POSTGRES_OWNER else "SQLite")+"/synthetic sessions; authorized fixture waiver; scanner bypass test policy; no live provider payment/antivirus acceptance"}
-(ROOT/"result.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
+if shared_config:
+    from applicant_shared_loopback import source_tree_sha256
+    ending_source_hash=source_tree_sha256(shared_config.source_dir)
+    if ending_source_hash!=shared_config.expected_source_tree_sha256:
+        raise RuntimeError("Immutable source tree changed during shared-loopback acceptance.")
+    result["preflight"]=safe_preflight_evidence(shared_config,image_evidence)
+    result["source_tree_sha256_after"]=ending_source_hash
+OUTPUT_PATH.write_text(json.dumps(result,indent=2),encoding="utf-8")
 print(json.dumps(result,indent=2))
