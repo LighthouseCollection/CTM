@@ -1,5 +1,5 @@
 diff --git a/static/ctm/app.js b/static/ctm/app.js
-index 05009e1..d6fb786 100644
+index 05009e1..d8a6ef8 100644
 --- a/static/ctm/app.js
 +++ b/static/ctm/app.js
 @@ -11,6 +11,8 @@
@@ -298,7 +298,7 @@ index 05009e1..d6fb786 100644
          );
        if (page === "case")
          return h(
-@@ -1456,6 +1589,49 @@
+@@ -1456,6 +1589,50 @@
              }),
            ),
          );
@@ -335,6 +335,7 @@ index 05009e1..d6fb786 100644
 +          sessionId: selection,
 +          onCase: (id) => go("case", id),
 +          onBack: () => go("sessions"),
++          onSession: (id) => go("session", id),
 +          renderAttendance: ({ session, members, attendance, key }) =>
 +            h(SessionAttendance, {
 +              key,
@@ -348,7 +349,7 @@ index 05009e1..d6fb786 100644
        if (page === "session")
          return h(
            P.Stack,
-@@ -1538,11 +1714,26 @@
+@@ -1538,11 +1715,26 @@
                : h(P.EmptyState, { title: t("noCurrent") }),
          );
        }
