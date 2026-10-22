@@ -110,6 +110,7 @@
       noFiles: "No technically cleared files are available in this section.",
       noReports: "No completed reports are available.",
       attendance: "Council attendance",
+      councilMember: "Council member",
       collapseAttendance: "Collapse {title}",
       expandAttendance: "Expand {title}",
       present: "Present",
@@ -284,6 +285,7 @@
       event_payment_finance_review: "توجد دفعة تحتاج إلى مراجعة مالية.",
       event_paid_filing_review: "يوجد طلب مدفوع يحتاج إلى مراجعة قبل إتمامه.",
       attendance: "حضور أعضاء المجلس",
+      councilMember: "عضو المجلس",
       collapseAttendance: "طي {title}",
       expandAttendance: "توسيع {title}",
       present: "حاضر",
@@ -638,73 +640,42 @@
     const [records, setRecords] = R.useState(initial),
       [pending, setPending] = R.useState(false),
       [failed, setFailed] = R.useState(false);
-    async function record(memberId, value) {
+    async function record(memberId, present) {
       if (pending || !session.can_record_attendance) return;
       const previous = records;
-      setRecords((old) => [
-        ...old.filter((row) => row.member_id !== memberId),
-        { member_id: memberId, present: value === "present" },
-      ]);
-      setPending(true);
-      setFailed(false);
+      setRecords((old) => [...old.filter((row) => row.member_id !== memberId), { member_id: memberId, present }]);
+      setPending(true); setFailed(false);
       try {
-        await api(`/api/sessions/${sessionId}/attendance/`, {
-          method: "POST",
-          body: JSON.stringify({
-            member_id: memberId,
-            present: value === "present",
-          }),
-        });
+        await api(`/api/sessions/${sessionId}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present }) });
         if (onSaved) onSaved();
-      } catch {
-        setRecords(previous);
-        setFailed(true);
-      } finally {
-        setPending(false);
-      }
+      } catch { setRecords(previous); setFailed(true); }
+      finally { setPending(false); }
     }
     const roster = [
       ...members.map((member) => ({ ...member, active: true })),
-      ...records
-        .filter((row) => !members.some((member) => member.id === row.member_id))
-        .map((row) => ({
-          id: row.member_id,
-          name: row.member_name,
-          active: false,
-        })),
+      ...records.filter((row) => !members.some((member) => member.id === row.member_id)).map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, active: false })),
     ];
-    return h(
-      P.Panel,
-      {
-        icon: "person", title: t("attendance"), collapsible: true,
-        strings: { collapse: t("collapseAttendance"), expand: t("expandAttendance") },
-      },
-      h(
-        P.Stack,
-        null,
+    return h(P.Stack, { gap: "md" },
+      h("div", { className: "ctm-hearing-attendance-table", role: "table", "aria-label": t("attendance") },
+        h("div", { className: "ctm-hearing-attendance-table__header", role: "row" },
+          h("div", { role: "columnheader" }, t("councilMember")),
+          h("div", { role: "columnheader" }, t("present")),
+          h("div", { role: "columnheader" }, t("absent")),
+        ),
         ...roster.map((member) => {
           const row = records.find((item) => item.member_id === member.id);
-          const value = row
-            ? row.present
-              ? "present"
-              : "absent"
-            : "notRecorded";
-          return session.can_record_attendance && member.active
-            ? h(P.RadioGroup, {
-                key: member.id,
-                label: member.name,
-                value,
-                options: [
-                  { value: "present", label: t("present"), disabled: pending },
-                  { value: "absent", label: t("absent"), disabled: pending },
-                ],
-                onChange: (value) => record(member.id, value),
-                layout: "row",
-              })
-            : text(`${member.name}: ${t(value)}`, { key: member.id });
+          const disabled = pending || !session.can_record_attendance || !member.active;
+          return h("div", { key: member.id, className: "ctm-hearing-attendance-table__row", role: "row" },
+            h("div", { className: "ctm-hearing-attendance-member", role: "cell" },
+              h(P.Text, { as: "div", variant: "strong" }, member.name),
+              member.role ? h(P.Text, { as: "div", variant: "secondary" }, member.role === "president" ? "Presiding" : member.role === "secretary" ? "Secretary" : "Member") : null,
+            ),
+            h("label", { className: "ctm-hearing-attendance-choice ctm-hearing-attendance-choice--present", role: "cell" }, h("input", { type: "radio", name: `session-${sessionId}-member-${member.id}`, checked: row?.present === true, disabled, "aria-label": `${t("present")}: ${member.name}`, onChange: () => record(member.id, true) })),
+            h("label", { className: "ctm-hearing-attendance-choice", role: "cell" }, h("input", { type: "radio", name: `session-${sessionId}-member-${member.id}`, checked: row?.present === false, disabled, "aria-label": `${t("absent")}: ${member.name}`, onChange: () => record(member.id, false) })),
+          );
         }),
-        failed ? h(P.Notice, { tone: "danger" }, t("error")) : null,
       ),
+      failed ? h(P.Notice, { tone: "danger" }, t("error")) : null,
     );
   }
   function NotificationInbox({ initial, t, onCase, lang }) {

@@ -1677,6 +1677,7 @@
     const [deferSession, setDeferSession] = R.useState(sessionId || "");
     const [attendanceFailure, setAttendanceFailure] = R.useState(null);
     const [attendanceSaving, setAttendanceSaving] = R.useState(false);
+    const [attendanceOpen, setAttendanceOpen] = R.useState(false);
     async function recordPresence(memberId, present) {
       setAttendanceSaving(true);
       setAttendanceFailure(null);
@@ -1805,26 +1806,25 @@
                     )
                   : null,
                 Array.isArray(state.data.hearingAttendance)
-                  ? h(
-                      P.Panel,
-                      { icon: "settings-users", title: t("hearingAttendance"), description: t("hearingAttendanceHelp"), collapsible: true, defaultExpanded: false },
-                      h(
-                        P.Stack,
-                        { gap: "sm" },
-                        ...state.data.hearingAttendance.map((row) =>
-                          canManage(user) && writable
-                            ? h(P.RadioGroup, {
-                                key: row.member_id,
-                                label: row.member_name,
-                                layout: "row",
-                                value: row.present ? "present" : "absent",
-                                onChange: (value) => recordPresence(row.member_id, value === "present"),
-                                options: [
-                                  { value: "present", label: t("presentLabel"), disabled: attendanceSaving },
-                                  { value: "absent", label: t("absentLabel"), disabled: attendanceSaving },
-                                ],
-                              })
-                            : h(P.Text, { key: row.member_id }, `${isolate(row.member_name)}: ${t(row.present ? "presentLabel" : "absentLabel")}`),
+                  ? h(P.Button, { size: "sm", icon: "settings-users", onClick: () => setAttendanceOpen(true) }, t("hearingAttendance"))
+                  : null,
+                attendanceOpen
+                  ? h(P.Dialog, { open: true, size: "lg", title: t("hearingAttendance"), description: t("hearingAttendanceHelp"), closeLabel: t("cancel"), onClose: () => !attendanceSaving && setAttendanceOpen(false) },
+                      h(P.Stack, { gap: "md" },
+                        h("div", { className: "ctm-hearing-attendance-table", role: "table", "aria-label": t("hearingAttendance") },
+                          h("div", { className: "ctm-hearing-attendance-table__header", role: "row" },
+                            h("div", { role: "columnheader" }, t("councilMember")),
+                            h("div", { role: "columnheader" }, t("presentLabel")),
+                            h("div", { role: "columnheader" }, t("absentLabel")),
+                          ),
+                          ...state.data.hearingAttendance.map((row) => h("div", { key: row.member_id, className: "ctm-hearing-attendance-table__row", role: "row" },
+                            h("div", { className: "ctm-hearing-attendance-member", role: "cell" },
+                              h(P.Text, { as: "div", variant: "strong" }, isolate(row.member_name)),
+                              h(P.Text, { as: "div", variant: "secondary" }, row.member_role === "president" ? "Presiding" : row.member_role === "secretary" ? "Secretary" : "Member"),
+                            ),
+                            h("label", { className: "ctm-hearing-attendance-choice ctm-hearing-attendance-choice--present", role: "cell" }, h("input", { type: "radio", name: `outcome-${hearingId}-member-${row.member_id}`, checked: row.present === true, disabled: attendanceSaving || !canManage(user) || !writable, "aria-label": `${t("presentLabel")}: ${row.member_name}`, onChange: () => recordPresence(row.member_id, true) })),
+                            h("label", { className: "ctm-hearing-attendance-choice", role: "cell" }, h("input", { type: "radio", name: `outcome-${hearingId}-member-${row.member_id}`, checked: row.present === false, disabled: attendanceSaving || !canManage(user) || !writable, "aria-label": `${t("absentLabel")}: ${row.member_name}`, onChange: () => recordPresence(row.member_id, false) })),
+                          )),
                         ),
                         !state.data.hearingAttendance.length ? h(P.EmptyState, { title: t("noHearingAttendance") }) : null,
                         attendanceFailure ? h(P.Notice, { tone: "danger" }, attendanceFailure) : null,
