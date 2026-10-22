@@ -304,6 +304,22 @@
     "handler": "recording_finalize"
   },
   {
+    "route": "api/reports/<uuid:report_id>/recordings/",
+    "handler": "report_recordings"
+  },
+  {
+    "route": "api/transcripts/<uuid:revision_id>/",
+    "handler": "transcript_detail"
+  },
+  {
+    "route": "api/transcripts/<uuid:revision_id>/review/",
+    "handler": "transcript_review"
+  },
+  {
+    "route": "api/processing/<uuid:run_id>/retry/",
+    "handler": "processing_retry"
+  },
+  {
     "route": "api/reports/<uuid:report_id>/revisions/",
     "handler": "report_revision"
   },

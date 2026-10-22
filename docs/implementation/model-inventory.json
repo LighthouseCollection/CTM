@@ -2750,6 +2750,13 @@
           "type": "CharField",
           "nullable": false,
           "primary_key": false
+        },
+        {
+          "name": "attempt",
+          "column": "attempt",
+          "type": "PositiveIntegerField",
+          "nullable": false,
+          "primary_key": false
         }
       ]
     },

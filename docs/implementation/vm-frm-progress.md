@@ -1,5 +1,24 @@
 # VM-FRM backend progress
 
+## D20 media continuation batches
+
+Full isolated PostgreSQL suite: **376 passed, 1 skipped**; no model drift;
+migration rollback/reapply through0027, concurrent retry and restricted-role checks pass.
+
+- Council report recording/status list with safe original links and honest null
+  capture/duration/update facts; no raw diagnostics serialized.
+- Exact transcript read and review routes with current reviewer/exact-version
+  release; no applicant audio/generated-content access or inherited review.
+- New numbered retry attempts retaining original runs/output and one successor/job
+  under repeated/concurrent retries; recording finalize remains bound to attempt1.
+- Migration0026 adds attempt identity;0027 adds Recording/ProcessingRun/
+  TranscriptRevision/TranscriptReview forced RLS and source/run guards. Runtime
+  cannot impersonate the missing output processor.54 protected tables;9 remaining
+  domain-table policy reviews;63 models/151 approved target;84 routes.
+- Contract/limits: [media-read-and-review.md](media-read-and-review.md). Transcription
+  provider, D21 metadata/unlimited capture and independent browser/device acceptance
+  remain outstanding. No operational migrations, credentials, deployment or merge.
+
 ## Next ten consecutive lifecycle and privacy batches
 
 1. Own draft-delete capability and locked expected-version enforcement.

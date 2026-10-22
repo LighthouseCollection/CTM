@@ -649,11 +649,12 @@ class ProcessingRun(Root):
     state = models.CharField(max_length=15, default="queued")
     engine = models.CharField(max_length=100, blank=True)
     error = models.CharField(max_length=250, blank=True)
+    attempt = models.PositiveIntegerField(default=1)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["file", "purpose"], name="file_processing_identity"
+                fields=["file", "purpose", "attempt"], name="file_processing_attempt"
             )
         ]
 

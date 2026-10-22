@@ -1723,6 +1723,31 @@ def report_revision(request, report_id):
     )
 
 
+@endpoint()
+def report_recordings(request, report_id):
+    from tribunal.services.media import report_recordings as query
+    return JsonResponse(query(request.user, report_id))
+
+
+@endpoint()
+def transcript_detail(request, revision_id):
+    from tribunal.services.media import transcript_for, transcript_data
+    return JsonResponse(transcript_data(request.user, transcript_for(request.user, revision_id)))
+
+
+@endpoint(("POST",))
+def transcript_review(request, revision_id):
+    from tribunal.services.reports import review_transcript
+    return JsonResponse(encoded(review_transcript(request.user, revision_id)), status=201)
+
+
+@endpoint(("POST",))
+def processing_retry(request, run_id):
+    from tribunal.services.media import retry_processing
+    value = retry_processing(request.user, run_id)
+    return JsonResponse(encoded(value, attempt=value.attempt, state=value.state), status=201)
+
+
 @endpoint(("GET", "POST"))
 def finding(request, proceeding_id):
     from tribunal.services.council import save_finding

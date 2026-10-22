@@ -79,6 +79,8 @@ def runtime():
             "ctm_request_source_writable(text,jsonb)",
             "ctm_call_readable()",
             "ctm_call_writable(jsonb)",
+            "ctm_media_readable(text,jsonb)",
+            "ctm_media_writable(text,jsonb,text)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -677,7 +679,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0025_communication_and_checkout_guards")])
+        MigrationExecutor(connection).migrate([("tribunal", "0027_media_privacy")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -847,7 +849,7 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 50
+        assert report["checks"]["forced_rls_table_count"] == 54
         assert "tribunal_reportrequest" not in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
@@ -1676,3 +1678,46 @@ def test_provider_checkout_resume_binding_under_real_runtime_role(runtime, unpai
     with pytest.raises(DatabaseError), runtime(app.owner):
         CheckoutIntent.objects.create(application=app, revision=intent.revision,
             checkout_url="https://checkout.stripe.com/c/forged")
+
+
+def test_media_exact_review_and_attempt_isolation_under_runtime_role(runtime, ready_application, people):
+    from tests.test_backend_followups import recorded
+    from tests.test_media_contract import output
+    from tribunal.models import Recording, ProcessingRun, TranscriptRevision, TranscriptReview
+    from tribunal.services.reports import finalize_recording, review_transcript
+    from tribunal.services.media import retry_processing, report_recordings
+    from django.db import DatabaseError
+    app = ready_application
+    submit_application(app.owner, app.pk, "media-runtime", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    with runtime(people["admin"]):
+        recording, report = recorded(app, people)
+        run = finalize_recording(people["admin"], recording.pk)
+    for actor in [None, app.owner]:
+        with runtime(actor):
+            assert not Recording.objects.exists() and not ProcessingRun.objects.exists()
+            assert not TranscriptRevision.objects.exists() and not TranscriptReview.objects.exists()
+    ProcessingRun.objects.filter(pk=run.pk).update(state="completed")
+    revision = TranscriptRevision.objects.create(recording=recording, run=run, number=1, language="en", text="Synthetic unreviewed output")
+    with runtime(people["member"]):
+        assert not TranscriptRevision.objects.filter(pk=revision.pk).exists()
+        assert report_recordings(people["member"], report.pk)["items"][0]["transcripts"] == []
+    with runtime(people["admin"]):
+        review = review_transcript(people["admin"], revision.pk)
+    with runtime(people["member"]):
+        assert TranscriptRevision.objects.get(pk=revision.pk).text == revision.text
+        assert TranscriptReview.objects.filter(pk=review.pk).exists()
+    newer = TranscriptRevision.objects.create(recording=recording, run=run, number=2, language="en", text="Synthetic new output")
+    with runtime(people["member"]):
+        assert not TranscriptRevision.objects.filter(pk=newer.pk).exists()
+    with pytest.raises(DatabaseError), runtime(people["member"]):
+        TranscriptReview.objects.create(revision=newer, actor=people["member"])
+    with pytest.raises(DatabaseError), runtime(people["admin"]):
+        TranscriptRevision.objects.create(recording=recording, run=run, number=3, language="en", text="App cannot impersonate output processor")
+    with runtime(people["admin"]):
+        assert ProcessingRun.objects.filter(pk=run.pk).update(state="completed") == 0
+    ProcessingRun.objects.filter(pk=run.pk).update(state="failed")
+    with runtime(people["admin"]):
+        retried = retry_processing(people["admin"], run.pk)
+        assert retried.attempt == 2 and retry_processing(people["admin"], run.pk).pk == retried.pk
+    assert TranscriptRevision.objects.filter(pk=revision.pk).exists()

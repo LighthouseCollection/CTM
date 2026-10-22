@@ -439,11 +439,11 @@ def finalize_recording(actor, recording_id):
     if not recording.notice_recorded or not safe_file(recording.file):
         raise ValidationError("Recording notice and technical validation required.")
     if recording.finalized_at:
-        return ProcessingRun.objects.get(file=recording.file, purpose="transcription")
+        return ProcessingRun.objects.get(file=recording.file, purpose="transcription", attempt=1)
     recording.finalized_at = timezone.now()
     recording.save(update_fields=["finalized_at"])
     run, _ = ProcessingRun.objects.get_or_create(
-        file=recording.file, purpose="transcription"
+        file=recording.file, purpose="transcription", attempt=1
     )
     from tribunal.models import Outbox
 

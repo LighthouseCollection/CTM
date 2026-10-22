@@ -133,7 +133,7 @@ def recorded(filed, people):
     attachment = m.Attachment.objects.create(case=filed.case, proceeding=filed.proceeding,
         category="AUDIO", visibility="council")
     file = m.FileVersion.objects.create(attachment=attachment, number=1, object_key=f"recording/{row.pk}",
-        mime_type="audio/mpeg", byte_count=5, sha256="c"*64)
+        mime_type="audio/mpeg", byte_count=5, sha256="c"*64, actor=people["admin"])
     m.FileTechnicalEvent.objects.create(file=file, task="scan", result="clean")
     recording = create_recording(people["admin"], file.pk, report_id=report.pk, notice_recorded=True)
     return recording, report
