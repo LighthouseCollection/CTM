@@ -1881,6 +1881,9 @@
       action: row.action,
       label: auditLabel(row.action, lang),
       actor: row.actor ? names[row.actor] || null : "system",
+      actor_id: row.actor,
+      source: row.source,
+      source_id: row.source_id,
     }));
   }
 
@@ -1912,15 +1915,16 @@
         ),
       [caseId],
     );
-    const [query, setQuery] = R.useState("");
+    const [filters, setFilters] = R.useState({});
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const rows = filterAudit(auditRows(state.data.items, state.data.members, lang), query);
+    const loaded = auditRows(state.data.items, state.data.members, lang);
+    const rows = window.CTMUI.filterAudit(loaded, filters);
     return h(
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("caseAudit")),
-      h(P.Field, { label: t("searchAudit") }, h(P.Input, { type: "search", value: query, onChange: (e) => setQuery(e.target.value) })),
+      h(window.CTMUI.AuditFilters, { rows: loaded, filters, onChange: setFilters, lang }),
       h(P.Text, { variant: "secondary" }, t("auditCount", { n: rows.length })),
       h(window.CTMShell.Workspace, {
         label: t("caseAudit"), rows, empty: t("noAudit"),
@@ -1930,6 +1934,8 @@
         h(P.Text, null, row.actor === "system" ? t("systemActor") : row.actor || t("otherAccount")),
         h(P.Text, null, base.formatWhen(row.timestamp, lang)),
         h(P.Text, { variant: "data" }, row.action),
+        row.source ? h(P.Text, null, row.source) : null,
+        row.source_id ? h(P.Text, { variant: "data" }, row.source_id) : null,
       )),
     );
   }

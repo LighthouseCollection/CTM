@@ -1,5 +1,6 @@
 """CDN header regression using synthetic authenticated API responses only."""
 import base64
+import os
 from playwright.sync_api import sync_playwright
 
 with sync_playwright() as p:
@@ -12,7 +13,7 @@ with sync_playwright() as p:
     identity = {"id": "header-test", "name": "Header Tester", "email": "header@example.test", "portal": "council", "role": "member", "ui_language": "en", "avatar_url": "/__profile_photo.png"}
     page.route("**/api/session/", lambda route: route.fulfill(json=identity))
     page.route("**/__profile_photo.png", lambda route: route.fulfill(content_type="image/png", body=base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=")))
-    page.goto("http://localhost:18844/")
+    page.goto(os.environ.get("CTM_REVIEW_URL", "http://localhost:18844/"))
     account = page.get_by_role("button", name="Account and settings for Header Tester", exact=True)
     account.wait_for()
     account.locator("img").evaluate("(e)=>e.decode()")

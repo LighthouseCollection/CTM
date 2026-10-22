@@ -1611,6 +1611,7 @@
           onSession: (id) => go("session", id),
           onReview: () => go("review"),
           onNotifications: () => go("notifications"),
+          onCases: () => go("cases"),
         });
       if (page === "medical" && council && councilModule?.AssessmentsWorkspace)
         return h(councilModule.AssessmentsWorkspace, { key: selection, api, lang, user, caseId: selection });
@@ -1658,6 +1659,10 @@
           council,
           t,
         });
+      if (page === "administration" && window.CTMUI)
+        return h(window.CTMUI.Administration, { api, user, lang, onNavigationGuard: registerApplicantGuard, onCase: (id) => go("case", id) });
+      if (page === "profile" && window.CTMUI)
+        return h(window.CTMUI.Profile, { user, lang, onSettings: () => go("settings") });
       if (page === "profile")
         return h(
           P.Stack,
@@ -1671,6 +1676,7 @@
           P.Stack,
           null,
           heading(t("settings")),
+          window.CTMUI?.canAdminister(user) ? h(P.Button, { onClick: () => go("administration") }, window.CTMUI.translator(lang)("administration")) : null,
           h(P.Panel, { icon: "fields", title: t("interfaceLanguage") }, language),
           h(
             P.Panel,

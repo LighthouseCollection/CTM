@@ -1,0 +1,11 @@
+# Pinned CDN dependencies from full UI review
+
+CTM remains pinned to Plenix0.58.0. No copied distribution, unsupported component prop, raw color/dimension override or silent pin upgrade was introduced.
+
+1. **Avatar photo treatment:** user requires white behind transparent portraits and a consistent soft-grey1px border. Existing old-checkout issue CDN-001 remains upstream. Avatar documentation lists name/src/size/color/category/presence/strings/className, without a documented global photo background/border contract. Account-photo relationship is independently owned by backend; a static name-to-file map is not a CDN fix.
+2. **Global peer-section spacing:** user supplied the entire New case assignments/Case hearings region as evidence after nesting cleanup. Current session UI restores flat heading/table peers with documented Stack gaps; this is not proof of a global CDN correction. CDN must establish one owner for outer inset, heading-to-content gap and larger section-to-section separation in PageContent/ReadingPane/SecondaryPane and all densities/RTL/mobile. Preserve flat composition; do not reintroduce bordered wrapper nesting. Root cause of historical CDN change has not been isolated.
+3. **Card heading icons:** see card-icon-cdn-gap.md. Panel.icon is documented; pinned Card lacks the matching documented slot. Existing Panel/navigation icons are supplied. Do not invent Card.icon.
+4. **Embedded PDF:** see ../council/pdf-viewer-cdn-defect.md. Authorized browser PDF fallback remains; embedded viewer engine/worker path repair is upstream.
+5. **Account-menu localization:** pinned application-header documentation exposes account actions but no documented strings contract for My account/CTM settings/Sign out. Arabic session/case-pane/attendance labels use their documented strings; account menu remains mixed-language. Need documented localized Account menu labels/accessible trigger, not a copied/custom menu.
+
+Required upstream acceptance: actual transparent portraits across header/plain surfaces; continuous tokenized border at all sizes; peer-section composition in both standalone and split hosts; PDF original authorized source with bundled engine/worker; Arabic menu/keyboard/screen-reader names. Release notes and consumer migration must identify the immutable version. No upstream release/acceptance is claimed by this UI branch.

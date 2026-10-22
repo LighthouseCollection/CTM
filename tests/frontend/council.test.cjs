@@ -221,14 +221,15 @@ test("search phrase length matches the server's 2–200 character rule", () => {
   assert.equal(typeof C.SearchWorkspace, "function");
 });
 
-test("My cases are the open cases shown as assigned to the signed-in member", () => {
+test("My cases match stable account IDs, never display-name equality", () => {
   const cases = [
-    { id: "1", status: "open", assigned_member: "Fr. Member" },
-    { id: "2", status: "closed", assigned_member: "Fr. Member" },
-    { id: "3", status: "open", assigned_member: "Fr. Other" },
+    { id: "1", status: "open", assigned_member: "Fr. Member", assigned_member_id: "m" },
+    { id: "2", status: "closed", assigned_member: "Fr. Member", assigned_member_id: "m" },
+    { id: "3", status: "open", assigned_member: "Fr. Member", assigned_member_id: "other" },
     { id: "4", status: "open", assigned_member: null },
   ];
   assert.deepEqual([...C.myCases(cases, member)].map((c) => c.id), ["1"]);
+  assert.equal(C.myCases([{id:"5",status:"open",assigned_member:member.name}],member).length,0);
 });
 
 test("word tables have no duplicate keys that would silently override text", () => {
