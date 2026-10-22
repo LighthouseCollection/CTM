@@ -411,3 +411,36 @@
   background: var(--plx-sys-color-success-strong, #126b31);
   border-color: var(--plx-sys-color-success-strong, #126b31);
 }
+
+/* Demo-only evidence supplied for the CTM walkthrough. */
+.ctm-demo-evidence-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--plx-space-sm, .75rem);
+}
+
+.ctm-demo-evidence-gallery__item {
+  display: block;
+  min-inline-size: 0;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--plx-sys-color-surface, #fff);
+  border: 1px solid var(--plx-sys-color-border, #d7dce4);
+  border-radius: var(--plx-radius-md, .5rem);
+}
+
+.ctm-demo-evidence-gallery__item:focus-visible {
+  outline: 2px solid var(--plx-sys-color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.ctm-demo-evidence-gallery__item img {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform .15s ease;
+}
+
+.ctm-demo-evidence-gallery__item:hover img { transform: scale(1.03); }

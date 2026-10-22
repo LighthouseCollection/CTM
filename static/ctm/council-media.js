@@ -342,6 +342,9 @@
       method_written: "Entered in CTM",
       method_external: "External source link",
       evidenceTitle: "Evidence",
+      demoEvidenceTitle: "Demo evidence images",
+      demoEvidenceHint: "Demo-only images supplied for the case review walkthrough.",
+      demoEvidenceImage: "Open demo evidence image {number}",
       documentsTitle: "Documents",
       olderVersions: "Include older versions",
       noFiles: "No technically cleared files are available in this section.",
@@ -550,6 +553,9 @@
       method_written: "أُدخل في النظام",
       method_external: "رابط مصدر خارجي",
       evidenceTitle: "الأدلة",
+      demoEvidenceTitle: "صور أدلة تجريبية",
+      demoEvidenceHint: "صور تجريبية مضافة لشرح مراجعة القضية فقط.",
+      demoEvidenceImage: "فتح صورة الدليل التجريبي {number}",
       documentsTitle: "المستندات",
       olderVersions: "تضمين الإصدارات السابقة",
       noFiles: "لا توجد ملفات اجتازت فحص الأمان في هذا القسم.",
@@ -2036,6 +2042,7 @@
     const [failure, setFailure] = R.useState(null);
     const [selected, select] = R.useState(null);
     const [viewerIndex, setViewerIndex] = R.useState(null);
+    const [demoViewerIndex, setDemoViewerIndex] = R.useState(null);
     const [reload, setReload] = R.useState(0);
     R.useEffect(() => {
       let live = true;
@@ -2072,10 +2079,37 @@
     const chosen = visible.find((row) => row.id === selected);
     const images = visible.filter((row) => viewerKind(row) === "image" && fileUrls(row).inline);
     const viewerItems = images.map((row) => ({ src: fileUrls(row).inline, alt: row.name, title: row.name, meta: [row.category, formatBytes(row.byte_count, lang)] }));
+    // These are static, demo-only visual records. They intentionally do not enter
+    // the protected attachment/audit workflow used for real evidence.
+    const demoEvidence = [
+      "/static/ctm/demo-evidence/demo-evidence-01.png",
+      "/static/ctm/demo-evidence/demo-evidence-02.png",
+      "/static/ctm/demo-evidence/demo-evidence-03.png",
+      "/static/ctm/demo-evidence/demo-evidence-04.png",
+    ];
+    const demoViewerItems = demoEvidence.map((src, index) => ({
+      src,
+      alt: t("demoEvidenceImage", { number: index + 1 }),
+      title: t("demoEvidenceImage", { number: index + 1 }),
+    }));
     return h(
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t(section === "documents" ? "documentsTitle" : "evidenceTitle")),
+      section === "evidence"
+        ? h(P.Panel, { icon: "image-a-2", title: t("demoEvidenceTitle") }, h(P.Stack, { gap: "sm" },
+          h(P.Text, null, t("demoEvidenceHint")),
+          h("div", { className: "ctm-demo-evidence-gallery" }, ...demoEvidence.map((src, index) =>
+            h("button", {
+              key: src,
+              type: "button",
+              className: "ctm-demo-evidence-gallery__item",
+              onClick: () => setDemoViewerIndex(index),
+              "aria-label": t("demoEvidenceImage", { number: index + 1 }),
+            }, h("img", { src, alt: t("demoEvidenceImage", { number: index + 1 }) })),
+          )),
+        ))
+        : null,
       h(P.SplitView, {
         label: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
         firstLabel: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
@@ -2116,6 +2150,17 @@
             onClose: () => setViewerIndex(null),
             label: t("viewerLabel"),
             strings: { label: t("viewerLabel"), close: t("closePreview"), previous: t("previous"), next: t("next"), counter: t("counter") },
+          })
+        : null,
+      demoViewerIndex !== null
+        ? h(P.MediaViewer, {
+            open: true,
+            items: demoViewerItems,
+            index: demoViewerIndex,
+            onIndexChange: setDemoViewerIndex,
+            onClose: () => setDemoViewerIndex(null),
+            label: t("demoEvidenceTitle"),
+            strings: { label: t("demoEvidenceTitle"), close: t("closePreview"), previous: t("previous"), next: t("next"), counter: t("counter") },
           })
         : null,
     );
