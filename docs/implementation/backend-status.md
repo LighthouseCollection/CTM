@@ -1,3 +1,9 @@
+Current validation: **833 PostgreSQL passed, 1 skipped**, migration rollback/reapply through0047 and no model drift. Nineteen new physical-role status/receipt checks plus one cross-adapter endpoint lifecycle; SQLite lifecycle separately passed. Council UI/integration acceptance remains required.
+
+C05 capability status/receipt: new read-only Bearer-only status endpoint exposes only lifecycle/expiry and an unexpired original report ID/time receipt.0047 adds app-only digest-bound projection; no existing mutation/row-visibility change. See external-status-receipt.md. UI metadata unique successor proposal0048after0047.
+
+Governance scoped withdrawal acceptance:73357864789e22bb504002b089f2934e11f86e37 withf0e97fa/0046 verifies firstwithdraw keeps case/otherfiling open, finalwithdraw closes case, fee/history/notification isolation and linkedsubmit201. Focused7pass/outer66partial; later message-pagination fixture stops broader run, so no full applicant/QA acceptance inferred.
+
 Current validation: **813 PostgreSQL passed, 1 skipped**, migration rollback/reapply through0046;16 new physical-role browser-entry regressions and Chromium fragment-transport smoke passed. No model/route/migration/grant changes in this continuation.
 
 External priest browser entry now negotiates explicit HTML navigation to the existing council static page while preserving Bearer JSON. No asset copy/migration; combined council assets and exact-successor browser acceptance are required. See external-browser-entry.md.
@@ -136,7 +142,7 @@ UI's other requested backend contracts remain unfinished: approved own-profile/
 contact/portrait mutations, verified email/provider administration, broader normalized/admin session history, member
 contact/portrait editing and broader institutional history, formal-source factual discrepancy views,
 and consumer integration of stored settings beyond account status notices and filing document labels. Council C05 external
-capability-receipt/recording/paper-completion/invitation contracts remain unfinished. Browser-entry routing and council link metadata are implemented; combined UI acceptance remains pending. Pagination and per-family settings
+recording/paper-completion/invitation contracts remain unfinished. Capability status/receipt is implemented; council UI binding and independent acceptance remain pending. Browser-entry routing and council link metadata are implemented; combined UI acceptance remains pending. Pagination and per-family settings
 edit schemas are addressed in these continuations;
 those separate contracts are not claimed complete or all blocked by credentials.
 

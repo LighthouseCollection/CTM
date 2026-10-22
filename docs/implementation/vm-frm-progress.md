@@ -1,3 +1,9 @@
+Current validation: **833 PostgreSQL passed, 1 skipped**, migration rollback/reapply through0047 and no model drift. Nineteen new physical-role status/receipt checks plus one cross-adapter endpoint lifecycle; SQLite lifecycle separately passed. Council UI/integration acceptance remains required.
+
+C05 capability status/receipt: new read-only Bearer-only status endpoint exposes only lifecycle/expiry and an unexpired original report ID/time receipt.0047 adds app-only digest-bound projection; no existing mutation/row-visibility change. See external-status-receipt.md. UI metadata unique successor proposal0048after0047.
+
+Governance scoped withdrawal acceptance:73357864789e22bb504002b089f2934e11f86e37 withf0e97fa/0046 verifies firstwithdraw keeps case/otherfiling open, finalwithdraw closes case, fee/history/notification isolation and linkedsubmit201. Focused7pass/outer66partial; later message-pagination fixture stops broader run, so no full applicant/QA acceptance inferred.
+
 Current validation: **813 PostgreSQL passed, 1 skipped**, migration rollback/reapply through0046;16 new physical-role browser-entry regressions and Chromium fragment-transport smoke passed. No model/route/migration/grant changes in this continuation.
 
 External browser entry: explicit HTML navigation redirects generically to council-owned static page, preserving fragment transport and all Bearer JSON/error contracts. No asset copy or migration; see external-browser-entry.md. Combined static/UI acceptance remains required.

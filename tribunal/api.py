@@ -2021,3 +2021,17 @@ def system_account_role_history(request, account_id):
                           serialize=lambda row: role_data(account, row, now))
     return JsonResponse({"account_id": str(account.pk), "account_role": account.role,
                          "account_active": account.is_active, **result})
+
+
+@csrf_exempt
+@vary_on_headers("Authorization")
+def external_report_status(request, request_id):
+    from tribunal.services.reports import external_status_receipt
+    if request.method != 'GET':
+        return JsonResponse({'error':'method_not_allowed'}, status=405)
+    authorization = request.headers.get('Authorization','')
+    token = authorization[len('Bearer '):] if authorization.startswith('Bearer ') else ''
+    try:
+        return JsonResponse(external_status_receipt(request_id, token))
+    except (PermissionDenied, ValidationError, ObjectDoesNotExist):
+        return JsonResponse({'error':'link_unavailable'}, status=403)
