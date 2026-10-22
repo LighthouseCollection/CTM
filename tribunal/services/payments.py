@@ -70,6 +70,9 @@ def prepare_checkout(actor, app_id, attestation, *, expected_version=None):
         validate_petition(revision.answers)
     elif not revision.answers.get("new_information"):
         raise ValidationError("Appeal requires new information/evidence.")
+    from .closed_filings import require_new_information
+
+    require_new_information(app, revision.answers)
     files = required_documents(app, revision.answers)
     manifest = [{"id": str(f.pk), "sha256": f.sha256} for f in files]
     if CheckoutIntent.objects.filter(application=app, state__in=["processing", "paid", "needs_review"]).exists():

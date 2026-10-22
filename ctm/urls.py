@@ -9,6 +9,7 @@ urlpatterns = [
     path("api/session/", api.session),
     path("api/applications/", api.applications),
     path("api/applications/<uuid:app_id>/", api.application),
+    path("api/applications/<uuid:app_id>/closed-case-result/", api.closed_filing_result),
     path("api/applications/<uuid:app_id>/history/", api.answer_history),
     path("api/applications/<uuid:app_id>/files/", api.application_files),
     path("api/applications/<uuid:app_id>/submit/", api.submit),

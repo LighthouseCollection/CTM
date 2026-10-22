@@ -246,6 +246,7 @@ class Application(Root):
     proceeding = models.ForeignKey(Proceeding, null=True, on_delete=models.PROTECT)
     party = models.ForeignKey(Party, null=True, on_delete=models.PROTECT)
     kind = models.CharField(max_length=10, default="petition")
+    origin = models.CharField(max_length=30, default="portal")
     status = models.CharField(max_length=15, default="draft")
     current_version = models.PositiveIntegerField(default=0)
     questionnaire = models.ForeignKey(
@@ -266,6 +267,11 @@ class Application(Root):
                 fields=["owner", "case"],
                 condition=Q(kind="appeal", status__in=["draft", "submitted"]),
                 name="one_pending_appeal",
+            ),
+            models.UniqueConstraint(
+                fields=["owner", "case"],
+                condition=Q(origin="closed_case_intake", status__in=["draft", "submitted"]),
+                name="one_pending_closed_intake",
             ),
         ]
 

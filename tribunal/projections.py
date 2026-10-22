@@ -5,6 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 import json
 from django.db import connection
+from tribunal.services.closed_filings import CLOSED_INTAKE, council_filing, pending_council_filings
 
 
 def release_metadata(request, actor):
@@ -72,7 +73,7 @@ def staff_application_data(app, actor):
                            and app.status == "submitted" and app.proceeding
                            and app.proceeding.status == "open" and app.case.status == "open"),
     }
-    if app.kind == "appeal":
+    if council_filing(app):
         result.update(appeal_data(app, actor))
     return result
 
@@ -82,6 +83,8 @@ def appeal_data(app, actor):
     disposition = m.AppealDisposition.objects.filter(application=app).select_related("actor").first()
     hearings = m.Hearing.objects.filter(agenda__case_id=app.case_id,
         presenter_id=app.case.assigned_member_id, state="held").select_related("agenda__session").order_by("-agenda__session__date", "-id")
+    if app.origin == CLOSED_INTAKE and app.submitted_at:
+        hearings = hearings.filter(created_at__gte=app.submitted_at)
     eligible = [{"id": str(row.pk), "session_date": row.agenda.session.date.isoformat()} for row in hearings]
     return {
         "supplements": [{"id": str(row.pk), "text": row.text, "manifest": row.manifest,
@@ -103,7 +106,7 @@ def case_capabilities(case, actor):
 
     council = actor.role != "applicant"
     write = council and (actor.role in {"admin", "secretary"} or case.assigned_member_id == actor.pk)
-    hearable = case.status == "open" or case.applications.filter(kind="appeal", status="submitted").exists()
+    hearable = case.status == "open" or pending_council_filings(case).exists()
     result = {"assigned_member_id": str(case.assigned_member_id) if case.assigned_member_id else None,
             "can_place_part2": bool(write and hearable),
             "can_assign": bool(council and assignment_recorder(actor) and case.status == "open")}
@@ -113,6 +116,14 @@ def case_capabilities(case, actor):
             "president": name(row.president), "actor_id": str(row.actor_id),
             "actor": name(row.actor), "timestamp": row.created_at.isoformat()}
             for row in m.CaseAssignment.objects.filter(case=case).select_related("member", "president", "actor").order_by("created_at", "id")]
+    else:
+        linked = case.parties.filter(account=actor, person_id=actor.person_id).exists()
+        already_filed = case.applications.filter(owner=actor, kind="petition", submitted_at__isnull=False).exists()
+        conflict = m.OpenCaseClaim.objects.filter(person_id=actor.person_id).exclude(case=case).exists()
+        draft = m.Application.objects.filter(owner=actor, kind="petition", status="draft").first()
+        can_start = bool(linked and not already_filed and not conflict and (not draft or draft.case_id == case.pk))
+        result["can_start_petition"] = can_start
+        result["can_start_closed_intake"] = can_start and case.status == "closed"
     return result
 
 
@@ -133,7 +144,7 @@ def hearing_writable(hearing, actor):
         return False
     if hearing.proceeding_id:
         return hearing.proceeding.status == "open" and case.status == "open"
-    return case.applications.filter(kind="appeal", status="submitted").exists()
+    return pending_council_filings(case).exists()
 
 
 def agenda_item_data(item, actor, attendance):
@@ -144,7 +155,7 @@ def agenda_item_data(item, actor, attendance):
                        and item.state == "scheduled" and item.session.state == "planned"
                        and presenter and presenter.present
                        and (case.proceedings.filter(status="open").exists()
-                            or case.applications.filter(kind="appeal", status="submitted").exists()))
+                            or pending_council_filings(case).exists()))
     testimony = []
     for appointment in m.TestimonyAppointment.objects.filter(agenda=item).select_related("party").order_by("starts_at", "id"):
         response = m.AppointmentResponse.objects.filter(appointment=appointment, version=appointment.version).order_by("-created_at", "-id").first()

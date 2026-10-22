@@ -24,6 +24,7 @@ from tribunal.models import (
 from tribunal.policy import active, application_for, case_for, open_proceeding, writer
 from .applications import safe_file
 from .common import audit, notify_manager
+from .closed_filings import council_filing
 
 
 def validate_category(category, mime):
@@ -199,9 +200,9 @@ def upload(
         proceeding = app.proceeding
         if app.status in {"withdrawn", "expired", "deleted", "declined"}:
             raise ValidationError("Application is no longer accepting documents.")
-        if app.submitted_at and app.kind != "appeal":
+        if app.submitted_at and not council_filing(app):
             open_proceeding(proceeding)
-        if app.kind == "appeal" and app.status not in {"draft", "submitted"}:
+        if council_filing(app) and app.status not in {"draft", "submitted"}:
             raise ValidationError("Appeal is not pending.")
         owner = app.owner
         if actor.role == "applicant" and visibility != "own":
@@ -294,7 +295,7 @@ def application_file_listing(actor, app_id):
     if actor.role != "applicant" or app.owner_id != actor.pk:
         raise PermissionDenied("Only the filing applicant can list draft documents.")
     can_upload = app.status not in {"withdrawn", "expired", "deleted", "declined"}
-    if app.kind == "appeal":
+    if council_filing(app):
         can_upload = can_upload and app.status in {"draft", "submitted"}
     elif app.submitted_at:
         can_upload = bool(can_upload and app.proceeding and app.proceeding.status == "open"

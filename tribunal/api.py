@@ -86,6 +86,7 @@ def filing_version(data):
 
 def application_data(app, actor):
     from tribunal.services.filing_privacy import revision_visible
+    from tribunal.services.closed_filings import CLOSED_INTAKE, require_new_information
 
     revision = app.revisions.filter(number=app.current_version).first()
     if actor.pk != app.owner_id and (revision is None or not revision_visible(revision)):
@@ -95,6 +96,8 @@ def application_data(app, actor):
     result = encoded(
         app,
         kind=app.kind,
+        origin=app.origin,
+        requires_new_information=app.origin == CLOSED_INTAKE,
         status=app.status,
         case_id=str(app.case_id) if app.case_id else None,
         case_number=app.case.number if app.case else None,
@@ -145,6 +148,7 @@ def application_data(app, actor):
                     validate_petition(revision.answers)
                 elif not revision.answers.get("new_information"):
                     ready = False
+                require_new_information(app, revision.answers)
                 required_documents(app, revision.answers)
                 if not app.submitted_at:
                     validate_filing_declaration(app)
@@ -239,7 +243,11 @@ def applications(request):
         if request.GET.get("state") == "awaiting_review":
             if request.user.role == "applicant":
                 raise PermissionDenied("Council completeness queue required.")
-            qs = qs.filter(kind="petition", status="submitted")
+            qs = qs.filter(kind="petition", status="submitted").exclude(origin="closed_case_intake")
+        if request.GET.get("state") == "council_consideration":
+            staff(request.user)
+            from django.db.models import Q
+            qs = qs.filter(status="submitted").filter(Q(kind="appeal") | Q(origin="closed_case_intake"))
         return JsonResponse(
             {
                 "items": [
@@ -1148,6 +1156,20 @@ def appeal_addition(request, app_id):
 
 
 @endpoint(("POST",))
+def closed_filing_result(request, app_id):
+    from tribunal.services.decisions import decide_appeal
+    from tribunal.services.closed_filings import CLOSED_INTAKE
+
+    app = application_for(request.user, app_id)
+    staff(request.user)
+    if app.origin != CLOSED_INTAKE:
+        raise ValidationError("This is not a closed-case first filing.")
+    data = body(request)
+    row = decide_appeal(request.user, app_id, data["hearing_id"], data["result"], data.get("explanation", ""))
+    return JsonResponse(encoded(row), status=201)
+
+
+@endpoint(("POST",))
 def appeal_result(request, app_id):
     from tribunal.services.decisions import decide_appeal
 
@@ -1413,7 +1435,7 @@ def dashboard(request):
             ).count(),
             "review_queue": m.Application.objects.filter(
                 status="submitted", kind="petition"
-            ).count()
+            ).exclude(origin="closed_case_intake").count()
             if request.user.role in {"admin", "secretary"}
             else None,
             "upcoming_sessions": [

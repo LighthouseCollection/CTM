@@ -24,6 +24,10 @@
     "handler": "application"
   },
   {
+    "route": "api/applications/<uuid:app_id>/closed-case-result/",
+    "handler": "closed_filing_result"
+  },
+  {
     "route": "api/applications/<uuid:app_id>/history/",
     "handler": "answer_history"
   },

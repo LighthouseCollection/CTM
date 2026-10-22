@@ -242,9 +242,8 @@ closed F08 is made by the earlier test counts.
 - F15 now has the assignment-specific adapter and approved membership/role
   structures described below. Broader role/lifecycle/authentication reconciliation
   must not be inferred from that narrow assignment capability.
-- F12 linked never-filing spouse filing against a closed case still needs the
-  closed-case intake and council acceptance/reopening transaction. Current code
-  refuses the closed match; it must not be presented as implemented.
+- F12 now has the closed-case intake and acceptance/reopening adapter described
+  below. Applicant/council browser integration remains to be accepted.
 - F30 secretary joint-withdrawal authority and manual priest bearer-link delivery
   remain unapproved; neither permission is inferred. D14 approved bilingual decree
   templates/rendering and the medical release declaration remain institutional
@@ -297,7 +296,7 @@ closed F08 is made by the earlier test counts.
   reversal/reapplication verified through 0020. Tests include missing/suspended
   context, applicant/council/admin read separation, setting-author forgery,
   nested credential payload denial and retained reference history.
-- F12, broader role reconciliation, remaining 18 domain-table policy reviews, full151-table reconciliation,
+- Broader role reconciliation, remaining domain-table policy reviews, full151-table reconciliation,
   independent browser reacceptance and institutional/provider gates remain open.
 
 ## F15 same-person assignment authorizer and recorder
@@ -343,3 +342,55 @@ closed F08 is made by the earlier test counts.
   Browser integration, real institutional configuration/grants and general role
   lifecycle acceptance remain with governance. No operational migrations,
   credentials, deployment, merge or actual role grants were changed.
+
+## F12 / AS-F12 linked spouse's first filing after closure
+
+- The direct-owner addendum supersedes the earlier closed-match refusal: an
+  already-linked canonical person/account with no prior formal petition for this
+  case can start the normal petition API with `case_id`. Application adds the
+  approved `origin` attribute, using `closed_case_intake` for this route, preserving
+  petition purpose/questionnaire/declaration. No DOB-only access or new spouse
+  mapping is inferred. Existing first filers must use the appeal route.
+- Applicant case detail exposes `can_start_petition` and `can_start_closed_intake`.
+  The resulting application exposes `origin`, `requires_new_information` and the
+  usual readiness/version/payment flags. Nonempty `new_information` is required
+  before checkout/submission; frozen candidate/recovery and one filing fee apply.
+- Submission retains the formal answers/manifest/signature and linked spouse but
+  keeps `proceeding_id=null`, case closed, no new proceeding/number/open claim and
+  no participation activation. Existing shared spouse name/reference/canonical
+  identity remain unchanged. Pending filing facts do not update the shared case
+  profile or notify the other spouse. Council reviewers/manager receive intake.
+- Council `GET /api/applications/?state=council_consideration` includes pending
+  appeals and closed first filings. The ordinary completeness queue excludes this
+  route. Closed-case agenda/hearing/attendance capabilities accept either type of
+  pending council filing; no substantive write to the closed proceeding is enabled.
+- Staff detail exposes retained supplements/disposition/eligible hearings and
+  `can_record_result`. `POST /api/applications/{id}/closed-case-result/` accepts
+  `{hearing_id,result:accept|decline,explanation?}` after a held assigned Part2
+  presentation after submission. The legacy appeal result/supplement services
+  share this logic without changing the petition's purpose. Existing
+  `POST /api/appeals/{id}/additions/` supports owner-only append-only pending facts.
+- Acceptance checks formal new information, activates the actual filing spouse,
+  rechecks all participating canonical-person claims, and creates or joins one
+  open appeal/reconsideration proceeding on the same case. A sibling appeal joins
+  that proceeding. Prior proceedings/answers remain locked. A conflict retains
+  the pending filing/payment and never closes or overwrites another case.
+- Decline or owner withdrawal preserves closure and avoids other-spouse notices.
+  Withdrawal after accepted first petition retains the council result and applies
+  ordinary active-petition closure rules. A controlled withdrawal/acceptance race
+  verifies the waiting acceptance cannot revive a withdrawn pending filing.
+- This is an adapter over the existing58-model architecture: legacy
+  AppealSupplement/AppealDisposition store shared reconsideration facts/results;
+  no claim is made that their legacy names/FKs replace the approved151-table
+  appeal structures or that this addendum rewrites protected schema sources.
+- Migration0022 retains origin/source/version/single-submission guards and adds
+  forced RLS to those two retained tables (**47 protected / 63 domain models**).
+  A narrow transaction context permits only council's filing-status result update;
+  actual actor/hearing, source ownership, active proceeding and all case claims
+  are verified before disposition insertion. Raw writes cannot fabricate a result,
+  reset a conclusion, edit submitted intake answers or rebind its old proceeding.
+- Full isolated PostgreSQL suite: **317 passed, 1 skipped**; no model drift;
+  rollback/reapply through0022; **79 routes**. Tests cover real HTTP/read contracts,
+  paid-candidate finalization (mock provider, no real charge), owner/non-owner
+  privacy, raw guards, shared reopening, conflict rollback and lock contention.
+  F12 browser acceptance and broader schema/identity reconciliation remain open.

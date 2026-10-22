@@ -69,6 +69,9 @@ def runtime():
             "ctm_staff_readable()",
             "ctm_staff_writable(text,jsonb)",
             "ctm_staff_mutable(text,jsonb)",
+            "ctm_council_result_update(jsonb)",
+            "ctm_reconsideration_readable(jsonb)",
+            "ctm_reconsideration_writable(text,jsonb)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -667,7 +670,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0021_tribunal_staffmembership_staffrole")])
+        MigrationExecutor(connection).migrate([("tribunal", "0022_application_origin_and_more")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -837,7 +840,7 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 45
+        assert report["checks"]["forced_rls_table_count"] == 47
         assert "tribunal_reportrequest" in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
@@ -1374,3 +1377,112 @@ def test_f15_primary_president_records_same_person_under_explicit_runtime_assign
     with runtime(people["president"]):
         record = assign_case(people["president"], app.case_id, people["member"].pk, people["president"].pk)
         assert record.actor_id == record.president_id == people["president"].pk
+
+
+def test_f12_full_closed_intake_and_assigned_result_under_runtime_role(runtime, ready_application, people):
+    from tests.test_closed_case_intake import prepare, present
+    from tribunal.services.council import assign_case
+    from tribunal.services.decisions import withdraw_application, decide_appeal, add_appeal_information
+    from tribunal.models import Party, AppealDisposition, AppealSupplement, OpenCaseClaim
+    app = ready_application
+    submit_application(app.owner, app.pk, "f12-raw-original", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    assign_case(people["admin"], app.case_id, people["member"].pk, people["president"].pk)
+    spouse = Account.objects.create_user(email="f12-runtime@example.test", email_verified=True)
+    Party.objects.create(case=app.case, account=spouse, person=spouse.person, slot="B", participating=False)
+    withdraw_application(app.owner, app.pk)
+    app.case.refresh_from_db()
+    with runtime(spouse):
+        filing = prepare(spouse, app.case, people, waive=False)
+    from tribunal.services.applications import waive_fee
+    with runtime(people["admin"]):
+        waive_fee(people["admin"], filing.pk)
+    with runtime(spouse):
+        submit_application(spouse, filing.pk, "f12-runtime-filing", {"accepted": True, "name": "Jane Smith"})
+        extra = add_appeal_information(spouse, filing.pk, "Additional facts")
+    with runtime(app.owner):
+        assert not Application.objects.filter(pk=filing.pk).exists()
+        assert not AppealSupplement.objects.filter(pk=extra.pk).exists()
+    with runtime(people["member"]):
+        assert AppealSupplement.objects.filter(pk=extra.pk).exists()
+    # Session/attendance writers and the assigned presenter keep their own actors.
+    from tribunal.services.council import create_session, place_agenda, record_attendance, hear_case
+    from datetime import date
+    with runtime(people["admin"]):
+        session = create_session(people["admin"], date(2031, 1, 7))
+        record_attendance(people["admin"], session.pk, people["member"].pk, True)
+    with runtime(people["member"]):
+        item = place_agenda(people["member"], session.pk, app.case_id)
+        hearing = hear_case(people["member"], item.pk)
+        result = decide_appeal(people["member"], filing.pk, hearing.pk, "accept")
+        assert AppealDisposition.objects.get(pk=result.pk).actor_id == people["member"].pk
+    app.case.refresh_from_db(); app.proceeding.refresh_from_db(); filing.refresh_from_db()
+    assert app.case.status == "open" and app.proceeding.status == "closed"
+    assert filing.status == "accepted" and filing.proceeding_id is None
+    assert OpenCaseClaim.objects.get(person=spouse.person).case_id == app.case_id
+    with runtime(app.owner):
+        assert not AppealDisposition.objects.filter(application_id=filing.pk).exists()
+
+
+def test_f12_raw_pending_source_and_result_guards(runtime, ready_application, people):
+    from tests.test_closed_case_intake import prepare, present
+    from tribunal.services.council import assign_case
+    from tribunal.services.decisions import withdraw_application
+    from tribunal.models import Party, AppealDisposition
+    from django.db import DatabaseError
+    original = ready_application
+    submit_application(original.owner, original.pk, "f12-guard-original", {"accepted": True, "name": "John Smith"})
+    original.refresh_from_db()
+    assign_case(people["admin"], original.case_id, people["member"].pk, people["president"].pk)
+    spouse = Account.objects.create_user(email="f12-guards@example.test", email_verified=True)
+    Party.objects.create(case=original.case, person=spouse.person, account=spouse, slot="B", participating=False)
+    withdraw_application(original.owner, original.pk)
+    original.case.refresh_from_db()
+    app = prepare(spouse, original.case, people)
+    submit_application(spouse, app.pk, "f12-guard-filing", {"accepted": True, "name": "Jane Smith"})
+    app.refresh_from_db()
+    for changes in [{"origin": "portal"}, {"proceeding": original.proceeding},
+                    {"current_version": 99}, {"status": "accepted"}]:
+        with pytest.raises(DatabaseError), runtime(spouse):
+            Application.objects.filter(pk=app.pk).update(**changes)
+    with pytest.raises(DatabaseError), runtime(spouse):
+        AnswerRevision.objects.create(application=app, number=2, actor=spouse, answers={"new_information": "Overwrite"})
+    hearing = present(app, people)
+    with pytest.raises(DatabaseError), runtime(spouse):
+        AppealDisposition.objects.create(application=app, actor=spouse, hearing=hearing, result="accept")
+    with pytest.raises(DatabaseError), runtime(people["member"]):
+        AppealDisposition.objects.create(application=app, actor=people["member"], hearing=hearing, result="accept")
+    with runtime(people["member"]):
+        assert Application.objects.filter(pk=app.pk).update(status="accepted") == 0
+    with runtime(people["admin"]):
+        assert Application.objects.filter(pk=app.pk).exists()
+    original.case.refresh_from_db()
+    assert original.case.status == "closed" and not AppealDisposition.objects.filter(application=app).exists()
+
+
+def test_f12_council_result_context_is_status_only_and_cannot_skip_claims(runtime, ready_application, people):
+    from tests.test_closed_case_intake import prepare, present
+    from tribunal.services.council import assign_case
+    from tribunal.services.decisions import withdraw_application
+    from tribunal.models import Party, AppealDisposition
+    from tribunal.db.context import database_actor, database_settings
+    from django.db import DatabaseError
+    from django.utils import timezone
+    original = ready_application
+    submit_application(original.owner, original.pk, "f12-context-original", {"accepted": True, "name": "John Smith"})
+    original.refresh_from_db()
+    assign_case(people["admin"], original.case_id, people["member"].pk, people["president"].pk)
+    spouse = Account.objects.create_user(email="f12-context@example.test", email_verified=True)
+    Party.objects.create(case=original.case, person=spouse.person, account=spouse, slot="B", participating=False)
+    withdraw_application(original.owner, original.pk)
+    original.case.refresh_from_db()
+    app = prepare(spouse, original.case, people)
+    submit_application(spouse, app.pk, "f12-context-filing", {"accepted": True, "name": "Jane Smith"})
+    hearing = present(app, people)
+    context = {"ctm.council_result": str(app.pk), "ctm.result_hearing": str(hearing.pk), "ctm.result_choice": "accept"}
+    with pytest.raises(DatabaseError), runtime(people["member"]), database_actor(people["member"]), database_settings(context):
+        Application.objects.filter(pk=app.pk).update(last_activity=timezone.now())
+    with pytest.raises(DatabaseError), runtime(people["member"]), database_actor(people["member"]), database_settings(context):
+        AppealDisposition.objects.create(application=app, hearing=hearing, actor=people["member"], result="accept")
+    app.refresh_from_db()
+    assert app.status == "submitted" and not AppealDisposition.objects.filter(application=app).exists()

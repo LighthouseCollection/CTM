@@ -701,6 +701,13 @@
           "primary_key": false
         },
         {
+          "name": "origin",
+          "column": "origin",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
           "name": "status",
           "column": "status",
           "type": "CharField",

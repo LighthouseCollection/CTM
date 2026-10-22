@@ -21,6 +21,7 @@ from tribunal.models import (
 )
 from tribunal.policy import active, administrator, application_for, open_proceeding
 from .common import audit, lock_key, notify, notify_manager
+from .closed_filings import CLOSED_INTAKE, council_filing, linked_never_filer, require_new_information
 
 GROUNDS = {"infidelity", "desertion", "abuse", "faith", "addiction", "concealment"}
 
@@ -82,6 +83,8 @@ def start_application(actor, case_id=None, kind="petition"):
         existing = existing.filter(case=case)
     prior = existing.first()
     if prior:
+        if case and prior.case_id != case.pk:
+            raise ValidationError("Continue or resolve the existing draft before starting a different case filing.")
         return prior
     if (
         case
@@ -99,8 +102,11 @@ def start_application(actor, case_id=None, kind="petition"):
     if schema is None:
         raise ValidationError("No published questionnaire is configured.")
     app = Application.objects.create(
-        owner=actor, case=case, kind=kind, questionnaire=schema
+        owner=actor, case=case, kind=kind, questionnaire=schema,
+        origin=CLOSED_INTAKE if case and case.status == "closed" and kind == "petition" else "portal"
     )
+    if app.origin == CLOSED_INTAKE:
+        linked_never_filer(app, case)
     FeeObligation.objects.create(application=app)
     audit(actor, "draft_started", app, case)
     return app
@@ -112,7 +118,7 @@ def save_answers(actor, app_id, answers, expected_version):
     app = Application.objects.select_for_update(of=("self",)).get(pk=app.pk)
     if not isinstance(answers, dict):
         raise ValidationError("Answers must be an object.")
-    if app.kind == "appeal" and app.submitted_at:
+    if council_filing(app) and app.submitted_at:
         raise ValidationError(
             "Submitted appeal is immutable; append additional information."
         )
@@ -360,9 +366,13 @@ def submit_application(
             )
             Proceeding.objects.create(case=case)
         case = Case.objects.select_for_update(of=("self",)).get(pk=case.pk)
-        if case.status != "open":
-            raise ValidationError("Matched case is closed; review required.")
-        party = case.parties.filter(person=actor.person).first()
+        closed_intake = app.origin == CLOSED_INTAKE or case.status == "closed"
+        if closed_intake:
+            party = linked_never_filer(app, case)
+            app.origin = CLOSED_INTAKE
+            require_new_information(app, answers)
+        else:
+            party = case.parties.filter(person=actor.person).first()
         if not party:
             if case.parties.count() >= 2:
                 raise ValidationError("Party mapping requires administrator review.")
@@ -384,23 +394,22 @@ def submit_application(
                 slot="A" if not case.parties.exists() else "B",
             )
         person = actor.person
-        person.first_name = answers["first_name"]
-        person.last_name = answers["last_name"]
-        person.birth_date = dob
-        person.gender = answers["gender"]
-        person.save()
-        if not party.reference:
-            initials = (
-                answers["first_name"][0].upper() + answers["last_name"][0].upper()
-            )
-            party.reference = f"{case.number}-{initials}{dob:%Y%m%d}{answers['gender']}"
-        party.name = f"{answers['first_name']} {answers['last_name']}"
-        party.participating = True
-        party.save()
-        OpenCaseClaim.objects.get_or_create(person=person, defaults={"case": case})
+        if not closed_intake:
+            person.first_name = answers["first_name"]
+            person.last_name = answers["last_name"]
+            person.birth_date = dob
+            person.gender = answers["gender"]
+            person.save()
+            if not party.reference:
+                initials = answers["first_name"][0].upper() + answers["last_name"][0].upper()
+                party.reference = f"{case.number}-{initials}{dob:%Y%m%d}{answers['gender']}"
+            party.name = f"{answers['first_name']} {answers['last_name']}"
+            party.participating = True
+            party.save()
+            OpenCaseClaim.objects.get_or_create(person=person, defaults={"case": case})
         app.case = case
         app.party = party
-        app.proceeding = case.proceedings.get(status="open")
+        app.proceeding = None if closed_intake else case.proceedings.get(status="open")
     else:
         if (
             not app.case
@@ -443,16 +452,18 @@ def submit_application(
     )
     app.status = "submitted"
     app.submitted_at = app.submitted_at or timezone.now()
-    app.save(update_fields=["status", "submitted_at", "case", "party", "proceeding"])
+    app.save(update_fields=["status", "submitted_at", "case", "party", "proceeding", "origin"])
     for attachment in app.attachments.all():
         attachment.case = app.case
         attachment.proceeding = app.proceeding
         attachment.save(update_fields=["case", "proceeding"])
     audit(actor, "application_submitted", submission, app.case)
+    if app.origin == CLOSED_INTAKE:
+        notify_manager(app.case, "closed_intake_submitted", submission)
     for reviewer in Account.objects.filter(
         role__in=["admin", "secretary"], is_active=True
     ):
-        notify(reviewer, "intake_submitted", submission, case=app.case)
+        notify(reviewer, "closed_intake_submitted" if app.origin == CLOSED_INTAKE else "intake_submitted", submission, case=app.case)
     notify(actor, "submission_received", submission, case=app.case)
     return submission
 

@@ -27,6 +27,7 @@ from tribunal.models import (
 )
 from tribunal.policy import active, administrator, staff, writer, open_proceeding
 from .common import audit, notify, notify_manager
+from .closed_filings import pending_council_filings
 from tribunal.db.context import database_settings, database_actor
 
 
@@ -175,9 +176,7 @@ def record_attendance(actor, session_id, member_id, present, hearing_id=None):
                 .get(pk=hearing.proceeding_id)
             )
             open_proceeding(proceeding)
-        elif not hearing.agenda.case.applications.filter(
-            kind="appeal", status="submitted"
-        ).exists():
+        elif not pending_council_filings(hearing.agenda.case).exists():
             raise ValidationError("Completed appeal hearing attendance is read-only.")
     row = Attendance.objects.create(
         session=session, hearing=hearing, member=member, present=present, actor=actor
@@ -201,7 +200,7 @@ def place_agenda(actor, session_id, case_id, part=2):
         raise ValidationError("Invalid session/agenda part.")
     if (
         case.status == "closed"
-        and not case.applications.filter(kind="appeal", status="submitted").exists()
+        and not pending_council_filings(case).exists()
     ):
         raise ValidationError("Closed case has no pending appeal to hear.")
     position = (session.agenda.aggregate(n=Max("position"))["n"] or 0) + 1
@@ -293,9 +292,7 @@ def hear_case(actor, item_id):
     if item.part != 2 or item.session.state == "closed" or item.state != "scheduled":
         raise ValidationError("Agenda item cannot be heard.")
     proceeding = item.case.proceedings.select_for_update().filter(status="open").first()
-    pending_appeal = item.case.applications.filter(
-        kind="appeal", status="submitted"
-    ).exists()
+    pending_appeal = pending_council_filings(item.case).exists()
     if (item.case.status != "open" or proceeding is None) and not pending_appeal:
         raise ValidationError("Case has no open proceeding or pending appeal to hear.")
     defaults = attendance_for(actor, item.session_id)
@@ -347,7 +344,7 @@ def save_hearing_outcome(
         raise ValidationError("Hearing outcome requires a held hearing.")
     if hearing.proceeding:
         open_proceeding(hearing.proceeding)
-    elif not hearing.agenda.case.applications.filter(kind="appeal", status="submitted").exists():
+    elif not pending_council_filings(hearing.agenda.case).exists():
         raise ValidationError("Completed appeal hearing is read-only.")
     prior = HearingOutcome.objects.filter(hearing=hearing).exists()
     result = HearingOutcome.objects.create(
@@ -385,7 +382,7 @@ def schedule_testimony(actor, agenda_id, party_id, starts_at, ends_at, instructi
         .get(pk=agenda_id)
     )
     writer(actor, agenda.case)
-    if agenda.case.status != "open" and not agenda.case.applications.filter(kind="appeal", status="submitted").exists():
+    if agenda.case.status != "open" and not pending_council_filings(agenda.case).exists():
         raise ValidationError("Closed case has no pending appeal testimony.")
     party = Party.objects.get(pk=party_id, case=agenda.case, account__isnull=False)
     if (
@@ -471,7 +468,7 @@ def reschedule_session(actor, session_id, new_date, replacement_times, reason):
     items = list(source.agenda.select_for_update(of=("self",)).order_by("case_id"))
     for item in items:
         item.case = Case.objects.select_for_update(of=("self",)).get(pk=item.case_id)
-        if item.case.status != "open" and not item.case.applications.filter(kind="appeal", status="submitted").exists():
+        if item.case.status != "open" and not pending_council_filings(item.case).exists():
             raise ValidationError("Resolve a closed case agenda entry before rescheduling.")
     appointments = list(TestimonyAppointment.objects.select_for_update(of=("self",)).filter(
         agenda__session=source).select_related("party__account", "agenda__session", "agenda__case").order_by("starts_at", "id"))
