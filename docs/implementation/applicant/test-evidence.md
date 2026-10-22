@@ -1,5 +1,14 @@
 # Desktop-R applicant workflow evidence
 
+## Current history and notification integration (2026-10-21)
+
+Twenty local applicant batches add own saved-history comparison in a Plenix modal and private paginated notifications with explicit read acknowledgements. No user-facing export exists. Current question labels are distinguished from unavailable historical wording.
+
+Current verification: 92 frontend tests, 74 isolated real API/browser groups, eight history/notification fixture groups and nine shell groups pass. Backend snapshot37d6ed7. Shared shell changes remain a governance patch. SQLite/synthetic/scanner-test coverage does not establish PostgreSQL or live service/institutional acceptance. Earlier counts below are historical snapshots.
+
+[Report](history-notification-report.md) | [Download JSON](history-notification-result.json)
+
+
 ## Current private message integration (2026-10-21)
 
 Applicant-only messaging now integrates backend db6dfa3: exact own thread binding,
