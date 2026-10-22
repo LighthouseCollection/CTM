@@ -112,6 +112,13 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
         }],
         "reconciliation_attempted": "Yes",
         "previously_applied": "No",
+        "children": [{
+            "first_name": "Michael",
+            "last_name": "O'Brien",
+            "dob": "2017-04-08",
+            "gender": "M",
+            "lives_with": "self",
+        }],
     }
     revision.__class__.objects.filter(pk=revision.pk).update(answers=revision.answers)
     spouse = Party.objects.create(case=app.case, slot="B", name="Jessica O'Brien")
@@ -165,6 +172,12 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
     assert detail["summary"]["filing_date"] == app.submitted_at.isoformat()
     assert detail["summary"]["sources"]["filing_date"] == detail["marriage_source"]
     assert detail["summary"]["sources"]["reason"] == detail["marriage_source"]
+    assert detail["summary"]["children"] == [{
+        "name": "Michael O'Brien",
+        "date_of_birth": "2017-04-08",
+        "gender": "M",
+        "lives_with": "self",
+    }]
     assert detail["summary"]["sources"]["children"] == detail["marriage_source"]
     assert detail["summary"]["sources"]["last_hearing_date"] is None
     assert detail["separation"]["marital_status"] == "Separated"

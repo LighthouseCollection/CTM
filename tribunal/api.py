@@ -600,6 +600,27 @@ def _submitted_separation(answers, application, case):
     }
 
 
+def _summary_child(value):
+    """Return a readable child record without discarding submitted child facts."""
+    if isinstance(value, str):
+        name = value.strip()
+        return {"name": name} if name else None
+    if not isinstance(value, dict):
+        return None
+    first_name = str(value.get("first_name") or value.get("firstName") or "").strip()
+    last_name = str(value.get("last_name") or value.get("lastName") or "").strip()
+    submitted_name = str(value.get("name") or "").strip()
+    name = " ".join(part for part in (first_name, last_name) if part) or submitted_name
+    if not name:
+        return None
+    return {
+        "name": name,
+        "date_of_birth": value.get("dob") or value.get("date_of_birth"),
+        "gender": value.get("gender"),
+        "lives_with": value.get("lives_with") or value.get("resides_with"),
+    }
+
+
 def _case_summary(case, application):
     """Case-summary values come only from a filing or a recorded council hearing."""
     answers = _submitted_answers(application)
@@ -623,7 +644,7 @@ def _case_summary(case, application):
     return {
         "filing_date": filing_source["submitted_at"] if filing_source else None,
         "reason": "; ".join(str(value) for value in grounds if value),
-        "children": [str(value) for value in children if value],
+        "children": [child for child in (_summary_child(value) for value in children) if child],
         "last_hearing_date": last_hearing.agenda.session.starts_at.isoformat() if last_hearing and last_hearing.agenda.session.starts_at else None,
         "sources": {
             "filing_date": filing_source,

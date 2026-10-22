@@ -2963,9 +2963,10 @@
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [assignment, setAssignment] = R.useState(null);
-    const [assignmentPending, setAssignmentPending] = R.useState(false);
-    const [assignmentFailure, setAssignmentFailure] = R.useState(null);
+    const [summaryEditing, setSummaryEditing] = R.useState(false);
+    const [summaryForm, setSummaryForm] = R.useState(null);
+    const [summaryPending, setSummaryPending] = R.useState(false);
+    const [summaryFailure, setSummaryFailure] = R.useState(null);
     const [state, retry] = base.useLoad(
       () =>
         api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)).then(async (record) => {
@@ -2997,7 +2998,8 @@
         : record.assigned_member || null;
     const eligibleMembers = base.assignableMembers(members);
     const presidents = base.assignmentAuthorizers(members);
-    const summary = record.summary || {};
+    const submittedSummary = record.summary || {};
+    const summary = councilCardValues(record, "summary", submittedSummary);
     const applicant = record.parties.find((party) => party.slot === "A") || record.parties[0] || null;
     const respondent = record.parties.find((party) => party.slot === "B") || record.parties[1] || null;
     const personPill = (party) => {
@@ -3052,22 +3054,26 @@
         time: summaryDate(applicationDate.date, lang),
         badge: timelineBadge("active", t("completed")),
       });
-    const recordAssignment = async () => {
-      if (!assignment?.memberId || !assignment.presidentId) return;
-      setAssignmentPending(true);
-      setAssignmentFailure(null);
+    const canEditSummary = writerFor(user, null, record) && openProceeding(record)?.status === "open";
+    const childLabel = (child) => typeof child === "string" ? child : child?.name || "—";
+    const childrenText = (children) => (children || []).map(childLabel).filter((value) => value && value !== "—").join("\n");
+    const startSummaryEdit = () => {
+      setSummaryFailure(null);
+      setSummaryForm({ reason: summary.reason || "", children: childrenText(summary.children), memberId: eligibleMembers.find((member) => member.name === manager)?.id || "", presidentId: "" });
+      setSummaryEditing(true);
+    };
+    const saveSummary = async (event) => {
+      event.preventDefault();
+      const nextMemberId = summaryForm.memberId;
+      const currentMemberId = eligibleMembers.find((member) => member.name === manager)?.id || "";
+      if (nextMemberId && nextMemberId !== currentMemberId && !summaryForm.presidentId) { setSummaryFailure(bt("choosePresident")); return; }
+      setSummaryPending(true); setSummaryFailure(null);
       try {
-        await api(`/api/cases/${encodeURIComponent(caseId)}/assignment/`, {
-          method: "POST",
-          body: JSON.stringify({ member_id: assignment.memberId, president_id: assignment.presidentId }),
-        });
-        setAssignment(null);
-        retry();
-      } catch (error) {
-        setAssignmentFailure(base.serverMessage(error, bt));
-      } finally {
-        setAssignmentPending(false);
-      }
+        if (nextMemberId && nextMemberId !== currentMemberId) await api(`/api/cases/${encodeURIComponent(caseId)}/assignment/`, { method: "POST", body: JSON.stringify({ member_id: nextMemberId, president_id: summaryForm.presidentId }) });
+        await api(`/api/proceedings/${encodeURIComponent(openProceeding(record).id)}/findings/`, { method: "POST", body: JSON.stringify({ fact_code: "case_card.summary", value: { reason: summaryForm.reason.trim(), children: summaryForm.children.split(/\r?\n/).map((name) => name.trim()).filter(Boolean).map((name) => ({ name })) } }) });
+        setSummaryEditing(false); retry();
+      } catch (error) { setSummaryFailure(base.serverMessage(error, bt)); }
+      finally { setSummaryPending(false); }
     };
     return h(
       P.Stack,
@@ -3075,71 +3081,36 @@
       h(P.Text, { as: "h1", variant: "title" }, record.number),
       h(
         P.Panel,
-        { icon: "document", title: t("caseSummary") },
-        h(P.PropertyList, { className: "ctm-case-summary-fields" },
-        h(P.PropertyList.Item, { label: t("caseNumber") }, h(P.Text, { variant: "data" }, record.number)),
-        h(P.PropertyList.Item, { label: t("filingDate") }, summaryDate(summary.filing_date, lang)),
-        h(P.PropertyList.Item, { label: bt("statusLabel") }, h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed"))),
-        h(P.PropertyList.Item, { label: t("applicant") }, personPill(applicant)),
-        h(P.PropertyList.Item, { label: t("respondent") }, personPill(respondent)),
-        h(P.PropertyList.Item, { label: t("reasonForDivorce") }, summary.reason || "—"),
-        h(
-          P.PropertyList.Item,
-          { label: t("assignedCouncilMember") },
-          !manager && record.can_assign
-            ? h(P.Select, {
-                value: assignment?.memberId || "",
-                disabled: assignmentPending || !eligibleMembers.length,
-                onChange: (event) => {
-                  const memberId = event.target.value;
-                  setAssignmentFailure(null);
-                  setAssignment(memberId ? { memberId, presidentId: "" } : null);
-                },
-                options: [
-                  { value: "", label: bt("unassigned") },
-                  ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id })),
-                ],
-              })
-            : manager ? h(P.DataPill, { person: true, fill: true }, manager) : bt("unassigned"),
-        ),
-        h(P.PropertyList.Item, { label: t("marriageDuration") }, marriageDuration(record.marriage?.church_marriage_date, lang)),
-        h(P.PropertyList.Item, { label: t("lastHearingDate") }, summaryDate(summary.last_hearing_date, lang)),
-        h(P.PropertyList.Item, { label: t("children") }, summary.children?.length ? summary.children.join(" · ") : t("noChildren")),
-        ),
+        { icon: "document", title: t("caseSummary"), actions: canEditSummary && !summaryEditing ? h(P.Button, { size: "sm", onClick: startSummaryEdit }, "Edit") : null },
+        summaryEditing
+          ? h(P.Form, { onSubmit: saveSummary, label: t("caseSummary"), noValidate: true },
+              h("div", { className: "ctm-case-edit-grid" },
+                h(P.Field, { label: t("reasonForDivorce") }, h(P.Input, { value: summaryForm.reason, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, reason: event.target.value })) })),
+                h(P.Field, { label: t("assignedCouncilMember") }, h(P.Select, { value: summaryForm.memberId, disabled: summaryPending || !record.can_assign, onChange: (event) => setSummaryForm((old) => ({ ...old, memberId: event.target.value, presidentId: "" })), options: [{ value: "", label: bt("unassigned") }, ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id }))] })),
+                summaryForm.memberId && summaryForm.memberId !== (eligibleMembers.find((member) => member.name === manager)?.id || "") ? h(P.Field, { label: bt("president"), required: true }, h(P.Select, { value: summaryForm.presidentId, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, presidentId: event.target.value })), options: [{ value: "", label: bt("choosePresident") }, ...presidents.map((member) => ({ value: member.id, label: member.name || member.id }))] })) : null,
+              ),
+              h(P.Field, { label: t("children"), description: "One child per line. Submitted child details remain with the application." }, h(P.Textarea, { rows: 4, value: summaryForm.children, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, children: event.target.value })) })),
+              summaryFailure ? h(P.Notice, { tone: "danger" }, summaryFailure) : null,
+              h(P.FormActions, { sticky: false }, h(P.Button, { disabled: summaryPending, onClick: () => setSummaryEditing(false) }, bt("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: summaryPending, disabled: summaryPending }, "Save")),
+            )
+          : h(P.PropertyList, { className: "ctm-case-summary-fields" },
+              h(P.PropertyList.Item, { label: t("caseNumber") }, h(P.Text, { variant: "data" }, record.number)),
+              h(P.PropertyList.Item, { label: t("filingDate") }, summaryDate(summary.filing_date, lang)),
+              h(P.PropertyList.Item, { label: bt("statusLabel") }, h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed"))),
+              h(P.PropertyList.Item, { label: t("assignedCouncilMember") }, manager ? h(P.DataPill, { person: true, className: "ctm-case-summary-person-pill" }, manager) : bt("unassigned")),
+              h(P.PropertyList.Item, { label: t("applicant") }, personPill(applicant)),
+              h(P.PropertyList.Item, { label: t("respondent") }, personPill(respondent)),
+              h(P.PropertyList.Item, { label: t("reasonForDivorce") }, summary.reason || "—"),
+              h(P.PropertyList.Item, { label: t("marriageDuration") }, marriageDuration(record.marriage?.church_marriage_date, lang)),
+              h(P.PropertyList.Item, { label: t("children") }, summary.children?.length ? summary.children.map(childLabel).join(" · ") : t("noChildren")),
+              h(P.PropertyList.Item, { label: t("lastHearingDate") }, summaryDate(summary.last_hearing_date, lang)),
+            ),
       ),
       h(
         P.Panel,
         { icon: "calendar", title: t("keyDates") },
         h(P.Timeline, { label: t("keyDates"), items: summaryTimeline }),
       ),
-      assignment
-        ? h(
-            P.Dialog,
-            { open: true, title: bt("assignTitle"), onClose: () => !assignmentPending && setAssignment(null) },
-            h(
-              P.Stack,
-              { gap: "md" },
-              h(P.Text, { as: "p", variant: "secondary" }, bt("assignHelp")),
-              h(P.Field, { label: bt("member"), required: true }, h(P.Select, {
-                value: assignment.memberId,
-                disabled: assignmentPending,
-                onChange: (event) => setAssignment((old) => ({ ...old, memberId: event.target.value })),
-                options: [{ value: "", label: bt("chooseMember") }, ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id }))],
-              })),
-              h(P.Field, { label: bt("president"), required: true }, h(P.Select, {
-                value: assignment.presidentId,
-                disabled: assignmentPending,
-                onChange: (event) => setAssignment((old) => ({ ...old, presidentId: event.target.value })),
-                options: [{ value: "", label: bt("choosePresident") }, ...presidents.map((member) => ({ value: member.id, label: member.name || member.id }))],
-              })),
-              assignmentFailure ? h(P.Notice, { tone: "danger" }, assignmentFailure) : null,
-              h(P.Inline, { justify: "end" },
-                h(P.Button, { variant: "secondary", disabled: assignmentPending, onClick: () => setAssignment(null) }, bt("cancel")),
-                h(P.Button, { variant: "primary", loading: assignmentPending, disabled: assignmentPending || !assignment.memberId || !assignment.presidentId, onClick: recordAssignment }, bt("recordAssignment")),
-              ),
-            ),
-          )
-        : null,
     );
   }
 

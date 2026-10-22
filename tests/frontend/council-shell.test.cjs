@@ -164,6 +164,11 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
   assert.match(councilCase, /tone: record\.status === "open" \? "success" : "neutral"/);
   assert.match(councilCase, /h\(P\.DataPill, \{ gender, className: "ctm-case-summary-person-pill" \}, party\.name\)/);
+  assert.match(councilCase, /actions: canEditSummary && !summaryEditing/);
+  assert.match(councilCase, /fact_code: "case_card\.summary"/);
+  assert.match(councilCase, /label: t\("applicant"\).*?label: t\("respondent"\)/s);
+  assert.match(councilCase, /person: true, className: "ctm-case-summary-person-pill"/);
+  assert.match(api, /def _summary_child\(value\):/);
   assert.match(councilCase, /latestAudit\("case_heard"\)/);
   assert.match(councilCase, /latestAudit\("case_assigned"\)/);
   assert.match(councilCase, /latestAudit\("application_submitted"\)/);
