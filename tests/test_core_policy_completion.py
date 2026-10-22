@@ -37,8 +37,10 @@ def granted_roles():
     return enter
 
 
-def test_seven_core_tables_fail_closed_without_actor(granted_roles,people):
+def test_seven_core_tables_fail_closed_without_actor(granted_roles,ready_application):
+    submit_application(ready_application.owner,ready_application.pk,'populated-isolation',{'accepted':True,'name':'John Smith'})
     for model in [Account,Person,Case,Party,Proceeding,OpenCaseClaim,Outbox]:
+        assert model.objects.exists(), model.__name__
         with granted_roles('ctm_app'):
             assert not model.objects.exists()
 
@@ -162,3 +164,17 @@ def test_conflicted_link_does_not_break_login_or_grant_review_authority(granted_
     monkeypatch.setattr('tribunal.services.identity.activate_pending_links',conflict)
     with granted_roles('ctm_app'):
         activate_verified_case_links(sender=Account,request=None,user=people['applicant'])
+
+
+@pytest.mark.parametrize('identity', [
+    {'marriage_date':'2011-05-01','spouse_dob_low':'1985-03-14','spouse_dob_high':'1987-04-02'},
+    {'marriage_date':'2010-05-01','spouse_dob_low':'1980-01-01','spouse_dob_high':'1987-04-02'},
+    {'marriage_date':'2010-05-01','spouse_dob_low':None,'spouse_dob_high':None},
+])
+def test_new_case_cannot_rebind_eligible_filing_identity(granted_roles,ready_application,identity):
+    from tribunal.db.context import database_settings
+    with pytest.raises(DatabaseError):
+        with granted_roles('ctm_app',ready_application.owner):
+            with database_settings({'ctm.core_operation':'filing','ctm.core_target':str(ready_application.pk)}):
+                Case.objects.create(number='20261021-01',**identity)
+    assert not Case.objects.exists()

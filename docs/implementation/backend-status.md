@@ -5,8 +5,8 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **566 PostgreSQL passed,1 skipped**; no model drift; migration rollback/
-reapply through0038. Protected151-table specification and accepted questions unchanged.
+Validation: **599 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+reapply through0039. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
   domain tables forced RLS; queue provenance in0036.
@@ -19,6 +19,14 @@ reapply through0038. Protected151-table specification and accepted questions unc
 - Live-service dependencies separated in live-service-dependencies.md.
 - All streams received the requested continuation/ownership/acceptance instructions
   on issues #1/#2/#3/#15/#4. Council is restricted to its requested first task.
+
+## Applicant checkpoint continuation
+
+The latest backend-owned slice implements recursive repeat validation, stable row
+identities, textarea publisher/runtime agreement, RO case-number aliases and MC/CMC
+category reconciliation, plus new-case identity snapshot binding in0039. Details,
+compatibility and remaining content dependencies:
+[applicant-validation-checkpoint.md](applicant-validation-checkpoint.md).
 
 ## Unfinished
 
@@ -34,7 +42,10 @@ completes the requested reconciliation/documentation, not those future migration
   and authorized test identities/mailboxes; see the separate dependency matrix.
   Operational availability is unverified, not asserted missing based on this sandbox.
 - Accepted application fact/repeat mapping: applicant issue #1 supplies approved
-  question, validation and Arabic mappings before normalized fact backfill design.
+  question and Arabic mappings before normalized fact backfill design. The reported
+  recursive validator and textarea gaps are addressed in the checkpoint continuation;
+  exact per-prior-marriage requiredness/answer states and approved Arabic civil-certificate
+  wording still require content/configuration owners.
 - Canonical institutional/membership/content records and identity correction rules:
   institution/governance acceptance before populating new retained fact structures.
 

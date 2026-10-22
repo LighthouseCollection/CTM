@@ -1,5 +1,18 @@
 # VM-FRM backend progress
 
+## Applicant validation checkpoint continuation
+
+**599 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply
+through0039. Inventory remains63 models/91 routes/63 forced-RLS tables.
+
+Recursive final repeat validation and stable row UUIDs; nested publisher validation;
+textarea agreement; canonical RO case_number with legacy number alias; mandatory
+MC church/CMC civil categories; approved text storage for per-marriage permit;
+new-case identity bound to filing answers in0039. Exact compatibility, normalized
+migration plan, content blockers and acceptance:
+[applicant-validation-checkpoint.md](applicant-validation-checkpoint.md).
+
+
 ## Core policy and grant completion (current delivery)
 
 Final PostgreSQL: **566 passed,1 skipped**; no model drift; rollback/reapply
