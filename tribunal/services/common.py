@@ -71,6 +71,10 @@ def notify_manager(case, kind, obj, digest=False):
     notify(case.assigned_member, kind, obj, case=case, due_at=due)
     if digest:
         # All unsent qualifying applicant events wait until10quiet minutes.
+        if connection.vendor == "postgresql":
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT public.ctm_delay_digest(%s,%s)", [str(case.pk), due])
+            return
         Outbox.objects.filter(
             case=case,
             delivered_at__isnull=True,

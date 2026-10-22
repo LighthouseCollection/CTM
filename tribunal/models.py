@@ -473,6 +473,7 @@ class AuditEvent(Immutable):
 
 
 class Outbox(Root):
+    queued_by = models.ForeignKey(Account, null=True, editable=False, on_delete=models.PROTECT, related_name="queued_actions")
     key = models.CharField(max_length=250, unique=True)
     kind = models.CharField(max_length=50)
     case = models.ForeignKey(Case, null=True, on_delete=models.PROTECT)

@@ -1,3 +1,4 @@
+from tribunal.db.context import core_operation
 from datetime import date
 from zoneinfo import ZoneInfo
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -186,8 +187,8 @@ def safe_file(file):
 
 
 DOCUMENT_LABELS = {
-    "MC": ("Marriage certificate", "شهادة الزواج"),
-    "CMC": ("Church marriage certificate", "شهادة الزواج الكنسي"),
+    "MC": ("Church marriage certificate", "شهادة الزواج الكنسي"),
+    "CMC": ("Civil marriage certificate", "شهادة الزواج"),
     "CDD": ("Final civil divorce decree", "حكم الطلاق المدني النهائي"),
     "PHOTO": ("Applicant photo", "صورة مقدم الطلب"),
     "SPOUSE_PHOTO": ("Spouse photo, if available", "صورة الزوج أو الزوجة إن توفرت"),
@@ -197,7 +198,7 @@ DOCUMENT_LABELS = {
 
 
 def document_requirements(app, answers):
-    required = {"MC", "CDD", "PHOTO"} if app.kind == "petition" else set()
+    required = {"MC", "CMC", "CDD", "PHOTO"} if app.kind == "petition" else set()
     if app.kind == "petition":
         required |= set(app.questionnaire.definition.get("required_document_categories", []))
     statement = answers.get("statement")
@@ -241,10 +242,11 @@ def required_documents(app, answers):
         ):
             raise ValidationError(f"Required document missing: {requirement['category']}")
     for order in answers.get("restraining_orders", []):
-        if not all(
-            str(order.get(k, "")).strip() and str(order[k]).lower() != "unknown"
-            for k in ["court", "number", "status"]
-        ):
+        number = order.get("case_number", order.get("number"))
+        if "case_number" in order and "number" in order and order["case_number"] != order["number"]:
+            raise ValidationError("Restraining-order case number aliases conflict.")
+        if not all(isinstance(value, str) and value.strip() and value.strip().lower() != "unknown"
+                   for value in [order.get("court"), number, order.get("status")]):
             raise ValidationError(
                 "Every restraining order requires court, case number and status."
             )
@@ -268,27 +270,47 @@ def validate_petition(answers):
         "marriage_date",
         "grounds",
     ]
-    if any(not answers.get(k) for k in required):
+    if not isinstance(answers, dict) or any(not answers.get(k) for k in required):
         raise ValidationError(
             "Complete the required identity, marriage and grounds fields."
         )
+    if (any(not isinstance(answers[key], str) or not answers[key].strip()
+            for key in ["first_name", "last_name", "birth_date", "gender", "marriage_date"])
+            or not isinstance(answers["grounds"], list)
+            or any(not isinstance(item, str) for item in answers["grounds"])):
+        raise ValidationError("Identity fields must be text and grounds must be a list of codes.")
     if answers["gender"] not in {"M", "F"} or not set(answers["grounds"]) <= GROUNDS:
         raise ValidationError("Invalid gender or selected grounds.")
-    for field in ["birth_date", "marriage_date"]:
+    date_fields = ["birth_date", "marriage_date"]
+    if answers.get("spouse_birth_date") not in (None, ""):
+        date_fields.append("spouse_birth_date")
+    for field in date_fields:
         try:
             value = date.fromisoformat(answers[field])
         except (TypeError, ValueError):
             raise ValidationError(f"Invalid {field} date.")
         if value > timezone.localdate():
             raise ValidationError("Future identity/marriage dates are invalid.")
-    for child in answers.get("children", []):
-        if not child.get("gender") or not child.get("lives_with"):
+    if "prior_marriages" in answers:
+        from types import SimpleNamespace
+        from tribunal.validation import validate_answers
+        validate_answers(SimpleNamespace(definition={"fields": [{
+            "code": "prior_marriages", "type": "list", "item_fields": [
+                {"code": "spouse_name", "type": "text"},
+                {"code": "ecclesiastical_permit", "type": "text"},
+            ]}]}), {"prior_marriages": answers["prior_marriages"]})
+    children = answers.get("children", [])
+    if not isinstance(children, list) or any(not isinstance(child, dict) for child in children):
+        raise ValidationError("Children must be a list of object rows.")
+    for child in children:
+        if any(not isinstance(child.get(key), str) or not child[key].strip() for key in ["gender", "lives_with"]):
             raise ValidationError(
                 "Children require gender and lives-with; Unknown is allowed."
             )
 
 
 @transaction.atomic
+@core_operation("filing")
 def submit_application(
     actor, app_id, idempotency_key, attestation=None, *, expected_version=None, paid_intent_id=None
 ):

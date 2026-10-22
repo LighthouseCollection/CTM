@@ -1,3 +1,4 @@
+from tribunal.db.context import core_operation
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from tribunal.models import (
@@ -12,9 +13,12 @@ from tribunal.policy import active, administrator
 from django.core.validators import validate_email
 from tribunal.db.context import database_actor
 from .common import audit, lock_key, notify
+import uuid
+from tribunal.db.context import database_settings
 
 
 @transaction.atomic
+@core_operation("preferences")
 def save_preferences(actor, values):
     active(actor)
     allowed = {"ui_language", "notification_language"}
@@ -66,18 +70,17 @@ def enroll_council(
         raise ValidationError("Council names must be text up to150 characters.")
     if microsoft_subject is not None and (not isinstance(microsoft_subject, str) or len(microsoft_subject)>200):
         raise ValidationError("Invalid preauthorized Microsoft subject.")
-    user = Account.objects.create_user(
-        email=email,
-        first_name=first_name,
-        last_name=last_name,
-        role=role,
-        microsoft_subject=microsoft_subject or "",
-    )
+    user_id, person_id = uuid.uuid4(), uuid.uuid4()
+    with database_settings({"ctm.enroll_account": str(user_id), "ctm.enroll_person": str(person_id)}):
+        person = Person.objects.create(id=person_id, first_name=first_name, last_name=last_name)
+        user = Account.objects.create_user(id=user_id, person=person, email=email,
+            first_name=first_name, last_name=last_name, role=role, microsoft_subject=microsoft_subject or "")
     audit(actor, "council_enrolled", user)
     return user
 
 
 @transaction.atomic
+@core_operation("account_status")
 def set_account_status(actor, target_id, enabled):
     administrator(actor)
     if type(enabled) is not bool:
@@ -108,6 +111,7 @@ def link_party(actor, case, account):
     return link_authorized_party(actor, case, account)
 
 
+@core_operation("onboarding")
 def link_authorized_party(actor, case, account):
     """Internal continuation of an already-authorized pending association."""
     administrator(actor)
@@ -180,6 +184,7 @@ def add_other_party(actor, case_id, first_name, last_name, email):
 
 
 @transaction.atomic
+@core_operation("activation", target_arg=0)
 def activate_pending_links(account):
     if (
         not account.email_verified

@@ -90,6 +90,10 @@ def runtime():
             "ctm_message_delivery_valid(uuid,uuid)",
             "ctm_draft_warning_current(uuid,timestamptz,uuid)",
             "ctm_orphan_cleanup_allowed(text)",
+            "ctm_core_read(text,jsonb)",
+            "ctm_core_write(text,jsonb,text)",
+            "ctm_applicant_parties(uuid)",
+            "ctm_delay_digest(uuid,timestamptz)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -642,12 +646,16 @@ def test_notification_retry_does_not_require_reading_another_recipients_inbox(
     from tribunal.services.common import notify
 
     with runtime(ready_application.owner):
-        notify(people["admin"], "test_update", ready_application)
-        notify(people["admin"], "test_update", ready_application)
+        submit_application(ready_application.owner, ready_application.pk, "notification-retry", {"accepted": True, "name": "John Smith"})
+    ready_application.refresh_from_db()
+    source = ready_application.submissions.get()
+    with runtime(ready_application.owner):
+        notify(people["admin"], "intake_submitted", source, case=source.application.case)
+        notify(people["admin"], "intake_submitted", source, case=source.application.case)
         assert not Notification.objects.filter(recipient=people["admin"]).exists()
     assert (
         Notification.objects.filter(
-            recipient=people["admin"], kind="test_update"
+            recipient=people["admin"], kind="intake_submitted"
         ).count()
         == 1
     )
@@ -774,7 +782,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0035_queue_source_and_cleanup_guards")])
+        MigrationExecutor(connection).migrate([("tribunal", "0039_filing_case_snapshot_guard")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -944,7 +952,7 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 56
+        assert report["checks"]["forced_rls_table_count"] == 63
         assert "tribunal_reportrequest" not in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
@@ -1657,7 +1665,9 @@ def test_request_privacy_raw_closure_and_subject_scope(runtime, ready_applicatio
     with runtime():
         assert not ReportRequest.objects.exists()
     with runtime(people["admin"]):
-        close_case(people["admin"], app.case, "synthetic_close")
+        from tribunal.services.decisions import record_decision, approve_decision
+        denial = record_decision(people["admin"], app.proceeding_id, "denied", "Synthetic denial", {})
+        approve_decision(people["admin"], denial.pk, people["president"].pk)
     with runtime(app.owner):
         assert list(ReportRequest.objects.values_list("pk", flat=True)) == [row.pk]
     with runtime(people["member"]):

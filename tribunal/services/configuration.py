@@ -216,9 +216,13 @@ def validate_questionnaire_definition(definition):
         code, kind = field.get("code"), field.get("type")
         if (not isinstance(code, str) or not code.strip() or code != code.strip()
                 or len(code) > 100 or code in codes
-                or not isinstance(kind, str) or kind not in {"text", "date", "choice", "boolean", "list"}):
+                or not isinstance(kind, str) or kind not in {"text", "textarea", "date", "choice", "boolean", "list"}):
             raise ValidationError("Field codes must be distinct and have a supported type.")
         codes[code] = field
+        if "item_fields" in field:
+            if kind != "list" or not isinstance(field["item_fields"], list) or not field["item_fields"]:
+                raise ValidationError("item_fields requires a nonempty list of repeat field definitions.")
+            validate_questionnaire_definition({"fields": field["item_fields"]})
         if "required" in field and type(field["required"]) is not bool:
             raise ValidationError("required must be a boolean.")
         if kind == "choice":

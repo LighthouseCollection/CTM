@@ -73,7 +73,7 @@ def claim_delivery(identifier, limit=500):
     Outbox.objects.filter(pk__in=ids).update(
         lease_until=now + timezone.timedelta(minutes=10), lease_token=uuid.uuid4()
     )
-    return list(Outbox.objects.filter(pk__in=ids).select_related("recipient"))
+    return list(Outbox.objects.filter(pk__in=ids))
 
 
 def deliver(events):
@@ -161,10 +161,20 @@ def deliver(events):
         return
     if event.kind == "transcribe":
         raise RuntimeError("Transcription provider not configured")
-    recipient = event.recipient
+    if connection.vendor == "postgresql":
+        from types import SimpleNamespace
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT public.ctm_delivery_destination(%s)", [str(event.pk)])
+            destination = cursor.fetchone()[0]
+        if isinstance(destination, str):
+            import json
+            destination = json.loads(destination)
+        recipient = SimpleNamespace(**destination) if destination else None
+    else:
+        recipient = event.recipient
+        if event.kind in MANAGER_KINDS and event.case_id:
+            recipient = Case.objects.select_related("assigned_member").get(pk=event.case_id).assigned_member
     if event.kind in MANAGER_KINDS and event.case_id:
-        case = Case.objects.select_related("assigned_member").get(pk=event.case_id)
-        recipient = case.assigned_member
         if recipient and recipient.role == "applicant":
             raise RuntimeError("Current manager authority requires review")
     if not recipient or not recipient.is_active or not recipient.email_verified:

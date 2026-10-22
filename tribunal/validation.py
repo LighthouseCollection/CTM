@@ -71,36 +71,60 @@ def validate_json_value(value, *, maximum=500_000):
 
 
 def validate_answers(schema, answers):
-    """Small declarative field vocabulary; no admin-supplied expressions or code."""
-    for field in schema.definition.get("fields", []):
-        code = field["code"]
-        condition = field.get("when")
-        if condition and answers.get(condition["field"]) != condition["equals"]:
-            continue
-        value = answers.get(code)
-        if field.get("required") and (
-            value is None
-            or value == ""
-            or value == []
-            or (isinstance(value, str) and not value.strip())
-        ):
-            raise ValidationError(f"Required answer missing: {code}")
-        if value is None or value == "":
-            continue
-        kind = field.get("type", "text")
-        if kind in {"text", "date", "choice"} and not isinstance(value, str):
-            raise ValidationError(f"Invalid answer type: {code}")
-        if kind == "date":
-            try:
-                date.fromisoformat(value)
-            except ValueError:
-                raise ValidationError(f"Invalid date: {code}")
-        if kind == "boolean" and not isinstance(value, bool):
-            raise ValidationError(f"Invalid boolean: {code}")
-        if kind == "list" and not isinstance(value, list):
-            raise ValidationError(f"Invalid list: {code}")
-        if kind == "choice" and value not in field.get("choices", []):
-            raise ValidationError(f"Invalid choice: {code}")
+    """Validate final answers recursively using the published field vocabulary."""
+    import uuid
+    validate_json_value(answers)
+    if not isinstance(answers, dict):
+        raise ValidationError("Answers must be an object.")
+
+    def fields_in(fields, values, path=""):
+        for field in fields:
+            code = field["code"]
+            location = f"{path}.{code}" if path else code
+            condition = field.get("when")
+            if condition and values.get(condition["field"]) != condition["equals"]:
+                continue
+            value = values.get(code)
+            if field.get("required") and (value is None or value == "" or value == []
+                    or (isinstance(value, str) and not value.strip())):
+                raise ValidationError(f"Required answer missing: {location}")
+            if value is None or value == "":
+                continue
+            kind = field.get("type", "text")
+            if kind not in {"text", "textarea", "date", "choice", "boolean", "list"}:
+                raise ValidationError(f"Unsupported answer type: {location}")
+            if kind in {"text", "textarea", "date", "choice"} and not isinstance(value, str):
+                raise ValidationError(f"Invalid answer type: {location}")
+            if kind == "date":
+                try:
+                    date.fromisoformat(value)
+                except ValueError:
+                    raise ValidationError(f"Invalid date: {location}")
+            if kind == "boolean" and type(value) is not bool:
+                raise ValidationError(f"Invalid boolean: {location}")
+            if kind == "choice" and value not in field.get("choices", []):
+                raise ValidationError(f"Invalid choice: {location}")
+            if kind == "list":
+                if not isinstance(value, list):
+                    raise ValidationError(f"Invalid list: {location}")
+                if "item_fields" in field:
+                    identities = set()
+                    for index, row in enumerate(value):
+                        row_path = f"{location}[{index}]"
+                        if not isinstance(row, dict):
+                            raise ValidationError(f"Repeat rows must be objects: {row_path}")
+                        try:
+                            identity = uuid.UUID(row.get("id", "")) if isinstance(row.get("id"), str) else None
+                        except ValueError:
+                            identity = None
+                        if identity is None or identity in identities:
+                            raise ValidationError(f"Repeat rows require distinct stable UUIDs: {row_path}")
+                        identities.add(identity)
+                        fields_in(field["item_fields"], row, row_path)
+                elif "choices" in field and any(not isinstance(item, str) or item not in field["choices"] for item in value):
+                    raise ValidationError(f"Invalid list choice: {location}")
+
+    fields_in(schema.definition.get("fields", []), answers)
 
 
 def validate_attestation(value):
