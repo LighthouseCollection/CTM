@@ -72,6 +72,10 @@ test("the current session keeps labeled actions and its status control inside th
   assert.doesNotMatch(agendaTable, /P\.SplitView/);
   assert.match(agendaTable, /previousRecommendation/);
   assert.match(agendaTable, /title: "", field: "open_action"/);
+  const assignmentColumns = agendaTable.slice(agendaTable.indexOf("const columns = first"), agendaTable.indexOf("        : ["));
+  assert.ok(assignmentColumns.lastIndexOf("field: \"open_action\"") > assignmentColumns.lastIndexOf("field: \"assigned_member_name\""), "Cases to assign ends with Open");
+  const scheduledColumns = agendaTable.slice(agendaTable.indexOf("        : ["), agendaTable.indexOf("      return h(P.Panel"));
+  assert.ok(scheduledColumns.lastIndexOf("field: \"open_action\"") > scheduledColumns.lastIndexOf("field: \"previous_recommendation\""), "Scheduled hearings ends with Open");
   assert.match(shellLayout, /headerMenu: false/);
   assert.match(shellLayout, /resizable: false/);
   assert.match(shellLayout, /return h\(P\.DataTable/);

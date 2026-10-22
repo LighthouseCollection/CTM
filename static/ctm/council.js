@@ -2111,8 +2111,9 @@
             { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent") },
             { title: t("reason"), field: "reason" },
             { title: t("yearsMarried"), field: "married_years", render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
-            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => setDialog({ kind: "agenda", row }) }, t("open")) },
-            { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
+
+            { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => setDialog({ kind: "agenda", row }) }, t("open")) },
+
           ]
         : [
             { title: "#", field: "position", kind: "name" },
