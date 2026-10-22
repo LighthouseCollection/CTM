@@ -2067,7 +2067,7 @@
     const presidentRows = assignmentAuthorizers(data.members);
     const recorder = canRecordAssignment(user, data.members);
     const memberRows = assignableMembers(data.members);
-    const transferSessions = data.sessions.filter((candidate) => candidate.id !== session.id && ["draft", "planned"].includes(candidate.state));
+    const transferSessions = data.sessions.filter((candidate) => candidate.id !== session.id && candidate.date > session.date && ["draft", "planned"].includes(candidate.state));
     // EntityHeader is the default Plenix record header.  Values come from the
     // selected session payload; a reference/state badge is deliberately not
     // repeated here because it is not part of the session's requested header.

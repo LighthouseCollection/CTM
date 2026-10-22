@@ -268,7 +268,7 @@ def agenda_item_data(item, actor, attendance):
             "submitted_at": application.submitted_at.isoformat() if application and application.submitted_at else None,
             "assignment_status": "assigned" if case.assigned_member_id else "unassigned",
             "can_present": can_present,
-            "can_transfer": bool(item.session.state == "planned" and item.state in {"scheduled", "time_exhausted"}
+            "can_transfer": bool(item.session.state in {"draft", "planned"} and item.state in {"scheduled", "time_exhausted"}
                                  and (actor.role in {"admin", "secretary"} or case.assigned_member_id == actor.pk)),
             "can_record_outcome": bool(hearing and hearing_writable(hearing, actor)),
             "testimony": testimony}

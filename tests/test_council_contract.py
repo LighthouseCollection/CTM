@@ -541,6 +541,19 @@ def test_active_session_agenda_requires_an_audited_override_to_move(filed, peopl
     assert transfer.reason == "The council ran out of time."
 
 
+def test_draft_session_agenda_can_move_to_a_later_open_session(filed, people):
+    app = filed
+    source_session = create_session(people["admin"], date(2030, 2, 2), state="draft")
+    target_session = create_session(people["admin"], date(2030, 2, 9), state="draft")
+    source = place_agenda(people["member"], source_session.pk, app.case_id)
+
+    destination = transfer_agenda_item(
+        people["member"], source.pk, target_session.pk, "Move to the later planned session."
+    )
+
+    assert destination.session_id == target_session.pk
+
+
 def test_session_metadata_can_be_edited_before_a_hearing(filed, people):
     session = create_session(people["admin"], date(2030, 2, 2), location="Original location")
     updated = update_session(

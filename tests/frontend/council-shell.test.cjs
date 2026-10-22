@@ -280,6 +280,7 @@ test("active-session transfers require a reason and use the retained override en
   assert.match(council, /transferReason/);
   assert.match(council, /\/transfer\//);
   assert.match(council, /row\.can_transfer/);
+  assert.match(council, /candidate\.date > session\.date/);
 });
 
 

@@ -341,7 +341,7 @@ def place_agenda(actor, session_id, case_id, part=2):
 
 @transaction.atomic
 def transfer_agenda_item(actor, item_id, target_session_id, reason):
-    """Move an active agenda item only through an authorized, retained override."""
+    """Move an open agenda item to a later session through an audited override."""
     if not isinstance(reason, str) or not reason.strip():
         raise ValidationError("A reason is required to move a case to another session.")
     source = (
@@ -352,10 +352,10 @@ def transfer_agenda_item(actor, item_id, target_session_id, reason):
     case = Case.objects.select_for_update(of=("self",)).get(pk=source.case_id)
     writer(actor, case)
     target = CouncilSession.objects.select_for_update(of=("self",)).get(pk=target_session_id)
-    if source.session.state != "planned" or source.state not in {"scheduled", "time_exhausted"}:
-        raise ValidationError("Only a scheduled case in an in-session agenda can be moved.")
-    if target.pk == source.session_id or target.state not in {"draft", "planned"}:
-        raise ValidationError("Choose a different draft or in-session tribunal session.")
+    if source.session.state not in {"draft", "planned"} or source.state not in {"scheduled", "time_exhausted"}:
+        raise ValidationError("Only a scheduled case in an open tribunal session can be moved.")
+    if target.pk == source.session_id or target.state not in {"draft", "planned"} or target.date <= source.session.date:
+        raise ValidationError("Choose a later open tribunal session.")
     if AgendaItem.objects.filter(session=target, case=case).exists():
         raise ValidationError("The case is already on the selected session agenda.")
     position = (target.agenda.aggregate(n=Max("position"))["n"] or 0) + 1
