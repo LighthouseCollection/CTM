@@ -30,9 +30,13 @@
   gap: var(--plx-sys-space-inline-sm);
 }
 
+.ctm-spouse-profile-section {
+  --ctm-spouse-section-accent: var(--plx-ref-color-orange-700, #9a4d00);
+}
+
 .ctm-spouse-profile-section__heading {
   inline-size: 100%;
-  color: var(--plx-sys-color-primary, var(--plx-color-primary));
+  color: var(--ctm-spouse-section-accent);
 }
 
 .ctm-spouse-profile-section__heading .plx-icon,
@@ -52,6 +56,9 @@
 .ctm-spouse-profile-section__divider {
   flex: 1 1 auto;
   min-inline-size: 0;
+  block-size: 1px;
+  border: 0;
+  background: var(--ctm-spouse-section-accent);
 }
 
 
