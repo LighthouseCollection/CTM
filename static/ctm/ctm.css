@@ -99,15 +99,9 @@
   min-block-size: 2.5rem;
 }
 
-/* The CDN inserts a generic type marker before every column title. It is not
-   semantic in a case agenda, so retain the real title and hide only that marker. */
-.ctm-session-agenda-grid .plx-data-grid__title > span:first-child:not(:last-child) {
-  display: none;
-}
-
-/* Plenix emits the generic marker as the first title-text span and the actual
-   column label as the second. Remove the marker in every CTM data grid. */
-.plx-data-grid__title > .plx-data-grid__title-text:first-of-type:not(:only-of-type) {
+/* The CDN inserts a generic text-type icon before every column header. It is
+   not semantic in council tables, so retain the text label and hide the icon. */
+.plx-data-grid__title > .plx-data-grid__type-icon {
   display: none;
 }
 

@@ -117,7 +117,7 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /function spouseProfileSection\(P, h, t, title, icon, values, twoColumns = false\)/);
   assert.match(councilCase, /t\("contact"\), "message", \[\s*[\s\S]*?\], true\)/);
   const councilCss = fs.readFileSync("static/ctm/ctm.css", "utf8");
-  assert.match(councilCss, /ctm-session-agenda-grid .*span:first-child:not\(:last-child\)/);
+  assert.match(councilCss, /plx-data-grid__type-icon/);
   assert.match(councilCss, /ctm-spouse-profile-section--two-columns/);
   assert.match(councilCss, /grid-column: 1 \/ -1/);
   assert.match(councilCss, /inline-size: 68px/);
