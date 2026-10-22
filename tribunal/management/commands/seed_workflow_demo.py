@@ -174,6 +174,10 @@ class Command(BaseCommand):
                 datetime.combine(day, time(hour=hour)), ZoneInfo("America/Los_Angeles")
             )
             session, _ = m.CouncilSession.objects.get_or_create(date=day)
+            if session.state == "closed":
+                # Archived sessions are immutable; an idempotent fixture refresh
+                # must leave their recorded council context untouched.
+                return session
             session.state = state
             session.starts_at = starts_at
             session.presiding_member = president
