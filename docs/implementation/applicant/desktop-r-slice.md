@@ -38,7 +38,10 @@ The renderer accepts object choices `{value,label_en,label_ar}` or existing
 primitive `choices` plus `choice_labels[value] = {label_en,label_ar}`. The latter
 preserves current backend choice validation. Existing `when: {field,equals}` uses
 the backend's strict equality predicate; hidden answers are retained. Unsupported
-repeat/conditional vocabularies remain blocked until a shared contract exists.
+conditional vocabularies remain blocked until a shared contract exists. Repeated
+records use the proposed `list.item_fields` vocabulary in `api-contract.md`, retain
+existing IDs/unknown keys and generate IDs only for new rows. Approved full repeat
+definitions and backend nested validation remain dependencies.
 This proposal must be reconciled with the backend owner's response before claiming
 API integration complete. Draft save already accepts `{answers, expected_version}`.
 No migrations, backend edits, shared shell edits or protected build-spec changes.

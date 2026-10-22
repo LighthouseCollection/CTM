@@ -159,3 +159,31 @@ test('draft creation delegates eligibility and reuse to server without posting l
   assert.deepEqual(payload,{kind:'petition'});
   assert.equal(result,'reused-draft');
 });
+
+test('repeat records preserve original IDs and opaque values during a nested correction', () => {
+  const app=fixture();
+  app.questionnaire.definition.fields.push({code:'children',type:'list',label_en:'Children',label_ar:'الأطفال',
+    item_fields:[{code:'gender',type:'choice',label_en:'Gender',label_ar:'الجنس',choices:[
+      {value:'unknown',label_en:'Unknown',label_ar:'غير معروف'}]}]});
+  app.answers.children=[{id:'original-id',gender:'unknown',opaque:{retained:true}}];
+  assert.equal(A.definitionProblem(app),null);
+  assert.equal(A.answerProblem(app),null);
+  const changed=A.updateRecord(app.answers.children,0,'gender','F');
+  assert.equal(changed[0].id,'original-id');
+  assert.equal(changed[0].opaque.retained,true);
+  assert.equal(app.answers.children[0].gender,'unknown');
+  assert.equal(A.updateRecord(app.answers.children,0,'id','replacement')[0].id,'original-id');
+});
+
+test('repeat schema rejects missing translations, nested records and malformed saved rows', () => {
+  const app=fixture();
+  const repeat={code:'orders',type:'list',label_en:'Orders',label_ar:'الأوامر',item_fields:[
+    {code:'court',type:'text',label_en:'Court',label_ar:'المحكمة'}]};
+  app.questionnaire.definition.fields.push(repeat);
+  assert.equal(A.definitionProblem(app),null);
+  delete repeat.item_fields[0].label_ar;
+  assert.equal(A.definitionProblem(app),'definitionUnavailable');
+  repeat.item_fields[0].label_ar='المحكمة';
+  app.answers.orders=['invalid record'];
+  assert.equal(A.answerProblem(app),'answersUnavailable');
+});

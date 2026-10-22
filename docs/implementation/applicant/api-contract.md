@@ -33,7 +33,16 @@ Definition fields: `code`, `type`, `label_en`, `label_ar`, `required`, optional
 types: text, textarea, date, choice, boolean, list of choices. Choices may be
 `{value,label_en,label_ar}` objects, or existing primitive strings with
 `choice_labels[value] = {label_en,label_ar}` to retain backend validation compatibility.
-Repeat-record definitions are still pending; no guessed labels or flattened data.
+Repeated records use `type:"list"` with `item_fields` instead of choices. Each child
+has the same bilingual label/type vocabulary; one record level is supported. Child
+conditions, nested repeat definitions and editable `id` fields fail closed. Existing
+record IDs and unknown keys are retained. New rows receive UUID `id`; contextual
+uploads bind that stable ID after the answers are saved. The UI can add/remove local
+rows and save a new attributed revision; it does not delete retained original files
+or previous answer revisions. Accepted form codes and wording still come from the
+approved bound definition, never generated from the field dictionary. This extension
+was proposed on #2; backend nested validation and the approved full form content remain
+dependencies. No answer flattening or guessed replacement wording is introduced.
 
 ## Existing writes
 

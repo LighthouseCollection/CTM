@@ -9,6 +9,11 @@
     typeof option === "string" ? { ...field.choice_labels?.[option], value: option } : option);
   const isVisible = (field, answers) => !field.when ||
     answers[field.when.field] === field.when.equals;
+  function updateRecord(rows,index,code,value) {
+    if(!Array.isArray(rows)||!Number.isInteger(index)||index<0||index>=rows.length||
+      ["id","__proto__","constructor","prototype"].includes(code))return rows;
+    return rows.map((row,i)=>i===index?{...row,[code]:value}:row);
+  }
 
   function definitionProblem(app) {
     const q = app?.questionnaire;
@@ -22,11 +27,18 @@
           ["__proto__", "constructor", "prototype"].includes(field.code) ||
           codes.has(field.code) || !bilingual(field) || !types.has(field.type) ||
           field.condition || field.visible_if) return "definitionUnavailable";
+      if(field.item_fields!==undefined && field.type!=="list")return "definitionUnavailable";
       if (field.when && (typeof field.when !== "object" ||
           !allCodes.has(field.when.field) || field.when.field === field.code ||
           !["string", "boolean"].includes(typeof field.when.equals)))
         return "definitionUnavailable";
       codes.add(field.code);
+      if(field.type==="list" && field.item_fields!==undefined) {
+        if(!Array.isArray(field.item_fields)||!field.item_fields.length||field.choices||
+          field.item_fields.some(child=>!child||child.code==="id"||child.item_fields!==undefined||child.when)||
+          definitionProblem({...app,questionnaire:{...q,definition:{fields:field.item_fields}}}))return "definitionUnavailable";
+        continue;
+      }
       if (["choice", "list"].includes(field.type)) {
         if (!Array.isArray(field.choices) || !field.choices.length)
           return "definitionUnavailable";
@@ -49,8 +61,15 @@
       const value = app.answers[field.code];
       if (value === null || value === undefined || value === "") continue;
       if (field.type === "list") {
-        if (!Array.isArray(value) || value.some(v => typeof v !== "string"))
-          return "answersUnavailable";
+        if(!Array.isArray(value))return "answersUnavailable";
+        if(field.item_fields) {
+          const ids=value.filter(row=>row?.id).map(row=>row.id);
+          if(new Set(ids).size!==ids.length)return "answersUnavailable";
+          if(value.some(row=>!row||Array.isArray(row)||typeof row!=="object"||
+            (row.id!==undefined&&typeof row.id!=="string")||
+            answerProblem({...app,answers:row,questionnaire:{definition:{fields:field.item_fields}}})))
+            return "answersUnavailable";
+        } else if(value.some(v=>typeof v!=="string"))return "answersUnavailable";
       } else if (field.type === "boolean") {
         if (typeof value !== "boolean") return "answersUnavailable";
       } else if (typeof value !== "string") return "answersUnavailable";
@@ -129,6 +148,7 @@
       refreshFailed:"Your save was acknowledged, but the current application status could not be refreshed. Reload saved answers before filing.",
       status:"Application status", draft:"Draft", submitted:"Submitted", returned:"Returned for corrections", accepted:"Accepted for processing",
       withdrawn:"Withdrawn", expiredStatus:"Expired", deleted:"Deleted", declined:"Declined", statusUnknown:"Status unavailable", caseReference:"Case reference",
+      addRecord:"Add another entry",removeRecord:"Remove this entry",noRecords:"No entries added",
     },
     ar: {
       title: "طلبي", loading: "جارٍ تحميل الطلب…", back: "رجوع",
@@ -154,6 +174,7 @@
       refreshFailed:"تم تأكيد الحفظ، لكن تعذر تحديث حالة الطلب الحالية. أعد تحميل الإجابات المحفوظة قبل تقديم الطلب.",
       status:"حالة الطلب", draft:"مسودة", submitted:"تم الإرسال", returned:"أعيد للتصحيح", accepted:"مقبول للمعالجة",
       withdrawn:"مسحوب", expiredStatus:"منتهي الصلاحية", deleted:"محذوف", declined:"مرفوض", statusUnknown:"الحالة غير متاحة", caseReference:"رقم القضية",
+      addRecord:"إضافة سجل آخر",removeRecord:"إزالة هذا السجل",noRecords:"لم تتم إضافة سجلات",
     },
   };
 
@@ -274,9 +295,23 @@
     else if (answerProblem(record)) body = h(P.Notice, { tone: "warning" }, t("answersUnavailable"));
     else {
       const fields = record.questionnaire.definition.fields;
-      const renderField = (field) => {
-        const value = state.answers[field.code];
+      const renderField = (field, answers=state.answers, change=session.change) => {
+        const value = answers[field.code];
         const fieldLabel = label(field, lang);
+        const controlsDisabled=state.saving||filingBusy||filingLocked||uploadBusy||projectionPending;
+        if(field.item_fields) {
+          const rows=Array.isArray(value)?value:[];
+          return h(P.Panel,{key:field.code,title:fieldLabel,description:field.required?t("required"):undefined},
+            h(P.Stack,null,
+              !rows.length?text(t("noRecords")):null,
+              ...rows.map((row,index)=>h(P.Panel,{key:row.id||index,title:`${fieldLabel} ${index+1}`},
+                h(P.Stack,null,...field.item_fields.map(child=>renderField(child,row,
+                  (code,next)=>change(field.code,updateRecord(rows,index,code,next)))),
+                  state.editable&&!review?h(P.Button,{disabled:controlsDisabled,
+                    onClick:()=>change(field.code,rows.filter((_,i)=>i!==index))},t("removeRecord")):null))),
+              state.editable&&!review?h(P.Button,{disabled:controlsDisabled,
+                onClick:()=>change(field.code,[...rows,{id:window.crypto.randomUUID()}])},t("addRecord")):null));
+        }
         const options = fieldChoices(field).map(o => ({ value: o.value, label: label(o, lang) }));
         const display = value === undefined || value === "" || (Array.isArray(value) && !value.length)
           ? t("empty") : Array.isArray(value)
@@ -289,21 +324,21 @@
         }, text(display));
         const shared = {
           value: value ?? "", disabled: state.saving || filingBusy || filingLocked || uploadBusy || projectionPending,
-          onChange: event => session.change(field.code, event.target.value),
+          onChange: event => change(field.code, event.target.value),
         };
         if (field.type === "boolean") return h(P.RadioGroup, {key:field.code,
           label:fieldLabel + (field.required ? ` (${t("required")})` : ""),
           value:typeof value === "boolean" ? String(value) : "",
           options:[{value:"true",label:t("yes"),disabled:shared.disabled},
             {value:"false",label:t("no"),disabled:shared.disabled}],
-          onChange:next => session.change(field.code,next === "true"),
+          onChange:next => change(field.code,next === "true"),
         });
         if (field.type === "list") return h(P.Fieldset, { key: field.code,
           legend: fieldLabel + (field.required ? ` (${t("required")})` : "") },
           ...options.map(option => h(P.Checkbox, {
             key: option.value, label: option.label, disabled: state.saving || filingBusy || filingLocked || uploadBusy || projectionPending,
             checked: Array.isArray(value) && value.includes(option.value),
-            onChange: event => session.change(field.code, event.target.checked
+            onChange: event => change(field.code, event.target.checked
               ? [...(Array.isArray(value) ? value : []), option.value]
               : (Array.isArray(value) ? value : []).filter(v => v !== option.value)),
           })));
@@ -325,7 +360,7 @@
         state.saved ? h(P.Notice, { tone: "success", role: "status" }, t("saved")) : null,
         state.dirty ? h(P.Notice, { tone: "warning", role: "status" }, t("unsaved")) : null,
         review ? h(P.Notice, null, t("reviewNotice")) : null,
-        ...fields.filter(field => isVisible(field, state.answers)).map(renderField),
+        ...fields.filter(field => isVisible(field, state.answers)).map(field=>renderField(field)),
         h(P.Inline, { wrap: true },
           state.editable ? button(state.saving || projectionPending ? "saving" : record.status === "draft" ? "save" : "saveCorrections", saveAnswers,
             { disabled: state.saving || filingBusy || filingLocked || uploadBusy || projectionPending || !state.dirty }) : null,
@@ -358,6 +393,6 @@
       body));
   }
 
-  window.CTMApplicant = { ApplicationEditor, StartApplication, startDraft, createDraftSession, definitionProblem,
+  window.CTMApplicant = { ApplicationEditor, StartApplication, startDraft, updateRecord, createDraftSession, definitionProblem,
     answerProblem, fieldChoices, isVisible };
 })();

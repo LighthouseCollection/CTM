@@ -66,6 +66,11 @@ fields=[{"code":code,"type":kind,"required":True,"label_en":en,"label_ar":ar}
             ("statement","textarea","Statement","البيان")]]
 fields[3].update(choices=["M","F"],choice_labels={"M":{"label_en":"Male","label_ar":"ذكر"},"F":{"label_en":"Female","label_ar":"أنثى"}})
 fields[5].update(choices=["abuse"],choice_labels={"abuse":{"label_en":"Abuse","label_ar":"الإساءة"}})
+fields.append({"code":"children","type":"list","label_en":"Children","label_ar":"الأطفال","item_fields":[
+    {"code":"gender","type":"choice","label_en":"Child gender","label_ar":"جنس الطفل","choices":["unknown"],
+     "choice_labels":{"unknown":{"label_en":"Unknown","label_ar":"غير معروف"}}},
+    {"code":"lives_with","type":"choice","label_en":"Child lives with","label_ar":"إقامة الطفل مع","choices":["unknown"],
+     "choice_labels":{"unknown":{"label_en":"Unknown","label_ar":"غير معروف"}}}]})
 QuestionnaireVersion.objects.create(purpose="petition",number=1,published=True,
     definition={"fields":fields,"required_document_categories":["CMC"]},
     declaration_en="Synthetic test declaration only",declaration_ar="إقرار تجريبي للاختبار فقط")
@@ -109,12 +114,17 @@ try:
         page.get_by_label("Marriage date",exact=False).fill("2010-01-01")
         page.get_by_label("Abuse",exact=True).check()
         page.get_by_label("Statement",exact=False).fill("Synthetic applicant statement")
+        page.get_by_role("button",name="Add another entry",exact=True).click()
+        page.get_by_label("Child gender",exact=True).select_option("unknown")
+        page.get_by_label("Child lives with",exact=True).select_option("unknown")
         page.get_by_role("button",name="Save draft",exact=True).click()
         expect(page.get_by_text("Your answers have been saved.",exact=True)).to_be_visible()
         data=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
         assert data["version"]==1 and data["answers"]["grounds"]==["abuse"]
+        assert data["answers"]["children"][0]["gender"]=="unknown"
+        assert len(data["answers"]["children"][0]["id"])==36
         assert data["can_edit"] and not data["can_submit"] and not data["can_checkout"]
-        checks.append("Real optimistic save persists answers; missing required files keep server filing capabilities false")
+        checks.append("Real optimistic save persists answers/repeated child records; missing files keep server filing false")
         expect(page.get_by_text("Document access is no longer available.",exact=True)).to_be_visible()
         assert page.get_by_role("button",name="Submit application",exact=True).count()==0
         checks.append("Missing real draft-file endpoint remains visibly unavailable and cannot enable filing")

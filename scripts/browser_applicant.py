@@ -305,6 +305,38 @@ try:
         expect(page.get_by_role("button",name="Submit application",exact=True)).to_be_enabled()
         promote_after_save=False
         checks.append("Acknowledged save reloads server filing capabilities before actions become available")
+        app=fixture()
+        app["questionnaire"]["definition"]["fields"].append({"code":"orders","type":"list","label_en":"Orders","label_ar":"الأوامر",
+            "item_fields":[{"code":"court","type":"text","label_en":"Court","label_ar":"المحكمة"},
+                           {"code":"number","type":"text","label_en":"Order number","label_ar":"رقم الأمر"},
+                           {"code":"status","type":"choice","label_en":"Order status","label_ar":"حالة الأمر",
+                            "choices":[{"value":"active","label_en":"Active","label_ar":"ساري"}]}]})
+        app["answers"]["orders"]=[{"id":"order-a","court":"Original court","number":"Original number","status":"active","opaque":{"keep":True}}]
+        page.reload(wait_until="networkidle")
+        page.get_by_label("Court",exact=True).fill("Corrected court")
+        page.get_by_role("button",name="Add another entry",exact=True).click()
+        page.get_by_label("Court",exact=True).nth(1).fill("Second court")
+        page.get_by_label("Order number",exact=True).nth(1).fill("Second number")
+        page.get_by_label("Order status",exact=True).nth(1).select_option("active")
+        page.get_by_role("button",name="Save draft",exact=True).click()
+        expect(page.get_by_text("Your answers have been saved.",exact=True)).to_be_visible()
+        records=writes[-1]["answers"]["orders"]
+        assert len(records)==2 and records[0]["id"]=="order-a" and records[0]["opaque"]=={"keep":True}
+        assert len(records[1]["id"])==36 and records[1]["id"]!="order-a"
+        page.get_by_role("button",name="العربية",exact=True).click()
+        expect(page.get_by_label("المحكمة",exact=True).nth(0)).to_have_value("Corrected court")
+        page.get_by_role("button",name="مراجعة الإجابات",exact=True).click()
+        expect(page.get_by_text("Corrected court",exact=True)).to_be_visible()
+        assert "[object Object]" not in page.locator("body").inner_text()
+        assert page.locator("[style]").count()==0
+        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        page.get_by_role("button",name="متابعة التعديل",exact=True).click()
+        page.get_by_role("button",name="إزالة هذا السجل",exact=True).nth(1).click()
+        page.get_by_role("button",name="حفظ المسودة",exact=True).click()
+        expect(page.get_by_text("تم حفظ إجاباتك.",exact=True)).to_be_visible()
+        assert len(writes[-1]["answers"]["orders"])==1
+        assert writes[-1]["answers"]["orders"][0]["id"]=="order-a"
+        checks.append("Repeated records add/correct/review/remove in RTL while retaining stable IDs and opaque original data")
         assert not errors, errors
         browser.close()
 finally:
