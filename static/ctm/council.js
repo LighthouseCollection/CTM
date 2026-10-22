@@ -2097,9 +2097,13 @@
       },
     };
 
-    const personPill = (value, kind) => value
-      ? h(P.Badge, { tone: kind === "applicant" ? "active" : kind === "respondent" ? "negative" : "neutral" }, value)
-      : t(kind === "clergy" ? "unassigned" : "notRecorded");
+    const personPill = (value, kind, gender) => {
+      if (!value) return t(kind === "clergy" ? "unassigned" : "notRecorded");
+      const normalizedGender = gender === "M" ? "male" : gender === "F" ? "female" : undefined;
+      return normalizedGender
+        ? h(P.DataPill, { gender: normalizedGender, fill: true }, value)
+        : h(P.DataPill, { person: true, fill: true }, value);
+    };
     const agendaTable = (n) => {
       const first = n === 1;
       const rows = groups[n];
@@ -2107,18 +2111,17 @@
       const columns = first
         ? [
             { title: "", field: "record" },
-            { title: t("applicant"), field: "applicant_name", kind: "name", render: (row) => personPill(row.applicant_name, "applicant") },
-            { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent") },
+            { title: t("applicant"), field: "applicant_name", kind: "name", render: (row) => personPill(row.applicant_name, "applicant", row.applicant_gender) },
+            { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent", row.respondent_gender) },
             { title: t("reason"), field: "reason" },
             { title: t("yearsMarried"), field: "married_years", render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
-
-            { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => setDialog({ kind: "agenda", row }) }, t("open")) },
-
+            { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
+            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => setDialog({ kind: "agenda", row }) }, t("open")) },
           ]
         : [
             { title: "#", field: "position", kind: "name" },
-            { title: t("applicant"), field: "applicant_name", render: (row) => personPill(row.applicant_name, "applicant") },
-            { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent") },
+            { title: t("applicant"), field: "applicant_name", render: (row) => personPill(row.applicant_name, "applicant", row.applicant_gender) },
+            { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent", row.respondent_gender) },
             { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
             { title: t("previousRecommendation"), field: "previous_recommendation", render: (row) => row.previous_recommendation || t("notRecorded") },
             { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => setDialog({ kind: "agenda", row }) }, t("open")) },
@@ -2164,16 +2167,20 @@
               P.Stack,
               { gap: "sm" },
               h(P.Stack, { gap: "xs" },
-                ...sessionHeaderActions.map((action) => h(P.Button, { key: action.label, size: "sm", icon: action.icon, variant: action.primary ? "primary" : "secondary", disabled: action.disabled, onClick: action.onClick }, action.label)),
+                ...sessionHeaderActions.map((action) => h(
+                  P.Inline,
+                  { key: action.label, justify: "end" },
+                  h(P.Button, { size: "sm", icon: action.icon, variant: action.primary ? "primary" : "secondary", disabled: action.disabled, onClick: action.onClick }, action.label),
+                )),
               ),
               current ? h(P.SegmentedControl, {
                 label: t("tribunalSession"),
                 size: "sm",
                 value: sessionStatus,
                 options: [
-                  { value: "draft", label: t("sessionStatusDraft"), icon: "edit" },
+                  { value: "draft", label: t("sessionStatusDraft"), icon: "document" },
                   { value: "in-session", label: t("sessionStatusInSession"), icon: "calendar" },
-                  { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "pause" },
+                  { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "stop" },
                 ],
                 onChange: (value) => value === "adjourned" && planned && manage && setDialog({ kind: "adjourn" }),
               }) : null,

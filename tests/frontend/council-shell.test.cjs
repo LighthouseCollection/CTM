@@ -50,9 +50,13 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(council, /plx-entity-header\$\{current/);
   assert.match(council, /className: "plx-entity-header__aside"/);
   assert.match(council, /P\.Stack, \{ gap: "xs" \},/);
+  assert.match(council, /P\.Inline,\s*\{ key: action\.label, justify: "end" \}/);
+  assert.match(council, /value: "draft", label: t\("sessionStatusDraft"\), icon: "document"/);
+  assert.match(council, /value: "adjourned", label: t\("sessionStatusAdjourned"\), icon: "stop"/);
+  assert.match(council, /P\.DataPill, \{ gender: normalizedGender, fill: true \}/);
   assert.match(council, /name: "calendar", size: "lg"/);
   assert.match(council, /sessionHeaderActions\.map/);
-  assert.match(council, /h\(P\.Button, \{ key: action\.label, size: "sm", icon: action\.icon/);
+  assert.match(council, /h\(P\.Button, \{ size: "sm", icon: action\.icon/);
   for (const key of ["addAssignmentCase", "addHearingCase", "attendance"])
     assert.match(council, new RegExp(`t\\("${key}"\\)`), key);
   assert.match(council, /t\("casesToAssign"\)/);

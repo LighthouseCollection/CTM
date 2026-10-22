@@ -204,8 +204,10 @@ def agenda_item_data(item, actor, attendance):
         case.parties.filter(account_id=application.owner_id).order_by("slot").first() if application else None
     )
     applicant_name = (applicant_party.name if applicant_party else "") or (name(application.owner) if application else "")
-    parties = case.parties.order_by("slot")
+    parties = case.parties.select_related("person").order_by("slot")
     respondent = parties.exclude(pk=applicant_party.pk).first() if applicant_party else None
+    applicant_gender = applicant_party.person.gender if applicant_party and applicant_party.person_id else None
+    respondent_gender = respondent.person.gender if respondent and respondent.person_id else None
     married_years = None
     if case.marriage_date:
         married_years = item.session.date.year - case.marriage_date.year - (
@@ -240,7 +242,9 @@ def agenda_item_data(item, actor, attendance):
             "previous_recommendation": previous_outcome.recommendations or None if previous_outcome else None,
             "party_names": list(case.parties.order_by("slot").values_list("name", flat=True)),
             "applicant_name": applicant_name or None,
+            "applicant_gender": applicant_gender,
             "respondent_name": respondent.name if respondent else None,
+            "respondent_gender": respondent_gender,
             "reason": reason or None,
             "married_years": married_years,
             "submitted_at": application.submitted_at.isoformat() if application and application.submitted_at else None,

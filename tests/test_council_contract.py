@@ -93,6 +93,8 @@ def test_session_workspace_projects_saved_header_and_assignment_facts(client, fi
     row = data["items"][0]
     assert row["applicant_name"] == "John Smith"
     assert row["respondent_name"] == "Mary Smith"
+    assert row["applicant_gender"] in {"M", "F", None}
+    assert row["respondent_gender"] is None
     assert row["reason"] == "infidelity"
     assert row["married_years"] == 19
     assert row["submitted_at"] == app.submitted_at.isoformat()
