@@ -73,8 +73,8 @@ screen('Council','Petition/notes/findings','council-case.js PetitionWorkspace','
  'Approved fact-code finding creation and full contextual evidence',
  'Read smoke + backend notes/findings tests','Council read; permitted case writers','Application/Submission/CaseNote/Finding','PA25')
 screen('Council','Reports/intake/templates','council-case.js + council-media.js','Template/category selection, questions, requests, report reader and author revision UI',
- 'Reaccept revision UI against latest expected_version contract; full report metadata and external priest workflow',
- 'Read smoke; PostgreSQL revision tests; QA01 separate','Council read; original authorized author writes','ReportRequest/Report/ReportRevision','PA19')
+ 'Full report metadata and external priest workflow; broader author/reassignment UI acceptance',
+ 'Read smoke + shipped JS payload against PostgreSQL HTTP write/replay/conflict; QA01 separate','Council read; original authorized author writes','ReportRequest/Report/ReportRevision','PA19')
 screen('Council','Recording/transcripts','council-media.js','Whole-report recorder/local recovery and original playback; status placeholder',
  'D20 status/review/retry UI wiring, real worker, server streaming, device/long-audio acceptance',
  'Fixture-tested UI; live transcription unavailable','Council only; scoped reviewer','Recording/ProcessingRun/Transcript')

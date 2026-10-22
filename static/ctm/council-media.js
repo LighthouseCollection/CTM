@@ -871,7 +871,7 @@
       if (answers[code] === undefined && !value) continue;
       answers[code] = value;
     }
-    return { answers, observations: draft.observations || "" };
+    return { expected_version: latest?.version, answers, observations: draft.observations || "" };
   }
 
   function revisionChanged(latest, draft) {
@@ -913,7 +913,7 @@
       if (!force && !revisionChanged(base0, draft)) return setProblem("revisionNoChange");
       setPending(true);
       try {
-        // The write route has no version check, so confirm nobody saved a newer version first.
+        // Preflight offers a helpful stale warning; the bound version also guards the write race.
         const current = await api(url);
         const newest = (current.items || [])[0] || null;
         onHistory(current.items || []);

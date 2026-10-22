@@ -24,5 +24,9 @@
   },
   "image_build": "in progress at report creation",
   "main_merged": false,
-  "production_deployed": false
+  "production_deployed": false,
+  "report_payload_integration": {
+    "passed": 1,
+    "scope": "Actual shipped JS builds payload; PostgreSQL HTTP accepts save, replays exact receipt and rejects stale change"
+  }
 }
