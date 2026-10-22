@@ -125,6 +125,7 @@
 }
 
 .ctm-case-summary-fields .plx-property-list__item {
+  grid-column: auto;
   grid-template-columns: minmax(0, 1fr);
   row-gap: var(--plx-sys-space-stack-2xs);
   align-items: start;
