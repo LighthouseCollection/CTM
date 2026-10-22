@@ -157,3 +157,10 @@ test("Arabic link states", () => {
   assert.match(ui.text(), /نشط/);
   assert.ok(buttons(ui.tree, "إصدار رابط جديد")[0]);
 });
+
+test("expiry is shown only for an active or expired link (real-backend finding)", () => {
+  const cancelled = panel(projected({ state: "cancelled", expires_at: "2026-11-21T08:00:00Z" }), () => ({}));
+  assert.doesNotMatch(cancelled.text(), /Expires|Expired on/);
+  const active = panel(projected({ state: "active", expires_at: "2026-11-21T08:00:00Z" }), () => ({}));
+  assert.match(active.text(), /Expires/);
+});

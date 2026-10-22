@@ -17,6 +17,7 @@ A priest who knows the marriage writes a free-form report through a private link
   - **Issue a new link** (confirmation) makes the earlier link stop working.
   - **Cancel request** (`POST /api/requests/{id}/cancel/ {expected_version}`, confirmation) also stops the link.
   - Completed or closed requests show their state with no link controls.
+  - **Link status (backend `c377706`):** when request rows carry `external_link`, the panel shows the priest's name, the state (not issued, active, expired, report submitted, cancelled, closed, unavailable) and the expiry for active or expired links. Issue, Reissue and Cancel follow the server's `can_issue`, `can_reissue` and `can_cancel` only. Older servers fall back to the request state.
 - **The submitted report** appears in Completed reports as "Report by Fr. [name]" with its date and method "External source link". The free-form answer is labelled **Written testimony**. It isn't revisable (no council author), and a follow-up is a separate linked report.
 
 ## Priest page (`static/ctm/external-report.html` and `.js`)
@@ -41,16 +42,16 @@ A priest who knows the marriage writes a free-form report through a private link
 ## Not available yet (backend contracts requested on #2)
 
 - An HTML route at `/external/reports/{id}/` (the static boot page is used meanwhile).
-- Distinguishable link states.
+- Distinguishable link states on the priest page (council now sees them through the projection).
 - Priest recording upload.
 - A printable request and paper-response completion.
 - Email delivery.
-- Link state, expiry and priest name in council request rows.
-- **Privacy defect:** council uploads with `request_id` on an external request are owned by the spouse with `own` visibility, so the spouse can download them. Reproduced; the council UI offers no such upload.
+- **Privacy defect: fixed in backend `6fe7d51` (migration 0042).** Reproduced on `dccbd63`, where the spouse downloaded the paper. On `f0e97fa` the same upload is stored with no owner and council visibility; the spouse is refused on GET, HEAD and range requests, and council still reads it. Awaiting the governance successor rerun.
+- **Council paper listing:** `/api/requests/{id}/files/` is applicant-only, so council can't list a returned paper on the request. Paper completion is also missing.
 
 ## Testing
 
 - `tests/frontend/external-report.test.cjs` (13) and `tests/frontend/council-external.test.cjs` (8).
 - The fixture (`scripts/council_fixture.cjs --contract=pr7`) models the send token, reissue, cancel and capability route.
 - Actual-backend results are in the #3 report.
-- Evidence: `evidence/c05-ar-390-priest-page-real-backend.jpg`, `evidence/c05-ar-390-link-inactive-real-backend.jpg` (synthetic data).
+- Evidence: `evidence/c05-ar-390-priest-page-real-backend.jpg`, `evidence/c05-ar-390-link-inactive-real-backend.jpg`, `evidence/c05-ar-390-link-expired-projection-real-backend.jpg` (synthetic data).

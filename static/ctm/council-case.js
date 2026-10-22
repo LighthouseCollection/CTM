@@ -1400,7 +1400,7 @@
                   t(`link_${controls.state}`),
                 ),
               ),
-              controls.expiresAt
+              controls.expiresAt && (controls.state === "active" || controls.state === "expired")
                 ? h(P.PropertyList.Item, { label: t(controls.state === "expired" ? "linkExpiredOn" : "linkExpiresOn"), data: true }, base.formatWhen(controls.expiresAt, lang))
                 : null,
             )
