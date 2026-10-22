@@ -649,7 +649,7 @@
     return h(
       P.Panel,
       {
-        icon: "user", title: t("attendance"), collapsible: true,
+        icon: "person", title: t("attendance"), collapsible: true,
         strings: { collapse: t("collapseAttendance"), expand: t("expandAttendance") },
       },
       h(

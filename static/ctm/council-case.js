@@ -2457,7 +2457,7 @@
         h(
           P.Panel,
           {
-            icon: "user",
+            icon: "person",
             key: party.id,
             title: party.name,
             collapsible: true,
@@ -2883,7 +2883,7 @@
       ),
       h(
         P.Panel,
-        { icon: "info", title: t("whereThingsStand") },
+        { icon: "circle-info", title: t("whereThingsStand") },
         h(
           P.PropertyList,
           null,

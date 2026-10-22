@@ -109,7 +109,7 @@
   function Profile({ user, lang, onSettings }) {
     const P = window.Plenix, h = window.React.createElement, t = translator(lang);
     return h(P.Stack, { gap: "lg" }, h(P.Text, { as: "h1", variant: "title" }, t("profile")),
-      h(P.Panel, { icon: "user", title: user.name || t("profile") },
+      h(P.Panel, { icon: "person", title: user.name || t("profile") },
         h(Properties, { lang, entries: [["name", user.name], ["email", user.email], ["role", user.role], ["portal", user.portal], ["ui_language", user.ui_language], ["notification_language", user.notification_language]] })),
       h(P.Button, { onClick: onSettings }, t("preferences")));
   }
@@ -155,7 +155,7 @@
       } catch (error) { setFailure(window.CTMCouncil.serverMessage(error, t)); }
       finally { setPending(false); }
     }
-    return h(P.Panel, { title: t("enroll"), icon: "user", collapsible: true, defaultExpanded: false, strings: { collapse: lang === "ar" ? "طي {title}" : "Collapse {title}", expand: lang === "ar" ? "توسيع {title}" : "Expand {title}" } },
+    return h(P.Panel, { title: t("enroll"), icon: "person", collapsible: true, defaultExpanded: false, strings: { collapse: lang === "ar" ? "طي {title}" : "Collapse {title}", expand: lang === "ar" ? "توسيع {title}" : "Expand {title}" } },
       h(P.Form, { label: t("enroll"), onSubmit: save, noValidate: true },
         h(P.Inline, { wrap: true }, ...["first_name", "last_name", "email"].map((key) => h(P.Field, { key, label: t(key === "email" ? "emailField" : key), required: true }, h(P.Input, { type: key === "email" ? "email" : "text", value: form[key], maxLength: key === "email" ? 254 : 150, disabled: pending, onChange: (event) => { setForm({ ...form, [key]: event.target.value }); setProblem(null); } }))),
           h(P.Field, { label: t("role"), required: true }, h(P.Select, { value: form.role, disabled: pending, onChange: (event) => setForm({ ...form, role: event.target.value }), options: roles.map((value) => ({ value, label: t(value) })) }))),
