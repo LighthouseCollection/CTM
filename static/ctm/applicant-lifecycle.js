@@ -8,6 +8,8 @@
     return action==="withdraw"&&app.can_withdraw===true&&["petition","appeal"].includes(app.kind)&&
       ["submitted","returned","accepted"].includes(app.status);
   }
+  const actionScope=app=>JSON.stringify([app?.id,app?.version,app?.status,
+    app?.can_delete_draft===true,app?.can_withdraw===true]);
   function createActionSession(app,api,changed=()=>{}) {
     const state={busy:false,locked:false,error:null,received:false};
     return {state,async send(action,confirmed){
@@ -39,7 +41,8 @@
     const [,render]=R.useReducer(n=>n+1,0),[selected,select]=R.useState(null);
     const session=R.useMemo(()=>createActionSession(application,api,render),[application.id,application.version,
       application.status,application.can_delete_draft,application.can_withdraw,api]),state=session.state;
-    R.useEffect(()=>{select(null);},[application,lang]);
+    const scope=actionScope(application);
+    R.useEffect(()=>{select(null);},[scope,lang]);
     R.useEffect(()=>{onBusyChange?.(state.busy);return()=>onBusyChange?.(false);},[state.busy,onBusyChange]);
     R.useEffect(()=>{onLockChange?.(state.locked);return()=>onLockChange?.(false);},[state.locked,onLockChange]);
     if(!available(application,"delete")&&!available(application,"withdraw"))return null;
@@ -54,5 +57,5 @@
       state.locked&&!state.busy?h(P.Button,{onClick:onRefresh,disabled:disabled},t("refresh")):null
     ));
   }
-  window.CTMApplicantLifecycle={available,createActionSession,Actions};
+  window.CTMApplicantLifecycle={available,actionScope,createActionSession,Actions};
 })();

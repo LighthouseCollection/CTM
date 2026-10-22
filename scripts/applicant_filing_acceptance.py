@@ -46,6 +46,7 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         page.get_by_role("button",name="My application",exact=True).click()
         page.get_by_role("button",name="Open application",exact=True).click()
         expect(page.get_by_role("heading",name="Application actions",exact=True)).to_be_visible()
+        page.wait_for_load_state("networkidle")
         return page
 
     def open_ready_review(page,ctx,app_id,label):
@@ -124,12 +125,14 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         assert ctx.request.get(f"{base}/api/files/{original_file}/").status==200
         page=open_editor(ctx)
         page.get_by_role("button",name="Delete unsubmitted draft",exact=True).click()
+        expect(page.get_by_role("button",name="Confirm action",exact=True)).to_be_enabled()
         page.get_by_role("button",name="Cancel",exact=True).click()
         assert detail(ctx,app_id)["status"]=="draft"
         # Advance the authoritative answer version behind the already-open editor.
         changed=post(ctx,csrf,f"/api/applications/{app_id}/",{"expected_version":1,"answers":{**row["answers"],"statement":"New saved version"}})
         assert changed.status==201,changed.text()
         page.get_by_role("button",name="Delete unsubmitted draft",exact=True).click()
+        expect(page.get_by_role("button",name="Confirm action",exact=True)).to_be_enabled()
         with page.expect_response(lambda r:r.url==f"{base}/api/applications/{app_id}/delete-draft/") as result:
             page.get_by_role("button",name="Confirm action",exact=True).click()
         assert result.value.status==422 and result.value.request.post_data_json=={"expected_version":1}
@@ -149,7 +152,7 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
             expect(page.get_by_role("button",name="Delete unsubmitted draft",exact=True)).to_be_enabled()
             checks.append("Browser cancel sends no deletion; a concurrent saved revision rejects stale confirmation and requires authoritative refresh")
             page.get_by_role("button",name="Delete unsubmitted draft",exact=True).click()
-            expect(page.get_by_role("button",name="Confirm action",exact=True)).to_be_visible()
+            expect(page.get_by_role("button",name="Confirm action",exact=True)).to_be_enabled()
             transition["initial_english_dialog"]=True
             language_delete_requests=[]
             page.on("request",lambda request:language_delete_requests.append(request.post_data_json)
@@ -166,7 +169,7 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
             assert detail(ctx,app_id)==refreshed_body
             transition["language_change_cancelled_confirmation"]={"delete_requests":0,"application_unchanged":True}
             page.get_by_role("button",name="حذف المسودة غير المقدّمة",exact=True).click()
-            expect(page.get_by_role("button",name="تأكيد الإجراء",exact=True)).to_be_visible()
+            expect(page.get_by_role("button",name="تأكيد الإجراء",exact=True)).to_be_enabled()
             transition["reopened_arabic_dialog"]=True
             assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
             with page.expect_response(lambda r:r.url==f"{base}/api/applications/{app_id}/delete-draft/") as result:
@@ -208,18 +211,41 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         lost_actor,lost,lost_csrf=new_owner("lost-delete")
         lost_id=start(lost,lost_csrf,"LostDelete")
         lost_page=open_editor(lost);attempts=[]
+        lost_trace={"application_id":lost_id,"before":detail(lost,lost_id)}
         def lose_ack(route):
             attempts.append(route.request.post_data_json)
             actual=route.fetch();assert actual.status==200
             route.fulfill(status=500,json={"error":"synthetic lost acknowledgement"})
         lost_page.route(f"{base}/api/applications/{lost_id}/delete-draft/",lose_ack)
-        lost_page.get_by_role("button",name="Delete unsubmitted draft",exact=True).click()
-        lost_page.get_by_role("button",name="Confirm action",exact=True).click()
-        expect(lost_page.get_by_text("The result is uncertain.",exact=False)).to_be_visible()
-        expect(lost_page.get_by_role("button",name="Confirm action",exact=True)).to_be_disabled()
-        lost_page.get_by_role("button",name="Refresh application",exact=True).click()
-        expect(lost_page.get_by_role("button",name="Delete unsubmitted draft",exact=True)).to_have_count(0)
-        assert len(attempts)==1 and detail(lost,lost_id)["status"]=="deleted"
+        try:
+            delete=lost_page.get_by_role("button",name="Delete unsubmitted draft",exact=True)
+            expect(delete).to_be_enabled();delete.click()
+            confirm=lost_page.get_by_role("button",name="Confirm action",exact=True)
+            expect(confirm).to_be_enabled()
+            with lost_page.expect_response(lambda r:r.url==f"{base}/api/applications/{lost_id}/delete-draft/" and r.request.method=="POST") as deletion:
+                confirm.click()
+            lost_trace["delete_response"]={"status":deletion.value.status,"payload":deletion.value.request.post_data_json,
+                "body":deletion.value.text()[:4000]}
+            expect(lost_page.get_by_text("The result is uncertain.",exact=False)).to_be_visible()
+            expect(lost_page.get_by_role("button",name="Confirm action",exact=True)).to_be_disabled()
+            with lost_page.expect_response(lambda r:r.url==f"{base}/api/applications/{lost_id}/" and r.request.method=="GET") as refreshed:
+                lost_page.get_by_role("button",name="Refresh application",exact=True).click()
+            refreshed_payload=refreshed.value.json()
+            lost_trace["refresh"]={"status":refreshed.value.status,"application":refreshed_payload}
+            assert refreshed.value.status==200 and refreshed_payload["status"]=="deleted"
+            expect(lost_page.get_by_text("Application status: Deleted",exact=True)).to_be_visible()
+            lost_trace["refresh"]["ui_status_visible"]=True
+            expect(lost_page.get_by_role("button",name="Delete unsubmitted draft",exact=True)).to_have_count(0)
+            assert len(attempts)==1 and detail(lost,lost_id)["status"]=="deleted"
+        except Exception:
+            artifact=Path(output);artifact.mkdir(parents=True,exist_ok=True)
+            lost_trace["failure_state"]={"server_application":detail(lost,lost_id),"attempts":attempts,"url":lost_page.url,
+                "buttons":lost_page.get_by_role("button").all_text_contents(),"alerts":lost_page.get_by_role("alert").all_text_contents(),
+                "body":lost_page.locator("body").inner_text(),"viewport":lost_page.viewport_size}
+            (artifact/"lost-delete-recovery-failure.json").write_text(json.dumps(lost_trace,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+            (artifact/"lost-delete-recovery-failure.html").write_text(lost_page.content(),encoding="utf-8")
+            lost_page.screenshot(path=str(artifact/"lost-delete-recovery-failure.png"),full_page=True,caret="initial")
+            raise
         checks.append("Lost acknowledgement after real deletion locks repeats; explicit own refresh recovers deleted state without a second mutation")
         # Both filings use actual save/upload/waiver/submit routes. Only verified-account
         # onboarding/linking is explicit fixture setup, outside this applicant journey.
@@ -307,6 +333,7 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
             "expected_payload":{"expected_version":original["version"]}}
         try:
             first_page.get_by_role("button",name="Withdraw my filing",exact=True).click()
+            expect(first_page.get_by_role("button",name="Confirm action",exact=True)).to_be_enabled()
             with first_page.expect_response(lambda r:r.url==f"{base}/api/applications/{first_id}/withdraw/") as result:
                 first_page.get_by_role("button",name="Confirm action",exact=True).click()
             withdrawal_response=result.value
