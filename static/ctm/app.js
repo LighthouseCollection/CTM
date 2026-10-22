@@ -31,7 +31,7 @@
       h("path", { d: "M6 3h9l3 3v15H6zM15 3v4h4M9 11h6M9 15h3M15 16.5a2.5 2.5 0 1 0-2 0v2l2-1 2 1v-2a2.5 2.5 0 0 0-2 0z" }),
     );
   const caseSearchIcon = () =>
-    h(P.Icon, { name: "folder_eye", "aria-hidden": true });
+    h(P.Icon, { name: "document_search", "aria-hidden": true });
   const appealsReturnIcon = () =>
     h("svg", { className: "ctm-appeals-nav-icon", width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
       h("path", { d: "m9 7-5 5 5 5M5 12h8a6 6 0 0 1 6 6v1" }),
