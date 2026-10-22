@@ -1,0 +1,78 @@
+{
+  "backend_sha": "bf69dbc79aaeda6ecfa34433c075f28ba2e7b750",
+  "completed_groups": 3,
+  "checks": [
+    "Actual ctm_app session/bootstrap permits own draft start and browser answer save while all domain tables force RLS",
+    "Runtime-role outsider/council draft and history denial returns no source payload; foreign write preserves exact own answers (403/404 observations retained)",
+    "Runtime-role own required-original uploads/downloads work with controlled scan policy; foreign original bytes remain denied"
+  ],
+  "failure": {
+    "type": "TimeoutError",
+    "message": "Locator.check: Timeout 30000ms exceeded.\nCall log:\n  - waiting for get_by_label(\"I have read and accept this declaration.\", exact=True)\n    - locator resolved to <input disabled type=\"checkbox\" class=\"plx-check__input\"/>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n      - waiting 100ms\n    58 \u00d7 waiting for element to be visible, enabled and stable\n       - element is not enabled\n     - retrying click action\n       - waiting 500ms\n"
+  },
+  "runtime_database": {
+    "mode": "postgresql_runtime",
+    "current_user": "ctm_app",
+    "session_user": "ctm_app",
+    "superuser": false,
+    "bypass_rls": false,
+    "inherit": false,
+    "domain_tables": 63,
+    "forced_rls_tables": 63,
+    "owner_memberships": 0
+  },
+  "denial_observations": [
+    {
+      "scope": "outsider private draft",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "outsider private draft history",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "council private draft",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "council private draft history",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "foreign answer write",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "foreign original download",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "foreign original download",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "foreign original download",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "foreign original download",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    }
+  ],
+  "scope": "Focused PostgreSQL applicant journey; synthetic authentication/content/scan policy/waiver, not full strict suite or institutional/live acceptance",
+  "review_candidate": {
+    "backend": "bf69dbc79aaeda6ecfa34433c075f28ba2e7b750",
+    "integrated_frontend": "104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc",
+    "applicant_head": "9da2c2bbf0778765f2f47a2b0c09e647d3f8017e",
+    "published_integration": false
+  }
+}

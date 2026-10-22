@@ -1,0 +1,40 @@
+{
+  "backend_sha": "bf69dbc79aaeda6ecfa34433c075f28ba2e7b750",
+  "completed_groups": 0,
+  "checks": [],
+  "failure": {
+    "type": "TimeoutError",
+    "message": "Timeout 30000ms exceeded while waiting for event \"response\""
+  },
+  "runtime_database": {
+    "mode": "postgresql_runtime",
+    "current_user": "ctm_app",
+    "session_user": "ctm_app",
+    "superuser": false,
+    "bypass_rls": false,
+    "inherit": false,
+    "domain_tables": 63,
+    "forced_rls_tables": 63,
+    "owner_memberships": 0
+  },
+  "denial_observations": [],
+  "scope": "Focused PostgreSQL applicant journey; synthetic authentication/content/scan policy/waiver, not full strict suite or institutional/live acceptance",
+  "observations": {
+    "query": "SELECT tribunal_account fields under ctm_app",
+    "observed_active_seconds_at_least": 190,
+    "wait_event_type": null,
+    "cause": "unverified; database/container/host behavior not yet isolated",
+    "cancellation": "pg_cancel_backend and pg_terminate_backend acknowledged but active backend remained; kill attempt did not recover",
+    "test_processes": "verified owned Python test tree terminated",
+    "cleanup": "blocked: Docker stop and force-remove both returned tried to kill container, but did not receive an exit event",
+    "remaining_container": "ctm-applicant-test-a9460e5e2058",
+    "existing_services": "governance PG and other containers were not stopped or restarted",
+    "role_timeout_note": "15s timeout was added to disposable role after stall for future connections; it did not bound the already active connection"
+  },
+  "review_candidate": {
+    "backend": "bf69dbc79aaeda6ecfa34433c075f28ba2e7b750",
+    "integrated_frontend": "104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc",
+    "applicant_head": "9da2c2bbf0778765f2f47a2b0c09e647d3f8017e",
+    "published_integration": false
+  }
+}

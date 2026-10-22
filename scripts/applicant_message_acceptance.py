@@ -13,9 +13,9 @@ def run(browser,page,context,staff,base,csrf,staff_csrf,case_id,case_number,part
         return [str(send_message(admin,case_id,f"Synthetic private paginated message {index}",[party_id],idempotency_key=f"pagination-{index}").pk) for index in range(51)]
     private_ids=set(fixture_db(seed))
     page.goto(base,wait_until="networkidle")
-    page.get_by_role("navigation").get_by_role("button",name="Past cases",exact=True).click()
+    page.get_by_role("button",name="Past cases",exact=True).click()
     page.get_by_text(case_number,exact=True).click()
-    page.get_by_role("navigation").get_by_role("button",name="Communications",exact=True).click()
+    page.get_by_role("button",name="Communications",exact=True).click()
     expect(page.get_by_role("heading",name="Private case messages",exact=True)).to_be_visible()
     expect(page.get_by_role("button",name="Load more messages",exact=True)).to_be_visible()
     assert fixture_db(lambda:m.MessageRecipient.objects.filter(message__case_id=case_id,party_id=party_id,read_at__isnull=False).count())==0
@@ -57,7 +57,7 @@ def run(browser,page,context,staff,base,csrf,staff_csrf,case_id,case_number,part
     checks.append("Actual linked spouse sees no other-thread message or receipt, cannot acknowledge it, and cannot send into the other party's thread")
     body="Own private message <script>literal text</script>"
     page.get_by_label("Your message",exact=True).fill(body)
-    page.get_by_role("button",name="Back to cases",exact=True).click()
+    page.get_by_role("button",name="Back to cases",exact=True).last.click()
     expect(page.get_by_text("Your local message has not been confirmed.",exact=False)).to_be_visible()
     page.get_by_role("button",name="Keep editing",exact=True).click()
     page.get_by_role("button",name="Review message",exact=True).click()

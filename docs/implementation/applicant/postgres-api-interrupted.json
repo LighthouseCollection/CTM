@@ -1,0 +1,34 @@
+{
+  "backend_sha": "bf69dbc79aaeda6ecfa34433c075f28ba2e7b750",
+  "completed_groups": 5,
+  "checks": [
+    "Real start/list/detail bound questionnaire opens draft through patched shell",
+    "Real optimistic save persists answers/repeated child records; missing files keep server filing false",
+    "Real current-document listing supplies required slots and missing originals cannot enable filing",
+    "Real CSRF-protected language preference persists and editor retains answers in RTL",
+    "Real concurrent save rejects stale editor write and explicit reload preserves immutable prior answer history"
+  ],
+  "page_errors": [],
+  "runtime_database": {
+    "mode": "postgresql_runtime",
+    "current_user": "ctm_app",
+    "session_user": "ctm_app",
+    "superuser": false,
+    "bypass_rls": false,
+    "inherit": false,
+    "domain_tables": 63,
+    "forced_rls_tables": 63,
+    "owner_memberships": 0
+  },
+  "failure": {
+    "type": "AssertionError",
+    "message": ""
+  },
+  "scope": "Interrupted isolated acceptance; completed groups are not a full-suite pass",
+  "review_candidate": {
+    "backend": "bf69dbc79aaeda6ecfa34433c075f28ba2e7b750",
+    "integrated_frontend": "104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc",
+    "applicant_head": "9da2c2bbf0778765f2f47a2b0c09e647d3f8017e",
+    "published_integration": false
+  }
+}

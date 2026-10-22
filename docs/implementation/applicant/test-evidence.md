@@ -1,5 +1,21 @@
 # Desktop-R applicant workflow evidence
 
+## PostgreSQL runtime acceptance attempt
+
+Verified direct ctm_app login and63forced domain tables, but full acceptance remains incomplete: strict403/404 mismatch, partial focused journey, later account-query stall and owned-container cleanup failure. No PostgreSQL full-suite pass is claimed. [Exact outcomes and cleanup dependency](postgres-acceptance-report.md).
+
+## Five repeat-family UI verification
+
+Eight fresh pinned-CDN browser groups verify all five mapped repeat families: exact new values, original/opaque preservation, add/edit/remove/review/reload, failed-save retention and Arabic390px. Synthetic technical fields are not institution-approved content or backend validation acceptance. [Report](repeat-sections-report.md) | [Download JSON](repeat-sections-result.json). Named dependencies remain in the field-mapping report; owner requests posted to issues2 and12.
+
+## Current linked first-petition checkpoint
+
+Linked-spouse first-petition entry is implemented; actual two-filer and closed-case first-petition submission coverage replaces prior constructed-filing state.94 frontend tests, six entry fixture groups and nine shell groups pass. Unmodified integration104e4fd passes75 applicant API/browser groups; the explicit local review candidate with the named module/minimal hook passes76. This is not an integrated successor or institutional acceptance. [Report and blockers](linked-petition-report.md) | [Candidate JSON](linked-petition-api-result.json). Earlier counts and fixture gaps below are historical snapshots.
+
+## Current field mapping and integrated verification
+
+90 semantic field targets, five repeat families, ten contextual requirements and24 AF decisions mapped at integration104e4fd. Fresh unmodified integrated archive:74 actual API/browser groups pass;92 frontend tests pass. Reference seed remains six unpublished fields without EN/AR labels; approved content and authoritative nested validation remain dependencies, not completed features. [Mapping and exact blockers](field-mapping/README.md) | [Download JSON](field-mapping/result.json). Earlier integration gaps/counts below are historical.
+
 ## Current history and notification integration (2026-10-21)
 
 Twenty local applicant batches add own saved-history comparison in a Plenix modal and private paginated notifications with explicit read acknowledgements. No user-facing export exists. Current question labels are distinguished from unavailable historical wording.

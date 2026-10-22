@@ -17,7 +17,7 @@ R.useEffect(()=>{document.documentElement.lang=lang;document.documentElement.dir
 return h(P.ThemeProvider,null,h(P.LocaleProvider,{locale:lang},h(P.PageContent,null,
 h(P.Button,{onClick:()=>setLang(lang==='en'?'ar':'en')},lang==='en'?'العربية':'English'),
 h(P.Button,{onClick:()=>setVisible(false)},'Leave case'),
-visible?h(CTMApplicantAppeals.StartAppeal,{caseId:'CASE',api,lang,onOpen:id=>{window.openedId=id;}}):h(P.Text,null,'Case closed'))));}
+visible?h(location.search.includes('petition')?CTMApplicantAppeals.StartPetition:CTMApplicantAppeals.StartAppeal,{caseId:'CASE',record:{id:'CASE',can_start_petition:!location.search.includes('blocked')},api,lang,onOpen:id=>{window.openedId=id;}}):h(P.Text,null,'Case closed'))));}
 ReactDOM.createRoot(document.getElementById('root')).render(h(Harness));</script></body></html>'''.replace('CDN',CDN).replace('CASE',CASE)
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -34,7 +34,7 @@ try:
         def api(route):
             payloads.append(route.request.post_data_json)
             if mode=='pause':pending.append(route)
-            else:route.fulfill(status=422 if mode=='reject' else 201,json={'error':'eligibility'} if mode=='reject' else {'id':APPEAL,'case_id':CASE,'kind':'appeal'})
+            else:route.fulfill(status=422 if mode=='reject' else 201,json={'error':'eligibility'} if mode=='reject' else {'id':APPEAL,'case_id':CASE,'kind':route.request.post_data_json['kind']})
         page.route('**/api/applications/',api)
         page.goto(f'http://127.0.0.1:{server.server_port}/',wait_until='networkidle')
         page.get_by_role('button',name='Start or resume appeal',exact=True).click()
@@ -58,7 +58,30 @@ try:
         page.wait_for_function('window.pendingFinished === true')
         assert page.evaluate('window.openedId') is None
         checks.append('Late appeal start acknowledgement cannot navigate after leaving the case')
+        mode='reject';page.goto(f'http://127.0.0.1:{server.server_port}/?petition',wait_until='networkidle')
+        page.get_by_role('button',name='Start or resume my petition',exact=True).click()
+        expect(page.get_by_text('Unable to open your petition.',exact=False)).to_be_visible()
+        assert payloads[-1]=={'kind':'petition','case_id':CASE} and page.evaluate('window.openedId') is None
+        page.get_by_role('button',name='العربية',exact=True).click()
+        expect(page.get_by_role('button',name='بدء طلبي أو متابعته',exact=True)).to_be_visible()
+        assert page.locator('[style]').count()==0 and page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+        checks.append('Linked first-petition eligibility failure preserves localized case view and exact petition routing without reopening')
+        page.get_by_role('button',name='English',exact=True).click();mode='ok'
+        page.get_by_role('button',name='Start or resume my petition',exact=True).click()
+        page.wait_for_function('window.openedId !== undefined');assert page.evaluate('window.openedId')==APPEAL
+        page.goto(f'http://127.0.0.1:{server.server_port}/?petition-blocked',wait_until='networkidle')
+        assert page.get_by_role('button',name='Start or resume my petition',exact=True).count()==0
+        checks.append('Literal linked capability controls first-petition entry and valid same-case acknowledgement opens editor')
+        page.goto(f'http://127.0.0.1:{server.server_port}/?petition',wait_until='networkidle');pending.clear();mode='pause'
+        page.get_by_role('button',name='Start or resume my petition',exact=True).click()
+        expect(page.get_by_role('button',name='Opening petition…',exact=True)).to_be_disabled()
+        page.get_by_role('button',name='Leave case',exact=True).click()
+        pending[0].fulfill(status=201,json={'id':APPEAL,'case_id':CASE,'kind':'petition'})
+        page.wait_for_function('window.pendingFinished === true');assert page.evaluate('window.openedId') is None
+        checks.append('Late first-petition acknowledgement cannot navigate after leaving case')
         assert not errors,errors
         browser.close()
 finally:server.shutdown()
-print(json.dumps({'passed':len(checks),'checks':checks,'page_errors':errors,'scope':'Synthetic API fixtures; real pinned CDN'},indent=2))
+result={'passed':len(checks),'checks':checks,'page_errors':errors,'scope':'Synthetic API fixtures; real pinned CDN'}
+(ROOT/'.tmp/linked-petition-fixture-result.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
+print(json.dumps(result,indent=2))

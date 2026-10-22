@@ -1,0 +1,150 @@
+{
+  "candidate_sha": "104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc",
+  "scope": "Direct actual validate_answers function from pinned source, no HTTP/database; submit additionally calls validate_petition and required_documents",
+  "probes": [
+    {
+      "id": "nested-required",
+      "expected": "rejected",
+      "actual": "accepted",
+      "gap": true,
+      "answers": {
+        "children": [
+          {}
+        ]
+      },
+      "source": "tribunal/validation.py:validate_answers",
+      "exposure": "list/item_fields or supported primitive definition; final submission has additional checks"
+    },
+    {
+      "id": "nested-date",
+      "expected": "rejected",
+      "actual": "accepted",
+      "gap": true,
+      "answers": {
+        "children": [
+          {
+            "name": "Fictional Child",
+            "birth_date": "not-a-date"
+          }
+        ]
+      },
+      "source": "tribunal/validation.py:validate_answers",
+      "exposure": "list/item_fields or supported primitive definition; final submission has additional checks"
+    },
+    {
+      "id": "nested-choice",
+      "expected": "rejected",
+      "actual": "accepted",
+      "gap": true,
+      "answers": {
+        "children": [
+          {
+            "name": "Fictional Child",
+            "gender": "invalid",
+            "lives_with": "invalid"
+          }
+        ]
+      },
+      "source": "tribunal/validation.py:validate_answers",
+      "exposure": "list/item_fields or supported primitive definition; final submission has additional checks"
+    },
+    {
+      "id": "repeat-object-shape",
+      "expected": "rejected",
+      "actual": "accepted",
+      "gap": true,
+      "answers": {
+        "children": [
+          "not-an-object"
+        ]
+      },
+      "source": "tribunal/validation.py:validate_answers",
+      "exposure": "list/item_fields or supported primitive definition; final submission has additional checks"
+    },
+    {
+      "id": "duplicate-repeat-id",
+      "expected": "rejected",
+      "actual": "accepted",
+      "gap": true,
+      "answers": {
+        "children": [
+          {
+            "id": "11111111-1111-4111-8111-111111111111",
+            "name": "A"
+          },
+          {
+            "id": "11111111-1111-4111-8111-111111111111",
+            "name": "B"
+          }
+        ]
+      },
+      "source": "tribunal/validation.py:validate_answers",
+      "exposure": "list/item_fields or supported primitive definition; final submission has additional checks"
+    },
+    {
+      "id": "textarea-type",
+      "expected": "rejected",
+      "actual": "accepted",
+      "gap": true,
+      "answers": {
+        "statement": {
+          "unexpected": "object"
+        }
+      },
+      "source": "tribunal/validation.py:validate_answers",
+      "exposure": "unsupported definition: publish_questionnaire rejects textarea; frontend/runtime vocabulary mismatch"
+    },
+    {
+      "id": "top-level-date",
+      "expected": "rejected",
+      "actual": "rejected",
+      "gap": false,
+      "answers": {
+        "date": "not-a-date"
+      },
+      "source": "tribunal/validation.py:validate_answers",
+      "exposure": "list/item_fields or supported primitive definition; final submission has additional checks"
+    },
+    {
+      "id": "top-level-required",
+      "expected": "rejected",
+      "actual": "rejected",
+      "gap": false,
+      "answers": {
+        "name": "   "
+      },
+      "source": "tribunal/validation.py:validate_answers",
+      "exposure": "list/item_fields or supported primitive definition; final submission has additional checks"
+    },
+    {
+      "id": "top-level-boolean",
+      "expected": "rejected",
+      "actual": "rejected",
+      "gap": false,
+      "answers": {
+        "flag": "false"
+      },
+      "source": "tribunal/validation.py:validate_answers",
+      "exposure": "list/item_fields or supported primitive definition; final submission has additional checks"
+    },
+    {
+      "id": "valid-nested-unknown",
+      "expected": "accepted",
+      "actual": "accepted",
+      "gap": false,
+      "answers": {
+        "children": [
+          {
+            "id": "11111111-1111-4111-8111-111111111111",
+            "name": "Fictional Child",
+            "gender": "unknown",
+            "lives_with": "unknown"
+          }
+        ]
+      },
+      "source": "tribunal/validation.py:validate_answers",
+      "exposure": "list/item_fields or supported primitive definition; final submission has additional checks"
+    }
+  ],
+  "gaps": 6
+}

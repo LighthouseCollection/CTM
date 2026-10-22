@@ -21,6 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 SOURCE = Path(__file__).resolve().parents[1]
 BACKEND_REF = os.environ.get("CTM_APPLICANT_BACKEND_REF", "origin/work/vm-frm-backend")
+INTEGRATED = os.environ.get("CTM_APPLICANT_INTEGRATED", "false") == "true"
 CHECK_RETURNED_PRIVACY = os.environ.get("CTM_APPLICANT_ACCEPTANCE", "returned_privacy") == "returned_privacy"
 
 if len(sys.argv) == 1:
@@ -30,25 +31,36 @@ if len(sys.argv) == 1:
     archive = subprocess.check_output(["git","archive",backend_sha],cwd=SOURCE)
     with tarfile.open(fileobj=io.BytesIO(archive)) as bundle:
         bundle.extractall(target,filter="data")
-    for asset in (SOURCE/"static/ctm").glob("applicant*.js"):
-        shutil.copyfile(asset,target/"static/ctm"/asset.name)
-    subprocess.run(["git","init","--quiet",str(target)],check=True)
-    subprocess.run(["git","apply",str(SOURCE/"docs/implementation/applicant/shell-integration.patch")],cwd=target,check=True)
+    if not INTEGRATED:
+        for asset in (SOURCE/"static/ctm").glob("applicant*.js"):
+            shutil.copyfile(asset,target/"static/ctm"/asset.name)
+        subprocess.run(["git","init","--quiet",str(target)],check=True)
+        subprocess.run(["git","apply",str(SOURCE/"docs/implementation/applicant/shell-integration.patch")],cwd=target,check=True)
     environment = {**os.environ,"CTM_TEST_BACKEND_SHA":backend_sha}
     result=subprocess.run([sys.executable,__file__,"--run",str(target)],cwd=target,env=environment)
     raise SystemExit(result.returncode)
 
 ROOT=Path(sys.argv[2]).resolve()
+if Path.cwd().resolve()!=ROOT:
+    raise RuntimeError("Run isolated acceptance from its archive directory to prevent mixed imports.")
 sys.path.insert(0,str(ROOT))
 os.environ["DJANGO_SETTINGS_MODULE"]="ctm.settings_test"
 from django.conf import settings
 
-settings.DATABASES["default"]["NAME"]=str(ROOT/"isolated.sqlite3")
+POSTGRES_OWNER=os.environ.get("CTM_APPLICANT_POSTGRES_OWNER_URL")
+if POSTGRES_OWNER:
+    import dj_database_url
+    settings.DATABASES={"default":dj_database_url.parse(POSTGRES_OWNER)}
+else:
+    settings.DATABASES["default"]["NAME"]=str(ROOT/"isolated.sqlite3")
 settings.MEDIA_ROOT=ROOT/"test-media"
 settings.DEBUG=True
 settings.ALLOWED_HOSTS=["127.0.0.1","localhost","testserver"]
 import django
 django.setup()
+import tribunal.models as isolated_models
+if not Path(isolated_models.__file__).resolve().is_relative_to(ROOT):
+    raise RuntimeError("Acceptance imported models outside the pinned archive.")
 logging.getLogger("django.request").setLevel(logging.CRITICAL)
 from django.core.management import call_command
 from django.test import Client
@@ -102,7 +114,28 @@ from django.core.wsgi import get_wsgi_application
 from wsgiref.simple_server import make_server,WSGIRequestHandler
 class Quiet(WSGIRequestHandler):
     def log_message(self,*args):pass
-server=make_server("127.0.0.1",0,StaticFilesHandler(get_wsgi_application()),handler_class=Quiet)
+runtime_database={"mode":"sqlite"}
+application=StaticFilesHandler(get_wsgi_application())
+def runtime_application(environ,start_response):
+    if POSTGRES_OWNER:
+        import dj_database_url
+        from django.db import connections
+        connection=connections["default"]
+        if connection.settings_dict["USER"]!="ctm_app":
+            connection.close()
+            # Change only this HTTP thread's wrapper, never the fixture/setup connection.
+            connection.settings_dict={**connection.settings_dict,**dj_database_url.parse(os.environ["CTM_APPLICANT_POSTGRES_APP_URL"])}
+        if runtime_database["mode"]!="postgresql_runtime":
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT current_user,session_user,rolsuper,rolbypassrls,rolinherit FROM pg_roles WHERE rolname=current_user")
+                user,session,superuser,bypass,inherit=cursor.fetchone()
+                assert user==session=="ctm_app" and not any([superuser,bypass,inherit])
+                tables=[model._meta.db_table for model in isolated_models.__dict__.values() if isinstance(model,type) and hasattr(model,"_meta") and model._meta.app_label=="tribunal" and not model._meta.abstract]
+                cursor.execute("SELECT count(*),count(*) FILTER(WHERE relrowsecurity AND relforcerowsecurity),count(*) FILTER(WHERE pg_has_role(current_user,relowner,'MEMBER')) FROM pg_class WHERE relname=ANY(%s)",[tables])
+                total,forced,owned=cursor.fetchone();assert total==forced and owned==0
+            runtime_database.update(mode="postgresql_runtime",current_user=user,session_user=session,superuser=superuser,bypass_rls=bypass,inherit=inherit,domain_tables=total,forced_rls_tables=forced,owner_memberships=owned)
+    return application(environ,start_response)
+server=make_server("127.0.0.1",0,runtime_application,handler_class=Quiet)
 threading.Thread(target=server.serve_forever,daemon=True).start()
 BASE=f"http://127.0.0.1:{server.server_port}"
 from playwright.sync_api import sync_playwright,expect
@@ -123,7 +156,7 @@ try:
         page=context.new_page(); errors=[]
         page.on("pageerror",lambda error:errors.append(str(error)))
         page.goto(BASE,wait_until="networkidle")
-        page.get_by_role("navigation").get_by_role("button",name="My application",exact=True).click()
+        page.get_by_role("button",name="My application",exact=True).click()
         page.get_by_role("button",name="Start or resume application",exact=True).click()
         expect(page.get_by_label("First name",exact=False)).to_be_visible()
         applications=context.request.get(BASE+"/api/applications/").json()["items"]
@@ -177,6 +210,9 @@ try:
         history=context.request.get(f"{BASE}/api/applications/{app_id}/history/").json()["items"]
         assert len(history)==2 and history[0]["answers"]["last_name"]=="Applicant"
         checks.append("Real concurrent save rejects stale editor write and explicit reload preserves immutable prior answer history")
+        if POSTGRES_OWNER:
+            from applicant_postgres_acceptance import run as run_postgres_focus
+            run_postgres_focus(browser,BASE,settings,fixture_db,session_cookie,cookies["admin"],ROOT,runtime_database,errors)
         from applicant_history_notice_acceptance import history_checks
         checks.extend(history_checks(browser,page,context,BASE,app_id,cookies,settings,ROOT))
         for name in ("outsider","admin"):
@@ -382,7 +418,7 @@ try:
         assert fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(application_id=app_id).count())==2
         checks.append("EN/AR retained declaration renders at mobile width; resume follows exact original URL without checkout POST or replacement attestation")
         page.goto(BASE,wait_until="networkidle")
-        page.get_by_role("navigation").get_by_role("button",name="My application",exact=True).click()
+        page.get_by_role("button",name="My application",exact=True).click()
         page.get_by_role("button",name="Start or resume application",exact=True).click()
         expect(page.get_by_role("button",name="Resume existing secure checkout",exact=True)).to_be_visible()
         probe=browser.new_context();probe.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["outsider"],"url":BASE}])
@@ -602,7 +638,7 @@ try:
         assert stranger.request.get(BASE+"/api/appointments/").json()=={"items":[]}
         assert context.request.get(BASE+"/api/sessions/").status==403
         assert staff.request.get(BASE+"/api/appointments/").status==403
-        page.get_by_role("navigation").get_by_role("button",name="My appointments",exact=True).click()
+        page.get_by_role("button",name="My appointments",exact=True).click()
         expect(page.get_by_text("Private applicant appointment instructions",exact=True)).to_be_visible()
         with page.expect_response(lambda response:response.url==f"{BASE}/api/appointments/{invitation_id}/response/") as received:
             page.get_by_role("button",name="Confirm attendance",exact=True).click()
@@ -654,14 +690,14 @@ try:
         assert all(isinstance(row["can_respond"],bool) and len(row["request_version"])==64 for row in own_requests)
         intake_request=next(row for row in own_requests if row["title"]=="Own sent intake")
         assessment_request=next(row for row in own_requests if row["title"]=="Own assessment")
-        page.get_by_role("navigation").get_by_role("button",name="Home",exact=True).click()
+        page.get_by_role("button",name="Home",exact=True).click()
         page.get_by_text(current["case_number"],exact=True).click()
         intake_panel=page.get_by_role("region",name="Own sent intake",exact=True)
         intake_panel.get_by_role("button",name="Open request",exact=True).click()
         expect(page.get_by_label("Own bound request question",exact=True)).to_be_enabled()
         page.get_by_label("Own bound request question",exact=True).fill("Own private bound intake answer")
         assert not errors,errors
-        page.locator("#main").get_by_role("button",name="Back to cases",exact=True).click()
+        page.locator("#main").get_by_role("button",name="Back to cases",exact=True).last.click()
         expect(page.get_by_text("Your local response has not been submitted.",exact=False)).to_be_visible()
         page.get_by_role("button",name="Keep editing",exact=True).click()
         assert context.request.post(f"{BASE}/api/requests/{intake_request['id']}/complete/",data={
@@ -762,8 +798,8 @@ try:
             Proceeding.objects.filter(case_id=current["case_id"],status="open").update(status="closed")
             OpenCaseClaim.objects.filter(case_id=current["case_id"]).delete()
         fixture_db(closed_case_fixture)  # Explicit closed-case setup, not decree/closure acceptance.
-        page.locator("#main").get_by_role("button",name="Back to cases",exact=True).click()
-        page.get_by_role("navigation").get_by_role("button",name="Past cases",exact=True).click()
+        page.locator("#main").get_by_role("button",name="Back to cases",exact=True).last.click()
+        page.get_by_role("button",name="Past cases",exact=True).click()
         page.get_by_text(current["case_number"],exact=True).click()
         expect(page.get_by_text("Own sent intake",exact=True)).to_be_visible()
         expect(page.get_by_text("Own bound request question",exact=True)).to_be_visible()
@@ -871,7 +907,7 @@ try:
         assert "no-store" in case_detail.headers.get("cache-control","")
         assert released_row["id"]==decree_id and released_row["language"]=="bilingual"
         assert released_row["signed_file"]["download_url"]==f"/api/files/{signed_file}/"
-        page.get_by_role("navigation").get_by_role("button",name="Past cases",exact=True).click()
+        page.get_by_role("button",name="Past cases",exact=True).click()
         page.get_by_text(current["case_number"],exact=True).click()
         expect(page.get_by_text("DCR-SYNTHETIC-ACCESS",exact=True)).to_be_visible()
         expect(page.get_by_text("English and Arabic",exact=True)).to_be_visible()
@@ -942,9 +978,13 @@ try:
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         assert not errors,errors
         browser.close()
+except Exception as failure:
+    partial={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"completed_groups":len(checks),"checks":checks,"page_errors":errors,"runtime_database":runtime_database,"failure":{"type":type(failure).__name__,"message":str(failure)[:5000]},"scope":"Interrupted isolated acceptance; completed groups are not a full-suite pass"}
+    (ROOT/"partial-result.json").write_text(json.dumps(partial,indent=2),encoding="utf-8")
+    raise
 finally:
     server.shutdown()
 result={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"passed":len(checks),"checks":checks,
-        "page_errors":errors,"scope":"Real Django APIs, isolated SQLite/synthetic sessions; authorized fixture waiver; scanner bypass test policy; no live provider payment/antivirus acceptance"}
+        "page_errors":errors,"runtime_database":runtime_database,"scope":"Real Django APIs, isolated "+("PostgreSQL runtime role" if POSTGRES_OWNER else "SQLite")+"/synthetic sessions; authorized fixture waiver; scanner bypass test policy; no live provider payment/antivirus acceptance"}
 (ROOT/"result.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
 print(json.dumps(result,indent=2))
