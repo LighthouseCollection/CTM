@@ -2924,7 +2924,7 @@
       badge: timelineBadge("active", t("completed")),
     });
     const filed = latestAudit("application_submitted");
-    summaryTimeline.push({
+    if (summary.filing_date) summaryTimeline.push({
       id: "filed", title: t("caseFiled"), time: summaryDate(filed?.timestamp || summary.filing_date, lang), description: t("caseFiledDescription"), badge: timelineBadge("active", t("completed")),
     });
     const recordAssignment = async () => {

@@ -153,6 +153,11 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /latestAudit\("application_submitted"\)/);
   assert.match(api, /def _case_summary\(case, application\):/);
   assert.match(api, /summary=_case_summary\(case, marriage_application\)/);
+  assert.match(api, /def _applicant_submission_source\(application\):/);
+  assert.match(api, /"kind": "applicant_submission"/);
+  assert.match(api, /"kind": "council_record", "record_type": "hearing"/);
+  assert.doesNotMatch(api, /case\.created_at\.isoformat\(\)/);
+  assert.match(councilCase, /if \(summary\.filing_date\) summaryTimeline\.push\(\{/);
   assert.match(api, /gender=p\.person\.gender if p\.person_id else None/);
 });
 

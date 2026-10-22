@@ -135,3 +135,16 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
         "church_location": "Los Angeles, CA",
         "diocese": "Diocese of Los Angeles",
     }
+    for row in parties:
+        assert row["profile_source"] == {
+            "kind": "applicant_submission",
+            "application_id": str(app.pk),
+            "revision": app.current_version,
+            "submitted_at": app.submitted_at.isoformat(),
+        }
+    assert detail["marriage_source"] == parties[0]["profile_source"]
+    assert detail["summary"]["filing_date"] == app.submitted_at.isoformat()
+    assert detail["summary"]["sources"]["filing_date"] == detail["marriage_source"]
+    assert detail["summary"]["sources"]["reason"] == detail["marriage_source"]
+    assert detail["summary"]["sources"]["children"] == detail["marriage_source"]
+    assert detail["summary"]["sources"]["last_hearing_date"] is None

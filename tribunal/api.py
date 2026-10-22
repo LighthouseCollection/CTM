@@ -522,14 +522,26 @@ def _submitted_party_profile(answers, prefix=""):
     }
 
 
-def _submitted_marriage(answers, case):
-    """Project marriage facts from the accepted filing, falling back only to case facts."""
+def _applicant_submission_source(application):
+    """A minimal, non-PII reference to the immutable applicant filing revision."""
+    if not application or not application.submitted_at:
+        return None
+    return {
+        "kind": "applicant_submission",
+        "application_id": str(application.pk),
+        "revision": application.current_version,
+        "submitted_at": application.submitted_at.isoformat(),
+    }
+
+
+def _submitted_marriage(answers):
+    """Project marriage facts only from the accepted applicant filing."""
     value = lambda *keys: _profile_value(answers, *keys)
     return {
         "outside_coptic_church": value("married_outside_coptic_church", "outside_coptic_church"),
         "outside_denomination": value("religious_denomination_officiating", "outside_denomination"),
         "outside_marriage_date": value("date_of_marriage_outside_coptic_church", "outside_marriage_date"),
-        "church_marriage_date": value("church_marriage_date", "marriage_date") or (case.marriage_date.isoformat() if case.marriage_date else None),
+        "church_marriage_date": value("church_marriage_date", "marriage_date"),
         "officiating_priest": value("officiating_priest", "marriage_officiant"),
         "church_name": value("church_name", "marriage_church_name"),
         "church_location": value("church_location", "church_address", "marriage_church_location"),
@@ -538,7 +550,7 @@ def _submitted_marriage(answers, case):
 
 
 def _case_summary(case, application):
-    """Case-summary fields come from the accepted filing and recorded hearings."""
+    """Case-summary values come only from a filing or a recorded council hearing."""
     answers = _submitted_answers(application)
     grounds = answers.get("grounds") or answers.get("reason") or []
     if isinstance(grounds, str):
@@ -552,11 +564,22 @@ def _case_summary(case, application):
         .order_by("-agenda__session__starts_at", "-created_at", "-id")
         .first()
     )
+    filing_source = _applicant_submission_source(application)
+    hearing_source = (
+        {"kind": "council_record", "record_type": "hearing", "record_id": str(last_hearing.pk)}
+        if last_hearing else None
+    )
     return {
-        "filing_date": application.submitted_at.isoformat() if application and application.submitted_at else case.created_at.isoformat(),
+        "filing_date": filing_source["submitted_at"] if filing_source else None,
         "reason": "; ".join(str(value) for value in grounds if value),
         "children": [str(value) for value in children if value],
         "last_hearing_date": last_hearing.agenda.session.starts_at.isoformat() if last_hearing and last_hearing.agenda.session.starts_at else None,
+        "sources": {
+            "filing_date": filing_source,
+            "reason": filing_source,
+            "children": filing_source,
+            "last_hearing_date": hearing_source,
+        },
     }
 
 
@@ -597,9 +620,11 @@ def _council_party_profiles(case, parties):
             answers, prefix, photo_category = _submitted_answers(direct), "", "PHOTO"
         else:
             answers, prefix, photo_category = _submitted_answers(source), "spouse_", "SPOUSE_PHOTO"
+        profile_application = direct or source
         result[party.pk] = {
             "profile": _submitted_party_profile(answers, prefix),
-            "photo_url": _application_photo_url(direct or source, photo_category),
+            "photo_url": _application_photo_url(profile_application, photo_category),
+            "profile_source": _applicant_submission_source(profile_application),
         }
     return result
 
@@ -642,7 +667,8 @@ def case_detail(request, case_id):
             can_message=request.user.role in {"applicant", "admin", "secretary"}
             or case.assigned_member_id == request.user.pk,
             parties=party_data,
-            marriage=_submitted_marriage(_submitted_answers(marriage_application), case),
+            marriage=_submitted_marriage(_submitted_answers(marriage_application)),
+            marriage_source=_applicant_submission_source(marriage_application),
             summary=_case_summary(case, marriage_application),
             proceedings=[
                 encoded(p, kind=p.kind, status=p.status, sequence=p.sequence)
