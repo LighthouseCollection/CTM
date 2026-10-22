@@ -4,8 +4,11 @@ from pathlib import Path
 import psycopg
 from psycopg import sql
 ROOT=Path(__file__).resolve().parents[1]
-BACKEND='bf69dbc79aaeda6ecfa34433c075f28ba2e7b750'
-FRONTEND='104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc'
+BACKEND=subprocess.check_output(['git','rev-parse',os.environ.get('CTM_APPLICANT_PG_REF','9b7abce1079370add53ccbfb47a42631e158fff2')],cwd=ROOT,text=True).strip()
+INTEGRATED=os.environ.get('CTM_APPLICANT_PG_INTEGRATED')=='true'
+PREFIX=os.environ.get('CTM_APPLICANT_PG_EVIDENCE','postgres-recovered')
+assert PREFIX.replace('-','').isalnum()
+FRONTEND=BACKEND if INTEGRATED else '83e537d'
 pending=subprocess.check_output(['docker','ps','--filter','label=ctm.applicant.acceptance','--format','{{.Names}}'],text=True,timeout=10).strip()
 if pending:raise RuntimeError('An earlier applicant test container still needs cleanup; no new container started: '+pending)
 identity=uuid.uuid4().hex;name='ctm-applicant-test-'+identity[:12]
@@ -16,10 +19,13 @@ paths=['static/ctm','tribunal/templates/tribunal/shell.html']
 with tarfile.open(fileobj=io.BytesIO(subprocess.check_output(['git','archive',FRONTEND,*paths],cwd=ROOT))) as bundle:bundle.extractall(target,filter='data')
 assets={}
 for source in (ROOT/'static/ctm').glob('applicant*.js'):
-    contents=source.read_bytes();(target/'static/ctm'/source.name).write_bytes(contents);assets[source.name]=hashlib.sha256(contents).hexdigest()
+    contents=(target/'static/ctm'/source.name).read_bytes() if INTEGRATED else source.read_bytes()
+    if not INTEGRATED:(target/'static/ctm'/source.name).write_bytes(contents)
+    assets[source.name]=hashlib.sha256(contents).hexdigest()
 patch=(ROOT/'docs/implementation/applicant/linked-petition-integration.patch').read_bytes();patch_path=target/'review-hook.patch';patch_path.write_bytes(patch)
 subprocess.run(['git','init','--quiet',str(target)],check=True)
-subprocess.run(['git','apply',str(patch_path)],cwd=target,check=True)
+# Current integrated shell already contains the linked-petition hook; no patch applied.
+FRONTEND=subprocess.check_output(['git','rev-parse',FRONTEND],cwd=ROOT,text=True).strip()
 password=secrets.token_hex(24);app_password=secrets.token_hex(24)
 started=False
 try:
@@ -45,7 +51,7 @@ try:
         connection.execute("ALTER ROLE ctm_app SET statement_timeout='15s'")
         connection.execute("ALTER ROLE ctm_app SET lock_timeout='5s'")
         connection.execute('CREATE ROLE ctm_worker NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS NOINHERIT')
-    env={**os.environ,'CTM_TEST_BACKEND_SHA':BACKEND,'CTM_APPLICANT_LINKED_ENTRY':'true','CTM_APPLICANT_POSTGRES_OWNER_URL':owner,'CTM_APPLICANT_POSTGRES_APP_URL':app}
+    env={**os.environ,'CTM_TEST_BACKEND_SHA':BACKEND,'CTM_APPLICANT_HISTORY_DENIAL_CONTRACT':'hidden404','CTM_APPLICANT_LINKED_ENTRY':'true','CTM_APPLICANT_POSTGRES_OWNER_URL':owner,'CTM_APPLICANT_POSTGRES_APP_URL':app}
     process=subprocess.Popen([sys.executable,str(ROOT/'scripts/browser_applicant_api.py'),'--run',str(target)],cwd=target,env=env,
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name=='nt' else 0,start_new_session=os.name!='nt')
     try:code=process.wait(timeout=180)
@@ -56,13 +62,16 @@ try:
     result_file=target/('result.json' if code==0 else 'partial-result.json')
     if result_file.exists():
         data=json.loads(result_file.read_text(encoding='utf-8'))
-        data['review_candidate']={'backend':BACKEND,'integrated_frontend':FRONTEND,'applicant_head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'module_sha256':assets,'hook_sha256':hashlib.sha256(patch).hexdigest(),'published_integration':False}
-        destination=ROOT/'docs/implementation/applicant'/('postgres-api-result.json' if code==0 else 'postgres-api-interrupted.json')
+        if code!=0:data['failure']={'type':data.get('failure',{}).get('type','Failure'),'detail':'See sanitized acceptance report; raw DEBUG response omitted.'}
+        data['review_candidate']={'backend':BACKEND,'integrated_frontend':FRONTEND,'applicant_head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'module_sha256':assets,'hook_applied':False,'history_denial_contract':'hidden404','published_integration':INTEGRATED}
+        destination=ROOT/'docs/implementation/applicant'/(PREFIX+'-result.json' if code==0 else PREFIX+'-interrupted.json')
         destination.write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
     focused=target/'postgres-focused-result.json'
     if focused.exists():
-        data=json.loads(focused.read_text(encoding='utf-8'));data['review_candidate']={'backend':BACKEND,'integrated_frontend':FRONTEND,'module_sha256':assets,'hook_sha256':hashlib.sha256(patch).hexdigest(),'published_integration':False}
-        (ROOT/'docs/implementation/applicant/postgres-focused-result.json').write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
+        data=json.loads(focused.read_text(encoding='utf-8'))
+        if data.get('failure'):data['failure']={'type':data['failure'].get('type','Failure'),'detail':'See sanitized acceptance report; raw DEBUG response omitted.'}
+        data['review_candidate']={'backend':BACKEND,'integrated_frontend':FRONTEND,'module_sha256':assets,'hook_applied':False,'history_denial_contract':'hidden404','published_integration':INTEGRATED}
+        (ROOT/'docs/implementation/applicant'/(PREFIX+'-focused-result.json')).write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
     if code:raise SystemExit(code)
 finally:
     if started:
@@ -88,3 +97,4 @@ finally:
             raise
         finally:
             (target/'cleanup.json').write_text(json.dumps(cleanup,indent=2)+'\n',encoding='utf-8')
+            (ROOT/'docs/implementation/applicant'/(PREFIX+'-cleanup.json')).write_text(json.dumps(cleanup,indent=2)+'\n',encoding='utf-8')
