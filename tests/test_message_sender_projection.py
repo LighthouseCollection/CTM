@@ -125,3 +125,30 @@ def test_message_name_contract_on_each_database_adapter(message_thread,people,cl
     item=response.json()['items'][0]
     assert item['id']==str(row.pk) and item['sender']=='admin Test'
     assert item['body']=='Retained adapter message'
+
+
+def test_hidden_thread_send_equals_missing_recipient_and_never_mutates(granted_roles,message_thread,people,client):
+    import uuid
+    from tribunal.services.identity import link_party
+    from tribunal.services.communications import acknowledge_message
+    app=message_thread
+    original=send_message(people['admin'],app.case_id,'Private original',[app.party_id])
+    acknowledge_message(app.owner,original.pk)
+    other=m.Account.objects.create_user(email='forged-thread@example.test',email_verified=True)
+    party=link_party(people['admin'],app.case,other)
+    before={model.__name__:model.objects.count() for model in [m.Message,m.MessageRecipient,m.Notification,m.Outbox,m.AuditEvent]}
+    receipt=list(m.MessageRecipient.objects.filter(message=original).values())
+    client.force_login(other)
+    with granted_roles('ctm_app',session=True):
+        with database_actor(other):
+            assert m.Party.objects.filter(pk=party.pk).exists()
+            assert not m.Party.objects.filter(pk=app.party_id).exists()
+        responses=[]
+        for target in [app.party_id,uuid.uuid4()]:
+            response=client.post(f'/api/cases/{app.case_id}/messages/',
+                {'body':'Forbidden other thread','party_ids':[str(target)],'idempotency_key':str(uuid.uuid4())},content_type='application/json')
+            assert response.status_code==422,response.content
+            responses.append(response.json())
+        assert responses[0]==responses[1]=={'error':'validation','messages':['Recipients must be registered parties of this case.']}
+    assert {model.__name__:model.objects.count() for model in [m.Message,m.MessageRecipient,m.Notification,m.Outbox,m.AuditEvent]}==before
+    assert list(m.MessageRecipient.objects.filter(message=original).values())==receipt

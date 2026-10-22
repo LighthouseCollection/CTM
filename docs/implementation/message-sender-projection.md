@@ -46,3 +46,22 @@ Applicant reruns the exact51-message journey on the combined successor, and QA
 independently records its SHA. Local backend tests do not establish full applicant,
 provider or deployment acceptance. No operational migration, merge or deploy by
 backend. Broader backend/content/service dependencies remain in backend-status.md.
+
+## Hidden recipient send contract
+
+The successor1e72a47494b29c4530b0029316ed21e530cd76ef acceptance run passed the51-message visibility stage, then
+stopped at applicant_message_acceptance.py108 expecting403 for a linked spouse
+sending into the other private thread. This separate response contract is unchanged:
+RLS hides the target Party, so recipient resolution fails with422 and the exact
+body `{"error":"validation","messages":["Recipients must be registered parties of this case."]}`.
+A nonexistent recipient UUID in the same authorized case gives the identical
+response. The later403 branch applies to a foreign party visible to the caller;
+revealing the hidden Party just to reach that branch would weaken concealment.
+
+A physicalctm_app regression pins hidden-versus-absent422 body equality and checks
+that Message, MessageRecipient, Notification, Outbox and AuditEvent counts, plus
+the original retained read receipt, are unchanged. Applicant must keep all its
+privacy/no-write assertions and use this exact denial oracle, rather than accepting
+arbitrary4xx or changing recipient fixtures. No production API, policy, grant,
+route or migration is changed for this test-oracle reconciliation. Full applicant
+and independent acceptance remain separate from the reported visibility milestone.
