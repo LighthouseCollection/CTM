@@ -323,7 +323,7 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /ctm-case-edit-grid ctm-case-read-grid/);
   const councilCss = fs.readFileSync("static/ctm/ctm.css", "utf8");
   assert.match(councilCss, /\.ctm-case-read-grid input\[readonly\]/);
-  assert.match(councilCase, /reasonForDivorce: "Reason for Divorce"/);
+  assert.match(councilCase, /reasonForDivorce: "Reason Seeking Divorce"/);
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
   assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
   assert.match(councilCase, /status: record\.status === "open" \? t\("active"\) : bt\("closed"\)/);
@@ -370,11 +370,11 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(councilCase, /"Reconciliation"/);
   assert.match(app, /const collaborationGroups = \[/);
   assert.match(app, /items: ["notes", "communications"]/);
-  assert.match(app, /className: "ctm-decree-nav-icon"/);
   assert.match(app, /id === "decision" \|\| id === "hearings"/);
   assert.match(app, /name: "gavel"/);
+  assert.match(app, /id === "marriage"\s*\? h\(P\.Icon, \{ name: "wedding"/);
+  assert.match(app, /id === "decree"\s*\? h\(P\.Icon, \{ name: "approval"/);
   assert.match(app, /id === "decision" \|\| id === "hearings"/);
-  assert.match(app, /M12 3v17M5 7h14/);
   assert.match(app, /groups: collaborationGroups/);
   assert.match(app, /page === "notes" && council && councilModule\?\.CaseNotesWorkspace/);
   assert.match(app, /onGoDecision: \(\) => go\(\"decision\"\)/);

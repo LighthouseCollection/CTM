@@ -33,9 +33,20 @@ from tribunal.validation import validate_json_value, revision_replay, UNBOUND_VE
 
 
 @transaction.atomic
-def assign_case(actor, case_id, member_id, president_id):
-    with database_actor(actor), database_settings({"ctm.assignment_member": str(member_id), "ctm.assignment_president": str(president_id)}):
-        return _assign_case(actor, case_id, member_id, president_id)
+def assign_case(actor, case_id, member_id, president_id=None):
+    """Assign a case under the configured active president when none is selected."""
+    with database_actor(actor):
+        if president_id is None:
+            president_id = (
+                Account.objects.filter(is_active=True, role="president")
+                .order_by("created_at", "pk")
+                .values_list("pk", flat=True)
+                .first()
+            )
+            if president_id is None:
+                raise ValidationError("An active president must authorize the assignment.")
+        with database_settings({"ctm.assignment_member": str(member_id), "ctm.assignment_president": str(president_id)}):
+            return _assign_case(actor, case_id, member_id, president_id)
 
 
 @core_operation("assignment")

@@ -346,7 +346,7 @@ ${ar}` : en;
       active: "Active",
       applicant: "Applicant",
       respondent: "Respondent",
-      reasonForDivorce: "Reason for Divorce",
+      reasonForDivorce: "Reason Seeking Divorce",
       assignedCouncilMember: "Assigned Council Member",
       lastHearingDate: "Last Hearing Date",
       children: "Children",
@@ -673,7 +673,7 @@ ${ar}` : en;
       active: "نشطة",
       applicant: "مقدم الطلب",
       respondent: "الطرف الآخر",
-      reasonForDivorce: "سبب الطلاق",
+      reasonForDivorce: "سبب طلب الطلاق",
       assignedCouncilMember: "عضو المجلس المكلّف",
       lastHearingDate: "تاريخ آخر جلسة",
       children: "الأبناء",
@@ -2946,7 +2946,6 @@ ${ar}` : en;
         ? record.assignment_history[record.assignment_history.length - 1].member
         : record.assigned_member || null;
     const eligibleMembers = base.assignableMembers(members);
-    const presidents = base.assignmentAuthorizers(members);
     const submittedSummary = record.summary || {};
     const summary = councilCardValues(record, "summary", submittedSummary);
     const applicant = record.parties.find((party) => party.slot === "A") || record.parties[0] || null;
@@ -3008,17 +3007,16 @@ ${ar}` : en;
     const childrenText = (children) => (children || []).map(childLabel).filter((value) => value && value !== "—").join("\n");
     const startSummaryEdit = () => {
       setSummaryFailure(null);
-      setSummaryForm({ reason: summary.reason || "", children: childrenText(summary.children), memberId: eligibleMembers.find((member) => member.name === manager)?.id || "", presidentId: "" });
+      setSummaryForm({ reason: summary.reason || "", children: childrenText(summary.children), memberId: eligibleMembers.find((member) => member.name === manager)?.id || "" });
       setSummaryEditing(true);
     };
     const saveSummary = async (event) => {
       event.preventDefault();
       const nextMemberId = summaryForm.memberId;
       const currentMemberId = eligibleMembers.find((member) => member.name === manager)?.id || "";
-      if (nextMemberId && nextMemberId !== currentMemberId && !summaryForm.presidentId) { setSummaryFailure(bt("choosePresident")); return; }
       setSummaryPending(true); setSummaryFailure(null);
       try {
-        if (nextMemberId && nextMemberId !== currentMemberId) await api(`/api/cases/${encodeURIComponent(caseId)}/assignment/`, { method: "POST", body: JSON.stringify({ member_id: nextMemberId, president_id: summaryForm.presidentId }) });
+        if (nextMemberId && nextMemberId !== currentMemberId) await api(`/api/cases/${encodeURIComponent(caseId)}/assignment/`, { method: "POST", body: JSON.stringify({ member_id: nextMemberId }) });
         await api(`/api/proceedings/${encodeURIComponent(openProceeding(record).id)}/findings/`, { method: "POST", body: JSON.stringify({ fact_code: "case_card.summary", value: { reason: summaryForm.reason.trim(), children: summaryForm.children.split(/\r?\n/).map((name) => name.trim()).filter(Boolean).map((name) => ({ name })) } }) });
         setSummaryEditing(false); retry();
       } catch (error) { setSummaryFailure(base.serverMessage(error, bt)); }
@@ -3045,8 +3043,7 @@ ${ar}` : en;
           ? h(P.Form, { onSubmit: saveSummary, label: t("caseSummary"), noValidate: true },
               h("div", { className: "ctm-case-edit-grid" },
                 h(P.Field, { label: t("reasonForDivorce") }, h(P.Input, { value: summaryForm.reason, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, reason: event.target.value })) })),
-                h(P.Field, { label: t("assignedCouncilMember") }, h(P.Select, { value: summaryForm.memberId, disabled: summaryPending || !record.can_assign, onChange: (event) => setSummaryForm((old) => ({ ...old, memberId: event.target.value, presidentId: "" })), options: [{ value: "", label: bt("unassigned") }, ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id }))] })),
-                summaryForm.memberId && summaryForm.memberId !== (eligibleMembers.find((member) => member.name === manager)?.id || "") ? h(P.Field, { label: bt("president"), required: true }, h(P.Select, { value: summaryForm.presidentId, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, presidentId: event.target.value })), options: [{ value: "", label: bt("choosePresident") }, ...presidents.map((member) => ({ value: member.id, label: member.name || member.id }))] })) : null,
+                h(P.Field, { label: t("assignedCouncilMember") }, h(P.Select, { value: summaryForm.memberId, disabled: summaryPending || !record.can_assign, onChange: (event) => setSummaryForm((old) => ({ ...old, memberId: event.target.value })), options: [{ value: "", label: bt("unassigned") }, ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id }))] })),
               ),
               h(P.Field, { label: t("children"), description: "One child per line. Submitted child details remain with the application." }, h(P.Textarea, { rows: 4, value: summaryForm.children, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, children: event.target.value })) })),
               summaryFailure ? h(P.Notice, { tone: "danger" }, summaryFailure) : null,

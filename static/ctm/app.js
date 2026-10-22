@@ -17,19 +17,11 @@
     home: "home", sessions: "calendar", sessionsUpcoming: "calendar", sessionsArchived: "archive", cases: "folder-open", search: "search",
     archived: "archive", statistics: "chart", applications: "doc-text",
     appointments: "schedule", past: "archive", case: "document", timeline: "progress",
-    parties: "settings-users", marriage: "settings-users", separation: "move", petition: "doc-text",
+    parties: "settings-users", marriage: "wedding", separation: "move", petition: "doc-text",
     reports: "document", hearings: "list-lines", evidence: "image-a-2", documents: "folder",
     medical: "lock", appeals: "progress",
     communications: "mail", calls: "phone", notes: "message", audit: "list-lines",
   };
-  const decisionBalanceIcon = () =>
-    h("svg", { className: "ctm-decision-nav-icon", width: "1em", height: "1em", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
-      h("path", { d: "M12 3v17M5 7h14M4 7l-3 6h6L4 7zm16 0-3 6h6l-3-6zM7 21h10" }),
-    );
-  const decreeCertificateIcon = () =>
-    h("svg", { className: "ctm-decree-nav-icon", width: "1em", height: "1em", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
-      h("path", { d: "M6 3h9l3 3v15H6zM15 3v4h4M9 11h6M9 15h3M15 16.5a2.5 2.5 0 1 0-2 0v2l2-1 2 1v-2a2.5 2.5 0 0 0-2 0z" }),
-    );
   const appealsReturnIcon = () =>
     h("svg", { className: "ctm-appeals-nav-icon", width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
       h("path", { d: "m9 7-5 5 5 5M5 12h8a6 6 0 0 1 6 6v1" }),
@@ -39,10 +31,12 @@
       ? h(P.Icon, { name: "document_search", "aria-hidden": true })
       : id === "separation"
       ? h(P.Icon, { name: "person_cancel", "aria-hidden": true })
+      : id === "marriage"
+        ? h(P.Icon, { name: "wedding", "aria-hidden": true })
       : id === "decision" || id === "hearings"
         ? h(P.Icon, { name: "gavel", "aria-hidden": true })
         : id === "decree"
-          ? decreeCertificateIcon()
+          ? h(P.Icon, { name: "approval", "aria-hidden": true })
           : id === "appeals"
             ? appealsReturnIcon()
             : h(P.Icon, { name: navigationIcons[id] });

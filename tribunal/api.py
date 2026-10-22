@@ -834,7 +834,7 @@ def assign(request, case_id):
     data = body(request)
     return JsonResponse(
         encoded(
-            assign_case(request.user, case_id, data["member_id"], data["president_id"])
+            assign_case(request.user, case_id, data["member_id"], data.get("president_id"))
         ),
         status=201,
     )
