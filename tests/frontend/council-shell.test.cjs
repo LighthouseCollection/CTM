@@ -149,7 +149,7 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
   assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
   assert.match(councilCase, /tone: record\.status === "open" \? "success" : "neutral"/);
-  assert.match(councilCase, /h\(P\.DataPill, \{ gender \}, party\.name\)/);
+  assert.match(councilCase, /h\(P\.DataPill, \{ gender, className: "ctm-case-summary-person-pill" \}, party\.name\)/);
   assert.match(councilCase, /latestAudit\("case_heard"\)/);
   assert.match(councilCase, /latestAudit\("case_assigned"\)/);
   assert.match(councilCase, /latestAudit\("application_submitted"\)/);

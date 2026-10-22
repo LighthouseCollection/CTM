@@ -2934,7 +2934,7 @@
     const personPill = (party) => {
       if (!party) return "—";
       const gender = party.gender === "M" ? "male" : party.gender === "F" ? "female" : undefined;
-      return gender ? h(P.DataPill, { gender }, party.name) : h(P.DataPill, { person: true }, party.name);
+      return gender ? h(P.DataPill, { gender, className: "ctm-case-summary-person-pill" }, party.name) : h(P.DataPill, { person: true, className: "ctm-case-summary-person-pill" }, party.name);
     };
     const latestAudit = (action) => [...facts.audit].filter((row) => row.action === action).sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)))[0];
     const summaryTimeline = [];
