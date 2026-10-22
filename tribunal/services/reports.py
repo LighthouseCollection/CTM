@@ -2,7 +2,7 @@ import hashlib
 import secrets
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
 from tribunal.models import (
@@ -338,6 +338,8 @@ def revise_report(actor, report_id, answers, observations="", *, expected_versio
         .get(pk=report_id)
     )
     writer(actor, report.request.case)
+    if report.method == "paper":
+        raise PermissionDenied("The paper original is retained; use a separate follow-up request.")
     if report.author_id != actor.pk or report.author.role == "applicant":
         raise PermissionDenied(
             "Only the original authorized council author can revise this report."
@@ -601,7 +603,7 @@ def external_status_receipt(request_id, token):
         if (source.kind != 'external_priest' or source.proceeding.case_id != source.case_id or not source.expires_at
                 or not source.token_hash or not constant_time_compare(source.token_hash, hashlib.sha256(token.encode()).hexdigest())):
             raise PermissionDenied("Invalid report capability.")
-        report = Report.objects.filter(request=source, method='external', author__isnull=True).first()
+        report = Report.objects.filter(Q(method='external', author__isnull=True) | Q(method='paper'), request=source).first()
         expired = timezone.now() >= source.expires_at
         receipt = None
         if expired:
@@ -616,3 +618,56 @@ def external_status_receipt(request_id, token):
         else:
             state = 'active' if source.state == 'sent' else 'unavailable'
         return {'state':state, 'expires_at':source.expires_at.isoformat(), 'receipt':receipt}
+
+
+@transaction.atomic
+def complete_external_paper(actor, request_id, file_id, completion_date, *, expected_version):
+    from datetime import date
+    from tribunal.db.context import database_actor, database_settings
+    # The proceeding lock serializes all request writers/closure, while a plain
+    # retained request read also permits exact receipt recovery after closure.
+    proceeding_id = ReportRequest.objects.values_list('proceeding_id', flat=True).get(pk=request_id)
+    Proceeding.objects.select_for_update(of=('self',)).get(pk=proceeding_id)
+    request = ReportRequest.objects.select_related('case', 'proceeding__case').get(pk=request_id)
+    writer(actor, request.case)
+    check_request_version(request, expected_version)
+    if request.kind != 'external_priest':
+        raise ValidationError("Paper completion requires an external priest request.")
+    try:
+        received = date.fromisoformat(completion_date)
+        if received.isoformat() != completion_date or received > timezone.localdate():
+            raise ValueError
+    except (ValueError, TypeError):
+        raise ValidationError("Provide the received date as YYYY-MM-DD, no later than today.")
+    import uuid
+    try:
+        file_id = uuid.UUID(str(file_id))
+    except (ValueError, TypeError, AttributeError):
+        raise ValidationError("Provide the paper original file ID.")
+    answers = {'files': [str(file_id)]}
+    if request.state == 'completed':
+        report = Report.objects.filter(request=request, author=actor, method='paper', completion_date=received).first()
+        if report and report.revisions.filter(number=1, answers=answers, observations='').exists():
+            return report
+        raise ValidationError("A different response has already been submitted.")
+    open_proceeding(request.proceeding)
+    if request.state != 'sent' or not request.sent_at:
+        raise ValidationError("Request is not awaiting this paper response.")
+    file = FileVersion.objects.select_related('attachment').get(pk=file_id)
+    attachment = file.attachment
+    if (attachment.report_request_id != request.pk or attachment.case_id != request.case_id
+            or attachment.proceeding_id != request.proceeding_id or attachment.application_id
+            or attachment.owner_id or attachment.visibility != 'council' or attachment.category != 'REPORT'
+            or file.mime_type != 'application/pdf'):
+        raise PermissionDenied("Paper original must be a council-only PDF bound to this request.")
+    if not safe_file(file) or attachment.versions.order_by('-number').first().pk != file.pk:
+        raise ValidationError("Await validation of the current paper original.")
+    with database_actor(actor), database_settings({'ctm.paper_request': str(request.pk),
+            'ctm.paper_file': str(file.pk), 'ctm.paper_date': received.isoformat()}):
+        report = Report.objects.create(request=request, author=actor, method='paper', completion_date=received)
+        ReportRevision.objects.create(report=report, number=1, answers=answers, observations='', actor=actor)
+        request.state = 'completed'
+        request.save(update_fields=['state'])
+        notify_manager(request.case, 'report_received', report)
+        audit(actor, 'external_paper_report_submitted', report, request.case)
+    return report

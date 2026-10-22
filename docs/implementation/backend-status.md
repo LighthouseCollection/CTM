@@ -1,3 +1,15 @@
+Current validation: **902 PostgreSQL passed, 1 skipped**; no model drift; rollback/reapply through0050 included. Twenty-eight new member administration tests are included; SQLite member HTTP contract separately passed. No new runtime grants or tables. Council UI/integration/independent acceptance remains pending.
+
+Member administration: admin-only explicit current-tribunal enrollment and versioned council display-name edits are implemented in0050. Existing council/enroll already created accounts; the new create contract additionally retains membership/grant sources. No applicant conversion, provider verification or role/email changes through profile edits. See member-administration.md. Council/UI/QA acceptance and broader contact/portrait/self-profile work remain pending. UI unapplied metadata needs unique0051-or-later.
+
+Current validation: **874 PostgreSQL passed, 1 skipped**; no model drift; existing migration rollback/reapply through0049 included in full suite. Eleven new restricted-role print checks passed. Synthetic Arabic template produced a one-page PDF in Chromium; council UI/content/font acceptance remains pending. No new migration or grant.
+
+Priest priority continuation: blank council print view implemented using stored wording and browser Print/Save as PDF; direct server PDF and council UI integration remain unfinished. See priest-request-print.md and priest-settings-priority.md for completed/unfinished/exact dependencies. No invitation email or integrated OCR/transcription success is claimed.
+
+Current validation: **863 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0049. Nineteen new paper-source/permission/recovery regressions included; SQLite paper/receipt endpoint contract separately passed. Integration/UI/independent acceptance remains pending.
+
+C05 paper-recording API:0049 accepts only authorized clean current request-bound council PDF, preserves original/actual recorder and received date, stops online writes and provides exact replay/minimal receipt. No general narrative edits to paper source. See external-paper-completion.md. UI orchestration, print/wrong-upload exception/recording/invitation remain unfinished. Unique later UI metadata proposal0050.
+
 Current validation: **844 PostgreSQL passed, 1 skipped**; rollback/reapply through0048. Eleven focused message tests and SQLite recipient-authorization contract passed. Known same-case other party403, absent/unrelated422, own-thread send preserved; no new migration/grant/row access.
 
 Applicant recipient authorization normalized before RLS-filtered existence lookup: known same-case spouse403, absent/unrelated422, own thread works. Reuses existing applicant case-party metadata; no new row access, migration or grant. Prior equal422 guidance is superseded; see message-sender-projection.md. Exact-successor applicant/QA reruns remain pending.
@@ -148,7 +160,7 @@ UI's other requested backend contracts remain unfinished: approved own-profile/
 contact/portrait mutations, verified email/provider administration, broader normalized/admin session history, member
 contact/portrait editing and broader institutional history, formal-source factual discrepancy views,
 and consumer integration of stored settings beyond account status notices and filing document labels. Council C05 external
-recording/paper-completion/invitation contracts remain unfinished. Capability status/receipt is implemented; council UI binding and independent acceptance remain pending. Browser-entry routing and council link metadata are implemented; combined UI acceptance remains pending. Pagination and per-family settings
+recording/wrong-upload-correction/invitation contracts remain unfinished. Blank browser-print transport is implemented; direct PDF and council UI integration remain unfinished. Paper-completion API is implemented; council upload/readiness/completion UI and independent acceptance remain pending. Capability status/receipt is implemented; council UI binding and independent acceptance remain pending. Browser-entry routing and council link metadata are implemented; combined UI acceptance remains pending. Pagination and per-family settings
 edit schemas are addressed in these continuations;
 those separate contracts are not claimed complete or all blocked by credentials.
 

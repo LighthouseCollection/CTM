@@ -67,6 +67,8 @@ def runtime():
             "ctm_assessment_release_metadata(uuid)",
             "ctm_request_author_names(uuid[])",
             "ctm_document_category_labels()",
+            "ctm_runtime_tribunal_contact()",
+            "ctm_case_recommended_doctors(uuid,text)",
             "ctm_withdrawal_can_close(uuid)",
             "ctm_closed_case_cleanup(uuid)",
             "ctm_external_status_receipt()",
@@ -789,7 +791,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0048_message_sender_projection")])
+        MigrationExecutor(connection).migrate([("tribunal", "0051_runtime_settings_consumers")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"

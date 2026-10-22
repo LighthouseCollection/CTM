@@ -884,6 +884,30 @@ def system_accounts(request):
         default_limit=100,serialize=lambda row:account_data(request.user,row,active_admin_count=active_admins)))
 
 
+@endpoint(("GET", "POST"))
+def system_members(request):
+    from tribunal.services.member_administration import create_member, member_data, member_queryset
+    from tribunal.services.staff_roles import existing_admin
+    existing_admin(request.user)
+    if request.method == 'GET':
+        from tribunal.pagination import page_records
+        return JsonResponse(page_records(member_queryset().order_by('-created_at', '-id'), request,
+            default_limit=100, serialize=lambda account: member_data(request.user, account)))
+    account, membership, grant = create_member(request.user, body(request))
+    return JsonResponse({**member_data(request.user, account),
+                         'membership_id': str(membership.pk), 'enrollment_role_id': str(grant.pk)}, status=201)
+
+
+@endpoint(("GET", "POST"))
+def system_member(request, account_id):
+    from tribunal.services.member_administration import edit_member, member_data, COUNCIL_ROLES
+    from tribunal.services.staff_roles import existing_admin
+    existing_admin(request.user)
+    account = (edit_member(request.user, account_id, body(request)) if request.method == 'POST'
+               else m.Account.objects.get(pk=account_id, role__in=COUNCIL_ROLES))
+    return JsonResponse(member_data(request.user, account))
+
+
 @endpoint()
 def system_account(request, account_id):
     from tribunal.services.account_administration import account_data
@@ -1473,6 +1497,20 @@ def send_report_request(request, request_id):
     return response
 
 
+@endpoint()
+def print_priest_request(request, request_id):
+    from tribunal.services.priest_print import printable_priest_request
+    response = render(request, 'tribunal/priest_request_print.html',
+                      printable_priest_request(request.user, request_id))
+    response['Cache-Control'] = 'no-store'
+    response['Referrer-Policy'] = 'no-referrer'
+    response['X-Content-Type-Options'] = 'nosniff'
+    response['Content-Security-Policy'] = (
+        "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; "
+        "base-uri 'none'; form-action 'none'")
+    return response
+
+
 @endpoint(("POST",))
 def complete_report_request(request, request_id):
     from tribunal.services.reports import complete_request
@@ -1536,7 +1574,7 @@ def reports(request, case_id):
                     "author_id": str(report.author_id) if report.author_id else None,
                     "author": f"{report.author.first_name} {report.author.last_name}".strip() if report.author else None,
                     "submitted_at": report.created_at.isoformat(), "method": report.method,
-                    "can_revise": bool(report.author_id == request.user.pk and report.author
+                    "can_revise": bool(report.method != "paper" and report.author_id == request.user.pk and report.author
                         and report.author.role != "applicant" and report.request.proceeding.status == "open"
                         and report.request.case.status == "open" and (request.user.role in {"admin", "secretary"}
                             or report.request.case.assigned_member_id == request.user.pk))}
@@ -1862,6 +1900,30 @@ def settings_endpoint(request):
     row = save_setting(request.user, data["key"], data["value"],
         expected_version=filing_version(data), schema_version=data.get("schema_version", 1))
     return JsonResponse(encoded(row, version=row.number, schema_version=1), status=201)
+
+
+@endpoint()
+def runtime_tribunal_contact(request):
+    from tribunal.services.runtime_settings import tribunal_contact
+
+    response = JsonResponse(tribunal_contact(request.user))
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
+@endpoint()
+def runtime_recommended_doctors(request, case_id):
+    from tribunal.services.runtime_settings import recommended_doctors
+
+    staff(request.user)
+    specialties = request.GET.getlist("specialty")
+    if len(specialties) != 1 or set(request.GET) != {"specialty"}:
+        raise ValidationError("Provide one specialty query parameter.")
+    response = JsonResponse(
+        recommended_doctors(request.user, case_id, specialties[0])
+    )
+    response["Cache-Control"] = "private, no-store"
+    return response
 
 
 @endpoint(("GET", "POST"))
@@ -2447,3 +2509,11 @@ def external_report_status(request, request_id):
         return JsonResponse(external_status_receipt(request_id, token))
     except (PermissionDenied, ValidationError, ObjectDoesNotExist):
         return JsonResponse({'error':'link_unavailable'}, status=403)
+
+
+@endpoint(("POST",))
+def complete_paper_report_request(request, request_id):
+    from tribunal.services.reports import complete_external_paper
+    data = body(request)
+    return JsonResponse(encoded(complete_external_paper(request.user, request_id,
+        data.get('file_id'), data.get('completion_date'), expected_version=data.get('expected_version'))), status=201)
