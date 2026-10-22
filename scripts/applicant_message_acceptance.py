@@ -1,5 +1,5 @@
 """Real private-message browser/API acceptance on an isolated synthetic case."""
-import os,uuid
+import json,os,uuid
 from pathlib import Path
 from playwright.sync_api import expect
 
@@ -10,20 +10,62 @@ def run(browser,page,context,staff,base,csrf,staff_csrf,case_id,case_number,part
     def seed():
         from tribunal.services.communications import send_message
         admin=m.Account.objects.get(pk=admin_id)
-        return [str(send_message(admin,case_id,f"Synthetic private paginated message {index}",[party_id],idempotency_key=f"pagination-{index}").pk) for index in range(51)]
-    private_ids=set(fixture_db(seed))
-    page.goto(base,wait_until="networkidle")
-    page.get_by_role("button",name="Past cases",exact=True).click()
-    page.get_by_text(case_number,exact=True).click()
-    page.get_by_role("button",name="Communications",exact=True).click()
-    expect(page.get_by_role("heading",name="Private case messages",exact=True)).to_be_visible()
-    expect(page.get_by_role("button",name="Load more messages",exact=True)).to_be_visible()
+        target=m.Party.objects.select_related("account").get(pk=party_id)
+        created=[send_message(admin,case_id,f"Synthetic private paginated message {index}",[party_id],idempotency_key=f"pagination-{index}") for index in range(51)]
+        ids=[str(message.pk) for message in created]
+        recipients=list(m.MessageRecipient.objects.filter(message_id__in=ids).order_by("message__created_at","message_id").values("message_id","party_id","party__account_id","message__case_id","read_at"))
+        return {"message_ids":ids,"message_count":m.Message.objects.filter(pk__in=ids).count(),"recipient_count":len(recipients),
+            "recipients":[{"message_id":str(row["message_id"]),"party_id":str(row["party_id"]),"account_id":str(row["party__account_id"]),
+                "case_id":str(row["message__case_id"]),"read_at":row["read_at"].isoformat() if row["read_at"] else None} for row in recipients],
+            "target_party":{"id":str(target.pk),"account_id":str(target.account_id),"case_id":str(target.case_id)},
+            "case":{"id":str(case_id),"status":m.Case.objects.get(pk=case_id).status}}
+    seeded=fixture_db(seed)
+    private_ids=set(seeded["message_ids"])
+    message_url=f"{base}/api/cases/{case_id}/messages/?offset=0"
+    case_url=f"{base}/api/cases/{case_id}/"
+    trace={"case_id":str(case_id),"party_id":str(party_id),"seed":seeded}
+    def response_snapshot(response):
+        raw=response.text()
+        try:payload=json.loads(raw)
+        except json.JSONDecodeError:payload=None
+        snapshot={"url":response.url,"status":response.status,"payload":payload}
+        if payload is None:snapshot["body"]=raw[:10000]
+        return snapshot
+    try:
+        case_response=context.request.get(case_url)
+        direct_response=context.request.get(message_url)
+        trace["direct_case_response"]=response_snapshot(case_response)
+        trace["direct_message_response"]=response_snapshot(direct_response)
+        page.goto(base,wait_until="networkidle")
+        page.get_by_role("button",name="Past cases",exact=True).click()
+        page.get_by_text(case_number,exact=True).click()
+        with page.expect_response(lambda response:response.url==message_url and response.request.method=="GET") as browser_messages:
+            page.get_by_role("button",name="Communications",exact=True).click()
+        trace["browser_message_response"]=response_snapshot(browser_messages.value)
+        expect(page.get_by_role("heading",name="Private case messages",exact=True)).to_be_visible()
+        more=page.get_by_role("button",name="Load more messages",exact=True)
+        trace["rendered"]={"url":page.url,"load_more_count":more.count(),"load_more_visible":more.count()>0 and more.first.is_visible(),
+            "body":page.locator("body").inner_text()[:10000]}
+        messages=trace["direct_message_response"]["payload"]
+        browser_payload=trace["browser_message_response"]["payload"]
+        assert case_response.status==200,case_response.text()
+        assert direct_response.status==200,direct_response.text()
+        assert browser_messages.value.status==200,browser_messages.value.text()
+        assert isinstance(messages,dict) and len(messages.get("items",[]))==50 and messages.get("next_offset")==50,messages
+        assert browser_payload==messages,(browser_payload,messages)
+        expect(more).to_be_visible()
+    except Exception:
+        artifact=Path(output)
+        trace["failure_state"]={"url":page.url,"viewport":page.viewport_size,
+            "body":page.locator("body").inner_text()[:10000] if page.locator("body").count() else None}
+        (artifact/"message-pagination-failure.json").write_text(json.dumps(trace,indent=2,ensure_ascii=False,default=str)+"\n",encoding="utf-8")
+        (artifact/"message-pagination-failure.html").write_text(page.content(),encoding="utf-8")
+        page.screenshot(path=str(artifact/"message-pagination-failure.png"),full_page=True,caret="initial")
+        raise
     assert fixture_db(lambda:m.MessageRecipient.objects.filter(message__case_id=case_id,party_id=party_id,read_at__isnull=False).count())==0
     page.get_by_role("button",name="Load more messages",exact=True).click()
     expect(page.get_by_role("button",name="Load more messages",exact=True)).to_have_count(0)
     expect(page.get_by_text("Synthetic private paginated message 50",exact=True)).to_be_visible()
-    messages=context.request.get(f"{base}/api/cases/{case_id}/messages/?offset=0").json()
-    assert len(messages["items"])==50 and messages["next_offset"]==50
     assert all(row["receipts"]==[{"party_id":party_id,"read_at":None}] for row in messages["items"])
     checks.append("Actual own closed-case communication route loads every private message through bounded continuation without auto read acknowledgement")
     first=messages["items"][0]
