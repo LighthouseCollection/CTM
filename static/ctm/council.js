@@ -1274,6 +1274,7 @@
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [created, setCreated] = R.useState(false);
+    const [formOpen, setFormOpen] = R.useState(false);
     const loaded = state.data?.sessions?.items || [];
     const presidingMembers = assignmentAuthorizers(state.data?.members?.items || []);
     const defaultPresiding = presidingMembers.find((row) => row.name === "H.E. Metropolitan Serapion")
@@ -1300,6 +1301,7 @@
       setProblem(null);
       setFailure(null);
       setCreated(false);
+      setFormOpen(true);
     }
     function resetSessionForm() {
       select(null);
@@ -1309,6 +1311,10 @@
       setLocation("St. George Coptic Orthodox Church, Bellflower, California");
       setProblem(null);
       setFailure(null);
+    }
+    function startCreate() {
+      resetSessionForm();
+      setFormOpen(true);
     }
 
     async function create(event) {
@@ -1326,6 +1332,7 @@
           body: JSON.stringify({ date, starts_at: laIso(date, time), presiding_member_id: presiding, location: location.trim() }),
         });
         resetSessionForm();
+        setFormOpen(false);
         setCreated(editing ? "sessionUpdated" : "sessionCreated");
         retry();
       } catch (error) {
@@ -1349,13 +1356,13 @@
       h(P.Text, { as: "h1", variant: "title" }, t(titleKey)),
       mode === "upcoming" && canManage(user)
         ? h(P.Toolbar, { label: t("tribunalSession") },
-            h(P.Button, { icon: "add", onClick: resetSessionForm, disabled: pending }, t("createSession")),
+            h(P.Button, { icon: "add", onClick: startCreate, disabled: pending }, t("createSession")),
             h(P.Button, { icon: "pencil", onClick: () => selectedSession && editSession(selectedSession), disabled: pending || !selectedSession }, t("editSession")),
-            h(P.Toolbar.Spacer),
-            h(P.Button, { icon: "save", type: "submit", form: "ctm-session-form", variant: "primary", disabled: pending, loading: pending }, t("saveSession")),
+            formOpen ? h(P.Toolbar.Spacer) : null,
+            formOpen ? h(P.Button, { icon: "save", type: "submit", form: "ctm-session-form", variant: "primary", disabled: pending, loading: pending }, t("saveSession")) : null,
           )
         : null,
-      mode === "upcoming" && canManage(user)
+      mode === "upcoming" && canManage(user) && formOpen
         ? h(
             P.Panel,
             { icon: "calendar", title: t(editing ? "editSession" : "newSession") },

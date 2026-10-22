@@ -278,6 +278,9 @@ test("upcoming sessions use a full table and load the selected session into the 
   assert.match(source, /onSelect: \(id\) => editSession\(rows\.find/);
   assert.match(source, /empty: t\(emptyKey\), isStatic: true/);
   assert.match(source, /method: editing \? "PATCH" : "POST"/);
+  assert.match(source, /const \[formOpen, setFormOpen\] = R\.useState\(false\)/);
+  assert.match(source, /onClick: startCreate/);
+  assert.match(source, /mode === "upcoming" && canManage\(user\) && formOpen/);
   assert.match(source, /title: t\("sessionTime"\), field: "starts_at", minWidth: "8rem", render: \(row\) => formatTime\(row\.starts_at, lang\)/);
   assert.doesNotMatch(source.slice(source.indexOf("columns: ["), source.indexOf("]),\n      }),")), /presiding_member_name/);
   assert.doesNotMatch(source.slice(source.indexOf("columns: ["), source.indexOf("]),\n      }),")), /locationNotRecorded/);
