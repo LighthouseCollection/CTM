@@ -77,7 +77,7 @@
       microsoft: "Continue with Microsoft",
       google: "Continue with Google",
       apple: "Continue with Apple",
-      councilLogin: "Council members use their authorized Microsoft account.",
+      councilLogin: "Council members sign in with their authorized lacopts.org Microsoft email.",
       noProviders:
         "Sign-in is temporarily unavailable. Please contact the tribunal.",
       language: "العربية",
@@ -339,7 +339,7 @@
       microsoft: "المتابعة باستخدام Microsoft",
       google: "المتابعة باستخدام Google",
       apple: "المتابعة باستخدام Apple",
-      councilLogin: "يستخدم أعضاء المجلس حساب Microsoft المعتمد لهم.",
+      councilLogin: "يستخدم أعضاء المجلس بريد Microsoft المعتمد لدى lacopts.org.",
       noProviders: "تسجيل الدخول غير متاح مؤقتًا. يرجى التواصل مع المجلس.",
       language: "English",
       home: "الرئيسية",
