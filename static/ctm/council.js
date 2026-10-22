@@ -1888,31 +1888,32 @@
     const presidentRows = assignmentAuthorizers(data.members);
     const recorder = canRecordAssignment(user, data.members);
     const memberRows = assignableMembers(data.members);
-    const sessionIdentity = h(P.Inline, { wrap: true },
-      h(P.Text, { variant: "muted" }, session.reference || sessionReference(session.date) || ""),
-      h(P.Badge, { tone: planned ? "active" : "neutral" }, t(session.state)),
-    );
-    const sessionMetrics = h(P.Metric.Group, { label: t("sessionSummary") },
-      h(P.Metric, { value: String(pendingAssignments), label: t("casesToAssign") }),
-      h(P.Metric, { value: String(scheduledHearings), label: t("scheduledHearings") }),
-    );
-    const sessionActions = h(P.Stack, { gap: "xs" },
+    // EntityHeader is the default Plenix record header.  Values come from the
+    // selected session payload; a reference/state badge is deliberately not
+    // repeated here because it is not part of the session's requested header.
+    const sessionFacts = [
+      { label: t("presiding"), value: session.presiding_member_name || t("presidingNotRecorded") },
+      { label: t("location"), value: session.location || t("locationNotRecorded") },
+      { label: t("casesToAssign"), value: String(pendingAssignments), data: true },
+      { label: t("scheduledCasesForHearing"), value: String(scheduledHearings), data: true },
+    ];
+    const sessionHeaderActions = [
       current && planned && manage
-        ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) }, t("addAssignmentCase"))
+        ? { icon: "folder-open", label: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) }
         : null,
       current && planned
-        ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) }, t("addHearingCase"))
+        ? { icon: "calendar", label: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) }
         : null,
       current
-        ? h(P.Button, { disabled: pending, onClick: () => setAttendanceVisible((visible) => !visible) }, t("attendance"))
+        ? { icon: "settings-users", label: t("attendance"), disabled: pending, onClick: () => setAttendanceVisible((visible) => !visible) }
         : null,
       session.can_reschedule === true
-        ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }, t("rescheduleAction"))
+        ? { icon: "calendar", label: t("rescheduleAction"), disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }
         : null,
       (typeof session.can_close === "boolean" ? session.can_close : manage && planned)
-        ? h(P.Button, { variant: "danger-secondary", disabled: pending, onClick: () => setDialog({ kind: "close" }) }, t("closeSession"))
+        ? { icon: "archive", label: t("closeSession"), disabled: pending, tone: "danger", onClick: () => setDialog({ kind: "close" }) }
         : null,
-    );
+    ].filter(Boolean);
 
     async function run(action, success, extra) {
       setPending(true);
@@ -2126,27 +2127,17 @@
       );
     };
 
-    const currentMeta = h(P.Stack, { gap: "xs" },
-      sessionIdentity,
-      h(P.Text, { variant: "strong" }, formatSessionStart(session.starts_at, lang) || t("timeNotRecorded")),
-      h(P.Text, null, `${t("presiding")}: ${session.presiding_member_name || t("presidingNotRecorded")}`),
-      h(P.Text, null, `${t("location")}: ${session.location || t("locationNotRecorded")}`),
-    );
-
     return h(
       P.Stack,
       { gap: "lg" },
       !current && onBack ? h(P.Inline, null, h(P.Button, { variant: "ghost", onClick: onBack }, t("backSessions"))) : null,
-      h(P.RecordPage.Header, {
-        title: current
-          ? `${t("tribunalSession")} ${session.reference || sessionReference(session.date) || session.id}`
-          : sessionLabel(session.date, t),
-        description: current ? undefined : t("sessionHeaderDescription"),
-        surface: "card",
-        meta: current
-          ? currentMeta
-          : h(P.Stack, { gap: "sm" }, sessionIdentity, compact ? sessionMetrics : null, compact ? sessionActions : null),
-        actions: compact ? null : h(P.Stack, { gap: "sm" }, current ? null : sessionMetrics, sessionActions),
+      h(P.EntityHeader, {
+        headingLevel: 1,
+        title: t("tribunalSession"),
+        subtitle: formatSessionStart(session.starts_at, lang) || t("timeNotRecorded"),
+        media: { icon: "calendar", hue: "blue" },
+        facts: sessionFacts,
+        actions: sessionHeaderActions,
       }),
       !planned ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,

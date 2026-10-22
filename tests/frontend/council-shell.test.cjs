@@ -29,9 +29,14 @@ test("session lifecycle changes refresh their parent destination list", () => {
   assert.match(council, /onChanged: retry/);
 });
 
-test("the current session is a record-header workspace with three workflow actions and two split tables", () => {
+test("the current session uses the default EntityHeader with real session facts and actions", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /mode === "current"/);
+  assert.match(council, /h\(P\.EntityHeader/);
+  assert.doesNotMatch(council, /h\(P\.RecordPage\.Header/);
+  assert.match(council, /media: \{ icon: "calendar"/);
+  assert.match(council, /facts: sessionFacts/);
+  assert.match(council, /actions: sessionHeaderActions/);
   for (const key of ["addAssignmentCase", "addHearingCase", "attendance"])
     assert.match(council, new RegExp(`t\\("${key}"\\)`), key);
   assert.match(council, /t\("casesToAssign"\)/);
