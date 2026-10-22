@@ -1,5 +1,9 @@
 # Remaining applicant work
 
+## Plenix 0.60.1 integration successor
+
+Exact unmodifiedbd6e5c8 passes76 applicant SQLite API/browser groups, no browser errors; targeted mobile overflow/runtime-style assertions pass. Earlier0.58.0 results remain historical. Latest applicant/backend integration and other acceptance dependencies remain open. [Report](integration-bd6e5c8-report.md) | [JSON](integration-bd6e5c8-result.json).
+
 ## Latest backend compatibility
 
 Backenddb82099 with captured applicant modules passes76 SQLite API/browser groups without page errors. This explicit local candidate is separate from the unmodified governance baseline and does not establish PostgreSQL acceptance. [Report](backend-db82099-report.md) | [JSON](backend-db82099-api-result.json).
