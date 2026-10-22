@@ -2114,13 +2114,19 @@
     };
     const agendaTable = (n) => {
       const first = n === 1;
-      const rows = groups[n];
+      // DataTable supplies renderers with its declared row fields. Keep a person's
+      // name and gender in the same declared value so the CDN DataPill receives both.
+      const rows = groups[n].map((row) => ({
+        ...row,
+        applicant: { name: row.applicant_name, gender: row.applicant_gender },
+        respondent: { name: row.respondent_name, gender: row.respondent_gender },
+      }));
       const title = first ? t("casesToAssign") : t("scheduledCasesForHearing");
       const columns = first
         ? [
             { title: "\u00a0", field: "record" },
-            { title: t("applicant"), field: "applicant_name", kind: "name", render: (row) => personPill(row.applicant_name, "applicant", row.applicant_gender) },
-            { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent", row.respondent_gender) },
+            { title: t("applicant"), field: "applicant", kind: "name", render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
+            { title: t("respondent"), field: "respondent", render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("reason"), field: "reason" },
             { title: t("yearsMarried"), field: "married_years", render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
             { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
@@ -2128,8 +2134,8 @@
           ]
         : [
             { title: "#", field: "position", kind: "name" },
-            { title: t("applicant"), field: "applicant_name", render: (row) => personPill(row.applicant_name, "applicant", row.applicant_gender) },
-            { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent", row.respondent_gender) },
+            { title: t("applicant"), field: "applicant", render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
+            { title: t("respondent"), field: "respondent", render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
             { title: t("previousRecommendation"), field: "previous_recommendation", render: (row) => row.previous_recommendation || t("notRecorded") },
             { title: "\u00a0", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
