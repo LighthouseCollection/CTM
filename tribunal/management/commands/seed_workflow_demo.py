@@ -754,7 +754,7 @@ class Command(BaseCommand):
             json.dumps(
                 {
                     "dataset": DATASET,
-                    "cases": 8,
+                    "cases": len(COUPLES),
                     "staff_profiles": 9,
                     "scenarios": scenarios,
                     "note": "Synthetic DB snapshots; no emails, payments or real signatures.",
