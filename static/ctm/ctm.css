@@ -188,3 +188,22 @@
   .ctm-session-form-grid { grid-template-columns: 1fr; }
 }
 
+
+/* A calendar action needs an explicit add affordance; the CDN does not expose a calendar-add glyph. */
+.ctm-calendar-add-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+.ctm-calendar-add-icon > .plx-icon:last-child {
+  position: absolute;
+  inset-inline-end: -0.22rem;
+  inset-block-end: -0.18rem;
+  padding: 0.04rem;
+  border-radius: 999px;
+  background: var(--plx-color-surface, #fff);
+}

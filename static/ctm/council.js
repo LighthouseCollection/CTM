@@ -394,8 +394,8 @@
       casesPresented: "Cases presented",
       archivedSessionDetails: "Archived session details",
       adjournSessionAction: "Adjourn session",
-      addAssignmentCase: "Add a Case to Be Assigned",
-      addHearingCase: "Add a Case to Hearings",
+      addAssignmentCase: "Case to be Assigned",
+      addHearingCase: "Case to Hearings",
       attendance: "Council Attendance",
       scheduledCasesForHearing: "Scheduled Cases for Hearing",
       collapse: "Collapse {title}",
@@ -692,8 +692,8 @@
       casesPresented: "القضايا المعروضة",
       archivedSessionDetails: "تفاصيل الجلسة المؤرشفة",
       adjournSessionAction: "تأجيل الجلسة",
-      addAssignmentCase: "إضافة قضية للتعيين",
-      addHearingCase: "إضافة قضية لجلسات النظر",
+      addAssignmentCase: "قضية للتعيين",
+      addHearingCase: "قضية لجلسات النظر",
       attendance: "حضور أعضاء المجلس",
       scheduledCasesForHearing: "القضايا المجدولة للنظر",
       collapse: "طي {title}",
@@ -2080,8 +2080,8 @@
     // control in the aside. EntityHeader only accepts icon-only entity actions,
     // so this uses its documented structural classes and tokenized anatomy.
     const sessionHeaderActions = (current ? [
-      editable && manage ? { icon: "folder-open", label: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) } : null,
-      editable ? { icon: "calendar", label: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) } : null,
+      editable && manage ? { icon: "folder-add", label: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) } : null,
+      editable ? { icon: h("span", { className: "ctm-calendar-add-icon", "aria-hidden": "true" }, h(P.Icon, { name: "calendar" }), h(P.Icon, { name: "add", size: "2xs" })), label: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) } : null,
       { icon: "settings-users", label: t("attendance"), disabled: pending, onClick: () => setDialog({ kind: "attendance" }) },
     ] : []).filter(Boolean);
     const sessionStatus = session.state === "closed" ? "adjourned" : session.state === "draft" ? "draft" : "in-session";
