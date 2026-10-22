@@ -214,12 +214,12 @@ POST; any uncertain response freezes that local attempt. Authoritative refresh a
 explicit clearing are required before starting another entry. The current real-API
 test verifies missing-contract controls stay disabled; append success is fixture-only.
 
-## Proposed own released decree read
+## Own released decree read
 
-The prepared case panel reads GET `/api/cases/{id}/` and requires an explicit
-`released_decrees` array. This extension is absent at backend f0e21b4; absence is
-unavailable, never an empty release list or a grant inferred from case closure.
-Proposed row fields: UUID `id`, nonempty `reference`, `language` (`en`, `ar`,
+The case panel reads GET `/api/cases/{id}/` and requires an explicit
+`released_decrees` array. Backend 444bad8 supplies this extension and private no-store case reads. Absence
+remains unavailable, never an empty list or a grant inferred from case closure.
+Row fields: UUID `id`, nonempty `reference`, `language` (`en`, `ar`,
 `bilingual`), offset-aware `released_at`, and `signed_file` with UUID `id`, `name`,
 `scan_state:"clean"` and exact `/api/files/{id}/` `download_url`. An empty array
 means the server confirms no currently released certificates for this account.
@@ -315,3 +315,12 @@ requests are valid read-only rows; never-sent content is not. The UI rejects nul
 sent timestamps, but API/RLS must exclude never-sent requests independently.
 Default API acceptance now fails on this regression. Baseline-only override is
 explicit and does not count as closure/privacy acceptance.
+
+
+Released-decree integration is independently verified against backend 444bad8:
+actual own empty/released/withdrawn reads, bilingual metadata, exact Plenix PDF
+action, Arabic mobile layout, linked-spouse isolation, no-store delivery and retained
+full/range/preview/HEAD denial after withdrawal. The fixture uses a dedicated council
+DEC attachment with a clean technical event, synthetic stored bytes and explicitly
+created decision/decree/closed state. It does not claim approval, signature capture
+or issuance acceptance. The unrelated unsent-request closure gate still fails.

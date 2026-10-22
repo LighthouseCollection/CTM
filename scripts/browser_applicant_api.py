@@ -586,9 +586,9 @@ try:
         assert page.get_by_text("Private external request",exact=True).count()==0
         checks.append("Actual own request list renders bound questions and assessment instructions while excluding staff drafts/interviews/external requests")
         expect(page.get_by_role("button",name="Start or resume appeal",exact=True)).to_be_visible()
-        expect(page.get_by_text("Released certificates are unavailable. Refresh or contact the tribunal.",exact=True)).to_be_visible()
+        expect(page.get_by_text("No certificate is currently released to your account.",exact=True)).to_be_visible()
         assert page.get_by_role("link",name="View or download signed PDF",exact=True).count()==0
-        checks.append("Current own case read without released decree list cannot expose certificate links")
+        checks.append("Actual own case read confirms no active decree releases and exposes no certificate links")
         page.get_by_role("button",name="Start or resume appeal",exact=True).click()
         expect(page.get_by_label("New information for consideration",exact=False)).to_be_visible()
         appeal=next(row for row in context.request.get(BASE+"/api/applications/").json()["items"] if row["kind"]=="appeal")
@@ -662,23 +662,62 @@ try:
         signed_file=next(row["id"] for row in context.request.get(f"{BASE}/api/applications/{app_id}/files/").json()["items"] if row["category"]=="CMC" and row["scan_state"]=="clean")
         signed_bytes=context.request.get(f"{BASE}/api/files/{signed_file}/").body()
         def decree_access_fixture():
+            import hashlib
             from django.utils import timezone
-            from tribunal.models import DecisionRevision,Decree,Proceeding
+            from tribunal.models import DecisionRevision,Decree,Proceeding,Attachment,FileVersion,FileTechnicalEvent,Case
+            from tribunal.services.files import write_private_original,private_path
             proceeding=Proceeding.objects.filter(case_id=current["case_id"],kind="initial").first()
+            attachment=Attachment.objects.create(case_id=current["case_id"],proceeding=proceeding,category="DEC",visibility="council")
+            file=FileVersion.objects.create(attachment=attachment,number=1,object_key=f"synthetic-decrees/{uuid.uuid4().hex}.pdf",
+                original_name="synthetic-signed.pdf",display_name="synthetic-signed.pdf",mime_type="application/pdf",
+                byte_count=len(signed_bytes),sha256=hashlib.sha256(signed_bytes).hexdigest(),actor=admin)
+            FileTechnicalEvent.objects.create(file=file,task="scan",result="clean")
+            write_private_original(private_path(file.object_key),signed_bytes)
             decision=DecisionRevision.objects.create(proceeding=proceeding,number=1,type="nullity",grounds="Synthetic access test only",actor=admin,
                 entitlements={party_id:"certificate"})
-            return str(Decree.objects.create(decision=decision,reference="DCR-SYNTHETIC-ACCESS",language="en",
-                signed_file_id=signed_file,signer=president,issued_at=timezone.now()).pk)
-        decree_id=fixture_db(decree_access_fixture)  # Synthetic PDF stands in for stored signed bytes; no issuance/signature acceptance.
+            decree=Decree.objects.create(decision=decision,reference="DCR-SYNTHETIC-ACCESS",language="both",
+                signed_file=file,signer=president,issued_at=timezone.now())
+            Case.objects.filter(pk=current["case_id"]).update(status="closed")
+            return str(decree.pk),str(file.pk)
+        decree_id,signed_file=fixture_db(decree_access_fixture)  # Synthetic stored signed bytes/closed state only, not issuance/signature acceptance.
         assert context.request.get(f"{BASE}/api/files/{signed_file}/").status==403
         release=staff.request.post(f"{BASE}/api/decrees/{decree_id}/release/",data={"party_id":party_id,"action":"release"},headers={"X-CSRFToken":staff_csrf})
         assert release.status==201,release.text()
+        case_detail=context.request.get(f"{BASE}/api/cases/{current['case_id']}/")
+        released_row=case_detail.json()["released_decrees"][0]
+        assert "no-store" in case_detail.headers.get("cache-control","")
+        assert released_row["id"]==decree_id and released_row["language"]=="bilingual"
+        assert released_row["signed_file"]["download_url"]==f"/api/files/{signed_file}/"
+        page.get_by_role("navigation").get_by_role("button",name="Past cases",exact=True).click()
+        page.get_by_text(current["case_number"],exact=True).click()
+        expect(page.get_by_text("DCR-SYNTHETIC-ACCESS",exact=True)).to_be_visible()
+        expect(page.get_by_text("English and Arabic",exact=True)).to_be_visible()
+        certificate=page.get_by_role("link",name="View or download signed PDF",exact=True)
+        expect(certificate).to_have_attribute("href",f"/api/files/{signed_file}/")
+        page.get_by_role("button",name="العربية",exact=True).click()
+        expect(page.get_by_text("الإنجليزية والعربية",exact=True)).to_be_visible()
+        expect(page.get_by_role("link",name="عرض أو تنزيل ملف PDF الموقّع",exact=True)).to_have_attribute("href",f"/api/files/{signed_file}/")
+        page.set_viewport_size({"width":390,"height":950})
+        assert page.locator("[style]").count()==0
+        assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
+        page.get_by_role("button",name="English",exact=True).click()
+        page.set_viewport_size({"width":1280,"height":1000})
+        other_recipient=browser.new_context()
+        other_recipient.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["outsider"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
+        assert other_recipient.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["released_decrees"]==[]
+        assert other_recipient.request.get(f"{BASE}/api/files/{signed_file}/").status==403
+        other_recipient.close()
+        checks.append("Actual own release list renders bilingual certificate metadata and exact PDF action while linked spouse receives no release or bytes")
         released=context.request.get(f"{BASE}/api/files/{signed_file}/")
         assert released.status==200 and released.body()==signed_bytes and "no-store" in released.headers.get("cache-control","")
         assert context.request.get(f"{BASE}/api/files/{signed_file}/",headers={"Range":"bytes=0-3"}).status==206
         assert context.request.get(f"{BASE}/api/files/{signed_file}/?view=1").status==200
         revoked=staff.request.post(f"{BASE}/api/decrees/{decree_id}/release/",data={"party_id":party_id,"action":"withdraw"},headers={"X-CSRFToken":staff_csrf})
         assert revoked.status==201,revoked.text()
+        page.get_by_role("button",name="Refresh released certificates",exact=True).click()
+        expect(page.get_by_text("No certificate is currently released to your account.",exact=True)).to_be_visible()
+        expect(certificate).to_have_count(0)
+        assert context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["released_decrees"]==[]
         for suffix,headers in [("",{}),("",{"Range":"bytes=0-3"}),("?view=1",{})]:
             assert context.request.get(f"{BASE}/api/files/{signed_file}/{suffix}",headers=headers).status==403
         head=http.client.HTTPConnection("127.0.0.1",server.server_port)

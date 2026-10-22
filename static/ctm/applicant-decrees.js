@@ -1,4 +1,4 @@
-/* Proposed own case read extension. Server release authorization is required on every file request. */
+/* Own active releases from the case read. Server authorization is required on every file request. */
 (() => {
   "use strict";
   const uuid=value=>typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);

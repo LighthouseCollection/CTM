@@ -80,3 +80,10 @@ stamp rejection is not API authorization. Default acceptance now asserts exclusi
 and fails. Preserve this failed result until a backend fix is independently verified.
 Prepared response/lifecycle controls remain disabled without own server capabilities;
 original-attestation checkout resume remains disabled without its immutable snapshot.
+
+
+Latest decree integration: backend 444bad8,35 preceding API/browser groups pass,
+then default closure privacy still fails. Own active release read is no longer a
+missing contract: actual EN/AR panel/exact PDF action, recipient isolation and
+withdrawn-list refresh are verified with dedicated synthetic DEC bytes. Live
+signature/issuance and PostgreSQL remain separate.

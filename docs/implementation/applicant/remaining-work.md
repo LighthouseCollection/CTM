@@ -8,7 +8,7 @@ owners; applicant PR #5 remains draft.
 | Order | Remaining task | Next concrete action / dependency |
 | --- | --- | --- |
 | 1 | Pending appeal supplements | UI prepared with review, safe evidence selection and uncertain-response locking. Actual owner supplement POST and staff denial verified; integration remains pending own supplement history and authoritative `can_supplement`. Existing POST additions accepts text/file IDs but has no idempotency key. |
-| 2 | Released decree access | Read-only UI prepared; backend own actively released decree projection remains pending. Real release/withdraw byte-route checks pass with a synthetic stored PDF; actual signing/issuance remain separate. Never infer recipient entitlement from filing order; revocation must cover preview/range/download. |
+| 2 | Released decree access — read integration verified | Backend 444bad8 supplies own active release rows. Actual browser shows bilingual metadata/exact PDF link, isolates linked spouse, and removes withdrawn release links. Retained full/range/preview/HEAD URLs revoke. Synthetic stored PDF only; real signing/issuance and PostgreSQL acceptance remain separate. |
 | 3 | Applicant request responses and professional release | Actual own request reader implemented with bound questions/instructions; intake response editor prepared with review/guards/version payload. Response capability/version enforcement, approved release definition and signed scope remain pending. Closure currently exposes unsent drafts through the backend API (P1). Keep drafts/interviews/other spouse requests private; no signature or institutional wording invented. |
 | 4 | Checkout recovery | Actual own payment history now blocks fresh checkout for unresolved/unknown candidates. Resume UI prepared; own pending candidate/original-attestation/resume contract is still missing. Recover an existing attempt without a new charge or signature; do not infer success from return URLs. |
 | 5 | Draft deletion and withdrawal controls | Explicit confirmation UI prepared with single-attempt locks and parent filing/navigation protection. Authoritative action capabilities and version enforcement remain pending. Returned filings must never use draft deletion; joint withdrawal and shared claim closure must follow owner decisions. |
@@ -35,7 +35,7 @@ acceptance or identity onboarding. Supplement UI is prepared; its own read/capab
 ## Current acceptance blocker
 
 The default real API suite now checks never-sent request privacy after actual case
-closure and fails at backend f0e21b4: a staff draft changes to `closed`, then is
+closure and still fails at backend 444bad8 (previously f0e21b4): a staff draft changes to `closed`, then is
 returned by the applicant request endpoint. The frontend rejects its null sent
 stamp, but cannot repair API disclosure. See `request-closure-privacy-result.json`
 and GitHub #2. Do not call the full acceptance suite green. An explicit

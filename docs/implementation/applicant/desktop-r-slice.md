@@ -138,8 +138,10 @@ API/CDN UI checks do not establish production identity or PostgreSQL readiness.
 shell patch. It displays explicit own active release metadata and authorized signed
 PDF actions with Plenix controls. No filing-order or closed-case entitlement guess
 is made. Refresh clears stale links; denied or malformed responses show unavailable.
-The required own case release-list extension is not supplied by current backend.
-Fixture checks cover presentation only; server byte-route revocation remains pending.
+The own case release-list extension is supplied by backend 444bad8 and verified
+through actual API/browser integration.
+Synthetic presentation fixtures remain separate from the real API release/read/
+withdraw checks; signing/issuance and operational acceptance remain pending.
 
 
 ## Own request reader
