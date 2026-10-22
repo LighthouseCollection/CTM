@@ -2155,23 +2155,23 @@
       const title = first ? t("casesToAssign") : t("scheduledCasesForHearing");
       const columns = first
         ? [
-            { title: "\u00a0", field: "record" },
-            { title: t("applicant"), field: "applicant", kind: "name", render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
-            { title: t("respondent"), field: "respondent", render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
-            { title: t("reason"), field: "reason" },
-            { title: t("yearsMarried"), field: "married_years", render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
-            { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: "\u00a0", field: "open_action", render: (row) => h(P.Inline, { gap: "xs" },
+            { title: "\u00a0", field: "record", width: "2rem" },
+            { title: t("applicant"), field: "applicant", kind: "name", minWidth: "8.5rem", render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
+            { title: t("respondent"), field: "respondent", minWidth: "8.5rem", render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
+            { title: t("reason"), field: "reason", minWidth: "6.5rem" },
+            { title: t("yearsMarried"), field: "married_years", minWidth: "7.5rem", render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
+            { title: t("assignedTo"), field: "assigned_member_name", minWidth: "9rem", render: (row) => personPill(row.assigned_member_name, "clergy") },
+            { title: "\u00a0", field: "open_action", minWidth: "7rem", render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               row.can_transfer && transferSessions.length ? h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase")) : null) },
           ]
         : [
-            { title: "#", field: "position", kind: "name" },
-            { title: t("applicant"), field: "applicant", render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
-            { title: t("respondent"), field: "respondent", render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
-            { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: t("previousRecommendation"), field: "previous_recommendation", render: (row) => row.previous_recommendation || t("notRecorded") },
-            { title: "\u00a0", field: "open_action", render: (row) => h(P.Inline, { gap: "xs" },
+            { title: "#", field: "position", kind: "name", width: "3rem" },
+            { title: t("applicant"), field: "applicant", minWidth: "8.5rem", render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
+            { title: t("respondent"), field: "respondent", minWidth: "8.5rem", render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
+            { title: t("assignedTo"), field: "assigned_member_name", minWidth: "9rem", render: (row) => personPill(row.assigned_member_name, "clergy") },
+            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "11rem", render: (row) => row.previous_recommendation || t("notRecorded") },
+            { title: "\u00a0", field: "open_action", minWidth: "7rem", render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               row.can_transfer && transferSessions.length ? h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase")) : null) },
           ];
