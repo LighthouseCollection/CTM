@@ -17,9 +17,12 @@
     { code: "diss-conditional", label: "Dissolution Granted — Conditional Permission to Remarry" },
     { code: "null-granted", label: "Declaration of Nullity — Permission to Remarry Granted" },
     { code: "null-conditional", label: "Declaration of Nullity — Conditional Permission to Remarry" },
-    { code: "deferred", label: "Decision Deferred — Further Investigation Required" },
     { code: "denied", label: "Petition Denied — No Permission to Remarry" },
   ];
+  // "Decision Deferred" is a hearing outcome in the approved catalog
+  // (hearing_pending_no_decree): it is labelled for display but never offered
+  // for a vote or approval (acceptance review F27).
+  const DISPLAY_ONLY_TYPES = [{ code: "deferred", label: "Decision Deferred — Further Investigation Required" }];
   const ENTITLEMENTS = ["certificate", "notice_only"];
   const VOTES = ["approve", "deny", "abstain"];
   const LANGUAGES = ["en", "ar", "both"];
@@ -27,7 +30,7 @@
   // ---------- Pure logic ----------
 
   function typeLabel(code) {
-    return DECISION_TYPES.find((row) => row.code === code)?.label || code;
+    return [...DECISION_TYPES, ...DISPLAY_ONLY_TYPES].find((row) => row.code === code)?.label || code;
   }
 
   function needsEntitlements(type) {
@@ -272,6 +275,7 @@
         "A revised type or grounds creates a new version. Earlier votes and approval stay with the earlier version and are not carried over.",
       decisionRecorded: "The decision version was recorded.",
       typeLabelNotice: "Approved Arabic decision-type labels are not yet supplied; the approved English label is shown.",
+      deferralNotice: "To defer for further investigation, record it in the hearing recommendations. Deferral is not voted on or approved as a decision.",
       votes: "Council votes",
       rosterNotice: "Every council member is listed, regardless of attendance.",
       approve: "Approve",
@@ -455,6 +459,7 @@
         "تعديل النوع أو الأسباب يُنشئ إصدارًا جديدًا. تبقى الأصوات والاعتماد السابقة مرتبطة بالإصدار السابق ولا تنتقل إلى الجديد.",
       decisionRecorded: "تم تسجيل إصدار القرار.",
       typeLabelNotice: "لم تُتَح بعد التسميات العربية المعتمدة لأنواع القرار؛ تُعرض التسمية الإنجليزية المعتمدة.",
+      deferralNotice: "لتأجيل القرار لمزيد من التحقيق، سجّل ذلك في توصيات الجلسة. لا يُصوَّت على التأجيل ولا يُعتمد كقرار.",
       votes: "أصوات أعضاء المجلس",
       rosterNotice: "يُدرج جميع أعضاء المجلس بغض النظر عن الحضور.",
       approve: "موافقة",
@@ -1091,6 +1096,7 @@
             options: [{ value: "", label: t("chooseType") }, ...DECISION_TYPES.map((row) => ({ value: row.code, label: row.label }))],
           }),
         ),
+        h(P.Text, { variant: "secondary" }, t("deferralNotice")),
         lang === "ar" ? h(P.Notice, { tone: "info" }, t("typeLabelNotice")) : null,
         h(
           P.Field,

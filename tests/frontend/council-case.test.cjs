@@ -26,7 +26,9 @@ test("decision catalog matches the server types and exact prototype labels", () 
   ).types;
   const server = fs.readFileSync("tribunal/services/decisions.py", "utf8");
   const serverTypes = [...server.match(/DECISION_TYPES = \{([^}]*)\}/)[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(plain(C.DECISION_TYPES.map((t) => t.code).sort()), [...serverTypes].sort());
+  // Every selectable type is a server type; deferral is a hearing outcome (F27).
+  assert.deepEqual(plain(C.DECISION_TYPES.map((t) => t.code).sort()), serverTypes.filter((t) => t !== "deferred").sort());
+  assert.equal(C.typeLabel("deferred"), "Decision Deferred — Further Investigation Required");
   for (const row of C.DECISION_TYPES) {
     const match = prototype.find((p) => p.prototype_code === row.code);
     assert.ok(match, row.code);
@@ -40,7 +42,7 @@ test("type and grounds are required before anything can be voted on", () => {
   assert.equal(C.decisionProblem({ type: "imprisonment", grounds: "x", entitlements: {} }, parties), "chooseType");
   assert.equal(C.decisionProblem({ type: "denied", grounds: "  ", entitlements: {} }, parties), "groundsRequired");
   assert.equal(C.decisionProblem({ type: "denied", grounds: "Reason", entitlements: {} }, parties), null);
-  assert.equal(C.decisionProblem({ type: "deferred", grounds: "Reason", entitlements: {} }, parties), null);
+  assert.equal(C.decisionProblem({ type: "deferred", grounds: "Reason", entitlements: {} }, parties), "chooseType");
 });
 
 test("granting decisions need an explicit entitlement for every party", () => {
