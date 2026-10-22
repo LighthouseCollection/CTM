@@ -383,6 +383,7 @@ test("F15: assignment authorizers and recorders follow server flags; one person 
   assert.equal(C.assignmentProblem("m", "a", flagged), null);
   // President approval list is unchanged by the assignment flags.
   assert.deepEqual([...C.presidents(flagged)].map((m) => m.id), ["p"]);
+  assert.deepEqual([...C.assignableMembers(flagged)].map((m) => m.id), ["m", "p"]);
   const part1 = { part: 1, state: "scheduled" };
   assert.equal(C.agendaActions(part1, { state: "planned", can_manage: false }, { id: "p", role: "president" }, null, { canRecordAssignment: true }).assign, true);
   assert.equal(C.agendaActions(part1, { state: "planned", can_manage: true }, admin, null, { canRecordAssignment: false }).assign, false);

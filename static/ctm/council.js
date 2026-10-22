@@ -166,7 +166,7 @@
   }
 
   function assignableMembers(members) {
-    return (members || []).filter((row) => row.role !== "applicant");
+    return (members || []).filter((row) => ["president", "secretary", "member"].includes(row.role));
   }
 
   function assignmentProblem(memberId, presidentId, members) {
