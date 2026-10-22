@@ -185,6 +185,7 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.match(app, /\["home", "myCases", "cases", "archived", "past"\]\.includes\(page\)/);
   assert.match(app, /view: page === "myCases" \? "mine" : page === "archived" \? "archived" : "active"/);
   assert.match(app, /id === "search"\s*\? h\(P\.Icon, \{ name: "document_search"/);
+  assert.match(app, /sessions: "today"/);
   assert.match(app, /const appealsReturnIcon = \(\) =>/);
   assert.match(app, /id === "appeals"\s*\? appealsReturnIcon\(\)/);
   assert.match(app, /const casesNavigationItems = \[\s*\{ id: "search", icon: navigationIcon\("search"\), label: t\("search"\) \}/);
