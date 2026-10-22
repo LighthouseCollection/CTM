@@ -1,5 +1,9 @@
 # Remaining applicant work
 
+## Exact governance successor verification
+
+Unmodified integration8572195 passes76 SQLite API/browser groups, no page errors. First migration launch failed; fresh unchanged rerun passed. Latest applicant1d20bfa and backenddb82099 still await integration. PostgreSQL now has a confirmed coordinated Docker VM recovery dependency. [Report](integration-8572195-report.md) | [JSON](integration-8572195-result.json).
+
 ## Current backend validation alignment
 
 At ff85717:17 direct probes,30 archived backend SQLite recursive tests,76 applicant SQLite API/browser groups,96 frontend tests and nine row/repeat browser fixture groups pass. F02/F04 and English MC/CMC technical gaps are addressed; approved content, normalized schema and PostgreSQL/integration acceptance remain. [Successor report](backend-validation-report.md) | [Resolution JSON](field-mapping/backend-resolution.json). Earlier status snapshots below are historical.
