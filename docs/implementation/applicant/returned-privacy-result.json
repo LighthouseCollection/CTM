@@ -20,9 +20,16 @@
     "owner_keeps_saved_answers": true,
     "owner_keeps_pending_original": true
   },
+  "pending_scan_checks": {
+    "pending_replacement_keeps_formal_manifest": true,
+    "pending_replacement_keeps_formal_listing": true,
+    "formal_original_download_survives_pending_replacement": true,
+    "council_cannot_download_pending_replacement": true,
+    "owner_cannot_download_unscanned_replacement": true
+  },
   "remaining_surfaces": [
-    "search integration",
-    "legacy queued alert delivery",
+    "live search integration",
+    "live email delivery",
     "PostgreSQL RLS"
   ],
   "scope": "Isolated SQLite/browser API fixtures; no actual case data",
@@ -32,5 +39,11 @@
     "new_manifest_does_not_bind_superseded_original": true,
     "council_can_download_resubmitted_original": true,
     "earlier_submitted_original_retained": true
+  },
+  "supplemental_validation": {
+    "backend_returned_privacy_pytest": {
+      "passed": 4,
+      "scope": "Independently executed exact e2f714a backend archive, settings_test SQLite; controlled search candidates and mocked never-called mail send; not live provider acceptance"
+    }
   }
 }

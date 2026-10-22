@@ -401,6 +401,20 @@ try:
             assert pending_received.value.status==201,pending_received.value.text()
             pending_file=pending_received.value.json()["id"]
             expect(slot.get_by_role("link",name="Download original",exact=True)).to_have_attribute("href",f"/api/files/{pending_file}/")
+            # AS-F25-1: a later pending scan must not displace the clean formal snapshot.
+            fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=pending_file,task="scan",result="pending"))
+            pending_detail=staff.request.get(f"{BASE}/api/applications/{app_id}/").json()
+            pending_listing=staff.request.get(f"{BASE}/api/cases/{current['case_id']}/files/").json()
+            pending_scan_checks={
+                "pending_replacement_keeps_formal_manifest":replacement_id in json.dumps(pending_detail.get("manifest",[])) and pending_file not in json.dumps(pending_detail.get("manifest",[])),
+                "pending_replacement_keeps_formal_listing":replacement_id in json.dumps(pending_listing) and pending_file not in json.dumps(pending_listing),
+                "formal_original_download_survives_pending_replacement":staff.request.get(f"{BASE}/api/files/{replacement_id}/").status==200,
+                "council_cannot_download_pending_replacement":staff.request.get(f"{BASE}/api/files/{pending_file}/").status in {403,404},
+                "owner_cannot_download_unscanned_replacement":context.request.get(f"{BASE}/api/files/{pending_file}/").status in {403,404},
+            }
+            assert all(pending_scan_checks.values()),"Pending replacement displaced formal submission or exposed unscanned bytes"
+            fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=pending_file,task="scan",result="clean"))
+            checks.append("AS-F25 pending replacement keeps prior clean formal manifest/list/download while pending bytes remain denied to owner and council")
             staff_detail=staff.request.get(f"{BASE}/api/applications/{app_id}/").json()
             staff_history=staff.request.get(f"{BASE}/api/applications/{app_id}/history/").json()
             case_files=staff.request.get(f"{BASE}/api/cases/{current['case_id']}/files/").json()
@@ -430,7 +444,8 @@ try:
             owner_checks={"owner_keeps_saved_answers":context.request.get(f"{BASE}/api/applications/{app_id}/").json()["answers"]["first_name"]==marker,
                           "owner_keeps_pending_original":context.request.get(f"{BASE}/api/files/{pending_file}/").status==200}
             report={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"acceptance":"F08/F25 direct-owner returned privacy",
-                    "checks":privacy,"owner_checks":owner_checks,"remaining_surfaces":["search integration","legacy queued alert delivery","PostgreSQL RLS"],
+                    "checks":privacy,"owner_checks":owner_checks,"pending_scan_checks":pending_scan_checks,
+                    "remaining_surfaces":["live search integration","live email delivery","PostgreSQL RLS"],
                     "scope":"Isolated SQLite/browser API fixtures; no actual case data"}
             (ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
             print(json.dumps(report,indent=2))
