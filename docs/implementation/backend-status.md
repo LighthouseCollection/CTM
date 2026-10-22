@@ -1,3 +1,13 @@
+Current validation: **797 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0046. Nine new restricted-role withdrawal regressions;17focused withdrawal/appeal checks passed.
+
+Withdrawal500 correction:0046 uses an authorized global participation decision without revealing other Party rows, then bounded authorized closed-case cleanup of hidden claims/unfinished requests. See withdrawal-case-scope.md. Exact-successor applicant and QA reruns remain pending; UI metadata successor proposal now0047after0046.
+
+Current validation: **788 PostgreSQL passed, 1 skipped**, including migration rollback/reapply through0045. Fifteen new physical-role council link projection regressions. No model/route/migration/grant changes in this continuation.
+
+Council C05 link projection: council-only priest name, expiry, current lifecycle state and writer-bound management flags; no capability/email/testimony disclosure or migration. See external-link-projection.md.
+
+Governance scoped verification: exact ace31522c0050b7e2d3bbe2ab0ac202f164a3de6 includes e49f355/0042–0045; linked second-applicant submit201/same-case/own-answer/private-history checks and focused7/7 passed. Full applicant acceptance remains open at a later withdrawal assertion, currently under applicant diagnosis.
+
 Current validation: **773 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0045. Nine new linked-filing regressions.
 
 Linked first-petition RLS correction: 0045 adds the existing own-party/open-claim binding path when optional spouse DOB is absent. Exact restricted-role reproduction and negative binding checks; see linked-first-filing.md. Governance integration, migration and applicant/QA acceptance remain pending. UI metadata successor proposal is now 0046 after 0045.
@@ -131,7 +141,7 @@ UI's other requested backend contracts remain unfinished: approved own-profile/
 contact/portrait mutations, verified email/provider administration, broader normalized/admin session history, member
 contact/portrait editing and broader institutional history, formal-source factual discrepancy views,
 and consumer integration of stored settings beyond account status notices and filing document labels. Council C05 external
-boot/link-state/recording/paper-completion/projection/invitation contracts remain unfinished. Pagination and per-family settings
+boot/link-state/recording/paper-completion/invitation contracts remain unfinished. Pagination and per-family settings
 edit schemas are addressed in these continuations;
 those separate contracts are not claimed complete or all blocked by credentials.
 

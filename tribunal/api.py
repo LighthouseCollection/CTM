@@ -995,8 +995,9 @@ def report_requests(request, case_id):
                 .exclude(kind__in=["external_priest", "interview"])
                 .exclude(state="draft")
             )
-        from tribunal.services.request_projection import request_author_names
-        rows = list(qs.select_related("subject").order_by("-created_at", "-id"))
+        from tribunal.services.request_projection import request_author_names, external_link_metadata
+        projection_time = timezone.now()
+        rows = list(qs.select_related("subject", "case", "proceeding").order_by("-created_at", "-id"))
         author_names = request_author_names(rows)
         return JsonResponse(
             {
@@ -1016,7 +1017,8 @@ def report_requests(request, case_id):
                         parent_report_id=str(x.parent_report_id) if x.parent_report_id else None,
                         author=author_names.get(str(x.pk)),
                         **release_metadata(x, request.user),
-                        **({"request_version": request_version(x)}
+                        **({"request_version": request_version(x),
+                            **external_link_metadata(x, request.user, now=projection_time)}
                             if request.user.role != "applicant" else {}),
                         **(own_request_data(x, request.user) if request.user.role == "applicant" else {}),
                     )
