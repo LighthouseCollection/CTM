@@ -1268,7 +1268,7 @@
     const [date, setDate] = R.useState("");
     const [time, setTime] = R.useState("");
     const [presiding, setPresiding] = R.useState("");
-    const [location, setLocation] = R.useState("");
+    const [location, setLocation] = R.useState("St. George Coptic Orthodox Church, Bellflower, California");
     const [problem, setProblem] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
@@ -1305,7 +1305,7 @@
       setDate("");
       setTime("");
       setPresiding(defaultPresiding?.id || "");
-      setLocation("");
+      setLocation("St. George Coptic Orthodox Church, Bellflower, California");
       setProblem(null);
       setFailure(null);
     }
@@ -1353,7 +1353,8 @@
             { icon: "calendar", title: t(editing ? "editSession" : "newSession") },
             h(
               P.Form,
-              { onSubmit: create, label: t("newSession"), noValidate: true },
+              { onSubmit: create, label: t("newSession"), noValidate: true, className: "ctm-session-form" },
+              h("div", { className: "ctm-session-form-grid" },
               h(
                 P.Field,
                 { label: t("sessionDate"), required: true, error: problem === "dateRequired" || problem === "dateTaken" ? t(problem) : undefined },
@@ -1378,6 +1379,7 @@
               h(P.Field, { label: t("location"), required: true, error: problem === "locationRequired" ? t(problem) : undefined },
                 h(P.Input, { value: location, maxLength: 300, disabled: pending,
                   onChange: (event) => { setLocation(event.target.value); setProblem(null); } })),
+              ),
               failure ? h(P.Notice, { tone: "danger" }, failure) : null,
               created ? h(P.Notice, { tone: "success" }, t(created)) : null,
               h(

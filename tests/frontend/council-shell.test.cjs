@@ -270,3 +270,13 @@ test("upcoming sessions use a full table and load the selected session into the 
   assert.match(source, /presiding_member_name/);
   assert.match(source, /locationNotRecorded/);
 });
+
+
+test("new session form defaults the Bellflower location and uses a responsive two-column grid", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  assert.match(council, /R\.useState\("St\. George Coptic Orthodox Church, Bellflower, California"\)/);
+  assert.match(council, /className: "ctm-session-form-grid"/);
+  assert.match(css, /\.ctm-session-form-grid[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.ctm-session-form \.plx-form-actions[\s\S]*background: transparent/);
+});
