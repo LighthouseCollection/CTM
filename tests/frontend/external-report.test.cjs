@@ -161,3 +161,8 @@ test("no browser storage, cookies or token logging in the page module; boot page
   assert.doesNotMatch(html, /\{\{|\{%|case_number|token=/);
   assert.doesNotMatch(src, /style\s*:/);
 });
+
+test("opening another link in the same tab (fragment change) restarts the page for that link (browser finding)", () => {
+  const src = fs.readFileSync("static/ctm/external-report.js", "utf8");
+  assert.match(src, /addEventListener\("hashchange", \(\) => window\.location\.reload\(\)\)/);
+});

@@ -476,6 +476,10 @@
       startInterviewMessage: "The question list is frozen. The applicant is not notified.",
       interviewStarted: "The interview was started. Record the answers when ready.",
       recordInterview: "Record interview answers",
+      externalSubject: "Spouse named in the request",
+      externalSubjectHelp: "The priest sees this name and the case number only.",
+      priestInstructions: "Instructions to the priest (optional)",
+      externalDraftSaved: "Draft saved. Issue the private link when you are ready.",
       externalHelp: "A priest who knows the marriage writes a free-form report through a private link. No council account is created.",
       priestName: "Priest's name",
       priestNameHelp: "The report is titled “Report by Fr. [name]”.",
@@ -749,6 +753,10 @@
       startInterviewMessage: "يتم تثبيت قائمة الأسئلة. ولا يتم إخطار مقدم الطلب.",
       interviewStarted: "بدأت المقابلة. سجّل الإجابات عندما تكون جاهزًا.",
       recordInterview: "تسجيل إجابات المقابلة",
+      externalSubject: "الزوج/الزوجة المذكور في الطلب",
+      externalSubjectHelp: "لا يرى الكاهن إلا هذا الاسم ورقم القضية.",
+      priestInstructions: "تعليمات للكاهن (اختياري)",
+      externalDraftSaved: "حُفظت المسودة. أصدر الرابط الخاص عندما تكون جاهزًا.",
       externalHelp: "يكتب كاهن يعرف الزواج تقريرًا حرًّا عبر رابط خاص. ولا يُنشأ له حساب في المجلس.",
       priestName: "اسم الكاهن",
       priestNameHelp: "يكون عنوان التقرير «Report by Fr. [الاسم]».",
@@ -976,7 +984,7 @@
           method: "POST",
           body: JSON.stringify(requestPayload(form, proceeding.id)),
         });
-        onSaved(created.id);
+        onSaved(created.id, form.kind === EXTERNAL ? "externalDraftSaved" : undefined);
       } catch (error) {
         setFailure(base.serverMessage(error, t));
       } finally {
@@ -992,7 +1000,9 @@
         { title: t("newRequest") },
         h(
           P.Field,
-          { label: t("subject"), required: true, error: err("chooseSubject") },
+          form.kind === EXTERNAL
+            ? { label: t("externalSubject"), description: t("externalSubjectHelp"), required: true, error: err("chooseSubject") }
+            : { label: t("subject"), required: true, error: err("chooseSubject") },
           h(P.Select, {
             value: form.party,
             disabled: pending,
@@ -1036,7 +1046,7 @@
         form.kind === EXTERNAL
           ? h(
               P.Field,
-              { label: t("instructions"), description: t("externalInstructionsHelp") },
+              { label: t("priestInstructions"), description: t("externalInstructionsHelp") },
               h(P.Textarea, { rows: 3, autoGrow: true, value: form.instructions, maxLength: 5000, disabled: pending, onChange: (e) => update({ instructions: e.target.value }) }),
             )
           : null,
@@ -1437,7 +1447,7 @@
             }),
           ),
       external ? h(ExternalLinkPanel, { api, lang, request, canWrite, onChanged: (note) => onSent(note || "externalIssued", { stay: true }) }) : null,
-      request.instructions ? h(P.Panel, { icon: "doc-text", title: t("instructions") }, h(P.Text, { as: "p" }, request.instructions)) : null,
+      request.instructions ? h(P.Panel, { icon: "doc-text", title: t(external ? "priestInstructions" : "instructions") }, h(P.Text, { as: "p", dir: "auto" }, request.instructions)) : null,
       failure && !confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
       request.state === "draft" && canWrite && (request.kind === "intake" || interview)
         ? h(P.Inline, null, h(P.Button, { variant: "primary", onClick: () => setConfirm(true) }, t(interview ? "startInterview" : "send")))
@@ -1536,9 +1546,9 @@
           onTemplatesChanged: retry,
           reports: reports || [],
           onCancel: () => setComposing(false),
-          onSaved: (id) => {
+          onSaved: (id, note) => {
             setComposing(false);
-            setNotice("draftSaved");
+            setNotice(note || "draftSaved");
             select(id);
             retry();
           },

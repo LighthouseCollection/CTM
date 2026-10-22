@@ -93,7 +93,7 @@
     const params = new URLSearchParams(String(hash || "").replace(/^#/, ""));
     const requestId = params.get("r");
     const token = params.get("t");
-    return requestId && token && /^[0-9a-fA-F-]{8,64}$/.test(requestId) ? { requestId, token } : null;
+    return requestId && token && /^[A-Za-z0-9-]{1,64}$/.test(requestId) ? { requestId, token } : null;
   }
 
   // Outcome of a request by status: the server deliberately collapses every link failure into 403.
@@ -275,6 +275,8 @@
     const link = parseFragment(window.location.hash);
     // Drop the token from the address bar and history; it stays in memory for this page only.
     if (window.location.hash) window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    // Opening another link in the same tab only changes the fragment; start that link fresh.
+    window.addEventListener("hashchange", () => window.location.reload());
     const initialLang = (navigator.language || "").toLowerCase().startsWith("ar") ? "ar" : null;
     window.ReactDOM.createRoot(root).render(
       window.React.createElement(ExternalReportPage, { link, fetchImpl: window.fetch.bind(window), initialLang }),
