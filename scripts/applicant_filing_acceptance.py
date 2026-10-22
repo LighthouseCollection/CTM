@@ -21,6 +21,12 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
     def post(ctx,csrf,path,data):
         return ctx.request.post(base+path,data=data,headers={"X-CSRFToken":csrf})
 
+    def private_denial(actual,missing):
+        if os.environ.get("CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT")=="hidden404":
+            assert actual.status==missing.status==404,(actual.status,missing.status)
+            assert actual.json()==missing.json(),(actual.text(),missing.text())
+        else:assert actual.status==403,actual.text()
+
     def start(ctx,csrf,label):
         response=post(ctx,csrf,"/api/applications/",{"kind":"petition"})
         assert response.status==201,response.text()
@@ -50,8 +56,10 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         for payload in [{},{"expected_version":0},{"expected_version":True},{"expected_version":"1"}]:
             response=post(ctx,csrf,f"/api/applications/{app_id}/delete-draft/",payload)
             assert response.status==422,response.text()
-        assert post(foreign,foreign_csrf,f"/api/applications/{app_id}/delete-draft/",{"expected_version":1}).status==403
-        assert detail(ctx,app_id)["status"]=="draft"
+        foreign_delete_payload={"expected_version":1}
+        private_denial(post(foreign,foreign_csrf,f"/api/applications/{app_id}/delete-draft/",foreign_delete_payload),
+            post(foreign,foreign_csrf,f"/api/applications/{uuid.uuid4()}/delete-draft/",foreign_delete_payload))
+        assert detail(ctx,app_id)==row
         checks.append("Real own draft capability rejects missing/malformed/stale versions and foreign-owner deletion without mutation")
         original_upload=ctx.request.post(base+"/api/files/",multipart={"application_id":app_id,"category":"CMC",
             "file":{"name":"delete-original.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.7 synthetic original for deletion"}},headers={"X-CSRFToken":csrf})
@@ -151,8 +159,8 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
             "marriage_date":"2011-02-03","grounds":["abuse"],"statement":"Own second applicant statement, independently retained"}
         saved=post(two,two_csrf,f"/api/applications/{second_id}/",{"answers":second_answers,"expected_version":0})
         assert saved.status==201,saved.text()
-        assert one.request.get(f"{base}/api/applications/{second_id}/").status==403
-        assert two.request.get(f"{base}/api/applications/{first_id}/").status==403
+        private_denial(one.request.get(f"{base}/api/applications/{second_id}/"),one.request.get(f"{base}/api/applications/{uuid.uuid4()}/"))
+        private_denial(two.request.get(f"{base}/api/applications/{first_id}/"),two.request.get(f"{base}/api/applications/{uuid.uuid4()}/"))
         listing=two.request.get(f"{base}/api/applications/{second_id}/files/").json()
         for requirement in listing["requirements"]:
             if not requirement["required"]:continue
@@ -175,14 +183,17 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         assert second_saved["status"]=="submitted" and second_saved["case_id"]==joint_case
         assert second_saved["answers"]==second_answers
         assert detail(one,first_id)["answers"]!=second_answers
-        assert one.request.get(f"{base}/api/applications/{second_id}/history/").status==403
-        assert two.request.get(f"{base}/api/applications/{first_id}/history/").status==403
+        private_denial(one.request.get(f"{base}/api/applications/{second_id}/history/"),one.request.get(f"{base}/api/applications/{uuid.uuid4()}/history/"))
+        private_denial(two.request.get(f"{base}/api/applications/{first_id}/history/"),two.request.get(f"{base}/api/applications/{uuid.uuid4()}/history/"))
         checks.append("Linked second applicant actually starts/saves/uploads/obtains separate authorized waiver and submits through browser with own declaration; both own histories stay private")
         original=detail(one,first_id);before_history=one.request.get(f"{base}/api/applications/{first_id}/history/").json()
         before_notifications=fixture_db(lambda:m.Notification.objects.filter(recipient=second).count())
         assert original["can_withdraw"] and not original["can_delete_draft"]
         assert post(one,one_csrf,f"/api/applications/{first_id}/delete-draft/",{"expected_version":original["version"]}).status==422
-        assert post(two,two_csrf,f"/api/applications/{first_id}/withdraw/",{"expected_version":original["version"]}).status==403
+        foreign_withdraw_payload={"expected_version":original["version"]}
+        private_denial(post(two,two_csrf,f"/api/applications/{first_id}/withdraw/",foreign_withdraw_payload),
+            post(two,two_csrf,f"/api/applications/{uuid.uuid4()}/withdraw/",foreign_withdraw_payload))
+        assert detail(one,first_id)==original
         for payload in [{},{"expected_version":0}]:assert post(one,one_csrf,f"/api/applications/{first_id}/withdraw/",payload).status==422
         first_page=open_editor(one)
         assert first_page.get_by_role("button",name="Delete unsubmitted draft",exact=True).count()==0
@@ -254,7 +265,7 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
             assert row["origin"]=="closed_case_intake" and row["status"]=="submitted" and row["case_id"]==closed_case
             assert fixture_db(lambda:m.Case.objects.get(pk=closed_case).status)=="closed"
             assert fixture_db(lambda:m.Proceeding.objects.filter(case_id=closed_case).count())==1
-            assert one.request.get(f"{base}/api/applications/{closed_id}/history/").status==403
+            private_denial(one.request.get(f"{base}/api/applications/{closed_id}/history/"),one.request.get(f"{base}/api/applications/{uuid.uuid4()}/history/"))
             checks.append("Linked never-filer starts first petition from closed case, saves new facts/uploads/separate waiver and submits in browser without reopening; closed record/link/content are explicit fixtures")
         # Explicit pending appeal state, independent of decree/signature issuance acceptance.
         def appeal_fixture():
@@ -268,7 +279,9 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         row=detail(one,appeal_id)
         assert row["can_withdraw"] and not row["can_delete_draft"]
         assert post(staff,staff_csrf,f"/api/applications/{appeal_id}/withdraw/",{"expected_version":1}).status==403
-        assert post(two,two_csrf,f"/api/applications/{appeal_id}/withdraw/",{"expected_version":1}).status==403
+        private_denial(post(two,two_csrf,f"/api/applications/{appeal_id}/withdraw/",{"expected_version":1}),
+            post(two,two_csrf,f"/api/applications/{uuid.uuid4()}/withdraw/",{"expected_version":1}))
+        assert detail(one,appeal_id)==row
         response=post(one,one_csrf,f"/api/applications/{appeal_id}/withdraw/",{"expected_version":1})
         assert response.status==200,response.text()
         assert detail(one,appeal_id)["status"]=="withdrawn" and detail(one,appeal_id)["fee"]==row["fee"]
