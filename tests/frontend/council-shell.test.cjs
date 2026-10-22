@@ -353,8 +353,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(app, /communications: "Email"/);
   assert.match(app, /caseCollaboration: "Email & Notes"/);
   assert.match(app, /items: ["case", "timeline", "parties", "marriage", "separation"]/);
-  assert.match(app, /id === "separation"\s*\? h\("span", \{ className: "ctm-separation-nav-icon"/);
-  assert.match(app, /h\(P\.Icon, \{ name: "person" \}\), h\(P\.Icon, \{ name: "close" \}\)/);
+  assert.match(app, /id === "separation"\s*\? h\(P\.Icon, \{ name: "person_cancel"/);
   assert.match(app, /page === "separation" && council && councilModule\?\.CaseSeparation/);
   assert.match(app, /items: \["communications", "calls", "notes"\]/);
   assert.match(councilCase, /function CaseSeparation\(\{ api, lang, user, caseId \}\)/);

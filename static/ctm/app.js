@@ -40,7 +40,7 @@
     id === "search"
       ? caseSearchIcon()
       : id === "separation"
-      ? h("span", { className: "ctm-separation-nav-icon", "aria-hidden": true }, h(P.Icon, { name: "person" }), h(P.Icon, { name: "close" }))
+      ? h(P.Icon, { name: "person_cancel", "aria-hidden": true })
       : id === "decision"
         ? decisionBalanceIcon()
         : id === "decree"
