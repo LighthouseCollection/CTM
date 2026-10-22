@@ -147,3 +147,8 @@ test("api() keeps CSRF on every request and lets FormData set its own type", () 
 test("assessment reports are excluded from the ordinary report reader", () => {
   assert.match(app, /!\["medical", "psychological"\]\.includes\(row\.kind\) && !row\.restricted/);
 });
+
+test("petition view shows the submitted petition without a redundant navigation notice", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.doesNotMatch(councilCase, /petitionReadOnly/);
+});

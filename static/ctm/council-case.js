@@ -372,7 +372,6 @@
       timelineHelp: "Key case events, oldest first. Every recorded action is listed in Case Audit.",
       noTimeline: "No key events are recorded yet.",
       petitionTitle: "Petition",
-      petitionReadOnly: "The formal petition is shown as submitted. Spouse profiles and marriage information are available from the case menu.",
       petition: "Petition",
       noPetitions: "No submitted petition is available for this case.",
       marriageTitle: "Marriage",
@@ -645,7 +644,6 @@
       timelineHelp: "الأحداث الرئيسية للقضية من الأقدم إلى الأحدث. وتُعرض جميع الإجراءات المسجلة في سجل تدقيق القضية.",
       noTimeline: "لم تُسجَّل أحداث رئيسية بعد.",
       petitionTitle: "الطلب",
-      petitionReadOnly: "يُعرض الطلب الرسمي كما قُدِّم. تتوفر ملفات الزوجين ومعلومات الزواج من قائمة القضية.",
       petition: "الطلب",
       noPetitions: "لا يوجد طلب مقدَّم متاح لهذه القضية.",
       marriageTitle: "الزواج",
@@ -2618,7 +2616,6 @@
     const { petitions } = state.data;
     return h(P.Stack, { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("petitionTitle")),
-      h(P.Notice, { tone: "info" }, t("petitionReadOnly")),
       ...petitions.map((row) => {
         const answers = petitionAnswers(row.answers);
         const labelled = answers.every(([code]) => base.fieldLabel(row, code, lang));
