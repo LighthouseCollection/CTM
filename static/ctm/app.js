@@ -1061,7 +1061,7 @@
       else if (
         councilModule &&
         user.portal === "council" &&
-        ["review", "sessions", "session", "decision", "decree", "appeals", "audit"].includes(page)
+        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search"].includes(page)
       )
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
@@ -1192,7 +1192,9 @@
     const navItems = council
       ? ["home", "sessions", "cases", "search", "archived", "statistics"]
       : ["home", "applications", "past"];
-    const unavailable = new Set(["search", "statistics"]);
+    const unavailable = new Set(
+      councilModule?.SearchWorkspace ? ["statistics"] : ["search", "statistics"],
+    );
     const caseContext =
       [
         "case",
@@ -1544,6 +1546,13 @@
             }),
           ),
         );
+      if (councilModule?.SearchWorkspace && council && page === "search")
+        return h(councilModule.SearchWorkspace, {
+          api,
+          lang,
+          user,
+          onCase: (id) => go("case", id),
+        });
       if (councilModule && council && page === "review")
         return h(councilModule.ReviewWorkspace, {
           api,

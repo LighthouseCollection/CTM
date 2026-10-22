@@ -211,3 +211,10 @@ test("review labels come from the bound questionnaire and never invent wording",
   assert.equal(C.fieldLabel(row, "unknown_code", "en"), null);
   assert.equal(C.fieldLabel({}, "first_name", "en"), null);
 });
+
+test("search phrase length matches the server's 2–200 character rule", () => {
+  assert.equal(C.searchProblem("ab"), null);
+  assert.equal(C.searchProblem(" a "), "searchLength");
+  assert.equal(C.searchProblem("x".repeat(201)), "searchLength");
+  assert.equal(typeof C.SearchWorkspace, "function");
+});

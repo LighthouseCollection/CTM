@@ -298,6 +298,18 @@
       sessionClosed: "The council session was closed.",
       closedReadOnly: "This session is closed and read-only.",
       unknownParty: "Unknown party",
+      searchTitle: "Search",
+      searchLabel: "Search documents",
+      searchHelp: "Searches the text of open and closed case documents you are permitted to see. Latest versions by default.",
+      searchLength: "Use a search phrase of 2 to 200 characters.",
+      searchAction: "Search",
+      searchHistory: "Include earlier file versions",
+      searchResults: "Results",
+      searchCount: "{n} results",
+      searchNone: "No permitted documents match this search.",
+      searchChoose: "Select a result",
+      searchExcerpt: "Excerpt",
+      searchNoExcerpt: "No text excerpt is available for this document.",
       assigned_state: "Assigned",
       presentNeedsAttendance: "Your attendance must be recorded as present before you can present this case.",
       recordOutcome: "Recommendations and update",
@@ -446,6 +458,18 @@
       sessionClosed: "تم إغلاق جلسة المجلس.",
       closedReadOnly: "هذه الجلسة مغلقة ومتاحة للقراءة فقط.",
       unknownParty: "طرف غير معروف",
+      searchTitle: "البحث",
+      searchLabel: "البحث في المستندات",
+      searchHelp: "يبحث في نصوص مستندات القضايا المفتوحة والمغلقة المسموح لك برؤيتها. أحدث الإصدارات افتراضيًا.",
+      searchLength: "استخدم عبارة بحث من حرفين إلى ٢٠٠ حرف.",
+      searchAction: "بحث",
+      searchHistory: "تضمين الإصدارات السابقة من الملفات",
+      searchResults: "النتائج",
+      searchCount: "{n} نتيجة",
+      searchNone: "لا توجد مستندات مسموح بها تطابق هذا البحث.",
+      searchChoose: "اختر نتيجة",
+      searchExcerpt: "مقتطف",
+      searchNoExcerpt: "لا يتوفر مقتطف نصي لهذا المستند.",
       assigned_state: "تم التعيين",
       presentNeedsAttendance: "يجب تسجيل حضورك قبل أن تتمكن من عرض هذه القضية.",
       recordOutcome: "التوصيات والتحديث",
@@ -1517,6 +1541,114 @@
     );
   }
 
+  // Council search: the server reauthorizes every hit before returning names or snippets.
+  function searchProblem(query) {
+    const q = String(query || "").trim();
+    if (q.length < 2 || q.length > 200) return "searchLength";
+    return null;
+  }
+
+  function SearchWorkspace({ api, lang, user, onCase }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [query, setQuery] = R.useState("");
+    const [history, setHistory] = R.useState(false);
+    const [problem, setProblem] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const [result, setResult] = R.useState(null);
+    const [cases, setCases] = R.useState({});
+    const [selected, select] = R.useState(null);
+    async function run(event) {
+      event.preventDefault();
+      const issue = searchProblem(query);
+      setProblem(issue);
+      if (issue) return;
+      setPending(true);
+      setFailure(null);
+      select(null);
+      try {
+        const [data, caseList] = await Promise.all([
+          api(`/api/search/?q=${encodeURIComponent(query.trim())}&history=${history ? "true" : "false"}`),
+          api("/api/cases/"),
+        ]);
+        setCases(Object.fromEntries((caseList.items || []).map((c) => [c.id, c.number])));
+        setResult(data.items || []);
+      } catch (error) {
+        setResult(null);
+        setFailure(serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    const rows = result || [];
+    const chosen = rows.find((row) => row.file_id === selected);
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("searchTitle")),
+      h(
+        P.Form,
+        { onSubmit: run, label: t("searchTitle"), noValidate: true },
+        h(
+          P.Inline,
+          { wrap: true, align: "end" },
+          h(
+            P.Field,
+            { label: t("searchLabel"), description: t("searchHelp"), error: problem ? t(problem) : undefined },
+            h(P.Input, { type: "search", width: "lg", value: query, maxLength: 200, disabled: pending, onChange: (e) => { setQuery(e.target.value); setProblem(null); } }),
+          ),
+          h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("searchAction")),
+        ),
+        h(P.Checkbox, { label: t("searchHistory"), checked: history, disabled: pending, onChange: (e) => setHistory(e.target.checked) }),
+      ),
+      failure ? h(P.Notice, { tone: "warning" }, failure) : null,
+      result
+        ? h(P.SplitView, {
+            label: t("searchResults"),
+            firstLabel: t("searchResults"),
+            first: rows.length
+              ? h(
+                  P.Stack,
+                  { gap: "sm" },
+                  h(P.Text, { variant: "secondary" }, t("searchCount", { n: rows.length })),
+                  ...rows.map((row) =>
+                    h(P.Card, {
+                      key: row.file_id,
+                      title: row.name,
+                      meta: cases[row.case_id] || "",
+                      selected: row.file_id === selected,
+                      onOpen: () => select(row.file_id),
+                    }),
+                  ),
+                )
+              : h(P.EmptyState, { title: t("searchNone") }),
+            second: h(
+              P.ReadingPane,
+              { label: chosen ? chosen.name : t("searchChoose"), empty: h(P.EmptyState, { title: t("searchChoose") }) },
+              chosen
+                ? h(
+                    P.Stack,
+                    { gap: "md" },
+                    h(P.Text, { variant: "data" }, chosen.name),
+                    cases[chosen.case_id] ? h(P.Text, { variant: "secondary" }, cases[chosen.case_id]) : null,
+                    chosen.snippet ? h(P.Panel, { title: t("searchExcerpt") }, h(P.Text, { as: "p" }, chosen.snippet)) : h(P.Text, { variant: "secondary" }, t("searchNoExcerpt")),
+                    h(
+                      P.Inline,
+                      { wrap: true },
+                      h(P.Button, { onClick: () => onCase(chosen.case_id) }, t("openCase")),
+                      h(P.Button, { href: `/api/files/${encodeURIComponent(chosen.file_id)}/` }, t("download")),
+                    ),
+                  )
+                : null,
+            ),
+          })
+        : null,
+    );
+  }
+
   window.CTMCouncil = {
     words,
     translator,
@@ -1546,5 +1678,7 @@
     ReviewWorkspace,
     SessionList,
     SessionWorkspace,
+    searchProblem,
+    SearchWorkspace,
   };
 })();

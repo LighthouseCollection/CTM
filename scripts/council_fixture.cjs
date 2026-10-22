@@ -242,6 +242,15 @@ function api(req, res, url, body) {
     return json(res, 200, { items: state.calls.filter((x) => x.case === m[1]) });
   }
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/messages\/$/))) return json(res, 200, { items: [] });
+  if (p === "/api/search/") {
+    const q = url.searchParams.get("q") || "";
+    if (q.trim().length < 2) return json(res, 422, { error: "validation", messages: ["Use a search phrase of2–200characters."] });
+    if (q === "unconfigured") return json(res, 422, { error: "validation", messages: ["Search engine is not configured."] });
+    return json(res, 200, {
+      items: [{ file_id: "f-search-1", case_id: "c-4", name: "20261001-01-PET-20261001-0930.pdf", snippet: `Synthetic excerpt containing ${q}.` }],
+      returned_count: 1,
+    });
+  }
   if ((m = p.match(/^\/api\/appeals\/([^/]+)\/result\/$/))) {
     const app = state.applications.find((a) => a.id === m[1]);
     const c = state.cases.find((x) => x.id === app.case_id);
