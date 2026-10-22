@@ -303,5 +303,6 @@ test("upcoming sessions expose create edit and save actions in a Plenix toolbar"
   assert.match(source, /icon: "pencil"/);
   assert.match(source, /icon: "save"/);
   assert.match(source, /form: "ctm-session-form"/);
+  assert.match(source, /t\("saveSession"\)/);
   assert.doesNotMatch(source, /SessionFilters/);
 });

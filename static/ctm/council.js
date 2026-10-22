@@ -1352,7 +1352,7 @@
             h(P.Button, { icon: "add", onClick: resetSessionForm, disabled: pending }, t("createSession")),
             h(P.Button, { icon: "pencil", onClick: () => selectedSession && editSession(selectedSession), disabled: pending || !selectedSession }, t("editSession")),
             h(P.Toolbar.Spacer),
-            h(P.Button, { icon: "save", type: "submit", form: "ctm-session-form", variant: "primary", disabled: pending, loading: pending }, t(editing ? "saveSession" : "createSession")),
+            h(P.Button, { icon: "save", type: "submit", form: "ctm-session-form", variant: "primary", disabled: pending, loading: pending }, t("saveSession")),
           )
         : null,
       mode === "upcoming" && canManage(user)
