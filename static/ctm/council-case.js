@@ -444,7 +444,7 @@ ${ar}` : en;
       contact: "Contact",
       editContact: "Edit contact",
       saveContact: "Save contact",
-      uploadPhoto: "Upload photo",
+      changePhoto: "Change",
       photoUploadFailed: "The photo could not be uploaded.",
       career: "Career",
       churchAffiliation: "Church Affiliation",
@@ -783,7 +783,7 @@ ${ar}` : en;
       contact: "التواصل",
       editContact: "تعديل بيانات التواصل",
       saveContact: "حفظ بيانات التواصل",
-      uploadPhoto: "رفع صورة",
+      changePhoto: "تغيير",
       photoUploadFailed: "تعذر رفع الصورة.",
       career: "العمل والتعليم",
       churchAffiliation: "الانتماء الكنسي",
@@ -2420,12 +2420,11 @@ ${ar}` : en;
 
   function SpousePhotoUpload({ api, P, h, t, user, record, party, onSaved }) {
     const R = window.React;
-    const [file, setFile] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const canWrite = writerFor(user, null, record);
     const upload = async (event) => {
-      event.preventDefault();
+      const file = event.target.files?.[0];
       if (!file || !canWrite || pending) return;
       setPending(true);
       setFailure(null);
@@ -2437,7 +2436,7 @@ ${ar}` : en;
         form.append("case_id", record.id);
         form.append("visibility", "council");
         await api("/api/files/", { method: "POST", body: form });
-        setFile(null);
+        event.target.value = "";
         onSaved();
       } catch (error) {
         setFailure(base.serverMessage(error, t) || t("photoUploadFailed"));
@@ -2445,18 +2444,22 @@ ${ar}` : en;
         setPending(false);
       }
     };
-    if (!canWrite) return null;
+    if (!canWrite) return spousePhoto(P, h, party);
+    const inputId = `ctm-photo-upload-${party.id}`;
     return h(
-      P.Form,
-      { onSubmit: upload, label: t("uploadPhoto"), noValidate: true },
-      h(P.Inline, { gap: "sm", align: "end" },
-        h(P.Field, { label: t("uploadPhoto") }, h(P.Input, {
-          type: "file", accept: "image/jpeg,image/png,image/gif,image/webp", disabled: pending,
-          onChange: (event) => setFile(event.target.files?.[0] || null),
-        })),
-        h(P.Button, { type: "submit", variant: "secondary", loading: pending, disabled: pending || !file }, t("uploadPhoto")),
-      ),
-      failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+      "span",
+      { className: "ctm-spouse-photo-control" },
+      spousePhoto(P, h, party),
+      h("input", {
+        id: inputId,
+        className: "ctm-spouse-photo-control__input",
+        type: "file",
+        accept: "image/jpeg,image/png,image/gif,image/webp",
+        disabled: pending,
+        onChange: upload,
+      }),
+      h("label", { htmlFor: inputId, className: "ctm-spouse-photo-control__change" }, pending ? "…" : t("changePhoto")),
+      failure ? h("span", { className: "ctm-spouse-photo-control__error", role: "alert" }, failure) : null,
     );
   }
 
@@ -2532,7 +2535,7 @@ ${ar}` : en;
         h(
           P.Panel,
           {
-            icon: spousePhoto(P, h, party),
+            icon: h(SpousePhotoUpload, { api, P, h, t, user, record, party, onSaved: retry }),
             key: party.id,
             title: spouseHeaderTitle(P, h, t, party),
             collapsible: true,
@@ -2542,7 +2545,6 @@ ${ar}` : en;
           h(
             P.Stack,
             { gap: "lg" },
-            h(SpousePhotoUpload, { api, P, h, t, user, record, party, onSaved: retry }),
             h(
               P.Stack,
               { gap: "section", className: "ctm-spouse-profile-sections" },

@@ -85,6 +85,46 @@
   object-fit: cover;
 }
 
+.ctm-spouse-photo-control {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--plx-sys-space-stack-2xs);
+}
+
+.ctm-spouse-photo-control__input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ctm-spouse-photo-control__change {
+  color: var(--plx-sys-color-text-primary);
+  font-size: var(--plx-sys-font-size-caption);
+  line-height: var(--plx-sys-line-height-caption);
+  cursor: pointer;
+}
+
+.ctm-spouse-photo-control__input:focus-visible + .ctm-spouse-photo-control__change {
+  outline: var(--plx-sys-border-width-focus) solid var(--plx-sys-color-focus);
+  outline-offset: var(--plx-sys-space-stack-2xs);
+}
+
+.ctm-spouse-photo-control__input:disabled + .ctm-spouse-photo-control__change {
+  cursor: wait;
+}
+
+.ctm-spouse-photo-control__error {
+  max-inline-size: 10rem;
+  color: var(--plx-sys-color-text-danger);
+  font-size: var(--plx-sys-font-size-caption);
+  text-align: center;
+}
+
 @media (max-width: 42rem) {
   .ctm-spouse-profile-section--two-columns .plx-property-list {
     grid-template-columns: minmax(0, 1fr);
