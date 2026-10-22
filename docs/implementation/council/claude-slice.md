@@ -10,7 +10,7 @@ Branch `work/claude-council`, draft PR #6, issue #3. UI only: no backend, migrat
 | `static/ctm/council-case.js` | Reports → Requests (intake and in-person interview), Decision & Voting, Case Audit, call records, Professional Assessments, Spouses, case Hearings. |
 | `static/ctm/council-decree.js` | Decree (signed PDF, safety check, signature record, issue, release/withdraw) and Appeals. |
 | `static/ctm/app.js`, `tribunal/templates/tribunal/shell.html` | Shell hook (separate commits): load the three modules before `app.js`; route council pages; enable locked-navigation items only when the module is loaded; `api()` errors carry `status`/server JSON; `FormData` bodies keep the browser's multipart type. |
-| `tests/frontend/council*.test.cjs` | `node --test tests/frontend/` (75 tests). Catalog test reads `decisions.py` and `prototype-decision-types.json`. |
+| `tests/frontend/council*.test.cjs` | `node --test tests/frontend/` (77 tests). Catalog test reads `decisions.py` and `prototype-decision-types.json`. |
 | `scripts/council_fixture.cjs` | Synthetic browser fixture: `node scripts/council_fixture.cjs [port] [role] [--contract=pr7] [--decree-read]`. Not a real-API, database or provider-login test. |
 
 ## Behavior by area
@@ -23,7 +23,7 @@ Branch `work/claude-council`, draft PR #6, issue #3. UI only: no backend, migrat
 | Reports | Completed reports (existing reader) and Requests tab: intake to applicant, or interview recorded by the manager (offered only with the PR #7 boundary); category or topic-group view of one selection; foundational questions locked; Arabic/bilingual blocked without approved Arabic wording; frozen snapshot before send/start. | report-questions, requests, send, complete |
 | Decision & Voting | Exact catalog (Deferred excluded as a hearing outcome); grounds required; named per-spouse entitlements; nullity and conditional rules; full roster tally; own and on-behalf votes; President approval or recorded approval; denial closing warning; saved versions and earlier versions with PR #7. | decision, vote, approve |
 | Decree | Admin/secretary only: store signed PDF (`DEC`, council-only, ≤25 MB), safety check, President signature record, confirmed issue (closes case), release/withdraw per entitled spouse. Template generation stated as unavailable. No replacement workflow. | files, signature, decree, release |
-| Appeals | Split list/detail; Accept/Decline against a heard case hearing, optional explanation; consequences stated. | applications, sessions/agenda, appeals result |
+| Appeals | Split list/detail of appeals and F12 later petitions (closed-case first filings, own result endpoint); Accept/Decline against a heard case hearing, optional explanation; consequences stated. | applications, sessions/agenda, appeals result |
 | Professional Assessments | Separate section; medical/psychological requests with optional recommended doctors; contents hidden without council-scope release; excluded from ordinary Requests. | requests, reports |
 | Communications | Existing messages plus manual call records (who, when with time zone, outcome, notes). | calls |
 | Case Audit | Searchable audit events with EN/AR labels for known codes. | audit |
@@ -36,7 +36,7 @@ Branch `work/claude-council`, draft PR #6, issue #3. UI only: no backend, migrat
 
 ## Evidence
 
-- `node --test tests/frontend/`: 75 passed.
+- `node --test tests/frontend/`: 77 passed.
 - Built-in Chromium with the real Plenix 0.58.0 CDN and real modules against the synthetic fixture, in both `main` and `--contract=pr7` modes. Every slice was checked as secretary and as member (and on the assigned/unassigned split). Checks covered: validation blocking with no request sent, exact request payloads, server error text shown, EN/AR at 1280 and 390 px, `dir=rtl`, zero `[style]` attributes, no horizontal overflow, and no console errors apart from the expected 405 decision probe on `main`.
 - Python/PostgreSQL: no Python/uv/Docker on this machine; GitHub Actions on PR #6 has passed on each push checked.
 
