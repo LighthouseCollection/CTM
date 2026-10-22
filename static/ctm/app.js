@@ -88,7 +88,7 @@
       home: "Home",
       cases: "Cases",
       myCases: "My Cases",
-      allCases: "All Cases",
+      allCases: "All Active Cases",
       archivedCases: "Archived Cases",
       sessions: "Tribunal Sessions - Current",
       sessionsUpcoming: "Tribunal Sessions - Upcoming",
@@ -210,7 +210,7 @@
       backAdministration: "Back to Administration",
       backSearchResults: "Back to search results",
       backMyCases: "Back to My Cases",
-      backAllCases: "Back to All Cases",
+      backAllCases: "Back to All Active Cases",
       backArchivedCases: "Back to Archived Cases",
       backCurrentSessions: "Back to Current Tribunal Sessions",
       backUpcomingSessions: "Back to Upcoming Tribunal Sessions",
@@ -343,7 +343,7 @@
       home: "الرئيسية",
       cases: "القضايا",
       myCases: "قضاياي",
-      allCases: "كل القضايا",
+      allCases: "كل القضايا النشطة",
       archivedCases: "القضايا المؤرشفة",
       sessions: "جلسات المجلس - الحالية",
       sessionsUpcoming: "جلسات المجلس - القادمة",
@@ -1248,7 +1248,7 @@
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
       else if (page === "applications") request = api("/api/applications/");
-      else if (["home", "cases", "archived", "past"].includes(page)) {
+      else if (["home", "myCases", "cases", "archived", "past"].includes(page)) {
         request =
           user.portal === "applicant" && page === "home"
             ? Promise.all([api("/api/cases/"), api("/api/applications/")]).then(
@@ -2037,8 +2037,9 @@
       if (council && councilModule?.CasesTable && ["myCases", "cases", "archived"].includes(page))
         return h(councilModule.CasesTable, {
           api, user,
-          cases: page === "myCases" ? data.items.filter((row) => row.status === "open" && row.assigned_member_id === user.id) : data.items,
+          cases: page === "myCases" ? data.items.filter((row) => row.assigned_member_id === user.id) : data.items,
           archived: page === "archived",
+          view: page === "myCases" ? "mine" : page === "archived" ? "archived" : "active",
           title: page === "myCases" ? t("myCases") : page === "archived" ? t("archivedCases") : t("allCases"),
           lang,
           onOpen: (id) => openCase(id, { page, labelKey: page === "myCases" ? "backMyCases" : page === "archived" ? "backArchivedCases" : "backAllCases" }),

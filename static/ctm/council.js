@@ -520,6 +520,12 @@
       caseNumber: "Case number",
       noOpenCases: "No open cases.",
       noArchived: "No closed cases.",
+      showClosedCases: "Show closed cases",
+      caseApplicant: "Applicant",
+      caseRespondent: "Respondent",
+      caseReason: "Reason for divorce",
+      caseAssignee: "Assigned council member",
+      caseClosedDate: "Closed date",
       noMatchingCases: "No cases match.",
       tablePerPage: "Rows per page",
       tableRange: "{first}–{last} of {total}",
@@ -810,6 +816,12 @@
       caseNumber: "رقم القضية",
       noOpenCases: "لا توجد قضايا مفتوحة.",
       noArchived: "لا توجد قضايا مغلقة.",
+      showClosedCases: "إظهار القضايا المغلقة",
+      caseApplicant: "الطالب",
+      caseRespondent: "المدعى عليه",
+      caseReason: "سبب الطلاق",
+      caseAssignee: "عضو المجلس المعيَّن",
+      caseClosedDate: "تاريخ الإغلاق",
       noMatchingCases: "لا توجد قضايا مطابقة.",
       tablePerPage: "عدد الصفوف في الصفحة",
       tableRange: "{first}–{last} من {total}",
@@ -2801,57 +2813,63 @@
 
   // Cases workspace table (open or archived). Built-in header/row menus are off so
   // no untranslated table chrome appears in the Arabic interface.
-  function caseRows(cases, archived, query) {
+  function caseRows(cases, archived, query, includeClosed = false) {
     const q = String(query || "").trim().toLowerCase();
     return (cases || [])
-      .filter((row) => (archived ? row.status === "closed" : row.status === "open"))
-      .filter((row) => !q || [row.number, row.assigned_member || ""].some((v) => String(v).toLowerCase().includes(q)));
+      .filter((row) => archived ? row.status === "closed" : row.status === "open" || includeClosed)
+      .filter((row) => !q || [row.number, row.applicant_name || "", row.respondent_name || "", row.reason || "", row.assigned_member || ""]
+        .some((value) => String(value).toLowerCase().includes(q)));
   }
 
-  function CasesTable({ cases, archived, title, lang, api, user, onOpen }) {
+  function CasesTable({ cases, archived, view, title, lang, api, user, onOpen }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
     const [selected, select] = R.useState(null);
     const [query, setQuery] = R.useState("");
-    const rows = caseRows(cases, archived, query).map((row) => ({
+    const [includeClosed, setIncludeClosed] = R.useState(false);
+    const rows = caseRows(cases, archived, query, includeClosed).map((row) => ({
       id: row.id,
       number: row.number,
-      status: t(row.status === "closed" ? "closed" : "open"),
+      applicant: row.applicant_name || "—",
+      respondent: row.respondent_name || "—",
+      reason: row.reason || "—",
       manager: row.assigned_member || t("unassigned"),
+      status: t(row.status === "closed" ? "closed" : "open"),
+      closedAt: row.closed_at ? row.closed_at.slice(0, 10) : "—",
     }));
+    const columns = archived
+      ? [
+          { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
+          { title: t("caseApplicant"), field: "applicant", kind: "name", sorter: "string" },
+          { title: t("caseRespondent"), field: "respondent", kind: "name", sorter: "string" },
+          { title: t("caseAssignee"), field: "manager", kind: "name", sorter: "string" },
+          { title: t("caseClosedDate"), field: "closedAt", sorter: "string" },
+          { title: t("statusLabel"), field: "status", sorter: "string" },
+        ]
+      : [
+          { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
+          { title: t("caseApplicant"), field: "applicant", kind: "name", sorter: "string" },
+          { title: t("caseRespondent"), field: "respondent", kind: "name", sorter: "string" },
+          { title: t("caseReason"), field: "reason", sorter: "string" },
+          ...(view === "active" ? [{ title: t("caseAssignee"), field: "manager", kind: "name", sorter: "string" }] : []),
+          { title: t("statusLabel"), field: "status", sorter: "string" },
+        ];
     const table = h(
       R.Fragment,
       null,
       h(P.Text, { as: "h1", variant: "title" }, title || t(archived ? "archivedTitle" : "casesTitle")),
-      h(P.Field, { label: t("searchCases") }, h(P.Input, { type: "search", width: "md", value: query, onChange: (e) => setQuery(e.target.value) })),
+      h(P.Inline, { gap: "md", align: "end" },
+        h(P.Field, { label: t("searchCases") }, h(P.Input, { type: "search", width: "md", value: query, onChange: (e) => setQuery(e.target.value) })),
+        !archived ? h(P.Checkbox, { label: t("showClosedCases"), checked: includeClosed, onChange: (event) => setIncludeClosed(event.target.checked) }) : null,
+      ),
       rows.length
         ? h(P.DataTable, {
-            label: title || t(archived ? "archivedTitle" : "casesTitle"),
-            data: rows,
-            index: "id",
-            selected: selected ? [selected] : [],
-            mode: "fill",
-            pageSize: 25,
-            headerMenu: false,
-            rowMenuButton: false,
-            narrow: "table",
-            keyColumns: ["number", "manager", "status"],
-            columns: [
-              { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
-              { title: t("assigned"), field: "manager", kind: "name", sorter: "string" },
-              { title: t("statusLabel"), field: "status", sorter: "string" },
-            ],
-            strings: {
-              perPage: t("tablePerPage"),
-              range: t("tableRange"),
-              count: t("tableCount"),
-              pages: t("tablePages"),
-              empty: t("noMatchingCases"),
-              failed: t("loadFailed"),
-              retry: t("retry"),
-            },
+            label: title || t(archived ? "archivedTitle" : "casesTitle"), data: rows, index: "id", selected: selected ? [selected] : [],
+            mode: "fill", pageSize: 25, headerMenu: false, rowMenuButton: false, narrow: "table",
+            keyColumns: columns.map((column) => column.field), columns,
+            strings: { perPage: t("tablePerPage"), range: t("tableRange"), count: t("tableCount"), pages: t("tablePages"), empty: t("noMatchingCases"), failed: t("loadFailed"), retry: t("retry") },
             onRowClick: (row) => select(row.id),
           })
         : h(P.EmptyState, { title: t(query ? "noMatchingCases" : archived ? "noArchived" : "noOpenCases") }),

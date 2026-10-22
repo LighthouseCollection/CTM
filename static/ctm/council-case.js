@@ -2518,7 +2518,7 @@
             key: party.id,
             title: spouseHeaderTitle(P, h, t, party),
             collapsible: true,
-            defaultExpanded: true,
+            defaultExpanded: false,
             strings: { collapse: t("collapse"), expand: t("expand") },
           },
           h(

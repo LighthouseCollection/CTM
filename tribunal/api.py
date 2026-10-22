@@ -450,6 +450,29 @@ def retry_payment(request, intent_id):
     return JsonResponse({"submitted": result is not None, "submission_id": str(result.pk) if result else None})
 
 
+def _case_list_data(case):
+    """Project the case-list fields from the case and its submitted filing."""
+    parties = sorted(case.parties.all(), key=lambda party: party.slot)
+    filings = [
+        application for application in case.applications.all()
+        if application.kind == "petition" and application.submitted_at is not None
+    ]
+    filing = max(filings, key=lambda application: (application.submitted_at, application.id), default=None)
+    applicant = filing.party if filing and filing.party_id else (parties[0] if parties else None)
+    respondent = next((party for party in parties if not applicant or party.pk != applicant.pk), None)
+    revision = next((row for row in filing.revisions.all() if row.number == filing.current_version), None) if filing else None
+    grounds = (revision.answers.get("grounds") or revision.answers.get("reason") or []) if revision else []
+    if isinstance(grounds, str):
+        grounds = [grounds]
+    return {
+        "applicant_name": applicant.name if applicant else None,
+        "respondent_name": respondent.name if respondent else None,
+        "reason": "; ".join(str(value) for value in grounds if value) or None,
+        "closed_at": case.closed_at.isoformat() if case.closed_at else None,
+        "party_names": [party.name for party in parties],
+    }
+
+
 @endpoint()
 def cases(request):
     from tribunal.pagination import page_records
@@ -457,13 +480,17 @@ def cases(request):
     if request.user.role == "applicant":
         qs = qs.filter(parties__account=request.user).distinct()
     return JsonResponse(page_records(
-        qs.select_related("assigned_member").prefetch_related("parties").order_by("-created_at", "-id"), request,
+        qs.select_related("assigned_member").prefetch_related(
+            "parties", "applications__party", "applications__revisions"
+        ).order_by("-created_at", "-id"), request,
         default_limit=100,
-        serialize=lambda c: encoded(c, number=c.number, status=c.status,
+        serialize=lambda c: encoded(
+            c, number=c.number, status=c.status,
             assigned_member_id=str(c.assigned_member_id) if c.assigned_member_id else None,
             assigned_member=f"{c.assigned_member.first_name} {c.assigned_member.last_name}".strip()
             if c.assigned_member else None,
-            party_names=[party.name for party in sorted(c.parties.all(), key=lambda party: party.slot)]),
+            **_case_list_data(c),
+        ),
     ))
 
 

@@ -289,6 +289,10 @@ test("cases table filters open or archived cases by number or manager", () => {
   assert.deepEqual([...C.caseRows(cases, true, "")].map((c) => c.id), ["3"]);
   assert.deepEqual([...C.caseRows(cases, false, "mark")].map((c) => c.id), ["1"]);
   assert.deepEqual([...C.caseRows(cases, false, "-02")].map((c) => c.id), ["2"]);
+  assert.deepEqual([...C.caseRows(cases, false, "", true)].map((c) => c.id), ["1", "2", "3"]);
+  assert.match(source, /showClosedCases: "Show closed cases"/);
+  assert.match(source, /view === "active"/);
+  assert.match(source, /caseClosedDate/);
 });
 
 test("statistics are plain counts, flagged partial at the list limit, never rates", () => {

@@ -45,6 +45,10 @@ test("council navigation groups sessions and cases into their requested destinat
   for (const key of ["myCases", "allCases", "archivedCases"])
     assert.match(app, new RegExp(`t\\("${key}"\\)`), key);
   assert.match(app, /statistics: "Reports"/);
+  assert.match(app, /allCases: "All Active Cases"/);
+  assert.match(app, /cases: page === "myCases" \? data\.items\.filter\(\(row\) => row\.assigned_member_id === user\.id\) : data\.items/);
+  assert.match(app, /\["home", "myCases", "cases", "archived", "past"\]\.includes\(page\)/);
+  assert.match(app, /view: page === "myCases" \? "mine" : page === "archived" \? "archived" : "active"/);
   assert.match(app, /const caseSearchIcon = \(\) =>/);
   assert.match(app, /className: "ctm-case-search-nav-icon", width: "1em", height: "1em"/);
   assert.match(app, /id === "search"\s*\? caseSearchIcon\(\)/);
@@ -127,6 +131,7 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /icon: spousePhoto\(P, h, party\)/);
   assert.match(councilCase, /function spouseHeaderTitle/);
   assert.match(councilCase, /title: spouseHeaderTitle\(P, h, t, party\)/);
+  assert.match(councilCase, /collapsible: true,\s*defaultExpanded: false/);
   assert.doesNotMatch(councilCase, /spouseIdentity\(P, h, t, party\)/);
   assert.match(councilCase, /collapsible: true/);
   assert.match(councilCase, /profile\?\.contact/);

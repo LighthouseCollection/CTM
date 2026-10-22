@@ -107,6 +107,7 @@ def test_case_listing_exposes_party_names_for_session_placement_choices(client, 
     login(client, people["secretary"])
     row = next(row for row in client.get("/api/cases/").json()["items"] if row["id"] == str(filed.case_id))
     assert row["party_names"] == ["John Smith", "Mary Smith"]
+    assert {"applicant_name", "respondent_name", "reason", "closed_at"} <= row.keys()
 
 
 def test_session_agenda_keeps_gender_pills_when_a_party_uses_its_linked_account_person(client, filed, people):
