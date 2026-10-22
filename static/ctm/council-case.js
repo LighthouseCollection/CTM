@@ -2497,7 +2497,7 @@
         ),
       ),
       !record.parties.length ? h(P.EmptyState, { title: t("noParties") }) : null,
-      manage && record.status === "open"
+      manage && record.status === "open" && record.parties.length < 2
         ? open
           ? h(
               P.Form,
