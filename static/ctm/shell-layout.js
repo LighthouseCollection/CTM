@@ -2,8 +2,12 @@
 (() => {
   const R = window.React, P = window.Plenix, h = R.createElement;
   function Table({ label, rows, columns, selected, onSelect, empty }) {
+    const common = { label, data: rows, columns, index: "id", narrow: "table", empty };
+    // Session agenda tables are reference tables, not interactive workspaces.
+    // P.Table deliberately has no grid controls or internal horizontal scrolling.
+    if (!onSelect) return h(P.Table, common);
     return h(P.DataTable, {
-      label, data: rows, columns, index: "id", narrow: "table", mode: "fill",
+      ...common, mode: "fill",
       selected: selected ? [selected] : [], onRowClick: (row) => onSelect(row.id), empty,
     });
   }

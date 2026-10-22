@@ -373,6 +373,7 @@
       married: "Married",
       submitted: "Submitted",
       assignedTo: "Assigned to",
+      previousRecommendation: "Previous recommendation",
       years: "{n} years",
       createSession: "Create session",
       dateRequired: "Enter a valid session date.",
@@ -642,6 +643,7 @@
       married: "مدة الزواج",
       submitted: "تاريخ التقديم",
       assignedTo: "مُعيَّنة إلى",
+      previousRecommendation: "التوصية السابقة",
       years: "{n} سنة",
       createSession: "إنشاء الجلسة",
       dateRequired: "أدخل تاريخًا صحيحًا للجلسة.",
@@ -1921,9 +1923,14 @@
       { label: t("casesToAssign"), value: String(pendingAssignments), data: true },
       { label: t("scheduledCasesForHearing"), value: String(scheduledHearings), data: true },
     ];
-    // EntityHeader actions are intentionally icon-only in the CDN. The session
-    // commands below are named compact buttons, as requested for this workflow.
-    const sessionHeaderActions = [];
+    // EntityHeader owns its action aside and divider. Its documented actions
+    // are icon buttons, with the translated label exposed as the tooltip and
+    // accessible name.
+    const sessionHeaderActions = [
+      planned && manage ? { icon: "folder-open", label: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) } : null,
+      planned ? { icon: "calendar", label: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) } : null,
+      { icon: "settings-users", label: t("attendance"), disabled: pending, onClick: () => setDialog({ kind: "attendance" }) },
+    ].filter(Boolean);
     const sessionStatus = session.state === "closed" ? "adjourned" : session.state === "draft" ? "draft" : "in-session";
 
     async function run(action, success, extra) {
@@ -2080,7 +2087,7 @@
     };
 
     const personPill = (value, kind) => value
-      ? h(P.Badge, { icon: "user", tone: kind === "applicant" ? "active" : kind === "respondent" ? "negative" : "neutral" }, value)
+      ? h(P.Badge, { tone: kind === "applicant" ? "active" : kind === "respondent" ? "negative" : "neutral" }, value)
       : t(kind === "clergy" ? "unassigned" : "notRecorded");
     const agendaTable = (n) => {
       const first = n === 1;
@@ -2088,18 +2095,22 @@
       const title = first ? t("casesToAssign") : t("scheduledCasesForHearing");
       const columns = first
         ? [
+            { title: "", field: "record" },
             { title: t("applicant"), field: "applicant_name", kind: "name", render: (row) => personPill(row.applicant_name, "applicant") },
             { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent") },
             { title: t("reason"), field: "reason" },
             { title: t("yearsMarried"), field: "married_years", render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
+            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => setDialog({ kind: "agenda", row }) }, t("open")) },
+            { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
           ]
         : [
             { title: "#", field: "position", kind: "name" },
             { title: t("applicant"), field: "applicant_name", render: (row) => personPill(row.applicant_name, "applicant") },
             { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent") },
             { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
+            { title: t("previousRecommendation"), field: "previous_recommendation", render: (row) => row.previous_recommendation || t("notRecorded") },
+            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => setDialog({ kind: "agenda", row }) }, t("open")) },
           ];
-      columns.push({ title: t("open"), field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => setDialog({ kind: "agenda", row }) }, t("open")) });
       return h(P.Panel, { key: n, title: first ? t("casesToAssign") : t("scheduledCasesForHearing") },
         h(window.CTMShell.Table, { label: title, rows, columns, empty: t(`part${n}Empty`) }),
       );
@@ -2119,16 +2130,7 @@
       }),
       current
         ? h(
-            P.Stack,
-            { gap: "sm" },
-            h(
-              P.Inline,
-              { wrap: true },
-              h(P.Button, { size: "sm", icon: "folder-open", disabled: pending || !planned || !manage, onClick: () => setDialog({ kind: "place", part: 1 }) }, t("addAssignmentCase")),
-              h(P.Button, { size: "sm", icon: "calendar", disabled: pending || !planned, onClick: () => setDialog({ kind: "place", part: 2 }) }, t("addHearingCase")),
-              h(P.Button, { size: "sm", icon: "settings-users", disabled: pending, onClick: () => setDialog({ kind: "attendance" }) }, t("attendance")),
-            ),
-            h(P.SegmentedControl, {
+            P.SegmentedControl, {
               label: t("tribunalSession"),
               size: "sm",
               value: sessionStatus,
@@ -2138,8 +2140,7 @@
                 { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "pause" },
               ],
               onChange: (value) => value === "adjourned" && planned && manage && setDialog({ kind: "adjourn" }),
-            }),
-          )
+            })
         : null,
       !planned ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,

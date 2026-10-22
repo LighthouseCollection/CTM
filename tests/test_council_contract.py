@@ -97,6 +97,17 @@ def test_session_workspace_projects_saved_header_and_assignment_facts(client, fi
     assert row["married_years"] == 19
     assert row["submitted_at"] == app.submitted_at.isoformat()
     assert row["assignment_status"] == "unassigned"
+    assert row["previous_recommendation"] is None
+
+
+def test_session_workspace_exposes_the_last_recorded_hearing_recommendation(client, hearing, filed, people):
+    save_hearing_outcome(people["member"], hearing.pk, "Private notes", "Proceed with reconciliation")
+    following = create_session(people["admin"], date(2030, 1, 9))
+    place_agenda(people["member"], following.pk, filed.case_id, part=2)
+    login(client, people["secretary"])
+
+    row = client.get(f"/api/sessions/{following.pk}/agenda/").json()["items"][0]
+    assert row["previous_recommendation"] == "Proceed with reconciliation"
 
 
 def test_session_create_api_persists_workspace_metadata(client, people):

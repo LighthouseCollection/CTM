@@ -4,6 +4,7 @@ const fs = require("node:fs");
 
 const shell = fs.readFileSync("tribunal/templates/tribunal/shell.html", "utf8");
 const app = fs.readFileSync("static/ctm/app.js", "utf8");
+const shellLayout = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
 
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
   const order = ["cdn/0.61.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
@@ -43,7 +44,7 @@ test("session lifecycle changes refresh their parent destination list", () => {
   assert.match(council, /onChanged: retry/);
 });
 
-test("the current session uses the default EntityHeader, compact named actions, and modal record views", () => {
+test("the current session uses the default EntityHeader actions and static agenda tables", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /mode === "current"/);
   assert.match(council, /h\(P\.EntityHeader/);
@@ -51,13 +52,17 @@ test("the current session uses the default EntityHeader, compact named actions, 
   assert.match(council, /media: \{ icon: "calendar"/);
   assert.match(council, /facts: sessionFacts/);
   assert.match(council, /actions: sessionHeaderActions/);
+  assert.match(council, /const sessionHeaderActions = \[/);
+  assert.match(council, /icon: "folder-open", label: t\("addAssignmentCase"\)/);
+  assert.match(council, /icon: "calendar", label: t\("addHearingCase"\)/);
+  assert.match(council, /icon: "settings-users", label: t\("attendance"\)/);
   for (const key of ["addAssignmentCase", "addHearingCase", "attendance"])
     assert.match(council, new RegExp(`t\\("${key}"\\)`), key);
   assert.match(council, /t\("casesToAssign"\)/);
   assert.match(council, /t\("scheduledCasesForHearing"\)/);
   const sessionFacts = council.slice(council.indexOf("const sessionFacts"), council.indexOf("const sessionHeaderActions"));
   assert.doesNotMatch(sessionFacts, /location/);
-  assert.match(council, /h\(P\.SegmentedControl/);
+  assert.match(council, /P\.SegmentedControl,/);
   assert.match(council, /sessionStatusDraft/);
   assert.match(council, /sessionStatusInSession/);
   assert.match(council, /sessionStatusAdjourned/);
@@ -68,6 +73,10 @@ test("the current session uses the default EntityHeader, compact named actions, 
   assert.match(council, /title: t\("openCase"\)/);
   const agendaTable = council.slice(council.indexOf("const agendaTable"), council.indexOf("return h(", council.indexOf("const agendaTable")));
   assert.doesNotMatch(agendaTable, /P\.SplitView/);
+  assert.match(agendaTable, /previousRecommendation/);
+  assert.match(agendaTable, /title: "", field: "open_action"/);
+  assert.match(shellLayout, /if \(!onSelect\) return h\(P\.Table/);
+  assert.match(shellLayout, /return h\(P\.DataTable/);
 });
 
 test("council pages are enabled only when their module is loaded", () => {

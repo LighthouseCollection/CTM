@@ -212,6 +212,12 @@ def agenda_item_data(item, actor, attendance):
             (item.session.date.month, item.session.date.day) < (case.marriage_date.month, case.marriage_date.day)
         )
     hearing = m.Hearing.objects.filter(agenda=item).select_related("proceeding", "agenda__case").first()
+    previous_outcome = (
+        m.HearingOutcome.objects.filter(hearing__agenda__case=case)
+        .exclude(hearing__agenda=item)
+        .order_by("-created_at", "-id")
+        .first()
+    )
     presenter = attendance.get(actor.pk)
     can_present = bool(case.assigned_member_id == actor.pk and item.part == 2
                        and item.state == "scheduled" and item.session.state == "planned"
@@ -231,6 +237,7 @@ def agenda_item_data(item, actor, attendance):
             "hearing_id": str(hearing.pk) if hearing else None,
             "assigned_member_id": str(case.assigned_member_id) if case.assigned_member_id else None,
             "assigned_member_name": name(case.assigned_member) if case.assigned_member_id else None,
+            "previous_recommendation": previous_outcome.recommendations or None if previous_outcome else None,
             "party_names": list(case.parties.order_by("slot").values_list("name", flat=True)),
             "applicant_name": applicant_name or None,
             "respondent_name": respondent.name if respondent else None,
