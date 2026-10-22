@@ -25,6 +25,8 @@ def granted_roles():
     import_module('tribunal.migrations.0043_request_author_projection').grant_runtime(apps,editor)
     import_module('tribunal.migrations.0044_document_category_labels').grant_runtime(apps,editor)
     import_module('tribunal.migrations.0046_withdrawal_case_scope').grant_runtime(apps,editor)
+    import_module('tribunal.migrations.0047_external_status_receipt').grant_runtime(apps,editor)
+    import_module('tribunal.migrations.0048_message_sender_projection').grant_runtime(apps,editor)
     @contextmanager
     def enter(role,actor=None,*,session=False):
         with transaction.atomic():

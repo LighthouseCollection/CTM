@@ -1,16 +1,16 @@
-Current validation: **797 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0046. Nine new restricted-role withdrawal regressions;17focused withdrawal/appeal checks passed.
+Current validation: **842 PostgreSQL passed, 1 skipped**; no model drift; rollback/reapply through0048. Eight new physical-role message regressions plus one cross-adapter endpoint contract; SQLite contract separately passed. Exact-successor applicant/QA acceptance remains pending.
 
-Withdrawal500 correction:0046 uses an authorized global participation decision without revealing other Party rows, then bounded authorized closed-case cleanup of hidden claims/unfinished requests. See withdrawal-case-scope.md. Exact-successor applicant and QA reruns remain pending; UI metadata successor proposal now0047after0046.
+Private-message pagination correction:0048 removes the hidden sender Account join and adds a bounded message-authorized name-only projection.51intended messages no longer disappear; existing message/recipient/Party/Account policies stay unchanged. See message-sender-projection.md. Exact-successor applicant/QA reruns remain pending; unique UI metadata successor proposal0049after0048.
 
-Current validation: **788 PostgreSQL passed, 1 skipped**, including migration rollback/reapply through0045. Fifteen new physical-role council link projection regressions. No model/route/migration/grant changes in this continuation.
+Earlier checkpoint validation: **833 PostgreSQL passed, 1 skipped**, migration rollback/reapply through0047 and no model drift. Nineteen new physical-role status/receipt checks plus one cross-adapter endpoint lifecycle; SQLite lifecycle separately passed. Council UI/integration acceptance remains required.
 
-Council C05 link projection: council-only priest name, expiry, current lifecycle state and writer-bound management flags; no capability/email/testimony disclosure or migration. See external-link-projection.md.
+C05 capability status/receipt: new read-only Bearer-only status endpoint exposes only lifecycle/expiry and an unexpired original report ID/time receipt.0047 adds app-only digest-bound projection; no existing mutation/row-visibility change. See external-status-receipt.md. UI metadata unique successor proposal0048after0047.
 
-Governance scoped verification: exact ace31522c0050b7e2d3bbe2ab0ac202f164a3de6 includes e49f355/0042–0045; linked second-applicant submit201/same-case/own-answer/private-history checks and focused7/7 passed. Full applicant acceptance remains open at a later withdrawal assertion, currently under applicant diagnosis.
+Governance scoped withdrawal acceptance:73357864789e22bb504002b089f2934e11f86e37 withf0e97fa/0046 verifies firstwithdraw keeps case/otherfiling open, finalwithdraw closes case, fee/history/notification isolation and linkedsubmit201. Focused7pass/outer66partial; later message-pagination fixture stops broader run, so no full applicant/QA acceptance inferred.
 
-Current validation: **773 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0045. Nine new linked-filing regressions.
+Earlier checkpoint validation: **813 PostgreSQL passed, 1 skipped**, migration rollback/reapply through0046;16 new physical-role browser-entry regressions and Chromium fragment-transport smoke passed. No model/route/migration/grant changes in this continuation.
 
-Linked first-petition RLS correction: 0045 adds the existing own-party/open-claim binding path when optional spouse DOB is absent. Exact restricted-role reproduction and negative binding checks; see linked-first-filing.md. Governance integration, migration and applicant/QA acceptance remain pending. UI metadata successor proposal is now 0046 after 0045.
+External priest browser entry now negotiates explicit HTML navigation to the existing council static page while preserving Bearer JSON. No asset copy/migration; combined council assets and exact-successor browser acceptance are required. See external-browser-entry.md.
 
 # Backend stream status: issue #2
 
@@ -19,8 +19,7 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **764 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
-reapply through0044. Protected151-table specification and accepted questions unchanged.
+Prior historical validation:764 PostgreSQL passed/1skip through0044; current delivery validation is recorded above. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
   domain tables forced RLS; queue provenance in0036.
@@ -135,13 +134,19 @@ fall back to existing labels. Requiredness, codes, contextual originals, scans a
 submission/recovery validation remain unchanged; settings rows stay hidden.
 [Runtime semantics, grants and content acceptance](document-label-consumer.md).
 
+## Recent backend corrections
+
+- 0045: first linked petition without optional spouse DOB. Governance verified submit201/same-case/own-answer/private-history on ace31522; full applicant acceptance remains separate.
+- 0046: joint withdrawal decision respects hidden participants; final authorized closure clears all case claims and unfinished requests. Applicant successor2a7d0eb rerun stopped earlier at a synthetic closure reason; the approved decree_issued fixture contract was supplied without weakening policies. Withdrawal successor acceptance remains pending.
+- Council link metadata and browser entry are implemented; no priest recording, paper or delivery completion is claimed.
+
 ## Unfinished
 
 UI's other requested backend contracts remain unfinished: approved own-profile/
 contact/portrait mutations, verified email/provider administration, broader normalized/admin session history, member
 contact/portrait editing and broader institutional history, formal-source factual discrepancy views,
 and consumer integration of stored settings beyond account status notices and filing document labels. Council C05 external
-boot/link-state/recording/paper-completion/invitation contracts remain unfinished. Pagination and per-family settings
+recording/paper-completion/invitation contracts remain unfinished. Capability status/receipt is implemented; council UI binding and independent acceptance remain pending. Browser-entry routing and council link metadata are implemented; combined UI acceptance remains pending. Pagination and per-family settings
 edit schemas are addressed in these continuations;
 those separate contracts are not claimed complete or all blocked by credentials.
 

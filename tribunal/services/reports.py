@@ -580,3 +580,39 @@ def review_transcript(actor, revision_id):
     if created:
         audit(actor, "transcript_reviewed", record, revision.recording.file.attachment.case)
     return record
+
+
+def external_status_receipt(request_id, token):
+    """No response content: a holder can inspect status but cannot reopen the link."""
+    from django.db import connection
+    from tribunal.db.context import database_external
+    if not isinstance(token, str) or not token or len(token)>256:
+        raise PermissionDenied("Invalid report capability.")
+    with database_external(request_id, token):
+        if connection.vendor == 'postgresql':
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT public.ctm_external_status_receipt()')
+                value = cursor.fetchone()[0]
+            if value is None:
+                raise PermissionDenied("Invalid report capability.")
+            import json
+            return json.loads(value) if isinstance(value, str) else value
+        source = ReportRequest.objects.select_related('case','proceeding').get(pk=request_id)
+        if (source.kind != 'external_priest' or source.proceeding.case_id != source.case_id or not source.expires_at
+                or not source.token_hash or not constant_time_compare(source.token_hash, hashlib.sha256(token.encode()).hexdigest())):
+            raise PermissionDenied("Invalid report capability.")
+        report = Report.objects.filter(request=source, method='external', author__isnull=True).first()
+        expired = timezone.now() >= source.expires_at
+        receipt = None
+        if expired:
+            state = 'expired'
+        elif source.state == 'completed' and report:
+            state = 'completed'
+            receipt = {'report_id':str(report.pk), 'completed_at':report.created_at.isoformat()}
+        elif source.state == 'cancelled':
+            state = 'cancelled'
+        elif source.state == 'closed' or source.case.status != 'open' or source.proceeding.status != 'open':
+            state = 'closed'
+        else:
+            state = 'active' if source.state == 'sent' else 'unavailable'
+        return {'state':state, 'expires_at':source.expires_at.isoformat(), 'receipt':receipt}

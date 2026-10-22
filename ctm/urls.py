@@ -70,6 +70,7 @@ urlpatterns = [
     path("api/cases/<uuid:case_id>/audit/", api.case_audit),
     path("api/system/audit/", api.system_audit),
     path("external/reports/<uuid:request_id>/", api.external_report),
+    path("external/reports/<uuid:request_id>/status/", api.external_report_status),
     path("api/system/settings/", api.settings_endpoint),
     path("api/templates/", api.templates),
     path("api/templates/<uuid:template_id>/publish/", api.template_publish),

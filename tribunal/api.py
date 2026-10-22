@@ -7,10 +7,11 @@ from pathlib import Path
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError, ObjectDoesNotExist
 from django.db import IntegrityError
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.vary import vary_on_headers
 from django.utils import timezone
 from django.shortcuts import render
 from tribunal import models as m
@@ -811,14 +812,16 @@ def messages(request, case_id):
         offset = int(request.GET.get("offset", 0))
         if not 0 <= offset <= 2**63-52:
             raise ValidationError("Message offset is outside the supported range.")
-        rows = list(messages_for(request.user, case_id).select_related("sender").order_by("created_at", "id")[offset:offset+51])
+        rows = list(messages_for(request.user, case_id).order_by("created_at", "id")[offset:offset+51])
+        from tribunal.services.message_projection import message_sender_names
+        sender_names = message_sender_names(rows[:50])
         return JsonResponse(
             {
                 "items": [
                     encoded(
                         x,
                         body=x.body,
-                        sender=f"{x.sender.first_name} {x.sender.last_name}".strip(),
+                        sender=sender_names.get(str(x.pk)),
                         channel=x.channel,
                         timestamp=x.created_at.isoformat(),
                         file_links=x.file_links,
@@ -1357,11 +1360,19 @@ def system_audit(request):
 
 
 @csrf_exempt
+@vary_on_headers("Accept", "Authorization")
 def external_report(request, request_id):
     from tribunal.services.reports import external_request, complete_external, lock_request
     from tribunal.db.context import database_external
     from django.db import transaction
 
+    # Browser navigation carries the capability only in its fragment. The existing
+    # council page removes it before fetching this route with a Bearer header.
+    # Do not inspect request existence or redirect query/header credentials.
+    if (request.method == "GET" and "Authorization" not in request.headers
+            and request.get_preferred_type(["application/json", "text/html"]) == "text/html"):
+        from django.templatetags.static import static
+        return HttpResponseRedirect(static("ctm/external-report.html"))
     token = request.headers.get("Authorization", "").removeprefix("Bearer ")
     if request.method not in {"GET", "POST"}:
         return JsonResponse({"error": "method_not_allowed"}, status=405)
@@ -2013,3 +2024,17 @@ def system_account_role_history(request, account_id):
                           serialize=lambda row: role_data(account, row, now))
     return JsonResponse({"account_id": str(account.pk), "account_role": account.role,
                          "account_active": account.is_active, **result})
+
+
+@csrf_exempt
+@vary_on_headers("Authorization")
+def external_report_status(request, request_id):
+    from tribunal.services.reports import external_status_receipt
+    if request.method != 'GET':
+        return JsonResponse({'error':'method_not_allowed'}, status=405)
+    authorization = request.headers.get('Authorization','')
+    token = authorization[len('Bearer '):] if authorization.startswith('Bearer ') else ''
+    try:
+        return JsonResponse(external_status_receipt(request_id, token))
+    except (PermissionDenied, ValidationError, ObjectDoesNotExist):
+        return JsonResponse({'error':'link_unavailable'}, status=403)
