@@ -91,6 +91,7 @@ urlpatterns = [
     path("api/templates/<uuid:template_id>/publish/", api.template_publish),
     path("api/templates/<uuid:template_id>/retire/", api.template_retire),
     path("api/account/settings/", api.account_settings),
+    path("api/account/activity/", api.account_activity),
     path("api/search/", api.search),
     path("api/applications/<uuid:app_id>/delete-draft/", api.delete_draft),
     path("api/system/questionnaires/publish/", api.publish_questionnaire),

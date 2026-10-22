@@ -106,13 +106,62 @@
     const P = window.Plenix, h = window.React.createElement, t = translator(lang);
     return h(P.PropertyList, { layout: "stacked" }, ...entries.filter(([, value]) => value !== undefined && value !== null && value !== "").map(([key, value]) => h(P.PropertyList.Item, { key, label: t(key) }, typeof value === "boolean" ? t(value ? "yes" : "no") : ["role", "portal", "ui_language", "notification_language"].includes(key) ? t(String(value)) : String(value))));
   }
-  function Profile({ user, lang, onSettings }) {
-    const P = window.Plenix, h = window.React.createElement, t = translator(lang);
-    return h(P.Stack, { gap: "lg" }, h(P.Text, { as: "h1", variant: "title" }, t("profile")),
-      h(P.Panel, { icon: "person", title: user.name || t("profile") },
-        h(Properties, { lang, entries: [["name", user.name], ["email", user.email], ["role", user.role], ["portal", user.portal], ["ui_language", user.ui_language], ["notification_language", user.notification_language]] })),
-      h(P.Button, { onClick: onSettings }, t("preferences")));
+  function Profile({ api, user, lang, onSettings, onUserUpdated }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [form, setForm] = R.useState({ first_name: user.first_name || user.name?.split(" ")[0] || "", last_name: user.last_name || user.name?.split(" ").slice(1).join(" ") || "" });
+    const [saving, setSaving] = R.useState(false), [notice, setNotice] = R.useState(null), [failure, setFailure] = R.useState(null);
+    const [state, retry] = window.CTMCouncil.useLoad(() => Promise.all([api("/api/account/sessions/"), api("/api/account/activity/")]).then(([sessions, activity]) => ({ sessions: sessions.items || [], activity: activity.items || [] })), []);
+    const save = async (event) => {
+      event.preventDefault();
+      setSaving(true); setFailure(null); setNotice(null);
+      try {
+        const updated = await api("/api/account/settings/", { method: "POST", body: JSON.stringify({ first_name: form.first_name.trim(), last_name: form.last_name.trim() }) });
+        onUserUpdated?.(updated); setNotice("Profile updated.");
+      } catch (error) { setFailure(window.CTMCouncil.serverMessage(error, t)); }
+      finally { setSaving(false); }
+    };
+    const preference = async (field, value) => {
+      setSaving(true); setFailure(null); setNotice(null);
+      try { const updated = await api("/api/account/settings/", { method: "POST", body: JSON.stringify({ [field]: value }) }); onUserUpdated?.(updated); setNotice("Notification preferences updated."); }
+      catch (error) { setFailure(window.CTMCouncil.serverMessage(error, t)); }
+      finally { setSaving(false); }
+    };
+    const role = t(user.role || "member"), portal = t(user.portal || "council");
+    return h(P.Stack, { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, "My Account"),
+      h("header", { className: "ctm-account-hero" },
+        h("span", { className: "ctm-account-hero__avatar", "aria-hidden": true }, (user.name || "?").split(/\s+/).map((word) => word[0]).join("").slice(0, 2)),
+        h("div", null, h(P.Text, { as: "h2", variant: "heading" }, user.name), h(P.Text, { variant: "secondary" }, `${role} · ${portal}`)),
+      ),
+      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, notice) : null,
+      failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
+      h(P.Panel, { icon: "person", title: "Profile" }, h(P.Form, { onSubmit: save, label: "Profile", noValidate: true },
+        h("div", { className: "ctm-account-grid" },
+          h(P.Field, { label: "First name", required: true }, h(P.Input, { value: form.first_name, maxLength: 150, disabled: saving, onChange: (event) => setForm({ ...form, first_name: event.target.value }) })),
+          h(P.Field, { label: "Last name", required: true }, h(P.Input, { value: form.last_name, maxLength: 150, disabled: saving, onChange: (event) => setForm({ ...form, last_name: event.target.value }) })),
+          h(P.Field, { label: "Signed-in email" }, h(P.Input, { value: user.email || "", disabled: true })),
+        ), h(P.FormActions, { sticky: false }, h(P.Button, { type: "submit", variant: "primary", loading: saving, disabled: saving }, "Save changes")))),
+      h(P.Panel, { icon: "lock", title: "Security" }, h(P.Stack, { gap: "md" },
+        h(P.Text, { variant: "secondary" }, "Your account uses your authorized identity-provider sign-in. Password changes are managed by that provider."),
+        state.pending ? h(P.Text, { variant: "secondary" }, t("loading")) : state.error ? h(P.Button, { onClick: retry }, t("retry")) : h(P.PropertyList, { layout: "stacked" },
+          h(P.PropertyList.Item, { label: "Active sessions" }, String(state.data.sessions.length)),
+          h(P.PropertyList.Item, { label: "Current session" }, state.data.sessions.some((item) => item.current) ? "Active" : "—"),
+        ),
+      )),
+      h(P.Panel, { icon: "settings-users", title: "Tribunal Role" }, h(P.PropertyList, { layout: "stacked" },
+        h(P.PropertyList.Item, { label: "Role" }, role), h(P.PropertyList.Item, { label: "Portal" }, portal), h(P.PropertyList.Item, { label: "Permissions" }, "Managed by tribunal administration"),
+      )),
+      h(P.Panel, { icon: "hdr-bell", title: "Notifications" }, h(P.Stack, { gap: "md" },
+        h(P.Text, { variant: "secondary" }, "Choose the language used for notification messages."),
+        h(P.Inline, { wrap: true }, ...["en", "ar"].map((value) => h(P.Button, { key: value, selected: user.notification_language === value, disabled: saving, onClick: () => preference("notification_language", value) }, t(value)))),
+        h(P.Button, { variant: "ghost", disabled: saving, onClick: onSettings }, t("preferences")),
+      )),
+      h(P.Panel, { icon: "activity", title: "Activity Log" },
+        state.pending ? h(P.Text, { variant: "secondary" }, t("loading")) : state.error ? h(P.Button, { onClick: retry }, t("retry")) : state.data.activity.length ? h(P.List, { variant: "bullets", items: state.data.activity.map((item) => ({ children: `${item.action} · ${window.CTMCouncil.formatWhen(item.timestamp, lang)}` })) }) : h(P.EmptyState, { title: "No account activity is available yet." }),
+      ),
+    );
   }
+
   function ConfigurationValue({ value, lang }) {
     const P = window.Plenix, h = window.React.createElement, t = translator(lang);
     if (value === null || value === undefined) return h(P.Text, null, "—");

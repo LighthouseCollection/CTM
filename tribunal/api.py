@@ -2024,11 +2024,26 @@ def account_settings(request):
         user = save_preferences(request.user, body(request))
     return JsonResponse(
         {
+            "name": f"{user.first_name} {user.last_name}".strip(),
+            "first_name": user.first_name,
+            "last_name": user.last_name,
             "ui_language": user.ui_language,
             "notification_language": user.notification_language,
             "email": user.email,
+            "role": user.role,
+            "portal": "applicant" if user.role == "applicant" else "council",
         }
     )
+
+
+@endpoint()
+def account_activity(request):
+    from tribunal.pagination import page_records
+    return JsonResponse(page_records(
+        m.AuditEvent.objects.filter(actor=request.user).order_by("-created_at", "-id"), request,
+        default_limit=20,
+        serialize=lambda row: encoded(row, action=row.action.replace("_", " "), timestamp=row.created_at.isoformat()),
+    ))
 
 
 @endpoint(("POST",))

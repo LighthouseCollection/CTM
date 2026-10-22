@@ -617,3 +617,8 @@
   .ctm-case-timeline__event > .plx-badge { grid-column: 3; justify-self: start; }
   .ctm-case-timeline__marker { inline-size: 1.25rem; block-size: 1.25rem; }
 }
+
+.ctm-account-hero { display: flex; align-items: center; gap: var(--plx-space-md, 1rem); padding: var(--plx-space-lg, 1.5rem); border: 1px solid var(--plx-color-border, #d7dce3); border-radius: var(--plx-radius-md, 8px); background: var(--plx-color-surface, #fff); }
+.ctm-account-hero__avatar { display: inline-flex; align-items: center; justify-content: center; inline-size: 4rem; block-size: 4rem; border-radius: var(--plx-radius-md, 8px); background: var(--plx-ref-color-blue-650, #1769aa); color: #fff; font-weight: 700; font-size: 1.125rem; }
+.ctm-account-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--plx-space-md, 1rem); }
+@media (max-width: 720px) { .ctm-account-grid { grid-template-columns: 1fr; } }
