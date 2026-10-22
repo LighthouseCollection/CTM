@@ -46,6 +46,7 @@ test("council navigation groups sessions and cases into their requested destinat
     assert.match(app, new RegExp(`t\\("${key}"\\)`), key);
   assert.match(app, /statistics: "Reports"/);
   assert.match(app, /const caseSearchIcon = \(\) =>/);
+  assert.match(app, /className: "ctm-case-search-nav-icon", width: "1em", height: "1em"/);
   assert.match(app, /id === "search"\s*\? caseSearchIcon\(\)/);
   assert.match(app, /const casesNavigationItems = \[\s*\{ id: "search", icon: navigationIcon\("search"\), label: t\("search"\) \}/);
 });
