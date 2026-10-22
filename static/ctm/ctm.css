@@ -335,3 +335,13 @@
 .plx-data-grid .plx-data-pill[data-plx-category="grey"] {
   background-color: var(--plx-sys-color-surface-subtle, #f8fafc);
 }
+
+/* Awaiting-review acceptance is distinct from the normal primary action. */
+.ctm-application-review__accept.plx-button--primary {
+  background: var(--plx-sys-color-success, #16803b);
+  border-color: var(--plx-sys-color-success, #16803b);
+}
+.ctm-application-review__accept.plx-button--primary:hover {
+  background: var(--plx-sys-color-success-strong, #126b31);
+  border-color: var(--plx-sys-color-success-strong, #126b31);
+}

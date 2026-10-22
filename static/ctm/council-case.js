@@ -339,6 +339,14 @@ ${ar}` : en;
       proceedingReconsideration: "Appeal or reconsideration proceeding",
       whereThingsStand: "Where the case stands",
       caseSummary: "Case Summary",
+      acceptApplication: "Accept",
+      declineApplication: "Decline",
+      acceptApplicationTitle: "Accept application?",
+      acceptApplicationMessage: "The applicant will be notified that the application was accepted.",
+      declineApplicationTitle: "Decline application",
+      declineApplicationHelp: "Explain why the application is being declined. This reason will be emailed to the applicant.",
+      declineReason: "Reason for decline",
+      declineReasonRequired: "Enter a reason for declining this application.",
       caseNumber: "Case Number",
       filingDate: "Filing Date",
       pending: "Pending",
@@ -670,6 +678,14 @@ ${ar}` : en;
       proceedingReconsideration: "إجراء استئناف أو إعادة نظر",
       whereThingsStand: "وضع القضية الحالي",
       caseSummary: "ملخص القضية",
+      acceptApplication: "قبول",
+      declineApplication: "رفض",
+      acceptApplicationTitle: "قبول الطلب؟",
+      acceptApplicationMessage: "سيتم إبلاغ مقدم الطلب بقبول الطلب.",
+      declineApplicationTitle: "رفض الطلب",
+      declineApplicationHelp: "اشرح سبب رفض الطلب. سيتم إرسال هذا السبب عبر البريد الإلكتروني إلى مقدم الطلب.",
+      declineReason: "سبب الرفض",
+      declineReasonRequired: "أدخل سبب رفض هذا الطلب.",
       caseNumber: "رقم القضية",
       filingDate: "تاريخ التقديم",
       pending: "قيد الانتظار",
@@ -3015,7 +3031,70 @@ ${ar}` : en;
     };
   }
 
-  function CaseSummary({ api, lang, user, caseId }) {
+  function ApplicationReviewActions({ api, lang, applicationId, onDone }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [mode, setMode] = R.useState(null);
+    const [reason, setReason] = R.useState("");
+    const [failure, setFailure] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+
+    async function submit(result) {
+      if (result === "reject" && !reason.trim()) return;
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/applications/${encodeURIComponent(applicationId)}/review/`, {
+          method: "POST",
+          body: JSON.stringify({ result, instructions: result === "reject" ? reason.trim() : "" }),
+        });
+        setMode(null);
+        onDone?.();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+
+    return h(
+      R.Fragment,
+      null,
+      h(P.Inline, { justify: "end", wrap: true, className: "ctm-application-review" },
+        h(P.Button, { className: "ctm-application-review__accept", variant: "primary", disabled: pending, onClick: () => setMode("accept") }, t("acceptApplication")),
+        h(P.Button, { variant: "danger", disabled: pending, onClick: () => setMode("reject") }, t("declineApplication")),
+      ),
+      h(P.ConfirmDialog, {
+        open: mode === "accept",
+        title: t("acceptApplicationTitle"),
+        message: t("acceptApplicationMessage"),
+        confirmLabel: t("acceptApplication"),
+        cancelLabel: base.translator(lang)("cancel"),
+        onConfirm: () => !pending && submit("accept"),
+        onCancel: () => !pending && setMode(null),
+      }, failure && mode === "accept" ? h(P.Notice, { tone: "danger" }, failure) : null),
+      h(P.Dialog, {
+        open: mode === "reject",
+        title: t("declineApplicationTitle"),
+        description: t("declineApplicationHelp"),
+        closeLabel: base.translator(lang)("cancel"),
+        onClose: () => !pending && setMode(null),
+        footer: h(P.Inline, { justify: "end" },
+          h(P.Button, { disabled: pending, onClick: () => setMode(null) }, base.translator(lang)("cancel")),
+          h(P.Button, { variant: "danger", loading: pending, disabled: pending || !reason.trim(), onClick: () => submit("reject") }, t("declineApplication")),
+        ),
+      },
+        h(P.Field, { label: t("declineReason"), required: true },
+          h(P.Textarea, { rows: 6, value: reason, maxLength: 10000, disabled: pending, onChange: (event) => { setReason(event.target.value); setFailure(null); } }),
+        ),
+        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+      ),
+    );
+  }
+
+  function CaseSummary({ api, lang, user, caseId, reviewApplicationId }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -3024,6 +3103,7 @@ ${ar}` : en;
     const [summaryForm, setSummaryForm] = R.useState(null);
     const [summaryPending, setSummaryPending] = R.useState(false);
     const [summaryFailure, setSummaryFailure] = R.useState(null);
+    const [reviewComplete, setReviewComplete] = R.useState(false);
     const [state, retry] = base.useLoad(
       () =>
         api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)).then(async (record) => {
@@ -3143,6 +3223,7 @@ ${ar}` : en;
     return h(
       P.Stack,
       { gap: "lg" },
+      reviewApplicationId && !reviewComplete ? h(ApplicationReviewActions, { api, lang, applicationId: reviewApplicationId, onDone: () => { setReviewComplete(true); retry(); } }) : null,
       h(P.Text, { as: "h1", variant: "title" }, record.number),
       h(
         P.Panel,

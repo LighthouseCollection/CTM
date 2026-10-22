@@ -15,9 +15,9 @@
   const councilModule = window.CTMCouncil || null;
   const navigationIcons = {
     home: "home", sessions: "today", sessionsGroup: "calendar_month", sessionsUpcoming: "calendar", sessionsArchived: "calendar_lock", cases: "work", search: "search",
-    archived: "archive", statistics: "chart", applications: "doc-text",
+    archived: "archive", statistics: "chart", applications: "doc-text", newApplications: "doc-text",
     appointments: "schedule", past: "archive", case: "document", timeline: "progress",
-    parties: "settings-users", marriage: "wedding", separation: "move", petition: "doc-text",
+    parties: "settings-users", marriage: "church", separation: "move", petition: "doc-text",
     reports: "document", hearings: "list-lines", evidence: "image-a-2", documents: "folder",
     medical: "lock", appeals: "progress",
     communications: "mail", calls: "phone", notes: "message", audit: "list-lines",
@@ -32,7 +32,7 @@
       : id === "separation"
       ? h(P.Icon, { name: "person_cancel", "aria-hidden": true })
       : id === "marriage"
-        ? h(P.Icon, { name: "wedding", "aria-hidden": true })
+        ? h(P.Icon, { name: "church", "aria-hidden": true })
       : id === "decision"
         ? h(P.Icon, { name: "gavel", "aria-hidden": true })
       : id === "hearings"
@@ -85,6 +85,7 @@
       cases: "Cases",
       myCases: "My Cases",
       allCases: "All Active Cases",
+      newApplications: "New Applications",
       archivedCases: "Archived Cases",
       sessions: "Tribunal Sessions - Current",
       sessionsUpcoming: "Tribunal Sessions - Upcoming",
@@ -208,6 +209,7 @@
       backSearchResults: "Back to search results",
       backMyCases: "Back to My Cases",
       backAllCases: "Back to All Active Cases",
+      backNewApplications: "Back to New Applications",
       backArchivedCases: "Back to Archived Cases",
       backCurrentSessions: "Back to Current Tribunal Sessions",
       backUpcomingSessions: "Back to Upcoming Tribunal Sessions",
@@ -341,6 +343,7 @@
       cases: "القضايا",
       myCases: "قضاياي",
       allCases: "كل القضايا النشطة",
+      newApplications: "الطلبات الجديدة",
       archivedCases: "القضايا المؤرشفة",
       sessions: "جلسات المجلس - الحالية",
       sessionsUpcoming: "جلسات المجلس - القادمة",
@@ -1183,7 +1186,7 @@
       else if (
         councilModule &&
         user.portal === "council" &&
-        ["review", "sessions", "sessionsUpcoming", "sessionsArchived", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings", "petition", "timeline", "statistics"].includes(page)
+        ["review", "newApplications", "sessions", "sessionsUpcoming", "sessionsArchived", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings", "petition", "timeline", "statistics"].includes(page)
       )
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
@@ -1325,7 +1328,7 @@
       go(origin.page, origin.selection || null);
     };
     const navItems = council
-      ? ["home", "sessions", "sessionsUpcoming", "sessionsArchived", "myCases", "cases", "archived", "statistics"]
+      ? ["home", "sessions", "sessionsUpcoming", "sessionsArchived", "myCases", "newApplications", "cases", "archived", "statistics"]
       : ["home", "applications", "appointments", "past"];
     const unavailable = new Set(
       [
@@ -1434,6 +1437,7 @@
     ];
     const casesNavigationItems = [
       { id: "myCases", icon: h(P.Icon, { name: "folder_shared", "aria-hidden": true }), label: t("myCases") },
+      ...(canManage(user) ? [{ id: "newApplications", icon: navigationIcon("newApplications"), label: t("newApplications") }] : []),
       { id: "cases", icon: h(P.Icon, { name: "folder", "aria-hidden": true }), label: t("allCases") },
       { id: "archived", icon: navigationIcon("archived"), label: t("archivedCases") },
       { id: "statistics", icon: navigationIcon("statistics"), label: t("statistics"), disabled: unavailable.has("statistics") },
@@ -1671,6 +1675,7 @@
           lang,
           user,
           caseId: selection,
+          reviewApplicationId: caseOrigin?.applicationId,
         });
       if (page === "timeline" && council && councilModule?.CaseTimeline)
         return h(councilModule.CaseTimeline, { key: selection, api, lang, caseId: selection });
@@ -1851,6 +1856,13 @@
           lang,
           user,
           onCase: (id) => openCase(id, { page: "search", labelKey: "backSearchResults" }),
+        });
+      if (councilModule && council && page === "newApplications")
+        return h(councilModule.NewApplicationsTable, {
+          api,
+          lang,
+          user,
+          onOpen: (caseId, applicationId) => openCase(caseId, { page: "newApplications", labelKey: "backNewApplications", applicationId }),
         });
       if (councilModule && council && page === "review")
         return h(councilModule.ReviewWorkspace, {

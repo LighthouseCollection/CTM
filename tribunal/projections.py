@@ -82,8 +82,17 @@ def staff_application_data(app, actor):
             manifest.append({"file_id": file_id, "category": entry.get("category"),
                              "name": entry.get("name"), "scan_state": scan.result if scan else "pending"})
     reviews = m.CompletenessReview.objects.filter(submission__application=app).select_related("actor").order_by("created_at", "id")
+    parties = list(app.case.parties.select_related("person", "account__person").order_by("slot", "id")) if app.case_id else []
+    applicant = app.party if app.party_id else (parties[0] if parties else None)
+    respondent = next((party for party in parties if not applicant or party.pk != applicant.pk), None)
+    applicant_person = applicant.person if applicant and applicant.person_id else getattr(app.owner, "person", None)
+    respondent_person = respondent.person if respondent and respondent.person_id else (respondent.account.person if respondent and respondent.account_id and respondent.account.person_id else None)
     result = {
         "applicant_name": app.party.name if app.party_id else name(app.owner),
+        "respondent_name": respondent.name if respondent else None,
+        "applicant_gender": applicant_person.gender if applicant_person else None,
+        "respondent_gender": respondent_person.gender if respondent_person else None,
+        "assigned_to": name(app.case.assigned_member) if app.case_id and app.case.assigned_member_id else None,
         "submitted_at": app.submitted_at.isoformat() if app.submitted_at else None,
         "submitted_version": latest.revision.number if latest else None,
         "questionnaire": questionnaire_data(latest.revision.questionnaire if latest else app.questionnaire),

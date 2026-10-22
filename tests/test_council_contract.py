@@ -43,6 +43,7 @@ def test_review_queue_has_frozen_manifest_labels_and_authority(client, filed, pe
     login(client, people["secretary"])
     data = client.get("/api/applications/?state=awaiting_review").json()["items"][0]
     assert data["applicant_name"] == "John Smith" and data["can_review"]
+    assert {"respondent_name", "assigned_to", "applicant_gender", "respondent_gender"} <= data.keys()
     assert data["submitted_at"] and data["submitted_version"] == 1
     assert data["questionnaire"]["id"] == str(app.questionnaire_id)
     assert len(data["manifest"]) == 4 and all(x["scan_state"] == "clean" for x in data["manifest"])

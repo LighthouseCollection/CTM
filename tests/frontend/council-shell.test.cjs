@@ -178,7 +178,7 @@ test("account menu receives localized AppHeader labels and density choices", () 
 });
 
 test("council navigation groups sessions and cases into their requested destinations", () => {
-  assert.match(app, /\["home", "sessions", "sessionsUpcoming", "sessionsArchived", "myCases", "cases", "archived", "statistics"\]/);
+  assert.match(app, /\["home", "sessions", "sessionsUpcoming", "sessionsArchived", "myCases", "newApplications", "cases", "archived", "statistics"\]/);
   assert.match(app, /sessions: "Tribunal Sessions - Current"/);
   assert.match(app, /sessionsUpcoming: "Tribunal Sessions - Upcoming"/);
   assert.match(app, /sessionsArchived: "Tribunal Sessions - Archived"/);
@@ -399,7 +399,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(app, /items: ["notes", "communications"]/);
   assert.match(app, /id === "decision"\s*\? h\(P\.Icon, \{ name: "gavel"/);
   assert.match(app, /name: "gavel"/);
-  assert.match(app, /id === "marriage"\s*\? h\(P\.Icon, \{ name: "wedding"/);
+  assert.match(app, /id === "marriage"\s*\? h\(P\.Icon, \{ name: "church"/);
   assert.match(app, /id === "decree"\s*\? h\(P\.Icon, \{ name: "approval"/);
   assert.match(app, /id === "hearings"\s*\? h\(P\.Icon, \{ name: "balance"/);
   assert.match(app, /groups: collaborationGroups/);
@@ -587,6 +587,27 @@ test("council can edit a spouse contact through a versioned case finding", () =>
 test("case navigation uses the requested Material folder icons", () => {
   assert.match(app, /id: "myCases", icon: h\(P\.Icon, \{ name: "folder_shared", "aria-hidden": true \}\), label: t\("myCases"\)/);
   assert.match(app, /id: "cases", icon: h\(P\.Icon, \{ name: "folder", "aria-hidden": true \}\), label: t\("allCases"\)/);
+});
+
+test("Cases includes a New Applications table that opens the standard case view", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(council, /function NewApplicationsTable\(\{ api, lang, user, onOpen \}\)/);
+  assert.match(council, /api\(REVIEW_URL\)/);
+  assert.match(council, /title: t\("caseNumber"\), field: "case_number"/);
+  assert.match(council, /onOpen\(row\.case_id, row\.id\)/);
+  assert.match(app, /id: "newApplications"[\s\S]*label: t\("newApplications"\)/);
+  assert.match(app, /page === "newApplications"/);
+  assert.match(app, /reviewApplicationId: caseOrigin\?\.applicationId/);
+});
+
+test("opening a new application adds accept and decline controls to the standard case view", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(councilCase, /function ApplicationReviewActions\(\{ api, lang, applicationId, onDone \}\)/);
+  assert.match(councilCase, /variant: "danger"/);
+  assert.match(councilCase, /ctm-application-review__accept/);
+  assert.match(councilCase, /api\(`\/api\/applications\/\$\{encodeURIComponent\(applicationId\)\}\/review\/`/);
+  assert.match(councilCase, /result,\s*instructions: result === "reject" \? reason\.trim\(\) : ""/);
+  assert.match(councilCase, /h\(ApplicationReviewActions, \{ api, lang, applicationId: reviewApplicationId/);
 });
 
 test("upcoming session editing offers Cancel that clears selection and closes the form", () => {

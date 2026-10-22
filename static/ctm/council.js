@@ -543,6 +543,8 @@
       statsSessions: "Council sessions",
       statsNoAssigned: "No open case has a case manager yet.",
       casesTitle: "Cases",
+      newApplications: "New Applications",
+      applicationSubmitted: "Submitted",
       archivedTitle: "Archived",
       searchCases: "Find a case by number or case manager",
       caseNumber: "Case number",
@@ -847,6 +849,8 @@
       statsSessions: "جلسات المجلس",
       statsNoAssigned: "لا توجد قضية مفتوحة معيَّن لها مسؤول بعد.",
       casesTitle: "القضايا",
+      newApplications: "الطلبات الجديدة",
+      applicationSubmitted: "مُقدَّم",
       archivedTitle: "الأرشيف",
       searchCases: "ابحث عن قضية برقمها أو بمسؤولها",
       caseNumber: "رقم القضية",
@@ -2960,6 +2964,37 @@
     );
   }
 
+  function NewApplicationsTable({ api, lang, user, onOpen }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [state, retry] = useLoad(() => api(REVIEW_URL), [user?.id]);
+    if (!canManage(user)) return h(P.EmptyState, { title: t("reviewOnlyAdmin") });
+    if (state.pending && !state.data) return loadingView(P, h, t);
+    if (state.error) return loadFailure(P, h, t, retry, state.error);
+    const rows = awaitingReview(state.data?.items).map((row) => ({
+      ...row,
+      applicant: { name: row.applicant_name || "—", gender: row.applicant_gender === "M" ? "male" : row.applicant_gender === "F" ? "female" : undefined },
+      respondent: { name: row.respondent_name || "—", gender: row.respondent_gender === "M" ? "male" : row.respondent_gender === "F" ? "female" : undefined },
+      status: t("applicationSubmitted"),
+      assigned_to: row.assigned_to || t("unassigned"),
+      submitted: row.submitted_at ? formatWhen(row.submitted_at, lang) : t("notRecorded"),
+    }));
+    return h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
+      h(P.Text, { as: "h1", variant: "title" }, t("newApplications")),
+      h(window.CTMShell.Table, {
+        label: t("newApplications"), rows, empty: t("reviewQueueEmpty"), isStatic: true,
+        columns: [
+          { title: t("caseNumber"), field: "case_number", kind: "data", minWidth: "9rem" },
+          { title: t("applicant"), field: "applicant", type: "person", minWidth: "11rem" },
+          { title: t("respondent"), field: "respondent", type: "person", minWidth: "11rem" },
+          { title: t("statusLabel"), field: "status", minWidth: "9rem" },
+          { title: t("assignedTo"), field: "assigned_to", type: "person", minWidth: "12rem" },
+          { title: t("submitted"), field: "submitted", minWidth: "12rem" },
+          { title: t("actions"), field: "open_action", pill: false, minWidth: "7rem", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onOpen(row.case_id, row.id) }, t("open")) },
+        ],
+      }),
+    );
+  }
+
   // Operational counts only. No rates: tribunal cases have no valid population
   // denominator, so nothing here implies a divorce or approval rate.
   const LIST_LIMIT = 100;
@@ -3085,6 +3120,7 @@
     CouncilHome: guarded(CouncilHome),
     caseRows,
     CasesTable: guarded(CasesTable),
+    NewApplicationsTable: guarded(NewApplicationsTable),
     caseStatistics,
     StatisticsWorkspace: guarded(StatisticsWorkspace),
   };
