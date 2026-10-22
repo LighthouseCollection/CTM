@@ -2955,7 +2955,7 @@
         title: t("actions"), field: "open_action", minWidth: canDelete ? "11rem" : "6rem", pill: false,
         render: (row) => h(P.Inline, { gap: "xs" },
           h(P.Button, { size: "xs", icon: "open", onClick: () => onOpen(row.id) }, t("open")),
-          canDelete ? h(P.Button, { size: "xs", icon: "trash", onClick: () => setDeleteTarget(row) }, t("deleteCase")) : null,
+          canDelete ? h(P.Button, { size: "xs", icon: "trash", variant: "danger-secondary", onClick: () => setDeleteTarget(row) }, t("deleteCase")) : null,
         ),
       },
     ];

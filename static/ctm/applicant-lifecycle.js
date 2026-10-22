@@ -50,10 +50,10 @@
       state.error?h(P.Notice,{tone:"warning",role:"alert"},t(state.error)):null,
       state.received?h(P.Notice,{role:"status"},t("received")):null,
       selected?h(P.Notice,{tone:"warning",role:"alert"},h(P.Stack,null,t(selected==="delete"?"deleteHelp":"withdrawHelp"),
-        h(P.Inline,{wrap:true},h(P.Button,{disabled:disabled||state.locked,onClick:()=>session.send(selected,true)},t(state.busy?"busy":"confirm")),
+        h(P.Inline,{wrap:true},h(P.Button,{variant:selected==="delete"?"danger-secondary":undefined,disabled:disabled||state.locked,onClick:()=>session.send(selected,true)},t(state.busy?"busy":"confirm")),
           h(P.Button,{variant:"secondary",disabled:state.busy,onClick:()=>select(null)},t("cancel"))))):null,
       !selected?h(P.Inline,{wrap:true},...["delete","withdraw"].filter(action=>available(application,action)).map(action=>
-        h(P.Button,{key:action,disabled:disabled||state.locked,onClick:()=>select(action)},t(action)))):null,
+        h(P.Button,{key:action,variant:action==="delete"?"danger-secondary":undefined,disabled:disabled||state.locked,onClick:()=>select(action)},t(action)))):null,
       state.locked&&!state.busy?h(P.Button,{onClick:onRefresh,disabled:disabled},t("refresh")):null
     ));
   }

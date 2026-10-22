@@ -529,6 +529,14 @@ test("upcoming session actions live in each row instead of the toolbar", () => {
   assert.match(source, /t\("saveSession"\)/);
 });
 
+test("delete controls use the shared danger-secondary treatment", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const lifecycle = fs.readFileSync("static/ctm/applicant-lifecycle.js", "utf8");
+  assert.match(council, /icon: "trash", variant: "danger-secondary", onClick: \(\) => setDeleteTarget\(row\).*t\("deleteCase"\)/);
+  assert.match(lifecycle, /variant:action==="delete"\?"danger-secondary":undefined/);
+  assert.match(lifecycle, /variant:selected==="delete"\?"danger-secondary":undefined/);
+});
+
 test("case list workspaces are table-only and open cases from their action column", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const source = council.slice(council.indexOf("function CasesTable"), council.indexOf("// Operational counts"));
