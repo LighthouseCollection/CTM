@@ -32,6 +32,11 @@
 }
 
 
+.ctm-case-search-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
 /* The CDN lacks a scale glyph, so Decision uses a semantic balance icon. */
 .ctm-decision-nav-icon {
   inline-size: 1rem;
