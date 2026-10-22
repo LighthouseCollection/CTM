@@ -2089,7 +2089,7 @@
           P.Stack,
           { gap: "sm" },
           h(P.DataTable, {
-            label: t(`part${n}`), data: groups[n], index: "id", narrow: "table", mode: "fill",
+            label: t(`part${n}`), data: groups[n], index: "id", narrow: "table", mode: "fill", isStatic: true,
             empty: t(`part${n}Empty`),
             columns: [
               { title: t("caseNumber"), field: "case_number", kind: "name" },
@@ -2214,7 +2214,7 @@
         defaultExpanded: true,
         strings: { collapse: t("collapse"), expand: t("expand") },
       },
-        h(window.CTMShell.Table, { className: "ctm-session-agenda-grid", label: title, rows, columns, empty: t(`part${n}Empty`) }),
+        h(window.CTMShell.Table, { className: "ctm-session-agenda-grid", label: title, rows, columns, empty: t(`part${n}Empty`), isStatic: true }),
       );
     };
 

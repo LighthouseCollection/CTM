@@ -1,7 +1,7 @@
 /* Shared integration of the documented Plenix table and split-view components. */
 (() => {
   const R = window.React, P = window.Plenix, h = R.createElement;
-  function Table({ label, rows, columns, selected, onSelect, empty, className, isStatic = false }) {
+  function Table({ label, rows, columns, selected, onSelect, empty, className, isStatic = true }) {
     // All CTM tables remain documented DataTable grids.  Session agenda grids
     // do not expose column menus or column resizing, which prevents their
     // grid chrome from creating a needless horizontal scrolling workflow.

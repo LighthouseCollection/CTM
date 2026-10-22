@@ -7,8 +7,8 @@ const app = fs.readFileSync("static/ctm/app.js", "utf8");
 const shellLayout = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
 
 test("session layout assets use a current cache version", () => {
-  assert.match(shell, /ctm\/shell-layout\.js\x27 %\}\?v=session-table-layout-20261022an/);
-  assert.match(shell, /ctm\/council\.js\x27 %\}\?v=session-table-layout-20261022an/);
+  assert.match(shell, /ctm\/shell-layout\.js\x27 %\}\?v=grid-layout-20261022ao/);
+  assert.match(shell, /ctm\/council\.js\x27 %\}\?v=grid-layout-20261022ao/);
 });
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
   const order = ["cdn/0.61.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
@@ -89,6 +89,8 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(agendaTable, /previousRecommendation/);
   assert.doesNotMatch(agendaTable, /field: "record"/);
   assert.match(agendaTable, /title: t\("actions"\), field: "open_action"/);
+  assert.match(council, /empty: t\(`part\$\{n\}Empty`\), isStatic: true/);
+  assert.match(shellLayout, /className, isStatic = true/);
   const assignmentColumns = agendaTable.slice(agendaTable.indexOf("const columns = first"), agendaTable.indexOf("        : ["));
   assert.ok(assignmentColumns.lastIndexOf("field: \"open_action\"") > assignmentColumns.lastIndexOf("field: \"assigned_member_name\""), "Cases to assign ends with Open");
   const scheduledColumns = agendaTable.slice(agendaTable.indexOf("        : ["), agendaTable.indexOf("      return h(P.Panel"));
@@ -253,7 +255,8 @@ test("agenda tables reserve enough space for complete header labels", () => {
   const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
   assert.match(council, /yearsMarried"\), field: "married_years", minWidth: "7\.5rem"/);
   assert.match(council, /assignedTo"\), field: "assigned_member_name", minWidth: "9rem"/);
-  assert.match(css, /ctm-session-agenda-grid[\s\S]*white-space: nowrap/);
+  assert.doesNotMatch(css, /ctm-session-agenda-grid[\s\S]*min-block-size/);
+  assert.match(council, /className: "ctm-session-agenda-grid"[\s\S]*isStatic: true/);
 });
 
 

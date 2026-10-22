@@ -149,22 +149,6 @@
   cursor: default;
 }
 
-/* Agenda labels must remain readable in compact density; grow the header row and wrap its title. */
-.ctm-session-agenda-grid .plx-data-grid__grid-col-title-holder,
-.ctm-session-agenda-grid .plx-data-grid__grid-col-title,
-.ctm-session-agenda-grid .plx-data-grid__title,
-.ctm-session-agenda-grid .plx-data-grid__title-text {
-  min-inline-size: 0;
-  white-space: nowrap;
-  overflow: visible;
-  text-overflow: clip;
-}
-
-.ctm-session-agenda-grid .plx-data-grid__grid-col-title-holder {
-  block-size: auto;
-  min-block-size: 2.5rem;
-}
-
 /* The CDN inserts a generic text-type icon before every column header. It is
    not semantic in council tables, so retain the text label and hide the icon. */
 .plx-data-grid__title > .plx-data-grid__type-icon {
