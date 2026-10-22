@@ -563,3 +563,57 @@
 .ctm-past-hearings-table__header > div, .ctm-past-hearings-table__row > div { display: flex; align-items: center; min-block-size: 3rem; padding: var(--plx-space-sm, .75rem); border-inline-end: 1px solid var(--plx-color-border, #d7dce3); border-block-end: 1px solid var(--plx-color-border, #d7dce3); }
 .ctm-past-hearings-table__header > div { min-block-size: auto; font-weight: 700; text-transform: uppercase; letter-spacing: .035em; font-size: .8125rem; background: var(--plx-color-surface-subtle, #f5f7fa); }
 .ctm-past-hearings-table__row:last-child > div { border-block-end: 0; }
+
+.ctm-case-timeline {
+  border: 1px solid var(--plx-color-border, #d7dce3);
+  border-radius: var(--plx-radius-md, 8px);
+  overflow: hidden;
+}
+
+.ctm-case-timeline__year-group {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  border-block-end: 1px solid var(--plx-color-border, #d7dce3);
+}
+
+.ctm-case-timeline__year-group:last-child { border-block-end: 0; }
+
+.ctm-case-timeline__year {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--plx-space-md, 1rem);
+  border-inline-end: 1px solid var(--plx-color-border, #d7dce3);
+  color: var(--plx-sys-color-text-secondary, #596579);
+  font-size: 1.1rem;
+  letter-spacing: .04em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.ctm-case-timeline__events { min-inline-size: 0; }
+
+.ctm-case-timeline__event {
+  display: grid;
+  grid-template-columns: 4.5rem 2.125rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--plx-space-sm, .75rem);
+  min-block-size: 5.25rem;
+  padding: var(--plx-space-md, 1rem);
+  border-block-end: 1px solid var(--plx-color-border, #d7dce3);
+}
+
+.ctm-case-timeline__event:last-child { border-block-end: 0; }
+.ctm-case-timeline__date { color: var(--plx-sys-color-text-secondary, #596579); font-weight: 700; font-size: .8125rem; text-align: end; }
+.ctm-case-timeline__marker { inline-size: 1.5rem; block-size: 1.5rem; border-radius: 50%; background: var(--plx-ref-color-blue-650, #1769aa); box-shadow: 0 0 0 1px var(--plx-ref-color-blue-650, #1769aa); }
+.ctm-case-timeline__event--marriage .ctm-case-timeline__marker { background: var(--plx-ref-color-orange-700, #9a4d00); box-shadow: 0 0 0 1px var(--plx-ref-color-orange-700, #9a4d00); }
+.ctm-case-timeline__body { min-inline-size: 0; }
+.ctm-case-timeline__body .plx-text { margin: 0; }
+
+@media (max-width: 640px) {
+  .ctm-case-timeline__year-group { grid-template-columns: 3.25rem minmax(0, 1fr); }
+  .ctm-case-timeline__event { grid-template-columns: 3.5rem 1.75rem minmax(0, 1fr); gap: var(--plx-space-xs, .5rem); padding: var(--plx-space-sm, .75rem); }
+  .ctm-case-timeline__event > .plx-badge { grid-column: 3; justify-self: start; }
+  .ctm-case-timeline__marker { inline-size: 1.25rem; block-size: 1.25rem; }
+}

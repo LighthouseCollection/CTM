@@ -281,6 +281,22 @@ test("timeline keeps milestones only, oldest first, with readable labels", () =>
   assert.deepEqual(plain(rows.map((r) => r.label)), ["Application submitted", "Decree issued"]);
 });
 
+test("timeline groups case milestones and marriage facts into dated display events", () => {
+  const events = C.timelineEvents(
+    [{ id: "filed", action: "application_submitted", timestamp: "2026-01-15T12:00:00Z" }],
+    {
+      marriage: { church_marriage_date: "2010-06-12" },
+      separation: { separation_date: "2024-11-03", civil_divorce: { date: "2025-01-06" } },
+    },
+    "en",
+  );
+  assert.deepEqual(plain(events.map((event) => [event.category, event.label, event.timestamp])), [
+    ["marriage", "Church marriage", "2010-06-12"],
+    ["marriage", "Separation", "2024-11-03"],
+    ["marriage", "Civil divorce", "2025-01-06"],
+    ["case", "Application submitted", "2026-01-15T12:00:00Z"],
+  ]);
+});
 test("follow-up parents exclude assessments even when readable by council", () => {
   const reports = [{ id: "a", kind: "intake" }, { id: "b", kind: "medical", restricted: false }, { id: "c", restricted: true }, { id: "d", kind: "psychological" }];
   assert.deepEqual(plain(C.ordinaryReports(reports).map((r) => r.id)), ["a"]);

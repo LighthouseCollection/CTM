@@ -407,8 +407,15 @@ ${ar}` : en;
       findingsHelp: "The council's own findings. They never change what either spouse submitted.",
       noFindings: "No findings have been recorded.",
       timelineTitle: "Timeline",
-      timelineHelp: "Key case events, oldest first. Every recorded action is listed in Case Audit.",
-      noTimeline: "No key events are recorded yet.",
+      timelineHelp: "Key case and marriage events in one dated history. Every recorded action is listed in Case Audit.",
+      noTimeline: "No timeline events are recorded yet.",
+      timelineAll: "All",
+      timelineCase: "Case",
+      timelineMarriage: "Marriage",
+      churchMarriageEvent: "Church marriage",
+      outsideMarriageEvent: "Marriage outside Coptic Church",
+      separationEvent: "Separation",
+      civilDivorceEvent: "Civil divorce",
       petitionTitle: "Petition",
       petition: "Petition",
       applicant: "Applicant",
@@ -757,6 +764,13 @@ ${ar}` : en;
       timelineTitle: "التسلسل الزمني",
       timelineHelp: "الأحداث الرئيسية للقضية من الأقدم إلى الأحدث. وتُعرض جميع الإجراءات المسجلة في سجل تدقيق القضية.",
       noTimeline: "لم تُسجَّل أحداث رئيسية بعد.",
+      timelineAll: "الكل",
+      timelineCase: "القضية",
+      timelineMarriage: "الزواج",
+      churchMarriageEvent: "الزواج الكنسي",
+      outsideMarriageEvent: "الزواج خارج الكنيسة القبطية",
+      separationEvent: "الانفصال",
+      civilDivorceEvent: "الطلاق المدني",
       petitionTitle: "الطلب",
       petition: "الطلب",
       applicant: "مقدم الطلب",
@@ -3094,47 +3108,64 @@ ${ar}` : en;
       .map((row) => ({ id: row.id, timestamp: row.timestamp, label: auditLabel(row.action, lang) }));
   }
 
+  function timelineEvents(items, record, lang) {
+    const t = translator(lang);
+    const caseEvents = timelineRows(items, lang).map((row) => ({ ...row, category: "case" }));
+    const marriageEvents = [
+      ["church-marriage", record?.marriage?.church_marriage_date, "churchMarriageEvent"],
+      ["outside-marriage", record?.marriage?.outside_marriage_date, "outsideMarriageEvent"],
+      ["separation", record?.separation?.separation_date, "separationEvent"],
+      ["civil-divorce", record?.separation?.civil_divorce?.date, "civilDivorceEvent"],
+    ].filter(([, timestamp]) => isSubmittedDate(timestamp)).map(([id, timestamp, labelKey]) => ({ id, timestamp, label: t(labelKey), category: "marriage" }));
+    return [...caseEvents, ...marriageEvents].sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
+  }
+
+  function timelineDateParts(timestamp, lang) {
+    const source = String(timestamp || "");
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(source) ? new Date(`${source}T12:00:00Z`) : new Date(source);
+    if (Number.isNaN(date.getTime())) return { year: "—", date: source || "—" };
+    return {
+      year: new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { year: "numeric" }).format(date),
+      date: new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { month: "short", day: "numeric" }).format(date),
+    };
+  }
+
   function CaseTimeline({ api, lang, caseId }) {
-    const R = window.React,
-      P = window.Plenix,
-      h = R.createElement,
-      t = translator(lang);
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [tab, setTab] = R.useState("all");
     const [state, retry] = base.useLoad(
-      () =>
-        Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/audit/`), api(`/api/cases/${encodeURIComponent(caseId)}/`)]).then(
-          ([audit, record]) => ({ items: audit.items, history: record.assignment_history || null }),
-        ),
+      () => Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/audit/`), api(`/api/cases/${encodeURIComponent(caseId)}/`)]).then(([audit, record]) => ({ items: audit.items, record })),
       [caseId],
     );
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const rows = timelineRows(state.data.items, lang);
-    const history = state.data.history;
-    return h(
-      P.Stack,
-      { gap: "lg" },
+    const events = timelineEvents(state.data.items, state.data.record, lang);
+    const visible = tab === "all" ? events : events.filter((event) => event.category === tab);
+    const groups = visible.slice().reverse().reduce((all, event) => {
+      const parts = timelineDateParts(event.timestamp, lang), item = { ...event, ...parts };
+      const group = all.find((entry) => entry.year === parts.year);
+      if (group) group.items.push(item); else all.push({ year: parts.year, items: [item] });
+      return all;
+    }, []);
+    const content = visible.length ? h("div", { className: "ctm-case-timeline", role: "list" }, ...groups.map((group) => h("section", { key: group.year, className: "ctm-case-timeline__year-group" },
+      h("h2", { className: "ctm-case-timeline__year" }, group.year),
+      h("div", { className: "ctm-case-timeline__events" }, ...group.items.map((event) => h("article", { key: event.id, className: `ctm-case-timeline__event ctm-case-timeline__event--${event.category}`, role: "listitem" },
+        h("time", { className: "ctm-case-timeline__date", dateTime: event.timestamp }, event.date),
+        h("span", { className: "ctm-case-timeline__marker", "aria-hidden": true }),
+        h("div", { className: "ctm-case-timeline__body" }, h(P.Text, { as: "h3", variant: "strong" }, event.label)),
+        h(P.Badge, { tone: event.category === "case" ? "active" : "neutral", size: "sm" }, t(event.category === "case" ? "timelineCase" : "timelineMarriage")),
+      ))),
+    ))) : h(P.EmptyState, { title: t("noTimeline") });
+    return h(P.Stack, { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("timelineTitle")),
       h(P.Text, { variant: "secondary" }, t("timelineHelp")),
-      rows.length
-        ? h(P.List, {
-            variant: "bullets",
-            items: rows.map((row) => ({ children: `${base.formatWhen(row.timestamp, lang)} — ${row.label}` })),
-          })
-        : h(P.EmptyState, { title: t("noTimeline") }),
-      history
-        ? h(
-            P.Panel,
-            { icon: "doc-text", title: t("managerHistory") },
-            history.length
-              ? h(P.List, {
-                  variant: "bullets",
-                  items: history.map((row) => ({
-                    children: `${base.formatWhen(row.timestamp, lang)} — ${base.isolate(row.member)} · ${t("authorizedBy")} ${base.isolate(row.president)} · ${t("recordedByInline")} ${base.isolate(row.actor)}`,
-                  })),
-                })
-              : h(P.EmptyState, { title: t("noManagerHistory") }),
-          )
-        : null,
+      h(P.Tabs, { variant: "contained", label: t("timelineTitle"), value: tab, onChange: setTab,
+        items: [
+          { value: "all", label: t("timelineAll"), content },
+          { value: "case", label: t("timelineCase"), content },
+          { value: "marriage", label: t("timelineMarriage"), content },
+        ],
+      }),
     );
   }
 
@@ -3436,6 +3467,7 @@ ${ar}` : en;
     CaseMarriage: base.guarded(CaseMarriage),
     CaseSeparation: base.guarded(CaseSeparation),
     timelineRows,
+    timelineEvents,
     summaryFacts,
     CaseSummary: base.guarded(CaseSummary),
     CaseTimeline: base.guarded(CaseTimeline),
