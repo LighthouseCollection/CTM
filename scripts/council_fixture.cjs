@@ -219,6 +219,29 @@ function api(req, res, url, body) {
     c.status = "closed";
     return json(res, 201, { id: decree.id });
   }
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/audit\/$/))) {
+    if (!state.audit) state.audit = [
+      { id: "ev-1", action: "application_submitted", timestamp: "2026-10-20T18:04:00Z", source: "Application", source_id: "a", actor: "applicant-x" },
+      { id: "ev-2", action: "completeness_accept", timestamp: "2026-10-20T19:00:00Z", source: "CompletenessReview", source_id: "r", actor: "u-sec" },
+      { id: "ev-3", action: "case_assigned", timestamp: "2026-10-21T17:00:00Z", source: "CaseAssignment", source_id: "x", actor: "u-sec" },
+      { id: "ev-4", action: "session_closed", timestamp: "2026-10-21T20:00:00Z", source: "CouncilSession", source_id: "s", actor: null },
+    ];
+    return json(res, 200, { items: state.audit });
+  }
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/calls\/$/))) {
+    if (!state.calls) state.calls = [];
+    if (req.method === "POST") {
+      const c = state.cases.find((x) => x.id === m[1]);
+      if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+      if (!String(body.outcome || "").trim() || !/(Z|[+-]\d{2}:\d{2})$/.test(body.occurred_at || ""))
+        return json(res, 422, { error: "validation", messages: ["Call outcome and actual timestamp with timezone are required."] });
+      const call = { id: "call-" + (state.calls.length + 1), case: m[1], party_id: body.party_id, occurred_at: body.occurred_at, recorded_at: now(), outcome: body.outcome, notes: body.notes };
+      state.calls.unshift(call);
+      return json(res, 201, { id: call.id });
+    }
+    return json(res, 200, { items: state.calls.filter((x) => x.case === m[1]) });
+  }
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/messages\/$/))) return json(res, 200, { items: [] });
   if ((m = p.match(/^\/api\/appeals\/([^/]+)\/result\/$/))) {
     const app = state.applications.find((a) => a.id === m[1]);
     const c = state.cases.find((x) => x.id === app.case_id);

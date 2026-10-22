@@ -1061,7 +1061,7 @@
       else if (
         councilModule &&
         user.portal === "council" &&
-        ["review", "sessions", "session", "decision", "decree", "appeals"].includes(page)
+        ["review", "sessions", "session", "decision", "decree", "appeals", "audit"].includes(page)
       )
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
@@ -1203,6 +1203,7 @@
         "decision",
         "decree",
         "appeals",
+        "audit",
       ].includes(page) && selection;
     const caseGroups = [
       {
@@ -1278,6 +1279,14 @@
                 value: page,
                 onSelect: (id) => go(id, selection),
                 groups: reviewGroups,
+              })
+            : null,
+          council && councilModule?.CaseAudit
+            ? h(P.NavList, {
+                label: t("audit"),
+                value: page,
+                onSelect: (id) => go(id, selection),
+                items: [{ id: "audit", label: t("audit") }],
               })
             : null,
         )
@@ -1386,6 +1395,8 @@
           renderReports: () =>
             h(ReportReader, { key: selection, rows: data.items, t, lang }),
         });
+      if (page === "audit" && council && councilModule?.CaseAudit)
+        return h(councilModule.CaseAudit, { key: selection, api, lang, caseId: selection });
       if (page === "appeals" && council && councilModule?.AppealsWorkspace)
         return h(councilModule.AppealsWorkspace, {
           key: selection,
@@ -1491,6 +1502,15 @@
                 council,
                 t,
                 onSent: () => reload((n) => n + 1),
+              })
+            : null,
+          council && councilModule?.CallLog
+            ? h(councilModule.CallLog, {
+                key: `calls-${selection}`,
+                api,
+                lang,
+                user,
+                caseId: selection,
               })
             : null,
         );

@@ -301,6 +301,26 @@
         "Only the assigned case manager, or the administrator or secretary, enters the decision type and grounds.",
       actionFailed: "The action could not be completed. Nothing was changed.",
       back: "Back",
+      caseAudit: "Case Audit",
+      searchAudit: "Search audit events",
+      auditCount: "{n} events",
+      noAudit: "No audit events match.",
+      systemActor: "System",
+      otherAccount: "Applicant or former council account",
+      callLog: "Call records",
+      callLogHelp: "Manual records of phone calls. CTM does not place or record calls.",
+      noCalls: "No calls have been recorded.",
+      recordCall: "Record a call",
+      callParty: "Person called",
+      chooseCallParty: "Select who was called.",
+      callTime: "When the call took place",
+      callTimeRequired: "Enter when the call took place.",
+      callTimeFuture: "The call time cannot be in the future.",
+      callOutcome: "Outcome",
+      callOutcomeRequired: "Enter the outcome of the call.",
+      callNotes: "Notes (optional)",
+      callRecorded: "The call was recorded.",
+      recordedAt: "Recorded",
       interviewHelp: "Record the applicant's answers yourself. The applicant is not notified and cannot see this interview.",
       chooseMethod: "Choose how the questions are answered.",
       questionView: "Show questions",
@@ -426,6 +446,26 @@
       writerDecision: "يُدخل نوع القرار وأسبابه مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط.",
       actionFailed: "تعذر إتمام الإجراء. لم يتم تغيير أي شيء.",
       back: "رجوع",
+      caseAudit: "سجل تدقيق القضية",
+      searchAudit: "البحث في أحداث التدقيق",
+      auditCount: "{n} حدث",
+      noAudit: "لا توجد أحداث تدقيق مطابقة.",
+      systemActor: "النظام",
+      otherAccount: "مقدم طلب أو عضو مجلس سابق",
+      callLog: "سجل المكالمات",
+      callLogHelp: "سجلات يدوية للمكالمات الهاتفية. لا يُجري النظام المكالمات ولا يسجّلها.",
+      noCalls: "لم تُسجَّل أي مكالمات.",
+      recordCall: "تسجيل مكالمة",
+      callParty: "الشخص الذي تم الاتصال به",
+      chooseCallParty: "اختر من تم الاتصال به.",
+      callTime: "وقت إجراء المكالمة",
+      callTimeRequired: "أدخل وقت إجراء المكالمة.",
+      callTimeFuture: "لا يمكن أن يكون وقت المكالمة في المستقبل.",
+      callOutcome: "النتيجة",
+      callOutcomeRequired: "أدخل نتيجة المكالمة.",
+      callNotes: "ملاحظات (اختياري)",
+      callRecorded: "تم تسجيل المكالمة.",
+      recordedAt: "تاريخ التسجيل",
       interviewHelp: "سجّل إجابات مقدم الطلب بنفسك. لا يتم إخطار مقدم الطلب ولا يمكنه رؤية هذه المقابلة.",
       chooseMethod: "اختر طريقة الإجابة عن الأسئلة.",
       questionView: "عرض الأسئلة",
@@ -1335,6 +1375,287 @@
     );
   }
 
+  // ---------- Case audit and manual call records ----------
+
+  const AUDIT_LABELS = {
+    en: {
+      agenda_placed: "Placed on a council session agenda",
+      session_created: "Council session created",
+      session_closed: "Council session closed",
+      agenda_carryover_already_placed: "Carryover skipped: already on the next agenda",
+      answers_saved: "Application answers saved",
+      appeal_accept: "Appeal accepted",
+      appeal_decline: "Appeal declined",
+      appeal_added: "Appeal information added",
+      application_submitted: "Application submitted",
+      attendance_recorded: "Attendance recorded",
+      call_recorded: "Call recorded",
+      case_assigned: "Case manager assigned",
+      case_heard: "Case presented at hearing",
+      completeness_accept: "Application accepted for review",
+      completeness_reject: "Application returned for correction",
+      decision_recorded: "Decision version recorded",
+      decree_access_release: "Decree certificate released",
+      decree_access_withdraw: "Decree certificate access withdrawn",
+      decree_issued: "Decree issued",
+      fee_waived: "Fee waived",
+      file_uploaded: "File uploaded",
+      filing_withdrawn: "Filing withdrawn",
+      finding_saved: "Finding saved",
+      hearing_deferred_presenter_absent: "Hearing deferred: presenter absent",
+      hearing_outcome_saved: "Hearing recommendations saved",
+      message_sent: "Message sent",
+      note_saved: "Internal note saved",
+      party_linked: "Party linked",
+      pending_party_added: "Other party added",
+      president_approved: "President's approval recorded",
+      president_signature_recorded: "President's signature recorded",
+      report_request_created: "Report request prepared",
+      report_request_sent: "Report request sent or started",
+      report_revised: "Report revised",
+      report_submitted: "Report submitted",
+      testimony_scheduled: "Testimony scheduled",
+      vote_recorded: "Vote recorded",
+      petition_denied: "Petition denied: case closed",
+      petitions_withdrawn: "Petitions withdrawn: case closed",
+      assignment_agenda_completed: "New-case assignment completed at session",
+    },
+    ar: {
+      agenda_placed: "أُدرجت في جدول أعمال جلسة المجلس",
+      session_created: "أُنشئت جلسة المجلس",
+      session_closed: "أُغلقت جلسة المجلس",
+      agenda_carryover_already_placed: "لم تُنقل: مُدرجة بالفعل في جدول الجلسة التالية",
+      answers_saved: "حُفظت إجابات الطلب",
+      appeal_accept: "قُبل الاستئناف",
+      appeal_decline: "رُفض الاستئناف",
+      appeal_added: "أُضيفت معلومات إلى الاستئناف",
+      application_submitted: "قُدِّم الطلب",
+      attendance_recorded: "سُجِّل الحضور",
+      call_recorded: "سُجِّلت مكالمة",
+      case_assigned: "عُيِّن مسؤول القضية",
+      case_heard: "عُرضت القضية في الجلسة",
+      completeness_accept: "قُبل الطلب بعد مراجعة الاستيفاء",
+      completeness_reject: "أُعيد الطلب للتصحيح",
+      decision_recorded: "سُجِّل إصدار القرار",
+      decree_access_release: "أُتيحت شهادة القرار",
+      decree_access_withdraw: "سُحبت إتاحة شهادة القرار",
+      decree_issued: "صدرت الشهادة",
+      fee_waived: "أُعفي من الرسوم",
+      file_uploaded: "رُفع ملف",
+      filing_withdrawn: "سُحب الطلب",
+      finding_saved: "حُفظت نتيجة تحقيق",
+      hearing_deferred_presenter_absent: "أُجِّلت الجلسة لغياب المقدِّم",
+      hearing_outcome_saved: "حُفظت توصيات الجلسة",
+      message_sent: "أُرسلت رسالة",
+      note_saved: "حُفظت ملاحظة داخلية",
+      party_linked: "رُبط طرف",
+      pending_party_added: "أُضيف الطرف الآخر",
+      president_approved: "سُجِّل اعتماد الرئيس",
+      president_signature_recorded: "سُجِّل توقيع الرئيس",
+      report_request_created: "أُعِدّ طلب تقرير",
+      report_request_sent: "أُرسل طلب التقرير أو بدأ",
+      report_revised: "عُدِّل تقرير",
+      report_submitted: "قُدِّم تقرير",
+      testimony_scheduled: "جُدولت الشهادة",
+      vote_recorded: "سُجِّل صوت",
+      petition_denied: "رُفض الطلب وأُغلقت القضية",
+      petitions_withdrawn: "سُحبت الطلبات وأُغلقت القضية",
+      assignment_agenda_completed: "اكتمل تعيين القضية الجديدة في الجلسة",
+    },
+  };
+
+  // Known codes get a readable label; unknown codes are shown exactly as stored.
+  function auditLabel(action, lang) {
+    const table = AUDIT_LABELS[lang === "ar" ? "ar" : "en"];
+    return table[action] || action;
+  }
+
+  function auditRows(items, members, lang) {
+    const names = Object.fromEntries((members || []).map((m) => [m.id, m.name]));
+    return (items || []).map((row) => ({
+      id: row.id,
+      timestamp: row.timestamp,
+      action: row.action,
+      label: auditLabel(row.action, lang),
+      actor: row.actor ? names[row.actor] || null : "system",
+    }));
+  }
+
+  function filterAudit(rows, query) {
+    const q = String(query || "").trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((row) =>
+      [row.label, row.action, row.actor || ""].some((value) => String(value).toLowerCase().includes(q)),
+    );
+  }
+
+  function callProblem(form) {
+    if (!form.party) return "chooseCallParty";
+    if (!form.occurred || Number.isNaN(new Date(form.occurred).getTime())) return "callTimeRequired";
+    if (new Date(form.occurred).getTime() > Date.now() + 5 * 60 * 1000) return "callTimeFuture";
+    if (!String(form.outcome || "").trim()) return "callOutcomeRequired";
+    return null;
+  }
+
+  function CaseAudit({ api, lang, caseId }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = base.useLoad(
+      () =>
+        Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/audit/`), api("/api/council/members/")]).then(
+          ([audit, members]) => ({ items: audit.items, members: members.items }),
+        ),
+      [caseId],
+    );
+    const [query, setQuery] = R.useState("");
+    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const rows = filterAudit(auditRows(state.data.items, state.data.members, lang), query);
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("caseAudit")),
+      h(P.Field, { label: t("searchAudit") }, h(P.Input, { type: "search", value: query, onChange: (e) => setQuery(e.target.value) })),
+      h(P.Text, { variant: "secondary" }, t("auditCount", { n: rows.length })),
+      rows.length
+        ? h(
+            P.Stack,
+            { gap: "xs" },
+            ...rows.map((row) =>
+              h(
+                P.Inline,
+                { key: row.id, justify: "between", wrap: true },
+                h(P.Text, { variant: "strong" }, row.label),
+                h(
+                  P.Text,
+                  { variant: "secondary" },
+                  `${row.actor === "system" ? t("systemActor") : row.actor || t("otherAccount")} · ${base.formatWhen(row.timestamp, lang)}`,
+                ),
+              ),
+            ),
+          )
+        : h(P.EmptyState, { title: t("noAudit") }),
+    );
+  }
+
+  function CallLog({ api, lang, user, caseId }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = base.useLoad(
+      () =>
+        Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/`), api(`/api/cases/${encodeURIComponent(caseId)}/calls/`)]).then(
+          ([record, calls]) => ({ record, calls: calls.items }),
+        ),
+      [caseId],
+    );
+    const [form, setForm] = R.useState({ party: "", occurred: "", outcome: "", notes: "" });
+    const [problem, setProblem] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const [notice, setNotice] = R.useState(null);
+    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const { record, calls } = state.data;
+    const canWrite = writerFor(user, null, record) && record.status === "open";
+    const partyName = (id) => record.parties.find((p) => p.id === id)?.name || "";
+    const update = (patch) => {
+      setForm((old) => ({ ...old, ...patch }));
+      setProblem(null);
+    };
+    async function save(event) {
+      event.preventDefault();
+      const issue = callProblem(form);
+      setProblem(issue);
+      if (issue) return;
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/cases/${encodeURIComponent(caseId)}/calls/`, {
+          method: "POST",
+          body: JSON.stringify({
+            party_id: form.party,
+            // Browser-local wall time converted to an absolute instant with offset.
+            occurred_at: new Date(form.occurred).toISOString(),
+            outcome: form.outcome.trim(),
+            notes: form.notes.trim(),
+          }),
+        });
+        setForm({ party: "", occurred: "", outcome: "", notes: "" });
+        setNotice("callRecorded");
+        retry();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    const err = (key) => (problem === key ? t(key) : undefined);
+    return h(
+      P.Panel,
+      { title: t("callLog"), description: t("callLogHelp") },
+      h(
+        P.Stack,
+        { gap: "md" },
+        notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+        calls.length
+          ? h(
+              P.Stack,
+              { gap: "sm" },
+              ...calls.map((call) =>
+                h(
+                  P.Card,
+                  { key: call.id, title: `${partyName(call.party_id)} · ${base.formatWhen(call.occurred_at, lang)}`, meta: `${t("recordedAt")}: ${base.formatWhen(call.recorded_at, lang)}` },
+                  h(P.Text, { as: "p", variant: "strong" }, call.outcome),
+                  call.notes ? h(P.Text, { as: "p" }, call.notes) : null,
+                ),
+              ),
+            )
+          : h(P.EmptyState, { title: t("noCalls") }),
+        canWrite
+          ? h(
+              P.Form,
+              { onSubmit: save, label: t("recordCall"), noValidate: true },
+              h(
+                P.FormSection,
+                { title: t("recordCall") },
+                h(
+                  P.Field,
+                  { label: t("callParty"), required: true, error: err("chooseCallParty") },
+                  h(P.Select, {
+                    value: form.party,
+                    disabled: pending,
+                    onChange: (e) => update({ party: e.target.value }),
+                    options: [{ value: "", label: t("chooseCallParty") }, ...record.parties.map((p) => ({ value: p.id, label: p.name }))],
+                  }),
+                ),
+                h(
+                  P.Field,
+                  { label: t("callTime"), required: true, error: err("callTimeRequired") || err("callTimeFuture") },
+                  h(P.Input, { type: "datetime-local", width: "md", value: form.occurred, disabled: pending, onChange: (e) => update({ occurred: e.target.value }) }),
+                ),
+                h(
+                  P.Field,
+                  { label: t("callOutcome"), required: true, error: err("callOutcomeRequired") },
+                  h(P.Input, { value: form.outcome, maxLength: 500, disabled: pending, onChange: (e) => update({ outcome: e.target.value }) }),
+                ),
+                h(
+                  P.Field,
+                  { label: t("callNotes") },
+                  h(P.Textarea, { rows: 3, value: form.notes, maxLength: 10000, disabled: pending, onChange: (e) => update({ notes: e.target.value }) }),
+                ),
+              ),
+              failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+              h(P.FormActions, { sticky: false }, h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("recordCall"))),
+            )
+          : null,
+      ),
+    );
+  }
+
   Object.assign(window.CTMCouncil, {
     caseWords: words,
     caseTranslator: translator,
@@ -1360,5 +1681,11 @@
     ReportsWorkspace,
     RequestsPanel,
     DecisionWorkspace,
+    auditLabel,
+    auditRows,
+    filterAudit,
+    callProblem,
+    CaseAudit,
+    CallLog,
   });
 })();

@@ -177,3 +177,40 @@ test("interview report keeps only answered questions and separates observations"
   assert.equal(C.requestPayload({ kind: "interview", party: "p", title: "t", language: "en", selected: [] }, "x").kind, "interview");
   assert.equal(C.requestPayload({ party: "p", title: "t", language: "en", selected: [] }, "x").kind, "intake");
 });
+
+test("audit labels are readable for known codes and verbatim otherwise", () => {
+  assert.equal(C.auditLabel("decree_issued", "en"), "Decree issued");
+  assert.equal(C.auditLabel("decree_issued", "ar"), "صدرت الشهادة");
+  assert.equal(C.auditLabel("some_future_code", "en"), "some_future_code");
+  const rows = C.auditRows(
+    [
+      { id: "1", action: "vote_recorded", actor: "m1", timestamp: "t" },
+      { id: "2", action: "answers_saved", actor: "applicant-x", timestamp: "t" },
+      { id: "3", action: "session_closed", actor: null, timestamp: "t" },
+    ],
+    [{ id: "m1", name: "Fr. A" }],
+    "en",
+  );
+  assert.deepEqual(plain(rows.map((r) => r.actor)), ["Fr. A", null, "system"]);
+  assert.deepEqual(plain(C.filterAudit(rows, "vote").map((r) => r.id)), ["1"]);
+  assert.deepEqual(plain(C.filterAudit(rows, "fr. a").map((r) => r.id)), ["1"]);
+  assert.equal(C.filterAudit(rows, "").length, 3);
+});
+
+test("a call record needs who, when (not future) and outcome", () => {
+  const ok = { party: "p", occurred: "2026-10-20T10:00", outcome: "Spoke with applicant" };
+  assert.equal(C.callProblem(ok), null);
+  assert.equal(C.callProblem({ ...ok, party: "" }), "chooseCallParty");
+  assert.equal(C.callProblem({ ...ok, occurred: "" }), "callTimeRequired");
+  assert.equal(C.callProblem({ ...ok, occurred: "2999-01-01T10:00" }), "callTimeFuture");
+  assert.equal(C.callProblem({ ...ok, outcome: " " }), "callOutcomeRequired");
+});
+
+test("English and Arabic audit labels cover the same codes", () => {
+  const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const block = src.slice(src.indexOf("const AUDIT_LABELS"), src.indexOf("function auditLabel"));
+  const en = block.slice(block.indexOf("en: {"), block.indexOf("ar: {"));
+  const ar = block.slice(block.indexOf("ar: {"));
+  const keys = (text) => [...text.matchAll(/^\s+([a-z_]+): "/gm)].map((m) => m[1]).sort();
+  assert.deepEqual(keys(ar), keys(en));
+});
