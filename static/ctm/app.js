@@ -20,7 +20,7 @@
     parties: "settings-users", marriage: "settings-users", separation: "move", petition: "doc-text",
     reports: "document", hearings: "list-lines", evidence: "image-a-2", documents: "folder",
     medical: "lock", decision: "scale", decree: "certificate", appeals: "progress",
-    communications: "message", notes: "message", audit: "list-lines",
+    communications: "mail", notes: "message", audit: "list-lines",
   };
   const navigationIcon = (id) =>
     id === "separation"
@@ -165,8 +165,8 @@
       paneCollapse: "Collapse {name}",
       paneResize: "Resize {name}",
       paneBack: "Back to {name}",
-      communications: "Communications",
-      caseCollaboration: "Notes & Communications",
+      communications: "Email",
+      caseCollaboration: "Email & Notes",
       assessment: "Case Review",
       decision: "Decision",
       timeline: "Timeline",
@@ -371,8 +371,8 @@
       paneCollapse: "طي {name}",
       paneResize: "تغيير حجم {name}",
       paneBack: "العودة إلى {name}",
-      communications: "المراسلات",
-      caseCollaboration: "الملاحظات والمراسلات",
+      communications: "البريد الإلكتروني",
+      caseCollaboration: "البريد الإلكتروني والملاحظات",
       assessment: "دراسة القضية",
       decision: "القرار",
       timeline: "التسلسل الزمني",
@@ -1417,7 +1417,7 @@
       {
         heading: t("caseCollaboration"),
         icon: navigationIcon("communications"),
-        items: ["notes", "communications"].map((id) => ({
+        items: ["communications", "notes"].map((id) => ({
           id,
           icon: navigationIcon(id),
           label: t(id),
