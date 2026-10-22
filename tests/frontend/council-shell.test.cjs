@@ -390,6 +390,10 @@ test("Case Audit is the final Case Review navigation item", () => {
   assert.doesNotMatch(app, /\[\{ id: "audit", label: t\("audit"\), icon: navigationIcon\("audit"\) \}\]/);
 });
 
+test("CTM Settings opens the complete administration workspace for administrators", () => {
+  assert.match(app, /if \(page === "settings" && window\.CTMUI\?\.canAdminister\(user\)\)\s*return h\(window\.CTMUI\.Administration/);
+});
+
 test("case navigation groups notes and communications outside Case Overview", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(app, /notes: "Notes"/);

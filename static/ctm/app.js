@@ -1737,6 +1737,8 @@
           text(user.name),
           text(t(user.portal)),
         );
+      if (page === "settings" && window.CTMUI?.canAdminister(user))
+        return h(window.CTMUI.Administration, { api, user, lang, onNavigationGuard: registerApplicantGuard, onCase: (id) => openCase(id, { page: "settings", labelKey: "settings" }) });
       if (page === "settings")
         return h(
           P.Stack,

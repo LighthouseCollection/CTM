@@ -218,24 +218,50 @@
     const sectionGuard = R.useRef(null);
     const registerGuard = R.useCallback((guard) => { sectionGuard.current = guard; onNavigationGuard?.(guard); }, [onNavigationGuard]);
     const allowed = canAdminister(user);
-    const [state, retry] = base.useLoad(() => allowed && section !== "historical" ? api({ members: "/api/council/members/", configuration: "/api/system/settings/", audit: "/api/system/audit/" }[section]) : Promise.resolve({ items: [] }), [section, allowed]);
+    const [state, retry] = base.useLoad(
+      () => allowed && section !== "historical"
+        ? api({ members: "/api/council/members/", configuration: "/api/system/settings/", audit: "/api/system/audit/" }[section])
+        : Promise.resolve({ items: [] }),
+      [section, allowed]
+    );
     if (!allowed) return h(P.Notice, { tone: "danger" }, t("unavailable"));
     const rows = state.data?.items || [];
     const filtered = section === "audit" ? filterAudit(rows, filters) : rows;
-    const columns = section === "members" ? [{ title: t("name"), field: "name", kind: "name" }, { title: t("role"), field: "role", render: (row) => t(row.role) }] : section === "configuration" ? [{ title: t("configuration"), field: "key", kind: "name", render: (row) => t(row.key) }, { title: t("version"), field: "version" }] : [{ title: t("action"), field: "action", kind: "name" }, { title: t("source"), field: "source" }, { title: t("date"), field: "timestamp", render: (row) => base.formatWhen(row.timestamp, lang) }];
-    return h(P.Stack, { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
-      h(P.Text, { as: "h1", variant: "title" }, t("administration")),
-      h(P.Inline, { wrap: true }, ...["members", "configuration", "audit", ...(canEnroll(user) ? ["historical"] : [])].map((key) => h(P.Button, { key, selected: key === section, onClick: () => { if (key === section) return; const move = () => { setSection(key); setFilters({}); setNotice(false); }; if (sectionGuard.current) sectionGuard.current(move); else move(); } }, t(key)))),
+    const columns = section === "members"
+      ? [{ title: t("name"), field: "name", kind: "name" }, { title: t("role"), field: "role", render: (row) => t(row.role) }]
+      : section === "configuration"
+        ? [{ title: t("configuration"), field: "key", kind: "name", render: (row) => t(row.key) }, { title: t("version"), field: "version" }]
+        : [{ title: t("action"), field: "action", kind: "name" }, { title: t("source"), field: "source" }, { title: t("date"), field: "timestamp", render: (row) => base.formatWhen(row.timestamp, lang) }];
+    const table = (detail) => state.pending
+      ? base.loadingView(P, h, t)
+      : state.error
+        ? base.loadFailure(P, h, t, retry, state.error)
+        : h(window.CTMShell.Workspace, { key: section, label: t(section), rows: filtered, columns, empty: t("noRows"), selectionPrompt: t("choose") }, detail);
+    const switchTab = (key) => {
+      if (key === section) return;
+      const move = () => { setSection(key); setFilters({}); setNotice(false); };
+      if (sectionGuard.current) sectionGuard.current(move); else move();
+    };
+    const memberContent = h(R.Fragment, null,
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(false) }, t("added")) : null,
-      section === "members" ? h(Enrollment, { api, user, lang, onNavigationGuard: registerGuard, onAdded: () => { setNotice(true); retry(); } }) : null,
-      section === "historical" ? h(window.CTMHistorical.Workspace, { api, user, lang, onNavigationGuard: registerGuard, onCase }) : null,
-      section === "audit" ? h(AuditFilters, { rows, filters, onChange: setFilters, lang, includeActor: false }) : null,
-      section === "historical" ? null : state.pending ? base.loadingView(P, h, t) : state.error ? base.loadFailure(P, h, t, retry, state.error) : h(R.Fragment, null,
-        h(P.Text, { variant: "secondary" }, `${t("count")}: ${filtered.length}. ${t("limited")}`),
-        h(window.CTMShell.Workspace, { key: section, label: t(section), rows: filtered, columns, empty: t("noRows"), selectionPrompt: t("choose") }, (row) => h(P.Stack, { gap: "md" },
-          h(P.Text, { as: "h2", variant: "heading" }, row.name || t(row.key || row.action)),
-          section === "configuration" ? h(ConfigurationValue, { value: row.value, lang }) : h(Properties, { lang, entries: section === "members" ? [["name", row.name], ["role", row.role], ["active", row.active], ["can_authorize_assignment", row.can_authorize_assignment], ["can_record_assignment", row.can_record_assignment]] : [["action", row.action], ["source", row.source], ["date", base.formatWhen(row.timestamp, lang)]] }),
-        ))));
+      h(Enrollment, { api, user, lang, onNavigationGuard: registerGuard, onAdded: () => { setNotice(true); retry(); } }),
+      table((row) => h(Properties, { lang, entries: [["name", row.name], ["role", row.role], ["active", row.active], ["can_authorize_assignment", row.can_authorize_assignment], ["can_record_assignment", row.can_record_assignment]] }))
+    );
+    const configurationContent = table((row) => h(ConfigurationValue, { value: row.value, lang }));
+    const auditContent = h(R.Fragment, null,
+      h(AuditFilters, { rows, filters, onChange: setFilters, lang, includeActor: false }),
+      table((row) => h(Properties, { lang, entries: [["action", row.action], ["source", row.source], ["date", base.formatWhen(row.timestamp, lang)]] }))
+    );
+    const tabs = [
+      { value: "members", label: "Users & Roles", content: memberContent },
+      { value: "configuration", label: "Tribunal Config", content: configurationContent },
+      ...(canEnroll(user) ? [{ value: "historical", label: "Data & Records", content: h(window.CTMHistorical.Workspace, { api, user, lang, onNavigationGuard: registerGuard, onCase }) }] : []),
+      { value: "audit", label: "Audit & Security", content: auditContent },
+    ];
+    return h(P.Stack, { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
+      h(P.Text, { as: "h1", variant: "title" }, "CTM Settings"),
+      h(P.Tabs, { variant: "contained", label: "CTM Settings", value: section, onChange: switchTab, items: tabs })
+    );
   }
   window.CTMUI = Object.freeze({ canAdminister, canEnroll, filterAudit, filterSessions, enrollmentProblem, translator, AuditFilters, SessionFilters, useDraftGuard, Profile, Administration });
 })();
