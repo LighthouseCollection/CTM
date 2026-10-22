@@ -624,7 +624,7 @@ class Command(BaseCommand):
                     hearing=hearing,
                     actor=manager or secretary,
                     internal_text="The assigned member reviewed the marriage history and submitted documents with the council.",
-                    recommendations="Decision ready for presidential consideration.",
+                    recommendations="Decision ready for Metropolitan consideration.",
                 )
             if stage in ("accepted", "investigation", "hearing", "decision", "appeal"):
                 request = m.ReportRequest.objects.create(

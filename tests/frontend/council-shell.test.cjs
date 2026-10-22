@@ -602,3 +602,8 @@ test("council spouse cards offer authorized profile-photo uploads", () => {
   assert.match(councilCase, /form\.append\("case_id", record\.id\)/);
   assert.match(councilCase, /h\(SpousePhotoUpload, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
 });
+
+test("council-facing copy never uses presidential terminology", () => {
+  for (const file of ["static/ctm/council-case.js", "static/ctm/council-decree.js"])
+    assert.doesNotMatch(fs.readFileSync(file, "utf8"), /presidential/i, file);
+});

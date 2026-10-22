@@ -96,11 +96,11 @@
       adminOnly: "Only the administrator or secretary prepares, issues and releases the decree. You can follow its status here.",
       readMissing: "The decision record cannot be read from this server yet, so the decree cannot be prepared here.",
       decreeProtocolTitle: "A decree follows a formal, documented decision.",
-      decreeProtocolMessage: "Record the decision, council votes, and presidential approval in Decision & Voting before preparing a decree.",
+      decreeProtocolMessage: "Record the decision, council votes, and the President's approval in Decision & Voting before preparing a decree.",
       goDecisionVoting: "Go to Decision & Voting",
       noDecision: "No decision has been recorded yet.",
       notCurrent: "The decision shown is not the current version.",
-      needsApproval: "The current decision version needs presidential approval before a decree can be prepared.",
+      needsApproval: "The current decision version needs the President's approval before a decree can be prepared.",
       deniedNoCertificate: "Petition Denied closes the case with an official decision notice. No decree certificate is issued.",
       deferredNoCertificate: "A deferred decision does not issue a decree certificate.",
       templateNotice:

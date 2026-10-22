@@ -318,7 +318,7 @@ ${ar}` : en;
       voteRecorded: "The vote was recorded.",
       tallyLine: "Approve {approve} · Deny {deny} · Abstain {abstain} · Not voted {none}",
       sessionVotesNotice: "Only votes recorded on this page are shown. Votes recorded elsewhere are saved but not yet displayed here.",
-      approval: "Presidential approval",
+      approval: "President's approval",
       approveDecision: "Approve decision",
       recordApproval: "Record President's approval",
       approvalTitle: "Record final approval of this version?",
