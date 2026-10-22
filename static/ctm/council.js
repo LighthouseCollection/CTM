@@ -2187,21 +2187,23 @@
                   h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: action.icon, variant: action.primary ? "primary" : "secondary", disabled: action.disabled, onClick: action.onClick }, action.label),
                 )),
               ),
-              current ? h(P.SegmentedControl, {
-                label: t("tribunalSession"),
-                size: "sm",
-                value: sessionStatus,
-                options: [
-                  { value: "draft", label: t("sessionStatusDraft"), icon: "document" },
-                  { value: "in-session", label: t("sessionStatusInSession"), icon: "calendar" },
-                  { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "stop" },
-                ],
-                onChange: (value) => {
-                  if (value === "in-session" && session.state === "draft" && session.can_activate)
-                    run(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/activate/`, { method: "POST", body: "{}" }), "sessionActivated", onChanged);
-                  if (value === "adjourned" && planned && manage) setDialog({ kind: "adjourn" });
-                },
-              }) : null,
+              current ? h(P.Inline, { justify: "end" },
+                h(P.SegmentedControl, {
+                  label: t("tribunalSession"),
+                  size: "sm",
+                  value: sessionStatus,
+                  options: [
+                    { value: "draft", label: t("sessionStatusDraft"), icon: "document" },
+                    { value: "in-session", label: t("sessionStatusInSession"), icon: "calendar" },
+                    { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "stop" },
+                  ],
+                  onChange: (value) => {
+                    if (value === "in-session" && session.state === "draft" && session.can_activate)
+                      run(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/activate/`, { method: "POST", body: "{}" }), "sessionActivated", onChanged);
+                    if (value === "adjourned" && planned && manage) setDialog({ kind: "adjourn" });
+                  },
+                }),
+              ) : null,
             ),
           ) : null,
         ),

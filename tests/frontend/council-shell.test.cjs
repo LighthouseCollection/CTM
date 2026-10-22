@@ -68,6 +68,7 @@ test("the current session keeps labeled actions and its status control inside th
   const sessionFacts = council.slice(council.indexOf("const sessionFacts"), council.indexOf("const sessionHeaderActions"));
   assert.doesNotMatch(sessionFacts, /location/);
   assert.match(council, /P\.SegmentedControl,/);
+  assert.match(council, /h\(P\.Inline, \{ justify: "end" \},\s*h\(P\.SegmentedControl,/);
   assert.match(council, /sessionStatusDraft/);
   assert.match(council, /sessionStatusInSession/);
   assert.match(council, /sessionStatusAdjourned/);
