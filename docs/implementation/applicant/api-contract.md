@@ -268,9 +268,9 @@ changed replay is rejected. Local answers/evidence and navigation/unload guards 
 refresh or lost acknowledgement. Stale evidence requires explicit removal and review.
 Uploads and consent/response attempts block competing writes and pending navigation.
 
-## Prepared lifecycle actions
+## Actual lifecycle actions (acafe29/d724ba5)
 
-Prepared lifecycle controls require `can_delete_draft:true` on a draft or
+Own lifecycle controls require `can_delete_draft:true` on a draft or
 `can_withdraw:true` on a submitted/returned/accepted petition or appeal. They send
 `expected_version` to existing delete-draft/withdraw routes after distinct explicit
 confirmation. No reason/approval/refund demand is introduced; no other-party notice
@@ -278,10 +278,13 @@ or guaranteed case closure is promised. The server owns participating-party and
 joint-case rules. Missing capabilities show no controls. Acknowledged/uncertain
 attempts stay locked until authoritative application refresh; all competing filing,
 file/answer/supplement controls remain disabled, including delayed action responses.
-The backend must project capabilities and enforce the requested version before
-these controls can be enabled in real integration.
+Backend acafe29 supplies and enforces these capabilities/versions. Actual browser
+checks cover stale/malformed version rejection, own explicit deletion, retained returned
+filing withdrawal, lost-acknowledgement recovery and owner-only pending appeal withdrawal.
+Joint second-participant state is an explicit fixture: first withdrawal leaves the
+other filing/case open; last participating withdrawal closes it without spouse notice.
 
-## Actual checkout guard and proposed resume snapshot
+## Actual checkout guard and retained resume snapshot (acafe29/d724ba5)
 
 The filing panel reads own payment history before enabling draft filing controls.
 Pending, processing, paid-but-unfinalized, needs_review, unknown or malformed history
@@ -289,18 +292,23 @@ blocks a new checkout/signature. Read failure also blocks it. This prevents a fr
 signature from pretending to replace the retained pending candidate's attestation.
 Returned correction resubmission does not enter the draft checkout recovery gate.
 
-Proposed own application extension: `can_resume_checkout:true`, and
+Actual own application projection: `can_resume_checkout:true`, and
 `pending_checkout:{id,version,checkout_url,attestation:{accepted:true,name},
-declaration_en,declaration_ar}`. Candidate UUID and answer version must match the
+declaration_en,declaration_ar,expires_at}`. Candidate UUID and answer version must match the
 single pending row in own payment history and current application version. Unknown
 history or any processing/paid/reconciliation state disables resume. Only the exact
 HTTPS checkout.stripe.com host is accepted. Resume displays original declaration
 and signer and navigates to the existing URL; it never POSTs, re-signs, creates a
-candidate or interprets return query parameters as payment success. Backend must
-supply the original immutable snapshot and currently authorized URL. Missing data
-keeps the hold visible, with refresh/contact guidance.
+candidate or interprets return query parameters as payment success. Backend supplies the original immutable snapshot and currently authorized URL. Missing
+data keeps the hold visible, with refresh/contact guidance. Expiry must be an explicit
+offset timestamp in the future. Raw URL whitespace/control characters fail closed.
+A mounted timer removes elapsed links and re-arms across the browser timer maximum;
+the click handler rechecks expiry. This only hides resume, never expires the candidate
+or clears the new-charge hold. Controlled provider-create output and actual private
+GETs verify retained identity without a real charge. Changed answer revisions, unsafe
+originals and processing/paid/reconciliation states disable resume server-side.
 
-## Current verification: ten batches (2026-10-21)
+## Earlier request verification: first ten batches (2026-10-21)
 
 Backend `480a246118cce8c4ac338c32c71c79cde74816d2` supplies the own request
 fingerprint, capabilities, scoped originals, published declaration and retained

@@ -9,14 +9,16 @@
     new Set(data.checkouts.map(row=>row.id)).size===data.checkouts.length;}
   function blocksNewCheckout(data){return !validHistory(data)||data.checkouts.some(row=>
     !states.includes(row.state)||["pending","processing","paid","needs_review"].includes(row.state));}
-  function resumeURL(app,history){
+  function resumeURL(app,history,now=Date.now()){
     const p=app?.pending_checkout;
     if(app?.can_resume_checkout!==true||app.status!=="draft"||!uuid(app.id)||!uuid(p?.id)||
+      !timestamp(p.expires_at)||Date.parse(p.expires_at)<=now||!Number.isFinite(now)||
       !Number.isSafeInteger(app.version)||app.version<0||p.version!==app.version||!validHistory(history)||history.checkouts.some(row=>!states.includes(row.state))||
       history.checkouts.filter(row=>["pending","processing","paid","needs_review"].includes(row.state)).length!==1||
       !history.checkouts.some(row=>row.id===p.id&&row.state==="pending"&&row.version===p.version)||
       p.attestation?.accepted!==true||typeof p.attestation.name!=="string"||!p.attestation.name.trim()||
       ![p.declaration_en,p.declaration_ar].every(s=>typeof s==="string"&&!!s.trim()))return null;
+    if(typeof p.checkout_url!=="string"||/[\x00-\x20\x7f]/.test(p.checkout_url))return null;
     try{const url=new URL(p.checkout_url);return url.protocol==="https:"&&url.hostname==="checkout.stripe.com"&&
       !url.username&&!url.password&&!url.port?url.href:null;}catch{return null;}
   }
@@ -31,6 +33,7 @@
   function Recovery({application,api,lang="en",disabled=false,onBlockChange,onCheckout=url=>window.location.assign(url)}){
     const R=window.React,P=window.Plenix,h=R.createElement,t=key=>words[lang==="ar"?"ar":"en"][key];
     const [data,setData]=R.useState(null),[loading,setLoading]=R.useState(true),[error,setError]=R.useState(false),[revision,reload]=R.useState(0);
+    const [clock,tick]=R.useReducer(n=>n+1,0);
     const blocked=!data||blocksNewCheckout(data.history);
     R.useEffect(()=>{onBlockChange?.(blocked);},[blocked,onBlockChange]);
     R.useEffect(()=>{
@@ -43,6 +46,11 @@
       return()=>{active=false;};
     },[application.id,application.version,api,revision,onBlockChange]);
     const url=data?resumeURL(data.app,data.history):null,p=data?.app.pending_checkout;
+    R.useEffect(()=>{
+      if(!url)return;
+      const timer=window.setTimeout(()=>tick(),Math.min(2147483647,Math.max(1,Date.parse(p.expires_at)-Date.now())));
+      return()=>window.clearTimeout(timer);
+    },[url,p,clock]);
     return h(P.Panel,{title:t("title")},h(P.Stack,null,
       h(P.Button,{disabled:loading,onClick:()=>reload(n=>n+1)},t("refresh")),
       loading?h(P.Text,{role:"status"},t("loading")):null,
@@ -50,7 +58,7 @@
       data?h(P.Notice,null,t(blocked?"hold":"clear")):null,
       url?h(P.Stack,null,h(P.Panel,{title:t("original")},h(P.Text,null,p[lang==="ar"?"declaration_ar":"declaration_en"])),
         h(P.Text,null,t("signer"),": ",p.attestation.name),
-        h(P.Button,{disabled:disabled,onClick:()=>onCheckout(url)},t("resume"))):null
+        h(P.Button,{disabled:disabled,onClick:()=>{const current=resumeURL(data.app,data.history);if(current&&!disabled)onCheckout(current);else tick();}},t("resume"))):null
     ));
   }
   window.CTMApplicantRecovery={validHistory,blocksNewCheckout,resumeURL,Recovery};

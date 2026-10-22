@@ -328,11 +328,84 @@ try:
         page.get_by_role("button",name="Refresh application status",exact=True).click()
         expect(page.get_by_text("An existing payment attempt must be resolved",exact=False)).to_be_visible()
         page.get_by_role("button",name="Review answers",exact=True).click()
-        expect(page.get_by_role("button",name="Continue to secure payment",exact=True)).to_be_disabled()
+        expect(page.get_by_role("button",name="Continue to secure payment",exact=True)).to_have_count(0)
         assert page.get_by_label("Your full name",exact=True).count()==0
         assert page.get_by_role("button",name="Resume existing secure checkout",exact=True).count()==0
-        checks.append("Actual pending checkout history blocks new checkout/signature; missing original-attestation resume contract cannot enable a resume link")
+        checks.append("Actual pending checkout history blocks new checkout/signature; legacy candidate without retained provider URL/expiry cannot enable resume")
         fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=pending_intent).update(state="expired"))
+        def retained_checkout_fixture():
+            from types import SimpleNamespace
+            from unittest.mock import patch
+            from django.utils import timezone
+            from tribunal.services.payments import create_checkout
+            original=settings.STRIPE_SECRET_KEY
+            try:
+                settings.STRIPE_SECRET_KEY="synthetic-provider-adapter-test-only"
+                session=SimpleNamespace(id="cs_synthetic_retained_checkout",url="https://checkout.stripe.com/c/synthetic-retained",
+                    expires_at=int((timezone.now()+timezone.timedelta(hours=1)).timestamp()))
+                with patch("tribunal.services.payments.stripe.checkout.Session.create",return_value=session) as provider:
+                    result=create_checkout(owner,app_id,{"accepted":True,"name":"Original retained synthetic signer"},BASE,
+                        expected_version=ready_version)
+                    assert provider.call_count==1
+                    return result["intent"]
+            finally:settings.STRIPE_SECRET_KEY=original
+        retained_intent=fixture_db(retained_checkout_fixture)
+        retained=context.request.get(f"{BASE}/api/applications/{app_id}/")
+        original_checkout=retained.json()["pending_checkout"]
+        assert "no-store" in retained.headers["cache-control"] and retained.json()["can_resume_checkout"]
+        assert not retained.json()["can_checkout"] and not retained.json()["can_delete_draft"]
+        assert original_checkout["id"]==retained_intent and original_checkout["version"]==ready_version
+        page.get_by_role("button",name="Refresh application status",exact=True).click()
+        expect(page.get_by_role("button",name="Resume existing secure checkout",exact=True)).to_be_visible()
+        expect(page.get_by_text("Original signer: Original retained synthetic signer",exact=True)).to_be_visible()
+        assert page.get_by_label("Your full name",exact=True).count()==0
+        assert page.get_by_role("button",name="Delete unsubmitted draft",exact=True).count()==0
+        checks.append("Actual provider-adapter fixture retains one original checkout; own private GET binds signer/declaration/version and disables fresh charge/signature/deletion")
+        page.get_by_role("button",name="العربية",exact=True).click();page.set_viewport_size({"width":390,"height":1000})
+        expect(page.get_by_text(original_checkout["declaration_ar"],exact=True)).to_be_visible()
+        expect(page.get_by_role("button",name="استئناف محاولة الدفع الآمنة القائمة",exact=True)).to_be_visible()
+        assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
+        page.screenshot(path=str(ROOT/"ar-retained-checkout-390.png"),full_page=True,caret="initial")
+        page.get_by_role("button",name="English",exact=True).click();page.set_viewport_size({"width":1280,"height":1000})
+        checkout_posts=[]
+        page.on("request",lambda request:checkout_posts.append(request.url) if request.method=="POST" and "/checkout/" in request.url else None)
+        page.route(original_checkout["checkout_url"],lambda route:route.fulfill(content_type="text/html",body="Synthetic provider destination only"))
+        page.get_by_role("button",name="Resume existing secure checkout",exact=True).click()
+        page.wait_for_url(original_checkout["checkout_url"])
+        assert not checkout_posts
+        assert fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(application_id=app_id).count())==2
+        checks.append("EN/AR retained declaration renders at mobile width; resume follows exact original URL without checkout POST or replacement attestation")
+        page.goto(BASE,wait_until="networkidle")
+        page.get_by_role("navigation").get_by_role("button",name="My application",exact=True).click()
+        page.get_by_role("button",name="Start or resume application",exact=True).click()
+        expect(page.get_by_role("button",name="Resume existing secure checkout",exact=True)).to_be_visible()
+        probe=browser.new_context();probe.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["outsider"],"url":BASE}])
+        assert probe.request.get(f"{BASE}/api/applications/{app_id}/").status==403
+        probe.close()
+        for payment_state in ["processing","paid","needs_review"]:
+            fixture_db(lambda state=payment_state:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state=state))
+            page.get_by_role("button",name="Refresh application status",exact=True).click()
+            expect(page.get_by_text("An existing payment attempt must be resolved",exact=False)).to_be_visible()
+            expect(page.get_by_role("button",name="Resume existing secure checkout",exact=True)).to_have_count(0)
+            assert page.get_by_label("Your full name",exact=True).count()==0 and not checkout_posts
+        checks.append("Actual processing/paid/reconciliation candidates remove resume and fresh signature; foreign owner cannot read original checkout")
+        fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state="pending"))
+        from unittest.mock import patch
+        from django.utils import timezone
+        future=timezone.now()+timezone.timedelta(hours=2)
+        with patch("tribunal.services.payments.timezone.now",return_value=future):
+            expired_projection=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
+        assert expired_projection["pending_checkout"] is None and not expired_projection["can_resume_checkout"] and not expired_projection["can_checkout"]
+        assert fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.get(pk=retained_intent).state)=="pending"
+        checks.append("Authoritative provider-expiry read hides resume while preserving pending candidate and blocking fresh charge; elapsed time is not payment reconciliation")
+        changed_answers={**retained.json()["answers"],"statement":"Changed after original checkout"}
+        changed=context.request.post(f"{BASE}/api/applications/{app_id}/",data={"answers":changed_answers,"expected_version":ready_version},headers={"X-CSRFToken":csrf})
+        assert changed.status==201,changed.text()
+        changed_projection=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
+        assert not changed_projection["can_resume_checkout"] and changed_projection["pending_checkout"] is None and not changed_projection["can_checkout"]
+        assert fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.get(pk=retained_intent).attestation)==original_checkout["attestation"]
+        fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state="expired"))
+        checks.append("Saved revision change disables original checkout resume without altering original attestation; candidate reconciliation remains explicit synthetic setup")
         staff=browser.new_context()
         staff.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["admin"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
         staff.request.get(BASE+"/api/session/")
@@ -856,6 +929,8 @@ try:
                 recovered=context.request.post(f"{BASE}/api/requests/{request_id}/complete/",data=payload,headers={"X-CSRFToken":csrf})
                 assert recovered.status==201 and recovered.json()["id"]==report_id
             checks.append("Actual closure preserves never-sent draft privacy and sent closed reads; exact intake/assessment receipt replays still recover after closure")
+        from applicant_filing_acceptance import run as run_filing_acceptance
+        checks.extend(run_filing_acceptance(browser,BASE,settings,fixture_db,session_cookie,staff,staff_csrf,errors))
         staff.close()
         assert page.locator("[style]").count()==0
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")

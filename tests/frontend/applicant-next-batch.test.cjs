@@ -28,7 +28,7 @@ test('response only sends bound question keys and accepts a report acknowledgeme
 });
 const history=(state='pending')=>({checkouts:[{id:other,state,version:2,timestamp:'2026-10-21T12:00:00Z'}]});
 const candidate=()=>({id,version:2,status:'draft',can_resume_checkout:true,pending_checkout:{id:other,version:2,
- checkout_url:'https://checkout.stripe.com/c/pay/test',attestation:{accepted:true,name:'Original Name'},
+ checkout_url:'https://checkout.stripe.com/c/pay/test',expires_at:new Date(Date.now()+3600000).toISOString(),attestation:{accepted:true,name:'Original Name'},
  declaration_en:'Original declaration',declaration_ar:'الإقرار الأصلي'}});
 test('checkout history blocks fresh payment on unresolved or unknown candidates and missing history',()=>{
  const C=context.window.CTMApplicantRecovery;
@@ -62,4 +62,28 @@ test('uncertain lifecycle operation locks repeats and wrong acknowledgement neve
  const s=L.createActionSession({id,version:2,kind:'appeal',status:'submitted',can_withdraw:true},async()=>{calls++;return {id:other};});
  assert.equal(await s.send('withdraw',true),false);assert.equal(s.state.error,'uncertain');
  await s.send('withdraw',true);assert.equal(calls,1);
+});
+
+
+test('retained checkout requires a future explicit provider expiry and rejects raw URL controls',()=>{
+ const C=context.window.CTMApplicantRecovery,now=Date.now();
+ const app=candidate();app.pending_checkout.expires_at=new Date(now+60000).toISOString();
+ assert.ok(C.resumeURL(app,history(),now));
+ for(const value of [undefined,'invalid','2030-01-01T10:00:00',new Date(now).toISOString(),new Date(now-1).toISOString()]){
+  const changed=structuredClone(app);changed.pending_checkout.expires_at=value;
+  assert.equal(C.resumeURL(changed,history(),now),null);
+ }
+ for(const url of ['https://checkout.stripe.com/\nunsafe',' https://checkout.stripe.com/x','https://checkout.stripe.com/with space']){
+  const changed=structuredClone(app);changed.pending_checkout.checkout_url=url;
+  assert.equal(C.resumeURL(changed,history(),now),null);
+ }
+ assert.equal(C.resumeURL(app,history(),now+60000),null);
+});
+
+test('owner lifecycle confirmation must be a literal explicit acceptance',async()=>{
+ const L=context.window.CTMApplicantLifecycle;let calls=0;
+ const app={id,version:2,kind:'petition',status:'draft',can_delete_draft:true};
+ const s=L.createActionSession(app,async()=>{calls++;return {id};});
+ for(const value of ['true',1,{},null,false])assert.equal(await s.send('delete',value),false);
+ assert.equal(calls,0);assert.equal(await s.send('delete',true),true);
 });

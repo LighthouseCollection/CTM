@@ -1,6 +1,23 @@
 # Applicant workflow implementation slice
 
-## Current verification: ten batches (2026-10-21)
+## Current filing/recovery verification (2026-10-21)
+
+The next ten batches integrate backend `d724ba56b8bd5cf501d55fbbca416470108f963a`
+(including filing contracts introduced in acafe29). Own draft deletion and withdrawal
+now use the server capabilities and current answer version. Original checkout recovery
+uses the retained candidate, attestation, exact declaration and future provider expiry.
+Local expiry removes resume only; it never reconciles a payment or enables a new charge.
+
+Current checks: 68 frontend tests, 54 real API/browser scenario groups, 11 response/
+recovery/lifecycle fixture groups and nine shell groups pass. The earlier 66/42 results
+below are historical snapshots. All backend data is isolated/synthetic; one controlled
+provider-create output verifies retained adapter behavior without network or a charge.
+The second joint filing and pending appeal state are explicit fixtures. PostgreSQL,
+live provider callbacks/antivirus, institutional wording and document issuance remain
+outside this acceptance. [Report](filing-recovery-batch-report.md) and
+[Download JSON](filing-recovery-batch-result.json).
+
+## Earlier verification: first ten batches (2026-10-21)
 
 Backend `480a246118cce8c4ac338c32c71c79cde74816d2` supplies the own request
 fingerprint, capabilities, scoped originals, published declaration and retained

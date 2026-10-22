@@ -1,6 +1,7 @@
 """Prepared response/lifecycle/recovery contracts; no real provider or institutional consent acceptance."""
 import json
 import threading
+from datetime import datetime,timedelta,timezone
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler,HTTPServer
 from playwright.sync_api import sync_playwright,expect
@@ -42,6 +43,7 @@ requests={'items':[request]};posts=[];errors=[];checks=[];complete_status=500;ho
 try:
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1280,'height':1100})
+        page.clock.install()
         page.on('pageerror',lambda e:errors.append(str(e)))
         def route_api(route):
             global held_action,held_projection,detail_reads
@@ -90,13 +92,27 @@ try:
         assert page.get_by_role('button',name='Resume existing secure checkout',exact=True).count()==0
         checks.append('Actual payment history shape with pending candidate blocks fresh checkout and replacement signature when resume contract is absent')
         application['can_resume_checkout']=True;application['pending_checkout']={'id':intent,'version':2,'checkout_url':'https://checkout.stripe.com/c/pay/existing',
-          'attestation':{'accepted':True,'name':'Original Signer'},'declaration_en':'Original retained declaration','declaration_ar':'الإقرار الأصلي المحفوظ'}
+          'expires_at':(datetime.now(timezone.utc)+timedelta(seconds=10)).isoformat(),'attestation':{'accepted':True,'name':'Original Signer'},'declaration_en':'Original retained declaration','declaration_ar':'الإقرار الأصلي المحفوظ'}
         page.get_by_role('button',name='Refresh existing checkout',exact=True).click()
         expect(page.get_by_text('Original retained declaration',exact=True)).to_be_visible()
         expect(page.get_by_text('Original signer: Original Signer',exact=True)).to_be_visible()
         page.get_by_role('button',name='Resume existing secure checkout',exact=True).click()
         assert page.evaluate('window.checkoutDestination')=='https://checkout.stripe.com/c/pay/existing'
         assert len(posts)==1
+        page.clock.fast_forward(15000)
+        expect(page.get_by_role('button',name='Resume existing secure checkout',exact=True)).to_have_count(0)
+        expect(page.get_by_text('An existing payment attempt must be resolved',exact=False)).to_be_visible()
+        expect(page.get_by_role('button',name='Continue to secure payment',exact=True)).to_be_disabled()
+        assert len(posts)==1
+        checks.append('Provider expiry removes mounted resume without clearing the unresolved hold or creating a payment attempt')
+        application['pending_checkout']['expires_at']=page.evaluate('new Date(Date.now()+30*86400000).toISOString()')
+        page.get_by_role('button',name='Refresh existing checkout',exact=True).click()
+        expect(page.get_by_role('button',name='Resume existing secure checkout',exact=True)).to_be_visible()
+        page.clock.fast_forward(2147483647)
+        expect(page.get_by_role('button',name='Resume existing secure checkout',exact=True)).to_be_visible()
+        page.clock.fast_forward(30*86400000-2147483647+1)
+        expect(page.get_by_role('button',name='Resume existing secure checkout',exact=True)).to_have_count(0)
+        checks.append('Long retained expiry re-arms beyond browser timer maximum and still clears resume at expiry')
         history['checkouts'][0]['state']='processing'
         page.get_by_role('button',name='Refresh existing checkout',exact=True).click()
         expect(page.get_by_role('button',name='Resume existing secure checkout',exact=True)).to_have_count(0)

@@ -1,4 +1,4 @@
-/* Prepared owner actions. Explicit server capabilities and version enforcement are required. */
+/* Owner actions bound to current server capabilities and answer version. */
 (() => {
   "use strict";
   const uuid=value=>typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -11,7 +11,7 @@
   function createActionSession(app,api,changed=()=>{}) {
     const state={busy:false,locked:false,error:null,received:false};
     return {state,async send(action,confirmed){
-      if(!confirmed||!available(app,action)||state.busy||state.locked)return false;
+      if(confirmed!==true||!available(app,action)||state.busy||state.locked)return false;
       state.busy=true;state.locked=true;state.error=null;changed();
       try{
         const result=await api(`/api/applications/${app.id}/${action==="delete"?"delete-draft":"withdraw"}/`,{
