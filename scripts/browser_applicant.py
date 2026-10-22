@@ -83,6 +83,7 @@ try:
         fail_submit = False
         action_requests = []
         documents = {"can_upload":False,"items":[],"requirements":[]}
+        promote_after_save = False
 
         def route_api(route):
             if route.request.url.endswith("/files/"):
@@ -107,6 +108,8 @@ try:
                 payload = route.request.post_data_json
                 writes.append(payload)
                 app.update(answers=payload["answers"], version=app["version"] + 1)
+                if promote_after_save:
+                    app["can_submit"]=True
                 route.fulfill(status=201, json={"version": app["version"]})
 
         def uncertain_upload(route):
@@ -286,6 +289,22 @@ try:
         expect(page.get_by_text("Your answers have been saved.", exact=True)).to_be_visible()
         expect(page.get_by_role("region", name="Second order copy", exact=True)).to_be_visible()
         checks.append("Acknowledged answer save automatically refreshes newly required document contexts")
+        app=fixture()
+        app.update(can_submit=False,fee={"amount_minor":25000,"currency":"USD","status":"waived"})
+        app["questionnaire"].update(declaration_en="Approved synthetic declaration",declaration_ar="إقرار تجريبي معتمد")
+        documents={"can_upload":False,"items":[],"requirements":[]}
+        promote_after_save=True
+        page.reload(wait_until="networkidle")
+        assert page.get_by_role("button",name="Submit application",exact=True).count()==0
+        page.get_by_label("First name",exact=False).fill("Capability refreshed")
+        page.get_by_role("button",name="Save draft",exact=True).click()
+        expect(page.get_by_role("button",name="Submit application",exact=True)).to_be_visible()
+        page.get_by_role("button",name="Review answers",exact=True).click()
+        page.get_by_label("I have read and accept this declaration.",exact=True).check()
+        page.get_by_label("Your full name",exact=False).fill("Synthetic Applicant")
+        expect(page.get_by_role("button",name="Submit application",exact=True)).to_be_enabled()
+        promote_after_save=False
+        checks.append("Acknowledged save reloads server filing capabilities before actions become available")
         assert not errors, errors
         browser.close()
 finally:

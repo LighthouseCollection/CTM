@@ -126,6 +126,9 @@
       startHelp:"Prepare your marriage certificates, finalized civil divorce decree and applicant photo. You may type your petition statement or upload a PDF or Word document. Any reported restraining order needs its own copy.",
       startFailed:"Unable to open an application. Try again to resume any existing draft, or contact the tribunal.",
       saveCorrections:"Save corrections",
+      refreshFailed:"Your save was acknowledged, but the current application status could not be refreshed. Reload saved answers before filing.",
+      status:"Application status", draft:"Draft", submitted:"Submitted", returned:"Returned for corrections", accepted:"Accepted for processing",
+      withdrawn:"Withdrawn", expiredStatus:"Expired", deleted:"Deleted", declined:"Declined", statusUnknown:"Status unavailable", caseReference:"Case reference",
     },
     ar: {
       title: "طلبي", loading: "جارٍ تحميل الطلب…", back: "رجوع",
@@ -148,6 +151,9 @@
       startHelp:"جهّز شهادات الزواج وحكم الطلاق المدني النهائي وصورتك الشخصية. يمكنك كتابة بيان الطلب أو رفعه بصيغة PDF أو Word. يلزم إرفاق نسخة مستقلة من كل أمر تقييدي يتم الإبلاغ عنه.",
       startFailed:"تعذر فتح طلب. حاول مجددًا لمتابعة أي مسودة موجودة أو تواصل مع المجلس.",
       saveCorrections:"حفظ التصحيحات",
+      refreshFailed:"تم تأكيد الحفظ، لكن تعذر تحديث حالة الطلب الحالية. أعد تحميل الإجابات المحفوظة قبل تقديم الطلب.",
+      status:"حالة الطلب", draft:"مسودة", submitted:"تم الإرسال", returned:"أعيد للتصحيح", accepted:"مقبول للمعالجة",
+      withdrawn:"مسحوب", expiredStatus:"منتهي الصلاحية", deleted:"محذوف", declined:"مرفوض", statusUnknown:"الحالة غير متاحة", caseReference:"رقم القضية",
     },
   };
 
@@ -183,6 +189,8 @@
     const [uploadBusy, setUploadBusy] = R.useState(false);
     const [documentRevision, setDocumentRevision] = R.useState(0);
     const [documentsReady, setDocumentsReady] = R.useState(false);
+    const [projectionPending, setProjectionPending] = R.useState(false);
+    const [projectionFailure, setProjectionFailure] = R.useState(false);
     const documentsReadinessChanged = R.useCallback(ready => {
       setDocumentsReady(ready); setReview(false);
     }, []);
@@ -190,10 +198,33 @@
       setReview(false); setDocumentRevision(n => n + 1);
     }, []);
     const [, refresh] = R.useReducer(n => n + 1, 0);
+    const currentSession = R.useRef(session);
+    const projectionRequest = R.useRef(0);
+    currentSession.current = session;
+    R.useEffect(() => () => { currentSession.current = null; }, []);
+    const refreshProjection = R.useCallback(async () => {
+      const target=currentSession.current;
+      if(!target)return;
+      const version=target.state.version, request=++projectionRequest.current;
+      setProjectionPending(true);setProjectionFailure(false);
+      try {
+        const updated=await api(`/api/applications/${encodeURIComponent(applicationId)}/`);
+        if(currentSession.current!==target || request!==projectionRequest.current || target.state.version!==version)return;
+        if(updated?.id!==applicationId || updated.version!==version)throw new Error("Application changed after saving");
+        target.state.editable=updated.can_edit===true&&!definitionProblem(updated)&&!answerProblem(updated)&&
+          !["withdrawn","expired","deleted"].includes(updated.status);
+        setRecord(updated);
+      } catch {
+        if(currentSession.current===target && request===projectionRequest.current)setProjectionFailure(true);
+      } finally {
+        if(currentSession.current===target && request===projectionRequest.current)setProjectionPending(false);
+      }
+    },[api,applicationId]);
     R.useEffect(() => {
       let active = true;
       setRecord(null); setSession(null); setFailure(null); setReview(false);
       setFilingBusy(false); setFilingLocked(false); setUploadBusy(false); setDocumentsReady(false);
+      setProjectionPending(false); setProjectionFailure(false);
       api(`/api/applications/${encodeURIComponent(applicationId)}/`).then(app => {
         if (!active) return;
         setRecord(app); setSession(createDraftSession(app, api, () => { if (active) refresh(); }));
@@ -214,17 +245,28 @@
     }, [state?.dirty]);
     const text = (value, props = {}) => h(P.Text, props, value);
     const button = (key, action, props = {}) => h(P.Button, {
-      onClick: action, disabled: state?.saving || filingBusy || uploadBusy, ...props,
+      onClick: action, disabled: state?.saving || filingBusy || uploadBusy || projectionPending, ...props,
     }, t(key));
     const navigate = (action) => {
-      if (state?.saving || filingBusy || uploadBusy) return;
+      if (state?.saving || filingBusy || uploadBusy || projectionPending) return;
       if (state?.dirty) setPending(() => action); else action();
     };
     R.useEffect(() => {
       onNavigationGuard?.(navigate);
       return () => onNavigationGuard?.(null);
-    }, [onNavigationGuard, session, state?.dirty, state?.saving, filingBusy, uploadBusy]);
+    }, [onNavigationGuard, session, state?.dirty, state?.saving, filingBusy, uploadBusy, projectionPending]);
     const reloadAnswers = () => navigate(() => setReload(n => n + 1));
+    const saveAnswers = async () => {
+      const target = session;
+      setProjectionPending(true); setProjectionFailure(false);
+      try {
+        if (await target.save() && currentSession.current===target) await refreshProjection();
+      } catch {
+        if (currentSession.current === target) setProjectionFailure(true);
+      } finally {
+        if (currentSession.current === target) setProjectionPending(false);
+      }
+    };
     let body;
     if (failure) body = h(P.Notice, { tone: "danger", actions: button("retry", reloadAnswers) }, t(failure));
     else if (!record || !session) body = text(t("loading"), { role: "status" });
@@ -246,7 +288,7 @@
           description: field.required ? t("required") : undefined,
         }, text(display));
         const shared = {
-          value: value ?? "", disabled: state.saving || filingBusy || filingLocked || uploadBusy,
+          value: value ?? "", disabled: state.saving || filingBusy || filingLocked || uploadBusy || projectionPending,
           onChange: event => session.change(field.code, event.target.value),
         };
         if (field.type === "boolean") return h(P.RadioGroup, {key:field.code,
@@ -259,7 +301,7 @@
         if (field.type === "list") return h(P.Fieldset, { key: field.code,
           legend: fieldLabel + (field.required ? ` (${t("required")})` : "") },
           ...options.map(option => h(P.Checkbox, {
-            key: option.value, label: option.label, disabled: state.saving || filingBusy || filingLocked || uploadBusy,
+            key: option.value, label: option.label, disabled: state.saving || filingBusy || filingLocked || uploadBusy || projectionPending,
             checked: Array.isArray(value) && value.includes(option.value),
             onChange: event => session.change(field.code, event.target.checked
               ? [...(Array.isArray(value) ? value : []), option.value]
@@ -272,30 +314,35 @@
         return h(P.Field, { key: field.code, label: fieldLabel, required: !!field.required }, control);
       };
       body = h(P.Stack, { gap: "lg" },
+        text(`${t("status")}: ${t(record.status === "expired" ? "expiredStatus" :
+          ["draft","submitted","returned","accepted","withdrawn","deleted","declined"].includes(record.status) ? record.status : "statusUnknown")}`),
+        record.case_number ? text(`${t("caseReference")}: ${record.case_number}`, {variant:"secondary"}) : null,
         h(P.Notice, null, t("fee")),
         !state.editable ? h(P.Notice, null, t("readOnly")) : text(t("draftNotice")),
         state.error ? h(P.Notice, { tone: "danger", role: "alert",
           actions: button("reload", reloadAnswers) }, t(state.error)) : null,
+        projectionFailure ? h(P.Notice, {tone:"warning",actions:button("reload",reloadAnswers)},t("refreshFailed")) : null,
         state.saved ? h(P.Notice, { tone: "success", role: "status" }, t("saved")) : null,
         state.dirty ? h(P.Notice, { tone: "warning", role: "status" }, t("unsaved")) : null,
         review ? h(P.Notice, null, t("reviewNotice")) : null,
         ...fields.filter(field => isVisible(field, state.answers)).map(renderField),
         h(P.Inline, { wrap: true },
-          state.editable ? button(state.saving ? "saving" : record.status === "draft" ? "save" : "saveCorrections", () => session.save(),
-            { disabled: state.saving || filingBusy || filingLocked || uploadBusy || !state.dirty }) : null,
+          state.editable ? button(state.saving || projectionPending ? "saving" : record.status === "draft" ? "save" : "saveCorrections", saveAnswers,
+            { disabled: state.saving || filingBusy || filingLocked || uploadBusy || projectionPending || !state.dirty }) : null,
           state.editable ? button(review ? "edit" : "review", () => setReview(!review),
-            { variant: "secondary", disabled:state.saving || filingBusy || filingLocked || uploadBusy })
-            : button("review", () => setReview(true), {variant:"secondary", disabled:review || filingBusy || filingLocked || uploadBusy}),
+            { variant: "secondary", disabled:state.saving || filingBusy || filingLocked || uploadBusy || projectionPending })
+            : button("review", () => setReview(true), {variant:"secondary", disabled:review || filingBusy || filingLocked || uploadBusy || projectionPending}),
         ),
         window.CTMApplicantFiles ? h(window.CTMApplicantFiles.ApplicationFiles, {
           key: "documents", applicationId, answerVersion:state.version, api, lang,
-          disabled: state.dirty || state.saving || filingBusy || filingLocked,
+          disabled: state.dirty || state.saving || filingBusy || filingLocked || projectionPending,
           onBusyChange: setUploadBusy, onChanged: documentsChanged,
           onReadyChange: documentsReadinessChanged,
+          onProjectionRefresh: refreshProjection,
         }) : null,
         window.CTMApplicantFiling ? h(window.CTMApplicantFiling.FilingActions, {
           key: "filing", application: filingRecord, api, lang,
-          dirty: state.dirty || state.saving || uploadBusy || !documentsReady, reviewed: review,
+          dirty: state.dirty || state.saving || uploadBusy || !documentsReady || projectionPending || projectionFailure || record.version !== state.version, reviewed: review,
           onBusyChange: setFilingBusy, onLockChange: setFilingLocked,
           onRefresh: reloadAnswers,
         }) : null);

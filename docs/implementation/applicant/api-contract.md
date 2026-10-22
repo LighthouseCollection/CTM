@@ -1,8 +1,9 @@
 # Applicant frontend integration contract
 
-Proposed on GitHub #1/#2 for VM-FRM; not an amendment to protected build-spec or a
-claim the current backend already supplies these projections. Governance owns
-shared shell integration. Existing backend remains the authorization authority.
+Coordinated on GitHub #1/#2; not an amendment to protected build-spec. Backend PR #7
+at `07c35ed` supplies the application projection and expected-version write guards;
+the proposed own-file listing remains pending there. Governance owns shared shell
+integration. Existing backend remains the authorization authority.
 
 ## Application projection
 
@@ -20,6 +21,12 @@ Existing GET `/api/applications/{id}/` fields are retained: `id`, `kind`, `statu
 - Existing fee states consumed: `due`, `paid`, `waived`, `historical_exempt`; unknown
   states show unavailable. USD 250 comes from the approved contract; amount display
   uses the actual server obligation. No client waiver request or inferred success.
+
+After a successful answer save and successful document listing, the frontend reloads
+the authoritative application projection before filing. It ignores responses from
+older requests, different sessions or different answer versions. Missing/mismatched
+refreshes block filing instead of retaining stale ready capabilities. Server-provided
+status and case reference are displayed without inferring either from browser URLs.
 
 Definition fields: `code`, `type`, `label_en`, `label_ar`, `required`, optional
 `when:{field,equals}` matching the existing strict backend predicate. Supported

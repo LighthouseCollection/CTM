@@ -64,7 +64,7 @@
       savedContext:"رفع الملفات متوقف أثناء تعديل الإجابات أو تنفيذ إجراء لتقديم الطلب.", additional:"أصول إضافية مرفوعة",
     },
   };
-  function ApplicationFiles({applicationId, answerVersion, api, lang="en", disabled=false, onBusyChange, onChanged, onReadyChange}) {
+  function ApplicationFiles({applicationId, answerVersion, api, lang="en", disabled=false, onBusyChange, onChanged, onReadyChange, onProjectionRefresh}) {
     const R=window.React, P=window.Plenix, h=R.createElement;
     const t=k=>words[lang === "ar" ? "ar" : "en"][k];
     const [data,setData]=R.useState(null), [error,setError]=R.useState(null);
@@ -80,13 +80,13 @@
       let active=true; setData(null); setError(null);
       api(`/api/applications/${encodeURIComponent(applicationId)}/files/`).then(result=>{
         if (!validListing(result)) throw new Error("Invalid file projection");
-        if(active){setData(result);setNeedsRefresh(false);}
+        if(active){setData(result);setNeedsRefresh(false);onProjectionRefresh?.();}
       }).catch(e=>{if(active){
         setError(e?.status===401?"expired":[403,404].includes(e?.status)?"denied":"unavailable");
         if([401,403].includes(e?.status))setLocked(true);
       }});
       return()=>{active=false;};
-    },[applicationId,answerVersion,api,revision]);
+    },[applicationId,answerVersion,api,revision,onProjectionRefresh]);
     const send=async(requirement,replacement,key)=>{
       if(busy || disabled || locked || needsRefresh || data?.can_upload !== true || !selected[key])return;
       setBusy(true);setError(null);setReceived(false);
