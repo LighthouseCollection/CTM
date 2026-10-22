@@ -59,7 +59,11 @@ for code, wording, foundational in [
 
 
 def new_case(number, manager, applicant):
-    case = Case.objects.create(number=number, assigned_member=manager)
+    # Assign through the real service (president authorizes, secretary records) so the
+    # assignment history the UI projects exists, exactly as in normal operation.
+    case = Case.objects.create(number=number)
+    assign_case(P["miller"], case.pk, manager.pk, P["wright"].pk)
+    case.refresh_from_db()
     proceeding = Proceeding.objects.create(case=case)
     party = Party.objects.create(case=case, account=applicant, slot="A",
                                  name=f"{applicant.first_name} {applicant.last_name}", participating=True)

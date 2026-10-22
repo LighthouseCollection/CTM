@@ -55,12 +55,18 @@ def page_for(browser, who, **kw):
     return ctx, page
 
 
+def report_item(page, title):
+    """Report row: a card button up to 65fa389, a table grid cell from 0b10a61."""
+    return page.get_by_role("gridcell", name=title, exact=True).or_(page.get_by_role("button", name=title, exact=True))
+
+
 def open_report(page, case_key, title):
     for attempt in range(2):
         open_case_reports(page, case_key)
-        item = page.get_by_role("button", name=title, exact=True).first
         try:
-            item.wait_for(timeout=10000)
+            page.get_by_role("gridcell", name=title, exact=True).or_(
+                page.get_by_role("button", name=title, exact=True)).first.wait_for(timeout=10000)
+            item = report_item(page, title).first
             break
         except Exception:
             if attempt:
@@ -80,7 +86,12 @@ def start_edit(page):
 
 
 def save(page):
-    page.get_by_role("button", name="Save as new version", exact=True).click()
+    """Click Save; from 0b10a61 an unconfirmed save offers 'Try again' (same body) instead."""
+    retry = page.get_by_role("button", name="Try again", exact=True)
+    (retry if retry.count() else page.get_by_role("button", name="Save as new version", exact=True)).first.click()
+
+
+UNCONFIRMED = re.compile(r"Your text is kept; try again\.|The server did not confirm this save")
 
 
 def scenario(fn):
@@ -104,7 +115,7 @@ def s1_visibility(browser):
     check("S1", "author sees Revise on own open report", "Revise visible", f"visible={has_revise(page)}", has_revise(page), "member (assigned author)", s)
     check("S1", "newest answers and observations load (v2)", "v2 texts shown", f"shown={ok_text}", ok_text, "member (assigned author)", s)
     for title, label in [("QA interview: secretary-authored", "secretary-authored report"), ("QA applicant intake", "applicant intake")]:
-        page.get_by_role("button", name=title, exact=True).first.click()
+        report_item(page, title).first.click()
         page.wait_for_timeout(600)
         s = shot(page, "s1-author-no-revise-" + label.split()[0])
         notice = page.get_by_text("Only the report's original council author can revise it", exact=False).count() > 0
@@ -189,7 +200,7 @@ def s8_failures(browser):
     page.route("**/api/reports/*/revisions/", lambda route: route.fulfill(status=500, content_type="application/json", body='{"error":"server"}')
                if route.request.method == "POST" else route.continue_())
     save(page)
-    page.get_by_text("Your text is kept; try again.", exact=False).wait_for(timeout=8000)
+    page.get_by_text(UNCONFIRMED).first.wait_for(timeout=8000)
     kept = page.get_by_role("textbox", name=HIST).input_value() == text
     success = page.get_by_text("Saved as version", exact=False).count() > 0
     s = shot(page, "s8-simulated-500")
@@ -226,6 +237,10 @@ def s8_failures(browser):
     check("S8", "OBSERVATION: retry after lost ack presents the user's own saved version as a conflicting newer version",
           "UI recognises its own committed write (idempotent receipt) instead of a conflict",
           f"stale_choice_shown={stale_notice} (a 'Save anyway' click would append a duplicate)", not stale_notice, "member (assigned author)", s)
+    confirmed = page.get_by_text("Saved as version", exact=False).count() > 0
+    check("S8", "retry after lost acknowledgement is confirmed as the already-saved version",
+          "success notice for the existing version, no new version", f"success_shown={confirmed} versions={len(after_retry)}",
+          confirmed and len(after_retry) == len(after_drop), "member (assigned author)", s)
     ctx.close()
     # (c) simulated 403 response
     ctx, page = page_for(browser, "thompson")
@@ -344,7 +359,7 @@ def s10_unsaved(browser):
     page.get_by_role("button", name="Documents", exact=True).first.click()
     page.wait_for_timeout(800)
     page.get_by_role("button", name="Reports", exact=True).first.click()
-    page.get_by_role("button", name="QA interview: main", exact=True).first.click()
+    report_item(page, "QA interview: main").first.click()
     page.wait_for_timeout(800)
     editor_back = page.get_by_role("textbox", name=HIST).count() > 0
     s = shot(page, "s10-sidebar-navigation")

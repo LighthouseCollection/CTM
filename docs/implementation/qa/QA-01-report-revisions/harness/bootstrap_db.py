@@ -24,7 +24,7 @@ from psycopg import sql
 
 from qa_env import EVIDENCE, SECRETS_DIR, load_env, save_env
 
-DB = "ctm_qa01"
+DB = os.environ.get("QA01_DB", "ctm_qa01")  # run 3: a fresh name per reset; never DROP a used database (Docker VM backends hang in D state)
 HOST, PORT = "127.0.0.1", int(os.environ.get("QA01_PG_PORT", "55433"))  # loopback-only disposable container
 
 
@@ -96,9 +96,16 @@ def grant():
     This applies the same table grants the backend's own runtime-role tests apply, and only
     reports - never adds - function EXECUTE grants, so missing migration grants stay visible.
     """
+    # Run 3+: migration 0038_runtime_grants provides the reviewed runtime grant plan, so set
+    # QA01_GRANTS=migration to add nothing and only record what the migrations granted.
+    migration_grants = os.environ.get("QA01_GRANTS") == "migration"
     with superuser(DB) as conn:
-        conn.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ctm_app")
-        conn.execute("GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ctm_app")
+        if not migration_grants:
+            conn.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ctm_app")
+            conn.execute("GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ctm_app")
+        ungranted = [r[0] for r in conn.execute(
+            "SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'tribunal\\_%' "
+            "AND NOT has_table_privilege('ctm_app', 'public.' || tablename, 'SELECT') ORDER BY 1").fetchall()]
         role = conn.execute(
             "SELECT rolsuper, rolbypassrls, rolinherit FROM pg_roles WHERE rolname='ctm_app'").fetchone()
         missing = []
@@ -119,6 +126,8 @@ def grant():
             "('tribunal_report','tribunal_reportrevision','tribunal_reportrequest') ORDER BY relname").fetchall()
     result = {
         "runtime_role": "ctm_app",
+        "grant_source": "migrations only (0038_runtime_grants)" if migration_grants else "QA fixture grants (tests/test_row_security.py)",
+        "tribunal_tables_without_ctm_app_select": ungranted,
         "rolsuper": role[0], "rolbypassrls": role[1], "rolinherit": role[2],
         "tribunal_tables_forced_rls": forced[0], "tribunal_tables_total": forced[1],
         "report_tables_rls": [{"table": t, "rls": r, "forced": f} for t, r, f in report_tables],

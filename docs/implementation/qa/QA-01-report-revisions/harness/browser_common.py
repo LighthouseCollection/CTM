@@ -37,6 +37,11 @@ def open_case_reports(page, case_key):
     nav(page, "Cases")
     number = F["case_numbers"][case_key]
     page.get_by_text(number, exact=True).first.click()
+    # 0b10a61+: the Cases list is a split view; the row opens a preview with "Open case".
+    open_case = page.get_by_role("button", name="Open case", exact=True)
+    page.wait_for_timeout(500)
+    if open_case.count():
+        open_case.first.click()
     page.get_by_role("heading", name=number).first.wait_for()
     nav(page, "Reports")
 

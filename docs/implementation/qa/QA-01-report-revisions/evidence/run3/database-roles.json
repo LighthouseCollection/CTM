@@ -1,0 +1,28 @@
+{
+  "runtime_role": "ctm_app",
+  "grant_source": "migrations only (0038_runtime_grants)",
+  "tribunal_tables_without_ctm_app_select": [],
+  "rolsuper": false,
+  "rolbypassrls": false,
+  "rolinherit": false,
+  "tribunal_tables_forced_rls": 58,
+  "tribunal_tables_total": 60,
+  "report_tables_rls": [
+    {
+      "table": "tribunal_report",
+      "rls": true,
+      "forced": true
+    },
+    {
+      "table": "tribunal_reportrequest",
+      "rls": true,
+      "forced": true
+    },
+    {
+      "table": "tribunal_reportrevision",
+      "rls": true,
+      "forced": true
+    }
+  ],
+  "fixture_functions_missing_execute_for_ctm_app": []
+}

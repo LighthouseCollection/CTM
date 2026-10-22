@@ -174,9 +174,19 @@ before = revisions(R["a_main"])
 st, data = S["thompson"].call("POST", f"/api/reports/{R['a_main']}/revisions/",
                               {"answers": {**before[-1][1], "QA-HIST": "Editor-shaped body (QA-01 S2)."},
                                "observations": before[-1][2]})
-check("S2", "contract: council editor request body (no expected_version) is accepted by this backend",
-      "201 (backend and council agree on the write contract)", f"status={st} body={data}",
-      st == 201, "member (assigned author)")
+import os  # noqa: E402
+
+if os.environ.get("QA01_RUN") in ("run1", "run2"):
+    # Runs 1-2 measured whether the then-current council body (no expected_version) was accepted.
+    check("S2", "contract: council editor request body (no expected_version) is accepted by this backend",
+          "201 (backend and council agree on the write contract)", f"status={st} body={data}",
+          st == 201, "member (assigned author)")
+else:
+    # Run 3+: the council editor sends expected_version (council-media.js revisionPayload; browser S2
+    # proves the saves). Here: the backend still refuses a body that omits it.
+    check("S2", "contract: a body without expected_version is refused (no unversioned writes)",
+          "422 validation, no version", f"status={st} body={data} versions={len(revisions(R['a_main']))}",
+          st == 422 and len(revisions(R["a_main"])) == len(before), "member (assigned author)")
 # Server-side contract observations (the editor is responsible for carrying values over).
 before = revisions(R["a_followup"])
 st, _ = post_revision("thompson", "a_followup", {"QA-HIST": "Only one key sent."}, "obs")
