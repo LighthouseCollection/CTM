@@ -48,6 +48,61 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         expect(page.get_by_role("heading",name="Application actions",exact=True)).to_be_visible()
         return page
 
+    def open_ready_review(page,ctx,app_id,label):
+        detail_url=f"{base}/api/applications/{app_id}/"
+        files_url=f"{base}/api/applications/{app_id}/files/"
+        trace={"application_id":app_id,"label":label,"responses":[]}
+        def summarize_files(payload):
+            required={(row["category"],row.get("context") or "") for row in payload.get("requirements",[]) if row.get("required")}
+            clean={(row["category"],row.get("context") or "") for row in payload.get("items",[]) if row.get("scan_state")=="clean"}
+            return {"required_keys":sorted(required),"clean_keys":sorted(clean),"requirements_clean":required<=clean}
+        def record(response):
+            if response.request.method=="GET" and response.url in {detail_url,files_url}:
+                trace["responses"].append({"url":response.url,"status":response.status})
+        page.on("response",record)
+        try:
+            authoritative=ctx.request.get(detail_url);authoritative_files=ctx.request.get(files_url)
+            assert authoritative.status==authoritative_files.status==200
+            authoritative_payload=authoritative.json();authoritative_file_payload=authoritative_files.json()
+            trace["authoritative"]={"status":authoritative_payload.get("status"),"version":authoritative_payload.get("version"),
+                "fee_status":(authoritative_payload.get("fee") or {}).get("status"),"can_submit":authoritative_payload.get("can_submit"),
+                **summarize_files(authoritative_file_payload)}
+            assert authoritative_payload["status"]=="draft" and authoritative_payload["can_submit"] is True
+            assert trace["authoritative"]["requirements_clean"]
+            with page.expect_response(lambda r:r.url==detail_url and r.request.method=="GET") as detail_received, \
+                    page.expect_response(lambda r:r.url==files_url and r.request.method=="GET") as files_received:
+                page.get_by_role("button",name="Refresh application status",exact=True).click()
+            refreshed=detail_received.value;refreshed_files=files_received.value
+            assert refreshed.status==refreshed_files.status==200
+            refreshed_payload=refreshed.json();refreshed_file_payload=refreshed_files.json()
+            trace["refreshed"]={"status":refreshed_payload.get("status"),"version":refreshed_payload.get("version"),
+                "fee_status":(refreshed_payload.get("fee") or {}).get("status"),"can_submit":refreshed_payload.get("can_submit"),
+                **summarize_files(refreshed_file_payload)}
+            assert refreshed_payload["status"]=="draft" and refreshed_payload["can_submit"] is True
+            assert trace["refreshed"]["requirements_clean"]
+            review=page.get_by_role("button",name="Review answers",exact=True)
+            expect(review).to_be_enabled()
+            review.click()
+            expect(page.get_by_text("Review your answers. Submission and payment are separate steps.",exact=True)).to_be_visible()
+            declaration=page.get_by_label("I have read and accept this declaration.",exact=True)
+            expect(declaration).to_be_enabled()
+            return trace
+        except Exception:
+            artifact=Path(output);artifact.mkdir(parents=True,exist_ok=True)
+            trace["failure_state"]={"server_application":detail(ctx,app_id),
+                "server_files":ctx.request.get(files_url).json(),"url":page.url,
+                "buttons":page.get_by_role("button").all_text_contents(),
+                "review_notice":page.get_by_text("Review your answers. Submission and payment are separate steps.",exact=True).count(),
+                "declaration_count":page.get_by_label("I have read and accept this declaration.",exact=True).count(),
+                "declaration_enabled":page.get_by_label("I have read and accept this declaration.",exact=True).count()==1 and
+                    page.get_by_label("I have read and accept this declaration.",exact=True).is_enabled(),
+                "body":page.locator("body").inner_text(),"viewport":page.viewport_size}
+            (artifact/f"{label}-review-readiness-failure.json").write_text(json.dumps(trace,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+            (artifact/f"{label}-review-readiness-failure.html").write_text(page.content(),encoding="utf-8")
+            page.screenshot(path=str(artifact/f"{label}-review-readiness-failure.png"),full_page=True,caret="initial")
+            raise
+        finally:page.remove_listener("response",record)
+
     try:
         actor,ctx,csrf=new_owner("draft-action")
         app_id=start(ctx,csrf,"DraftAction")
@@ -223,7 +278,7 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         assert detail(two,second_id)["fee"]["status"]=="due"
         assert post(staff,staff_csrf,f"/api/applications/{second_id}/waiver/",{}).status==201
         second_page=open_editor(two)
-        second_page.get_by_role("button",name="Review answers",exact=True).click()
+        open_ready_review(second_page,two,second_id,"linked-second")
         second_page.get_by_label("I have read and accept this declaration.",exact=True).check()
         second_page.get_by_label("Your full name",exact=False).fill("Synthetic JointSecond")
         with second_page.expect_response(lambda r:r.url==f"{base}/api/applications/{second_id}/submit/" and r.request.method=="POST") as submitted:
@@ -306,7 +361,7 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
             assert post(staff,staff_csrf,f"/api/applications/{closed_id}/waiver/",{}).status==201
             cp.get_by_role("button",name="Reload saved answers",exact=True).click()
             expect(cp.get_by_role("textbox",name="Synthetic closed-case new information",exact=False)).to_have_value(answers["new_information"])
-            cp.get_by_role("button",name="Review answers",exact=True).click()
+            open_ready_review(cp,closed_ctx,closed_id,"closed-case-intake")
             cp.get_by_label("I have read and accept this declaration.",exact=True).check()
             cp.get_by_label("Your full name",exact=False).fill("Synthetic ClosedFirst")
             with cp.expect_response(lambda r:r.url==f"{base}/api/applications/{closed_id}/submit/" and r.request.method=="POST") as submitted:

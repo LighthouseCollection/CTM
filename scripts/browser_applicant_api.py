@@ -564,7 +564,46 @@ try:
         assert financial.status==200 and financial.json()["verified_payment"] is False
         assert financial.json()["fee"]["status"]=="waived" and financial.json()["events"]==[]
         checks.append("Real owner payment history shows authorized waiver without fabricating provider success; outsider and staff draft reads denied")
-        page.get_by_role("button",name="Review answers",exact=True).click()
+        initial_review_trace={"before_refresh":{"status":ready["status"],"version":ready["version"],
+            "fee_status":ready["fee"]["status"],"can_submit":ready["can_submit"]},"responses":[]}
+        initial_detail_url=f"{BASE}/api/applications/{app_id}/";initial_files_url=f"{BASE}/api/applications/{app_id}/files/"
+        def record_initial_review(response):
+            if response.request.method=="GET" and response.url in {initial_detail_url,initial_files_url}:
+                initial_review_trace["responses"].append({"url":response.url,"status":response.status})
+        page.on("response",record_initial_review)
+        try:
+            with page.expect_response(lambda response:response.url==initial_detail_url and response.request.method=="GET") as initial_detail_received, \
+                    page.expect_response(lambda response:response.url==initial_files_url and response.request.method=="GET") as initial_files_received:
+                page.get_by_role("button",name="Refresh application status",exact=True).click()
+            refreshed_initial=initial_detail_received.value;refreshed_initial_files=initial_files_received.value
+            refreshed_initial_payload=refreshed_initial.json();refreshed_initial_files_payload=refreshed_initial_files.json()
+            initial_required={(row["category"],row.get("context") or "") for row in refreshed_initial_files_payload["requirements"] if row["required"]}
+            initial_clean={(row["category"],row.get("context") or "") for row in refreshed_initial_files_payload["items"] if row["scan_state"]=="clean"}
+            initial_review_trace["refreshed"]={"application_status":refreshed_initial.status,"files_status":refreshed_initial_files.status,
+                "status":refreshed_initial_payload.get("status"),"version":refreshed_initial_payload.get("version"),
+                "fee_status":(refreshed_initial_payload.get("fee") or {}).get("status"),"can_submit":refreshed_initial_payload.get("can_submit"),
+                "required_keys":sorted(initial_required),"clean_keys":sorted(initial_clean)}
+            assert refreshed_initial.status==refreshed_initial_files.status==200
+            assert refreshed_initial_payload["status"]=="draft" and refreshed_initial_payload["can_submit"] is True
+            assert initial_required<=initial_clean
+            initial_review=page.get_by_role("button",name="Review answers",exact=True)
+            expect(initial_review).to_be_enabled();initial_review.click()
+            expect(page.get_by_text("Review your answers. Submission and payment are separate steps.",exact=True)).to_be_visible()
+            expect(page.get_by_label("I have read and accept this declaration.",exact=True)).to_be_enabled()
+        except Exception:
+            initial_review_trace["failure_state"]={"server_application":context.request.get(initial_detail_url).json(),
+                "server_files":context.request.get(initial_files_url).json(),"url":page.url,
+                "buttons":page.get_by_role("button").all_text_contents(),
+                "review_notice":page.get_by_text("Review your answers. Submission and payment are separate steps.",exact=True).count(),
+                "declaration_count":page.get_by_label("I have read and accept this declaration.",exact=True).count(),
+                "declaration_enabled":page.get_by_label("I have read and accept this declaration.",exact=True).count()==1 and
+                    page.get_by_label("I have read and accept this declaration.",exact=True).is_enabled(),
+                "body":page.locator("body").inner_text(),"viewport":page.viewport_size}
+            (ARTIFACT_ROOT/"initial-review-readiness-failure.json").write_text(json.dumps(initial_review_trace,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+            (ARTIFACT_ROOT/"initial-review-readiness-failure.html").write_text(page.content(),encoding="utf-8")
+            page.screenshot(path=str(ARTIFACT_ROOT/"initial-review-readiness-failure.png"),full_page=True,caret="initial")
+            raise
+        finally:page.remove_listener("response",record_initial_review)
         page.get_by_label("I have read and accept this declaration.",exact=True).check()
         page.get_by_label("Your full name",exact=False).fill("Synthetic Applicant")
         with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{app_id}/submit/" and response.request.method=="POST") as received:
