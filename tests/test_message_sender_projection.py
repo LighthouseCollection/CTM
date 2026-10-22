@@ -125,3 +125,53 @@ def test_message_name_contract_on_each_database_adapter(message_thread,people,cl
     item=response.json()['items'][0]
     assert item['id']==str(row.pk) and item['sender']=='admin Test'
     assert item['body']=='Retained adapter message'
+
+
+def test_known_foreign_thread_is_forbidden_and_absent_recipient_invalid_without_mutation(granted_roles,message_thread,people,client):
+    import uuid
+    from tribunal.services.identity import link_party
+    from tribunal.services.communications import acknowledge_message
+    app=message_thread
+    original=send_message(people['admin'],app.case_id,'Private original',[app.party_id])
+    acknowledge_message(app.owner,original.pk)
+    other=m.Account.objects.create_user(email='forged-thread@example.test',email_verified=True)
+    party=link_party(people['admin'],app.case,other)
+    unrelated_case=m.Case.objects.create(number='20301022-99',status='closed')
+    unrelated=m.Party.objects.create(case=unrelated_case,account=app.owner,person=app.owner.person,slot='A')
+    before={model.__name__:model.objects.count() for model in [m.Message,m.MessageRecipient,m.Notification,m.Outbox,m.AuditEvent]}
+    receipt=list(m.MessageRecipient.objects.filter(message=original).values())
+    client.force_login(other)
+    with granted_roles('ctm_app',session=True):
+        with database_actor(other):
+            assert m.Party.objects.filter(pk=party.pk).exists()
+            assert not m.Party.objects.filter(pk=app.party_id).exists()
+        responses=[]
+        for targets,expected in [([app.party_id],403),([str(app.party_id).upper()],403),([uuid.uuid4()],422),([unrelated.pk],422),([party.pk,app.party_id],403),([party.pk,uuid.uuid4()],422)]:
+            response=client.post(f'/api/cases/{app.case_id}/messages/',
+                {'body':'Forbidden other thread','party_ids':list(map(str,targets)),'idempotency_key':str(uuid.uuid4())},content_type='application/json')
+            assert response.status_code==expected,response.content
+            responses.append(response.json())
+        assert responses[0]==responses[1]==responses[4]=={'error':'forbidden','detail':'Applicants can only use their own private communication thread.'}
+        assert responses[2]==responses[3]==responses[5]=={'error':'validation','messages':['Recipients must be registered parties of this case.']}
+        with database_actor(other):
+            assert not m.Party.objects.filter(pk=app.party_id).exists()
+            assert not m.Account.objects.filter(pk=app.owner_id).exists()
+    assert {model.__name__:model.objects.count() for model in [m.Message,m.MessageRecipient,m.Notification,m.Outbox,m.AuditEvent]}==before
+    assert list(m.MessageRecipient.objects.filter(message=original).values())==receipt
+
+
+def test_recipient_authorization_contract_on_each_adapter(message_thread,people,client):
+    import uuid
+    from tribunal.services.identity import link_party
+    app=message_thread
+    other=m.Account.objects.create_user(email='adapter-recipient@example.test',email_verified=True)
+    party=link_party(people['admin'],app.case,other)
+    client.force_login(other)
+    url=f'/api/cases/{app.case_id}/messages/'
+    for target,expected,error in [(app.party_id,403,'forbidden'),(uuid.uuid4(),422,'validation')]:
+        response=client.post(url,{'body':'Rejected other thread','party_ids':[str(target)]},content_type='application/json')
+        assert response.status_code==expected,response.content
+        assert response.json()['error']==error
+    response=client.post(url,{'body':'Own thread','party_ids':[str(party.pk)],'idempotency_key':'adapter-own-thread'},content_type='application/json')
+    assert response.status_code==201,response.content
+    assert m.MessageRecipient.objects.get(message_id=response.json()['id']).party_id==party.pk

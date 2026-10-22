@@ -1,4 +1,6 @@
-Current validation: **842 PostgreSQL passed, 1 skipped**; no model drift; rollback/reapply through0048. Eight new physical-role message regressions plus one cross-adapter endpoint contract; SQLite contract separately passed. Exact-successor applicant/QA acceptance remains pending.
+Current validation: **844 PostgreSQL passed, 1 skipped**; rollback/reapply through0048. Eleven focused message tests and SQLite recipient-authorization contract passed. Known same-case other party403, absent/unrelated422, own-thread send preserved; no new migration/grant/row access.
+
+Applicant recipient authorization normalized before RLS-filtered existence lookup: known same-case spouse403, absent/unrelated422, own thread works. Reuses existing applicant case-party metadata; no new row access, migration or grant. Prior equal422 guidance is superseded; see message-sender-projection.md. Exact-successor applicant/QA reruns remain pending.
 
 Private-message pagination correction:0048 removes the hidden sender Account join and adds a bounded message-authorized name-only projection.51intended messages no longer disappear; existing message/recipient/Party/Account policies stay unchanged. See message-sender-projection.md. Exact-successor applicant/QA reruns remain pending; unique UI metadata successor proposal0049after0048.
 
