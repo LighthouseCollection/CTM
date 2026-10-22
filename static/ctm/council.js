@@ -819,7 +819,7 @@
                 { gap: "sm" },
                 h(P.Badge, { tone: "action-required" }, t("reviewCount", { n: rows.length })),
                 ...rows.slice(0, 5).map((row) =>
-                  h(P.Card, {
+                  h(P.Card, { icon: "doc-text",
                     key: row.id,
                     title: row.case_number || t("unnumbered"),
                     meta: reviewMeta(row, t, lang),
@@ -1041,7 +1041,7 @@
               P.Stack,
               { gap: "sm" },
               ...rows.map((row) =>
-                h(P.Card, {
+                h(P.Card, { icon: "doc-text",
                   key: row.id,
                   title: row.case_number || t("unnumbered"),
                   meta: reviewMeta(row, t, lang),
@@ -1210,6 +1210,7 @@
     return h(
       compact ? P.Stack : P.Card,
       compact ? { gap: "xs" } : {
+        icon: "calendar",
         title: titled ? hearingTitle(row.party_names, session.date, t) : row.case_number,
         meta: [titled ? isolate(row.case_number) : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`].filter(Boolean).join(" · "),
         actions: h(P.Inline, { gap: "xs", wrap: true }, ...actions),
@@ -1892,23 +1893,21 @@
       P.Stack,
       { gap: "lg" },
       h(P.Inline, null, h(P.Button, { variant: "ghost", onClick: onBack }, t("backSessions"))),
-      h(
-        P.Inline,
-        { justify: "between", wrap: true },
-        h(P.Text, { as: "h1", variant: "title" }, sessionLabel(session.date, t)),
-        session.can_reschedule === true
-          ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }, t("rescheduleAction"))
-          : null,
-        (typeof session.can_close === "boolean" ? session.can_close : manage && planned)
-          ? h(P.Button, { variant: "danger-secondary", disabled: pending, onClick: () => setDialog({ kind: "close" }) }, t("closeSession"))
-          : null,
-      ),
-      h(
-        P.PropertyList,
-        null,
-        h(P.PropertyList.Item, { label: t("reference"), data: true }, sessionReference(session.date) || ""),
-        h(P.PropertyList.Item, { label: t("statusLabel") }, h(P.Badge, { tone: planned ? "active" : "neutral" }, t(session.state))),
-      ),
+      h(P.RecordPage.Header, {
+        title: sessionLabel(session.date, t),
+        meta: h(P.Inline, null,
+          h(P.Text, { variant: "muted" }, sessionReference(session.date) || ""),
+          h(P.Badge, { tone: planned ? "active" : "neutral" }, t(session.state)),
+        ),
+        actions: h(P.Inline, { wrap: true },
+          session.can_reschedule === true
+            ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }, t("rescheduleAction"))
+            : null,
+          (typeof session.can_close === "boolean" ? session.can_close : manage && planned)
+            ? h(P.Button, { variant: "danger-secondary", disabled: pending, onClick: () => setDialog({ kind: "close" }) }, t("closeSession"))
+            : null,
+        ),
+      }),
       !planned ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
@@ -2236,7 +2235,7 @@
               P.Stack,
               { gap: "sm" },
               ...upcoming.slice(0, 3).map((s) =>
-                h(P.Card, { key: s.id, title: sessionLabel(s.date, t), meta: sessionReference(s.date), onOpen: () => onSession(s.id) }),
+                h(P.Card, { icon: "calendar", key: s.id, title: sessionLabel(s.date, t), meta: sessionReference(s.date), onOpen: () => onSession(s.id) }),
               ),
             )
           : h(P.EmptyState, { title: t("noUpcoming") }),
@@ -2276,7 +2275,7 @@
           ? h(
               P.Stack,
               { gap: "sm" },
-              ...mine.map((row) => h(P.Card, { key: row.id, title: row.number, meta: t("open"), onOpen: () => onCase(row.id) })),
+              ...mine.map((row) => h(P.Card, { icon: "folder-open", key: row.id, title: row.number, meta: t("open"), onOpen: () => onCase(row.id) })),
             )
           : dashboard.my_cases === 0 ? h(P.EmptyState, { title: t("noMyCases") }) : h(P.Notice, { tone: "info" },
               t("myCasesUnavailable"), onCases ? h(P.Button, { onClick: onCases }, t("casesTitle")) : null),
@@ -2316,6 +2315,7 @@
             label: t(archived ? "archivedTitle" : "casesTitle"),
             data: rows,
             index: "id",
+            selected: selected ? [selected] : [],
             mode: "fill",
             pageSize: 25,
             headerMenu: false,

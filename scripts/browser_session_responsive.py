@@ -25,6 +25,7 @@ with sync_playwright() as p:
             assert logo.evaluate("async e => { try { await e.decode(); return e.naturalWidth > 0; } catch { return false; } }"), "Logo must decode"
             page.get_by_role("button", name="Tribunal Sessions" if language == "en" else "جلسات المجلس", exact=True).first.click()
             page.get_by_role("grid").first.get_by_role("row").nth(1).click()
+            page.locator(".plx-record-page__header--lg").wait_for()
             title = "Council attendance" if language == "en" else "حضور أعضاء المجلس"
             page.get_by_role("heading", name=title, exact=True).wait_for()
             panel = page.locator(".plx-panel").filter(has=page.get_by_role("heading", name=title, exact=True))

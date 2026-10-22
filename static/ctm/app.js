@@ -814,7 +814,7 @@
           P.Stack,
           null,
           ...reports.map((row) =>
-            h(P.Card, {
+            h(P.Card, { icon: "doc-text",
               key: row.id,
               title: row.title,
               meta: `${row.date}${row.parent_report_id ? " · " + t("followUp") : ""}`,
@@ -914,7 +914,7 @@
           })
         : null,
       ...visible.map((row) =>
-        h(P.Card, {
+        h(P.Card, { icon: "doc-text",
           key: row.id,
           title: row.name,
           meta: `${row.category} · ${t("version")} ${row.version}`,
@@ -1516,7 +1516,7 @@
     const caseCard = (row) =>
       h(
         P.Card,
-        {
+        { icon: "folder-open",
           key: row.id,
           title: row.number,
           meta: t(row.status),
@@ -1823,7 +1823,7 @@
               ...data.items
                 .filter((row) => row.part === part)
                 .map((row) =>
-                  h(P.Card, {
+                  h(P.Card, { icon: "doc-text",
                     key: row.id,
                     title: row.case_number,
                     meta: t(row.state),
@@ -1840,7 +1840,7 @@
           heading(t(page)),
           data.items.length
             ? data.items.map((row) =>
-                h(P.Card, {
+                h(P.Card, { icon: "calendar",
                   key: row.id,
                   title: `${t("councilSession")} ${row.date}`,
                   meta: t(row.state),

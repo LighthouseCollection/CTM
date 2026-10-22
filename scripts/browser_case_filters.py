@@ -21,6 +21,10 @@ with sync_playwright() as p:
     page.get_by_role("button", name="Cases", exact=True).first.click()
     page.get_by_text("20261001-01", exact=True).first.click()
     page.get_by_role("button", name="Open case", exact=True).wait_for()
+    selected_row = page.get_by_role("grid").get_by_role("row").filter(has_text="20261001-01")
+    assert "grid-selected" in selected_row.get_attribute("class"), "Viewed case must remain selected"
+    page.get_by_role("searchbox").click()
+    assert "grid-selected" in selected_row.get_attribute("class"), "Selection must survive focus leaving the table"
     page.get_by_role("searchbox").fill("no-matching-case")
     assert page.get_by_role("button", name="Open case", exact=True).count() == 0, "Filtered-out case preview remains actionable"
     page.get_by_role("searchbox").fill("")

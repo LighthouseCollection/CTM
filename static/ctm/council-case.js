@@ -1274,7 +1274,7 @@
         ? h(P.Inline, null, h(P.Button, { variant: "primary", size: "sm", onClick: () => { setComposing(true); select(null); setNotice(null); } }, t("newRequest")))
         : h(P.Notice, { tone: "info" }, t(proceeding ? "writerOnly" : "noOpenProceeding")),
       ...requests.map((row) =>
-        h(P.Card, {
+        h(P.Card, { icon: "doc-text",
           key: row.id,
           title: row.title,
           meta: [t(row.kind), base.isolate(row.subject_name), t(row.state)].filter(Boolean).join(" · "),
@@ -2008,7 +2008,7 @@
               ...calls.map((call) =>
                 h(
                   P.Card,
-                  { key: call.id, title: `${base.isolate(partyName(call.party_id))} · ${base.formatWhen(call.occurred_at, lang)}`, meta: `${t("recordedAt")}: ${base.formatWhen(call.recorded_at, lang)}` },
+                  { icon: "message", key: call.id, title: `${base.isolate(partyName(call.party_id))} · ${base.formatWhen(call.occurred_at, lang)}`, meta: `${t("recordedAt")}: ${base.formatWhen(call.recorded_at, lang)}` },
                   h(P.Text, { as: "p", variant: "strong" }, call.outcome),
                   call.notes ? h(P.Text, { as: "p" }, call.notes) : null,
                 ),
@@ -2216,7 +2216,7 @@
           ...requests.filter((row) => row.id === selected).map((row) =>
             h(
               P.Card,
-              {
+              { icon: "doc-text",
                 key: row.id,
                 title: row.title,
                 meta: [t(row.kind), base.isolate(row.subject_name), t(row.state), row.release_status ? t("release_" + row.release_status) : null].filter(Boolean).join(" · "),
@@ -2241,10 +2241,10 @@
               { gap: "sm" },
               ...reports.filter((row) => row.id === selected).map((row) =>
                 row.restricted
-                  ? h(P.Card, { key: row.id, title: t("restrictedAssessment"), meta: t("restrictedAssessmentHelp") })
+                  ? h(P.Card, { icon: "lock", key: row.id, title: t("restrictedAssessment"), meta: t("restrictedAssessmentHelp") })
                   : h(
                       P.Card,
-                      { key: row.id, title: row.title, meta: [t(row.kind), row.subject, row.date].filter(Boolean).join(" · ") },
+                      { icon: "doc-text", key: row.id, title: row.title, meta: [t(row.kind), row.subject, row.date].filter(Boolean).join(" · ") },
                       ...((row.answers && Array.isArray(row.answers.files) ? row.answers.files : []).map((id) =>
                         h(P.Button, { key: id, size: "xs", href: `/api/files/${encodeURIComponent(id)}/` }, t("download")),
                       )),
@@ -2568,7 +2568,7 @@
                 ...notes.map((note) =>
                   h(
                     P.Card,
-                    {
+                    { icon: "doc-text",
                       key: note.note_id,
                       title: note.author ? `${note.author} · ${base.formatWhen(note.timestamp, lang)}` : t("note"),
                       meta: `${t("version")} ${note.version}`,
