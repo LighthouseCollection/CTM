@@ -4,7 +4,7 @@ from pathlib import Path
 from playwright.sync_api import expect
 
 
-def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, errors, output):
+def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, errors, output, admin_id):
     from tribunal import models as m
     from django.utils import timezone
     checks=[]
@@ -186,12 +186,11 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         assert post(staff,staff_csrf,f"/api/applications/{first_id}/review/",{"result":"reject","instructions":"Synthetic lifecycle return"}).status==201
         second,two,two_csrf=new_owner("joint-second")
         def linked_second_party_fixture():
+            from tribunal.services.identity import link_party
             original=m.Application.objects.get(pk=first_id)
-            party=original.case.parties.exclude(pk=original.party_id).first()
-            if party is None:
-                party=m.Party.objects.create(case=original.case,slot="B" if original.party.slot=="A" else "A",name="Synthetic second participant")
-            party.account=second;party.person=second.person
-            party.save(update_fields=["account","person"])
+            administrator=m.Account.objects.get(pk=admin_id)
+            party=link_party(administrator,original.case,second)
+            assert party.account_id==second.pk and party.person_id==second.person_id and party.pk!=original.party_id
             return str(original.case_id)
         joint_case=fixture_db(linked_second_party_fixture)
         if os.environ.get("CTM_APPLICANT_LINKED_ENTRY")=="true":
