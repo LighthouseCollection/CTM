@@ -36,7 +36,7 @@ def template_data(template, actor):
 
 @lru_cache(maxsize=1)
 def question_taxonomy():
-    return json.loads((Path(__file__).parent / "reference/question-taxonomy.json").read_text())["questions"]
+    return json.loads((Path(__file__).parent / "reference/question-taxonomy.json").read_text(encoding="utf-8"))["questions"]
 
 
 def name(account):

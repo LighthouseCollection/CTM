@@ -282,10 +282,13 @@ def test_report_template_draft_can_target_both_spouses(client, filed, people):
     assert created.count() == 2 and all(row.state == "draft" for row in created)
 
 
-def test_seeded_question_bank_has_versioned_arabic_wording():
+def test_seeded_question_bank_has_versioned_arabic_wording(client, people):
     call_command("seed_reference", verbosity=0)
     question = ReportQuestion.objects.get(code="OPEN-01", version=2)
     assert question.wording_ar and question.wording_ar != question.wording_en
+    login(client, people["admin"])
+    row = next(item for item in client.get("/api/report-questions/").json()["items"] if item["code"] == "OPEN-01" and item["version"] == 2)
+    assert row["wording_ar"] == question.wording_ar and row["category_ar"] == "الأسئلة الأساسية"
 
 
 def test_question_taxonomy_preserves_multiple_groups_and_missing_translation(client, people):
