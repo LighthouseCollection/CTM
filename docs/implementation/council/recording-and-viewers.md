@@ -44,7 +44,7 @@ Only `/api/files/…` routes are ever used; a listing URL that is not an `/api/f
 - Private browsing or blocked site storage prevents the local copy; the page then warns that the tab must stay open until submission.
 - Recordings above 500 MB (WebM/MP4) or 100 MB (Ogg) are blocked by the current server limits; long recordings need the resumable upload requested as D21.
 - Audio is kept on the device until submitted: on a shared computer, submit or discard before leaving.
-- The embedded PDF viewer is unavailable until PDF.js files are packaged (issue #4); browser PDF viewing is used meanwhile.
+- The embedded PDF viewer is unavailable because of a Plenix 0.58.0 CDN defect (PDF.js not published, and a loader path that resolves against the app origin). See [pdf-viewer-cdn-defect.md](pdf-viewer-cdn-defect.md). Authorized browser PDF viewing is used until the design system is fixed.
 
 ## Evidence of testing
 
