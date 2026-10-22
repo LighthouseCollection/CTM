@@ -2603,7 +2603,9 @@
       return { record, proceeding, notes: latestNotes(notes.items) };
     }), [caseId]);
     const [text, setText] = R.useState("");
+    const [selected, select] = R.useState(null);
     const [editing, setEditing] = R.useState(null);
+    const [composing, setComposing] = R.useState(false);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
@@ -2617,24 +2619,28 @@
       setPending(true); setFailure(null);
       try {
         await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`, { method: "POST", body: JSON.stringify(editing ? { text: text.trim(), note_id: editing } : { text: text.trim() }) });
-        setText(""); setEditing(null); setNotice("noteSaved"); retry();
+        setText(""); setEditing(null); setComposing(false); setNotice("noteSaved"); retry();
       } catch (error) { setFailure(base.serverMessage(error, t)); }
       finally { setPending(false); }
     }
-    return h(P.Stack, { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("internalNotes")),
-      h(P.Text, { as: "p", variant: "secondary" }, t("internalNotesHelp")),
-      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-      h(window.CTMShell.Workspace, {
-        label: t("internalNotes"), selected: editing, onSelect: (noteId) => { setEditing(noteId); setText(notes.find((note) => note.note_id === noteId)?.text || ""); setFailure(null); },
-        rows: notes.map((note) => ({ ...note, id: note.note_id, title: note.author || t("note"), preview: note.text, recorded: base.formatWhen(note.timestamp, lang) })), empty: t("noNotes"),
-        columns: [{ title: t("note"), field: "title", kind: "name" }, { title: t("recordedAt"), field: "recorded" }, { title: t("note"), field: "preview", kind: "wrap" }],
-      }, (note) => note ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h2", variant: "title" }, note.title), h(P.Text, { variant: "secondary" }, `${t("version")} ${note.version} · ${note.recorded}`), h(P.Text, { as: "p" }, note.text), note.can_edit && canWrite ? h(P.Button, { size: "sm", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); } }, t("editNote")) : null) : null),
-      canWrite ? h(P.Form, { onSubmit: save, label: t("addNote"), noValidate: true },
-        h(P.Field, { label: t(editing ? "editingNote" : "addNote"), description: editing ? t("editNoteHelp") : undefined }, h(P.Textarea, { rows: 4, autoGrow: true, value: text, maxLength: 50000, disabled: pending, onChange: (e) => { setText(e.target.value); setFailure(null); } })),
+    const noteDialog = composing ? h(P.Dialog, { open: true, title: t(editing ? "editingNote" : "addNote"), size: "lg", onClose: () => !pending && setComposing(false) },
+      h(P.Form, { onSubmit: save, label: t(editing ? "editingNote" : "addNote"), noValidate: true },
+        h(P.Field, { label: t(editing ? "editingNote" : "addNote"), description: editing ? t("editNoteHelp") : undefined }, h(P.Textarea, { rows: 5, autoGrow: true, value: text, maxLength: 50000, disabled: pending, onChange: (e) => { setText(e.target.value); setFailure(null); } })),
         failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-        h(P.FormActions, { sticky: false }, editing ? h(P.Button, { disabled: pending, onClick: () => { setEditing(null); setText(""); } }, t("cancel")) : null, h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t(editing ? "saveRevision" : "saveNote"))),
-      ) : null,
+        h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setComposing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t(editing ? "saveRevision" : "saveNote"))),
+      ),
+    ) : null;
+    return h(R.Fragment, null, noteDialog,
+      h(P.Stack, { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
+        h(P.Toolbar, { label: t("internalNotes") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => { setEditing(null); setText(""); setFailure(null); setComposing(true); } }, t("addNote")) : null),
+        h(P.Text, { as: "p", variant: "secondary" }, t("internalNotesHelp")),
+        notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+        h(window.CTMShell.Workspace, {
+          label: t("internalNotes"), selected, onSelect: select,
+          rows: notes.map((note) => ({ ...note, id: note.note_id, title: note.author || t("note"), preview: note.text, recorded: base.formatWhen(note.timestamp, lang) })), empty: t("noNotes"),
+          columns: [{ title: t("note"), field: "title", kind: "name" }, { title: t("recordedAt"), field: "recorded" }, { title: t("note"), field: "preview", kind: "wrap" }],
+        }, (note) => note ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h2", variant: "title" }, note.title), h(P.Text, { variant: "secondary" }, `${t("version")} ${note.version} · ${note.recorded}`), h(P.Text, { as: "p" }, note.text), note.can_edit && canWrite ? h(P.Button, { size: "sm", icon: "edit", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); setComposing(true); } }, t("editNote")) : null) : h(P.EmptyState, { title: t("noNotes") })),
+      ),
     );
   }
   function marriageDuration(dateValue, lang) {
