@@ -695,10 +695,52 @@ try:
         current_safe_keys={(item["category"],item.get("context") or "") for item in current_safe_items}
         assert required_keys<=current_safe_keys and len(current_safe_items)==len(current_items)
         assert {item["context"] for item in current_safe_items if item["category"]=="RO"}==set(contexts)
-        page.get_by_role("button",name="Refresh application status",exact=True).click()
-        expect(page.get_by_role("link",name="Download original",exact=True)).to_have_count(len(current_safe_items))
-        page.get_by_role("button",name="Review answers",exact=True).click()
-        expect(page.get_by_role("button",name="Resubmit corrections",exact=True)).to_be_enabled()
+        detail_url=f"{BASE}/api/applications/{app_id}/"
+        files_url=f"{BASE}/api/applications/{app_id}/files/"
+        refresh_responses=[]
+        def record_readiness_response(response):
+            if response.url in {detail_url,files_url} and response.request.method=="GET":
+                refresh_responses.append({"url":response.url,"status":response.status})
+        page.on("response",record_readiness_response)
+        readiness_trace={"before_refresh":{
+            "application":{"status":ready_to_resubmit["status"],"can_resubmit":ready_to_resubmit["can_resubmit"],"version":ready_to_resubmit["version"]},
+            "required_keys":sorted(required_keys),"current_safe_keys":sorted(current_safe_keys),"current_original_count":len(current_safe_items)}}
+        try:
+            with page.expect_response(lambda response:response.url==detail_url and response.request.method=="GET") as refreshed_detail_received, \
+                    page.expect_response(lambda response:response.url==files_url and response.request.method=="GET") as refreshed_files_received:
+                page.get_by_role("button",name="Refresh application status",exact=True).click()
+            refreshed_detail=refreshed_detail_received.value
+            refreshed_files=refreshed_files_received.value
+            refreshed_detail_payload=refreshed_detail.json()
+            refreshed_files_payload=refreshed_files.json()
+            readiness_trace["reload_responses"]={
+                "application":{"status_code":refreshed_detail.status,"status":refreshed_detail_payload.get("status"),
+                    "can_resubmit":refreshed_detail_payload.get("can_resubmit"),"version":refreshed_detail_payload.get("version")},
+                "files":{"status_code":refreshed_files.status,"item_count":len(refreshed_files_payload.get("items",[])),
+                    "requirement_count":len(refreshed_files_payload.get("requirements",[]))}}
+            assert refreshed_detail.status==200 and refreshed_detail_payload["status"]=="returned" and refreshed_detail_payload["can_resubmit"]
+            assert refreshed_files.status==200 and len(refreshed_files_payload["items"])==len(current_safe_items)
+            review_button=page.get_by_role("button",name="Review answers",exact=True)
+            expect(review_button).to_be_enabled()
+            expect(page.get_by_role("link",name="Download original",exact=True)).to_have_count(len(current_safe_items))
+            review_button.click()
+            expect(page.get_by_text("Review your answers. Submission and payment are separate steps.",exact=True)).to_be_visible()
+            expect(page.get_by_role("button",name="Resubmit corrections",exact=True)).to_be_enabled()
+        except Exception:
+            readiness_trace["observed_responses"]=refresh_responses
+            readiness_trace["failure_state"]={
+                "review_buttons":page.get_by_role("button",name="Review answers",exact=True).count(),
+                "edit_buttons":page.get_by_role("button",name="Continue editing",exact=True).count(),
+                "resubmit_buttons":page.get_by_role("button",name="Resubmit corrections",exact=True).count(),
+                "resubmit_enabled":page.get_by_role("button",name="Resubmit corrections",exact=True).count()==1 and
+                    page.get_by_role("button",name="Resubmit corrections",exact=True).is_enabled(),
+                "download_links":page.get_by_role("link",name="Download original",exact=True).count()}
+            (ARTIFACT_ROOT/"resubmit-readiness-failure.json").write_text(json.dumps(readiness_trace,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"resubmit-readiness-failure.html").write_text(page.content(),encoding="utf-8")
+            page.screenshot(path=str(ARTIFACT_ROOT/"resubmit-readiness-failure.png"),full_page=True)
+            raise
+        finally:
+            page.remove_listener("response",record_readiness_response)
         with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{app_id}/submit/" and response.request.method=="POST") as received:
             page.get_by_role("button",name="Resubmit corrections",exact=True).click()
         response=received.value
