@@ -235,3 +235,11 @@ test("ordinary Requests tab never lists assessment requests", () => {
   const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(src, /requests: requests\.items\.filter\(\(row\) => !\["medical", "psychological"\]\.includes\(row\.kind\)\)/);
 });
+
+test("adding the other party needs first name, last name and a valid email", () => {
+  const ok = { first: "Mary", last: "Smith", email: "mary@example.test" };
+  assert.equal(C.partyProblem(ok), null);
+  assert.equal(C.partyProblem({ ...ok, first: " " }), "firstRequired");
+  assert.equal(C.partyProblem({ ...ok, last: "" }), "lastRequired");
+  assert.equal(C.partyProblem({ ...ok, email: "not-an-email" }), "emailInvalid");
+});

@@ -301,6 +301,24 @@
         "Only the assigned case manager, or the administrator or secretary, enters the decision type and grounds.",
       actionFailed: "The action could not be completed. Nothing was changed.",
       back: "Back",
+      partiesTitle: "Parties",
+      ctmReference: "CTM reference",
+      portalAccount: "Portal account",
+      registered: "Registered",
+      notRegistered: "Not registered",
+      noParties: "No parties are recorded.",
+      addParty: "Add other party",
+      addPartyHelp: "Record the other spouse by name and email. They are linked automatically after registering with a matching verified email. No account is created for them and no invitation acceptance is needed.",
+      firstName: "First name",
+      lastName: "Last name",
+      email: "Email",
+      firstRequired: "Enter the first name.",
+      lastRequired: "Enter the last name.",
+      emailInvalid: "Enter a valid email address.",
+      partyAdded: "The other party was recorded. They are linked once they register with this verified email.",
+      hearingsTitle: "Hearings",
+      hearingsScope: "Agenda appearances of this case in recent council sessions.",
+      noHearings: "This case has not been placed on a council session agenda.",
       assessments: "Professional Assessments",
       assessmentPrivacy: "Medical and psychological reports are kept separate from ordinary documents. Their contents are shown only when the person's signed release covers the council, and they are never sent to external AI processing.",
       releaseTextPending: "The institution's signed-release wording has not been approved yet, so applicants cannot sign releases and report contents stay hidden.",
@@ -464,6 +482,24 @@
       writerDecision: "يُدخل نوع القرار وأسبابه مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط.",
       actionFailed: "تعذر إتمام الإجراء. لم يتم تغيير أي شيء.",
       back: "رجوع",
+      partiesTitle: "الأطراف",
+      ctmReference: "مرجع النظام",
+      portalAccount: "حساب البوابة",
+      registered: "مسجَّل",
+      notRegistered: "غير مسجَّل",
+      noParties: "لا توجد أطراف مسجلة.",
+      addParty: "إضافة الطرف الآخر",
+      addPartyHelp: "سجّل الزوج الآخر بالاسم والبريد الإلكتروني. ويُربط تلقائيًا بعد تسجيله ببريد إلكتروني مطابق ومُتحقَّق منه. لا يُنشأ له حساب ولا يلزم قبول دعوة.",
+      firstName: "الاسم الأول",
+      lastName: "اسم العائلة",
+      email: "البريد الإلكتروني",
+      firstRequired: "أدخل الاسم الأول.",
+      lastRequired: "أدخل اسم العائلة.",
+      emailInvalid: "أدخل بريدًا إلكترونيًا صحيحًا.",
+      partyAdded: "تم تسجيل الطرف الآخر. ويُربط بمجرد تسجيله بهذا البريد المُتحقَّق منه.",
+      hearingsTitle: "الجلسات",
+      hearingsScope: "ظهور هذه القضية في جداول أعمال جلسات المجلس الأخيرة.",
+      noHearings: "لم تُدرج هذه القضية في جدول أعمال أي جلسة مجلس.",
       assessments: "التقييمات المهنية",
       assessmentPrivacy: "تُحفظ التقارير الطبية والنفسية منفصلة عن المستندات العادية. ولا تُعرض محتوياتها إلا إذا شمل الإذن الموقَّع من صاحبها المجلس، ولا تُرسل أبدًا إلى معالجة خارجية بالذكاء الاصطناعي.",
       releaseTextPending: "لم تُعتمد بعد صياغة الإذن الموقَّع من الجهة، لذلك لا يمكن لمقدمي الطلبات توقيع الإذن وتبقى محتويات التقارير مخفية.",
@@ -1905,6 +1941,162 @@
     );
   }
 
+  // ---------- Parties and case hearings ----------
+
+  const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function partyProblem(form) {
+    if (!String(form.first || "").trim()) return "firstRequired";
+    if (!String(form.last || "").trim()) return "lastRequired";
+    if (!EMAIL.test(String(form.email || "").trim())) return "emailInvalid";
+    return null;
+  }
+
+  function CaseParties({ api, lang, user, caseId }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`), [caseId]);
+    const [form, setForm] = R.useState({ first: "", last: "", email: "" });
+    const [open, setOpen] = R.useState(false);
+    const [problem, setProblem] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const [notice, setNotice] = R.useState(null);
+    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const record = state.data;
+    const manage = base.canManage(user);
+    const update = (patch) => {
+      setForm((old) => ({ ...old, ...patch }));
+      setProblem(null);
+    };
+    async function save(event) {
+      event.preventDefault();
+      const issue = partyProblem(form);
+      setProblem(issue);
+      if (issue) return;
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/cases/${encodeURIComponent(caseId)}/parties/`, {
+          method: "POST",
+          body: JSON.stringify({ first_name: form.first.trim(), last_name: form.last.trim(), email: form.email.trim() }),
+        });
+        setForm({ first: "", last: "", email: "" });
+        setOpen(false);
+        setNotice("partyAdded");
+        retry();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    const err = (key) => (problem === key ? t(key) : undefined);
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("partiesTitle")),
+      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+      ...record.parties.map((party) =>
+        h(
+          P.Panel,
+          { key: party.id, title: party.name },
+          h(
+            P.PropertyList,
+            null,
+            party.reference ? h(P.PropertyList.Item, { label: t("ctmReference"), data: true }, party.reference) : null,
+            h(
+              P.PropertyList.Item,
+              { label: t("portalAccount") },
+              h(P.Badge, { tone: party.can_receive ? "success" : "waiting" }, t(party.can_receive ? "registered" : "notRegistered")),
+            ),
+          ),
+        ),
+      ),
+      !record.parties.length ? h(P.EmptyState, { title: t("noParties") }) : null,
+      manage && record.status === "open"
+        ? open
+          ? h(
+              P.Form,
+              { onSubmit: save, label: t("addParty"), noValidate: true },
+              h(
+                P.FormSection,
+                { title: t("addParty"), description: t("addPartyHelp") },
+                h(P.Field, { label: t("firstName"), required: true, error: err("firstRequired") }, h(P.Input, { value: form.first, maxLength: 150, disabled: pending, onChange: (e) => update({ first: e.target.value }) })),
+                h(P.Field, { label: t("lastName"), required: true, error: err("lastRequired") }, h(P.Input, { value: form.last, maxLength: 150, disabled: pending, onChange: (e) => update({ last: e.target.value }) })),
+                h(P.Field, { label: t("email"), required: true, error: err("emailInvalid") }, h(P.Input, { type: "email", value: form.email, maxLength: 254, disabled: pending, onChange: (e) => update({ email: e.target.value }) })),
+              ),
+              failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+              h(
+                P.FormActions,
+                { sticky: false },
+                h(P.Button, { disabled: pending, onClick: () => setOpen(false) }, t("cancel")),
+                h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("addParty")),
+              ),
+            )
+          : h(P.Inline, null, h(P.Button, { onClick: () => setOpen(true) }, t("addParty")))
+        : null,
+    );
+  }
+
+  function CaseHearings({ api, lang, caseId, onSession }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = base.useLoad(
+      () =>
+        api("/api/sessions/").then(async (sessions) => {
+          const recent = (sessions.items || []).slice(0, 24);
+          const agendas = await Promise.all(
+            recent.map((session) =>
+              api(`/api/sessions/${encodeURIComponent(session.id)}/agenda/`).then((data) => ({ session, items: data.items })),
+            ),
+          );
+          const rows = [];
+          for (const { session, items } of agendas)
+            for (const item of items || []) if (item.case_id === caseId) rows.push({ session, item });
+          return rows.sort((a, b) => b.session.date.localeCompare(a.session.date));
+        }),
+      [caseId],
+    );
+    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const bt = base.translator(lang);
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("hearingsTitle")),
+      h(P.Text, { variant: "secondary" }, t("hearingsScope")),
+      state.data.length
+        ? h(
+            P.Stack,
+            { gap: "sm" },
+            ...state.data.map(({ session, item }) =>
+              h(
+                P.Card,
+                {
+                  key: item.id,
+                  title:
+                    item.part === 2 && Array.isArray(item.party_names) && item.party_names.length
+                      ? base.hearingTitle(item.party_names, session.date, bt)
+                      : base.sessionLabel(session.date, bt),
+                  meta: `${bt(item.part === 1 ? "part1" : "part2")} · ${bt(item.state === "assigned" ? "assigned_state" : item.state)}`,
+                  onOpen: () => onSession(session.id),
+                },
+                (item.testimony || []).length
+                  ? h(P.Text, { variant: "secondary" }, `${bt("testimony")}: ${item.testimony.length}`)
+                  : null,
+              ),
+            ),
+          )
+        : h(P.EmptyState, { title: t("noHearings") }),
+    );
+  }
+
   Object.assign(window.CTMCouncil, {
     caseWords: words,
     caseTranslator: translator,
@@ -1940,5 +2132,8 @@
     assessmentReports,
     assessmentProblem,
     AssessmentsWorkspace,
+    partyProblem,
+    CaseParties,
+    CaseHearings,
   });
 })();

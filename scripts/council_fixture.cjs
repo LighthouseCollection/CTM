@@ -242,6 +242,16 @@ function api(req, res, url, body) {
     return json(res, 200, { items: state.calls.filter((x) => x.case === m[1]) });
   }
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/messages\/$/))) return json(res, 200, { items: [] });
+  if (p === "/api/dashboard/")
+    return json(res, 200, {
+      my_cases: state.cases.filter((c) => c.status === "open" && c.assigned === me().id).length,
+      review_queue: admin() ? state.applications.filter((a) => a.kind === "petition" && a.status === "submitted").length : null,
+      upcoming_sessions: state.sessions.filter((s) => s.state === "planned").map((s) => ({ id: s.id, date: s.date })),
+    });
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/parties\/$/))) {
+    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    return json(res, 201, { id: "pending-" + Date.now() });
+  }
   if (p === "/api/search/") {
     const q = url.searchParams.get("q") || "";
     if (q.trim().length < 2) return json(res, 422, { error: "validation", messages: ["Use a search phrase of2–200characters."] });

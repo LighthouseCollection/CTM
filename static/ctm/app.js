@@ -1061,7 +1061,7 @@
       else if (
         councilModule &&
         user.portal === "council" &&
-        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search", "medical"].includes(page)
+        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings"].includes(page)
       )
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
@@ -1207,6 +1207,8 @@
         "appeals",
         "audit",
         "medical",
+        "parties",
+        "hearings",
       ].includes(page) && selection;
     const caseGroups = [
       {
@@ -1215,7 +1217,7 @@
           (id) => ({
             id,
             label: t(id === "case" ? "summary" : id),
-            disabled: id !== "case",
+            disabled: !(id === "case" || (id === "parties" && councilModule?.CaseParties && council)),
           }),
         ),
       },
@@ -1235,7 +1237,8 @@
           label: t(id),
           disabled: !(
             ["documents", "evidence", "reports"].includes(id) ||
-            (id === "medical" && councilModule?.AssessmentsWorkspace)
+            (id === "medical" && councilModule?.AssessmentsWorkspace) ||
+            (id === "hearings" && councilModule?.CaseHearings)
           ),
         })),
       },
@@ -1400,6 +1403,26 @@
           reports: data.items,
           renderReports: () =>
             h(ReportReader, { key: selection, rows: data.items, t, lang }),
+        });
+      if (page === "parties" && council && councilModule?.CaseParties)
+        return h(councilModule.CaseParties, { key: selection, api, lang, user, caseId: selection });
+      if (page === "hearings" && council && councilModule?.CaseHearings)
+        return h(councilModule.CaseHearings, {
+          key: selection,
+          api,
+          lang,
+          caseId: selection,
+          onSession: (id) => go("session", id),
+        });
+      if (page === "home" && council && councilModule?.CouncilHome)
+        return h(councilModule.CouncilHome, {
+          api,
+          lang,
+          user,
+          onCase: (id) => go("case", id),
+          onSession: (id) => go("session", id),
+          onReview: () => go("review"),
+          onNotifications: () => go("notifications"),
         });
       if (page === "medical" && council && councilModule?.AssessmentsWorkspace)
         return h(councilModule.AssessmentsWorkspace, { key: selection, api, lang, user, caseId: selection });

@@ -298,6 +298,17 @@
       sessionClosed: "The council session was closed.",
       closedReadOnly: "This session is closed and read-only.",
       unknownParty: "Unknown party",
+      homeTitle: "Home",
+      upcomingSession: "Upcoming council session",
+      noUpcoming: "No council session is scheduled.",
+      needsAttention: "Needs attention",
+      unreadNotifications: "{n} unread notifications",
+      openNotifications: "Open notifications",
+      nothingNeedsAttention: "Nothing needs your attention right now.",
+      myCases: "My cases",
+      myCasesCount: "{n} open cases assigned to you",
+      noMyCases: "No open cases are assigned to you.",
+      open: "Open",
       searchTitle: "Search",
       searchLabel: "Search documents",
       searchHelp: "Searches the text of open and closed case documents you are permitted to see. Latest versions by default.",
@@ -458,6 +469,17 @@
       sessionClosed: "تم إغلاق جلسة المجلس.",
       closedReadOnly: "هذه الجلسة مغلقة ومتاحة للقراءة فقط.",
       unknownParty: "طرف غير معروف",
+      homeTitle: "الرئيسية",
+      upcomingSession: "جلسة المجلس القادمة",
+      noUpcoming: "لا توجد جلسة مجلس مجدولة.",
+      needsAttention: "يحتاج إلى متابعة",
+      unreadNotifications: "{n} إشعارات غير مقروءة",
+      openNotifications: "فتح الإشعارات",
+      nothingNeedsAttention: "لا يوجد ما يحتاج إلى متابعتك الآن.",
+      myCases: "قضاياي",
+      myCasesCount: "{n} قضايا مفتوحة معيَّنة لك",
+      noMyCases: "لا توجد قضايا مفتوحة معيَّنة لك.",
+      open: "مفتوحة",
       searchTitle: "البحث",
       searchLabel: "البحث في المستندات",
       searchHelp: "يبحث في نصوص مستندات القضايا المفتوحة والمغلقة المسموح لك برؤيتها. أحدث الإصدارات افتراضيًا.",
@@ -1649,6 +1671,87 @@
     );
   }
 
+  // Council Home: upcoming session, own cases and what needs attention.
+  // Larger analytics belong to Statistics and Reports, not here.
+  function myCases(cases, user) {
+    return (cases || []).filter((row) => row.status === "open" && row.assigned_member && row.assigned_member === user?.name);
+  }
+
+  function CouncilHome({ api, lang, user, onCase, onSession, onReview, onNotifications }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = useLoad(
+      () =>
+        Promise.all([api("/api/dashboard/"), api("/api/cases/"), api("/api/notifications/")]).then(([dashboard, cases, notes]) => ({
+          dashboard,
+          cases: cases.items,
+          unread: notes.unread_count || 0,
+        })),
+      [user?.id],
+    );
+    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.error) return loadFailure(P, h, t, retry, state.error);
+    const { dashboard, cases, unread } = state.data;
+    const upcoming = dashboard.upcoming_sessions || [];
+    const mine = myCases(cases, user);
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("homeTitle")),
+      h(
+        P.Panel,
+        { title: t("upcomingSession") },
+        upcoming.length
+          ? h(
+              P.Stack,
+              { gap: "sm" },
+              ...upcoming.slice(0, 3).map((s) =>
+                h(P.Card, { key: s.id, title: sessionLabel(s.date, t), meta: sessionReference(s.date), onOpen: () => onSession(s.id) }),
+              ),
+            )
+          : h(P.EmptyState, { title: t("noUpcoming") }),
+      ),
+      h(
+        P.Panel,
+        { title: t("needsAttention") },
+        h(
+          P.Stack,
+          { gap: "sm" },
+          unread
+            ? h(
+                P.Inline,
+                { justify: "between", wrap: true },
+                h(P.Text, null, t("unreadNotifications", { n: unread })),
+                h(P.Button, { size: "xs", onClick: onNotifications }, t("openNotifications")),
+              )
+            : null,
+          typeof dashboard.review_queue === "number" && dashboard.review_queue > 0
+            ? h(
+                P.Inline,
+                { justify: "between", wrap: true },
+                h(P.Text, null, t("reviewCount", { n: dashboard.review_queue })),
+                h(P.Button, { size: "xs", onClick: onReview }, t("reviewOpen")),
+              )
+            : null,
+          !unread && !(dashboard.review_queue > 0) ? h(P.EmptyState, { title: t("nothingNeedsAttention") }) : null,
+        ),
+      ),
+      h(
+        P.Panel,
+        { title: t("myCases"), description: typeof dashboard.my_cases === "number" ? t("myCasesCount", { n: dashboard.my_cases }) : undefined },
+        mine.length
+          ? h(
+              P.Stack,
+              { gap: "sm" },
+              ...mine.map((row) => h(P.Card, { key: row.id, title: row.number, meta: t("open"), onOpen: () => onCase(row.id) })),
+            )
+          : h(P.EmptyState, { title: t("noMyCases") }),
+      ),
+    );
+  }
+
   window.CTMCouncil = {
     words,
     translator,
@@ -1680,5 +1783,7 @@
     SessionWorkspace,
     searchProblem,
     SearchWorkspace,
+    myCases,
+    CouncilHome,
   };
 })();
