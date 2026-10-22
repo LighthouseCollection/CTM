@@ -1,5 +1,5 @@
 diff --git a/static/ctm/app.js b/static/ctm/app.js
-index 05009e1..cab0504 100644
+index 05009e1..a82ba81 100644
 --- a/static/ctm/app.js
 +++ b/static/ctm/app.js
 @@ -11,6 +11,8 @@
@@ -11,7 +11,26 @@ index 05009e1..cab0504 100644
    const words = {
      en: {
        event_report_requested: "A report has been requested.",
-@@ -125,15 +127,16 @@
+@@ -28,6 +30,18 @@
+       event_appeal_added: "New appeal information was added.",
+       event_testimony_response: "A testimony invitation received a response.",
+       event_testimony_invited: "You have a testimony invitation.",
++      event_testimony_rescheduled: "Your testimony appointment was rescheduled.",
++      event_testimony_cancelled: "Your testimony appointment was cancelled.",
++      event_closed_intake_submitted: "A later petition on a closed case awaits council consideration.",
++      event_application_accepted: "Your application was accepted for council review.",
++      event_application_returned: "Your application was returned for correction.",
++      event_appeal_accept: "The appeal was accepted.",
++      event_appeal_decline: "The appeal was declined.",
++      event_decree_issued: "A decision was issued and the case is closed.",
++      event_petition_denied: "The petition was denied and the case is closed.",
++      event_petitions_withdrawn: "The petitions were withdrawn and the case is closed.",
++      event_payment_finance_review: "A payment needs finance review.",
++      event_paid_filing_review: "A paid filing needs review before it can be finalized.",
+       tribunal: "Church Tribunal",
+       signIn: "Sign in to CTM",
+       welcome: "Access your application or council workspace securely.",
+@@ -125,15 +139,16 @@
        assessment: "Case Review",
        decision: "Decision",
        timeline: "Timeline",
@@ -30,7 +49,7 @@ index 05009e1..cab0504 100644
        appeals: "Appeals",
        audit: "Case Audit",
        backCases: "Back to cases",
-@@ -152,7 +155,7 @@
+@@ -152,7 +167,7 @@
        unpresented: "Not presented",
        planned: "Planned",
        status: "Status",
@@ -39,7 +58,26 @@ index 05009e1..cab0504 100644
        view: "Open",
        profile: "Profile",
        council: "Council portal",
-@@ -288,15 +291,16 @@
+@@ -193,6 +208,18 @@
+       event_appeal_added: "أضيفت معلومات جديدة إلى الاستئناف.",
+       event_testimony_response: "تم الرد على دعوة الإدلاء بالشهادة.",
+       event_testimony_invited: "لديك دعوة للإدلاء بالشهادة.",
++      event_testimony_rescheduled: "تمت إعادة جدولة موعد إدلائك بالشهادة.",
++      event_testimony_cancelled: "تم إلغاء موعد إدلائك بالشهادة.",
++      event_closed_intake_submitted: "يوجد طلب لاحق على قضية مغلقة في انتظار نظر المجلس.",
++      event_application_accepted: "تم قبول طلبك لعرضه على المجلس.",
++      event_application_returned: "أُعيد طلبك للتصحيح.",
++      event_appeal_accept: "تم قبول الاستئناف.",
++      event_appeal_decline: "تم رفض الاستئناف.",
++      event_decree_issued: "صدر قرار وأُغلقت القضية.",
++      event_petition_denied: "رُفض الطلب وأُغلقت القضية.",
++      event_petitions_withdrawn: "سُحبت الطلبات وأُغلقت القضية.",
++      event_payment_finance_review: "توجد دفعة تحتاج إلى مراجعة مالية.",
++      event_paid_filing_review: "يوجد طلب مدفوع يحتاج إلى مراجعة قبل إتمامه.",
+       attendance: "حضور أعضاء المجلس",
+       present: "حاضر",
+       absent: "غائب",
+@@ -288,15 +315,16 @@
        assessment: "دراسة القضية",
        decision: "القرار",
        timeline: "التسلسل الزمني",
@@ -58,7 +96,7 @@ index 05009e1..cab0504 100644
        appeals: "التماسات إعادة النظر",
        audit: "سجل القضية",
        backCases: "العودة إلى القضايا",
-@@ -315,7 +319,7 @@
+@@ -315,7 +343,7 @@
        unpresented: "لم تُناقش",
        planned: "محددة",
        status: "الحالة",
@@ -67,7 +105,7 @@ index 05009e1..cab0504 100644
        view: "فتح",
        profile: "الملف الشخصي",
        council: "بوابة المجلس",
-@@ -365,9 +369,12 @@
+@@ -365,9 +393,12 @@
      const response = await fetch(url, {
        ...options,
        credentials: "same-origin",
@@ -81,7 +119,7 @@ index 05009e1..cab0504 100644
          "X-CSRFToken": csrf(),
        },
        cache: "no-store",
-@@ -377,7 +384,16 @@
+@@ -377,7 +408,16 @@
        error.status = 401;
        throw error;
      }
@@ -99,7 +137,7 @@ index 05009e1..cab0504 100644
      return response.json();
    }
    function MessageComposer({ record, sessions, council, t, onSent }) {
-@@ -501,7 +517,7 @@
+@@ -501,7 +541,7 @@
    }
    const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
    const heading = (value) => text(value, { as: "h1", variant: "title" });
@@ -108,7 +146,7 @@ index 05009e1..cab0504 100644
      const [records, setRecords] = R.useState(initial),
        [pending, setPending] = R.useState(false),
        [failed, setFailed] = R.useState(false);
-@@ -522,6 +538,7 @@
+@@ -522,6 +562,7 @@
              present: value === "present",
            }),
          });
@@ -116,7 +154,7 @@ index 05009e1..cab0504 100644
        } catch {
          setRecords(previous);
          setFailed(true);
-@@ -1032,7 +1049,7 @@
+@@ -1032,7 +1073,7 @@
            messages: messages.items,
            sessions: sessions.items,
          }));
@@ -125,7 +163,7 @@ index 05009e1..cab0504 100644
          request = Promise.all([
            api(`/api/sessions/${selection}/agenda/`),
            api("/api/council/members/"),
-@@ -1042,6 +1059,12 @@
+@@ -1042,6 +1083,12 @@
            members: members.items,
            attendance: attendance.items,
          }));
@@ -138,7 +176,7 @@ index 05009e1..cab0504 100644
        else if (page === "sessions") request = api("/api/sessions/");
        else if (page === "applications") request = api("/api/applications/");
        else if (["home", "cases", "archived", "past"].includes(page)) {
-@@ -1170,11 +1193,29 @@
+@@ -1170,11 +1217,29 @@
      const navItems = council
        ? ["home", "sessions", "cases", "search", "archived", "statistics"]
        : ["home", "applications", "past"];
@@ -172,7 +210,7 @@ index 05009e1..cab0504 100644
      const caseGroups = [
        {
          heading: t("overview"),
-@@ -1182,7 +1223,11 @@
+@@ -1182,7 +1247,11 @@
            (id) => ({
              id,
              label: t(id === "case" ? "summary" : id),
@@ -185,7 +223,7 @@ index 05009e1..cab0504 100644
            }),
          ),
        },
-@@ -1200,15 +1245,24 @@
+@@ -1200,15 +1269,24 @@
          ].map((id) => ({
            id,
            label: t(id),
@@ -214,7 +252,7 @@ index 05009e1..cab0504 100644
          })),
        },
      ];
-@@ -1247,6 +1301,14 @@
+@@ -1247,6 +1325,14 @@
                  groups: reviewGroups,
                })
              : null,
@@ -229,7 +267,7 @@ index 05009e1..cab0504 100644
          )
        : h(
            P.NavPane,
-@@ -1342,6 +1404,69 @@
+@@ -1342,6 +1428,69 @@
            lang,
            onCase: (id) => go("case", id),
          });
@@ -299,7 +337,7 @@ index 05009e1..cab0504 100644
        if (page === "reports")
          return h(ReportReader, { key: selection, rows: data.items, t, lang });
        if (["documents", "evidence"].includes(page))
-@@ -1425,6 +1550,15 @@
+@@ -1425,6 +1574,15 @@
                  onSent: () => reload((n) => n + 1),
                })
              : null,
@@ -315,7 +353,7 @@ index 05009e1..cab0504 100644
          );
        if (page === "case")
          return h(
-@@ -1456,6 +1590,51 @@
+@@ -1456,6 +1614,51 @@
              }),
            ),
          );
@@ -367,7 +405,7 @@ index 05009e1..cab0504 100644
        if (page === "session")
          return h(
            P.Stack,
-@@ -1538,11 +1717,26 @@
+@@ -1538,11 +1741,26 @@
                : h(P.EmptyState, { title: t("noCurrent") }),
          );
        }

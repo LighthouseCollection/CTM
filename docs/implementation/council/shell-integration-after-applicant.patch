@@ -1,5 +1,5 @@
 diff --git a/static/ctm/app.js b/static/ctm/app.js
-index b4b4300..8cf6da5 100644
+index 5dd9e57..78a1374 100644
 --- a/static/ctm/app.js
 +++ b/static/ctm/app.js
 @@ -11,6 +11,8 @@
@@ -11,7 +11,26 @@ index b4b4300..8cf6da5 100644
    const words = {
      en: {
        event_report_requested: "A report has been requested.",
-@@ -127,15 +129,16 @@
+@@ -28,6 +30,18 @@
+       event_appeal_added: "New appeal information was added.",
+       event_testimony_response: "A testimony invitation received a response.",
+       event_testimony_invited: "You have a testimony invitation.",
++      event_testimony_rescheduled: "Your testimony appointment was rescheduled.",
++      event_testimony_cancelled: "Your testimony appointment was cancelled.",
++      event_closed_intake_submitted: "A later petition on a closed case awaits council consideration.",
++      event_application_accepted: "Your application was accepted for council review.",
++      event_application_returned: "Your application was returned for correction.",
++      event_appeal_accept: "The appeal was accepted.",
++      event_appeal_decline: "The appeal was declined.",
++      event_decree_issued: "A decision was issued and the case is closed.",
++      event_petition_denied: "The petition was denied and the case is closed.",
++      event_petitions_withdrawn: "The petitions were withdrawn and the case is closed.",
++      event_payment_finance_review: "A payment needs finance review.",
++      event_paid_filing_review: "A paid filing needs review before it can be finalized.",
+       tribunal: "Church Tribunal",
+       signIn: "Sign in to CTM",
+       welcome: "Access your application or council workspace securely.",
+@@ -127,15 +141,16 @@
        assessment: "Case Review",
        decision: "Decision",
        timeline: "Timeline",
@@ -30,7 +49,7 @@ index b4b4300..8cf6da5 100644
        appeals: "Appeals",
        audit: "Case Audit",
        backCases: "Back to cases",
-@@ -154,7 +157,7 @@
+@@ -154,7 +169,7 @@
        unpresented: "Not presented",
        planned: "Planned",
        status: "Status",
@@ -39,7 +58,26 @@ index b4b4300..8cf6da5 100644
        view: "Open",
        profile: "Profile",
        council: "Council portal",
-@@ -292,15 +295,16 @@
+@@ -195,6 +210,18 @@
+       event_appeal_added: "أضيفت معلومات جديدة إلى الاستئناف.",
+       event_testimony_response: "تم الرد على دعوة الإدلاء بالشهادة.",
+       event_testimony_invited: "لديك دعوة للإدلاء بالشهادة.",
++      event_testimony_rescheduled: "تمت إعادة جدولة موعد إدلائك بالشهادة.",
++      event_testimony_cancelled: "تم إلغاء موعد إدلائك بالشهادة.",
++      event_closed_intake_submitted: "يوجد طلب لاحق على قضية مغلقة في انتظار نظر المجلس.",
++      event_application_accepted: "تم قبول طلبك لعرضه على المجلس.",
++      event_application_returned: "أُعيد طلبك للتصحيح.",
++      event_appeal_accept: "تم قبول الاستئناف.",
++      event_appeal_decline: "تم رفض الاستئناف.",
++      event_decree_issued: "صدر قرار وأُغلقت القضية.",
++      event_petition_denied: "رُفض الطلب وأُغلقت القضية.",
++      event_petitions_withdrawn: "سُحبت الطلبات وأُغلقت القضية.",
++      event_payment_finance_review: "توجد دفعة تحتاج إلى مراجعة مالية.",
++      event_paid_filing_review: "يوجد طلب مدفوع يحتاج إلى مراجعة قبل إتمامه.",
+       attendance: "حضور أعضاء المجلس",
+       present: "حاضر",
+       absent: "غائب",
+@@ -292,15 +319,16 @@
        assessment: "دراسة القضية",
        decision: "القرار",
        timeline: "التسلسل الزمني",
@@ -58,7 +96,7 @@ index b4b4300..8cf6da5 100644
        appeals: "التماسات إعادة النظر",
        audit: "سجل القضية",
        backCases: "العودة إلى القضايا",
-@@ -319,7 +323,7 @@
+@@ -319,7 +347,7 @@
        unpresented: "لم تُناقش",
        planned: "محددة",
        status: "الحالة",
@@ -67,7 +105,7 @@ index b4b4300..8cf6da5 100644
        view: "فتح",
        profile: "الملف الشخصي",
        council: "بوابة المجلس",
-@@ -369,6 +373,7 @@
+@@ -369,6 +397,7 @@
      const response = await fetch(url, {
        ...options,
        credentials: "same-origin",
@@ -75,7 +113,7 @@ index b4b4300..8cf6da5 100644
        headers: {
          Accept: "application/json",
          ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
-@@ -384,6 +389,11 @@
+@@ -384,6 +413,11 @@
      if (!response.ok) {
        const error = new Error("request_failed");
        error.status = response.status;
@@ -87,7 +125,7 @@ index b4b4300..8cf6da5 100644
        throw error;
      }
      return response.json();
-@@ -509,7 +519,7 @@
+@@ -509,7 +543,7 @@
    }
    const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
    const heading = (value) => text(value, { as: "h1", variant: "title" });
@@ -96,7 +134,7 @@ index b4b4300..8cf6da5 100644
      const [records, setRecords] = R.useState(initial),
        [pending, setPending] = R.useState(false),
        [failed, setFailed] = R.useState(false);
-@@ -530,6 +540,7 @@
+@@ -530,6 +564,7 @@
              present: value === "present",
            }),
          });
@@ -104,7 +142,7 @@ index b4b4300..8cf6da5 100644
        } catch {
          setRecords(previous);
          setFailed(true);
-@@ -1046,7 +1057,7 @@
+@@ -1046,7 +1081,7 @@
            messages: messages.items,
            sessions: sessions.items,
          }));
@@ -113,7 +151,7 @@ index b4b4300..8cf6da5 100644
          request = Promise.all([
            api(`/api/sessions/${selection}/agenda/`),
            api("/api/council/members/"),
-@@ -1056,6 +1067,12 @@
+@@ -1056,6 +1091,12 @@
            members: members.items,
            attendance: attendance.items,
          }));
@@ -126,7 +164,7 @@ index b4b4300..8cf6da5 100644
        else if (page === "sessions") request = api("/api/sessions/");
        else if (page === "applications") request = api("/api/applications/");
        else if (["home", "cases", "archived", "past"].includes(page)) {
-@@ -1188,11 +1205,29 @@
+@@ -1188,11 +1229,29 @@
      const navItems = council
        ? ["home", "sessions", "cases", "search", "archived", "statistics"]
        : ["home", "applications", "appointments", "past"];
@@ -160,7 +198,7 @@ index b4b4300..8cf6da5 100644
      const caseGroups = [
        {
          heading: t("overview"),
-@@ -1200,7 +1235,11 @@
+@@ -1200,7 +1259,11 @@
            (id) => ({
              id,
              label: t(id === "case" ? "summary" : id),
@@ -173,7 +211,7 @@ index b4b4300..8cf6da5 100644
            }),
          ),
        },
-@@ -1218,15 +1257,24 @@
+@@ -1218,15 +1281,24 @@
          ].map((id) => ({
            id,
            label: t(id),
@@ -202,7 +240,7 @@ index b4b4300..8cf6da5 100644
          })),
        },
      ];
-@@ -1265,6 +1313,14 @@
+@@ -1265,6 +1337,14 @@
                  groups: reviewGroups,
                })
              : null,
@@ -217,7 +255,7 @@ index b4b4300..8cf6da5 100644
          )
        : h(
            P.NavPane,
-@@ -1372,6 +1428,69 @@
+@@ -1372,6 +1452,69 @@
            lang,
            onCase: (id) => go("case", id),
          });
@@ -287,7 +325,7 @@ index b4b4300..8cf6da5 100644
        if (page === "reports")
          return h(ReportReader, { key: selection, rows: data.items, t, lang });
        if (["documents", "evidence"].includes(page))
-@@ -1455,6 +1574,15 @@
+@@ -1455,6 +1598,15 @@
                  onSent: () => reload((n) => n + 1),
                })
              : null,
@@ -303,7 +341,7 @@ index b4b4300..8cf6da5 100644
          );
        if (page === "case")
          return h(
-@@ -1486,6 +1614,51 @@
+@@ -1493,6 +1645,51 @@
              }),
            ),
          );
@@ -355,7 +393,7 @@ index b4b4300..8cf6da5 100644
        if (page === "session")
          return h(
            P.Stack,
-@@ -1571,11 +1744,26 @@
+@@ -1578,11 +1775,26 @@
                : h(P.EmptyState, { title: t("noCurrent") }),
          );
        }
@@ -383,12 +421,12 @@ index b4b4300..8cf6da5 100644
              data.items.filter((row) =>
                ["archived", "past"].includes(page)
 diff --git a/tribunal/templates/tribunal/shell.html b/tribunal/templates/tribunal/shell.html
-index d5aa0a5..b57b56e 100644
+index 2f42e95..a0eaa30 100644
 --- a/tribunal/templates/tribunal/shell.html
 +++ b/tribunal/templates/tribunal/shell.html
-@@ -15,6 +15,9 @@
-   <script defer src="{% static 'ctm/applicant-appointments.js' %}"></script>
-   <script defer src="{% static 'ctm/applicant-payments.js' %}"></script>
+@@ -19,6 +19,9 @@
+   <script defer src="{% static 'ctm/applicant-decrees.js' %}"></script>
+   <script defer src="{% static 'ctm/applicant-supplements.js' %}"></script>
    <script defer src="{% static 'ctm/applicant.js' %}"></script>
 +  <script defer src="{% static 'ctm/council.js' %}"></script>
 +  <script defer src="{% static 'ctm/council-case.js' %}"></script>
