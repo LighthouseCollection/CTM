@@ -53,6 +53,11 @@ test("report templates are an inline category-to-question workspace", () => {
   assert.doesNotMatch(councilCase.slice(councilCase.indexOf("function RequestsPanel"), councilCase.indexOf("function ReportsWorkspace")), /h\(P\.Dialog/);
 });
 
+test("report template questions hide internal question-bank codes", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(councilCase, /key: q\.code, label: wording\(q, lang\)/);
+});
+
 test("report template wording follows the selected request language", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(councilCase, /if \(lang === "ar"\) return ar \|\| en/);

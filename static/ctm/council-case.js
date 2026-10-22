@@ -1113,7 +1113,7 @@ ${ar}` : en;
           }),
           h(P.Fieldset, { legend: groupTitle(categoryGroups.find((group) => group.category === activeCategory) || {}, lang) },
             ...activeQuestions.map((q) => h(P.Checkbox, {
-              key: q.code, label: `${q.code} — ${wording(q, lang)}`,
+              key: q.code, label: wording(q, lang),
               description: q.foundational ? t("foundational") : lang === "ar" && !String(q.wording_ar || "").trim() ? t("arabicPending") : undefined,
               checked: q.foundational || form.selected.includes(q.code), disabled: pending || q.foundational,
               onChange: (e) => update({ selected: e.target.checked ? [...form.selected, q.code] : form.selected.filter((code) => code !== q.code) }),
