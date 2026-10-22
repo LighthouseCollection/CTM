@@ -347,6 +347,10 @@
       timeNotRecorded: "Time not recorded",
       presidingNotRecorded: "Presiding member not recorded",
       locationNotRecorded: "Location not recorded",
+      hearingAdjourned: "Hearing Adjourned",
+      resumeHearing: "Resume Hearing",
+      hearingAdjournedNotice: "The hearing has been adjourned.",
+      hearingResumedNotice: "The hearing has resumed.",
       addAssignmentCase: "Add a Case to Be Assigned",
       addHearingCase: "Add a Case to Hearings",
       attendance: "Council Attendance",
@@ -605,6 +609,10 @@
       timeNotRecorded: "لم يُسجّل الوقت",
       presidingNotRecorded: "لم يُسجّل العضو المترئس",
       locationNotRecorded: "لم يُسجّل الموقع",
+      hearingAdjourned: "تأجيل الجلسة",
+      resumeHearing: "استئناف الجلسة",
+      hearingAdjournedNotice: "تم تأجيل الجلسة.",
+      hearingResumedNotice: "تم استئناف الجلسة.",
       addAssignmentCase: "إضافة قضية للتعيين",
       addHearingCase: "إضافة قضية لجلسات النظر",
       attendance: "حضور أعضاء المجلس",
@@ -1893,7 +1901,6 @@
     // repeated here because it is not part of the session's requested header.
     const sessionFacts = [
       { label: t("presiding"), value: session.presiding_member_name || t("presidingNotRecorded") },
-      { label: t("location"), value: session.location || t("locationNotRecorded") },
       { label: t("casesToAssign"), value: String(pendingAssignments), data: true },
       { label: t("scheduledCasesForHearing"), value: String(scheduledHearings), data: true },
     ];
@@ -1906,6 +1913,10 @@
         : null,
       current
         ? { icon: "settings-users", label: t("attendance"), disabled: pending, onClick: () => setAttendanceVisible((visible) => !visible) }
+        : null,
+      current && planned && manage
+        ? { icon: session.adjourned_at ? "play" : "pause", label: t(session.adjourned_at ? "resumeHearing" : "hearingAdjourned"), disabled: pending,
+            onClick: () => run(() => api(`/api/sessions/${sessionId}/adjourn/`, { method: "POST", body: JSON.stringify({ adjourned: !session.adjourned_at }) }), session.adjourned_at ? "hearingResumedNotice" : "hearingAdjournedNotice") }
         : null,
       session.can_reschedule === true
         ? { icon: "calendar", label: t("rescheduleAction"), disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }
@@ -2558,7 +2569,7 @@
       .filter((row) => !q || [row.number, row.assigned_member || ""].some((v) => String(v).toLowerCase().includes(q)));
   }
 
-  function CasesTable({ cases, archived, lang, api, user, onOpen }) {
+  function CasesTable({ cases, archived, title, lang, api, user, onOpen }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -2574,11 +2585,11 @@
     const table = h(
       R.Fragment,
       null,
-      h(P.Text, { as: "h1", variant: "title" }, t(archived ? "archivedTitle" : "casesTitle")),
+      h(P.Text, { as: "h1", variant: "title" }, title || t(archived ? "archivedTitle" : "casesTitle")),
       h(P.Field, { label: t("searchCases") }, h(P.Input, { type: "search", width: "md", value: query, onChange: (e) => setQuery(e.target.value) })),
       rows.length
         ? h(P.DataTable, {
-            label: t(archived ? "archivedTitle" : "casesTitle"),
+            label: title || t(archived ? "archivedTitle" : "casesTitle"),
             data: rows,
             index: "id",
             selected: selected ? [selected] : [],
@@ -2607,7 +2618,7 @@
         : h(P.EmptyState, { title: t(query ? "noMatchingCases" : archived ? "noArchived" : "noOpenCases") }),
     );
     return h(P.SplitView, {
-      label: t(archived ? "archivedTitle" : "casesTitle"), firstLabel: t("casesTitle"),
+      label: title || t(archived ? "archivedTitle" : "casesTitle"), firstLabel: title || t("casesTitle"),
       first: h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" }, table),
       second: h(P.ReadingPane, { label: t("casesTitle") },
         rows.some((row) => row.id === selected) ? h(P.Stack, null,

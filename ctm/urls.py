@@ -37,6 +37,7 @@ urlpatterns = [
     path("api/sessions/<uuid:session_id>/agenda/", api.agenda),
     path("api/sessions/<uuid:session_id>/attendance/", api.attendance),
     path("api/sessions/<uuid:session_id>/close/", api.close_session),
+    path("api/sessions/<uuid:session_id>/adjourn/", api.adjourn_session),
     path("api/sessions/<uuid:session_id>/reschedule/", api.reschedule_session),
     path("api/agenda/<uuid:item_id>/hear/", api.hear),
     path("api/cases/<uuid:case_id>/messages/", api.messages),

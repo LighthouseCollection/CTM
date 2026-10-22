@@ -714,6 +714,19 @@ def close_session(request, session_id):
 
 
 @endpoint(("POST",))
+def adjourn_session(request, session_id):
+    from tribunal.projections import session_data
+    from tribunal.services.council import set_session_adjourned
+
+    data = body(request)
+    adjourned = data.get("adjourned")
+    if not isinstance(adjourned, bool):
+        raise ValidationError("Adjourned must be true or false.")
+    session = set_session_adjourned(request.user, session_id, adjourned)
+    return JsonResponse(encoded(session, **session_data(session, request.user)))
+
+
+@endpoint(("POST",))
 def reschedule_session(request, session_id):
     from tribunal.services.council import reschedule_session as command
 

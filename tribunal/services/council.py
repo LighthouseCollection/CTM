@@ -333,6 +333,21 @@ def close_session(actor, session_id):
 
 
 @transaction.atomic
+def set_session_adjourned(actor, session_id, adjourned):
+    """Record the current session's operational pause without closing it."""
+    staff(actor)
+    if actor.role not in {"admin", "secretary"}:
+        raise PermissionDenied("Only the tribunal administrator or secretary can adjourn a session.")
+    session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    if session.state != "planned":
+        raise ValidationError("Only a planned session can be adjourned or resumed.")
+    session.adjourned_at = timezone.now() if adjourned else None
+    session.save(update_fields=["adjourned_at"])
+    audit(actor, "session_adjourned" if adjourned else "session_resumed", session)
+    return session
+
+
+@transaction.atomic
 def hear_case(actor, item_id):
     staff(actor)
     # Attendance edits and hearing snapshots serialize on the same session row.

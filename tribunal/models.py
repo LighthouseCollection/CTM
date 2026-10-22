@@ -514,6 +514,7 @@ class CouncilSession(Root):
         Account, null=True, blank=True, on_delete=models.PROTECT, related_name="presided_sessions"
     )
     location = models.CharField(max_length=300, blank=True)
+    adjourned_at = models.DateTimeField(null=True, blank=True)
     state = models.CharField(max_length=12, default="planned")
     closed_at = models.DateTimeField(null=True)
 

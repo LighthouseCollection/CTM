@@ -167,6 +167,7 @@ def session_data(session, actor):
         "presiding_member_id": str(session.presiding_member_id) if session.presiding_member_id else None,
         "presiding_member_name": name(session.presiding_member) if session.presiding_member_id else None,
         "location": session.location or None,
+        "adjourned_at": session.adjourned_at.isoformat() if session.adjourned_at else None,
         "state": session.state,
         **session_capabilities(session, actor),
     }

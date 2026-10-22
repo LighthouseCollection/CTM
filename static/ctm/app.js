@@ -64,6 +64,9 @@
       language: "العربية",
       home: "Home",
       cases: "Cases",
+      myCases: "My Cases",
+      allCases: "All Cases",
+      archivedCases: "Archived Cases",
       sessions: "Tribunal Sessions - Current",
       sessionsUpcoming: "Tribunal Sessions - Upcoming",
       sessionsArchived: "Tribunal Sessions - Archived",
@@ -74,7 +77,7 @@
       councilSession: "Council Session",
       archived: "Archived",
       search: "Search",
-      statistics: "Statistics and Reports",
+      statistics: "Reports only",
       applications: "My application",
       past: "Past cases",
       loading: "Loading…",
@@ -303,6 +306,9 @@
       language: "English",
       home: "الرئيسية",
       cases: "القضايا",
+      myCases: "قضاياي",
+      allCases: "كل القضايا",
+      archivedCases: "القضايا المؤرشفة",
       sessions: "جلسات المجلس - الحالية",
       sessionsUpcoming: "جلسات المجلس - القادمة",
       sessionsArchived: "جلسات المجلس - المؤرشفة",
@@ -313,7 +319,7 @@
       councilSession: "جلسة المجلس",
       archived: "الأرشيف",
       search: "البحث",
-      statistics: "الإحصاءات والتقارير",
+      statistics: "التقارير فقط",
       applications: "طلبي",
       past: "القضايا السابقة",
       loading: "جارٍ التحميل…",
@@ -1320,7 +1326,7 @@
     }
     const council = user.portal === "council";
     const navItems = council
-      ? ["home", "sessions", "sessionsUpcoming", "sessionsArchived", "cases", "search", "archived", "statistics"]
+      ? ["home", "sessions", "sessionsUpcoming", "sessionsArchived", "myCases", "cases", "search", "archived", "statistics"]
       : ["home", "applications", "appointments", "past"];
     const unavailable = new Set(
       [
@@ -1409,11 +1415,19 @@
       { id: "sessionsUpcoming", icon: navigationIcon("sessionsUpcoming"), label: t("sessionUpcoming") },
       { id: "sessionsArchived", icon: navigationIcon("sessionsArchived"), label: t("sessionArchived") },
     ];
-    const primaryNavigationItems = mainNavigationItems.filter((item) => !sessionNavigationItems.some((session) => session.id === item.id));
+    const casesNavigationItems = [
+      { id: "myCases", icon: navigationIcon("cases"), label: t("myCases") },
+      { id: "cases", icon: navigationIcon("cases"), label: t("allCases") },
+      { id: "search", icon: navigationIcon("search"), label: t("search") },
+      { id: "archived", icon: navigationIcon("archived"), label: t("archivedCases") },
+      { id: "statistics", icon: navigationIcon("statistics"), label: t("statistics"), disabled: unavailable.has("statistics") },
+    ];
+    const primaryNavigationItems = mainNavigationItems.filter((item) => !sessionNavigationItems.some((session) => session.id === item.id) && !casesNavigationItems.some((caseItem) => caseItem.id === item.id));
     const mainRailItems = council
       ? [
           primaryNavigationItems[0],
           { id: "sessions", icon: navigationIcon("sessions"), label: t("tribunalSessions"), active: sessionNavigationItems.some((item) => item.id === page) },
+          { id: "cases", icon: navigationIcon("cases"), label: t("cases"), active: casesNavigationItems.some((item) => item.id === page) },
           ...primaryNavigationItems.slice(1),
         ]
       : mainNavigationItems;
@@ -1502,6 +1516,12 @@
               icon: navigationIcon("sessions"),
               items: sessionNavigationItems,
             }],
+          }) : null,
+          council ? h(P.NavList, {
+            label: t("cases"),
+            value: page,
+            onSelect: (id) => go(id),
+            groups: [{ heading: t("cases"), icon: navigationIcon("cases"), items: casesNavigationItems }],
           }) : null,
           h(P.NavList, {
             label: t("tribunal"),
@@ -1920,11 +1940,12 @@
               : h(P.EmptyState, { title: t("noCurrent") }),
         );
       }
-      if (council && councilModule?.CasesTable && ["cases", "archived"].includes(page))
+      if (council && councilModule?.CasesTable && ["myCases", "cases", "archived"].includes(page))
         return h(councilModule.CasesTable, {
           api, user,
-          cases: data.items,
+          cases: page === "myCases" ? data.items.filter((row) => row.status === "open" && row.assigned_member_id === user.id) : data.items,
           archived: page === "archived",
+          title: page === "myCases" ? t("myCases") : page === "archived" ? t("archivedCases") : t("allCases"),
           lang,
           onOpen: (id) => go("case", id),
         });
