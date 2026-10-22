@@ -131,6 +131,12 @@ test("Decision & Voting uses stacked decision and council-vote containers", () =
   assert.match(councilCase, /ctm-vote-total/);
 });
 
+test("decision version form omits the deferral helper text", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const decisionForm = councilCase.slice(councilCase.indexOf("function DecisionForm"), councilCase.indexOf("function CouncilVoteRecord"));
+  assert.doesNotMatch(decisionForm, /deferralNotice/);
+});
+
 test("report template wording follows the selected request language", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(councilCase, /if \(lang === "ar"\) return ar \|\| en/);

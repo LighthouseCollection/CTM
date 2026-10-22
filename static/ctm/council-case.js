@@ -1385,7 +1385,6 @@ ${ar}` : en;
             options: [{ value: "", label: t("chooseType") }, ...DECISION_TYPES.map((row) => ({ value: row.code, label: row.label }))],
           }),
         ),
-        h(P.Text, { variant: "secondary" }, t("deferralNotice")),
         lang === "ar" ? h(P.Notice, { tone: "info" }, t("typeLabelNotice")) : null,
         h(
           P.Field,
