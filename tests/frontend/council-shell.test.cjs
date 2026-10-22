@@ -527,3 +527,8 @@ test("upcoming session editing offers Cancel that clears selection and closes th
   assert.match(source, /function cancelSessionForm\(\)[\s\S]*select\(""\)[\s\S]*setFormOpen\(false\)/);
   assert.match(source, /icon: "close", onClick: cancelSessionForm, disabled: pending[\s\S]*t\("cancel"\)/);
 });
+
+test("home attention empty state uses a calm reassurance", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(council, /nothingNeedsAttention: "You’re all caught up for now\."/);
+});

@@ -542,7 +542,7 @@
       needsAttention: "Needs attention",
       unreadNotifications: "{n} unread notifications",
       openNotifications: "Open notifications",
-      nothingNeedsAttention: "Nothing needs your attention right now.",
+      nothingNeedsAttention: "You’re all caught up for now.",
       myCases: "My cases",
       myCasesCount: "{n} open cases assigned to you",
       noMyCases: "No open cases are assigned to you.",
