@@ -9,7 +9,7 @@ deployment or production-readiness acceptance is represented by these checks.
 | `node --test tests/frontend/*.test.cjs` | 32 passed | Bound definitions, repeat stable IDs/opaque fields, incomplete save, optimistic versions, errors/permission lock, boolean false/unanswered, conditional retention, start/reuse, filing eligibility, immutable signature/idempotency retry, private download paths, context replacement, size gates, malformed current-file projection, invitation version/capability and response locks |
 | `uv run --group browser python scripts/browser_applicant.py` | 16 scenario groups passed; no page errors | Real Plenix 0.58.0 CDN, synthetic API; escaped review, save, language/RTL, unsaved guards, declaration/fee/signature layout, waived filing, read-only returned resubmission, unsafe checkout, uncertain upload/readiness, boolean conditional save, automatic checklist/capability refresh, repeat add/correct/review/remove in RTL |
 | `uv run --group browser python scripts/browser_applicant_shell.py` | 9 scenario groups passed; no page errors | Proposed shell patch applied only to temporary copies; actual helper, sidebar/back, preference success/failure, 403/404 lock, multipart boundary/context/replacement, pending-scan links, Arabic layout, start/reuse/eligibility error, applicant appointment navigation |
-| `uv run --group browser python scripts/browser_applicant_api.py` | 11 scenario groups passed; no page errors | Real Django APIs against backend `6e89c22715d6b769b4398bcd14c8fa2901091e07`, isolated SQLite/synthetic accounts; start/form/repeat save/preferences, stale history, draft/file privacy, browser required uploads and downloads, clean current-file listing/capability refresh, authorized fixture waiver, browser declaration/signature/submit and real key replay, browser returned resubmit, actual status refresh |
+| `uv run --group browser python scripts/browser_applicant_api.py` | 13 scenario groups passed; no page errors | Real Django APIs against backend `6e89c22715d6b769b4398bcd14c8fa2901091e07`, isolated SQLite/synthetic accounts; start/form/repeat save/preferences, stale history, draft/file privacy, browser required uploads/downloads/correction with retained original bytes, latest synthetic scan-event gates, clean current-file listing/capability refresh, authorized fixture waiver, browser declaration/signature/submit and real key replay, browser returned resubmit, actual status refresh |
 | `uv run --group browser python scripts/browser_applicant_appointments.py` | 5 scenario groups passed; no page errors | Proposed read-contract fixtures only; private escaped instructions, exact offset times, Confirm/Reject/version, stale/uncertain lock, rescheduled version reset, cancelled controls, Arabic mobile layout, malformed/empty/unavailable listing |
 | `uv run pytest tests/test_workflows.py tests/test_input_validation.py tests/test_row_security.py tests/test_shell.py -q` | 15 passed; 37 skipped | SQLite local regression; PostgreSQL-only checks skipped, not passed |
 | `git apply --check docs/implementation/applicant/shell-integration.patch` | Passed | Clean base shared shell; governance must recheck when integrating |
@@ -56,6 +56,11 @@ return and resubmission without a new signature/fee. This uses the isolated
 backend filing actions are exercised through real HTTP requests; the browser filing
 controls now exercise actual file upload/list/download, review, declaration consent,
 signature, waived submit and returned resubmit through the visible browser UI.
+Corrected originals retain previous stored bytes and version identity while the
+applicant old-version download is denied. Synthetic technical scan events prove
+that a later pending result removes the current download and blocks checkout,
+and a later clean result restores eligibility. These events are explicit isolated
+test setup and do not represent live scanner execution.
 Status refresh displays the real submitted state and allocated synthetic case number.
 No live provider payment, antivirus, production database or deployment acceptance is claimed.
 

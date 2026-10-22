@@ -16,6 +16,7 @@ import sys
 import tarfile
 import threading
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 
 SOURCE = Path(__file__).resolve().parents[1]
 BACKEND_REF = os.environ.get("CTM_APPLICANT_BACKEND_REF", "origin/work/vm-frm-backend")
@@ -91,6 +92,14 @@ threading.Thread(target=server.serve_forever,daemon=True).start()
 BASE=f"http://127.0.0.1:{server.server_port}"
 from playwright.sync_api import sync_playwright,expect
 checks=[]
+def fixture_db(operation):
+    # Playwright's sync driver owns an event loop; keep synthetic DB setup off it.
+    def run():
+        from django.db import connections
+        try:return operation()
+        finally:connections.close_all()
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        return executor.submit(run).result()
 try:
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True)
@@ -182,7 +191,7 @@ try:
         page.get_by_role("button",name="Refresh documents",exact=True).click()
         expect(page.get_by_text("Safety checks passed",exact=False)).to_have_count(4)
         expect(page.get_by_role("button",name="Continue to secure payment",exact=True)).to_be_visible()
-        assert page.get_by_role("link",name="Download original",exact=True).count()==4
+        expect(page.get_by_role("link",name="Download original",exact=True)).to_have_count(4)
         checks.append("Real document refresh renders four clean current originals and updates checkout capability")
         file_id,content=uploaded[0]
         own_file=context.request.get(f"{BASE}/api/files/{file_id}/")
@@ -192,6 +201,37 @@ try:
         assert stranger.request.get(f"{BASE}/api/files/{file_id}/",headers={"Range":"bytes=0-3"}).status==403
         stranger.close()
         checks.append("Real multipart required-file upload and owner download work; outsider range request denied")
+        from tribunal.models import FileVersion,FileTechnicalEvent
+        from tribunal.services.files import private_path
+        original=fixture_db(lambda:FileVersion.objects.get(pk=file_id))
+        original_bytes=private_path(original.object_key).read_bytes()
+        requirement=next(r for r in requirements if r["category"]=="MC")
+        slot=page.get_by_role("region",name=requirement["label_en"],exact=True)
+        replacement=b"%PDF-1.7 corrected-synthetic-original"
+        slot.locator('input[type="file"]').set_input_files({"name":"correction.pdf","mimeType":"application/pdf","buffer":replacement})
+        with page.expect_response(lambda response:response.url==BASE+"/api/files/" and response.request.method=="POST") as received:
+            slot.get_by_role("button",name="Upload corrected original",exact=True).click()
+        assert received.value.status==201,received.value.text()
+        replacement_id=received.value.json()["id"]
+        expect(slot.get_by_role("link",name="Download original",exact=True)).to_have_attribute("href",f"/api/files/{replacement_id}/")
+        latest=fixture_db(lambda:FileVersion.objects.get(pk=replacement_id))
+        assert latest.attachment_id==original.attachment_id and latest.number==original.number+1
+        assert private_path(original.object_key).read_bytes()==original_bytes
+        assert private_path(latest.object_key).read_bytes()==replacement
+        assert context.request.get(f"{BASE}/api/files/{file_id}/").status==403
+        checks.append("Browser original correction retains original bytes/version and exposes only the current same-context original")
+        # Synthetic technical events exercise projection/download gates, not a live scanner.
+        fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=replacement_id,task="scan",result="pending"))
+        page.get_by_role("button",name="Refresh documents",exact=True).click()
+        expect(slot.get_by_text("Safety checks pending",exact=False)).to_be_visible()
+        assert slot.get_by_role("link",name="Download original",exact=True).count()==0
+        expect(page.get_by_role("button",name="Continue to secure payment",exact=True)).to_have_count(0)
+        assert context.request.get(f"{BASE}/api/files/{replacement_id}/").status==403
+        fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=replacement_id,task="scan",result="clean"))
+        page.get_by_role("button",name="Refresh documents",exact=True).click()
+        expect(slot.get_by_role("link",name="Download original",exact=True)).to_be_visible()
+        expect(page.get_by_role("button",name="Continue to secure payment",exact=True)).to_be_visible()
+        checks.append("Latest synthetic scan event governs actual current-file listing, browser readiness and byte access; pending blocks all three")
         staff=browser.new_context()
         staff.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["admin"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
         staff.request.get(BASE+"/api/session/")
