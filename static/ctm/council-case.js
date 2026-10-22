@@ -333,6 +333,32 @@
       proceedingInitial: "Initial proceeding",
       proceedingReconsideration: "Appeal or reconsideration proceeding",
       whereThingsStand: "Where the case stands",
+      caseSummary: "Case Summary",
+      caseNumber: "Case Number",
+      filingDate: "Filing Date",
+      pending: "Pending",
+      inProgress: "In progress",
+      active: "Active",
+      applicant: "Applicant",
+      respondent: "Respondent",
+      reasonForDivorce: "Reason for Divorce",
+      assignedCouncilMember: "Assigned Council Member",
+      lastHearingDate: "Last Hearing Date",
+      children: "Children",
+      noChildren: "No children recorded",
+      keyDates: "Key Dates",
+      decreeIssued: "Decree Issued",
+      councilReviewDecision: "Council Review & Decision",
+      recommendationPending: "Recommendation Pending",
+      awaitingCouncilReview: "Awaiting council review and decision.",
+      awaitingRecommendation: "Awaiting recommendation from {member}.",
+      current: "Current",
+      upcoming: "Upcoming",
+      completed: "Completed",
+      caseFiled: "Case Filed",
+      caseFiledDescription: "Application received and logged.",
+      caseAssigned: "Assigned to Council Member",
+      hearing: "Hearing",
       pendingRequests: "Requests awaiting a response",
       draftRequests: "Draft requests not yet sent",
       decreeIssuedState: "Decree issued",
@@ -605,6 +631,32 @@
       proceedingInitial: "الإجراء الأول",
       proceedingReconsideration: "إجراء استئناف أو إعادة نظر",
       whereThingsStand: "وضع القضية الحالي",
+      caseSummary: "ملخص القضية",
+      caseNumber: "رقم القضية",
+      filingDate: "تاريخ التقديم",
+      pending: "قيد الانتظار",
+      inProgress: "قيد التنفيذ",
+      active: "نشطة",
+      applicant: "مقدم الطلب",
+      respondent: "الطرف الآخر",
+      reasonForDivorce: "سبب الطلاق",
+      assignedCouncilMember: "عضو المجلس المكلّف",
+      lastHearingDate: "تاريخ آخر جلسة",
+      children: "الأبناء",
+      noChildren: "لا يوجد أبناء مسجلون",
+      keyDates: "التواريخ المهمة",
+      decreeIssued: "صدور المرسوم",
+      councilReviewDecision: "مراجعة المجلس والقرار",
+      recommendationPending: "التوصية قيد الانتظار",
+      awaitingCouncilReview: "بانتظار مراجعة المجلس والقرار.",
+      awaitingRecommendation: "بانتظار توصية من {member}.",
+      current: "الحالي",
+      upcoming: "قادم",
+      completed: "مكتمل",
+      caseFiled: "تم تقديم القضية",
+      caseFiledDescription: "تم استلام الطلب وتسجيله.",
+      caseAssigned: "تم التعيين لعضو المجلس",
+      hearing: "جلسة استماع",
       pendingRequests: "طلبات في انتظار الرد",
       draftRequests: "مسودات طلبات لم تُرسل",
       decreeIssuedState: "صدرت الشهادة",
@@ -2777,13 +2829,21 @@
   }
 
   // ---------- Case summary ----------
-  function summaryFacts(record, requests, versions) {
+  function summaryDate(value, lang) {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium" }).format(date);
+  }
+
+  function summaryFacts(record, requests, versions, audit) {
     const latest = Array.isArray(versions) && versions.length ? [...versions].sort((a, b) => b.number - a.number)[0] : null;
     return {
       pendingRequests: (requests || []).filter((r) => r.state === "sent" && !["medical", "psychological"].includes(r.kind)).length,
       draftRequests: (requests || []).filter((r) => r.state === "draft" && !["medical", "psychological"].includes(r.kind)).length,
+      audit: audit || [],
       decision: latest
-        ? { type: latest.type, approved: Boolean(latest.approval), issued: Boolean(latest.decree && latest.decree.issued_at), number: latest.number }
+        ? { type: latest.type, approved: Boolean(latest.approval), issued: Boolean(latest.decree && latest.decree.issued_at), issuedAt: latest.decree?.issued_at || null, number: latest.number }
         : null,
       openProceeding: openProceeding(record),
     };
@@ -2800,9 +2860,10 @@
     const [state, retry] = base.useLoad(
       () =>
         api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)).then(async (record) => {
-          const [requests, members] = await Promise.all([
+          const [requests, members, audit] = await Promise.all([
             api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
             record.can_assign ? api("/api/council/members/") : Promise.resolve({ items: [] }),
+            api(`/api/cases/${encodeURIComponent(caseId)}/audit/`),
           ]);
           const proceeding = openProceeding(record) || [...(record.proceedings || [])].sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0];
           let versions = null;
@@ -2813,7 +2874,7 @@
               if (error.status !== 405) throw error;
             }
           }
-          return { record, members: members.items, facts: summaryFacts(record, requests.items, versions) };
+          return { record, members: members.items, facts: summaryFacts(record, requests.items, versions, audit.items) };
         }),
       [caseId],
     );
@@ -2827,6 +2888,45 @@
         : record.assigned_member || null;
     const eligibleMembers = base.assignableMembers(members);
     const presidents = base.assignmentAuthorizers(members);
+    const summary = record.summary || {};
+    const applicant = record.parties.find((party) => party.slot === "A") || record.parties[0] || null;
+    const respondent = record.parties.find((party) => party.slot === "B") || record.parties[1] || null;
+    const personPill = (party) => {
+      if (!party) return "—";
+      const gender = party.gender === "M" ? "male" : party.gender === "F" ? "female" : undefined;
+      return gender ? h(P.DataPill, { gender, fill: true }, party.name) : h(P.DataPill, { person: true, fill: true }, party.name);
+    };
+    const latestAudit = (action) => [...facts.audit].filter((row) => row.action === action).sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)))[0];
+    const summaryTimeline = [];
+    const timelineBadge = (tone, label) => h(P.Badge, { tone, size: "sm" }, label);
+    summaryTimeline.push({
+      id: "decree", title: t("decreeIssued"), time: facts.decision?.issued ? summaryDate(facts.decision.issuedAt, lang) : t("pending"),
+      badge: timelineBadge(facts.decision?.issued ? "success" : "neutral", facts.decision?.issued ? t("completed") : t("upcoming")),
+    });
+    summaryTimeline.push({
+      id: "decision", title: t("councilReviewDecision"), time: facts.decision?.approved ? t("approved") : t("pending"),
+      description: facts.decision?.approved ? null : t("awaitingCouncilReview"),
+      badge: timelineBadge(facts.decision?.approved ? "success" : "neutral", facts.decision?.approved ? t("completed") : t("upcoming")),
+    });
+    if (record.status === "open") summaryTimeline.push({
+      id: "recommendation", title: t("recommendationPending"), time: t("inProgress"),
+      description: manager ? t("awaitingRecommendation", { member: manager }) : bt("unassigned"),
+      badge: timelineBadge("success", t("current")),
+    });
+    const hearing = latestAudit("case_heard");
+    if (hearing) summaryTimeline.push({
+      id: `hearing-${hearing.id}`, title: t("hearing"), time: summaryDate(hearing.timestamp, lang), description: auditLabel(hearing.action, lang), badge: timelineBadge("active", t("completed")),
+    });
+    const assigned = latestAudit("case_assigned");
+    if (assigned) summaryTimeline.push({
+      id: `assigned-${assigned.id}`, title: t("caseAssigned"), time: summaryDate(assigned.timestamp, lang),
+      description: manager || null,
+      badge: timelineBadge("active", t("completed")),
+    });
+    const filed = latestAudit("application_submitted");
+    summaryTimeline.push({
+      id: "filed", title: t("caseFiled"), time: summaryDate(filed?.timestamp || summary.filing_date, lang), description: t("caseFiledDescription"), badge: timelineBadge("active", t("completed")),
+    });
     const recordAssignment = async () => {
       if (!assignment?.memberId || !assignment.presidentId) return;
       setAssignmentPending(true);
@@ -2849,12 +2949,18 @@
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, record.number),
       h(
-        P.PropertyList,
-        null,
-        h(P.PropertyList.Item, { label: bt("statusLabel") }, h(P.Badge, { tone: record.status === "open" ? "active" : "neutral" }, bt(record.status === "open" ? "open" : "closed"))),
+        P.Panel,
+        { icon: "document", title: t("caseSummary") },
+        h(P.PropertyList, { columns: 3 },
+        h(P.PropertyList.Item, { label: t("caseNumber") }, h(P.Text, { variant: "data" }, record.number)),
+        h(P.PropertyList.Item, { label: t("filingDate") }, summaryDate(summary.filing_date, lang)),
+        h(P.PropertyList.Item, { label: bt("statusLabel") }, h(P.Badge, { tone: record.status === "open" ? "active" : "neutral" }, record.status === "open" ? t("active") : bt("closed"))),
+        h(P.PropertyList.Item, { label: t("applicant") }, personPill(applicant)),
+        h(P.PropertyList.Item, { label: t("respondent") }, personPill(respondent)),
+        h(P.PropertyList.Item, { label: t("reasonForDivorce") }, summary.reason || "—"),
         h(
           P.PropertyList.Item,
-          { label: bt("assigned") },
+          { label: t("assignedCouncilMember") },
           !manager && record.can_assign
             ? h(P.Select, {
                 value: assignment?.memberId || "",
@@ -2869,29 +2975,17 @@
                   ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id })),
                 ],
               })
-            : manager || bt("unassigned"),
+            : manager ? h(P.DataPill, { person: true, fill: true }, manager) : bt("unassigned"),
         ),
-        h(P.PropertyList.Item, { label: t("partiesTitle") }, record.parties.map((p) => p.name).join(" · ") || t("noParties")),
-        facts.openProceeding
-          ? h(P.PropertyList.Item, { label: t("currentProceeding") }, t(facts.openProceeding.kind === "initial" ? "proceedingInitial" : "proceedingReconsideration"))
-          : null,
+        h(P.PropertyList.Item, { label: t("marriageDuration") }, marriageDuration(record.marriage?.church_marriage_date, lang)),
+        h(P.PropertyList.Item, { label: t("lastHearingDate") }, summaryDate(summary.last_hearing_date, lang)),
+        h(P.PropertyList.Item, { label: t("children") }, summary.children?.length ? summary.children.join(" · ") : t("noChildren")),
+        ),
       ),
       h(
         P.Panel,
-        { icon: "circle-info", title: t("whereThingsStand") },
-        h(
-          P.PropertyList,
-          null,
-          h(P.PropertyList.Item, { label: t("pendingRequests") }, String(facts.pendingRequests)),
-          h(P.PropertyList.Item, { label: t("draftRequests") }, String(facts.draftRequests)),
-          h(
-            P.PropertyList.Item,
-            { label: t("decisionVoting") },
-            facts.decision
-              ? `${typeLabel(facts.decision.type)} · ${t("version")} ${facts.decision.number} · ${t(facts.decision.issued ? "decreeIssuedState" : facts.decision.approved ? "approved" : "notApproved")}`
-              : t("noDecision"),
-          ),
-        ),
+        { icon: "calendar", title: t("keyDates") },
+        h(P.Timeline, { label: t("keyDates"), items: summaryTimeline }),
       ),
       assignment
         ? h(

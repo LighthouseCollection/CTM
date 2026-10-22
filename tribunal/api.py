@@ -537,6 +537,29 @@ def _submitted_marriage(answers, case):
     }
 
 
+def _case_summary(case, application):
+    """Case-summary fields come from the accepted filing and recorded hearings."""
+    answers = _submitted_answers(application)
+    grounds = answers.get("grounds") or answers.get("reason") or []
+    if isinstance(grounds, str):
+        grounds = [grounds]
+    children = answers.get("children") or []
+    if isinstance(children, str):
+        children = [children]
+    last_hearing = (
+        m.Hearing.objects.filter(agenda__case=case)
+        .select_related("agenda__session")
+        .order_by("-agenda__session__starts_at", "-created_at", "-id")
+        .first()
+    )
+    return {
+        "filing_date": application.submitted_at.isoformat() if application and application.submitted_at else case.created_at.isoformat(),
+        "reason": "; ".join(str(value) for value in grounds if value),
+        "children": [str(value) for value in children if value],
+        "last_hearing_date": last_hearing.agenda.session.starts_at.isoformat() if last_hearing and last_hearing.agenda.session.starts_at else None,
+    }
+
+
 def _application_photo_url(application, category):
     if not application:
         return None
@@ -585,7 +608,7 @@ def _council_party_profiles(case, parties):
 def case_detail(request, case_id):
     from tribunal.projections import case_capabilities
     case = case_for(request.user, case_id)
-    parties = list(case.parties.all().order_by("slot", "id"))
+    parties = list(case.parties.select_related("person").all().order_by("slot", "id"))
     council_profiles = _council_party_profiles(case, parties) if request.user.role != "applicant" else {}
     marriage_application = (
         m.Application.objects.filter(case=case, kind="petition", submitted_at__isnull=False)
@@ -596,6 +619,8 @@ def case_detail(request, case_id):
     party_data = [encoded(
         p,
         name=p.name,
+        slot=p.slot,
+        gender=p.person.gender if p.person_id else None,
         is_self=p.account_id == request.user.pk,
         can_receive=p.account_id is not None,
         reference=p.reference if p.account_id == request.user.pk or request.user.role != "applicant" else None,
@@ -618,6 +643,7 @@ def case_detail(request, case_id):
             or case.assigned_member_id == request.user.pk,
             parties=party_data,
             marriage=_submitted_marriage(_submitted_answers(marriage_application), case),
+            summary=_case_summary(case, marriage_application),
             proceedings=[
                 encoded(p, kind=p.kind, status=p.status, sequence=p.sequence)
                 for p in case.proceedings.all()

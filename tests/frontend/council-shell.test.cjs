@@ -136,6 +136,21 @@ test("case back navigation retains the workspace that opened the case", () => {
   assert.match(app, /page: "session", selection, labelKey: "backTribunalSession"/);
 });
 
+test("case summary shows case details and recorded key-date milestones", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const api = fs.readFileSync("tribunal/api.py", "utf8");
+  assert.match(councilCase, /caseSummary: "Case Summary"/);
+  assert.match(councilCase, /reasonForDivorce: "Reason for Divorce"/);
+  assert.match(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}/);
+  assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
+  assert.match(councilCase, /latestAudit\("case_heard"\)/);
+  assert.match(councilCase, /latestAudit\("case_assigned"\)/);
+  assert.match(councilCase, /latestAudit\("application_submitted"\)/);
+  assert.match(api, /def _case_summary\(case, application\):/);
+  assert.match(api, /summary=_case_summary\(case, marriage_application\)/);
+  assert.match(api, /gender=p\.person\.gender if p\.person_id else None/);
+});
+
 test("case navigation groups notes and communications outside Case Overview", () => {
   assert.match(app, /notes: "Notes"/);
   assert.match(app, /caseCollaboration: "Notes & Communications"/);
