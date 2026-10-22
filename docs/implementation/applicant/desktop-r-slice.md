@@ -130,3 +130,13 @@ preservation of unknown fields, optimistic versions, stale/error recovery and la
 switching without losing input. Real pinned-CDN browser checks cover accessible
 labels, review/save, EN/AR RTL, runtime `[style]` and horizontal overflow. Synthetic
 API/CDN UI checks do not establish production identity or PostgreSQL readiness.
+
+
+## Released decree panel prepared
+
+`applicant-decrees.js` supplies a separate applicant case panel through the proposed
+shell patch. It displays explicit own active release metadata and authorized signed
+PDF actions with Plenix controls. No filing-order or closed-case entitlement guess
+is made. Refresh clears stale links; denied or malformed responses show unavailable.
+The required own case release-list extension is not supplied by current backend.
+Fixture checks cover presentation only; server byte-route revocation remains pending.

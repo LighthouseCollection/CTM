@@ -42,7 +42,7 @@ and index suppression, private intermediate corrections, and obsolete queued-ale
 discard with EmailMessage.send mocked and never called. Live search service, live
 mail delivery and PostgreSQL RLS remain separate acceptance surfaces.
 
-All28 real API/browser scenario groups pass in the default mode. An explicitly
+All29 real API/browser scenario groups pass in the default mode. An explicitly
 selected baseline-only mode (`CTM_APPLICANT_ACCEPTANCE=baseline`) omits this privacy
 scenario and is not full returned-privacy acceptance. No shared backend or protected
 specification changes are made in the applicant stream.
@@ -56,3 +56,11 @@ and403 on response; applicant council-session read is403. The projection does no
 include other-party or council agenda details. This replaces the former missing-read
 dependency; PostgreSQL invitation policies and real notification delivery remain
 separate acceptance surfaces.
+
+
+Latest complete API/browser rerun: backend
+`f0e21b4e0b5c76f1e99a4135c3701ea3e39a74d3`, 29 scenario groups passed.
+The added check verifies the missing own decree release-list projection cannot
+expose certificate links. Supplement/decree successful read/write flows remain
+proposed-contract fixtures; no real decree issuance/release/revocation acceptance.
+Earlier per-feature evidence and saved privacy artifact retain their recorded SHAs.

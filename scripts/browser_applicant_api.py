@@ -550,6 +550,9 @@ try:
         page.get_by_role("navigation").get_by_role("button",name="Past cases",exact=True).click()
         page.get_by_text(current["case_number"],exact=True).click()
         expect(page.get_by_role("button",name="Start or resume appeal",exact=True)).to_be_visible()
+        expect(page.get_by_text("Released certificates are unavailable. Refresh or contact the tribunal.",exact=True)).to_be_visible()
+        assert page.get_by_role("link",name="View or download signed PDF",exact=True).count()==0
+        checks.append("Current own case read without released decree list cannot expose certificate links")
         page.get_by_role("button",name="Start or resume appeal",exact=True).click()
         expect(page.get_by_label("New information for consideration",exact=False)).to_be_visible()
         appeal=next(row for row in context.request.get(BASE+"/api/applications/").json()["items"] if row["kind"]=="appeal")

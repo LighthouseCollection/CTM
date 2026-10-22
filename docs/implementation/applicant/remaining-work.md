@@ -8,7 +8,7 @@ owners; applicant PR #5 remains draft.
 | Order | Remaining task | Next concrete action / dependency |
 | --- | --- | --- |
 | 1 | Pending appeal supplements | UI prepared with review, safe evidence selection and uncertain-response locking. Backend integration remains pending own supplement history and authoritative `can_supplement`. Existing POST additions accepts text/file IDs but has no idempotency key. |
-| 2 | Released decree access | Obtain own actively released decree read projection, then show authorized PDF links. Never infer recipient entitlement from filing order; revocation must cover preview/range/download. |
+| 2 | Released decree access | Read-only UI prepared; backend own actively released decree projection and real revocation acceptance remain pending. Never infer recipient entitlement from filing order; revocation must cover preview/range/download. |
 | 3 | Applicant request responses and professional release | Obtain own response capability, bound question/release definitions and signed scope projection. Keep drafts/interviews/other spouse requests private; no signature or institutional wording invented. |
 | 4 | Checkout recovery | Own pending candidate/original-attestation/resume contract is still missing. Recover an existing attempt without a new charge or signature; do not infer success from return URLs. |
 | 5 | Draft deletion and withdrawal controls | Add authoritative action capabilities and explicit confirmation UI. Returned filings must never use draft deletion; joint withdrawal and shared claim closure must follow owner decisions. |

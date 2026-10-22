@@ -213,3 +213,22 @@ current files with exact authorized download paths can be selected. Review prece
 POST; any uncertain response freezes that local attempt. Authoritative refresh and
 explicit clearing are required before starting another entry. The current real-API
 test verifies missing-contract controls stay disabled; append success is fixture-only.
+
+## Proposed own released decree read
+
+The prepared case panel reads GET `/api/cases/{id}/` and requires an explicit
+`released_decrees` array. This extension is absent at backend f0e21b4; absence is
+unavailable, never an empty release list or a grant inferred from case closure.
+Proposed row fields: UUID `id`, nonempty `reference`, `language` (`en`, `ar`,
+`bilingual`), offset-aware `released_at`, and `signed_file` with UUID `id`, `name`,
+`scan_state:"clean"` and exact `/api/files/{id}/` `download_url`. An empty array
+means the server confirms no currently released certificates for this account.
+
+The backend must filter to the authenticated recipient's latest active release,
+exclude revoked/unreleased certificates and other recipients' release history,
+and authorize the exact stored signed PDF on every full, range, HEAD and preview
+request. Issuance, entitlement, notice receipt and appeal state alone grant no PDF
+access. Retained links must fail after revocation. Existing authorized_file checks
+latest recipient release, but transport/cache/revocation acceptance is not proven
+by the new UI fixtures. No replacement, signing or release write is exposed here.
+Refresh clears old links before fetching; failed/malformed reads clear them too.
