@@ -1,3 +1,13 @@
+## Private draft read / integrated returned-filing checkpoint
+
+Applicant89072dd reports seven focused physical-login PostgreSQL groups pass on
+exact combinedb3de51e (backend48b80c4); governance reports0040/0041 applied to its test
+server. New backend private-draft regressions cover four read routes, all council
+roles and unrelated applicants, matching hidden/nonexistent404 bodies and no list
+leak. No application/policy/migration change. Full isolated backend:673 passed,1
+skipped. See private-draft-read-contract.md for attributed evidence, remaining QA,
+broader runner reconciliation and historical B01 assessment. No merge/deploy by us.
+
 ## Account administration / returned resubmission continuation
 
 Completed account directory/detail/status/history, status CAS and session revocation,

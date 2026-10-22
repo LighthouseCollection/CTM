@@ -5,7 +5,7 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **669 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+Validation: **673 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
 reapply through0041. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
@@ -53,6 +53,17 @@ notice proofs;0041 corrects bound returned-petition resubmission with optional o
 corrected DOB. Current adapter:63 domain models,95 routes,63 forced-RLS tables.
 [Contract and remaining work](account-administration-contract.md).
 
+## Integrated fix and private draft contract checkpoint
+
+Governance reports48b80c4 integrated/deployed for testing asb3de51e with0040/0041.
+Applicant89072dd reports all seven focused physical-login PostgreSQL groups pass,
+including the exact returned correction failure. Backend48b80c4 hosted checks pass.
+A subsequent broader strict403 expectation receives the intended private-resource404;
+four app SQL-session regressions now cover detail/history/files/payments, all council
+roles and unrelated applicants, identical hidden/absent bodies, list isolation and
+private cache headers. No policy/API/migration change is needed for that oracle.
+[Evidence, contract and B01 evaluation](private-draft-read-contract.md).
+
 ## Unfinished
 
 UI's other requested backend contracts remain unfinished: approved own-profile/
@@ -83,9 +94,9 @@ completes the requested reconciliation/documentation, not those future migration
 
 ## Awaiting acceptance
 
-- Governance reviews and serially integrates this PR's exact delivered SHA.
-- UI binds list continuation; applicant independently reruns the actual physical-login
-  browser journey and preserves its previous403/404 and stall findings.
+- Governance reported serial integration of48b80c4 asb3de51e; subsequent backend test/documentation checkpoints still require review.
+- UI binds list continuation; applicant focused physical-login rerun passed onb3de51e.
+  Its broader suite must reconcile the private-draft404 oracle and continue, preserving prior findings.
 - Independent non-owner/integration/browser acceptance against that successor SHA;
   QA issue #15 preserves existing findings and follows council's unsaved-text fix.
 - Institution accepts schema equivalence, operational readiness and live-service
