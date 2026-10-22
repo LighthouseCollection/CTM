@@ -32,6 +32,42 @@ class Immutable(Root):
         abstract = True
 
 
+class Tribunal(Root):
+    code = models.CharField(max_length=80, unique=True)
+    name_en = models.CharField(max_length=250)
+    name_ar = models.CharField(max_length=250, blank=True, null=True)
+    timezone = models.CharField(max_length=80, default="America/Los_Angeles")
+
+    class Meta:
+        db_table = "tribunals"
+        constraints = [models.CheckConstraint(condition=Q(timezone="America/Los_Angeles"), name="tribunal_la_timezone")]
+
+
+class StaffMembership(Root):
+    account = models.ForeignKey("Account", on_delete=models.PROTECT, related_name="staff_memberships")
+    tribunal = models.ForeignKey(Tribunal, on_delete=models.PROTECT)
+    appointed_by = models.ForeignKey("Account", on_delete=models.PROTECT, related_name="staff_appointments")
+    active_from = models.DateTimeField(default=timezone.now)
+    active_until = models.DateTimeField(null=True)
+
+    class Meta:
+        db_table = "staff_memberships"
+
+
+class StaffRole(Root):
+    membership = models.ForeignKey(StaffMembership, on_delete=models.PROTECT, related_name="roles")
+    role = models.CharField(max_length=12)
+    granted_by = models.ForeignKey("Account", on_delete=models.PROTECT, related_name="staff_role_grants")
+    revoked_at = models.DateTimeField(null=True)
+
+    class Meta:
+        db_table = "staff_roles"
+        constraints = [
+            models.CheckConstraint(condition=Q(role__in=["admin", "secretary", "president", "member"]), name="staff_role_valid"),
+            models.UniqueConstraint(fields=["membership", "role"], condition=Q(revoked_at__isnull=True), name="staff_role_current"),
+        ]
+
+
 class Person(Root):
     canonical = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.PROTECT
@@ -210,6 +246,7 @@ class Application(Root):
     proceeding = models.ForeignKey(Proceeding, null=True, on_delete=models.PROTECT)
     party = models.ForeignKey(Party, null=True, on_delete=models.PROTECT)
     kind = models.CharField(max_length=10, default="petition")
+    origin = models.CharField(max_length=30, default="portal")
     status = models.CharField(max_length=15, default="draft")
     current_version = models.PositiveIntegerField(default=0)
     questionnaire = models.ForeignKey(
@@ -230,6 +267,11 @@ class Application(Root):
                 fields=["owner", "case"],
                 condition=Q(kind="appeal", status__in=["draft", "submitted"]),
                 name="one_pending_appeal",
+            ),
+            models.UniqueConstraint(
+                fields=["owner", "case"],
+                condition=Q(origin="closed_case_intake", status__in=["draft", "submitted"]),
+                name="one_pending_closed_intake",
             ),
         ]
 
@@ -289,6 +331,7 @@ class PaymentEvent(Immutable):
     amount_minor = models.IntegerField()
     currency = models.CharField(max_length=3)
     provider_reference = models.CharField(max_length=250)
+    payment_reference = models.CharField(max_length=250, blank=True, default="", db_index=True)
 
 
 class CheckoutIntent(Root):
@@ -297,8 +340,11 @@ class CheckoutIntent(Root):
     attestation = models.JSONField(default=dict)
     manifest = models.JSONField(default=list)
     provider_reference = models.CharField(max_length=250, unique=True, null=True)
+    payment_reference = models.CharField(max_length=250, blank=True, default="", db_index=True)
     state = models.CharField(max_length=25, default="pending")
     failure = models.CharField(max_length=250, blank=True)
+    checkout_url = models.TextField(blank=True, default="")
+    checkout_expires_at = models.DateTimeField(null=True)
 
 
 class CompletenessReview(Immutable):
@@ -386,6 +432,9 @@ class PendingPartyLink(Root):
     state = models.CharField(max_length=15, default="pending")
     activated_party = models.ForeignKey("Party", null=True, on_delete=models.PROTECT)
 
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["case", "email"], condition=Q(state="pending"), name="one_pending_party_email")]
+
 
 class HistoricalWorkspace(Root):
     actor = models.ForeignKey(Account, on_delete=models.PROTECT)
@@ -430,7 +479,9 @@ class Outbox(Root):
     payload = models.JSONField(default=dict)
     due_at = models.DateTimeField(default=timezone.now)
     delivered_at = models.DateTimeField(null=True)
+    discarded_at = models.DateTimeField(null=True)
     lease_until = models.DateTimeField(null=True)
+    lease_token = models.UUIDField(null=True)
     attempts = models.PositiveIntegerField(default=0)
     last_error = models.CharField(max_length=250, blank=True)
 
@@ -594,6 +645,9 @@ class Recording(Root):
     file = models.OneToOneField(FileVersion, on_delete=models.PROTECT)
     notice_recorded = models.BooleanField(default=False)
     finalized_at = models.DateTimeField(null=True)
+    captured_by = models.ForeignKey(Account, null=True, on_delete=models.PROTECT)
+    duration_ms = models.PositiveBigIntegerField(null=True)
+    recording_notice = models.JSONField(default=dict)
 
 
 class ProcessingRun(Root):
@@ -602,11 +656,12 @@ class ProcessingRun(Root):
     state = models.CharField(max_length=15, default="queued")
     engine = models.CharField(max_length=100, blank=True)
     error = models.CharField(max_length=250, blank=True)
+    attempt = models.PositiveIntegerField(default=1)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["file", "purpose"], name="file_processing_identity"
+                fields=["file", "purpose", "attempt"], name="file_processing_attempt"
             )
         ]
 
@@ -710,6 +765,10 @@ class AppealSupplement(Immutable):
     actor = models.ForeignKey(Account, on_delete=models.PROTECT)
     text = models.TextField()
     manifest = models.JSONField(default=list)
+    idempotency_key = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["application", "idempotency_key"], name="supplement_replay_identity")]
 
 
 class AppealDisposition(Immutable):
@@ -731,6 +790,11 @@ class Message(Immutable):
     file_links = models.JSONField(default=list)
     email_timing = models.CharField(max_length=25, default="immediate")
     session = models.ForeignKey(CouncilSession, null=True, on_delete=models.PROTECT)
+    session_snapshot = models.JSONField(default=dict)
+    idempotency_key = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["case", "sender", "idempotency_key"], name="message_replay_identity")]
 
 
 class MessageRecipient(Root):
@@ -750,6 +814,36 @@ class TestimonyAppointment(Root):
     instructions = models.TextField()
     version = models.PositiveIntegerField(default=1)
     state = models.CharField(max_length=15, default="invited")
+
+
+class TestimonyAppointmentVersion(Immutable):
+    __test__ = False
+    appointment = models.ForeignKey(TestimonyAppointment, on_delete=models.PROTECT, related_name="versions")
+    version = models.PositiveIntegerField()
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField()
+    instructions = models.TextField()
+    attendance_location = models.JSONField(default=dict)
+    cancelled = models.BooleanField(default=False)
+    actor = models.ForeignKey(Account, on_delete=models.PROTECT)
+    request_id = models.UUIDField(null=True)
+
+    class Meta:
+        db_table = "testimony_appointment_versions"
+        constraints = [models.UniqueConstraint(fields=["appointment", "version"], name="testimony_invitation_version")]
+
+
+class AgendaTransferEvent(Immutable):
+    case = models.ForeignKey(Case, on_delete=models.PROTECT)
+    from_session_snapshot = models.JSONField()
+    to_session = models.ForeignKey(CouncilSession, on_delete=models.PROTECT)
+    destination_item = models.ForeignKey(AgendaItem, on_delete=models.PROTECT)
+    reason = models.TextField()
+    actor = models.ForeignKey(Account, on_delete=models.PROTECT)
+    request_id = models.UUIDField(null=True)
+
+    class Meta:
+        db_table = "agenda_transfer_events"
 
 
 class AppointmentResponse(Immutable):

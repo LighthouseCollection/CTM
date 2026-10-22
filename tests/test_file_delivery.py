@@ -9,7 +9,13 @@ PAYLOAD = b"0123456789abcdef"
 @pytest.fixture
 def delivery(client, ready_application, settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path
-    file = ready_application.attachments.get(category="MC").versions.get()
+    import hashlib
+    from tribunal.models import FileVersion, FileTechnicalEvent
+    attachment = ready_application.attachments.get(category="MC")
+    file = FileVersion.objects.create(attachment=attachment, number=2,
+        object_key=f"delivery/{attachment.pk}", original_name="source.pdf", display_name="source.pdf",
+        mime_type="application/pdf", byte_count=len(PAYLOAD), sha256=hashlib.sha256(PAYLOAD).hexdigest(), actor=ready_application.owner)
+    FileTechnicalEvent.objects.create(file=file, task="scan", result="clean")
     path = private_path(file.object_key)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(PAYLOAD)

@@ -24,6 +24,7 @@ from tribunal.policy import (
     case_for,
 )
 from tribunal.services.common import audit
+from tribunal.validation import VersionConflict
 
 
 def endpoint(methods=("GET",)):
@@ -43,6 +44,8 @@ def endpoint(methods=("GET",)):
                 )
             except (ObjectDoesNotExist, ValueError, TypeError, KeyError):
                 return JsonResponse({"error": "resource_or_input_invalid"}, status=404)
+            except VersionConflict as exc:
+                return JsonResponse({"error": "version_conflict", "current_version": exc.current_version}, status=409)
             except ValidationError as exc:
                 return JsonResponse(
                     {"error": "validation", "messages": exc.messages}, status=422
@@ -77,16 +80,31 @@ def encoded(obj, **extra):
     return {"id": str(obj.pk), **extra}
 
 
-def application_data(app):
+def filing_version(data):
+    version = data.get("expected_version")
+    if type(version) is not int or version < 0:
+        raise ValidationError("expected_version must be a non-negative integer.")
+    return version
+
+
+def application_data(app, actor):
+    from tribunal.services.filing_privacy import revision_visible
+    from tribunal.services.closed_filings import CLOSED_INTAKE, require_new_information
+
     revision = app.revisions.filter(number=app.current_version).first()
+    if actor.pk != app.owner_id and (revision is None or not revision_visible(revision)):
+        formal = app.submissions.select_related("revision").order_by("-created_at", "-id").first()
+        revision = formal.revision if formal else None
     fee = getattr(app, "fee", None)
-    return encoded(
+    result = encoded(
         app,
         kind=app.kind,
+        origin=app.origin,
+        requires_new_information=app.origin == CLOSED_INTAKE,
         status=app.status,
         case_id=str(app.case_id) if app.case_id else None,
         case_number=app.case.number if app.case else None,
-        version=app.current_version,
+        version=revision.number if revision else 0,
         answers=revision.answers if revision else {},
         fee={
             "amount_minor": fee.amount_minor,
@@ -96,6 +114,81 @@ def application_data(app):
         if fee
         else None,
     )
+    if app.owner_id == actor.pk:
+        from tribunal.services.filing_actions import own_filing_actions
+        from tribunal.services.payments import own_pending_checkout
+        result.update(own_filing_actions(app, actor))
+        result.update(own_pending_checkout(app, actor))
+        from tribunal.services.applications import (
+            required_documents,
+            validate_petition,
+            validate_filing_declaration,
+        )
+        from tribunal.validation import validate_answers
+
+        questionnaire = app.questionnaire
+        result["questionnaire"] = (
+            encoded(
+                questionnaire,
+                version=questionnaire.number,
+                published=questionnaire.published,
+                definition=questionnaire.definition,
+                declaration_en=questionnaire.declaration_en,
+                declaration_ar=questionnaire.declaration_ar,
+            )
+            if questionnaire else None
+        )
+        editable = app.status not in {"withdrawn", "expired", "deleted"}
+        if app.submitted_at:
+            editable = bool(
+                editable and app.kind == "petition" and app.proceeding
+                and app.proceeding.status == "open" and app.case.status == "open"
+            )
+        ready = bool(
+            editable and actor.email_verified and not app.duplicate_hold
+            and app.status in {"draft", "returned"} and revision and questionnaire
+        )
+        if ready:
+            try:
+                validate_answers(questionnaire, revision.answers)
+                if app.kind == "petition":
+                    validate_petition(revision.answers)
+                elif not revision.answers.get("new_information"):
+                    ready = False
+                require_new_information(app, revision.answers)
+                required_documents(app, revision.answers)
+                if not app.submitted_at:
+                    validate_filing_declaration(app)
+            except ValidationError:
+                ready = False
+        satisfied = bool(fee and fee.status in {"paid", "waived", "historical_exempt"})
+        returned = bool(app.status == "returned" and app.submitted_at)
+        unresolved = m.CheckoutIntent.objects.filter(application=app, state__in=["processing", "paid", "needs_review"]).exists()
+        stale_checkout = m.CheckoutIntent.objects.filter(application=app, state="pending").exclude(revision=revision).exists()
+        latest_review = m.CompletenessReview.objects.filter(
+            submission__application=app
+        ).order_by("-created_at", "-id").first()
+        result.update(
+            can_edit=editable,
+            can_checkout=bool(
+                ready and not unresolved and not stale_checkout
+                and not m.CheckoutIntent.objects.filter(application=app, state="pending").exists()
+                and app.status == "draft" and fee and fee.status == "due"
+            ),
+            can_submit=bool(ready and satisfied and not returned and not unresolved),
+            can_resubmit=bool(ready and satisfied and returned and not unresolved),
+            duplicate_hold=app.duplicate_hold,
+            return_instructions=(
+                latest_review.instructions
+                if returned and latest_review and latest_review.result == "reject"
+                else ""
+            ),
+        )
+    else:
+        from tribunal.projections import staff_application_data
+
+        result.update(staff_application_data(app, actor))
+    return result
 
 
 @require_GET
@@ -154,11 +247,20 @@ def session(request):
 @endpoint(("GET", "POST"))
 def applications(request):
     if request.method == "GET":
+        qs = visible_applications(request.user)
+        if request.GET.get("state") == "awaiting_review":
+            if request.user.role == "applicant":
+                raise PermissionDenied("Council completeness queue required.")
+            qs = qs.filter(kind="petition", status="submitted").exclude(origin="closed_case_intake")
+        if request.GET.get("state") == "council_consideration":
+            staff(request.user)
+            from django.db.models import Q
+            qs = qs.filter(status="submitted").filter(Q(kind="appeal") | Q(origin="closed_case_intake"))
         return JsonResponse(
             {
                 "items": [
-                    application_data(x)
-                    for x in visible_applications(request.user)[:100]
+                    application_data(x, request.user)
+                    for x in qs.order_by("created_at", "pk")[:100]
                 ]
             }
         )
@@ -168,13 +270,15 @@ def applications(request):
     result = start_application(
         request.user, data.get("case_id"), data.get("kind", "petition")
     )
-    return JsonResponse(application_data(result), status=201)
+    return JsonResponse(application_data(result, request.user), status=201)
 
 
 @endpoint(("GET", "POST"))
 def application(request, app_id):
     if request.method == "GET":
-        return JsonResponse(application_data(application_for(request.user, app_id)))
+        return JsonResponse(
+            application_data(application_for(request.user, app_id), request.user)
+        )
     from tribunal.services.applications import save_answers
 
     data = body(request)
@@ -187,6 +291,7 @@ def application(request, app_id):
 @endpoint()
 def answer_history(request, app_id):
     app = application_for(request.user, app_id)
+    from tribunal.services.filing_privacy import revision_visible
     return JsonResponse(
         {
             "items": [
@@ -197,7 +302,8 @@ def answer_history(request, app_id):
                     actor=f"{x.actor.first_name} {x.actor.last_name}".strip(),
                     timestamp=x.created_at.isoformat(),
                 )
-                for x in app.revisions.select_related("actor").order_by("number")
+                for x in app.revisions.select_related("actor", "application").order_by("number")
+                if app.owner_id == request.user.pk or revision_visible(x)
             ]
         }
     )
@@ -209,7 +315,8 @@ def submit(request, app_id):
 
     data = body(request)
     result = submit_application(
-        request.user, app_id, data["idempotency_key"], data.get("attestation")
+        request.user, app_id, data["idempotency_key"], data.get("attestation"),
+        expected_version=filing_version(data),
     )
     return JsonResponse(encoded(result), status=201)
 
@@ -240,7 +347,9 @@ def waiver(request, app_id):
 def withdraw(request, app_id):
     from tribunal.services.decisions import withdraw_application
 
-    return JsonResponse(encoded(withdraw_application(request.user, app_id)))
+    data = body(request)
+    concurrency = {"expected_version": filing_version(data)} if request.user.role == "applicant" or "expected_version" in data else {}
+    return JsonResponse(encoded(withdraw_application(request.user, app_id, **concurrency)))
 
 
 @endpoint(("POST",))
@@ -254,7 +363,10 @@ def checkout(request, app_id):
         else request.build_absolute_uri("/").rstrip("/")
     )
     return JsonResponse(
-        create_checkout(request.user, app_id, data["attestation"], base)
+        create_checkout(
+            request.user, app_id, data["attestation"], base,
+            expected_version=filing_version(data),
+        )
     )
 
 
@@ -262,7 +374,9 @@ def checkout(request, app_id):
 @require_POST
 def stripe_webhook(request):
     import stripe
-    from tribunal.services.payments import process_paid_checkout, finalize_paid_intent
+    from tribunal.services.payments import (
+        process_paid_checkout, finalize_paid_intent, process_checkout_state, process_finance_event,
+    )
 
     if not settings.STRIPE_WEBHOOK_SECRET:
         return JsonResponse({"error": "not_configured"}, status=503)
@@ -279,6 +393,9 @@ def stripe_webhook(request):
         "checkout.session.async_payment_succeeded",
     }:
         try:
+            if event.type == "checkout.session.completed" and event.data.object.get("payment_status") != "paid":
+                process_checkout_state(event.id, event.data.object, "processing")
+                return JsonResponse({"received": True, "payment_pending": True})
             intent = process_paid_checkout(event.id, event.data.object)
         except ValidationError:
             # No durable paid record exists: retain provider retries instead of acknowledging loss.
@@ -290,7 +407,41 @@ def stripe_webhook(request):
         except ValidationError:
             # Durable paid candidate/outbox stays for reconciliation; do not repeatedly charge.
             return JsonResponse({"received": True, "reconciliation_required": True})
+    elif event.type in {"checkout.session.expired", "checkout.session.async_payment_failed",
+                         "charge.dispute.created", "charge.dispute.closed", "charge.refunded"}:
+        try:
+            payload = event.data.object
+            if event.type.startswith("checkout.session."):
+                process_checkout_state(event.id, payload, "expired" if event.type.endswith("expired") else "failed")
+            else:
+                kind = "refunded" if event.type == "charge.refunded" else (
+                    "chargeback" if event.type == "charge.dispute.created" else "dispute_" + str(payload.get("status", "")))
+                process_finance_event(event.id, payload, kind)
+        except (ValidationError, ValueError):
+            return JsonResponse({"error": "payment_requires_reconciliation"}, status=503)
     return JsonResponse({"received": True})
+
+
+@endpoint()
+def application_payments(request, app_id):
+    from tribunal.services.payments import application_payment_data
+
+    return JsonResponse(application_payment_data(request.user, app_id))
+
+
+@endpoint()
+def payment_reconciliation(request):
+    from tribunal.services.payments import payment_reconciliation as query
+
+    return JsonResponse(query(request.user, int(request.GET.get("offset", "0"))))
+
+
+@endpoint(("POST",))
+def retry_payment(request, intent_id):
+    from tribunal.services.payments import retry_paid_filing
+
+    result = retry_paid_filing(request.user, intent_id)
+    return JsonResponse({"submitted": result is not None, "submission_id": str(result.pk) if result else None})
 
 
 @endpoint()
@@ -319,13 +470,15 @@ def cases(request):
 
 @endpoint()
 def case_detail(request, case_id):
+    from tribunal.projections import case_capabilities
     case = case_for(request.user, case_id)
     parties = case.parties.all()
-    return JsonResponse(
+    response = JsonResponse(
         encoded(
             case,
             number=case.number,
             status=case.status,
+            **case_capabilities(case, request.user),
             can_message=request.user.role in {"applicant", "admin", "secretary"}
             or case.assigned_member_id == request.user.pk,
             parties=[
@@ -347,6 +500,9 @@ def case_detail(request, case_id):
         )
     )
 
+    response["Cache-Control"] = "private, no-store"
+    return response
+
 
 @endpoint(("POST",))
 def assign(request, case_id):
@@ -363,17 +519,58 @@ def assign(request, case_id):
 
 @endpoint()
 def members(request):
+    from tribunal.services.staff_roles import assignment_president, assignment_recorder
+
     staff(request.user)
     return JsonResponse(
         {
             "items": [
-                encoded(x, name=f"{x.first_name} {x.last_name}".strip(), role=x.role)
+                encoded(x, name=f"{x.first_name} {x.last_name}".strip(), role=x.role,
+                        president=x.role == "president", active=x.is_active,
+                        can_authorize_assignment=assignment_president(x),
+                        can_record_assignment=assignment_recorder(x))
                 for x in m.Account.objects.filter(is_active=True).exclude(
                     role="applicant"
                 )
             ]
         }
     )
+
+
+@endpoint(("GET", "POST"))
+def tribunals(request):
+    from tribunal.services.staff_roles import create_tribunal, existing_admin
+
+    existing_admin(request.user)
+    if request.method == "GET":
+        return JsonResponse({"items": [encoded(row, code=row.code, name_en=row.name_en,
+            name_ar=row.name_ar, timezone=row.timezone) for row in m.Tribunal.objects.order_by("code")]})
+    data = body(request)
+    row = create_tribunal(request.user, data.get("code"), data.get("name_en"), data.get("name_ar"))
+    return JsonResponse(encoded(row, code=row.code, name_en=row.name_en, name_ar=row.name_ar, timezone=row.timezone), status=201)
+
+
+@endpoint(("GET", "POST"))
+def assignment_authorities(request):
+    from tribunal.services.staff_roles import existing_admin, grant_assignment_authority, current_tribunal_id
+
+    existing_admin(request.user)
+    if request.method == "GET":
+        rows = m.StaffRole.objects.filter(role__in=["president", "admin", "secretary"], membership__tribunal_id=current_tribunal_id()).select_related("membership")
+        return JsonResponse({"items": [encoded(row, role=row.role, account_id=str(row.membership.account_id),
+            tribunal_id=str(row.membership.tribunal_id), membership_id=str(row.membership_id),
+            granted_by_id=str(row.granted_by_id), revoked_at=row.revoked_at.isoformat() if row.revoked_at else None) for row in rows.order_by("created_at", "id")]})
+    data = body(request)
+    row = grant_assignment_authority(request.user, data["account_id"], data["tribunal_id"], data.get("role", "president"))
+    return JsonResponse(encoded(row, role=row.role, membership_id=str(row.membership_id), granted_by_id=str(row.granted_by_id)), status=201)
+
+
+@endpoint(("POST",))
+def revoke_assignment_authority(request, role_id):
+    from tribunal.services.staff_roles import revoke_assignment_authority as command
+
+    row = command(request.user, role_id)
+    return JsonResponse(encoded(row, revoked_at=row.revoked_at.isoformat()))
 
 
 @endpoint(("POST",))
@@ -398,13 +595,15 @@ def enroll(request):
 
 @endpoint(("GET", "POST"))
 def sessions(request):
+    from tribunal.projections import session_capabilities
     staff(request.user)
     if request.method == "GET":
         return JsonResponse(
             {
                 "items": [
                     encoded(
-                        x, date=x.date.isoformat(), reference=x.reference, state=x.state
+                        x, date=x.date.isoformat(), reference=x.reference, state=x.state,
+                        **session_capabilities(x, request.user)
                     )
                     for x in m.CouncilSession.objects.order_by("-date")[:100]
                 ]
@@ -422,6 +621,8 @@ def sessions(request):
 
 @endpoint(("GET", "POST"))
 def agenda(request, session_id):
+    from tribunal.projections import agenda_item_data, session_capabilities
+    from tribunal.services.council import attendance_for
     staff(request.user)
     if request.method == "GET":
         session = m.CouncilSession.objects.get(pk=session_id)
@@ -431,19 +632,12 @@ def agenda(request, session_id):
                     session,
                     date=session.date.isoformat(),
                     state=session.state,
-                    can_record_attendance=request.user.role in {"admin", "secretary"}
-                    and session.state == "planned",
+                    **session_capabilities(session, request.user),
                 ),
                 "items": [
-                    encoded(
-                        x,
-                        case_id=str(x.case_id),
-                        case_number=x.case.number,
-                        part=x.part,
-                        state=x.state,
-                    )
+                    agenda_item_data(x, request.user, attendance_for(request.user, session.pk))
                     for x in m.AgendaItem.objects.filter(session_id=session_id)
-                    .select_related("case")
+                    .select_related("case__assigned_member", "session")
                     .order_by("part", "position")
                 ],
             }
@@ -464,6 +658,24 @@ def close_session(request, session_id):
     from tribunal.services.council import close_session as command
 
     return JsonResponse(encoded(command(request.user, session_id)))
+
+
+@endpoint(("POST",))
+def reschedule_session(request, session_id):
+    from tribunal.services.council import reschedule_session as command
+
+    data = body(request)
+    replacements = data.get("appointments", {})
+    if not isinstance(replacements, dict):
+        raise ValidationError("Appointments must be keyed by identifier.")
+    times = {}
+    for identifier, value in replacements.items():
+        if not isinstance(value, dict):
+            raise ValidationError("Each appointment requires new start/end times.")
+        times[identifier] = {**value, "starts_at": datetime.fromisoformat(value["starts_at"]),
+                             "ends_at": datetime.fromisoformat(value["ends_at"])}
+    target = command(request.user, session_id, date.fromisoformat(data["date"]), times, data.get("reason", ""))
+    return JsonResponse(encoded(target, date=target.date.isoformat(), reference=target.reference), status=201)
 
 
 @endpoint(("POST",))
@@ -516,9 +728,13 @@ def attendance(request, session_id):
 
 @endpoint(("GET", "POST"))
 def messages(request, case_id):
-    from tribunal.services.communications import messages_for, send_message
+    from tribunal.services.communications import messages_for, send_message, message_receipts
 
     if request.method == "GET":
+        offset = int(request.GET.get("offset", 0))
+        if not 0 <= offset <= 2**63-52:
+            raise ValidationError("Message offset is outside the supported range.")
+        rows = list(messages_for(request.user, case_id).select_related("sender").order_by("created_at", "id")[offset:offset+51])
         return JsonResponse(
             {
                 "items": [
@@ -529,11 +745,11 @@ def messages(request, case_id):
                         channel=x.channel,
                         timestamp=x.created_at.isoformat(),
                         file_links=x.file_links,
+                        receipts=message_receipts(request.user, x),
+                        idempotency_key=x.idempotency_key if x.sender_id == request.user.pk else None,
                     )
-                    for x in messages_for(request.user, case_id).select_related(
-                        "sender"
-                    )[:250]
-                ]
+                    for x in rows[:50]
+                ], "next_offset": offset+50 if len(rows)>50 else None,
             }
         )
     data = body(request)
@@ -548,15 +764,26 @@ def messages(request, case_id):
                 data.get("session_id"),
                 data.get("file_ids"),
                 data.get("channel", "portal"),
+                idempotency_key=data.get("idempotency_key"),
             )
         ),
         status=201,
     )
 
 
+@endpoint(("POST",))
+def message_acknowledge(request, message_id):
+    from tribunal.services.communications import acknowledge_message
+    row = acknowledge_message(request.user, message_id)
+    return JsonResponse({"id": str(message_id), "read_at": row.read_at.isoformat()})
+
+
 @endpoint(("GET", "POST"))
 def notifications(request):
+    from tribunal.services.filing_privacy import notice_visible
     qs = m.Notification.objects.filter(recipient=request.user)
+    hidden = [pk for pk, key in qs.values_list("pk", "key") if not notice_visible(key)]
+    qs = qs.exclude(pk__in=hidden)
     if request.method == "POST":
         updated = qs.filter(pk=body(request)["id"], read_at__isnull=True).update(
             read_at=timezone.now()
@@ -602,6 +829,7 @@ def upload(request):
         request.POST.get("context", ""),
         request.POST.get("visibility", "own"),
         request.POST.get("request_id"),
+        expected_request_version=request.POST.get("expected_request_version"),
     )
     return JsonResponse(
         encoded(
@@ -614,6 +842,15 @@ def upload(request):
     )
 
 
+@endpoint()
+def application_files(request, app_id):
+    from tribunal.services.files import application_file_listing
+
+    if request.GET.get("history"):
+        raise PermissionDenied("Applicant file history is not available.")
+    return JsonResponse(application_file_listing(request.user, app_id))
+
+
 @endpoint(("GET", "HEAD"))
 def download(request, file_id):
     from tribunal.file_delivery import deliver_file
@@ -622,7 +859,28 @@ def download(request, file_id):
 
 
 @endpoint()
+def request_files(request, request_id):
+    from tribunal.services.files import request_file_listing
+
+    return JsonResponse(request_file_listing(request.user, request_id))
+
+
+@endpoint()
+def file_status(request, file_id):
+    from tribunal.services.files import authorized_file
+
+    staff(request.user)
+    file = authorized_file(request.user, file_id, require_safe=False)
+    scan = file.technical_events.filter(task="scan").order_by("-created_at", "-id").first()
+    state = scan.result if scan and scan.result in {"clean", "pending", "rejected"} else "pending"
+    return JsonResponse({"id": str(file.pk), "scan_state": state,
+                         "can_download": state == "clean"})
+
+
+@endpoint()
 def report_questions(request):
+    from tribunal.projections import question_taxonomy
+
     staff(request.user)
     return JsonResponse(
         {
@@ -632,6 +890,7 @@ def report_questions(request):
                     code=x.code,
                     version=x.version,
                     category=x.category,
+                    **question_taxonomy().get(x.code, {"category_id": None, "category_ar": None, "topic_groups": []}),
                     wording_en=x.wording_en,
                     wording_ar=x.wording_ar,
                     foundational=x.foundational,
@@ -647,12 +906,15 @@ def report_questions(request):
 
 @endpoint(("GET", "POST"))
 def report_requests(request, case_id):
+    from tribunal.projections import release_metadata
+    from tribunal.services.request_contracts import own_request_data, request_version
     case = case_for(request.user, case_id)
     if request.method == "GET":
         qs = m.ReportRequest.objects.filter(case=case)
         if request.user.role == "applicant":
             qs = (
                 qs.filter(subject__account=request.user)
+                .filter(sent_at__isnull=False)
                 .exclude(kind__in=["external_priest", "interview"])
                 .exclude(state="draft")
             )
@@ -666,6 +928,17 @@ def report_requests(request, case_id):
                         state=x.state,
                         questions=x.questions,
                         instructions=x.instructions,
+                        subject_party_id=str(x.subject_id),
+                        subject_name=x.subject.name,
+                        language=x.language,
+                        created_at=x.created_at.isoformat(),
+                        sent_at=x.sent_at.isoformat() if x.sent_at else None,
+                        parent_report_id=str(x.parent_report_id) if x.parent_report_id else None,
+                        author=f"{x.author.first_name} {x.author.last_name}".strip(),
+                        **release_metadata(x, request.user),
+                        **({"request_version": request_version(x)}
+                            if request.user.role != "applicant" else {}),
+                        **(own_request_data(x, request.user) if request.user.role == "applicant" else {}),
                     )
                     for x in qs.order_by("-created_at")
                 ]
@@ -715,6 +988,8 @@ def complete_report_request(request, request_id):
     from tribunal.services.reports import complete_request
 
     data = body(request)
+    concurrency = ({"expected_version": data.get("expected_version")}
+                   if request.user.role == "applicant" or "expected_version" in data else {})
     return JsonResponse(
         encoded(
             complete_request(
@@ -722,6 +997,7 @@ def complete_report_request(request, request_id):
                 request_id,
                 data.get("answers", {}),
                 data.get("observations", ""),
+                **concurrency,
             )
         ),
         status=201,
@@ -731,7 +1007,8 @@ def complete_report_request(request, request_id):
 @endpoint()
 def reports(request, case_id):
     case = case_for(request.user, case_id)
-    qs = m.Report.objects.filter(request__case=case).select_related("request__subject")
+    qs = m.Report.objects.filter(request__case=case).select_related(
+        "request__subject", "request__proceeding", "request__case", "author")
     if request.user.role == "applicant":
         qs = qs.filter(
             request__subject__account=request.user, author=request.user
@@ -764,6 +1041,14 @@ def reports(request, case_id):
                 observations=revision.observations
                 if revision and request.user.is_staff
                 else None,
+                **({"author_id": str(report.author_id) if report.author_id else None,
+                    "author": f"{report.author.first_name} {report.author.last_name}".strip() if report.author else None,
+                    "submitted_at": report.created_at.isoformat(), "method": report.method,
+                    "can_revise": bool(report.author_id == request.user.pk and report.author
+                        and report.author.role != "applicant" and report.request.proceeding.status == "open"
+                        and report.request.case.status == "open" and (request.user.role in {"admin", "secretary"}
+                            or report.request.case.assigned_member_id == request.user.pk))}
+                   if request.user.role != "applicant" else {}),
             )
         )
     return JsonResponse({"items": items})
@@ -777,7 +1062,9 @@ def medical_release(request, request_id):
     return JsonResponse(
         encoded(
             sign_medical_release(
-                request.user, request_id, data["file_id"], data["scope"]
+                request.user, request_id, data["file_id"], data["scope"],
+                expected_version=data.get("expected_version"),
+                declaration_id=data.get("declaration_id"), accepted=data.get("accepted"),
             )
         ),
         status=201,
@@ -792,10 +1079,16 @@ def notes(request, proceeding_id):
         return JsonResponse(
             {
                 "items": [
-                    encoded(x, note_id=str(x.note_id), version=x.number, text=x.text)
+                    encoded(x, note_id=str(x.note_id), version=x.number, text=x.text,
+                            author_id=str(x.note.author_id),
+                            author=f"{x.note.author.first_name} {x.note.author.last_name}".strip(),
+                            timestamp=x.created_at.isoformat(),
+                            can_edit=bool(x.note.author_id == request.user.pk
+                                and proceeding.status == "open" and proceeding.case.status == "open"
+                                and (request.user.role in {"admin", "secretary"} or proceeding.case.assigned_member_id == request.user.pk)))
                     for x in m.NoteRevision.objects.filter(
                         note__proceeding=proceeding
-                    ).order_by("created_at")
+                    ).select_related("note__author").order_by("created_at", "id")
                 ]
             }
         )
@@ -810,8 +1103,16 @@ def notes(request, proceeding_id):
     )
 
 
-@endpoint(("POST",))
+@endpoint(("GET", "POST"))
 def decision(request, proceeding_id):
+    staff(request.user)
+    if request.method == "GET":
+        from tribunal.projections import decision_data
+
+        proceeding = m.Proceeding.objects.get(pk=proceeding_id)
+        return JsonResponse({"items": [decision_data(row, request.user)
+                             for row in m.DecisionRevision.objects.filter(proceeding=proceeding)
+                             .select_related("actor", "proceeding__case").order_by("-number")]})
     from tribunal.services.decisions import record_decision
 
     data = body(request)
@@ -896,14 +1197,31 @@ def appeal_addition(request, app_id):
     from tribunal.services.decisions import add_appeal_information
 
     data = body(request)
+    if not isinstance(data.get("idempotency_key"), str) or not data["idempotency_key"].strip():
+        raise ValidationError("A supplement idempotency_key is required.")
     return JsonResponse(
         encoded(
             add_appeal_information(
-                request.user, app_id, data.get("text", ""), data.get("file_ids")
+                request.user, app_id, data.get("text", ""), data.get("file_ids"),
+                expected_version=filing_version(data), idempotency_key=data["idempotency_key"],
             )
         ),
         status=201,
     )
+
+
+@endpoint(("POST",))
+def closed_filing_result(request, app_id):
+    from tribunal.services.decisions import decide_appeal
+    from tribunal.services.closed_filings import CLOSED_INTAKE
+
+    app = application_for(request.user, app_id)
+    staff(request.user)
+    if app.origin != CLOSED_INTAKE:
+        raise ValidationError("This is not a closed-case first filing.")
+    data = body(request)
+    row = decide_appeal(request.user, app_id, data["hearing_id"], data["result"], data.get("explanation", ""))
+    return JsonResponse(encoded(row), status=201)
 
 
 @endpoint(("POST",))
@@ -929,6 +1247,7 @@ def appeal_result(request, app_id):
 def case_audit(request, case_id):
     staff(request.user)
     case = case_for(request.user, case_id)
+    from tribunal.services.filing_privacy import audit_visible
     return JsonResponse(
         {
             "items": [
@@ -942,7 +1261,7 @@ def case_audit(request, case_id):
                 )
                 for x in m.AuditEvent.objects.filter(case=case).order_by("-created_at")[
                     :250
-                ]
+                ] if audit_visible(x)
             ]
         }
     )
@@ -950,6 +1269,7 @@ def case_audit(request, case_id):
 
 @endpoint()
 def system_audit(request):
+    from tribunal.services.filing_privacy import audit_visible
     administrator(request.user)
     return JsonResponse(
         {
@@ -960,7 +1280,7 @@ def system_audit(request):
                     source=x.source,
                     timestamp=x.created_at.isoformat(),
                 )
-                for x in m.AuditEvent.objects.order_by("-created_at")[:250]
+                for x in m.AuditEvent.objects.order_by("-created_at")[:250] if audit_visible(x)
             ]
         }
     )
@@ -968,15 +1288,16 @@ def system_audit(request):
 
 @csrf_exempt
 def external_report(request, request_id):
-    from tribunal.services.reports import external_request, complete_external
+    from tribunal.services.reports import external_request, complete_external, lock_request
+    from tribunal.db.context import database_external
     from django.db import transaction
 
     token = request.headers.get("Authorization", "").removeprefix("Bearer ")
     if request.method not in {"GET", "POST"}:
         return JsonResponse({"error": "method_not_allowed"}, status=405)
     try:
-        with transaction.atomic():
-            m.ReportRequest.objects.select_for_update().get(pk=request_id)
+        with transaction.atomic(), database_external(request_id, token):
+            lock_request(request_id)
             source = external_request(request_id, token)
             if request.method == "GET":
                 response = JsonResponse(
@@ -1031,13 +1352,14 @@ def settings_endpoint(request):
     from tribunal.services.configuration import save_setting
 
     data = body(request)
-    return JsonResponse(
-        encoded(save_setting(request.user, data["key"], data["value"])), status=201
-    )
+    row = save_setting(request.user, data["key"], data["value"],
+                       **({"expected_version": data["expected_version"]} if "expected_version" in data else {}))
+    return JsonResponse(encoded(row, version=row.number), status=201)
 
 
 @endpoint(("GET", "POST"))
 def templates(request):
+    from tribunal.projections import template_data
     staff(request.user)
     if request.method == "GET":
         from django.db.models import Q
@@ -1045,7 +1367,7 @@ def templates(request):
         return JsonResponse(
             {
                 "items": [
-                    encoded(t, title=t.title, shared=t.shared, retired=t.retired)
+                    template_data(t, request.user)
                     for t in m.ReportTemplate.objects.filter(
                         Q(shared=True) | Q(owner=request.user)
                     ).order_by("title")
@@ -1068,6 +1390,22 @@ def templates(request):
     )
 
 
+@endpoint(("POST",))
+def template_publish(request, template_id):
+    from tribunal.services.configuration import publish_personal_template
+    from tribunal.projections import template_data
+
+    return JsonResponse(template_data(publish_personal_template(request.user, template_id), request.user), status=201)
+
+
+@endpoint(("POST",))
+def template_retire(request, template_id):
+    from tribunal.services.configuration import retire_template
+    from tribunal.projections import template_data
+
+    return JsonResponse(template_data(retire_template(request.user, template_id), request.user))
+
+
 @endpoint(("GET", "POST"))
 def account_settings(request):
     from tribunal.services.identity import save_preferences
@@ -1084,16 +1422,20 @@ def account_settings(request):
     )
 
 
-@endpoint()
+@endpoint(("POST",))
 def search(request):
     from tribunal.services.search import search as command
 
+    data = body(request)
+    history = data.get("history", False)
+    if type(history) is not bool:
+        raise ValidationError("history must be a boolean.")
     return JsonResponse(
         command(
             request.user,
-            request.GET.get("q", ""),
-            request.GET.get("history") == "true",
-            request.GET.get("case_id"),
+            data.get("q", ""),
+            history,
+            data.get("case_id"),
         )
     )
 
@@ -1102,7 +1444,7 @@ def search(request):
 def delete_draft(request, app_id):
     from tribunal.services.retention import remove_draft
 
-    return JsonResponse(encoded(remove_draft(request.user, app_id)))
+    return JsonResponse(encoded(remove_draft(request.user, app_id, expected_version=filing_version(body(request)))))
 
 
 @endpoint(("POST",))
@@ -1149,7 +1491,7 @@ def dashboard(request):
             ).count(),
             "review_queue": m.Application.objects.filter(
                 status="submitted", kind="petition"
-            ).count()
+            ).exclude(origin="closed_case_intake").count()
             if request.user.role in {"admin", "secretary"}
             else None,
             "upcoming_sessions": [
@@ -1177,6 +1519,7 @@ def calls(request, case_id):
                         recorded_at=x.created_at.isoformat(),
                         outcome=x.outcome,
                         notes=x.notes,
+                        actor_id=str(x.actor_id),
                     )
                     for x in m.CallRecord.objects.filter(case=case).order_by(
                         "-occurred_at"
@@ -1240,6 +1583,15 @@ def signature(request, file_id):
     )
 
 
+@endpoint()
+def hearing_detail(request, hearing_id):
+    from tribunal.projections import hearing_data
+
+    staff(request.user)
+    hearing = m.Hearing.objects.select_related("agenda__case", "proceeding").get(pk=hearing_id)
+    return JsonResponse(hearing_data(hearing, request.user))
+
+
 @endpoint(("POST",))
 def hearing_outcome(request, hearing_id):
     from tribunal.services.council import save_hearing_outcome
@@ -1253,6 +1605,8 @@ def hearing_outcome(request, hearing_id):
                 data.get("internal_text", ""),
                 data.get("recommendations", ""),
                 data.get("applicant_message"),
+                email_timing=data.get("email_timing", "immediate"),
+                session_id=data.get("session_id"),
             )
         ),
         status=201,
@@ -1298,6 +1652,21 @@ def testimony_response(request, appointment_id):
     )
 
 
+@endpoint()
+def own_testimony(request):
+    from tribunal.services.council import own_testimony as query
+
+    return JsonResponse(query(request.user))
+
+
+@endpoint(("POST",))
+def cancel_testimony(request, appointment_id):
+    from tribunal.services.council import cancel_testimony as command
+
+    value = command(request.user, appointment_id, body(request).get("expected_version"))
+    return JsonResponse(encoded(value, version=value.version, state=value.state))
+
+
 @endpoint(("POST",))
 def recording(request):
     from tribunal.services.reports import create_recording
@@ -1311,6 +1680,7 @@ def recording(request):
                 data.get("report_id"),
                 data.get("appointment_id"),
                 data.get("notice_recorded", False),
+                duration_ms=data.get("duration_ms"), recording_notice=data.get("recording_notice"),
             )
         ),
         status=201,
@@ -1328,23 +1698,22 @@ def recording_finalize(request, recording_id):
 
 @endpoint(("GET", "POST"))
 def report_revision(request, report_id):
-    from tribunal.services.reports import revise_report
+    from tribunal.services.reports import revise_report, require_report_disclosure
 
     if request.method == "GET":
         staff(request.user)
         report = m.Report.objects.select_related("request__subject").get(pk=report_id)
         case_for(request.user, report.request.case_id)
-        if (
-            report.request.kind in {"medical", "psychological"}
-            and not m.MedicalRelease.objects.filter(
-                request=report.request,
-                subject=report.request.subject.account,
-                scope__council=True,
-            ).exists()
-        ):
-            raise PermissionDenied("Signed scoped medical disclosure is required.")
+        require_report_disclosure(report.request)
+        rows = list(report.revisions.select_related("actor").order_by("-number"))
+        can_revise = (report.author_id == request.user.pk and request.user.role != "applicant"
+                      and report.request.proceeding.status == "open" and report.request.case.status == "open"
+                      and (request.user.role in {"admin", "secretary"}
+                           or report.request.case.assigned_member_id == request.user.pk))
         return JsonResponse(
             {
+                "current_version": rows[0].number if rows else 0,
+                "can_revise": can_revise,
                 "items": [
                     encoded(
                         row,
@@ -1356,28 +1725,79 @@ def report_revision(request, report_id):
                         else None,
                         timestamp=row.created_at.isoformat(),
                     )
-                    for row in report.revisions.select_related("actor").order_by(
-                        "-number"
-                    )
+                    for row in rows
                 ]
             }
         )
 
     data = body(request)
-    return JsonResponse(
-        encoded(
-            revise_report(
-                request.user, report_id, data["answers"], data.get("observations", "")
-            )
-        ),
-        status=201,
+    row = revise_report(
+        request.user, report_id, data["answers"], data.get("observations", ""),
+        expected_version=filing_version(data),
     )
+    return JsonResponse(encoded(row, version=row.number), status=201)
+
+
+@endpoint()
+def report_recordings(request, report_id):
+    from tribunal.services.media import report_recordings as query
+    return JsonResponse(query(request.user, report_id, offset=int(request.GET.get("offset", 0)),
+        transcript_offset=int(request.GET.get("transcript_offset", 0))))
+
+
+@endpoint()
+def transcript_detail(request, revision_id):
+    from tribunal.services.media import transcript_for, transcript_data
+    return JsonResponse(transcript_data(request.user, transcript_for(request.user, revision_id)))
 
 
 @endpoint(("POST",))
+def transcript_review(request, revision_id):
+    from tribunal.services.reports import review_transcript
+    return JsonResponse(encoded(review_transcript(request.user, revision_id)), status=201)
+
+
+@endpoint(("POST",))
+def processing_retry(request, run_id):
+    from tribunal.services.media import retry_processing
+    value = retry_processing(request.user, run_id)
+    return JsonResponse(encoded(value, attempt=value.attempt, state=value.state), status=201)
+
+
+@endpoint(("POST",))
+def transcript_correct(request, revision_id):
+    from tribunal.services.media import correct_transcript
+    data = body(request)
+    row = correct_transcript(request.user, revision_id, data["text"], data.get("segments", []), data.get("expected_version"))
+    return JsonResponse(encoded(row, version=row.number, reviewed=m.TranscriptReview.objects.filter(revision=row).exists()), status=201)
+
+
+@endpoint(("POST",))
+def pending_link_cancel(request, pending_id):
+    from tribunal.services.identity import cancel_pending_link
+    row = cancel_pending_link(request.user, pending_id)
+    return JsonResponse(encoded(row, state=row.state))
+
+
+@endpoint(("POST",))
+def report_request_cancel(request, request_id):
+    from tribunal.services.reports import cancel_request
+    row = cancel_request(request.user, request_id, body(request).get("expected_version"))
+    return JsonResponse(encoded(row, state=row.state))
+
+
+@endpoint(("GET", "POST"))
 def finding(request, proceeding_id):
     from tribunal.services.council import save_finding
 
+    staff(request.user)
+    proceeding = m.Proceeding.objects.get(pk=proceeding_id)
+    if request.method == "GET":
+        return JsonResponse({"items": [encoded(row, fact_code=row.fact_code,
+            version=row.number, value=row.value, sources=row.sources,
+            actor_id=str(row.actor_id), actor=f"{row.actor.first_name} {row.actor.last_name}".strip(),
+            timestamp=row.created_at.isoformat()) for row in m.FindingRevision.objects.filter(
+                proceeding=proceeding).select_related("actor").order_by("fact_code", "number", "id")]})
     data = body(request)
     return JsonResponse(
         encoded(

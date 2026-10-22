@@ -21,8 +21,32 @@ from tribunal.models import (
 )
 from tribunal.policy import active, administrator, application_for, open_proceeding
 from .common import audit, lock_key, notify, notify_manager
+from .closed_filings import CLOSED_INTAKE, council_filing, linked_never_filer, require_new_information
 
 GROUNDS = {"infidelity", "desertion", "abuse", "faith", "addiction", "concealment"}
+
+
+def check_filing_version(app, expected_version):
+    """Called after locking the application; legacy internal callers may omit it."""
+    if expected_version is not None and (
+        type(expected_version) is not int
+        or expected_version < 0
+        or app.current_version != expected_version
+    ):
+        raise ValidationError("Another change was saved. Reload before filing.")
+
+
+def validate_filing_declaration(app):
+    questionnaire = app.questionnaire
+    if (
+        questionnaire is None
+        or not questionnaire.published
+        or not questionnaire.declaration_en.strip()
+        or not questionnaire.declaration_ar.strip()
+    ):
+        raise ValidationError(
+            "A published bilingual declaration is required before filing."
+        )
 
 
 @transaction.atomic
@@ -59,6 +83,8 @@ def start_application(actor, case_id=None, kind="petition"):
         existing = existing.filter(case=case)
     prior = existing.first()
     if prior:
+        if case and prior.case_id != case.pk:
+            raise ValidationError("Continue or resolve the existing draft before starting a different case filing.")
         return prior
     if (
         case
@@ -76,8 +102,11 @@ def start_application(actor, case_id=None, kind="petition"):
     if schema is None:
         raise ValidationError("No published questionnaire is configured.")
     app = Application.objects.create(
-        owner=actor, case=case, kind=kind, questionnaire=schema
+        owner=actor, case=case, kind=kind, questionnaire=schema,
+        origin=CLOSED_INTAKE if case and case.status == "closed" and kind == "petition" else "portal"
     )
+    if app.origin == CLOSED_INTAKE:
+        linked_never_filer(app, case)
     FeeObligation.objects.create(application=app)
     audit(actor, "draft_started", app, case)
     return app
@@ -89,7 +118,7 @@ def save_answers(actor, app_id, answers, expected_version):
     app = Application.objects.select_for_update(of=("self",)).get(pk=app.pk)
     if not isinstance(answers, dict):
         raise ValidationError("Answers must be an object.")
-    if app.kind == "appeal" and app.submitted_at:
+    if council_filing(app) and app.submitted_at:
         raise ValidationError(
             "Submitted appeal is immutable; append additional information."
         )
@@ -113,17 +142,32 @@ def save_answers(actor, app_id, answers, expected_version):
         app.last_activity = timezone.now()
     app.save(update_fields=["current_version", "last_activity"])
     audit(actor, "answers_saved", revision, app.case)
-    if app.submitted_at and actor.pk == app.owner_id:
+    if app.submitted_at and app.status != "returned" and actor.pk == app.owner_id:
         notify_manager(app.case, "answer_changed", revision, digest=True)
     return revision
 
 
 @transaction.atomic
-def allocate_case_number(at=None):
+def allocate_case_number(at=None, *, application_id=None):
+    from datetime import datetime
+    if at is not None and (not isinstance(at, datetime) or not timezone.is_aware(at)):
+        raise ValidationError("Case numbering requires an aware server timestamp.")
     local_date = (
         (at or timezone.now()).astimezone(ZoneInfo("America/Los_Angeles")).date()
     )
     lock_key(f"case-counter:{local_date}")
+    from django.db import connection
+    if connection.vendor == "postgresql":
+        from tribunal.db.context import database_settings
+        from django.db import IntegrityError
+        try:
+            with database_settings({"ctm.numbering_application": str(application_id) if application_id else ""}), connection.cursor() as cursor:
+                cursor.execute("SELECT public.ctm_allocate_case_number(%s)", [local_date])
+                return cursor.fetchone()[0]
+        except IntegrityError as exc:
+            if getattr(exc.__cause__, "sqlstate", None) == "23514":
+                raise ValidationError("Daily case-number capacity reached; nothing has been submitted.") from exc
+            raise
     counter, _ = CaseNumberCounter.objects.select_for_update(
         of=("self",)
     ).get_or_create(date=local_date)
@@ -137,8 +181,48 @@ def allocate_case_number(at=None):
 
 
 def safe_file(file):
-    result = file.technical_events.filter(task="scan").order_by("-created_at").first()
+    result = file.technical_events.filter(task="scan").order_by("-created_at", "-id").first()
     return result is not None and result.result == "clean"
+
+
+DOCUMENT_LABELS = {
+    "MC": ("Marriage certificate", "شهادة الزواج"),
+    "CMC": ("Church marriage certificate", "شهادة الزواج الكنسي"),
+    "CDD": ("Final civil divorce decree", "حكم الطلاق المدني النهائي"),
+    "PHOTO": ("Applicant photo", "صورة مقدم الطلب"),
+    "SPOUSE_PHOTO": ("Spouse photo, if available", "صورة الزوج أو الزوجة إن توفرت"),
+    "PET": ("Petition statement", "بيان الالتماس"),
+    "RO": ("Restraining order copy", "نسخة من أمر الحماية"),
+}
+
+
+def document_requirements(app, answers):
+    required = {"MC", "CDD", "PHOTO"} if app.kind == "petition" else set()
+    if app.kind == "petition":
+        required |= set(app.questionnaire.definition.get("required_document_categories", []))
+    statement = answers.get("statement")
+    if not isinstance(statement, str) or not statement.strip():
+        required.add("PET")
+    categories = list(DOCUMENT_LABELS)[:-1] if app.kind == "petition" else ["PET"]
+    categories += sorted(required - set(categories))
+    requirements = [
+        {"category": category, "context": "", "label_en": DOCUMENT_LABELS.get(category, (category, ""))[0],
+         "label_ar": DOCUMENT_LABELS.get(category, (category, ""))[1], "required": category in required}
+        for category in categories
+    ]
+    orders = answers.get("restraining_orders", [])
+    if not isinstance(orders, list):
+        raise ValidationError("Restraining orders must be a list.")
+    seen = set()
+    for order in orders:
+        context = order.get("id") if isinstance(order, dict) else None
+        if not isinstance(context, str) or not context.strip() or len(context) > 150 or context in seen:
+            raise ValidationError("Every restraining order requires its own saved identifier.")
+        seen.add(context)
+        requirements.append({"category": "RO", "context": context,
+                             "label_en": DOCUMENT_LABELS["RO"][0],
+                             "label_ar": DOCUMENT_LABELS["RO"][1], "required": True})
+    return requirements
 
 
 def required_documents(app, answers):
@@ -150,22 +234,12 @@ def required_documents(app, answers):
 
             validate_category(attachment.category, file.mime_type)
             current.append(file)
-    categories = {f.attachment.category for f in current}
-    required = {"MC", "CDD", "PHOTO"}
-    # CMC is independently required if the published questionnaire defines it.
-    required |= set(
-        app.questionnaire.definition.get("required_document_categories", [])
-    )
-    if app.kind == "appeal":
-        required = set()
-    if not required <= categories:
-        raise ValidationError(
-            f"Required documents missing: {', '.join(sorted(required - categories))}"
-        )
-    raw_statement = answers.get("statement")
-    statement = raw_statement.strip() if isinstance(raw_statement, str) else ""
-    if not statement and "PET" not in categories:
-        raise ValidationError("A petition statement or PDF/Word statement is required.")
+    for requirement in document_requirements(app, answers):
+        if requirement["required"] and not any(
+            file.attachment.category == requirement["category"]
+            and file.attachment.context == requirement["context"] for file in current
+        ):
+            raise ValidationError(f"Required document missing: {requirement['category']}")
     for order in answers.get("restraining_orders", []):
         if not all(
             str(order.get(k, "")).strip() and str(order[k]).lower() != "unknown"
@@ -215,7 +289,9 @@ def validate_petition(answers):
 
 
 @transaction.atomic
-def submit_application(actor, app_id, idempotency_key, attestation=None):
+def submit_application(
+    actor, app_id, idempotency_key, attestation=None, *, expected_version=None, paid_intent_id=None
+):
     app = application_for(actor, app_id)
     if actor.pk != app.owner_id:
         raise PermissionDenied("Only the applicant can attest and submit.")
@@ -230,15 +306,28 @@ def submit_application(actor, app_id, idempotency_key, attestation=None):
         if previous.application_id != app.pk:
             raise ValidationError("Idempotency key belongs to another operation.")
         return previous
+    check_filing_version(app, expected_version)
     if not actor.email_verified:
         raise ValidationError("Verify your email before submission.")
     if app.duplicate_hold:
         raise ValidationError("Duplicate identity review must be completed first.")
     if app.status not in {"draft", "returned"}:
         raise ValidationError("Application already submitted.")
+    from tribunal.models import CheckoutIntent
+
+    unresolved = CheckoutIntent.objects.filter(application=app, state__in=["pending", "processing", "paid", "needs_review"])
+    if paid_intent_id is not None:
+        unresolved = unresolved.exclude(pk=paid_intent_id)
+    if unresolved.exists():
+        raise ValidationError("An existing checkout requires processing or reconciliation before submission.")
     fee = FeeObligation.objects.select_for_update(of=("self",)).get(application=app)
     if fee.status not in {"paid", "waived", "historical_exempt"}:
         raise ValidationError("Successful payment or authorized waiver is required.")
+    if fee.status == "paid":
+        from tribunal.models import PaymentEvent
+
+        if not PaymentEvent.objects.filter(application=app, kind="paid", amount_minor=fee.amount_minor, currency=fee.currency).exists():
+            raise ValidationError("A verified provider payment is required.")
     revision = app.revisions.filter(number=app.current_version).first()
     if not revision:
         raise ValidationError("Save the completed application first.")
@@ -257,6 +346,7 @@ def submit_application(actor, app_id, idempotency_key, attestation=None):
     if first_submission:
         from tribunal.validation import validate_attestation
 
+        validate_filing_declaration(app)
         validate_attestation(attestation)
     if app.kind == "petition":
         dob = date.fromisoformat(answers["birth_date"])
@@ -284,16 +374,20 @@ def submit_application(actor, app_id, idempotency_key, attestation=None):
             raise ValidationError("Applicant already has another open case.")
         if not case:
             case = Case.objects.create(
-                number=allocate_case_number(),
+                number=allocate_case_number(application_id=app.pk),
                 marriage_date=marriage_date,
                 spouse_dob_low=low,
                 spouse_dob_high=high,
             )
             Proceeding.objects.create(case=case)
         case = Case.objects.select_for_update(of=("self",)).get(pk=case.pk)
-        if case.status != "open":
-            raise ValidationError("Matched case is closed; review required.")
-        party = case.parties.filter(person=actor.person).first()
+        closed_intake = app.origin == CLOSED_INTAKE or case.status == "closed"
+        if closed_intake:
+            party = linked_never_filer(app, case)
+            app.origin = CLOSED_INTAKE
+            require_new_information(app, answers)
+        else:
+            party = case.parties.filter(person=actor.person).first()
         if not party:
             if case.parties.count() >= 2:
                 raise ValidationError("Party mapping requires administrator review.")
@@ -315,23 +409,22 @@ def submit_application(actor, app_id, idempotency_key, attestation=None):
                 slot="A" if not case.parties.exists() else "B",
             )
         person = actor.person
-        person.first_name = answers["first_name"]
-        person.last_name = answers["last_name"]
-        person.birth_date = dob
-        person.gender = answers["gender"]
-        person.save()
-        if not party.reference:
-            initials = (
-                answers["first_name"][0].upper() + answers["last_name"][0].upper()
-            )
-            party.reference = f"{case.number}-{initials}{dob:%Y%m%d}{answers['gender']}"
-        party.name = f"{answers['first_name']} {answers['last_name']}"
-        party.participating = True
-        party.save()
-        OpenCaseClaim.objects.get_or_create(person=person, defaults={"case": case})
+        if not closed_intake:
+            person.first_name = answers["first_name"]
+            person.last_name = answers["last_name"]
+            person.birth_date = dob
+            person.gender = answers["gender"]
+            person.save()
+            if not party.reference:
+                initials = answers["first_name"][0].upper() + answers["last_name"][0].upper()
+                party.reference = f"{case.number}-{initials}{dob:%Y%m%d}{answers['gender']}"
+            party.name = f"{answers['first_name']} {answers['last_name']}"
+            party.participating = True
+            party.save()
+            OpenCaseClaim.objects.get_or_create(person=person, defaults={"case": case})
         app.case = case
         app.party = party
-        app.proceeding = case.proceedings.get(status="open")
+        app.proceeding = None if closed_intake else case.proceedings.get(status="open")
     else:
         if (
             not app.case
@@ -374,16 +467,18 @@ def submit_application(actor, app_id, idempotency_key, attestation=None):
     )
     app.status = "submitted"
     app.submitted_at = app.submitted_at or timezone.now()
-    app.save(update_fields=["status", "submitted_at", "case", "party", "proceeding"])
+    app.save(update_fields=["status", "submitted_at", "case", "party", "proceeding", "origin"])
     for attachment in app.attachments.all():
         attachment.case = app.case
         attachment.proceeding = app.proceeding
         attachment.save(update_fields=["case", "proceeding"])
     audit(actor, "application_submitted", submission, app.case)
+    if app.origin == CLOSED_INTAKE:
+        notify_manager(app.case, "closed_intake_submitted", submission)
     for reviewer in Account.objects.filter(
         role__in=["admin", "secretary"], is_active=True
     ):
-        notify(reviewer, "intake_submitted", submission, case=app.case)
+        notify(reviewer, "closed_intake_submitted" if app.origin == CLOSED_INTAKE else "intake_submitted", submission, case=app.case)
     notify(actor, "submission_received", submission, case=app.case)
     return submission
 
@@ -391,14 +486,28 @@ def submit_application(actor, app_id, idempotency_key, attestation=None):
 @transaction.atomic
 def waive_fee(actor, app_id):
     administrator(actor)
-    app = Application.objects.select_for_update(of=("self",)).get(pk=app_id)
-    if app.submitted_at:
-        raise ValidationError("Cannot retroactively waive an already submitted filing.")
-    fee = FeeObligation.objects.select_for_update(of=("self",)).get(application=app)
+    from django.db import connection
+
+    fee = FeeObligation.objects.select_for_update(of=("self",)).get(application_id=app_id)
+    if connection.vendor == "postgresql":
+        from tribunal.db.context import database_actor
+
+        with database_actor(actor), connection.cursor() as cursor:
+            cursor.execute("SELECT public.ctm_fee_can_waive(%s)", [str(app_id)])
+            eligible = cursor.fetchone()[0]
+    else:
+        eligible = Application.objects.filter(pk=app_id, submitted_at__isnull=True, status="draft").exists()
+        from tribunal.models import CheckoutIntent
+
+        eligible = eligible and not CheckoutIntent.objects.filter(application_id=app_id, state__in=["pending", "processing", "paid", "needs_review"]).exists()
+    if not eligible:
+        raise ValidationError("Only an unsubmitted filing without an unresolved checkout can be waived.")
+    if fee.status != "due":
+        raise ValidationError("Only an outstanding filing fee can be waived.")
     fee.status = "waived"
     fee.waived_by = actor
     fee.save(update_fields=["status", "waived_by"])
-    audit(actor, "fee_waived", fee, app.case)
+    audit(actor, "fee_waived", fee)
     return fee
 
 
@@ -408,11 +517,14 @@ def review_application(actor, app_id, result, instructions=""):
     app = Application.objects.select_for_update(of=("self",)).get(pk=app_id)
     if app.kind != "petition" or app.status != "submitted":
         raise ValidationError("No petition is awaiting completeness review.")
+    if not app.proceeding:
+        raise ValidationError("Proceeding missing.")
+    open_proceeding(app.proceeding)
     if result not in {"accept", "reject"} or (
         result == "reject" and not instructions.strip()
     ):
         raise ValidationError("Reject requires correction instructions.")
-    submission = app.submissions.order_by("-created_at").first()
+    submission = app.submissions.order_by("-created_at", "-id").first()
     review = CompletenessReview.objects.create(
         submission=submission, actor=actor, result=result, instructions=instructions
     )

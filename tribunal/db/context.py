@@ -2,7 +2,9 @@
 
 from contextlib import contextmanager
 import hashlib
+import uuid
 from django.db import connection, transaction
+from django.conf import settings
 
 
 @contextmanager
@@ -29,10 +31,12 @@ def database_settings(values):
                 cursor.execute("SELECT current_setting(%s,true)", [name])
                 previous[name] = cursor.fetchone()[0] or ""
                 cursor.execute("SELECT set_config(%s,%s,true)", [name, value])
+        succeeded = False
         try:
             yield
+            succeeded = True
         finally:
-            if not connection.needs_rollback:
+            if succeeded and not connection.needs_rollback:
                 with connection.cursor() as cursor:
                     for name, value in previous.items():
                         cursor.execute("SELECT set_config(%s,%s,true)", [name, value])
@@ -43,5 +47,9 @@ def database_actor(actor):
     actor_id = (
         str(actor.pk) if actor and actor.is_authenticated and actor.is_active else ""
     )
-    with database_settings({"ctm.actor_id": actor_id}):
+    try:
+        tribunal_id = str(uuid.UUID(str(settings.CTM_TRIBUNAL_ID)))
+    except (ValueError, TypeError, AttributeError):
+        tribunal_id = ""
+    with database_settings({"ctm.actor_id": actor_id, "ctm.tribunal_id": tribunal_id}):
         yield

@@ -1,5 +1,39 @@
 from datetime import date
+import json
 from django.core.exceptions import ValidationError
+
+
+class VersionConflict(ValidationError):
+    def __init__(self, current_version):
+        self.current_version = current_version
+        super().__init__("The saved version changed. Reload before saving.")
+
+
+def validate_json_value(value, *, maximum=500_000):
+    """Accept bounded JSON data, including direct service callers outside HTTP."""
+    def visit(node, depth=0):
+        if depth > 20:
+            raise ValidationError("JSON nesting exceeds the supported limit.")
+        if isinstance(node, dict):
+            if any(not isinstance(key, str) or "\x00" in key for key in node):
+                raise ValidationError("JSON object keys must be strings.")
+            for child in node.values():
+                visit(child, depth + 1)
+        elif isinstance(node, list):
+            for child in node:
+                visit(child, depth + 1)
+        elif isinstance(node, str) and "\x00" in node:
+            raise ValidationError("Text cannot contain null characters.")
+        elif node is not None and type(node) not in {str, int, float, bool}:
+            raise ValidationError("Unsupported JSON value.")
+    visit(value)
+    try:
+        encoded = json.dumps(value, allow_nan=False, ensure_ascii=False)
+        size = len(encoded.encode("utf-8"))
+    except (ValueError, TypeError, OverflowError, UnicodeError):
+        raise ValidationError("Use finite, valid JSON values.")
+    if size > maximum:
+        raise ValidationError("JSON content exceeds the supported size.")
 
 
 def validate_answers(schema, answers):

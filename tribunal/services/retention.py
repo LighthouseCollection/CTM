@@ -18,10 +18,12 @@ from .files import private_path
 
 
 @transaction.atomic
-def remove_draft(actor, app_id, expired=False):
+def remove_draft(actor, app_id, expired=False, *, expected_version=None):
     if actor:
         active(actor)
     app = Application.objects.select_for_update(of=("self",)).get(pk=app_id)
+    from .applications import check_filing_version
+    check_filing_version(app, expected_version)
     if actor and app.owner_id != actor.pk:
         raise PermissionDenied("Only the draft owner can delete it.")
     if app.submitted_at or app.status != "draft":
@@ -95,7 +97,7 @@ def process_drafts(now=None):
                         defaults={
                             "recipient": app.owner,
                             "kind": "draft_expiring",
-                            "payload": {"expires_at": deadline.isoformat()},
+                            "payload": {"expires_at": deadline.isoformat(), "application": str(app.pk)},
                         },
                     )
                     result["warned"] += 1

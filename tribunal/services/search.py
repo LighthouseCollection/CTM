@@ -2,10 +2,19 @@
 
 import os
 import requests
+import uuid
 from django.core.exceptions import ValidationError, PermissionDenied, ObjectDoesNotExist
 from tribunal.models import FileVersion, DocumentText
 from tribunal.policy import staff
 from .files import authorized_file
+from .filing_privacy import file_visible
+
+
+def excluded_assessment(file):
+    attachment = file.attachment
+    return attachment.visibility == "medical" or bool(
+        attachment.report_request_id and attachment.report_request.kind in {"medical", "psychological"}
+    )
 
 
 def search(actor, query, include_history=False, case_id=None):
@@ -24,7 +33,10 @@ def search(actor, query, include_history=False, case_id=None):
             timeout=10,
         )
         response.raise_for_status()
-        hits = response.json().get("hits", [])
+        data = response.json()
+        if not isinstance(data, dict) or not isinstance(data.get("hits"), list) or len(data["hits"])>100:
+            raise ValueError("Invalid search candidate response")
+        hits = data["hits"]
     except (requests.RequestException, ValueError):
         raise ValidationError(
             "Search is temporarily unavailable; source documents are unchanged."
@@ -32,15 +44,23 @@ def search(actor, query, include_history=False, case_id=None):
     results = []
     seen = set()
     for hit in hits:
+        if not isinstance(hit, dict):
+            continue
         try:
-            file = authorized_file(actor, hit["file_id"])
-        except (PermissionDenied, ObjectDoesNotExist, ValueError, KeyError):
+            identifier = str(uuid.UUID(str(hit["file_id"])))
+            file = authorized_file(actor, identifier)
+        except (PermissionDenied, ObjectDoesNotExist, ValueError, KeyError, TypeError):
+            continue
+        if excluded_assessment(file):
             continue
         if case_id and str(file.attachment.case_id) != str(case_id):
             continue
         if (
             not include_history
-            and file.attachment.versions.order_by("-number").first().pk != file.pk
+            and (not file_visible(file, current=True) or any(
+                file_visible(later, current=True)
+                for later in file.attachment.versions.filter(number__gt=file.number)
+            ))
         ):
             continue
         if file.pk in seen:
@@ -62,14 +82,19 @@ def search(actor, query, include_history=False, case_id=None):
 
 
 def index_text(derivative):
+    file = derivative.file
+    if excluded_assessment(file):
+        return None
+    from .applications import safe_file
+    if not safe_file(file):
+        return None
     url = os.environ.get("MEILI_URL", "").rstrip("/")
     key = os.environ.get("MEILI_MASTER_KEY", "")
     if not url or not key:
         raise ValidationError("Search engine is not configured.")
-    file = derivative.file
     # Applicant drafts are not published into council search.
     app = file.attachment.application
-    if app and not app.submitted_at:
+    if app and (not app.submitted_at or not file_visible(file)):
         return None
     headers = {"Authorization": "Bearer " + key}
     response = requests.post(

@@ -24,8 +24,16 @@
     "handler": "application"
   },
   {
+    "route": "api/applications/<uuid:app_id>/closed-case-result/",
+    "handler": "closed_filing_result"
+  },
+  {
     "route": "api/applications/<uuid:app_id>/history/",
     "handler": "answer_history"
+  },
+  {
+    "route": "api/applications/<uuid:app_id>/files/",
+    "handler": "application_files"
   },
   {
     "route": "api/applications/<uuid:app_id>/submit/",
@@ -48,6 +56,18 @@
     "handler": "checkout"
   },
   {
+    "route": "api/applications/<uuid:app_id>/payments/",
+    "handler": "application_payments"
+  },
+  {
+    "route": "api/payments/reconciliation/",
+    "handler": "payment_reconciliation"
+  },
+  {
+    "route": "api/payments/<uuid:intent_id>/retry/",
+    "handler": "retry_payment"
+  },
+  {
     "route": "integrations/stripe/",
     "handler": "stripe_webhook"
   },
@@ -66,6 +86,18 @@
   {
     "route": "api/council/members/",
     "handler": "members"
+  },
+  {
+    "route": "api/council/tribunals/",
+    "handler": "tribunals"
+  },
+  {
+    "route": "api/council/assignment-authorities/",
+    "handler": "assignment_authorities"
+  },
+  {
+    "route": "api/council/assignment-authorities/<uuid:role_id>/revoke/",
+    "handler": "revoke_assignment_authority"
   },
   {
     "route": "api/council/enroll/",
@@ -88,6 +120,10 @@
     "handler": "close_session"
   },
   {
+    "route": "api/sessions/<uuid:session_id>/reschedule/",
+    "handler": "reschedule_session"
+  },
+  {
     "route": "api/agenda/<uuid:item_id>/hear/",
     "handler": "hear"
   },
@@ -98,6 +134,10 @@
   {
     "route": "api/notifications/",
     "handler": "notifications"
+  },
+  {
+    "route": "api/messages/<uuid:message_id>/read/",
+    "handler": "message_acknowledge"
   },
   {
     "route": "api/cases/<uuid:case_id>/files/",
@@ -112,6 +152,10 @@
     "handler": "download"
   },
   {
+    "route": "api/files/<uuid:file_id>/status/",
+    "handler": "file_status"
+  },
+  {
     "route": "api/report-questions/",
     "handler": "report_questions"
   },
@@ -124,12 +168,24 @@
     "handler": "send_report_request"
   },
   {
+    "route": "api/requests/<uuid:request_id>/cancel/",
+    "handler": "report_request_cancel"
+  },
+  {
+    "route": "api/pending-party-links/<uuid:pending_id>/cancel/",
+    "handler": "pending_link_cancel"
+  },
+  {
     "route": "api/requests/<uuid:request_id>/complete/",
     "handler": "complete_report_request"
   },
   {
     "route": "api/requests/<uuid:request_id>/release/",
     "handler": "medical_release"
+  },
+  {
+    "route": "api/requests/<uuid:request_id>/files/",
+    "handler": "request_files"
   },
   {
     "route": "api/cases/<uuid:case_id>/reports/",
@@ -188,6 +244,14 @@
     "handler": "templates"
   },
   {
+    "route": "api/templates/<uuid:template_id>/publish/",
+    "handler": "template_publish"
+  },
+  {
+    "route": "api/templates/<uuid:template_id>/retire/",
+    "handler": "template_retire"
+  },
+  {
     "route": "api/account/settings/",
     "handler": "account_settings"
   },
@@ -224,6 +288,10 @@
     "handler": "hearing_outcome"
   },
   {
+    "route": "api/hearings/<uuid:hearing_id>/",
+    "handler": "hearing_detail"
+  },
+  {
     "route": "api/agenda/<uuid:item_id>/testimony/",
     "handler": "testimony"
   },
@@ -232,12 +300,40 @@
     "handler": "testimony_response"
   },
   {
+    "route": "api/appointments/",
+    "handler": "own_testimony"
+  },
+  {
+    "route": "api/appointments/<uuid:appointment_id>/cancel/",
+    "handler": "cancel_testimony"
+  },
+  {
     "route": "api/recordings/",
     "handler": "recording"
   },
   {
     "route": "api/recordings/<uuid:recording_id>/finalize/",
     "handler": "recording_finalize"
+  },
+  {
+    "route": "api/reports/<uuid:report_id>/recordings/",
+    "handler": "report_recordings"
+  },
+  {
+    "route": "api/transcripts/<uuid:revision_id>/",
+    "handler": "transcript_detail"
+  },
+  {
+    "route": "api/transcripts/<uuid:revision_id>/review/",
+    "handler": "transcript_review"
+  },
+  {
+    "route": "api/transcripts/<uuid:revision_id>/correct/",
+    "handler": "transcript_correct"
+  },
+  {
+    "route": "api/processing/<uuid:run_id>/retry/",
+    "handler": "processing_retry"
   },
   {
     "route": "api/reports/<uuid:report_id>/revisions/",

@@ -30,6 +30,8 @@ from tribunal.policy import (
 )
 from .common import audit, lock_key, notify, notify_manager
 from .applications import safe_file
+from .closed_filings import CLOSED_INTAKE, council_filing, require_new_information
+from tribunal.db.context import database_actor, database_settings
 
 DECISION_TYPES = {
     "diss-applicant",
@@ -159,7 +161,8 @@ def close_case(actor, case, reason, notify_parties=True):
     OpenCaseClaim.objects.filter(case=case).delete()
     from tribunal.models import ReportRequest
 
-    ReportRequest.objects.filter(case=case, state__in=["draft", "sent"]).update(
+    ReportRequest.objects.filter(case=case, state="draft").update(state="cancelled")
+    ReportRequest.objects.filter(case=case, state="sent").update(
         state="closed"
     )
     audit(actor, reason, case, case)
@@ -272,7 +275,7 @@ def release_decree(actor, decree_id, party_id, action="release"):
 
 
 @transaction.atomic
-def withdraw_application(actor, application_id):
+def withdraw_application(actor, application_id, *, expected_version=None):
     app = application_for(actor, application_id)
     app = (
         Application.objects.select_for_update(of=("self",))
@@ -281,9 +284,11 @@ def withdraw_application(actor, application_id):
     )
     if app.owner_id != actor.pk and actor.role != "admin":
         raise PermissionDenied("Only owner or admin can withdraw petition.")
+    from .applications import check_filing_version
+    check_filing_version(app, expected_version)
     if app.status not in {"submitted", "accepted", "returned"}:
         raise ValidationError("Filing is not eligible for withdrawal.")
-    if app.kind == "appeal":
+    if app.kind == "appeal" or (app.origin == CLOSED_INTAKE and app.status == "submitted"):
         if (
             actor.pk != app.owner_id
             or AppealDisposition.objects.filter(application=app).exists()
@@ -295,10 +300,15 @@ def withdraw_application(actor, application_id):
         # checks, which hold the same case lock and never lock the application.
         Case.objects.select_for_update(of=("self",)).get(pk=app.case_id)
     else:
-        open_proceeding(lock_proceeding(app.proceeding_id))
+        proceeding_id = app.proceeding_id
+        if app.origin == CLOSED_INTAKE:
+            disposition = AppealDisposition.objects.get(application=app, result="accept")
+            proceeding_id = app.case.proceedings.get(status="open").pk
+        open_proceeding(lock_proceeding(proceeding_id))
+    pending_closed_intake = app.origin == CLOSED_INTAKE and app.status == "submitted"
     app.status = "withdrawn"
     app.save(update_fields=["status"])
-    if app.kind == "petition" and app.party:
+    if app.kind == "petition" and not pending_closed_intake and app.party:
         app.party.withdrawn_at = timezone.now()
         app.party.save(update_fields=["withdrawn_at"])
         if not app.case.parties.filter(
@@ -312,12 +322,30 @@ def withdraw_application(actor, application_id):
 
 
 @transaction.atomic
-def add_appeal_information(actor, application_id, text, file_ids=None):
+def add_appeal_information(actor, application_id, text, file_ids=None, *, expected_version=None, idempotency_key=None):
     app = application_for(actor, application_id)
     app = Application.objects.select_for_update(of=("self",)).get(pk=app.pk)
+    from .applications import check_filing_version
+    check_filing_version(app, expected_version)
+    if actor.pk != app.owner_id:
+        raise PermissionDenied("Only the filing owner can supplement it.")
+    if not isinstance(text, str) or len(text) > 100000:
+        raise ValidationError("Supplement text must be within the supported size.")
+    if file_ids is None:
+        file_ids = []
+    if not isinstance(file_ids, list) or len(file_ids) != len(set(map(str, file_ids))):
+        raise ValidationError("Provide distinct evidence identifiers as a list.")
+    if idempotency_key is not None:
+        if not isinstance(idempotency_key, str) or not idempotency_key.strip() or len(idempotency_key) > 100:
+            raise ValidationError("A nonempty supplement idempotency_key up to100 characters is required.")
+        previous = AppealSupplement.objects.filter(application=app, idempotency_key=idempotency_key).first()
+        if previous:
+            if previous.text == text and [x["id"] for x in previous.manifest] == list(map(str, file_ids)):
+                return previous
+            raise ValidationError("This supplement key already identifies different information.")
     if (
         actor.pk != app.owner_id
-        or app.kind != "appeal"
+        or not council_filing(app)
         or app.status != "submitted"
         or AppealDisposition.objects.filter(application=app).exists()
     ):
@@ -327,11 +355,14 @@ def add_appeal_information(actor, application_id, text, file_ids=None):
     manifest = []
     for file_id in file_ids or []:
         file = FileVersion.objects.select_related("attachment").get(pk=file_id)
-        if file.attachment.application_id != app.pk or not safe_file(file):
+        if (file.attachment.application_id != app.pk or file.attachment.owner_id != actor.pk
+                or file.attachment.report_request_id or file.attachment.visibility != "own"
+                or file.attachment.case_id != app.case_id or not safe_file(file)
+                or file.attachment.versions.order_by("-number").first().pk != file.pk):
             raise PermissionDenied("Evidence must belong to this appeal.")
         manifest.append({"id": str(file.pk), "sha256": file.sha256})
     extra = AppealSupplement.objects.create(
-        application=app, actor=actor, text=text, manifest=manifest
+        application=app, actor=actor, text=text, manifest=manifest, idempotency_key=idempotency_key
     )
     notify_manager(app.case, "appeal_added", extra, digest=True)
     audit(actor, "appeal_added", extra, app.case)
@@ -340,6 +371,12 @@ def add_appeal_information(actor, application_id, text, file_ids=None):
 
 @transaction.atomic
 def decide_appeal(actor, application_id, hearing_id, result, explanation=""):
+    with database_actor(actor), database_settings({"ctm.council_result": str(application_id),
+        "ctm.result_hearing": str(hearing_id), "ctm.result_choice": str(result)}):
+        return _decide_appeal(actor, application_id, hearing_id, result, explanation)
+
+
+def _decide_appeal(actor, application_id, hearing_id, result, explanation=""):
     app = (
         Application.objects.select_for_update(of=("self",))
         .select_related("case")
@@ -347,22 +384,34 @@ def decide_appeal(actor, application_id, hearing_id, result, explanation=""):
     )
     writer(actor, app.case)
     if (
-        app.kind != "appeal"
+        not council_filing(app)
         or app.status != "submitted"
         or result not in {"accept", "decline"}
+        or AppealDisposition.objects.filter(application=app).exists()
     ):
         raise ValidationError("No pending appeal or invalid result.")
     hearing = Hearing.objects.select_related("agenda").get(
-        pk=hearing_id, agenda__case=app.case
+        pk=hearing_id, agenda__case=app.case, state="held", agenda__part=2
     )
+    if app.origin == CLOSED_INTAKE and hearing.created_at < app.submitted_at:
+        raise ValidationError("Council must present this filing after it was submitted.")
     if hearing.presenter_id != app.case.assigned_member_id:
         raise ValidationError("Appeal must be heard by its assigned member.")
     case = Case.objects.select_for_update(of=("self",)).get(pk=app.case_id)
     proceeding = None
     reopened = False
     if result == "accept":
+        if app.origin == CLOSED_INTAKE:
+            formal = app.submissions.select_related("revision").order_by("-created_at", "-id").first()
+            if formal is None:
+                raise ValidationError("The formal filing is missing.")
+            require_new_information(app, formal.revision.answers)
+        party = Party.objects.select_for_update().get(account_id=app.owner_id, case=case)
+        party.participating = True
+        party.withdrawn_at = None
+        party.save(update_fields=["participating", "withdrawn_at"])
         parties = list(
-            case.parties.filter(person__isnull=False, account__isnull=False).order_by(
+            case.parties.filter(participating=True, person__isnull=False, account__isnull=False).order_by(
                 "person_id"
             )
         )
@@ -403,7 +452,7 @@ def decide_appeal(actor, application_id, hearing_id, result, explanation=""):
     app.save(update_fields=["status"])
     notify(
         app.owner,
-        "appeal_" + result,
+        ("closed_intake_" if app.origin == CLOSED_INTAKE else "appeal_") + result,
         result_record,
         case=case,
         payload={"explanation": explanation},
@@ -412,5 +461,5 @@ def decide_appeal(actor, application_id, hearing_id, result, explanation=""):
         for party in case.parties.select_related("account"):
             if party.account:
                 notify(party.account, "case_reopened", result_record, case=case)
-    audit(actor, "appeal_" + result, result_record, case)
+    audit(actor, ("closed_intake_" if app.origin == CLOSED_INTAKE else "appeal_") + result, result_record, case)
     return result_record

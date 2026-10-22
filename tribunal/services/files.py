@@ -24,6 +24,7 @@ from tribunal.models import (
 from tribunal.policy import active, application_for, case_for, open_proceeding, writer
 from .applications import safe_file
 from .common import audit, notify_manager
+from .closed_filings import council_filing
 
 
 def validate_category(category, mime):
@@ -154,6 +155,7 @@ def upload(
     context="",
     visibility="own",
     request_id=None,
+    expected_request_version=None,
 ):
     active(actor)
     if not category or not category.replace("_", "").isalnum() or len(category) > 30:
@@ -165,17 +167,23 @@ def upload(
     if request_id:
         from tribunal.models import ReportRequest
 
-        request = ReportRequest.objects.select_related(
-            "subject", "proceeding__case"
-        ).get(pk=request_id)
+        from .reports import lock_request
+        from .request_contracts import own_request, check_request_version
+
+        request = lock_request(request_id)
         if actor.role == "applicant":
-            if request.subject.account_id != actor.pk:
-                raise PermissionDenied("Not your report request.")
+            own_request(actor, request)
+            check_request_version(request, expected_request_version)
         else:
             writer(actor, request.case)
         open_proceeding(request.proceeding)
         if request.state != "sent":
             raise ValidationError("Report request is not accepting uploads.")
+        if category == "CONSENT":
+            if request.kind not in {"medical", "psychological"}:
+                raise ValidationError("Consent files belong to assessment requests.")
+            if MedicalRelease.objects.filter(request=request).exists():
+                raise ValidationError("The signed disclosure original is retained.")
         case = request.case
         proceeding = request.proceeding
         owner = request.subject.account
@@ -184,17 +192,28 @@ def upload(
         )
     elif app_id:
         app = application_for(actor, app_id)
+        from tribunal.models import Application, Case
+
+        if app.owner_id == actor.pk or actor.role in {"admin", "secretary"}:
+            app = Application.objects.select_for_update(of=("self",)).get(pk=app.pk)
+        if app.case_id:
+            # Managers may correct files without permission to UPDATE the application.
+            # Case locking serializes those corrections with closure and reassignment.
+            Case.objects.select_for_update(of=("self",)).get(pk=app.case_id)
+            app = Application.objects.get(pk=app.pk)
         if app.owner_id != actor.pk:
             writer(actor, app.case)
         case = app.case
         proceeding = app.proceeding
         if app.status in {"withdrawn", "expired", "deleted", "declined"}:
             raise ValidationError("Application is no longer accepting documents.")
-        if app.submitted_at and app.kind != "appeal":
+        if app.submitted_at and not council_filing(app):
             open_proceeding(proceeding)
-        if app.kind == "appeal" and app.status not in {"draft", "submitted"}:
+        if council_filing(app) and app.status not in {"draft", "submitted"}:
             raise ValidationError("Appeal is not pending.")
         owner = app.owner
+        if actor.role == "applicant" and visibility != "own":
+            raise PermissionDenied("Application documents must use ordinary owner visibility.")
     else:
         case = case_for(actor, case_id, write=True)
         if case.status != "open":
@@ -221,6 +240,8 @@ def upload(
             attachment.application_id != (app.pk if app else None)
             or attachment.case_id != (case.pk if case else None)
             or attachment.category != category
+            or attachment.context != context
+            or attachment.visibility != visibility
             or attachment.report_request_id != (request.pk if request else None)
         ):
             raise PermissionDenied("Replacement belongs to a different context.")
@@ -268,18 +289,77 @@ def upload(
     transaction.on_commit(lambda: write_private_original(path, data))
     FileTechnicalEvent.objects.create(file=file, task="scan", result=state)
     audit(actor, "file_uploaded", file, case, metadata={"category": category})
-    if app and app.submitted_at and actor.pk == app.owner_id:
+    if app and app.submitted_at and app.status != "returned" and actor.pk == app.owner_id:
         notify_manager(case, "file_uploaded", file, digest=True)
     return file
 
 
-def authorized_file(actor, file_id):
+def application_file_listing(actor, app_id):
+    """Owner-only current ordinary originals, including honest pending scan state."""
+    from .applications import document_requirements
+
+    app = application_for(actor, app_id)
+    if actor.role != "applicant" or app.owner_id != actor.pk:
+        raise PermissionDenied("Only the filing applicant can list draft documents.")
+    can_upload = app.status not in {"withdrawn", "expired", "deleted", "declined"}
+    if council_filing(app):
+        can_upload = can_upload and app.status in {"draft", "submitted"}
+    elif app.submitted_at:
+        can_upload = bool(can_upload and app.proceeding and app.proceeding.status == "open"
+                          and app.case.status == "open")
+    items = []
+    for attachment in app.attachments.filter(
+        owner=actor, visibility="own", report_request__isnull=True
+    ).order_by("created_at", "pk"):
+        file = attachment.versions.order_by("-number").first()
+        if not file or Decree.objects.filter(signed_file=file).exists():
+            continue
+        event = file.technical_events.filter(task="scan").order_by("-created_at", "-id").first()
+        state = event.result if event and event.result in {"clean", "pending", "rejected"} else "pending"
+        item = {"id": str(file.pk), "attachment_id": str(attachment.pk),
+                "category": attachment.category, "context": attachment.context,
+                "name": display_filename(file), "scan_state": state}
+        if state == "clean":
+            authorized_file(actor, file.pk)
+            item["download_url"] = f"/api/files/{file.pk}/"
+        items.append(item)
+    revision = app.revisions.filter(number=app.current_version).first()
+    return {"can_upload": can_upload, "items": items,
+            "requirements": document_requirements(app, revision.answers if revision else {})}
+
+
+def request_file_listing(actor, request_id):
+    from tribunal.models import ReportRequest
+    from .request_contracts import own_request, request_version, request_open
+
+    request = ReportRequest.objects.select_related("case", "proceeding", "subject").get(pk=request_id)
+    own_request(actor, request)
+    items = []
+    for attachment in Attachment.objects.filter(report_request=request, owner=actor,
+            case=request.case, proceeding=request.proceeding).exclude(visibility="council").order_by("created_at", "id"):
+        file = attachment.versions.order_by("-number").first()
+        if not file:
+            continue
+        event = file.technical_events.filter(task="scan").order_by("-created_at", "-id").first()
+        state = event.result if event and event.result in {"clean", "pending", "rejected"} else "pending"
+        row = {"id": str(file.pk), "attachment_id": str(attachment.pk),
+               "category": attachment.category, "purpose": "consent" if attachment.category == "CONSENT" else "report",
+               "name": display_filename(file), "version": file.number, "scan_state": state}
+        if state == "clean":
+            authorized_file(actor, file.pk)
+            row["download_url"] = f"/api/files/{file.pk}/"
+        items.append(row)
+    return {"request_id": str(request.pk), "proceeding_id": str(request.proceeding_id),
+            "request_version": request_version(request), "can_upload": request_open(request), "items": items}
+
+
+def authorized_file(actor, file_id, *, require_safe=True):
     active(actor)
     file = FileVersion.objects.select_related(
         "attachment__application", "attachment__case"
     ).get(pk=file_id)
     attachment = file.attachment
-    if not safe_file(file):
+    if require_safe and not safe_file(file):
         raise PermissionDenied("File has not passed technical validation.")
     if actor.role == "applicant":
         decree = Decree.objects.filter(signed_file=file).first()
@@ -296,6 +376,10 @@ def authorized_file(actor, file_id):
         if not decree and attachment.versions.order_by("-number").first().pk != file.pk:
             raise PermissionDenied("Applicants see only the latest version.")
     else:
+        from .filing_privacy import file_visible
+
+        if not file_visible(file):
+            raise PermissionDenied("Returned corrections are private until resubmission.")
         if attachment.application and attachment.application.submitted_at is None:
             raise PermissionDenied("Applicant draft attachments are private.")
         if attachment.visibility == "medical":
@@ -341,7 +425,7 @@ def case_file_listing(actor, case_id, *, history=False, offset=0):
             Q(attachment__application__isnull=True)
             | Q(attachment__application__submitted_at__isnull=False)
         )
-    if not history:
+    if not history and actor.role == "applicant":
         later = FileVersion.objects.filter(
             attachment_id=OuterRef("attachment_id"), number__gt=OuterRef("number")
         )
@@ -353,10 +437,29 @@ def case_file_listing(actor, case_id, *, history=False, offset=0):
     )
     files = (
         files.annotate(latest_scan=Subquery(scan))
-        .filter(latest_scan="clean")
         .order_by("-created_at", "-id")
     )
-    rows = list(files[offset : offset + 51])
+    if actor.role == "applicant":
+        files = files.filter(latest_scan="clean")
+    if actor.role != "applicant":
+        from .filing_privacy import file_visible
+
+        # Filter before pagination and select the newest visible formal original.
+        # A pending replacement must not hide the last formally submitted file.
+        visible = []
+        seen = set()
+        for row in files:
+            if not file_visible(row, current=not history):
+                continue
+            if not history and row.attachment_id in seen:
+                continue
+            seen.add(row.attachment_id)
+            if row.latest_scan != "clean":
+                continue
+            visible.append(row)
+        rows = visible[offset : offset + 51]
+    else:
+        rows = list(files[offset : offset + 51])
     return {
         "items": [
             {
