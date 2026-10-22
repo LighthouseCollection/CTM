@@ -69,3 +69,8 @@ def test_session_listing_projects_assigned_and_hearing_case_counts(client, peopl
 
     assert row["assigned_case_count"] == 1
     assert row["hearing_case_count"] == 0
+    agenda = client.get(f"/api/sessions/{session.pk}/agenda/").json()
+    assert agenda["session"]["id"] == str(session.pk)
+    assert [(item["case_id"], item["part"]) for item in agenda["items"]] == [
+        (str(ready_application.case_id), 1)
+    ]

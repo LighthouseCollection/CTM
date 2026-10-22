@@ -60,18 +60,15 @@ test("session naming follows the contract", () => {
   );
 });
 
-test("a session adjourned today stays in Current through Los Angeles midnight", () => {
+test("an adjourned session immediately moves to Archived", () => {
   const rows = [
     { id: "active", state: "planned", date: "2026-10-22" },
     { id: "adjourned", state: "closed", date: "2026-10-22", adjourned_at: "2026-10-22T19:30:00-07:00" },
     { id: "archived", state: "closed", date: "2026-10-21", adjourned_at: "2026-10-21T19:30:00-07:00" },
   ];
   const today = C.sessionBuckets(rows, "2026-10-22");
-  assert.deepEqual([...today.current].map((row) => row.id), ["active", "adjourned"]);
-  assert.deepEqual([...today.archived].map((row) => row.id), ["archived"]);
-  const tomorrow = C.sessionBuckets(rows, "2026-10-23");
-  assert.deepEqual([...tomorrow.current].map((row) => row.id), ["active"]);
-  assert.deepEqual([...tomorrow.archived].map((row) => row.id), ["adjourned", "archived"]);
+  assert.deepEqual([...today.current].map((row) => row.id), ["active"]);
+  assert.deepEqual([...today.archived].map((row) => row.id), ["adjourned", "archived"]);
 });
 
 test("missing session metadata stays missing instead of becoming an epoch date", () => {

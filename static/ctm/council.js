@@ -69,21 +69,16 @@
 
   function sessionBuckets(rows, today) {
     const records = rows || [];
-    const adjournedToday = (session) =>
-      session.state === "closed" &&
-      Boolean(session.adjourned_at) &&
-      todayInLosAngeles(new Date(session.adjourned_at)) === today;
     return {
       current: records
-        // Adjourned closes the session, but it stays here through Los Angeles
-        // midnight so council can still open its record and finish notes.
-        .filter((session) => (OPEN_SESSION_STATES.has(session.state) && session.date <= today) || adjournedToday(session))
+        .filter((session) => OPEN_SESSION_STATES.has(session.state) && session.date <= today)
         .sort((a, b) => b.date.localeCompare(a.date)),
       upcoming: records
         .filter((session) => OPEN_SESSION_STATES.has(session.state) && session.date > today)
         .sort((a, b) => a.date.localeCompare(b.date)),
+      // Adjournment completes the session and immediately archives its record.
       archived: records
-        .filter((session) => session.state === "closed" && !adjournedToday(session))
+        .filter((session) => session.state === "closed")
         .sort((a, b) => b.date.localeCompare(a.date)),
     };
   }
