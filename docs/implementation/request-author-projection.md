@@ -53,7 +53,7 @@ Do not change published0038 or reuse applied0040/0041.
 Governance serially integrates/apply0042 then0043 with recoverable snapshot and gives
 applicant/QA the exact combined successor. UI PR22's separate unapplied competing
 0040_session_workspace_metadata must be ported to a unique coordinated successor
-(proposed0044after0043), not a parallel leaf or renamed applied migration. Backend
+(proposed0045after0044), not a parallel leaf or renamed applied migration. Backend
 has not modified that UI branch or the server.
 
 Applicant reruns the real administrator-authored request stage and later groups on

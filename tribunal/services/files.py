@@ -325,8 +325,10 @@ def application_file_listing(actor, app_id):
             item["download_url"] = f"/api/files/{file.pk}/"
         items.append(item)
     revision = app.revisions.filter(number=app.current_version).first()
+    from .document_labels import filing_requirement_labels
+    requirements = document_requirements(app, revision.answers if revision else {})
     return {"can_upload": can_upload, "items": items,
-            "requirements": document_requirements(app, revision.answers if revision else {})}
+            "requirements": filing_requirement_labels(actor, requirements)}
 
 
 def request_file_listing(actor, request_id):

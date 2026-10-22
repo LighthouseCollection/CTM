@@ -1,3 +1,13 @@
+## Filing document-category display label consumer
+
+Implemented valid latest configured bilingual labels in owner filing-file listings,
+with narrow app-only0044 projection, full-shape legacy validation and built-in
+fallback. Business requirements/RO contexts/scan/private originals remain unchanged;
+no label read in submission/worker validation. Thirteen restrictedctm_app tests;
+full PostgreSQL764 passed/1skip, roundtrip0044.99routes/63models/63forced tables.
+See document-label-consumer.md. UI metadata successor proposal now0045after0044;
+no UI branch/server mutation/merge/deploy. Exact pushed SHA recorded issue #2.
+
 ## Applicant request author-name RLS projection correction
 
 Reproduced admin-authored sent request404 with hidden Account and visible request

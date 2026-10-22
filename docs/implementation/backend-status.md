@@ -5,8 +5,8 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **751 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
-reapply through0043. Protected151-table specification and accepted questions unchanged.
+Validation: **764 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+reapply through0044. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
   domain tables forced RLS; queue provenance in0036.
@@ -113,12 +113,20 @@ Account dereferences or broader Account SELECT. Admin remains hidden, member aut
 remains genuine, and outsider/private/external/interview/worker access stays denied.
 [Source-scoped lookup, grants and successor acceptance](request-author-projection.md).
 
+## Filing document-label settings consumer
+
+Owner filing-file requirement labels now consume valid latest document_categories
+bilingual configuration through a narrow app-only projection; invalid legacy values
+fall back to existing labels. Requiredness, codes, contextual originals, scans and
+submission/recovery validation remain unchanged; settings rows stay hidden.
+[Runtime semantics, grants and content acceptance](document-label-consumer.md).
+
 ## Unfinished
 
 UI's other requested backend contracts remain unfinished: approved own-profile/
 contact/portrait mutations, verified email/provider administration, broader normalized/admin session history, member
 contact/portrait editing and broader institutional history, formal-source factual discrepancy views,
-and consumer integration of stored settings beyond account status notices. Council C05 external
+and consumer integration of stored settings beyond account status notices and filing document labels. Council C05 external
 boot/link-state/recording/paper-completion/projection/invitation contracts remain unfinished. Pagination and per-family settings
 edit schemas are addressed in these continuations;
 those separate contracts are not claimed complete or all blocked by credentials.

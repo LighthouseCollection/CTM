@@ -52,7 +52,7 @@ not live antivirus/provider acceptance.99routes/63models/63forced tables unchang
 serially applies it with a recoverable snapshot and integrates the exact backend
 SHA. Never reuse/rename applied0040_account_administration or0041_bound_returned_filing.
 The separate UI PR22 competing0040_session_workspace_metadata must be reconciled
-as an unapplied unique successor by governance/backend (proposed0044 after the later0043 request-author projection),
+as an unapplied unique successor by governance/backend (proposed0045 after the later0043 author and0044 document-label projections),
 not deployed as a parallel leaf. Backend did not edit that branch or operate the server.
 Downgrading0042 restores the vulnerable prior SQL behavior; rollback is not a safe
 privacy acceptance outcome. Retain appropriate access restrictions during recovery.
