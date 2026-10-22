@@ -60,6 +60,13 @@ def notify(recipient, kind, obj, case=None, payload=None, due_at=None, email=Tru
 def notify_manager(case, kind, obj, digest=False):
     if not case or not case.assigned_member_id:
         return
+    if not case.assigned_member.is_active or case.assigned_member.role == "applicant":
+        from tribunal.models import Account
+        for reviewer in Account.objects.filter(is_active=True, role__in=["admin", "secretary"]):
+            notify(reviewer, "manager_authority_review", obj, case=case)
+        return
+    if digest:
+        lock_key(f"digest:{case.pk}")
     due = timezone.now() + timezone.timedelta(minutes=10) if digest else None
     notify(case.assigned_member, kind, obj, case=case, due_at=due)
     if digest:

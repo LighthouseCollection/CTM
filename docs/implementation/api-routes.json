@@ -136,6 +136,10 @@
     "handler": "notifications"
   },
   {
+    "route": "api/messages/<uuid:message_id>/read/",
+    "handler": "message_acknowledge"
+  },
+  {
     "route": "api/cases/<uuid:case_id>/files/",
     "handler": "case_files"
   },

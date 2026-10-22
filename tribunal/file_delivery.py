@@ -73,6 +73,9 @@ def deliver_file(request, file_id):
         return JsonResponse({"error": "source_unavailable"}, status=503)
     try:
         size = os.fstat(handle.fileno()).st_size
+        if size != source.byte_count:
+            handle.close()
+            return JsonResponse({"error": "source_integrity_unavailable"}, status=503)
         etag = f'"{source.sha256}"'
         modified = int(source.created_at.timestamp())
         requested = request.headers.get("Range", "") if request.method == "GET" else ""

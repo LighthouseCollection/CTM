@@ -37,6 +37,7 @@ urlpatterns = [
     path("api/agenda/<uuid:item_id>/hear/", api.hear),
     path("api/cases/<uuid:case_id>/messages/", api.messages),
     path("api/notifications/", api.notifications),
+    path("api/messages/<uuid:message_id>/read/", api.message_acknowledge),
     path("api/cases/<uuid:case_id>/files/", api.case_files),
     path("api/files/", api.upload),
     path("api/files/<uuid:file_id>/", api.download),

@@ -31,10 +31,12 @@ def database_settings(values):
                 cursor.execute("SELECT current_setting(%s,true)", [name])
                 previous[name] = cursor.fetchone()[0] or ""
                 cursor.execute("SELECT set_config(%s,%s,true)", [name, value])
+        succeeded = False
         try:
             yield
+            succeeded = True
         finally:
-            if not connection.needs_rollback:
+            if succeeded and not connection.needs_rollback:
                 with connection.cursor() as cursor:
                     for name, value in previous.items():
                         cursor.execute("SELECT set_config(%s,%s,true)", [name, value])

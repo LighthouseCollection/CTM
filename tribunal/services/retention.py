@@ -97,7 +97,7 @@ def process_drafts(now=None):
                         defaults={
                             "recipient": app.owner,
                             "kind": "draft_expiring",
-                            "payload": {"expires_at": deadline.isoformat()},
+                            "payload": {"expires_at": deadline.isoformat(), "application": str(app.pk)},
                         },
                     )
                     result["warned"] += 1

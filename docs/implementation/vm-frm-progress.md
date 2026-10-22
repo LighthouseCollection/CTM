@@ -1,5 +1,22 @@
 # VM-FRM backend progress
 
+## Next twenty communication/delivery/integrity batches
+
+Completed all20: typed/replay-safe messages, own first acknowledgement/private
+receipts/pagination; live recipient/current-manager checks; obsolete expiry-warning
+suppression; fenced leases/bounded exponential retry/digest quiet serialization;
+aware numbering/counter RLS/monotonic provenance; malformed search/hit validation/
+safe indexing; extraction checksum/DOCX/idempotency gates; byte-route length checks.
+
+Full isolated PostgreSQL: **433 passed, 1 skipped**; no model drift; migration
+rollback/reapply through0031, runtime isolation and concurrent message replay pass.
+**56 forced-RLS tables /63 domain models /151 approved target;88 routes**. No new
+domain models. Seven core policy reviews and provider/identity/schema/browser
+acceptance remain. Contracts and specific limits:
+[delivery-continuation.md](delivery-continuation.md).
+Protected build-spec unchanged; no operational migrations, credentials, deployment
+or merge. Queue fencing does not claim external-provider exactly-once delivery.
+
 ## Twenty functional continuation batches
 
 Full isolated PostgreSQL suite: **401 passed, 1 skipped**; no model drift;

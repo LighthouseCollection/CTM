@@ -1868,6 +1868,13 @@
           "primary_key": false
         },
         {
+          "name": "lease_token",
+          "column": "lease_token",
+          "type": "UUIDField",
+          "nullable": true,
+          "primary_key": false
+        },
+        {
           "name": "attempts",
           "column": "attempts",
           "type": "PositiveIntegerField",
@@ -3593,6 +3600,13 @@
           "column": "session_snapshot",
           "type": "JSONField",
           "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "idempotency_key",
+          "column": "idempotency_key",
+          "type": "CharField",
+          "nullable": true,
           "primary_key": false
         }
       ]

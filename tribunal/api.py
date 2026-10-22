@@ -725,9 +725,13 @@ def attendance(request, session_id):
 
 @endpoint(("GET", "POST"))
 def messages(request, case_id):
-    from tribunal.services.communications import messages_for, send_message
+    from tribunal.services.communications import messages_for, send_message, message_receipts
 
     if request.method == "GET":
+        offset = int(request.GET.get("offset", 0))
+        if not 0 <= offset <= 2**63-52:
+            raise ValidationError("Message offset is outside the supported range.")
+        rows = list(messages_for(request.user, case_id).select_related("sender").order_by("created_at", "id")[offset:offset+51])
         return JsonResponse(
             {
                 "items": [
@@ -738,11 +742,11 @@ def messages(request, case_id):
                         channel=x.channel,
                         timestamp=x.created_at.isoformat(),
                         file_links=x.file_links,
+                        receipts=message_receipts(request.user, x),
+                        idempotency_key=x.idempotency_key if x.sender_id == request.user.pk else None,
                     )
-                    for x in messages_for(request.user, case_id).select_related(
-                        "sender"
-                    )[:250]
-                ]
+                    for x in rows[:50]
+                ], "next_offset": offset+50 if len(rows)>50 else None,
             }
         )
     data = body(request)
@@ -757,10 +761,18 @@ def messages(request, case_id):
                 data.get("session_id"),
                 data.get("file_ids"),
                 data.get("channel", "portal"),
+                idempotency_key=data.get("idempotency_key"),
             )
         ),
         status=201,
     )
+
+
+@endpoint(("POST",))
+def message_acknowledge(request, message_id):
+    from tribunal.services.communications import acknowledge_message
+    row = acknowledge_message(request.user, message_id)
+    return JsonResponse({"id": str(message_id), "read_at": row.read_at.isoformat()})
 
 
 @endpoint(("GET", "POST"))

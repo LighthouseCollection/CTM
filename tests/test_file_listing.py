@@ -160,7 +160,7 @@ def test_application_file_access_is_audited_under_its_linked_case(
     source = app.attachments.get(category="MC").versions.get()
     path = private_path(source.object_key)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(b"%PDF-test")
+    path.write_bytes(b"%PDF-")
     assert client.head(f"/api/files/{source.pk}/").status_code == 200
     assert (
         AuditEvent.objects.get(action="file_metadata_accessed").case_id == app.case_id

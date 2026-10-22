@@ -85,6 +85,9 @@ def runtime():
             "ctm_pending_writable(jsonb,text)",
             "ctm_media_status(uuid)",
             "ctm_supplement_manifest_valid(jsonb)",
+            "ctm_allocate_case_number(date)",
+            "ctm_message_delivery_valid(uuid,uuid)",
+            "ctm_draft_warning_current(uuid,timestamptz,uuid)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -683,7 +686,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0029_onboarding_and_capture_guards")])
+        MigrationExecutor(connection).migrate([("tribunal", "0031_delivery_and_numbering_guards")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -853,7 +856,7 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 55
+        assert report["checks"]["forced_rls_table_count"] == 56
         assert "tribunal_reportrequest" not in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
@@ -1779,3 +1782,33 @@ def test_scoped_processing_status_and_attributed_correction_runtime(runtime, rea
     with runtime(people["member"]):
         assert not TranscriptRevision.objects.filter(pk=corrected.pk).exists()
         assert TranscriptRevision.objects.filter(pk=original.pk).exists()
+
+
+def test_private_message_acknowledgement_under_runtime_role(runtime, ready_application, people):
+    from tribunal.services.communications import send_message, acknowledge_message
+    from tribunal.models import MessageRecipient
+    app = ready_application
+    submit_application(app.owner, app.pk, "message-read-runtime", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    with runtime(people["admin"]):
+        message = send_message(people["admin"], app.case_id, "Synthetic private message", [str(app.party_id)], idempotency_key="runtime-message")
+    with runtime(app.owner):
+        receipt = acknowledge_message(app.owner, message.pk)
+        assert receipt.read_at
+        assert acknowledge_message(app.owner, message.pk).read_at == receipt.read_at
+    with runtime(people["admin"]):
+        assert MessageRecipient.objects.filter(pk=receipt.pk).update(read_at=None) == 0
+
+
+def test_case_number_counter_hidden_and_allocator_context_bound(runtime, ready_application):
+    from tribunal.models import CaseNumberCounter
+    from tribunal.services.applications import allocate_case_number
+    from django.db import DatabaseError
+    app = ready_application
+    with pytest.raises(DatabaseError), runtime(app.owner):
+        allocate_case_number()
+    with runtime(app.owner):
+        assert not CaseNumberCounter.objects.exists()
+        submitted = submit_application(app.owner, app.pk, "bound-counter-runtime", {"accepted": True, "name": "John Smith"})
+        assert submitted.application.case_id
+        assert not CaseNumberCounter.objects.exists()

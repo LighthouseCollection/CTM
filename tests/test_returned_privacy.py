@@ -35,7 +35,7 @@ def test_returned_http_snapshot_and_bytes(client, ready_application, people, set
     settings.MEDIA_ROOT = tmp_path
     settings.CTM_SCAN_REQUIRED = False
     app, formal, draft, old, new = correction(ready_application, people)
-    write_private_original(private_path(old.object_key), b"%PDF-original")
+    write_private_original(private_path(old.object_key), b"%PDF-")
     write_private_original(private_path(new.object_key), b"%PDF-private")
     login(client, app.owner)
     assert client.get(f"/api/applications/{app.pk}/").json()["answers"] == draft.answers

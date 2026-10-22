@@ -148,11 +148,26 @@ def save_answers(actor, app_id, answers, expected_version):
 
 
 @transaction.atomic
-def allocate_case_number(at=None):
+def allocate_case_number(at=None, *, application_id=None):
+    from datetime import datetime
+    if at is not None and (not isinstance(at, datetime) or not timezone.is_aware(at)):
+        raise ValidationError("Case numbering requires an aware server timestamp.")
     local_date = (
         (at or timezone.now()).astimezone(ZoneInfo("America/Los_Angeles")).date()
     )
     lock_key(f"case-counter:{local_date}")
+    from django.db import connection
+    if connection.vendor == "postgresql":
+        from tribunal.db.context import database_settings
+        from django.db import IntegrityError
+        try:
+            with database_settings({"ctm.numbering_application": str(application_id) if application_id else ""}), connection.cursor() as cursor:
+                cursor.execute("SELECT public.ctm_allocate_case_number(%s)", [local_date])
+                return cursor.fetchone()[0]
+        except IntegrityError as exc:
+            if getattr(exc.__cause__, "sqlstate", None) == "23514":
+                raise ValidationError("Daily case-number capacity reached; nothing has been submitted.") from exc
+            raise
     counter, _ = CaseNumberCounter.objects.select_for_update(
         of=("self",)
     ).get_or_create(date=local_date)
@@ -359,7 +374,7 @@ def submit_application(
             raise ValidationError("Applicant already has another open case.")
         if not case:
             case = Case.objects.create(
-                number=allocate_case_number(),
+                number=allocate_case_number(application_id=app.pk),
                 marriage_date=marriage_date,
                 spouse_dob_low=low,
                 spouse_dob_high=high,

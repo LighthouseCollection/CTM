@@ -481,6 +481,7 @@ class Outbox(Root):
     delivered_at = models.DateTimeField(null=True)
     discarded_at = models.DateTimeField(null=True)
     lease_until = models.DateTimeField(null=True)
+    lease_token = models.UUIDField(null=True)
     attempts = models.PositiveIntegerField(default=0)
     last_error = models.CharField(max_length=250, blank=True)
 
@@ -790,6 +791,10 @@ class Message(Immutable):
     email_timing = models.CharField(max_length=25, default="immediate")
     session = models.ForeignKey(CouncilSession, null=True, on_delete=models.PROTECT)
     session_snapshot = models.JSONField(default=dict)
+    idempotency_key = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["case", "sender", "idempotency_key"], name="message_replay_identity")]
 
 
 class MessageRecipient(Root):
