@@ -2689,7 +2689,7 @@
             first: h(window.CTMShell.Table, {
               label: t("searchResults"), rows: rows.map((row) => ({ ...row, id: row.file_id })),
               selected, onSelect: select,
-              empty: t(pending ? "loading" : failure ? "loadFailed" : result === null ? "searchHelp" : "searchNone"),
+              empty: t(pending ? "loading" : failure ? "loadFailed" : "searchNone"),
               columns: [{ title: t("searchResults"), field: "name", kind: "name" }],
             }),
             second: h(
