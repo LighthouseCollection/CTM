@@ -133,8 +133,16 @@ test("D19: save re-reads history first and stops on a newer version; failures ke
   const staleCheck = editor.indexOf("newest.version !== base0.version");
   const post = editor.indexOf('method: "POST"');
   assert.ok(read > 0 && staleCheck > read && post > staleCheck);
-  assert.match(editor, /error\.status === 403\) setDenied\(true\)/);
+  assert.match(editor, /error\.status === 403\) \{\s*setDenied\(true\)/);
   // The draft is never cleared on failure; only onSaved closes the editor.
   assert.doesNotMatch(editor, /setDraft\(\s*revisionDraft[^)]*\)\s*;\s*\}\s*catch/);
   assert.match(editor, /beforeunload/);
+});
+
+test("D19: answers read in the request's question order; a refused save refreshes the rows", () => {
+  const report = { questions: [{ code: "BASIS-01" }, { code: "OPEN-01" }] };
+  const answers = { attendance: ["applicant"], "OPEN-01": "b", "BASIS-01": "a" }; // PostgreSQL jsonb key order
+  assert.deepEqual([...C.answerEntries(report, answers)].map(([k]) => k), ["BASIS-01", "OPEN-01", "attendance"]);
+  const editor = source.slice(source.indexOf("function ReportRevisionEditor("), source.indexOf("// ---------- Completed reports reader"));
+  assert.match(editor, /setDenied\(true\);\s*if \(onDenied\) onDenied\(\)/);
 });

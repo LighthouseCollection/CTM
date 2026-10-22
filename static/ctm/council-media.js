@@ -849,6 +849,13 @@
     return codes.filter((code) => answers[code] === undefined || typeof answers[code] === "string");
   }
 
+  // Answers in the request's question order (PostgreSQL JSON does not keep key order), then any others.
+  function answerEntries(report, answers) {
+    const order = (report.questions || []).map((q) => q.code);
+    const rank = (code) => (order.includes(code) ? order.indexOf(code) : order.length);
+    return Object.entries(answers || {}).sort((a, b) => rank(a[0]) - rank(b[0]));
+  }
+
   function revisionDraft(report, latest) {
     const answers = (latest && latest.answers) || {};
     return {
@@ -875,7 +882,7 @@
     return before.observations !== after.observations;
   }
 
-  function ReportRevisionEditor({ api, lang, report, latest, onCancel, onSaved, onHistory }) {
+  function ReportRevisionEditor({ api, lang, report, latest, onCancel, onSaved, onHistory, onDenied }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -920,7 +927,10 @@
         onSaved(after?.items?.[0]?.version ?? null);
       } catch (error) {
         setFailure(base.serverMessage(error, t));
-        if (error && error.status === 403) setDenied(true);
+        if (error && error.status === 403) {
+          setDenied(true);
+          if (onDenied) onDenied(); // refresh rows so can_revise reflects the withdrawn authority
+        }
       } finally {
         setPending(false);
       }
@@ -942,8 +952,9 @@
           const q = questions.find((x) => x.code === code);
           return h(
             P.Field,
-            { key: code, label: q ? `${code} — ${(lang === "ar" && q.ar) || q.en || code}` : code },
+            { key: code, label: q ? `${code} — ${base.isolate((lang === "ar" && q.ar) || q.en || code)}` : code },
             h(P.Textarea, {
+              dir: "auto",
               rows: 3,
               autoGrow: true,
               value: draft.answers[code] || "",
@@ -961,6 +972,7 @@
           P.Field,
           { label: t("observations") },
           h(P.Textarea, {
+              dir: "auto",
             rows: 4,
             autoGrow: true,
             value: draft.observations,
@@ -1061,6 +1073,7 @@
           latest: editing,
           onCancel: () => setEditing(null),
           onHistory: showHistory,
+          onDenied: onRevised,
           onSaved: (newVersion) => {
             setEditing(null);
             setSaved(newVersion);
@@ -1099,12 +1112,12 @@
           )
         : h(P.Inline, null, h(P.Button, { size: "sm", onClick: loadHistory }, t("loadHistory"))),
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-      ...Object.entries(shown.answers || {}).map(([code, answer]) => {
+      ...answerEntries(report, shown.answers).map(([code, answer]) => {
         const question = (report.questions || []).find((q) => q.code === code);
-        const label = question ? `${code} — ${(lang === "ar" && question.ar) || question.en || code}` : code === "files" ? t("response") : code;
-        return h(P.Panel, { key: code, title: label }, h(P.Text, { as: "p" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
+        const label = question ? `${code} — ${base.isolate((lang === "ar" && question.ar) || question.en || code)}` : code === "files" ? t("response") : code;
+        return h(P.Panel, { key: code, title: label }, h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
       }),
-      shown.observations ? h(P.Panel, { title: t("observations") }, h(P.Text, { as: "p" }, shown.observations)) : null,
+      shown.observations ? h(P.Panel, { title: t("observations") }, h(P.Text, { as: "p", dir: "auto" }, shown.observations)) : null,
       access === "unknown" ? h(P.Text, { variant: "secondary" }, t("revisionPending")) : null,
       access === "denied" ? h(P.Text, { variant: "secondary" }, t("revisionNotAllowed")) : null,
     );
@@ -1357,6 +1370,7 @@
     revisionDraft,
     revisionPayload,
     revisionChanged,
+    answerEntries,
     extensionFor,
     sizeLimitBytes,
     microphoneProblem,
