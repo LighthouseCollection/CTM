@@ -94,6 +94,12 @@ test("report maker omits applicant instructions and reusable question-template c
   assert.doesNotMatch(councilCase, /function TemplateTools/);
 });
 
+test("interview report reading panes omit the frozen-question notice", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const readingPane = councilCase.slice(councilCase.indexOf("function RequestDetail"), councilCase.indexOf("function RequestsPanel"));
+  assert.doesNotMatch(readingPane, /frozenNotice/);
+});
+
 test("report template questions hide internal question-bank codes", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(councilCase, /key: q\.code, label: wording\(q, lang\)/);
