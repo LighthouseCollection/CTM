@@ -105,6 +105,8 @@ test("report template wording follows the selected request language", () => {
   assert.match(councilCase, /if \(lang === "ar"\) return ar \|\| en/);
   assert.match(councilCase, /lang === "en-ar" && ar \? `\$\{en\}\r?\n\$\{ar\}` : en/);
   assert.match(councilCase, /lang === "en-ar" && ar \? `\$\{en\} \/ \$\{ar\}` : en/);
+  assert.match(councilCase, /label: groupTitle\(group, form\.language\)/);
+  assert.match(councilCase, /key: q\.code, label: wording\(q, form\.language\)/);
 });
 
 test("account menu receives localized AppHeader labels and density choices", () => {
