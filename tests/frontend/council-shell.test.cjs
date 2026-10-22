@@ -111,6 +111,7 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /profile\?\.contact/);
   assert.match(councilCase, /t\("personalDetails"\), "person", \[/);
   assert.doesNotMatch(councilCase, /t\("personalDetails"\), "user", \[/);
+  assert.match(councilCase, /P\.Columns,\s*\{ count: 2, gap: "lg", collapseBelow: "wide", className: "ctm-spouse-profile-columns" \}/);
   assert.match(councilCase, /manage && record\.status === "open" && record\.parties\.length < 2/);
 });
 
