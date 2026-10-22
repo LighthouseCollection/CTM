@@ -95,3 +95,42 @@ note was incorrect; the route has not changed.
   1 skipped**, including reversal/reapplication through migration 0013 and raw
   decision/decree non-owner tests. `makemigrations --check --dry-run` finds no
   model drift. All migrations ran only in disposable test databases.
+
+## Payment lifecycle, finance privacy and readiness gate
+
+- Checkout and payment events retain the provider PaymentIntent identifier in
+  migration 0014. Signed unpaid checkout completion remains `processing`; only
+  verified paid events can satisfy a fee. Signed expiry/failure is retained and
+  never downgrades a paid/finalized candidate. An unresolved or stale checkout
+  prevents a second payment/manual submission or a waiver over an in-flight fee.
+- Verified dispute/refund facts preserve applications/submissions and notify
+  admin/secretary. A refund observation is not a refund request/authorization.
+  `charge.refunded` amounts are cumulative provider observations, not additive
+  refund allocations. No refund API operation or live Stripe call was performed.
+- Late payment after an earlier checkout expired remains recoverable even if a
+  new pending attempt prevents finalization. Recovery commits its `needs_review`
+  state/alerts before surfacing validation failure; no paid fact is lost and no
+  automatic extra charge is attempted.
+- `GET /api/applications/{id}/payments/` provides owner/authorized finance history,
+  with verified-payment evidence separate from waiver/exemption. Admin/secretary
+  have `GET /api/payments/reconciliation/` and authenticated POST
+  `/api/payments/{intent_id}/retry/`; retry revalidates the paid candidate and
+  never contacts Stripe to charge again. No private answers appear in the queue.
+- Migration 0015 adds forced RLS on obligations, checkouts, payment events and
+  completeness reviews. Signed callbacks/recovery use narrow transaction-local
+  provider context, never interactive browser identity. Snapshot/source identity,
+  paid/finalized state, fee amount and waiver attribution cannot be reset.
+  Admin/secretary can waive an eligible obligation without draft-answer access.
+- `check_backend_readiness` is a read-only CLI gate. It reports role privileges,
+  ownership access, installed tables, forced RLS, grants and public helper ACLs.
+  `--report-only` collects blockers without a failing exit status. It never grants
+  privileges or claims that configured credentials prove provider acceptance.
+- Latest full isolated PostgreSQL suite: **255 passed, 1 skipped**. Migration
+  reversal/reapplication now reaches 0015; 33 domain tables have forced RLS.
+  Django reports no missing model migrations. Inventory still reports 58 models
+  against the approved151-table contract, with explicit routes regenerated.
+- Provider event references follow [Stripe's event types](https://docs.stripe.com/api/events/types)
+  and [Checkout Sessions](https://docs.stripe.com/api/checkout/sessions). Real test-mode
+  credentials/callback acceptance, duplicate-refund authorization/allocation,
+  receipts/email delivery, remaining identity/report/worker policies and complete
+  schema reconciliation remain open. No credential/operational change occurred.

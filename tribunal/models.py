@@ -289,6 +289,7 @@ class PaymentEvent(Immutable):
     amount_minor = models.IntegerField()
     currency = models.CharField(max_length=3)
     provider_reference = models.CharField(max_length=250)
+    payment_reference = models.CharField(max_length=250, blank=True, default="", db_index=True)
 
 
 class CheckoutIntent(Root):
@@ -297,6 +298,7 @@ class CheckoutIntent(Root):
     attestation = models.JSONField(default=dict)
     manifest = models.JSONField(default=list)
     provider_reference = models.CharField(max_length=250, unique=True, null=True)
+    payment_reference = models.CharField(max_length=250, blank=True, default="", db_index=True)
     state = models.CharField(max_length=25, default="pending")
     failure = models.CharField(max_length=250, blank=True)
 

@@ -147,16 +147,19 @@ def application_data(app, actor):
                 ready = False
         satisfied = bool(fee and fee.status in {"paid", "waived", "historical_exempt"})
         returned = bool(app.status == "returned" and app.submitted_at)
+        unresolved = m.CheckoutIntent.objects.filter(application=app, state__in=["processing", "paid", "needs_review"]).exists()
+        stale_checkout = m.CheckoutIntent.objects.filter(application=app, state="pending").exclude(revision=revision).exists()
         latest_review = m.CompletenessReview.objects.filter(
             submission__application=app
         ).order_by("-created_at", "-id").first()
         result.update(
             can_edit=editable,
             can_checkout=bool(
-                ready and app.status == "draft" and fee and fee.status == "due"
+                ready and not unresolved and not stale_checkout
+                and app.status == "draft" and fee and fee.status == "due"
             ),
-            can_submit=bool(ready and satisfied and not returned),
-            can_resubmit=bool(ready and satisfied and returned),
+            can_submit=bool(ready and satisfied and not returned and not unresolved),
+            can_resubmit=bool(ready and satisfied and returned and not unresolved),
             duplicate_hold=app.duplicate_hold,
             return_instructions=(
                 latest_review.instructions
@@ -346,7 +349,9 @@ def checkout(request, app_id):
 @require_POST
 def stripe_webhook(request):
     import stripe
-    from tribunal.services.payments import process_paid_checkout, finalize_paid_intent
+    from tribunal.services.payments import (
+        process_paid_checkout, finalize_paid_intent, process_checkout_state, process_finance_event,
+    )
 
     if not settings.STRIPE_WEBHOOK_SECRET:
         return JsonResponse({"error": "not_configured"}, status=503)
@@ -363,6 +368,9 @@ def stripe_webhook(request):
         "checkout.session.async_payment_succeeded",
     }:
         try:
+            if event.type == "checkout.session.completed" and event.data.object.get("payment_status") != "paid":
+                process_checkout_state(event.id, event.data.object, "processing")
+                return JsonResponse({"received": True, "payment_pending": True})
             intent = process_paid_checkout(event.id, event.data.object)
         except ValidationError:
             # No durable paid record exists: retain provider retries instead of acknowledging loss.
@@ -374,7 +382,41 @@ def stripe_webhook(request):
         except ValidationError:
             # Durable paid candidate/outbox stays for reconciliation; do not repeatedly charge.
             return JsonResponse({"received": True, "reconciliation_required": True})
+    elif event.type in {"checkout.session.expired", "checkout.session.async_payment_failed",
+                         "charge.dispute.created", "charge.dispute.closed", "charge.refunded"}:
+        try:
+            payload = event.data.object
+            if event.type.startswith("checkout.session."):
+                process_checkout_state(event.id, payload, "expired" if event.type.endswith("expired") else "failed")
+            else:
+                kind = "refunded" if event.type == "charge.refunded" else (
+                    "chargeback" if event.type == "charge.dispute.created" else "dispute_" + str(payload.get("status", "")))
+                process_finance_event(event.id, payload, kind)
+        except (ValidationError, ValueError):
+            return JsonResponse({"error": "payment_requires_reconciliation"}, status=503)
     return JsonResponse({"received": True})
+
+
+@endpoint()
+def application_payments(request, app_id):
+    from tribunal.services.payments import application_payment_data
+
+    return JsonResponse(application_payment_data(request.user, app_id))
+
+
+@endpoint()
+def payment_reconciliation(request):
+    from tribunal.services.payments import payment_reconciliation as query
+
+    return JsonResponse(query(request.user, int(request.GET.get("offset", "0"))))
+
+
+@endpoint(("POST",))
+def retry_payment(request, intent_id):
+    from tribunal.services.payments import retry_paid_filing
+
+    result = retry_paid_filing(request.user, intent_id)
+    return JsonResponse({"submitted": result is not None, "submission_id": str(result.pk) if result else None})
 
 
 @endpoint()

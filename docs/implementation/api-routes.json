@@ -28,6 +28,10 @@
     "handler": "answer_history"
   },
   {
+    "route": "api/applications/<uuid:app_id>/files/",
+    "handler": "application_files"
+  },
+  {
     "route": "api/applications/<uuid:app_id>/submit/",
     "handler": "submit"
   },
@@ -46,6 +50,18 @@
   {
     "route": "api/applications/<uuid:app_id>/checkout/",
     "handler": "checkout"
+  },
+  {
+    "route": "api/applications/<uuid:app_id>/payments/",
+    "handler": "application_payments"
+  },
+  {
+    "route": "api/payments/reconciliation/",
+    "handler": "payment_reconciliation"
+  },
+  {
+    "route": "api/payments/<uuid:intent_id>/retry/",
+    "handler": "retry_payment"
   },
   {
     "route": "integrations/stripe/",
@@ -222,6 +238,10 @@
   {
     "route": "api/hearings/<uuid:hearing_id>/outcome/",
     "handler": "hearing_outcome"
+  },
+  {
+    "route": "api/hearings/<uuid:hearing_id>/",
+    "handler": "hearing_detail"
   },
   {
     "route": "api/agenda/<uuid:item_id>/testimony/",

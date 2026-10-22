@@ -6,7 +6,7 @@ from tribunal.models import Account, Application, AnswerRevision, OpenCaseClaim,
 
 
 @pytest.mark.django_db(transaction=True)
-def test_checkout_rechecks_version_after_waiting_for_answer_save(ready_application):
+def test_checkout_rechecks_version_after_waiting_for_answer_save(unpaid_application):
     from threading import Event
     from django.core.exceptions import ValidationError
     from tribunal.models import FeeObligation, CheckoutIntent
@@ -15,7 +15,7 @@ def test_checkout_rechecks_version_after_waiting_for_answer_save(ready_applicati
 
     if connection.vendor != "postgresql":
         pytest.skip("PostgreSQL row-lock contention test")
-    app = ready_application
+    app = unpaid_application
     FeeObligation.objects.filter(application=app).update(status="due", waived_by=None)
     started = Event()
 

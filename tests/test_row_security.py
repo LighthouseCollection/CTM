@@ -51,6 +51,11 @@ def runtime():
             "ctm_decision_readable(text,jsonb)",
             "ctm_decision_writable(text,jsonb)",
             "ctm_decree_writable(jsonb)",
+            "ctm_finance_readable(text,jsonb)",
+            "ctm_review_readable(jsonb)",
+            "ctm_finance_writable(text,jsonb)",
+            "ctm_finance_notice(text,jsonb)",
+            "ctm_fee_can_waive(uuid)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -529,7 +534,7 @@ def test_notification_retry_does_not_require_reading_another_recipients_inbox(
 
 
 def test_verified_payment_and_paid_filing_recovery_work_without_an_interactive_session(
-    runtime, ready_application
+    runtime, unpaid_application
 ):
     from tribunal.models import FeeObligation
     from tribunal.services.payments import (
@@ -538,7 +543,7 @@ def test_verified_payment_and_paid_filing_recovery_work_without_an_interactive_s
         finalize_paid_intent,
     )
 
-    app = ready_application
+    app = unpaid_application
     FeeObligation.objects.filter(application=app).update(status="due", waived_by=None)
     with runtime(app.owner):
         intent = prepare_checkout(
@@ -571,14 +576,14 @@ def test_security_definer_helpers_are_not_executable_by_public(runtime):
 
 @pytest.mark.parametrize("signed_in", [False, True])
 def test_signed_payment_webhook_is_validated_under_non_owner_role(
-    runtime, client, ready_application, signed_in
+    runtime, client, unpaid_application, signed_in
 ):
     import json, hmac, hashlib, time
     from django.test import override_settings
     from tribunal.models import FeeObligation
     from tribunal.services.payments import prepare_checkout
 
-    app = ready_application
+    app = unpaid_application
     if signed_in:
         other = Account.objects.create_user(
             email="webhook-browser@example.test", email_verified=True
@@ -649,7 +654,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0013_decision_privacy")])
+        MigrationExecutor(connection).migrate([("tribunal", "0015_finance_privacy")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -727,6 +732,7 @@ def test_decree_policies_require_signature_and_exact_release(runtime, ready_appl
         decree = issue_decree(people["admin"], decision.pk, file.pk, people["president"].pk)
     with runtime(app.owner):
         assert not Decree.objects.exists() and not FileVersion.objects.filter(pk=file.pk).exists()
+
     with runtime(people["secretary"]):
         release_decree(people["secretary"], decree.pk, app.party_id)
     with runtime(app.owner):
@@ -737,6 +743,104 @@ def test_decree_policies_require_signature_and_exact_release(runtime, ready_appl
         release_decree(people["secretary"], decree.pk, app.party_id, "withdraw")
     with runtime(app.owner):
         assert not Decree.objects.exists() and not FileVersion.objects.filter(pk=file.pk).exists()
+
+
+def test_finance_policies_reject_forged_payment_and_snapshot_changes(runtime, unpaid_application):
+    from django.db import DatabaseError
+    from tribunal.models import FeeObligation, CheckoutIntent, PaymentEvent
+    from tribunal.services.payments import prepare_checkout
+
+    app = unpaid_application
+    with runtime(app.owner):
+        intent = prepare_checkout(app.owner, app.pk, {"accepted": True, "name": "John Smith"})
+    with pytest.raises(DatabaseError), runtime(app.owner):
+        PaymentEvent.objects.create(application=app, provider_event_id="evt_forged", kind="paid",
+            amount_minor=25000, currency="USD", provider_reference="cs_forged")
+    with pytest.raises(DatabaseError), runtime(app.owner):
+        FeeObligation.objects.filter(application=app).update(status="paid")
+    with pytest.raises(DatabaseError), runtime(app.owner):
+        CheckoutIntent.objects.filter(pk=intent.pk).update(attestation={"accepted": True, "name": "Changed"})
+    outsider = Account.objects.create_user(email="finance-other@example.test", email_verified=True)
+    with runtime(outsider):
+        assert not CheckoutIntent.objects.exists() and not FeeObligation.objects.exists() and not PaymentEvent.objects.exists()
+
+
+def test_non_owner_finance_events_keep_formal_submission(runtime, unpaid_application, people):
+    from tribunal.models import PaymentEvent, FeeObligation
+    from tribunal.services.payments import prepare_checkout, process_paid_checkout, finalize_paid_intent, process_finance_event
+
+    app = unpaid_application
+    with runtime(app.owner):
+        intent = prepare_checkout(app.owner, app.pk, {"accepted": True, "name": "John Smith"})
+    with runtime():
+        process_paid_checkout("evt_finance_paid", {"id": "cs_finance", "metadata": {"ctm_intent": str(intent.pk)},
+            "client_reference_id": str(intent.pk), "payment_status": "paid", "amount_total": 25000,
+            "currency": "usd", "payment_intent": "pi_finance"})
+        submission = finalize_paid_intent(intent.pk)
+        event = process_finance_event("evt_finance_dispute", {"payment_intent": "pi_finance", "amount": 25000, "currency": "usd"}, "chargeback")
+        assert not PaymentEvent.objects.exists()
+    with runtime(app.owner):
+        assert app.submissions.get().pk == submission.pk
+        assert PaymentEvent.objects.filter(pk=event.pk, kind="chargeback").exists()
+        assert FeeObligation.objects.get(application=app).status == "paid"
+    for role in ["admin", "secretary"]:
+        with runtime(people[role]):
+            assert Notification.objects.filter(kind="payment_finance_review").exists()
+
+
+def test_administrative_waiver_does_not_grant_draft_answer_access(runtime, unpaid_application, people):
+    from tribunal.services.applications import waive_fee
+    from tribunal.models import FeeObligation
+
+    app = unpaid_application
+    with runtime(people["secretary"]):
+        assert not Application.objects.filter(pk=app.pk).exists()
+        waived = waive_fee(people["secretary"], app.pk)
+        assert waived.status == "waived"
+        assert not AnswerRevision.objects.filter(application=app).exists()
+    with runtime(app.owner):
+        assert FeeObligation.objects.get(application=app).waived_by_id == people["secretary"].pk
+
+
+def test_satisfied_fee_cannot_be_reset_or_waiver_actor_rewritten(runtime, ready_application):
+    from django.db import DatabaseError
+    from tribunal.models import FeeObligation
+
+    app = ready_application
+    with pytest.raises(DatabaseError), runtime(app.owner):
+        FeeObligation.objects.filter(application=app).update(status="due", waived_by=None)
+    with pytest.raises(DatabaseError), runtime(app.owner):
+        FeeObligation.objects.filter(application=app).update(waived_by=app.owner)
+
+
+def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime):
+    from tribunal.services.readiness import database_readiness
+
+    owner = database_readiness()
+    assert not owner["ready_for_deployment"]
+    assert owner["checks"]["owned_or_owner_role_accessible_tables"]
+    with runtime():
+        report = database_readiness()
+        assert not report["ready_for_deployment"]
+        assert not any(report["checks"]["role_attributes"].values())
+        assert not report["checks"]["owned_or_owner_role_accessible_tables"]
+        assert report["checks"]["forced_rls_table_count"] == 33
+        assert "tribunal_reportrequest" in report["checks"]["unreviewed_domain_tables"]
+        assert not report["checks"]["public_security_definer_helpers"]
+
+
+def test_restricted_role_checkout_response_can_bind_only_provider_reference(runtime, unpaid_application):
+    from unittest.mock import patch
+    from types import SimpleNamespace
+    from django.test import override_settings
+    from tribunal.services.payments import create_checkout
+
+    app = unpaid_application
+    with runtime(app.owner), override_settings(STRIPE_SECRET_KEY="test-key"), patch(
+        "stripe.checkout.Session.create", return_value=SimpleNamespace(id="cs_created_rls", url="https://checkout.stripe.com/test")
+    ):
+        result = create_checkout(app.owner, app.pk, {"accepted": True, "name": "John Smith"}, "https://example.test", expected_version=1)
+        assert result["checkout_url"] == "https://checkout.stripe.com/test"
 
 
 @pytest.fixture

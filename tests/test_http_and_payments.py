@@ -68,10 +68,10 @@ def test_required_configured_question_not_bypassable(ready_application, people):
         )
 
 
-def test_payment_event_wrong_amount_does_not_mark_paid(ready_application):
+def test_payment_event_wrong_amount_does_not_mark_paid(unpaid_application):
     from tribunal.services.payments import process_paid_checkout
 
-    FeeObligation.objects.filter(application=ready_application).update(
+    FeeObligation.objects.filter(application=unpaid_application).update(
         status="due", waived_by=None
     )
     with pytest.raises(ValidationError):
@@ -84,8 +84,8 @@ def test_payment_event_wrong_amount_does_not_mark_paid(ready_application):
                 "payment_status": "paid",
             },
         )
-    ready_application.fee.refresh_from_db()
-    assert ready_application.fee.status == "due"
+    unpaid_application.fee.refresh_from_db()
+    assert unpaid_application.fee.status == "due"
 
 
 def test_no_public_media_route(client):

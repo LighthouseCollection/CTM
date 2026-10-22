@@ -117,8 +117,8 @@ def test_http_requires_integer_version(client, ready_application, value, action)
     assert not CheckoutIntent.objects.exists() and not Submission.objects.exists()
 
 
-def test_stale_checkout_never_contacts_provider(client, ready_application):
-    app = ready_application
+def test_stale_checkout_never_contacts_provider(client, unpaid_application):
+    app = unpaid_application
     FeeObligation.objects.filter(application=app).update(status="due", waived_by=None)
     login(client, app.owner)
     with override_settings(STRIPE_SECRET_KEY="test-key"), patch("stripe.checkout.Session.create") as provider:
@@ -128,10 +128,10 @@ def test_stale_checkout_never_contacts_provider(client, ready_application):
     assert not CheckoutIntent.objects.exists()
 
 
-def test_current_checkout_freezes_revision_without_claiming_payment(client, ready_application):
+def test_current_checkout_freezes_revision_without_claiming_payment(client, unpaid_application):
     from types import SimpleNamespace
 
-    app = ready_application
+    app = unpaid_application
     FeeObligation.objects.filter(application=app).update(status="due", waived_by=None)
     login(client, app.owner)
     data = client.get(f"/api/applications/{app.pk}/").json()
@@ -167,8 +167,10 @@ def test_stale_submit_does_not_finalize_newer_answers(client, ready_application)
 
 
 @pytest.mark.parametrize("declarations", [(False, "English", "العربية"), (True, "", "العربية"), (True, "English", " ")])
-def test_unpublished_or_untranslated_declaration_blocks_first_filing(client, ready_application, declarations):
-    app = ready_application
+def test_unpublished_or_untranslated_declaration_blocks_first_filing(client, unpaid_application, declarations, people):
+    from tribunal.services.applications import waive_fee
+
+    app = unpaid_application
     published, en, ar = declarations
     questionnaire = QuestionnaireVersion.objects.create(
         purpose="petition", number=2, published=published,
@@ -178,10 +180,10 @@ def test_unpublished_or_untranslated_declaration_blocks_first_filing(client, rea
     login(client, app.owner)
     assert not client.get(f"/api/applications/{app.pk}/").json()["can_submit"]
     with pytest.raises(ValidationError, match="bilingual"):
-        submit_application(app.owner, app.pk, "invalid-declaration", ATTESTATION)
-    FeeObligation.objects.filter(application=app).update(status="due", waived_by=None)
-    with pytest.raises(ValidationError, match="bilingual"):
         prepare_checkout(app.owner, app.pk, ATTESTATION)
+    waive_fee(people["admin"], app.pk)
+    with pytest.raises(ValidationError, match="bilingual"):
+        submit_application(app.owner, app.pk, "invalid-declaration", ATTESTATION)
     assert not Submission.objects.exists() and not CheckoutIntent.objects.exists()
 
 

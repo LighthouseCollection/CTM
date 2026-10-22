@@ -829,6 +829,13 @@
           "type": "CharField",
           "nullable": false,
           "primary_key": false
+        },
+        {
+          "name": "payment_reference",
+          "column": "payment_reference",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
         }
       ]
     },
@@ -885,6 +892,13 @@
           "column": "provider_reference",
           "type": "CharField",
           "nullable": true,
+          "primary_key": false
+        },
+        {
+          "name": "payment_reference",
+          "column": "payment_reference",
+          "type": "CharField",
+          "nullable": false,
           "primary_key": false
         },
         {

@@ -269,7 +269,7 @@ def validate_petition(answers):
 
 @transaction.atomic
 def submit_application(
-    actor, app_id, idempotency_key, attestation=None, *, expected_version=None
+    actor, app_id, idempotency_key, attestation=None, *, expected_version=None, paid_intent_id=None
 ):
     app = application_for(actor, app_id)
     if actor.pk != app.owner_id:
@@ -292,9 +292,21 @@ def submit_application(
         raise ValidationError("Duplicate identity review must be completed first.")
     if app.status not in {"draft", "returned"}:
         raise ValidationError("Application already submitted.")
+    from tribunal.models import CheckoutIntent
+
+    unresolved = CheckoutIntent.objects.filter(application=app, state__in=["pending", "processing", "paid", "needs_review"])
+    if paid_intent_id is not None:
+        unresolved = unresolved.exclude(pk=paid_intent_id)
+    if unresolved.exists():
+        raise ValidationError("An existing checkout requires processing or reconciliation before submission.")
     fee = FeeObligation.objects.select_for_update(of=("self",)).get(application=app)
     if fee.status not in {"paid", "waived", "historical_exempt"}:
         raise ValidationError("Successful payment or authorized waiver is required.")
+    if fee.status == "paid":
+        from tribunal.models import PaymentEvent
+
+        if not PaymentEvent.objects.filter(application=app, kind="paid", amount_minor=fee.amount_minor, currency=fee.currency).exists():
+            raise ValidationError("A verified provider payment is required.")
     revision = app.revisions.filter(number=app.current_version).first()
     if not revision:
         raise ValidationError("Save the completed application first.")
@@ -448,14 +460,28 @@ def submit_application(
 @transaction.atomic
 def waive_fee(actor, app_id):
     administrator(actor)
-    app = Application.objects.select_for_update(of=("self",)).get(pk=app_id)
-    if app.submitted_at:
-        raise ValidationError("Cannot retroactively waive an already submitted filing.")
-    fee = FeeObligation.objects.select_for_update(of=("self",)).get(application=app)
+    from django.db import connection
+
+    fee = FeeObligation.objects.select_for_update(of=("self",)).get(application_id=app_id)
+    if connection.vendor == "postgresql":
+        from tribunal.db.context import database_actor
+
+        with database_actor(actor), connection.cursor() as cursor:
+            cursor.execute("SELECT public.ctm_fee_can_waive(%s)", [str(app_id)])
+            eligible = cursor.fetchone()[0]
+    else:
+        eligible = Application.objects.filter(pk=app_id, submitted_at__isnull=True, status="draft").exists()
+        from tribunal.models import CheckoutIntent
+
+        eligible = eligible and not CheckoutIntent.objects.filter(application_id=app_id, state__in=["pending", "processing", "paid", "needs_review"]).exists()
+    if not eligible:
+        raise ValidationError("Only an unsubmitted filing without an unresolved checkout can be waived.")
+    if fee.status != "due":
+        raise ValidationError("Only an outstanding filing fee can be waived.")
     fee.status = "waived"
     fee.waived_by = actor
     fee.save(update_fields=["status", "waived_by"])
-    audit(actor, "fee_waived", fee, app.case)
+    audit(actor, "fee_waived", fee)
     return fee
 
 
@@ -472,7 +498,7 @@ def review_application(actor, app_id, result, instructions=""):
         result == "reject" and not instructions.strip()
     ):
         raise ValidationError("Reject requires correction instructions.")
-    submission = app.submissions.order_by("-created_at").first()
+    submission = app.submissions.order_by("-created_at", "-id").first()
     review = CompletenessReview.objects.create(
         submission=submission, actor=actor, result=result, instructions=instructions
     )
