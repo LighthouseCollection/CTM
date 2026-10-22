@@ -10,7 +10,7 @@ test("static table headers retain their full label on hover", () => {
   const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
   assert.doesNotMatch(css, /\.plx-table__title > \.plx-table__type-icon/);
   assert.doesNotMatch(css, /--plx-comp-data-grid-context-hover-reserve/);
-  assert.match(shellLayout, /typeIcons: true/);
+  assert.match(shellLayout, /typeIcons: false/);
 });
 
 test("shared person pills prefer recorded gender over the generic person treatment", () => {

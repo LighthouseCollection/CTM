@@ -37,7 +37,7 @@
     });
     const common = {
       label, data: rows, columns: gridColumns, index: "id", className,
-      density: "compact", cells: "pill", typeIcons: true, wrapHeaders: false,
+      density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
       narrow: "table", empty,
     };
     return h(P.DataGrid, {
