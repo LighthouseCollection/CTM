@@ -1067,6 +1067,20 @@ def send_report_request(request, request_id):
     return response
 
 
+@endpoint()
+def print_priest_request(request, request_id):
+    from tribunal.services.priest_print import printable_priest_request
+    response = render(request, 'tribunal/priest_request_print.html',
+                      printable_priest_request(request.user, request_id))
+    response['Cache-Control'] = 'no-store'
+    response['Referrer-Policy'] = 'no-referrer'
+    response['X-Content-Type-Options'] = 'nosniff'
+    response['Content-Security-Policy'] = (
+        "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; "
+        "base-uri 'none'; form-action 'none'")
+    return response
+
+
 @endpoint(("POST",))
 def complete_report_request(request, request_id):
     from tribunal.services.reports import complete_request

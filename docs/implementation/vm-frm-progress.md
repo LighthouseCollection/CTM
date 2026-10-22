@@ -1,3 +1,7 @@
+Current validation: **874 PostgreSQL passed, 1 skipped**; no model drift; existing migration rollback/reapply through0049 included in full suite. Eleven new restricted-role print checks passed. Synthetic Arabic template produced a one-page PDF in Chromium; council UI/content/font acceptance remains pending. No new migration or grant.
+
+Priest priority continuation: blank council print view implemented using stored wording and browser Print/Save as PDF; direct server PDF and council UI integration remain unfinished. See priest-request-print.md and priest-settings-priority.md for completed/unfinished/exact dependencies. No invitation email or integrated OCR/transcription success is claimed.
+
 Current validation: **863 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0049. Nineteen new paper-source/permission/recovery regressions included; SQLite paper/receipt endpoint contract separately passed. Integration/UI/independent acceptance remains pending.
 
 C05 paper-recording API:0049 accepts only authorized clean current request-bound council PDF, preserves original/actual recorder and received date, stops online writes and provides exact replay/minimal receipt. No general narrative edits to paper source. See external-paper-completion.md. UI orchestration, print/wrong-upload exception/recording/invitation remain unfinished. Unique later UI metadata proposal0050.
