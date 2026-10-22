@@ -11,7 +11,6 @@ import re
 import traceback
 import secrets
 import sys
-import uuid
 from pathlib import Path
 from wsgiref.simple_server import make_server, WSGIRequestHandler
 
@@ -30,11 +29,20 @@ for line in sys.stdin.read().splitlines():
 if not all(os.environ.get(key) for key in allowed):
     raise SystemExit("Microsoft configuration is incomplete; no server started.")
 os.environ["DJANGO_SETTINGS_MODULE"] = "ctm.settings_test"
-os.environ["DJANGO_SECRET_KEY"] = secrets.token_urlsafe(48)
+run_dir = Path(os.environ.get("CTM_LOCAL_REVIEW_DIR", root / ".tmp" / "local-microsoft-review")).resolve()
+if not run_dir.is_relative_to((root / ".tmp").resolve()):
+    raise SystemExit("Local review data must remain inside the ignored .tmp directory.")
+run_dir.mkdir(parents=True, exist_ok=True)
+key_path = run_dir / "session-signing.key"
+try:
+    with key_path.open("x", encoding="utf-8") as key_file:
+        os.chmod(key_path, 0o600)
+        key_file.write(secrets.token_urlsafe(48))
+except FileExistsError:
+    pass
+os.environ["DJANGO_SECRET_KEY"] = key_path.read_text(encoding="utf-8")
 from django.conf import settings
 
-run_dir = root / ".tmp" / ("local-microsoft-" + uuid.uuid4().hex)
-run_dir.mkdir(parents=True)
 settings.DATABASES["default"]["NAME"] = str(run_dir / "isolated.sqlite3")
 settings.MEDIA_ROOT = run_dir / "media"
 settings.ALLOWED_HOSTS = ["localhost"]
@@ -73,14 +81,17 @@ from django.contrib.staticfiles.handlers import StaticFilesHandler
 from django.core.wsgi import get_wsgi_application
 
 call_command("migrate", verbosity=0)
-call_command(
-    "bootstrap_admin",
-    email="frraphaelmaher@lacopts.org",
-    microsoft_subject="b3683bd7-2bd9-42ba-93f9-374252ed6ca5",
-    first_name="Fr. Raphael",
-    last_name="Maher",
-    verbosity=0,
-)
+from tribunal.models import Account
+
+if not Account.objects.filter(role="admin").exists():
+    call_command(
+        "bootstrap_admin",
+        email="frraphaelmaher@lacopts.org",
+        microsoft_subject="b3683bd7-2bd9-42ba-93f9-374252ed6ca5",
+        first_name="Fr. Raphael",
+        last_name="Maher",
+        verbosity=0,
+    )
 application = StaticFilesHandler(get_wsgi_application())
 
 
