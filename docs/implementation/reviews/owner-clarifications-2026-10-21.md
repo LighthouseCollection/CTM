@@ -35,3 +35,7 @@ owner's answers above instead of reopening all eight original questions.
 
 No protected build-spec source is rewritten by this addendum. Schema/permission
 reconciliation must reference this later direct-owner instruction explicitly.
+
+## Terminology confirmed
+
+The owner subsequently approved **Spouses** as the user-facing term for the husband and wife. Use it in section headings and labels in both portals; retain actual names for per-person actions and decree entitlements. Internal Party model/table identifiers need no rename, and this approval does not change who receives a particular decision or certificate.
