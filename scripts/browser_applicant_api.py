@@ -769,7 +769,18 @@ try:
         assert forbidden.status==422,forbidden.text()
         stranger.request.get(BASE+"/api/session/")
         stranger_csrf=next(cookie["value"] for cookie in stranger.cookies() if cookie["name"]=="csrftoken")
-        assert stranger.request.post(f"{BASE}/api/appointments/{invitation_id}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf}).status==403
+        def appointment_snapshot():
+            from tribunal.models import AppointmentResponse,TestimonyAppointment
+            return (TestimonyAppointment.objects.filter(pk=invitation_id).values("version","state").get(),
+                AppointmentResponse.objects.filter(appointment_id=invitation_id).count())
+        before_foreign_response=fixture_db(appointment_snapshot)
+        foreign_response=stranger.request.post(f"{BASE}/api/appointments/{invitation_id}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf})
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            missing_response=stranger.request.post(f"{BASE}/api/appointments/{uuid.uuid4()}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf})
+            assert foreign_response.status==missing_response.status==404,(foreign_response.status,missing_response.status)
+            assert foreign_response.json()==missing_response.json(),(foreign_response.text(),missing_response.text())
+        else:assert foreign_response.status==403,foreign_response.text()
+        assert fixture_db(appointment_snapshot)==before_foreign_response
         stranger.close()
         checks.append("Actual cancellation removes browser response actions; cancelled and outsider responses are denied by server")
         def own_requests_fixture():
