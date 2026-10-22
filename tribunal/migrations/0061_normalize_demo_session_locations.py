@@ -10,7 +10,9 @@ CANONICAL_DEMO_LOCATION = "St. George Coptic Orthodox Church, Bellflower, Califo
 
 def normalize_demo_session_locations(apps, schema_editor):
     CouncilSession = apps.get_model("tribunal", "CouncilSession")
-    CouncilSession.objects.filter(location__in=DEMO_SESSION_LOCATIONS).update(
+    CouncilSession.objects.filter(
+        location__in=DEMO_SESSION_LOCATIONS, state__in=["draft", "planned"]
+    ).update(
         location=CANONICAL_DEMO_LOCATION
     )
 

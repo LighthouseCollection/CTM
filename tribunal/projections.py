@@ -52,6 +52,17 @@ def council_display_text(value):
     return _LEGACY_PRESIDENTIAL_WORDING.sub("Metropolitan", value) if value else value
 
 
+_LEGACY_DEMO_SESSION_LOCATIONS = {
+    "St. Mark Coptic Orthodox Church, Los Angeles, California",
+    "St. Mary Coptic Orthodox Church, Los Angeles, California",
+}
+_DEMO_SESSION_LOCATION = "St. George Coptic Orthodox Church, Bellflower, California"
+
+
+def session_display_location(value):
+    return _DEMO_SESSION_LOCATION if value in _LEGACY_DEMO_SESSION_LOCATIONS else value
+
+
 def questionnaire_data(questionnaire):
     if questionnaire is None:
         return None
@@ -183,7 +194,7 @@ def session_data(session, actor):
         "starts_at": session.starts_at.astimezone(ZoneInfo("America/Los_Angeles")).isoformat() if session.starts_at else None,
         "presiding_member_id": str(session.presiding_member_id) if session.presiding_member_id else None,
         "presiding_member_name": name(session.presiding_member) if session.presiding_member_id else None,
-        "location": session.location or None,
+        "location": session_display_location(session.location) or None,
         "adjourned_at": session.adjourned_at.isoformat() if session.adjourned_at else None,
         "assigned_case_count": assigned_case_count,
         "hearing_case_count": hearing_case_count,

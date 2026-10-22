@@ -246,3 +246,11 @@ def test_council_display_text_removes_retired_presidential_wording():
     assert council_display_text("Decision ready for presidential consideration.") == (
         "Decision ready for Metropolitan consideration."
     )
+
+
+def test_session_display_location_normalizes_legacy_demo_locations():
+    from tribunal.projections import session_display_location
+
+    assert session_display_location("St. Mark Coptic Orthodox Church, Los Angeles, California") == (
+        "St. George Coptic Orthodox Church, Bellflower, California"
+    )
