@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 import json
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
-from tribunal.models import Account, AgendaItem, AgendaTransferEvent, Notification, Party, ReportQuestion
+from tribunal.models import Account, AgendaItem, AgendaTransferEvent, Notification, Party, ReportQuestion, ReportRequest
 from tribunal.services.applications import submit_application, review_application, save_answers
 from tribunal.services.council import (
     assign_case, create_session, place_agenda, record_attendance, hear_case,
@@ -257,6 +257,28 @@ def test_manager_interview_does_not_notify_applicant_or_accept_applicant_complet
     assert data["subject_party_id"] == str(app.party_id) and data["subject_name"] == "John Smith"
     assert data["language"] == "en" and data["author"] == "admin Test"
     assert data["sent_at"] and data["created_at"] and data["parent_report_id"] is None
+
+
+def test_report_template_draft_can_target_both_spouses(client, filed, people):
+    second_party = Party.objects.create(case=filed.case, slot="B", name="Mary Smith")
+    login(client, people["admin"])
+    response = client.post(
+        f"/api/cases/{filed.case_id}/requests/",
+        {
+            "proceeding_id": str(filed.proceeding_id),
+            "party_ids": [str(filed.party_id), str(second_party.pk)],
+            "kind": "interview",
+            "title": "Pre-interview draft",
+            "questions": [],
+            "language": "en",
+        },
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+    rows = response.json()["items"]
+    created = ReportRequest.objects.filter(pk__in=[row["id"] for row in rows])
+    assert {str(row.subject_id) for row in created} == {str(filed.party_id), str(second_party.pk)}
+    assert created.count() == 2 and all(row.state == "draft" for row in created)
 
 
 def test_question_taxonomy_preserves_multiple_groups_and_missing_translation(client, people):

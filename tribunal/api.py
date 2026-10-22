@@ -1399,14 +1399,17 @@ def report_requests(request, case_id):
             raise ValidationError("Provide one or two distinct report recipients.")
         if "party_id" in data or len({str(value) for value in party_ids}) != len(party_ids):
             raise ValidationError("Provide distinct report recipients.")
-        created = [
-            create_request(
-                request.user, data["proceeding_id"], party_id, data["kind"], data["title"],
-                data.get("questions", []), data.get("instructions", ""),
-                data.get("language", "en"), data.get("parent_id"),
-            )
-            for party_id in party_ids
-        ]
+        from django.db import transaction
+
+        with transaction.atomic():
+            created = [
+                create_request(
+                    request.user, data["proceeding_id"], party_id, data["kind"], data["title"],
+                    data.get("questions", []), data.get("instructions", ""),
+                    data.get("language", "en"), data.get("parent_id"),
+                )
+                for party_id in party_ids
+            ]
         return JsonResponse({"items": [encoded(row) for row in created]}, status=201)
     return JsonResponse(encoded(create_request(
         request.user, data["proceeding_id"], data["party_id"], data["kind"], data["title"],
