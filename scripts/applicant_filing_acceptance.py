@@ -1,9 +1,10 @@
 """Additional real HTTP filing-action scenarios, isolated synthetic records only."""
-import uuid,os
+import json,uuid,os
+from pathlib import Path
 from playwright.sync_api import expect
 
 
-def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, errors):
+def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, errors, output):
     from tribunal import models as m
     from django.utils import timezone
     checks=[]
@@ -79,12 +80,31 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         assert result.value.status==422 and result.value.request.post_data_json=={"expected_version":1}
         expect(page.get_by_role("button",name="Confirm action",exact=True)).to_be_disabled()
         assert detail(ctx,app_id)["status"]=="draft"
-        page.get_by_role("button",name="Refresh application",exact=True).click()
-        expect(page.get_by_role("button",name="Delete unsubmitted draft",exact=True)).to_be_enabled()
-        checks.append("Browser cancel sends no deletion; a concurrent saved revision rejects stale confirmation and requires authoritative refresh")
-        page.get_by_role("button",name="Delete unsubmitted draft",exact=True).click()
-        page.get_by_role("button",name="العربية",exact=True).click();page.set_viewport_size({"width":390,"height":1000})
-        expect(page.get_by_role("button",name="تأكيد الإجراء",exact=True)).to_be_visible()
+        try:
+            with page.expect_response(lambda r:r.url==f"{base}/api/applications/{app_id}/" and r.request.method=="GET") as refreshed:
+                page.get_by_role("button",name="Refresh application",exact=True).click()
+            refreshed_row=refreshed.value
+            assert refreshed_row.status==200,refreshed_row.text()
+            refreshed_body=refreshed_row.json()
+            assert refreshed_body["id"]==app_id and refreshed_body["status"]=="draft" and refreshed_body["version"]==2
+            assert refreshed_body["can_delete_draft"] is True
+            expect(page.get_by_role("button",name="Delete unsubmitted draft",exact=True)).to_be_enabled()
+            checks.append("Browser cancel sends no deletion; a concurrent saved revision rejects stale confirmation and requires authoritative refresh")
+            page.get_by_role("button",name="Delete unsubmitted draft",exact=True).click()
+            expect(page.get_by_role("button",name="Confirm action",exact=True)).to_be_visible()
+            with page.expect_response(lambda r:r.url==base+"/api/account/settings/" and r.request.method=="POST") as language:
+                page.get_by_role("button",name="العربية",exact=True).click()
+            assert language.value.status==200,language.value.text()
+            page.set_viewport_size({"width":390,"height":1000})
+            expect(page.get_by_role("button",name="تأكيد الإجراء",exact=True)).to_be_visible()
+        except Exception:
+            artifact=Path(output);artifact.mkdir(parents=True,exist_ok=True)
+            diagnostic={"application_id":app_id,"server_detail":detail(ctx,app_id),"url":page.url,
+                "buttons":page.get_by_role("button").all_text_contents(),"body":page.locator("body").inner_text(),
+                "viewport":page.viewport_size}
+            (artifact/"draft-delete-confirmation-failure.json").write_text(json.dumps(diagnostic,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+            page.screenshot(path=str(artifact/"draft-delete-confirmation-failure.png"),full_page=True,caret="initial")
+            raise
         assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
         page.get_by_role("button",name="English",exact=True).click()
         with page.expect_response(lambda r:r.url==f"{base}/api/applications/{app_id}/delete-draft/") as result:

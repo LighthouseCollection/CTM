@@ -1257,7 +1257,7 @@ try:
                 assert recovered.status==201 and recovered.json()["id"]==report_id
             checks.append("Actual closure preserves never-sent draft privacy and sent closed reads; exact intake/assessment receipt replays still recover after closure")
         from applicant_filing_acceptance import run as run_filing_acceptance
-        checks.extend(run_filing_acceptance(browser,BASE,settings,fixture_db,session_cookie,staff,staff_csrf,errors))
+        checks.extend(run_filing_acceptance(browser,BASE,settings,fixture_db,session_cookie,staff,staff_csrf,errors,ARTIFACT_ROOT))
         from applicant_message_acceptance import run as run_message_acceptance
         checks.extend(run_message_acceptance(browser,page,context,staff,BASE,csrf,staff_csrf,current["case_id"],current["case_number"],party_id,cookies["outsider"],settings,fixture_db,ARTIFACT_ROOT,admin.pk))
         from applicant_history_notice_acceptance import notification_checks
