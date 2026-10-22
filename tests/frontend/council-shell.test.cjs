@@ -481,3 +481,9 @@ test("case list workspaces are table-only and open cases from their action colum
   assert.match(source, /title: t\("actions"\), field: "open_action"/);
   assert.match(source, /onClick: \(\) => onOpen\(row\.id\)/);
 });
+test("session agenda person pills preserve normalized gender styling", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const source = council.slice(council.indexOf("const personPill"), council.indexOf("const agendaTable"));
+  assert.match(source, /gender === "M" \|\| gender === "male"/);
+  assert.match(source, /gender === "F" \|\| gender === "female"/);
+});

@@ -2258,7 +2258,7 @@
 
     const personPill = (value, kind, gender) => {
       if (!value) return t(kind === "clergy" ? "unassigned" : "notRecorded");
-      const normalizedGender = gender === "M" ? "male" : gender === "F" ? "female" : undefined;
+      const normalizedGender = gender === "M" || gender === "male" ? "male" : gender === "F" || gender === "female" ? "female" : undefined;
       return normalizedGender
         ? h(P.DataPill, { size: "md", gender: normalizedGender }, value)
         : h(P.DataPill, { size: "md", person: true }, value);
