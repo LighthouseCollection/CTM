@@ -1,5 +1,5 @@
 diff --git a/static/ctm/app.js b/static/ctm/app.js
-index 5dd9e57..78a1374 100644
+index 5dd9e57..47da4eb 100644
 --- a/static/ctm/app.js
 +++ b/static/ctm/app.js
 @@ -11,6 +11,8 @@
@@ -255,7 +255,7 @@ index 5dd9e57..78a1374 100644
          )
        : h(
            P.NavPane,
-@@ -1372,6 +1452,69 @@
+@@ -1372,6 +1452,78 @@
            lang,
            onCase: (id) => go("case", id),
          });
@@ -269,6 +269,15 @@ index 5dd9e57..78a1374 100644
 +          reports: data.items,
 +          renderReports: () =>
 +            h(ReportReader, { key: selection, rows: data.items, t, lang }),
++        });
++      if (page === "case" && council && councilModule?.CaseSummary)
++        return h(councilModule.CaseSummary, {
++          key: selection,
++          api,
++          lang,
++          user,
++          caseId: selection,
++          onNavigate: (id) => go(id, selection),
 +        });
 +      if (page === "timeline" && council && councilModule?.CaseTimeline)
 +        return h(councilModule.CaseTimeline, { key: selection, api, lang, caseId: selection });
@@ -325,7 +334,7 @@ index 5dd9e57..78a1374 100644
        if (page === "reports")
          return h(ReportReader, { key: selection, rows: data.items, t, lang });
        if (["documents", "evidence"].includes(page))
-@@ -1455,6 +1598,15 @@
+@@ -1455,6 +1607,15 @@
                  onSent: () => reload((n) => n + 1),
                })
              : null,
@@ -341,7 +350,7 @@ index 5dd9e57..78a1374 100644
          );
        if (page === "case")
          return h(
-@@ -1493,6 +1645,51 @@
+@@ -1493,6 +1654,51 @@
              }),
            ),
          );
@@ -393,7 +402,7 @@ index 5dd9e57..78a1374 100644
        if (page === "session")
          return h(
            P.Stack,
-@@ -1578,11 +1775,26 @@
+@@ -1578,11 +1784,26 @@
                : h(P.EmptyState, { title: t("noCurrent") }),
          );
        }
