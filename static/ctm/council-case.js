@@ -2694,12 +2694,16 @@
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
+    const [assignment, setAssignment] = R.useState(null);
+    const [assignmentPending, setAssignmentPending] = R.useState(false);
+    const [assignmentFailure, setAssignmentFailure] = R.useState(null);
     const [state, retry] = base.useLoad(
       () =>
-        Promise.all([
-          api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
-          api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
-        ]).then(async ([record, requests]) => {
+        api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)).then(async (record) => {
+          const [requests, members] = await Promise.all([
+            api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
+            record.can_assign ? api("/api/council/members/") : Promise.resolve({ items: [] }),
+          ]);
           const proceeding = openProceeding(record) || [...(record.proceedings || [])].sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0];
           let versions = null;
           if (proceeding) {
@@ -2709,18 +2713,37 @@
               if (error.status !== 405) throw error;
             }
           }
-          return { record, facts: summaryFacts(record, requests.items, versions) };
+          return { record, members: members.items, facts: summaryFacts(record, requests.items, versions) };
         }),
       [caseId],
     );
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const { record, facts } = state.data;
+    const { record, members, facts } = state.data;
     const bt = base.translator(lang);
     const manager =
       record.assignment_history && record.assignment_history.length
         ? record.assignment_history[record.assignment_history.length - 1].member
         : record.assigned_member || null;
+    const eligibleMembers = base.assignableMembers(members);
+    const presidents = base.assignmentAuthorizers(members);
+    const recordAssignment = async () => {
+      if (!assignment?.memberId || !assignment.presidentId) return;
+      setAssignmentPending(true);
+      setAssignmentFailure(null);
+      try {
+        await api(`/api/cases/${encodeURIComponent(caseId)}/assignment/`, {
+          method: "POST",
+          body: JSON.stringify({ member_id: assignment.memberId, president_id: assignment.presidentId }),
+        });
+        setAssignment(null);
+        retry();
+      } catch (error) {
+        setAssignmentFailure(base.serverMessage(error, bt));
+      } finally {
+        setAssignmentPending(false);
+      }
+    };
     const link = (page, label) => h(P.Button, { key: page, size: "sm", onClick: () => onNavigate(page) }, t(label));
     return h(
       P.Stack,
@@ -2730,7 +2753,25 @@
         P.PropertyList,
         null,
         h(P.PropertyList.Item, { label: bt("statusLabel") }, h(P.Badge, { tone: record.status === "open" ? "active" : "neutral" }, bt(record.status === "open" ? "open" : "closed"))),
-        h(P.PropertyList.Item, { label: bt("assigned") }, manager || bt("unassigned")),
+        h(
+          P.PropertyList.Item,
+          { label: bt("assigned") },
+          !manager && record.can_assign
+            ? h(P.Select, {
+                value: assignment?.memberId || "",
+                disabled: assignmentPending || !eligibleMembers.length,
+                onChange: (event) => {
+                  const memberId = event.target.value;
+                  setAssignmentFailure(null);
+                  setAssignment(memberId ? { memberId, presidentId: "" } : null);
+                },
+                options: [
+                  { value: "", label: bt("unassigned") },
+                  ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id })),
+                ],
+              })
+            : manager || bt("unassigned"),
+        ),
         h(P.PropertyList.Item, { label: t("partiesTitle") }, record.parties.map((p) => p.name).join(" · ") || t("noParties")),
         facts.openProceeding
           ? h(P.PropertyList.Item, { label: t("currentProceeding") }, t(facts.openProceeding.kind === "initial" ? "proceedingInitial" : "proceedingReconsideration"))
@@ -2762,6 +2803,34 @@
         link("decision", "decisionVoting"),
         link("communications", "communicationsLink"),
       ),
+      assignment
+        ? h(
+            P.Dialog,
+            { open: true, title: bt("assignTitle"), onClose: () => !assignmentPending && setAssignment(null) },
+            h(
+              P.Stack,
+              { gap: "md" },
+              h(P.Text, { as: "p", variant: "secondary" }, bt("assignHelp")),
+              h(P.Field, { label: bt("member"), required: true }, h(P.Select, {
+                value: assignment.memberId,
+                disabled: assignmentPending,
+                onChange: (event) => setAssignment((old) => ({ ...old, memberId: event.target.value })),
+                options: [{ value: "", label: bt("chooseMember") }, ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id }))],
+              })),
+              h(P.Field, { label: bt("president"), required: true }, h(P.Select, {
+                value: assignment.presidentId,
+                disabled: assignmentPending,
+                onChange: (event) => setAssignment((old) => ({ ...old, presidentId: event.target.value })),
+                options: [{ value: "", label: bt("choosePresident") }, ...presidents.map((member) => ({ value: member.id, label: member.name || member.id }))],
+              })),
+              assignmentFailure ? h(P.Notice, { tone: "danger" }, assignmentFailure) : null,
+              h(P.Inline, { justify: "end" },
+                h(P.Button, { variant: "secondary", disabled: assignmentPending, onClick: () => setAssignment(null) }, bt("cancel")),
+                h(P.Button, { variant: "primary", loading: assignmentPending, disabled: assignmentPending || !assignment.memberId || !assignment.presidentId, onClick: recordAssignment }, bt("recordAssignment")),
+              ),
+            ),
+          )
+        : null,
     );
   }
 

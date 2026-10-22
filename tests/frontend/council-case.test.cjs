@@ -20,6 +20,15 @@ test("case module extends the council namespace", () => {
     assert.equal(typeof C[name], "function");
 });
 
+test("an unassigned open case offers the council-member picker and records President authorization", () => {
+  assert.match(source, /api\("\/api\/council\/members\/"\)/);
+  assert.match(source, /!manager && record\.can_assign/);
+  assert.match(source, /base\.assignableMembers\(members\)/);
+  assert.match(source, /P\.Select,/);
+  assert.match(source, /api\(`\/api\/cases\/\$\{encodeURIComponent\(caseId\)\}\/assignment\/`,/);
+  assert.match(source, /president_id: assignment\.presidentId/);
+});
+
 test("decision catalog matches the server types and exact prototype labels", () => {
   const prototype = JSON.parse(
     fs.readFileSync("docs/architecture/build-spec/prototype-decision-types.json", "utf8"),
