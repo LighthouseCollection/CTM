@@ -178,21 +178,24 @@
        if (page === "notifications")
          return h(NotificationInbox, {
            key: revision,
-@@ -1437,6 +1471,13 @@
+@@ -1437,6 +1471,16 @@
            ),
            heading(data.number),
            text(`${t("status")}: ${t(data.status)}`),
++          !council && data.can_start_petition === true && window.CTMApplicantAppeals?.StartPetition
++            ? h(window.CTMApplicantAppeals.StartPetition, {key:"petition-"+selection,record:data,api,lang,
++                onOpen:(id)=>go("application",id)}) : null,
 +          !council && window.CTMApplicantAppeals?.hasAppealContext(data)
-+            ? h(window.CTMApplicantAppeals.StartAppeal, {caseId:selection,api,lang,
++            ? h(window.CTMApplicantAppeals.StartAppeal, {key:"appeal-"+selection,caseId:selection,api,lang,
 +                onOpen:(id)=>go("application",id)}) : null,
 +          !council && window.CTMApplicantDecrees
-+            ? h(window.CTMApplicantDecrees.ReleasedDecrees, {key:selection,caseId:selection,api,lang}) : null,
++            ? h(window.CTMApplicantDecrees.ReleasedDecrees, {key:"decrees-"+selection,caseId:selection,api,lang}) : null,
 +          !council && window.CTMApplicantRequests
-+            ? h(window.CTMApplicantRequests.Requests, {key:selection,caseId:selection,api,lang,onNavigationGuard:registerApplicantGuard}) : null,
++            ? h(window.CTMApplicantRequests.Requests, {key:"requests-"+selection,caseId:selection,api,lang,onNavigationGuard:registerApplicantGuard}) : null,
            h(
              P.Panel,
              { title: t("parties") },
-@@ -1513,6 +1554,9 @@
+@@ -1513,6 +1557,9 @@
            P.Stack,
            null,
            heading(t(page)),
@@ -202,7 +205,7 @@
            ...data.items.map(applicationCard),
          );
        if (page === "home" && !council) {
-@@ -1556,7 +1600,10 @@
+@@ -1556,7 +1603,10 @@
      return h(
        P.AppShell,
        { header, sideNav: nav, page: "workspace", strings: { skip: t("skip") } },

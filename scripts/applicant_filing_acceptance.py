@@ -1,5 +1,5 @@
 """Additional real HTTP filing-action scenarios, isolated synthetic records only."""
-import uuid
+import uuid,os
 from playwright.sync_api import expect
 
 
@@ -106,8 +106,8 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         expect(lost_page.get_by_role("button",name="Delete unsubmitted draft",exact=True)).to_have_count(0)
         assert len(attempts)==1 and detail(lost,lost_id)["status"]=="deleted"
         checks.append("Lost acknowledgement after real deletion locks repeats; explicit own refresh recovers deleted state without a second mutation")
-        # First filing uses actual uploads, waiver and submission. A second participating
-        # filing is explicit synthetic state to isolate joint-withdrawal rules.
+        # Both filings use actual save/upload/waiver/submit routes. Only verified-account
+        # onboarding/linking is explicit fixture setup, outside this applicant journey.
         first,one,one_csrf=new_owner("joint-first")
         first_id=start(one,one_csrf,"JointFirst")
         listing=one.request.get(f"{base}/api/applications/{first_id}/files/").json()
@@ -125,18 +125,59 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         assert submitted.status==201,submitted.text()
         assert post(staff,staff_csrf,f"/api/applications/{first_id}/review/",{"result":"reject","instructions":"Synthetic lifecycle return"}).status==201
         second,two,two_csrf=new_owner("joint-second")
-        def second_filing_fixture():
+        def linked_second_party_fixture():
             original=m.Application.objects.get(pk=first_id)
             party=original.case.parties.exclude(pk=original.party_id).first()
-            if party is None:party=m.Party.objects.create(case=original.case,slot="B" if original.party.slot=="A" else "A",name="Synthetic second participant")
-            party.account=second;party.participating=True;party.save(update_fields=["account","participating"])
-            app=m.Application.objects.create(owner=second,case=original.case,proceeding=original.proceeding,party=party,
-                status="submitted",submitted_at=timezone.now(),current_version=1,questionnaire=original.questionnaire)
-            m.AnswerRevision.objects.create(application=app,number=1,answers=original.revisions.get(number=1).answers,
-                questionnaire=original.questionnaire,actor=second)
-            m.FeeObligation.objects.create(application=app,status="waived")
-            return str(app.pk)
-        second_id=fixture_db(second_filing_fixture)
+            if party is None:
+                party=m.Party.objects.create(case=original.case,slot="B" if original.party.slot=="A" else "A",name="Synthetic second participant")
+            party.account=second;party.person=second.person
+            party.save(update_fields=["account","person"])
+            return str(original.case_id)
+        joint_case=fixture_db(linked_second_party_fixture)
+        if os.environ.get("CTM_APPLICANT_LINKED_ENTRY")=="true":
+            entry=two.new_page();entry.on("pageerror",lambda error:errors.append(str(error)))
+            entry.goto(base,wait_until="networkidle")
+            number=fixture_db(lambda:m.Case.objects.get(pk=joint_case).number)
+            entry.get_by_text(number,exact=True).click()
+            assert entry.get_by_role("button",name="Start or resume appeal",exact=True).count()==0
+            with entry.expect_response(lambda r:r.url==base+"/api/applications/" and r.request.method=="POST") as received:
+                entry.get_by_role("button",name="Start or resume my petition",exact=True).click()
+            created=received.value
+        else:
+            created=post(two,two_csrf,"/api/applications/",{"kind":"petition","case_id":joint_case})
+        assert created.status==201,created.text()
+        second_id=created.json()["id"]
+        second_answers={"first_name":"JointSecond","last_name":"SyntheticLifecycle","birth_date":"1987-06-07","gender":"M",
+            "marriage_date":"2011-02-03","grounds":["abuse"],"statement":"Own second applicant statement, independently retained"}
+        saved=post(two,two_csrf,f"/api/applications/{second_id}/",{"answers":second_answers,"expected_version":0})
+        assert saved.status==201,saved.text()
+        assert one.request.get(f"{base}/api/applications/{second_id}/").status==403
+        assert two.request.get(f"{base}/api/applications/{first_id}/").status==403
+        listing=two.request.get(f"{base}/api/applications/{second_id}/files/").json()
+        for requirement in listing["requirements"]:
+            if not requirement["required"]:continue
+            category=requirement["category"];image=category=="PHOTO"
+            received=two.request.post(base+"/api/files/",multipart={"application_id":second_id,"category":category,
+                "file":{"name":"second-photo.png" if image else "second-document.pdf","mimeType":"image/png" if image else "application/pdf",
+                    "buffer":b"\x89PNG\r\n\x1a\nsynthetic second photo" if image else b"%PDF-1.7 synthetic second applicant document"}},headers={"X-CSRFToken":two_csrf})
+            assert received.status==201,received.text()
+        assert detail(two,second_id)["fee"]["status"]=="due"
+        assert post(staff,staff_csrf,f"/api/applications/{second_id}/waiver/",{}).status==201
+        second_page=open_editor(two)
+        second_page.get_by_role("button",name="Review answers",exact=True).click()
+        second_page.get_by_label("I have read and accept this declaration.",exact=True).check()
+        second_page.get_by_label("Your full name",exact=False).fill("Synthetic JointSecond")
+        with second_page.expect_response(lambda r:r.url==f"{base}/api/applications/{second_id}/submit/" and r.request.method=="POST") as submitted:
+            second_page.get_by_role("button",name="Submit application",exact=True).click()
+        assert submitted.value.status==201,submitted.value.text()
+        assert submitted.value.request.post_data_json["attestation"]=={"accepted":True,"name":"Synthetic JointSecond"}
+        second_saved=detail(two,second_id)
+        assert second_saved["status"]=="submitted" and second_saved["case_id"]==joint_case
+        assert second_saved["answers"]==second_answers
+        assert detail(one,first_id)["answers"]!=second_answers
+        assert one.request.get(f"{base}/api/applications/{second_id}/history/").status==403
+        assert two.request.get(f"{base}/api/applications/{first_id}/history/").status==403
+        checks.append("Linked second applicant actually starts/saves/uploads/obtains separate authorized waiver and submits through browser with own declaration; both own histories stay private")
         original=detail(one,first_id);before_history=one.request.get(f"{base}/api/applications/{first_id}/history/").json()
         before_notifications=fixture_db(lambda:m.Notification.objects.filter(recipient=second).count())
         assert original["can_withdraw"] and not original["can_delete_draft"]
@@ -164,7 +205,57 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         last=detail(two,second_id)
         assert post(two,two_csrf,f"/api/applications/{second_id}/withdraw/",{"expected_version":last["version"]}).status==200
         assert fixture_db(joint_state)["case"]=="closed"
-        checks.append("Synthetic second-participant state verifies first withdrawal preserves joint case/other filing without spouse notification; last withdrawal closes case")
+        checks.append("Two actually submitted filings verify first withdrawal preserves joint case and other filing without spouse notification; last withdrawal closes case (account linking remains fixture)")
+        if os.environ.get("CTM_APPLICANT_LINKED_ENTRY")=="true":
+            closed_actor,closed_ctx,closed_csrf=new_owner("closed-never-filer")
+            def closed_case_fixture():
+                # Explicit imported/closed case and verified link; no claimed decree/identity acceptance.
+                from copy import deepcopy
+                from datetime import date
+                old=m.QuestionnaireVersion.objects.filter(purpose="petition",published=True).order_by("-number").first()
+                definition=deepcopy(old.definition)
+                definition["fields"].append({"code":"new_information","type":"textarea","label_en":"Synthetic closed-case new information","label_ar":"معلومات جديدة تجريبية للقضية المغلقة"})
+                m.QuestionnaireVersion.objects.create(purpose="petition",number=old.number+1,published=True,definition=definition,
+                    declaration_en=old.declaration_en,declaration_ar=old.declaration_ar)
+                case=m.Case.objects.create(number="SYNTH-CLOSED-"+uuid.uuid4().hex[:8],status="closed",marriage_date=date(2011,2,3),closed_at=timezone.now())
+                m.Proceeding.objects.create(case=case,status="closed")
+                m.Party.objects.create(case=case,slot="B",account=closed_actor,person=closed_actor.person,name="Synthetic closed-case spouse")
+                return str(case.pk),case.number
+            closed_case,closed_number=fixture_db(closed_case_fixture)
+            cp=closed_ctx.new_page();cp.on("pageerror",lambda error:errors.append(str(error)))
+            cp.goto(base,wait_until="networkidle");cp.get_by_role("button",name="Past cases",exact=True).click()
+            cp.get_by_text(closed_number,exact=True).click()
+            with cp.expect_response(lambda r:r.url==base+"/api/applications/" and r.request.method=="POST") as opened:
+                cp.get_by_role("button",name="Start or resume my petition",exact=True).click()
+            assert opened.value.status==201,opened.value.text()
+            closed_id=opened.value.json()["id"]
+            answers={"first_name":"ClosedFirst","last_name":"SyntheticLifecycle","birth_date":"1988-07-08","gender":"F",
+                "marriage_date":"2011-02-03","grounds":["abuse"],"statement":"Synthetic first closed-case petition",
+                "new_information":"Own new facts for council consideration"}
+            assert post(closed_ctx,closed_csrf,f"/api/applications/{closed_id}/",{"answers":answers,"expected_version":0}).status==201
+            listing=closed_ctx.request.get(f"{base}/api/applications/{closed_id}/files/").json()
+            for requirement in listing["requirements"]:
+                if not requirement["required"]:continue
+                category=requirement["category"];image=category=="PHOTO"
+                received=closed_ctx.request.post(base+"/api/files/",multipart={"application_id":closed_id,"category":category,
+                    "file":{"name":"closed-photo.png" if image else "closed-copy.pdf","mimeType":"image/png" if image else "application/pdf",
+                        "buffer":b"\x89PNG\r\n\x1a\nsynthetic closed photo" if image else b"%PDF-1.7 synthetic closed original"}},headers={"X-CSRFToken":closed_csrf})
+                assert received.status==201,received.text()
+            assert post(staff,staff_csrf,f"/api/applications/{closed_id}/waiver/",{}).status==201
+            cp.get_by_role("button",name="Reload saved answers",exact=True).click()
+            expect(cp.get_by_role("textbox",name="Synthetic closed-case new information",exact=False)).to_have_value(answers["new_information"])
+            cp.get_by_role("button",name="Review answers",exact=True).click()
+            cp.get_by_label("I have read and accept this declaration.",exact=True).check()
+            cp.get_by_label("Your full name",exact=False).fill("Synthetic ClosedFirst")
+            with cp.expect_response(lambda r:r.url==f"{base}/api/applications/{closed_id}/submit/" and r.request.method=="POST") as submitted:
+                cp.get_by_role("button",name="Submit application",exact=True).click()
+            assert submitted.value.status==201,submitted.value.text()
+            row=detail(closed_ctx,closed_id)
+            assert row["origin"]=="closed_case_intake" and row["status"]=="submitted" and row["case_id"]==closed_case
+            assert fixture_db(lambda:m.Case.objects.get(pk=closed_case).status)=="closed"
+            assert fixture_db(lambda:m.Proceeding.objects.filter(case_id=closed_case).count())==1
+            assert one.request.get(f"{base}/api/applications/{closed_id}/history/").status==403
+            checks.append("Linked never-filer starts first petition from closed case, saves new facts/uploads/separate waiver and submits in browser without reopening; closed record/link/content are explicit fixtures")
         # Explicit pending appeal state, independent of decree/signature issuance acceptance.
         def appeal_fixture():
             parent=m.Application.objects.get(pk=first_id)

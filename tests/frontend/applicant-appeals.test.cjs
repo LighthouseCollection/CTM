@@ -36,3 +36,26 @@ test('access failures lock further starts; eligibility rejection preserves the c
   if(status!==422){assert.equal(await starter.start(),null);assert.equal(calls,1);}
  }
 });
+
+
+test('linked first-petition entry requires literal server capability and same-case petition receipt',async()=>{
+ for(const permission of [undefined,false,'true',1]){
+  let calls=0;const starter=A.createPetitionStarter({id:caseId,can_start_petition:permission},async()=>{calls++;return {};});
+  assert.equal(await starter.start(),null);assert.equal(calls,0);
+ }
+ const starter=A.createPetitionStarter({id:caseId,can_start_petition:true},async(url,options)=>{
+  assert.equal(url,'/api/applications/');assert.deepEqual(JSON.parse(options.body),{kind:'petition',case_id:caseId});
+  return {id:appealId,case_id:caseId,kind:'petition'};
+ });
+ assert.equal(await starter.start(),appealId);
+});
+
+test('linked petition entry rejects foreign receipts, blocks concurrent starts and locks denied retries',async()=>{
+ for(const result of [{id:appealId,case_id:caseId,kind:'appeal'},{id:appealId,case_id:appealId,kind:'petition'},{}]){
+  const starter=A.createPetitionStarter({id:caseId,can_start_petition:true},async()=>result);assert.equal(await starter.start(),null);
+ }
+ let release,calls=0;const starter=A.createPetitionStarter({id:caseId,can_start_petition:true},()=>{calls++;return new Promise(resolve=>release=resolve);});
+ const first=starter.start();assert.equal(await starter.start(),null);release({id:appealId,case_id:caseId,kind:'petition'});await first;assert.equal(calls,1);
+ const denied=A.createPetitionStarter({id:caseId,can_start_petition:true},async()=>{throw {status:403};});
+ assert.equal(await denied.start(),null);assert.equal(denied.state.locked,true);assert.equal(await denied.start(),null);
+});

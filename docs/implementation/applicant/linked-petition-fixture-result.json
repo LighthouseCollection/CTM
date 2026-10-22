@@ -1,0 +1,13 @@
+{
+  "passed": 6,
+  "checks": [
+    "Eligibility failure preserves case view and localized Arabic mobile UI without styles or overflow",
+    "Valid same-case appeal acknowledgement opens the bound editor without client case mutations",
+    "Late appeal start acknowledgement cannot navigate after leaving the case",
+    "Linked first-petition eligibility failure preserves localized case view and exact petition routing without reopening",
+    "Literal linked capability controls first-petition entry and valid same-case acknowledgement opens editor",
+    "Late first-petition acknowledgement cannot navigate after leaving case"
+  ],
+  "page_errors": [],
+  "scope": "Synthetic API fixtures; real pinned CDN"
+}

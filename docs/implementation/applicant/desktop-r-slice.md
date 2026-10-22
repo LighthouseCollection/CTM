@@ -1,5 +1,9 @@
 # Applicant workflow implementation slice
 
+## Current linked first-petition checkpoint
+
+Linked-spouse first-petition entry is implemented; actual two-filer and closed-case first-petition submission coverage replaces prior constructed-filing state.94 frontend tests, six entry fixture groups and nine shell groups pass. Unmodified integration104e4fd passes75 applicant API/browser groups; the explicit local review candidate with the named module/minimal hook passes76. This is not an integrated successor or institutional acceptance. [Report and blockers](linked-petition-report.md) | [Candidate JSON](linked-petition-api-result.json). Earlier counts and fixture gaps below are historical snapshots.
+
 ## Current private message integration (2026-10-21)
 
 Applicant-only messaging now integrates backend db6dfa3: exact own thread binding,

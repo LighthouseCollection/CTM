@@ -1,5 +1,9 @@
 # Applicant acceptance reconciliation
 
+## Current linked first-petition checkpoint
+
+Linked-spouse first-petition entry is implemented; actual two-filer and closed-case first-petition submission coverage replaces prior constructed-filing state.94 frontend tests, six entry fixture groups and nine shell groups pass. Unmodified integration104e4fd passes75 applicant API/browser groups; the explicit local review candidate with the named module/minimal hook passes76. This is not an integrated successor or institutional acceptance. [Report and blockers](linked-petition-report.md) | [Candidate JSON](linked-petition-api-result.json). Earlier counts and fixture gaps below are historical snapshots.
+
 ## Current field mapping and integrated verification
 
 90 semantic field targets, five repeat families, ten contextual requirements and24 AF decisions mapped at integration104e4fd. Fresh unmodified integrated archive:74 actual API/browser groups pass;92 frontend tests pass. Reference seed remains six unpublished fields without EN/AR labels; approved content and authoritative nested validation remain dependencies, not completed features. [Mapping and exact blockers](field-mapping/README.md) | [Download JSON](field-mapping/result.json). Earlier integration gaps/counts below are historical.
