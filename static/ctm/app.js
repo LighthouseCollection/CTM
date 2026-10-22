@@ -136,6 +136,7 @@
       documents: "Documents",
       medical: "Medical & Psychological Reports",
       decree: "Decree",
+      decisionVoting: "Decision & Voting",
       appeals: "Appeals",
       audit: "Case Audit",
       backCases: "Back to cases",
@@ -299,6 +300,7 @@
       documents: "المستندات",
       medical: "التقارير الطبية والنفسية",
       decree: "الشهادة",
+      decisionVoting: "القرار والتصويت",
       appeals: "التماسات إعادة النظر",
       audit: "سجل القضية",
       backCases: "العودة إلى القضايا",
@@ -1056,7 +1058,7 @@
       else if (
         councilModule &&
         user.portal === "council" &&
-        ["review", "sessions", "session"].includes(page)
+        ["review", "sessions", "session", "decision"].includes(page)
       )
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
@@ -1189,9 +1191,14 @@
       : ["home", "applications", "past"];
     const unavailable = new Set(["search", "statistics"]);
     const caseContext =
-      ["case", "communications", "documents", "evidence", "reports"].includes(
-        page,
-      ) && selection;
+      [
+        "case",
+        "communications",
+        "documents",
+        "evidence",
+        "reports",
+        "decision",
+      ].includes(page) && selection;
     const caseGroups = [
       {
         heading: t("overview"),
@@ -1222,10 +1229,10 @@
       },
       {
         heading: t("decision"),
-        items: ["decree", "appeals"].map((id) => ({
+        items: ["decision", "decree", "appeals"].map((id) => ({
           id,
-          label: t(id),
-          disabled: true,
+          label: t(id === "decision" ? "decisionVoting" : id),
+          disabled: !(id === "decision" && councilModule?.DecisionWorkspace),
         })),
       },
     ];
@@ -1358,6 +1365,25 @@
           t,
           lang,
           onCase: (id) => go("case", id),
+        });
+      if (page === "reports" && council && councilModule?.ReportsWorkspace)
+        return h(councilModule.ReportsWorkspace, {
+          key: selection,
+          api,
+          lang,
+          user,
+          caseId: selection,
+          reports: data.items,
+          renderReports: () =>
+            h(ReportReader, { key: selection, rows: data.items, t, lang }),
+        });
+      if (page === "decision" && council && councilModule?.DecisionWorkspace)
+        return h(councilModule.DecisionWorkspace, {
+          key: selection,
+          api,
+          lang,
+          user,
+          caseId: selection,
         });
       if (page === "reports")
         return h(ReportReader, { key: selection, rows: data.items, t, lang });
