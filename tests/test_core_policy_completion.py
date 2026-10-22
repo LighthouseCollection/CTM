@@ -22,6 +22,7 @@ def granted_roles():
             cursor.execute(f'GRANT {role} TO CURRENT_USER')
     editor=connection.schema_editor(atomic=False)
     import_module('tribunal.migrations.0038_runtime_grants').grant_runtime(apps,editor)
+    import_module('tribunal.migrations.0043_request_author_projection').grant_runtime(apps,editor)
     @contextmanager
     def enter(role,actor=None,*,session=False):
         with transaction.atomic():

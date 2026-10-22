@@ -5,8 +5,8 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **673 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
-reapply through0041. Protected151-table specification and accepted questions unchanged.
+Validation: **751 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+reapply through0043. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
   domain tables forced RLS; queue provenance in0036.
@@ -50,7 +50,7 @@ Account directory/detail/status/history APIs, compare-and-save status changes,
 target session revocation, source-bound configured bilingual status notices and
 stable assigned_member_id are implemented.0040 adds the audit index and restricted
 notice proofs;0041 corrects bound returned-petition resubmission with optional or
-corrected DOB. Current adapter:63 domain models,95 routes,63 forced-RLS tables.
+corrected DOB. Current adapter:63 domain models,99 routes,63 forced-RLS tables.
 [Contract and remaining work](account-administration-contract.md).
 
 ## Integrated fix and private draft contract checkpoint
@@ -64,12 +64,62 @@ roles and unrelated applicants, identical hidden/absent bodies, list isolation a
 private cache headers. No policy/API/migration change is needed for that oracle.
 [Evidence, contract and B01 evaluation](private-draft-read-contract.md).
 
+## Own session administration continuation
+
+Active accounts can list valid own sessions with opaque handles and explicitly
+revoke one, including the current session. Owner filtering precedes pagination;
+foreign/absent sessions share404; current-session revocation logs out the next
+request. Deletion and actual-actor audit are atomic. No migration or grant change.
+[Wire contract, evidence and adapter limits](own-session-administration.md).
+Microsoft callbackc06b869 is also pushed (679-test checkpoint); hosted checks pass.
+Governance reports it preserved in deployeddccbd63; genuine callback confirmation
+remains separate. Independent QAc54333d reports13/13 and32/32 backendfix checks on
+b3de51e only, not the latest deployed head.
+
+## Tribunal Sessions list continuation
+
+GET /api/sessions/ now supports bounded offset/limit/next_offset, optional planned/
+closed state and inclusive date_from/date_to filters before pagination. Existing
+fields/capabilities and default100 are preserved; rows beyond the former cap are
+reachable. Council-only authority remains. No lifecycle semantics or unsupported
+session timing/location/presiding/minutes fields are invented.
+[Contract and remaining field decisions](session-list-continuation.md).
+
+## Council appointment and assignment history continuation
+
+Admin/secretary can page actual memberships and assignment-role history for an
+existing council account, including inactive accounts. Real appointment/grant
+actors and recorded intervals are retained; revocation actor/time are returned
+only from actual audit evidence. Current scope/grant flags do not widen authority.
+No historical appointment or baseline role grant is invented.
+[Projection, provenance and limits](member-history-projection.md).
+
+## Council request original privacy correction
+
+Reproduced council C05 subject-applicant HTTP200 after clean scan for an external
+priest upload. New external_priest/interview uploads are council-visible with no
+owner; service and0042 read/write policy guards also protect retained legacy wrong
+scope and derived scan/text rows. Original evidence is not rewritten. External-link
+responses consistently use no-referrer. Twenty-one targeted regressions and full suite
+pass; independent exact-successor negative-access acceptance remains required.
+[Root cause, migration coordination and limits](council-request-file-privacy.md).
+
+## Applicant request author projection correction
+
+Reproduced valid admin-authored requests returning generic404 because author
+Account RLS correctly hid the administrator.0043 exposes only author display names
+bound to authorized request IDs; the endpoint keeps its author field without
+Account dereferences or broader Account SELECT. Admin remains hidden, member author
+remains genuine, and outsider/private/external/interview/worker access stays denied.
+[Source-scoped lookup, grants and successor acceptance](request-author-projection.md).
+
 ## Unfinished
 
 UI's other requested backend contracts remain unfinished: approved own-profile/
-contact/portrait mutations, verified email/provider/session administration, member
-contact/appointment/history projections, formal-source factual discrepancy views,
-and consumer integration of stored settings beyond account status notices. Pagination and per-family settings
+contact/portrait mutations, verified email/provider administration, broader normalized/admin session history, member
+contact/portrait editing and broader institutional history, formal-source factual discrepancy views,
+and consumer integration of stored settings beyond account status notices. Council C05 external
+boot/link-state/recording/paper-completion/projection/invitation contracts remain unfinished. Pagination and per-family settings
 edit schemas are addressed in these continuations;
 those separate contracts are not claimed complete or all blocked by credentials.
 
@@ -96,7 +146,8 @@ completes the requested reconciliation/documentation, not those future migration
 
 - Governance reported serial integration of48b80c4 asb3de51e; subsequent backend test/documentation checkpoints still require review.
 - UI binds list continuation; applicant focused physical-login rerun passed onb3de51e.
-  Its broader suite must reconcile the private-draft404 oracle and continue, preserving prior findings.
+  Its broader private-draft404 oracle was reconciled in0828515; the full PG run
+  remains incomplete after an isolated account-query/Docker stall, with prior findings preserved.
 - Independent non-owner/integration/browser acceptance against that successor SHA;
   QA issue #15 preserves existing findings and follows council's unsaved-text fix.
 - Institution accepts schema equivalence, operational readiness and live-service

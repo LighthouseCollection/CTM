@@ -1,3 +1,55 @@
+## Applicant request author-name RLS projection correction
+
+Reproduced admin-authored sent request404 with hidden Account and visible request
+rows. Added bounded request-ID-based current-name lookup in0043, app-only execute,
+repeated own/council request authorization and no Account policy widening. Twelve
+restrictedctm_app tests; full PostgreSQL751 passed/1skip, roundtrip through0043.
+C05 prior0042/privacy/medical guards preserved. See request-author-projection.md;
+governance integrates0042→0043 and reconciles UI metadata separately (proposed0044).
+Applicant34outer partial/focused7pass remains scoped until exact-successor rerun.
+No server mutation/merge/deploy by backend; publication SHA recorded issue #2.
+
+## C05 council request attachment privacy correction
+
+Reproduced restrictedctm_app subject GET200 for clean priest original. Fixed new
+external_priest/interview owner/visibility plus service and0042 SQL read/write
+scope, protecting retained legacy rows and derived text without rewriting evidence.
+No-referrer now covers failed external-link responses. Twenty-one focused regressions;
+full PostgreSQL739 passed/1skip, rollback/reapply through0042.99routes/63models/
+63forced tables unchanged. See council-request-file-privacy.md; governance owns
+0042 rollout and separate UI competing0040 reconciliation. C05 remaining capability/
+paper/invitation contracts and settings-label consumer are not claimed complete.
+Exact publication SHA recorded issue #2; no merge/deploy by backend.
+
+## Council appointment / assignment-role history projection
+
+Completed admin/secretary paginated memberships and role-history for existing
+council accounts, including inactive/ended/future/scoped records. Actual appointing/
+grant/revocation evidence retained; legacy unknown provenance stays unknown. No
+role/permission/provider/schema mutation. Twelve restrictedctm_app regressions;
+full PostgreSQL718 passed/1skip. Adapter99routes/63models/63forced tables, leaf0041.
+See member-history-projection.md and issue #2 for remaining work/publication SHA.
+No merge/server deployment by backend.
+
+## Tribunal Sessions server continuation
+
+Completed session list offset/limit/next_offset and validated state/date filters;
+default100/item fields/capabilities preserved, former100-row truncation removed.
+Sixteen restrictedctm_app regressions, full PostgreSQL706 passed/1skip. No new
+model/route/policy/grant/migration. See session-list-continuation.md; session timing,
+location, presiding member/minutes remain a separate approved contract decision.
+Exact publication ledger is on issue #2. No merge/server deployment by backend.
+
+## Own active-session inventory and revocation
+
+Implemented GET /api/account/sessions/ and POST own handle/revoke with actual
+session validation, opaque actor-bound handles, ownership-before-pagination,
+selected/current revocation and atomic retained actor audit. Eleven focused tests;
+full PostgreSQL690 passed,1 skipped. No migration/grant/provider/RLS change.
+Adapter97routes/63domain models/63forced tables. See own-session-administration.md
+for UI contract, scanning cost and unfinished normalized/provider/admin workflows.
+No merge/deploy; exact pushed SHA and acceptance ledger recorded on issue #2.
+
 ## Private draft read / integrated returned-filing checkpoint
 
 Applicant89072dd reports seven focused physical-login PostgreSQL groups pass on

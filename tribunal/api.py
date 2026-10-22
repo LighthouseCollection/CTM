@@ -652,17 +652,40 @@ def sessions(request):
     from tribunal.projections import session_capabilities
     staff(request.user)
     if request.method == "GET":
-        return JsonResponse(
-            {
-                "items": [
-                    encoded(
-                        x, date=x.date.isoformat(), reference=x.reference, state=x.state,
-                        **session_capabilities(x, request.user)
-                    )
-                    for x in m.CouncilSession.objects.order_by("-date")[:100]
-                ]
-            }
-        )
+        from tribunal.pagination import page_records
+        qs = m.CouncilSession.objects.all()
+        filters = {}
+        for key in ("state", "date_from", "date_to"):
+            if key not in request.GET:
+                continue
+            raw = request.GET.get(key)
+            if len(request.GET.getlist(key)) != 1 or not raw:
+                raise ValidationError(f"Provide one nonempty {key} filter.")
+            if key == "state":
+                if raw not in {"planned", "closed"}:
+                    raise ValidationError("state must be planned or closed.")
+                qs = qs.filter(state=raw)
+            else:
+                try:
+                    parsed = date.fromisoformat(raw)
+                    if parsed.isoformat() != raw:
+                        raise ValueError
+                except ValueError:
+                    raise ValidationError(f"{key} must be a YYYY-MM-DD date.")
+                filters[key] = parsed
+        if filters.get("date_from", date.min) > filters.get("date_to", date.max):
+            raise ValidationError("date_from must not follow date_to.")
+        if "date_from" in filters:
+            qs = qs.filter(date__gte=filters["date_from"])
+        if "date_to" in filters:
+            qs = qs.filter(date__lte=filters["date_to"])
+        return JsonResponse(page_records(
+            qs.order_by("-date", "-id"), request, default_limit=100,
+            serialize=lambda x: encoded(
+                x, date=x.date.isoformat(), reference=x.reference, state=x.state,
+                **session_capabilities(x, request.user),
+            ),
+        ))
     from tribunal.services.council import create_session
 
     return JsonResponse(
@@ -972,6 +995,9 @@ def report_requests(request, case_id):
                 .exclude(kind__in=["external_priest", "interview"])
                 .exclude(state="draft")
             )
+        from tribunal.services.request_projection import request_author_names
+        rows = list(qs.select_related("subject").order_by("-created_at", "-id"))
+        author_names = request_author_names(rows)
         return JsonResponse(
             {
                 "items": [
@@ -988,13 +1014,13 @@ def report_requests(request, case_id):
                         created_at=x.created_at.isoformat(),
                         sent_at=x.sent_at.isoformat() if x.sent_at else None,
                         parent_report_id=str(x.parent_report_id) if x.parent_report_id else None,
-                        author=f"{x.author.first_name} {x.author.last_name}".strip(),
+                        author=author_names.get(str(x.pk)),
                         **release_metadata(x, request.user),
                         **({"request_version": request_version(x)}
                             if request.user.role != "applicant" else {}),
                         **(own_request_data(x, request.user) if request.user.role == "applicant" else {}),
                     )
-                    for x in qs.order_by("-created_at")
+                    for x in rows
                 ]
             }
         )
@@ -1933,3 +1959,55 @@ def case_files(request, case_id):
     response = JsonResponse(result)
     response["Cache-Control"] = "private, no-store"
     return response
+
+
+@endpoint()
+def account_sessions(request):
+    from tribunal.pagination import page_records
+    from tribunal.services.account_sessions import active_sessions, owned_session, session_handle
+    return JsonResponse(page_records(
+        active_sessions(), request, default_limit=50,
+        visible=lambda row: owned_session(request.user, row),
+        serialize=lambda row: {
+            "handle": session_handle(request.user, row.session_key),
+            "current": row.session_key == request.session.session_key,
+            "expires_at": row.expire_date.isoformat(),
+        },
+    ))
+
+
+@endpoint(("POST",))
+def account_session_revoke(request, handle):
+    from tribunal.services.account_sessions import revoke_session
+    if body(request):
+        raise ValidationError("Session revocation accepts an empty object only.")
+    return JsonResponse(revoke_session(request.user, handle, request.session.session_key))
+
+
+@endpoint()
+def system_account_memberships(request, account_id):
+    from tribunal.pagination import page_records
+    from tribunal.services.member_history import membership_data
+    administrator(request.user)
+    account = m.Account.objects.exclude(role="applicant").get(pk=account_id)
+    now = timezone.now()
+    result = page_records(
+        m.StaffMembership.objects.filter(account=account).select_related("tribunal")
+        .order_by("-active_from", "-id"), request, default_limit=50,
+        serialize=lambda row: membership_data(account, row, now),
+    )
+    return JsonResponse({"account_id": str(account.pk), "account_role": account.role,
+                         "account_active": account.is_active, **result})
+
+
+@endpoint()
+def system_account_role_history(request, account_id):
+    from tribunal.pagination import page_records
+    from tribunal.services.member_history import role_history, role_data
+    administrator(request.user)
+    account = m.Account.objects.exclude(role="applicant").get(pk=account_id)
+    now = timezone.now()
+    result = page_records(role_history(account), request, default_limit=50,
+                          serialize=lambda row: role_data(account, row, now))
+    return JsonResponse({"account_id": str(account.pk), "account_role": account.role,
+                         "account_active": account.is_active, **result})
