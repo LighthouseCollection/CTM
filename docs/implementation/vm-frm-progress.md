@@ -1,3 +1,7 @@
+Current validation: **773 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0045. Nine new linked-filing regressions.
+
+Linked first-petition RLS correction: 0045 adds the existing own-party/open-claim binding path when optional spouse DOB is absent. Exact restricted-role reproduction and negative binding checks; see linked-first-filing.md. Governance integration, migration and applicant/QA acceptance remain pending. UI metadata successor proposal is now 0046 after 0045.
+
 ## Filing document-category display label consumer
 
 Implemented valid latest configured bilingual labels in owner filing-file listings,
