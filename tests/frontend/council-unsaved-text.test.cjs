@@ -4,68 +4,9 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const vm = require("node:vm");
 
-function harness() {
-  let states = [];
-  let index = 0;
-  let effects = [];
-  const React = {
-    useState(init) {
-      const i = index++;
-      if (!(i in states)) states[i] = typeof init === "function" ? init() : init;
-      return [states[i], (v) => { states[i] = typeof v === "function" ? v(states[i]) : v; }];
-    },
-    useEffect(fn) { effects.push(fn); },
-    createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity) }),
-  };
-  return {
-    React,
-    render(component, props) {
-      index = 0;
-      effects = [];
-      const tree = component(props);
-      effects.forEach((f) => f());
-      return tree;
-    },
-    unmount() { states = []; }, // what sidebar navigation does to the page's component state
-  };
-}
-
-// Any Plenix component is a named placeholder; nested names (PropertyList.Item) work too.
-const named = (name) => new Proxy(function () {}, { get: (_t, key) => (key === "displayName" ? name : named(`${name}.${String(key)}`)) });
-const Plenix = new Proxy({}, { get: (_t, key) => named(String(key)) });
-const nameOf = (type) => (type && type.displayName) || "";
-
-function load(h) {
-  const window = { React: h.React, Plenix, addEventListener() {}, removeEventListener() {} };
-  const context = { window, console };
-  for (const file of ["council.js", "council-case.js", "council-decree.js", "council-media.js"])
-    vm.runInNewContext(fs.readFileSync(`static/ctm/${file}`, "utf8"), context);
-  return window.CTMCouncil;
-}
-
-// Walks children and element-valued props (Tabs items[].content, SplitView first/second, ...).
-function find(tree, predicate, out = []) {
-  if (!tree || typeof tree !== "object") return out;
-  if (Array.isArray(tree)) {
-    for (const item of tree) find(item, predicate, out);
-    return out;
-  }
-  if ("type" in tree && "props" in tree) {
-    if (predicate(tree)) out.push(tree);
-    for (const child of tree.children || []) find(child, predicate, out);
-    for (const value of Object.values(tree.props)) if (value && typeof value === "object") find(value, predicate, out);
-    return out;
-  }
-  for (const value of Object.values(tree)) if (value && typeof value === "object") find(value, predicate, out);
-  return out;
-}
-const textareas = (tree) => find(tree, (n) => nameOf(n.type) === "Textarea");
-const notices = (tree) => find(tree, (n) => nameOf(n.type) === "Notice").map((n) => n.children.join(""));
-const buttons = (tree, label) => find(tree, (n) => nameOf(n.type) === "Button" && n.children.join("") === label);
-const dialog = (tree) => find(tree, (n) => nameOf(n.type) === "ConfirmDialog")[0];
-const type = (area, value) => area.props.onChange({ target: { value } });
+const { harness, load, find, textareas, notices, buttons, type } = require("./harness.cjs");
+const dialog = (tree) => require("./harness.cjs").dialogs(tree)[0];
 
 const report = { id: "rep-1", title: "Interview", kind: "interview", version: 1, can_revise: true,
   questions: [{ code: "Q1", en: "Question one?" }], answers: { Q1: "Original.", attendance: ["applicant"] }, observations: "Obs." };
