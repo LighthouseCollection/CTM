@@ -46,7 +46,7 @@
 
   // Formal hearing title from the contract. Missing names stay visibly unknown.
   function hearingTitle(partyNames, date, t) {
-    const unknown = t ? t("unknownParty") : "Unknown party";
+    const unknown = t ? t("unknownParty") : "Unknown spouse";
     const names = (partyNames || []).filter((n) => String(n || "").trim());
     const first = names[0] || unknown,
       second = names[1] || unknown;
@@ -297,7 +297,7 @@
         "Unpresented cases carry over to the next already scheduled session, or await manual placement if none exists. Deferred and presenter-absent cases always await manual placement. Messages set to “Send after council session” are released.",
       sessionClosed: "The council session was closed.",
       closedReadOnly: "This session is closed and read-only.",
-      unknownParty: "Unknown party",
+      unknownParty: "Unknown spouse",
       homeTitle: "Home",
       upcomingSession: "Upcoming council session",
       noUpcoming: "No council session is scheduled.",
@@ -468,7 +468,7 @@
         "تنتقل القضايا التي لم تُعرض إلى الجلسة المجدولة التالية، أو تنتظر الجدولة اليدوية إن لم توجد جلسة. أما القضايا المؤجلة أو التي غاب مقدِّمها فتنتظر دائمًا الجدولة اليدوية. ويتم إرسال الرسائل المحددة بخيار «الإرسال بعد جلسة المجلس».",
       sessionClosed: "تم إغلاق جلسة المجلس.",
       closedReadOnly: "هذه الجلسة مغلقة ومتاحة للقراءة فقط.",
-      unknownParty: "طرف غير معروف",
+      unknownParty: "زوج غير معروف",
       homeTitle: "الرئيسية",
       upcomingSession: "جلسة المجلس القادمة",
       noUpcoming: "لا توجد جلسة مجلس مجدولة.",

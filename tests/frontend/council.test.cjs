@@ -76,7 +76,7 @@ test("hearing title uses exact contract wording and never invents names", () => 
   );
   assert.equal(
     C.hearingTitle(["John Smith"], "2026-10-20", t),
-    "Case Hearing of John Smith vs. Unknown party on Council Session 2026-10-20",
+    "Case Hearing of John Smith vs. Unknown spouse on Council Session 2026-10-20",
   );
 });
 
