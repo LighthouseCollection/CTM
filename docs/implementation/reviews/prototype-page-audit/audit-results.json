@@ -1,0 +1,1568 @@
+{
+  "metadata": {
+    "date_local": "2026-10-21",
+    "prototype_root": "D:\\Documents\\Projects\\Projects_Applications\\LACopts Church Tribunal\\ClericalTribunalManagement_v2\\ctm-admin",
+    "schema": "ctm-build-contract-2026-10-21-v1",
+    "backend": "d724ba56b8bd5cf501d55fbbca416470108f963a",
+    "council": "e70bb9d439ede8649b7a0fab2fcc43d718624f27",
+    "applicant": "44f311ef8538de1283b006b9a96ec31db61cb794",
+    "coverage": "33 HTML pages recursively; 29 business/placeholder and4 design/reference pages. Source inspection plus selected inline/shared functional scripts. No rendered visual or runtime acceptance."
+  },
+  "pages": [
+    {
+      "page": "admin-archived.html",
+      "current_destination": "CasesTable closed view",
+      "status": "Partial",
+      "findings": [
+        "PA07",
+        "PA08"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-audit.html",
+      "current_destination": "CaseAudit",
+      "status": "Partial",
+      "findings": [
+        "PA22"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-communications.html",
+      "current_destination": "Communications / call log",
+      "status": "Partial",
+      "findings": [
+        "PA20",
+        "PA21"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-decree-view.html",
+      "current_destination": "Issued Decree + Decision history",
+      "status": "Partial",
+      "findings": [
+        "PA24"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-decree.html",
+      "current_destination": "Decision & Voting / Decree / Communications",
+      "status": "Partial",
+      "findings": [
+        "PA23"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-documents.html",
+      "current_destination": "Documents media viewer",
+      "status": "Mapped / partial",
+      "findings": [
+        "PA25"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Mapped / partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-evidence.html",
+      "current_destination": "Evidence media viewer",
+      "status": "Mapped / partial",
+      "findings": [
+        "PA25"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Mapped / partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-hearings-2.html",
+      "current_destination": "Same hearing workflow, alternate empty-state fixture",
+      "status": "Mapped alternate",
+      "findings": [
+        "PA16"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Mapped alternate",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-hearings.html",
+      "current_destination": "CaseHearings / SessionWorkspace",
+      "status": "Mapped / partial",
+      "findings": [
+        "PA16",
+        "PA17"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Mapped / partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-intake.html",
+      "current_destination": "Reports / requests / interviews",
+      "status": "Mapped / partial",
+      "findings": [
+        "PA19"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Mapped / partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-marriage.html",
+      "current_destination": "Marriage disabled",
+      "status": "Missing",
+      "findings": [
+        "PA01",
+        "PA25",
+        "PA28"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Missing",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-notes.html",
+      "current_destination": "Petition internal notes / revision history",
+      "status": "Mapped; not a missing entity",
+      "findings": [],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Mapped; not a missing entity",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-parties.html",
+      "current_destination": "Spouses / CaseParties",
+      "status": "Partial",
+      "findings": [
+        "PA03",
+        "PA04"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-requisition.html",
+      "current_destination": "Petition: individual formal submissions",
+      "status": "Renamed / partial",
+      "findings": [
+        "PA21",
+        "PA25"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Renamed / partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-separation.html",
+      "current_destination": "Separation disabled",
+      "status": "Missing",
+      "findings": [
+        "PA02",
+        "PA25",
+        "PA28"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Missing",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-summary.html",
+      "current_destination": "CaseSummary",
+      "status": "Partial",
+      "findings": [
+        "PA04",
+        "PA05"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-case-timeline.html",
+      "current_destination": "CaseTimeline",
+      "status": "Partial",
+      "findings": [
+        "PA06"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-cases.html",
+      "current_destination": "CasesTable / review / historical entry",
+      "status": "Partial",
+      "findings": [
+        "PA07",
+        "PA08",
+        "PA26"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-index.html",
+      "current_destination": "CouncilHome",
+      "status": "Partial",
+      "findings": [
+        "PA10",
+        "PA11"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-management.html",
+      "current_destination": "Partial system administration APIs",
+      "status": "Mostly missing UI",
+      "findings": [
+        "PA13",
+        "PA14"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Mostly missing UI",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-member.html",
+      "current_destination": "No member detail workspace found",
+      "status": "Missing",
+      "findings": [
+        "PA12"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Missing",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-reports.html",
+      "current_destination": "StatisticsWorkspace (distinct from case Reports)",
+      "status": "Partial",
+      "findings": [
+        "PA11"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-search.html",
+      "current_destination": "SearchWorkspace",
+      "status": "Partial",
+      "findings": [
+        "PA09"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-session-summary.html",
+      "current_destination": "Closed session records, no full minutes workflow",
+      "status": "Partial",
+      "findings": [
+        "PA17"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-sessions-historical.html",
+      "current_destination": "Closed sessions list/workspace",
+      "status": "Partial",
+      "findings": [
+        "PA18"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-sessions-upcoming.html",
+      "current_destination": "SessionWorkspace",
+      "status": "Mapped / partial",
+      "findings": [
+        "PA16",
+        "PA17"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Mapped / partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-sessions.html",
+      "current_destination": "SessionList / SessionWorkspace",
+      "status": "Mapped / partial",
+      "findings": [
+        "PA16",
+        "PA18"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Mapped / partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-support.html",
+      "current_destination": "No support equivalent; prototype under-development placeholder",
+      "status": "Unconfirmed candidate",
+      "findings": [],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Unconfirmed candidate",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "admin-user-account.html",
+      "current_destination": "Profile / language preferences",
+      "status": "Partial",
+      "findings": [
+        "PA15"
+      ],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Partial",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "consolidation-preview.html",
+      "current_destination": "Design/reference experiment; not current product UI",
+      "status": "Excluded reference",
+      "findings": [],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Excluded reference",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "design-preview.html",
+      "current_destination": "Design/reference experiment; not current product UI",
+      "status": "Excluded reference",
+      "findings": [],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Excluded reference",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "patternfly-spike/index.html",
+      "current_destination": "Design/reference experiment; not current product UI",
+      "status": "Excluded reference",
+      "findings": [],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Excluded reference",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    },
+    {
+      "page": "patternfly-spike/token-match-matrix.html",
+      "current_destination": "Design/reference experiment; not current product UI",
+      "status": "Excluded reference",
+      "findings": [],
+      "completion_stages": {
+        "workflow": "Mapped to prototype and later decisions; uncovered items flagged",
+        "schema": "Mapped concepts; field equivalence not fully verified",
+        "database": "Partial operational adapter",
+        "coded": "Excluded reference",
+        "working": "Not runtime verified by audit",
+        "UI": "Not visually accepted by audit",
+        "testing_QA": "Source audit only"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "id": "PA01",
+      "priority": "P1",
+      "title": "Marriage overview is missing",
+      "prototype": "admin-case-marriage.html:67-162: outside-Coptic ceremony, dates, priest, church/location/diocese, certificate number/issue date and contextual documents.",
+      "implementation": "Council app.js:1246-1255 disables Marriage; council implementation notes explicitly say no projection. Case detail lacks these facts.",
+      "schema_mapping": "marriages + application_marriage_assertions + application_answers/additional_facts + file_context_links. Current Case.marriage_date is not the full record. Certificate issue date needs an explicit question/field mapping.",
+      "action": "Build source-attributed council marriage projection/view and exact contextual document links. Separate spouse assertions from findings; do not invent a table per page.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA02",
+      "priority": "P1",
+      "title": "Separation overview is missing",
+      "prototype": "admin-case-separation.html:92-279: separation/initiator; civil court/date/number/status; restraining orders; reconciliation; previous permit applications; documents.",
+      "implementation": "Separation is disabled in council shell; backend case_detail lacks this projection.",
+      "schema_mapping": "application_separation_assertions, application_restraining_orders, application_prior_records and answers. Current adapter uses AnswerRevision.answers JSON.",
+      "action": "Build read projection and page. Render multiple orders/prior records and approved Unknown states. Do not restore rejected spouse lives-with requirements.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA03",
+      "priority": "P1",
+      "title": "Spouses page loses detailed profiles",
+      "prototype": "admin-case-parties.html:101-180: DOB, aliases, birth country, nationality, contact, immigration, education/graduation, occupation, church/parish/Father of Confession.",
+      "implementation": "council-case.js:2234 CaseParties shows name, CTM reference, registration badge and add-spouse form. api.py:469 case_detail provides only minimal party details.",
+      "schema_mapping": "person_identity_versions + application_person_assertions + answers/additional_facts. Current Person/Account/Party do not provide the complete council profile.",
+      "action": "Map each approved field to exact question code and retained answer source, then render attributed spouse profiles. Unconfirmed prototype-only fields need review; do not merge conflicting spouse accounts of a fact.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA04",
+      "priority": "P1",
+      "title": "Children missing from council overview",
+      "prototype": "admin-case-parties.html:191-215 and summary:251-255: repeated child names, DOB/age, gender and lives-with.",
+      "implementation": "CaseParties, CaseSummary and case_detail have no child projection.",
+      "schema_mapping": "application_children + stable repeat-entry identities; generic answers lists are only an adapter. Age is derived, not a stored timeless fact.",
+      "action": "Connect repeated children into Spouses/Summary with approved Unknown and per-source attribution.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA05",
+      "priority": "P1",
+      "title": "Summary lacks factual overview",
+      "prototype": "admin-case-summary.html:208-348: filing date, grounds, duration, last hearing, children, key dates.",
+      "implementation": "council-case.js:2649 CaseSummary shows operational state, assignee, spouses, proceeding, request counts and decision links, not the full factual summary.",
+      "schema_mapping": "Submissions, grounds, marriage assertions, children, hearings and lifecycle events already planned.",
+      "action": "Restore factual summary with authoritative dates and source links. Distinguish creation from filing and define duration endpoints.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA06",
+      "priority": "P2",
+      "title": "Timeline omits marriage/family chronology",
+      "prototype": "admin-case-timeline.html:79-81,115-120: Case/Marriage filters, church marriage, births, separation, divorce and counseling.",
+      "implementation": "CaseTimeline derives audit milestones and assignment history, not a full family chronology.",
+      "schema_mapping": "Assertion/repeat records plus lifecycle events. Event occurrence date is different from audit recorded_at.",
+      "action": "Add source-linked factual timeline and filters. Do not silently restore timeline export/rasterization.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA07",
+      "priority": "P1",
+      "title": "Cases/Archived lose queues and important columns",
+      "prototype": "admin-cases.html:118-159: My/Unassigned/Active/Closed/Incomplete/All tabs, spouses, last activity, filing date, grounds and outcome; admin-archived.html:81-87.",
+      "implementation": "council.js:2300 CasesTable shows case number, manager and open/closed status only. api.py:445 lacks richer row projection.",
+      "schema_mapping": "Case lifecycle, application completeness, assignments, party identity, grounds, submissions, decisions/decrees are distinct concepts.",
+      "action": "Restore server-backed queues/columns/filters; incomplete means formal returned/incomplete filing, never private unfinished drafts. No case delete or arbitrary close action.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA08",
+      "priority": "P1",
+      "title": "Pagination cannot reach all records",
+      "prototype": "Cases, Archived and historical-session browsing imply complete record access.",
+      "implementation": "api.py:445 cases and :594 sessions return only first100; DataTable pagination operates on that array.",
+      "schema_mapping": "No new business table: needs authorized query, count and stable cursor/filter contract.",
+      "action": "Implement server pagination and complete counts, test >100 cases/sessions and stable ordering.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA09",
+      "priority": "P1",
+      "title": "Advanced search is document-only and lacks filters",
+      "prototype": "admin-search.html:88-116: cases/people/documents/sessions, case ID/name/status/grounds/manager/document type/date range.",
+      "implementation": "council.js:2092 SearchWorkspace offers query/history only; backend search service queries ctm_documents, api accepts q/history/case_id.",
+      "schema_mapping": "search_documents supports source_kind/source_id/version/security scope; additional entity indexing/query projections missing.",
+      "action": "Restore unified authorized entity search and filters. Keep text in POST bodies, medical exclusions and source authorization on every result/snippet.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA10",
+      "priority": "P2",
+      "title": "Dashboard misses defined content",
+      "prototype": "admin-index.html:484-570,802-855; earlier approved dashboard plan also requires Outstanding Requests.",
+      "implementation": "CouncilHome:2207 has session dates, unread/review/consideration counts and own-case cards; no outstanding requests, previous summary, roster workload or recent submissions.",
+      "schema_mapping": "Requests, assignments, sessions and submissions exist conceptually; aggregate projections missing.",
+      "action": "Complete functional dashboard in Plenix and conduct actual visual review. Do not copy prototype CSS or hardcoded metrics.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA11",
+      "priority": "P2",
+      "title": "Statistics is only basic operational counts",
+      "prototype": "admin-reports.html:77-103; admin-index.html:579-790: period, case volume/status/grounds/outcomes/workload/durations and demographic breakdowns.",
+      "implementation": "council.js:2368 StatisticsWorkspace computes limited open/closed/unassigned/member/session counts over max100 rows.",
+      "schema_mapping": "Most source facts already planned. No obligatory analytics table; period/denominator definitions required.",
+      "action": "Implement full server aggregates and period filters. Outcome proportions can be valid with defined cohort; do not call tribunal demographics population divorce rates or imply causation.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA12",
+      "priority": "P2",
+      "title": "Council member detail/history page absent",
+      "prototype": "admin-member.html:132-184: member ID/contact, active assigned cases and past cases.",
+      "implementation": "No member-detail workspace; roster API is not equivalent to member historical workload view.",
+      "schema_mapping": "staff_memberships/roles, accounts, case_assignments. Past workload cannot be reconstructed from current assigned_member alone.",
+      "action": "Provide member profile/current/past cases with retained assignment history and bounded queries.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA13",
+      "priority": "P1",
+      "title": "System management UI mostly absent",
+      "prototype": "admin-management.html:191-250,317-470: staff lifecycle, tribunal settings, grounds/stages/outcomes, template library/editor.",
+      "implementation": "Generic settings API allows six keys; enrollment/authority routes exist but no equivalent comprehensive system administration workspace.",
+      "schema_mapping": "Staff tables, ground_definitions, decision_types, document_categories, questionnaire/declaration/template/setting/integration versions.",
+      "action": "Build system-level management, not case-member authority. Existing-admin-only council creation and later fixed permission rules supersede generic role toggles.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA14",
+      "priority": "P2",
+      "title": "Previous members/login sessions/security views incomplete",
+      "prototype": "admin-management.html:239-250,280-301,529-599: departed members, login result/IP/device, session revocation and audit filters.",
+      "implementation": "Active-account flag, partial membership dates and generic audit are not full lifecycle/login/session interfaces.",
+      "schema_mapping": "staff memberships/roles, account_events, app_sessions/identities; provider login events require explicit integration.",
+      "action": "Define CTM vs provider-session/log sources and safe retention, expose authorized history/revocation. No local password system.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA15",
+      "priority": "P2",
+      "title": "My Account profile is a stub",
+      "prototype": "admin-user-account.html:113-157,197-276: photo/title/name/phone/contact, role/appointment info, cases/activity.",
+      "implementation": "app.js:1521 Profile displays name and portal; Account Settings provides languages only. No full phone/photo profile adapter.",
+      "schema_mapping": "Identity/profile facts, staff memberships/roles and contextual photo ownership need exact mapping.",
+      "action": "Complete approved profile/contact and role/activity views; keep provider identity/email-change rules. Do not restore password/timeouts/SMS widgets.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA16",
+      "priority": "P1",
+      "title": "Session timing/location/presiding metadata lacks explicit storage",
+      "prototype": "admin-sessions-upcoming.html:125-130; admin-session-summary.html:83-86: time, presiding member, location and actual duration.",
+      "implementation": "CouncilSession stores date/state/closed_at; session API has date/reference/state/capabilities only.",
+      "schema_mapping": "Baseline council_sessions also lacks scheduled time/location/presiding snapshot. Testimony appointment location/time is not session metadata.",
+      "action": "Define session start/timezone/location and presiding reference/snapshot; clarify actual start/end. Append approved schema mapping/change rather than fabricate values.",
+      "classification": "Schema clarification + implementation gap"
+    },
+    {
+      "id": "PA17",
+      "priority": "P2",
+      "title": "Session summary/minutes not complete",
+      "prototype": "admin-session-summary.html:91-150: totals, cases/outcomes/recommendations, attendance, minutes, recorder/approval and print.",
+      "implementation": "Closed agenda/hearing records exist; no dedicated equivalent minutes version/approval entity or full summary generator found.",
+      "schema_mapping": "Agenda/attendance/hearing outcomes support summary. No session_minutes entity in151 baseline.",
+      "action": "Compose retained-record summary. Editable minutes/approval require workflow/schema decision; prototype TBD is not approval. Printing is distinct from rejected exports.",
+      "classification": "Schema clarification + implementation gap"
+    },
+    {
+      "id": "PA18",
+      "priority": "P2",
+      "title": "Historical session filters incomplete",
+      "prototype": "admin-sessions-historical.html:189-214 and admin-sessions.html:345-369: date/year, member, ground, outcome and totals.",
+      "implementation": "Split session list/closed workspace exist; no complete filtered/paged aggregate API.",
+      "schema_mapping": "Sessions, agenda, assignments, hearings and decisions supply sources.",
+      "action": "Add complete historical filters/counts and friendly date-based names; do not restore old sequence IDs.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA19",
+      "priority": "P2",
+      "title": "Interview event metadata only partly retained",
+      "prototype": "admin-case-intake.html:211-260: subject, actual interviewer, method, datetime/location/duration.",
+      "implementation": "Report has completion_date/method/author; structured actual location/duration/datetime not found. Recording duration is different.",
+      "schema_mapping": "reports baseline has completion_date/method, recordings duration. Explicit mapping needed for remaining approved interview facts.",
+      "action": "Reconcile interviewer vs recorder and event metadata. Owner later chose date sufficient for report naming, not necessarily deletion of event details.",
+      "classification": "Schema clarification + implementation gap"
+    },
+    {
+      "id": "PA20",
+      "priority": "P2",
+      "title": "Call logging has narrower metadata/contact scope",
+      "prototype": "admin-case-communications.html:359-386: spouse/clergy contact, inbound/outbound, date, duration and notes.",
+      "implementation": "CallRecord requires Party and has occurred_at/outcome/notes; no explicit direction/duration or clergy contact.",
+      "schema_mapping": "call_details has contacted_person/call_at/outcome/notes; communications.direction could hold direction if adapter mapped.",
+      "action": "Document call-to-communication mapping and clarify clergy contact scope. No new dialing/automatic phone recording claim.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA21",
+      "priority": "P1",
+      "title": "Communication subject/external recipients/inbound reply coverage incomplete",
+      "prototype": "admin-case-communications.html:315-345: subject, spouse/clergy recipient and message history.",
+      "implementation": "Existing Message/Recipient and call UI do not establish full subject/thread/external-clergy/inbound integration.",
+      "schema_mapping": "communications.subject/channel/direction; recipients.external_email; reply_routes/inbound_receipts/attachment_returns planned.",
+      "action": "Map actual subject/thread/delivery contract; distinguish priest request invites from ordinary correspondence. Private spouse channels and contextual document links remain required.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA22",
+      "priority": "P2",
+      "title": "Case audit structured filters reduced",
+      "prototype": "admin-case-audit.html:96-101: action/user selectors and timestamp/action/user/target/description.",
+      "implementation": "CaseAudit offers free-text filtering; equivalent action/user/date structured controls absent.",
+      "schema_mapping": "audit_events source references and safe details already planned.",
+      "action": "Add useful authorized filters/pagination and safe actor/target context, preserving council vs system audit scope.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA23",
+      "priority": "P1",
+      "title": "Decree template authoring/generation missing",
+      "prototype": "admin-case-decree.html:378-416 and admin-management.html:408-470: preamble/findings/canonical basis/statement/conditions editor, signature and templates.",
+      "implementation": "Council decree UI uploads signed PDF, records signature, issues and releases; notes explicitly state generation unavailable.",
+      "schema_mapping": "decree_template_versions/certificates/issuance/entitlements/releases planned; current smaller model adapter not fully equivalent.",
+      "action": "Complete approved versioned type-specific EN/AR/bilingual certificate authoring/generation. Institutional wording remains blocked; no sample doctrine treated as approved.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA24",
+      "priority": "P2",
+      "title": "Issued decree structured read needs reconciliation",
+      "prototype": "admin-case-decree-view.html:233-405: metadata, tally/member votes, narrative sections, signature and PDF.",
+      "implementation": "Votes/decision/decree details exist across separate destinations; structured narrative preview/generation absent.",
+      "schema_mapping": "Decision/votes/approval and exact signed PDF/template provenance, not duplicate free-editable certificate facts.",
+      "action": "Map existing destinations before duplicating; provide source-linked read view while exact signed certificate remains authoritative.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA25",
+      "priority": "P1",
+      "title": "Contextual documents not connected to missing factual pages",
+      "prototype": "Marriage:144-162, Separation:261-279, Requisition:108-126 plus Evidence/Documents split views.",
+      "implementation": "Global viewers and file contexts exist; no Marriage/Separation view to host their exact category/context files.",
+      "schema_mapping": "files + file_context_links + repeat/question context + exact versions/manifests; current Attachment.context is a string adapter.",
+      "action": "Map stable contexts and render latest permitted versions in correct locations. Multiple links must not require copying originals.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA26",
+      "priority": "P1",
+      "title": "Historical case entry lacks full council UI",
+      "prototype": "admin-cases.html:88 Create a Case; owner later approved special historical entry with missing facts/no fee.",
+      "implementation": "Backend historical_stage/publish and workspace exist; no complete historical-entry workspace in council module inventory.",
+      "schema_mapping": "historical_entry_workspaces, preserved original identifiers and unavailable facts.",
+      "action": "Add authorized system-level entry, open/closed selection and original IDs without bypassing ordinary applicant requirements.",
+      "classification": "Implementation gap"
+    },
+    {
+      "id": "PA27",
+      "priority": "P1",
+      "title": "Full schema equivalence not demonstrated",
+      "prototype": "Detailed pages versus151-table approved contract; not a one-page/one-table exercise.",
+      "implementation": "Pinned backend has63 model classes/aggregate adapters; JSON stores several normalized concepts. Counts alone prove neither data loss nor equivalence.",
+      "schema_mapping": "Need per-column mapping to model/JSON path, type, validation, repeat ID, history, RLS, provenance and query/index semantics.",
+      "action": "Create explicit equivalence register; migrations only for unsupported semantics after review. Do not replace approved schema to match adapter.",
+      "classification": "Schema reconciliation gap"
+    },
+    {
+      "id": "PA28",
+      "priority": "P1",
+      "title": "Application-to-council field coverage not proven",
+      "prototype": "All spouse/marriage/separation/repeat labels; build-spec requires accepted AF wording and repeat details.",
+      "implementation": "Generic renderer/report question bank is not proof published petition definition includes every approved field. Report questions are not application intake.",
+      "schema_mapping": "Questionnaire code -> assertion/answer JSON path -> formal revision -> council projection, with exact EN/AR/Unknown requirements.",
+      "action": "Register each prototype field and later disposition; identify omitted codes vs stored-but-unshown values. Do not silently add unapproved prototype-only questions.",
+      "classification": "Verification gap"
+    },
+    {
+      "id": "PA29",
+      "priority": "P2",
+      "title": "Page completion needs seven-stage evidence",
+      "prototype": "All business pages and later Reports/Appeals/Assessments workflows.",
+      "implementation": "Named screen/fixture-tested component was conflated with full working and visual acceptance. Separate branches are not localhost integration.",
+      "schema_mapping": "Delivery governance, no new business entity.",
+      "action": "Track Workflow/Schema/Database/Coded/Working/UI/QA per capability, with source/runtime/visual evidence separately.",
+      "classification": "Governance gap"
+    },
+    {
+      "id": "PA30",
+      "priority": "P2",
+      "title": "Dynamic controls must remain requirements evidence",
+      "prototype": "admin-cases.html:118-159 inline tabs/actions and shared prototype app.js; design previews separate.",
+      "implementation": "Static headings alone miss operational tabs, fields and state-dependent actions.",
+      "schema_mapping": "Map destinations/actions/roles, not literal old navigation or CSS.",
+      "action": "Keep functional coverage while excluding purge/export/password/old-stage shortcuts; prototype scripts are not normative permission logic.",
+      "classification": "Coverage rule"
+    }
+  ],
+  "prototype_sha256": {
+    "admin-archived.html": "77fdb65acfdadc7104ad64e5614930aa204e7ba25107569f4d1bca63671886ba",
+    "admin-case-audit.html": "7116c3bf0c4f5b4ed1c828f3611e59fe706b2deb5dcdf8519c70f7f0f6bdbe99",
+    "admin-case-communications.html": "0c46f2bd94093cd744f3321161a6325aeae45db267cbfd1b1033aefed628811c",
+    "admin-case-decree-view.html": "fafd3d36988dabf5c0e9f90e5cec17c693c42b233b67eb6508f75d140239c77f",
+    "admin-case-decree.html": "0200fc1b5f5de501ee672b8d1159d0dc122e61d4f6fb5e95c55fa80eeff2d88a",
+    "admin-case-documents.html": "f54831d92d322c9c0fadde84837da8f9afb0bc14f3810db11484cfa24e592ae4",
+    "admin-case-evidence.html": "6d8c65c2e0fa5e3bcdaa2afacd57e5dfb784121bb2c474c8e05bc67a1f651023",
+    "admin-case-hearings-2.html": "8fa1547da133b3f5c5cf0554d95676d549836bcba04302b7ab0bf84f0d689759",
+    "admin-case-hearings.html": "51424e2d13b0988c7512a4267f5587d21b120282d8ac7d62c2cf51163236916c",
+    "admin-case-intake.html": "ce3b1108b80c8e12e829cba169f0606d55a2deff205a32b585a1701f2a960883",
+    "admin-case-marriage.html": "4e2e7a59816e8c031aa53db6cc4fff12c0acfbd2bd421f7ef35a1af11b5ebd10",
+    "admin-case-notes.html": "d4a7242490b6751464f0633695aea8823eb6c7303d9a9e7dbe5e6e3117f467f4",
+    "admin-case-parties.html": "c9f08e6b068c976ab098d8bd12ee6647a62ace6a66b28f3b783bf8c338d8af95",
+    "admin-case-requisition.html": "24fec5b7c78a357592be8823035208589dcc710429af9a82adc40b0df4e4e64d",
+    "admin-case-separation.html": "67af4526135687125d298b4006ed73d8a93a11694b658ff5d68533b540d64455",
+    "admin-case-summary.html": "63eb53a9615ac49bf306f79c6820dda169151bf51b6c15ee4cf2b11dcc0888d3",
+    "admin-case-timeline.html": "637e875c541fbdde7ba2a505bcbefb1b27be6e0dd66a35a3a33cc4edc5defaae",
+    "admin-cases.html": "b171759143b23e33e9cb1af494780970fab51b0755bbf1201b2cb4aba889a88d",
+    "admin-index.html": "fc46d133edfb44db63d45e9135f75d46906555476de567d74b9974c3093b3619",
+    "admin-management.html": "bed870c0f2d4576844e83ce075b43f31cd987031854013bb9d6e4ff4c7dab744",
+    "admin-member.html": "8151dc2a2453e932c8074aa929f7dbf4df0286ce9b3b37f86b9248f78120cd9d",
+    "admin-reports.html": "855cf0e439c98ca706e76b00d42c9aeed589bcda0e9a4f65d26c72d9538baa89",
+    "admin-search.html": "3fa3c5662959fe451b74c5347aafd39e7715ccbe61170be00a8dc19816632e46",
+    "admin-session-summary.html": "53fbd3292858775832a11f7a4e793f7b780819c935356d09ca7d13aa3fe5c01d",
+    "admin-sessions-historical.html": "6a60437811fa69f20211ab0f0f2e2a79aa8b83b4be25ebe36f61699aaec726d7",
+    "admin-sessions-upcoming.html": "b25c9e18014672926a329553a9985af3b99dcee917d5c595735ff63fa7079370",
+    "admin-sessions.html": "1e91085bd782993c5d025a8192adb52713126d17fe1c7c339152d687f756da82",
+    "admin-support.html": "7669ae251005ea90446b451a6eadb2e44729250e22c4bbf05c822b031a43afc8",
+    "admin-user-account.html": "76f445ed63cc9f2c79c0ba0d859038ce1b6ef77594bf48bc5056ffbdc9c59d2b",
+    "consolidation-preview.html": "e9244e6b88f37b5b9ae0f714f6923c57753a0e3c52b95800b577da97d401ca63",
+    "design-preview.html": "5120ed2c4b2aeaaad4cf82705aec5a1698670a1e5ba1fb84ce70dc0f5e72bfb2",
+    "patternfly-spike\\index.html": "96f1698fba836c9a4234ecdb08653b832e1bb4d3b7f3f0f759b27a157ba6cfb5",
+    "patternfly-spike\\token-match-matrix.html": "b111aee11e8aad96e62f73532a1100f6e47f3272527f28bb3a4eddef4852c240"
+  },
+  "field_mapping_review": [
+    {
+      "prototype_page": "admin-case-marriage.html",
+      "prototype_label": "Outside Coptic ceremony",
+      "approved_schema_table": "application_marriage_assertions",
+      "approved_column_or_container": "outside_coptic_marriage",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Retain separate spouse assertions and formal visibility; Unknown where approved; no sample data imported",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-marriage.html",
+      "prototype_label": "Outside denomination",
+      "approved_schema_table": "application_marriage_assertions",
+      "approved_column_or_container": "outside_denomination",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Retain separate spouse assertions and formal visibility; Unknown where approved; no sample data imported",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-marriage.html",
+      "prototype_label": "Outside ceremony date",
+      "approved_schema_table": "application_marriage_assertions",
+      "approved_column_or_container": "additional_facts / explicit field mapping needed",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Retain separate spouse assertions and formal visibility; Unknown where approved; no sample data imported",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-marriage.html",
+      "prototype_label": "Church marriage date",
+      "approved_schema_table": "application_marriage_assertions",
+      "approved_column_or_container": "church_marriage_date",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Retain separate spouse assertions and formal visibility; Unknown where approved; no sample data imported",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-marriage.html",
+      "prototype_label": "Officiating priest",
+      "approved_schema_table": "application_marriage_assertions",
+      "approved_column_or_container": "officiating_priest",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Retain separate spouse assertions and formal visibility; Unknown where approved; no sample data imported",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-marriage.html",
+      "prototype_label": "Church name",
+      "approved_schema_table": "application_marriage_assertions",
+      "approved_column_or_container": "church_name",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Retain separate spouse assertions and formal visibility; Unknown where approved; no sample data imported",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-marriage.html",
+      "prototype_label": "Church location",
+      "approved_schema_table": "application_marriage_assertions",
+      "approved_column_or_container": "church_location",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Retain separate spouse assertions and formal visibility; Unknown where approved; no sample data imported",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-marriage.html",
+      "prototype_label": "Diocese",
+      "approved_schema_table": "application_marriage_assertions",
+      "approved_column_or_container": "diocese",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Retain separate spouse assertions and formal visibility; Unknown where approved; no sample data imported",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-marriage.html",
+      "prototype_label": "Marriage certificate number",
+      "approved_schema_table": "application_marriage_assertions",
+      "approved_column_or_container": "certificate_number",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Retain separate spouse assertions and formal visibility; Unknown where approved; no sample data imported",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-marriage.html",
+      "prototype_label": "Certificate issue date",
+      "approved_schema_table": "application_marriage_assertions",
+      "approved_column_or_container": "additional_facts / explicit code mapping needed",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Retain separate spouse assertions and formal visibility; Unknown where approved; no sample data imported",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "First/last English names",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "first_name_en / last_name_en",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Other names",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "additional_facts",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Birth date",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "birth_date",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Birth country",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "birth_country",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Nationality",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "nationality",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Contact address",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "address",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Mobile/email",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "contacts",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Immigration status",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "immigration_status",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Country of residence",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "residence_country",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Education",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "additional_facts",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Graduation year",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "additional_facts",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Occupation",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "additional_facts",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Religious affiliation",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "religious_affiliation / denomination",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Bishop/diocese",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "additional_facts",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Parish",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "parish",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Father of Confession",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "father_of_confession",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Awareness of application",
+      "approved_schema_table": "application_person_assertions",
+      "approved_column_or_container": "additional_facts",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Some prototype-only fields unconfirmed: do not add requirement silently; no spouse lives-with requirement; keep approved Unknown",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Child name",
+      "approved_schema_table": "application_children",
+      "approved_column_or_container": "names",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Repeatable stable entry; gender/lives-with Unknown allowed; age derived",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Child date of birth",
+      "approved_schema_table": "application_children",
+      "approved_column_or_container": "birth_date",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Repeatable stable entry; gender/lives-with Unknown allowed; age derived",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Child gender",
+      "approved_schema_table": "application_children",
+      "approved_column_or_container": "gender",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Repeatable stable entry; gender/lives-with Unknown allowed; age derived",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-parties.html",
+      "prototype_label": "Child lives with",
+      "approved_schema_table": "application_children",
+      "approved_column_or_container": "lives_with",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Repeatable stable entry; gender/lives-with Unknown allowed; age derived",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Separation date",
+      "approved_schema_table": "application_separation_assertions",
+      "approved_column_or_container": "separation_date",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Preserve independent accounts; finalized civil divorce decree required for new filing",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Initiated by",
+      "approved_schema_table": "application_separation_assertions",
+      "approved_column_or_container": "initiated_by",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Preserve independent accounts; finalized civil divorce decree required for new filing",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Final civil divorce date",
+      "approved_schema_table": "application_separation_assertions",
+      "approved_column_or_container": "civil_divorce_date",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Preserve independent accounts; finalized civil divorce decree required for new filing",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Court name",
+      "approved_schema_table": "application_separation_assertions",
+      "approved_column_or_container": "court_name",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Preserve independent accounts; finalized civil divorce decree required for new filing",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Civil case number",
+      "approved_schema_table": "application_separation_assertions",
+      "approved_column_or_container": "court_case_number",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Preserve independent accounts; finalized civil divorce decree required for new filing",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Civil filing/status",
+      "approved_schema_table": "application_separation_assertions",
+      "approved_column_or_container": "facts / explicit code mapping needed",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Preserve independent accounts; finalized civil divorce decree required for new filing",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Order court",
+      "approved_schema_table": "application_restraining_orders",
+      "approved_column_or_container": "court_name",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Multiple orders; court/name/status no Unknown; each reported order requires own uploaded copy",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Order case number",
+      "approved_schema_table": "application_restraining_orders",
+      "approved_column_or_container": "court_case_number",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Multiple orders; court/name/status no Unknown; each reported order requires own uploaded copy",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Order status",
+      "approved_schema_table": "application_restraining_orders",
+      "approved_column_or_container": "current_status",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Multiple orders; court/name/status no Unknown; each reported order requires own uploaded copy",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Order date",
+      "approved_schema_table": "application_restraining_orders",
+      "approved_column_or_container": "order_date",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Multiple orders; court/name/status no Unknown; each reported order requires own uploaded copy",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Order expiry",
+      "approved_schema_table": "application_restraining_orders",
+      "approved_column_or_container": "expiry_date",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Multiple orders; court/name/status no Unknown; each reported order requires own uploaded copy",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Named person",
+      "approved_schema_table": "application_restraining_orders",
+      "approved_column_or_container": "named_person",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Multiple orders; court/name/status no Unknown; each reported order requires own uploaded copy",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Prior application date",
+      "approved_schema_table": "application_prior_records",
+      "approved_column_or_container": "record_date",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Multiple prior applications and marriages; keep kinds distinct",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Council/diocese",
+      "approved_schema_table": "application_prior_records",
+      "approved_column_or_container": "council_or_diocese",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Multiple prior applications and marriages; keep kinds distinct",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Prior outcome",
+      "approved_schema_table": "application_prior_records",
+      "approved_column_or_container": "outcome",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Multiple prior applications and marriages; keep kinds distinct",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Prior marriage spouse",
+      "approved_schema_table": "application_prior_records",
+      "approved_column_or_container": "spouse_name",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Multiple prior applications and marriages; keep kinds distinct",
+      "working_UI_QA": "Not accepted by source audit"
+    },
+    {
+      "prototype_page": "admin-case-separation.html",
+      "prototype_label": "Ecclesiastical permit",
+      "approved_schema_table": "application_prior_records",
+      "approved_column_or_container": "ecclesiastical_permit",
+      "application_question_code": "UNVERIFIED - reconcile published application definition",
+      "current_model_or_JSON_path": "Exact path not established by this audit; AnswerRevision.answers is aggregate adapter",
+      "council_projection": "Missing detailed projection at pinned snapshot",
+      "owner_qualification": "Multiple prior applications and marriages; keep kinds distinct",
+      "working_UI_QA": "Not accepted by source audit"
+    }
+  ],
+  "source_hashes": {
+    "backend/tribunal/api.py": "9cbdd3621726cd7e7bdb4e440db5311c16c8990f80201076bbdd464d15b12d7d",
+    "backend/tribunal/models.py": "429b14538183f24ac73f709fd729e2cda4c9b0d06f62e8b056a14e1465ab9b64",
+    "backend/tribunal/services/applications.py": "9e02b908641de7dd1c502aef20aeabd865b94f45d8929e968f44677bd270911c",
+    "backend/tribunal/services/closed_filings.py": "4fb54f09ed526ccc2a697782ee089e2bcc4a6ff0ce2c758b1739466c2ec07358",
+    "backend/tribunal/services/common.py": "d44d1e38dec62d14ad2af8197042caa1426c860a56a25fc83d5a9f43d0229304",
+    "backend/tribunal/services/communications.py": "37a8b66f56fe14b6f801f9abc61e5534cfa8cf9189e377854e83e4167dd2ae64",
+    "backend/tribunal/services/configuration.py": "8e5a711de09d49306161e0d854889e0d8103ff78da171bc407ede6d2943e6aa2",
+    "backend/tribunal/services/council.py": "1d44f55f83f191893f5dd69654e1451cee7e9382c91a4be03922a37b68e6b5bf",
+    "backend/tribunal/services/decisions.py": "92de64a4aef1d543ecd2a7049193a23a417397d0ec352aae624c681a9e28d721",
+    "backend/tribunal/services/documents.py": "912d3e6c38d4da88934a9b74cc275dc27ba3bcd9ebe59b3c7bc9399a2cc7e869",
+    "backend/tribunal/services/files.py": "014f0e1a18dae5e90d29bba8a45cbfc450c7f2936020468c70a47583c2c06367",
+    "backend/tribunal/services/filing_actions.py": "1daf29948917ba31d8efcc1a212110234e3fbf38165fb1e80866d1100059d461",
+    "backend/tribunal/services/filing_privacy.py": "57c456d19d2430d5643ef3857f9bb5a8dac2d3217f09b373b0af8babc4cd4de3",
+    "backend/tribunal/services/historical.py": "79cba014e6b533d968486b2791f3aad814df6a6fe19974fe5bf99203a8e0b1a6",
+    "backend/tribunal/services/identity.py": "097ece14c3c1917fa5a27c73c1fc1e02d0f8f66ccbc9e41c6921c635fff99597",
+    "backend/tribunal/services/media.py": "1effe9cd976367335dd9867a9b748f7afc86537d6c8533f0e0cc2e749ecaff3e",
+    "backend/tribunal/services/payments.py": "71a18b056ccccfa90e4c70c3b9ea1d86af530fc4393da4d9199303067c1f9c1c",
+    "backend/tribunal/services/readiness.py": "77b7c7c97d2def9f59eb9a3b2009ce6a08564baf0c3a11c9a567c86cee223e6f",
+    "backend/tribunal/services/reports.py": "f3938287d096796a5369bf82ef3d0c9176e8a363def4eb45d9ceabbae80aadc4",
+    "backend/tribunal/services/request_contracts.py": "0e332026fca5d7f30f354f0b011627fe6824ea2eab276c4507b62c8e9766714f",
+    "backend/tribunal/services/retention.py": "ec877a43a0770625630ef3296abca0887a7fa795e49f2494e5d24b11bd6b1373",
+    "backend/tribunal/services/search.py": "73c4935cac8dbaebd9d770c1aeef7a8312878592bdf71c6be373ed90bc5cca7e",
+    "backend/tribunal/services/staff_roles.py": "559a42841aac56d4a90e59bed32372b9f7f36dc834a530fb6957da0654b193cd",
+    "backend/tribunal/services/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "backend/static/ctm/app.js": "0ce60d0404291ddc3d2d3324e1a649e76465e9e10896c5f26dc4c4ad018322a0",
+    "backend/docs/implementation/database-source-privacy.md": "39e7ae6847abdc67006154e95e83ab40e84bd306a471c94266749169e34c995b",
+    "backend/docs/implementation/filing-actions-and-resume.md": "31d9f64c030f4a27d013de61fb003afbbd017dfddc3af43b7f5670a7c932b64a",
+    "backend/docs/implementation/governance.md": "d90cc25fb6f951a92b84626178c757206f8b240fcb7a9cdb25fe5b3042484e3e",
+    "backend/docs/implementation/integration-access.md": "2b51380186e64c16f3b2678a82d7131fa2567bd54e78299a77961baaad4933de",
+    "backend/docs/implementation/media-read-and-review.md": "9992493408e6eae788d4f83f72df9cfcfdfff90f9133525e6ceeca346847c6be",
+    "backend/docs/implementation/own-request-contract.md": "285a0adc05dc8f8c40140d115c78dbf08e1177c6311518baba7133c87ccf1368",
+    "backend/docs/implementation/parallel-build-handoff.md": "7a99c20310e1415afacb7f083cd28eeb0b44a0909d9d87b81212968642232d7d",
+    "backend/docs/implementation/status.md": "342e16b9b4b39f1ac207dbdce1e6c9e7d9e2b4a20830306b719cbe7b35a82227",
+    "backend/docs/implementation/stream-claude.md": "28dc0bc842855bf1a2c6fa8cf720c0aa30d3d643cc878f672b70f316c2d34740",
+    "backend/docs/implementation/stream-desktop-r.md": "6b561c45510a54b030a2f46969ad68114eafa4535367075b271fee48a05e2c45",
+    "backend/docs/implementation/stream-vm-frm.md": "7b576902b658440e0eddcfb56729e2488796afa6a20d3c1d1aeb407410d512ae",
+    "backend/docs/implementation/vm-frm-progress.md": "3d880b7707fa791cafbfe8f84cd5064da6c4353cf74933567446340d787abe8f",
+    "council/tribunal/api.py": "68da1bdce11638f737aece20795dbfb87bc7c37766f6a3d840c03f486e4288b0",
+    "council/tribunal/models.py": "730abfb68a48b52bde6c75df6411fe383a62e3f156e3ea0815fe5fcb0f574169",
+    "council/tribunal/services/applications.py": "c18ec7d64efbd7bb0b7bb76ee82ba13cd30fe60270f748dfa3288c01cf59603e",
+    "council/tribunal/services/common.py": "d44d1e38dec62d14ad2af8197042caa1426c860a56a25fc83d5a9f43d0229304",
+    "council/tribunal/services/communications.py": "771786c573843377000b49695786681716a1a4550e1752fafc4558c909559b45",
+    "council/tribunal/services/configuration.py": "98900a560d7f5775a8ea66146e7c7986aed80a28fc90ad68344827dbea3476c5",
+    "council/tribunal/services/council.py": "8310dd1cbe2f55dbe0fed1be3b99c66c8efd59b23922e3899ddd4e4f7041fa76",
+    "council/tribunal/services/decisions.py": "904c64cc2e315fe6460ac972c70651c2ca13c6c3b720d960cd62bf14685fa2f8",
+    "council/tribunal/services/documents.py": "691f2a630a50937208bcbf83a1069e74e43701378e2f6d213470730ded37d1f9",
+    "council/tribunal/services/files.py": "0caf7f1d110f20c4377e6be797a4638120e71d11916d07a2d875b06f4465176e",
+    "council/tribunal/services/historical.py": "79cba014e6b533d968486b2791f3aad814df6a6fe19974fe5bf99203a8e0b1a6",
+    "council/tribunal/services/identity.py": "097ece14c3c1917fa5a27c73c1fc1e02d0f8f66ccbc9e41c6921c635fff99597",
+    "council/tribunal/services/payments.py": "fe446ec1724d1a9091e531d6358c719271af7c5ab511446be4eee520851096a1",
+    "council/tribunal/services/reports.py": "c670f7e899ba2fbfee7753978a016911e81c4379864611d647a17a27f422e487",
+    "council/tribunal/services/retention.py": "46f2cb4cb484ce7c5d1ad4725ed77272ec6be06bbde0aa963a908d437f6c30d0",
+    "council/tribunal/services/search.py": "fe86b145f5d3fb6d7b473f97fa694a84eb995dad41dc0ddf550b868d1d0f4d0b",
+    "council/tribunal/services/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "council/static/ctm/app.js": "43e956d097d41e7b057574233b235c319c2217ca8037e1df438e6117a1bd2caf",
+    "council/static/ctm/council-case.js": "9767a2754afa022a247394799b9a3ec66b19445b37511bcaa1faabf1bec1be67",
+    "council/static/ctm/council-decree.js": "42b18d1110570cd5f02e7659310447345b889a822623a1bbfd45cbde5e2552d7",
+    "council/static/ctm/council-media.js": "a0a9a56eeef1973e1637db44970dadadfd2e567d012582af1b0ebaba4e23c409",
+    "council/static/ctm/council.js": "4b5f634b9c462e75991d85503d8a678e29e6a96e19229d3f0af2bf9fc8f92e77",
+    "council/docs/implementation/database-source-privacy.md": "39e7ae6847abdc67006154e95e83ab40e84bd306a471c94266749169e34c995b",
+    "council/docs/implementation/demo-scenarios.md": "cb8126f7b58437957810daa129284652d5ef480b5d48c0baedbcc198cc4b2c89",
+    "council/docs/implementation/governance.md": "d90cc25fb6f951a92b84626178c757206f8b240fcb7a9cdb25fe5b3042484e3e",
+    "council/docs/implementation/integration-access.md": "2b51380186e64c16f3b2678a82d7131fa2567bd54e78299a77961baaad4933de",
+    "council/docs/implementation/parallel-build-handoff.md": "7a99c20310e1415afacb7f083cd28eeb0b44a0909d9d87b81212968642232d7d",
+    "council/docs/implementation/status.md": "342e16b9b4b39f1ac207dbdce1e6c9e7d9e2b4a20830306b719cbe7b35a82227",
+    "council/docs/implementation/stream-claude.md": "28dc0bc842855bf1a2c6fa8cf720c0aa30d3d643cc878f672b70f316c2d34740",
+    "council/docs/implementation/stream-desktop-r.md": "6b561c45510a54b030a2f46969ad68114eafa4535367075b271fee48a05e2c45",
+    "council/docs/implementation/stream-vm-frm.md": "7b576902b658440e0eddcfb56729e2488796afa6a20d3c1d1aeb407410d512ae",
+    "council/docs/implementation/council/browser-checks.md": "ccbb61876fd9c1c0368a40246d3e1014a607cc81087885432a1b447b8ab9d11e",
+    "council/docs/implementation/council/claude-slice.md": "a435c946b5ab7179e484de6d182aaf4f0b7207805fd18060a0e142a2027f16cc",
+    "council/docs/implementation/council/demo-walkthrough.md": "3a408a91ea11cdc365c9736501d93176934657fa2c65da0569687280c74cf013",
+    "council/docs/implementation/council/pdf-viewer-cdn-defect.md": "4b875c56ba379bec14bf1b7779a224f0ea5874c8a27a936c4d7dc6a8dae42d6b",
+    "council/docs/implementation/council/recording-and-viewers.md": "bc77b9fe3438ad07710a85d12cdd2e3c6f366b8c270de525c82ed5007001b13c",
+    "council/docs/implementation/reviews/CTM-Independent-Acceptance-Review.md": "b21f7c3307c440ab03092ed37356d0cacefd6359d96a9d020cacea409cf3607b",
+    "council/docs/implementation/reviews/owner-clarifications-2026-10-21.md": "12cf5eaffee27f8be002c4cb6d341b84c68c7b1df40284fe18f22fbd5653bac6",
+    "applicant/tribunal/api.py": "68da1bdce11638f737aece20795dbfb87bc7c37766f6a3d840c03f486e4288b0",
+    "applicant/tribunal/models.py": "730abfb68a48b52bde6c75df6411fe383a62e3f156e3ea0815fe5fcb0f574169",
+    "applicant/tribunal/services/applications.py": "c18ec7d64efbd7bb0b7bb76ee82ba13cd30fe60270f748dfa3288c01cf59603e",
+    "applicant/tribunal/services/common.py": "d44d1e38dec62d14ad2af8197042caa1426c860a56a25fc83d5a9f43d0229304",
+    "applicant/tribunal/services/communications.py": "771786c573843377000b49695786681716a1a4550e1752fafc4558c909559b45",
+    "applicant/tribunal/services/configuration.py": "98900a560d7f5775a8ea66146e7c7986aed80a28fc90ad68344827dbea3476c5",
+    "applicant/tribunal/services/council.py": "8310dd1cbe2f55dbe0fed1be3b99c66c8efd59b23922e3899ddd4e4f7041fa76",
+    "applicant/tribunal/services/decisions.py": "904c64cc2e315fe6460ac972c70651c2ca13c6c3b720d960cd62bf14685fa2f8",
+    "applicant/tribunal/services/documents.py": "691f2a630a50937208bcbf83a1069e74e43701378e2f6d213470730ded37d1f9",
+    "applicant/tribunal/services/files.py": "0caf7f1d110f20c4377e6be797a4638120e71d11916d07a2d875b06f4465176e",
+    "applicant/tribunal/services/historical.py": "79cba014e6b533d968486b2791f3aad814df6a6fe19974fe5bf99203a8e0b1a6",
+    "applicant/tribunal/services/identity.py": "097ece14c3c1917fa5a27c73c1fc1e02d0f8f66ccbc9e41c6921c635fff99597",
+    "applicant/tribunal/services/payments.py": "fe446ec1724d1a9091e531d6358c719271af7c5ab511446be4eee520851096a1",
+    "applicant/tribunal/services/reports.py": "c670f7e899ba2fbfee7753978a016911e81c4379864611d647a17a27f422e487",
+    "applicant/tribunal/services/retention.py": "46f2cb4cb484ce7c5d1ad4725ed77272ec6be06bbde0aa963a908d437f6c30d0",
+    "applicant/tribunal/services/search.py": "fe86b145f5d3fb6d7b473f97fa694a84eb995dad41dc0ddf550b868d1d0f4d0b",
+    "applicant/tribunal/services/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "applicant/static/ctm/app.js": "0ce60d0404291ddc3d2d3324e1a649e76465e9e10896c5f26dc4c4ad018322a0",
+    "applicant/static/ctm/applicant-appeals.js": "f1ec99ade0cb28f44c18c4a1890cdbeb52f5b23c5c66ec127ad3434ece58abc9",
+    "applicant/static/ctm/applicant-appointments.js": "ac2e01bb9b4b54594d6c5d286efe327b92e255a71a3e98e8c22b9dfc4d1cf115",
+    "applicant/static/ctm/applicant-assessments.js": "308787c8c19a03cd95057cc247c9366c104bd6b5ca233869a45aae58c51ef3f5",
+    "applicant/static/ctm/applicant-decrees.js": "09dd090ca9652d5cfcabab35681e2be8aee213382ad9cd9f2a6d15ae5fea4990",
+    "applicant/static/ctm/applicant-files.js": "9ae4675d3797b4a3fed3e99edf0c14dcaacbf8bad0605fa9b8b52c959e878295",
+    "applicant/static/ctm/applicant-filing.js": "7b349543c31bffbe1e24e411079a6316d668bfb2656d415819c3709f02254003",
+    "applicant/static/ctm/applicant-lifecycle.js": "cf24e37896a44bdf453fb3d42446b9f2474673e4245caba7c32d11bc6c72fe27",
+    "applicant/static/ctm/applicant-payments.js": "e13b3faf33a087d09ccb8421f912926a8bd13ca0d34bfdee7cf2307ed976de7d",
+    "applicant/static/ctm/applicant-recovery.js": "1780cf4dad4a7ccd114a1ee8e692b5d73eb6c82393289229b88296140d45fcca",
+    "applicant/static/ctm/applicant-requests.js": "5706ab2aca8c02daba2aad82b1085790e1f44a92ea9a7b38fdf7644676ebafe7",
+    "applicant/static/ctm/applicant-responses.js": "9914768654725d2777b06a4aeebb8ab55efc204bb16fb610baac29410f56573c",
+    "applicant/static/ctm/applicant-supplements.js": "f851c266a7c3b778d2c112af0e989c7216bea6a6c3f588fb30f2727022a2d679",
+    "applicant/static/ctm/applicant.js": "d8d4e39caa28721b4214bae8767a3bde85bd02cf009ac25db96a093a02af7270",
+    "applicant/docs/implementation/database-source-privacy.md": "39e7ae6847abdc67006154e95e83ab40e84bd306a471c94266749169e34c995b",
+    "applicant/docs/implementation/governance.md": "d90cc25fb6f951a92b84626178c757206f8b240fcb7a9cdb25fe5b3042484e3e",
+    "applicant/docs/implementation/integration-access.md": "2b51380186e64c16f3b2678a82d7131fa2567bd54e78299a77961baaad4933de",
+    "applicant/docs/implementation/parallel-build-handoff.md": "7a99c20310e1415afacb7f083cd28eeb0b44a0909d9d87b81212968642232d7d",
+    "applicant/docs/implementation/status.md": "342e16b9b4b39f1ac207dbdce1e6c9e7d9e2b4a20830306b719cbe7b35a82227",
+    "applicant/docs/implementation/stream-claude.md": "28dc0bc842855bf1a2c6fa8cf720c0aa30d3d643cc878f672b70f316c2d34740",
+    "applicant/docs/implementation/stream-desktop-r.md": "6b561c45510a54b030a2f46969ad68114eafa4535367075b271fee48a05e2c45",
+    "applicant/docs/implementation/stream-vm-frm.md": "7b576902b658440e0eddcfb56729e2488796afa6a20d3c1d1aeb407410d512ae",
+    "applicant/docs/implementation/applicant/acceptance-reconciliation.md": "2b4b180070247f5f07cbdc85f1519220a4d14040eeef159b22fbd1ff1bf95d48",
+    "applicant/docs/implementation/applicant/api-contract.md": "5f53e9ea40e9c6fc4196c34015f4003655adf7d17d1083d8ecbc76210148aaac",
+    "applicant/docs/implementation/applicant/desktop-r-slice.md": "15573aaec6410ebc9f21e66f17ac71f87ca4ca75d99a13348b798f35634c1490",
+    "applicant/docs/implementation/applicant/next-five-report.md": "f2a9c7ee0b3092c48569f2259decd72257bfe0006701e124aeaa02ded72b4dbb",
+    "applicant/docs/implementation/applicant/remaining-work.md": "f4d7e4ed2f8da0fdaa2a23d1438285bfb7f5276d060cf40a042d6b165ee74030",
+    "applicant/docs/implementation/applicant/ten-batch-report.md": "46477147e2b21e0956f4df5783d1ed0348cac03cd6c7e697017d669ff3022b55",
+    "applicant/docs/implementation/applicant/test-evidence.md": "6322d0489ae5528e74dd280e0c69048d7f41f08484704df643161efe6854f504"
+  }
+}
