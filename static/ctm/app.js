@@ -1713,13 +1713,16 @@
           ),
           heading(data.number),
           text(`${t("status")}: ${t(data.status)}`),
+          !council && data.can_start_petition === true && window.CTMApplicantAppeals?.StartPetition
+            ? h(window.CTMApplicantAppeals.StartPetition, {key:"petition-"+selection,record:data,api,lang,
+                onOpen:(id)=>go("application",id)}) : null,
           !council && window.CTMApplicantAppeals?.hasAppealContext(data)
-            ? h(window.CTMApplicantAppeals.StartAppeal, {caseId:selection,api,lang,
+            ? h(window.CTMApplicantAppeals.StartAppeal, {key:"appeal-"+selection,caseId:selection,api,lang,
                 onOpen:(id)=>go("application",id)}) : null,
           !council && window.CTMApplicantDecrees
-            ? h(window.CTMApplicantDecrees.ReleasedDecrees, {key:selection,caseId:selection,api,lang}) : null,
+            ? h(window.CTMApplicantDecrees.ReleasedDecrees, {key:"decrees-"+selection,caseId:selection,api,lang}) : null,
           !council && window.CTMApplicantRequests
-            ? h(window.CTMApplicantRequests.Requests, {key:selection,caseId:selection,api,lang,onNavigationGuard:registerApplicantGuard}) : null,
+            ? h(window.CTMApplicantRequests.Requests, {key:"requests-"+selection,caseId:selection,api,lang,onNavigationGuard:registerApplicantGuard}) : null,
           h(
             P.Panel,
             { icon: "doc-text", title: t("parties") },
