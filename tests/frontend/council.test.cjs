@@ -313,6 +313,7 @@ test("statistics are plain counts, flagged partial at the list limit, never rate
   assert.equal(C.caseStatistics(Array(100).fill({ status: "open" }), []).partial, true);
   const src = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.doesNotMatch(src.slice(src.indexOf("function caseStatistics"), src.indexOf("function StatisticsWorkspace")), /\/|percent|rate/i);
+  assert.doesNotMatch(src.slice(src.indexOf("function StatisticsWorkspace"), src.indexOf("window.CTMCouncil")), /statsScope/);
 });
 
 test("Los Angeles times carry the right daylight-saving offset", () => {

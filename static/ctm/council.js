@@ -505,7 +505,6 @@
       keepInvitation: "Keep invitation",
       invitationCancelled: "The testimony invitation was cancelled.",
       statsTitle: "Statistics and Reports",
-      statsScope: "Operational counts for council planning. These are not rates: tribunal cases have no population denominator, so no divorce or approval rate is implied.",
       statsPartial: "Counts cover the most recent 100 cases or sessions returned to this view. Complete figures need a server summary.",
       statsCases: "Cases",
       statsOpen: "Open cases",
@@ -801,7 +800,6 @@
       keepInvitation: "الإبقاء على الدعوة",
       invitationCancelled: "تم إلغاء دعوة الإدلاء بالشهادة.",
       statsTitle: "الإحصاءات والتقارير",
-      statsScope: "أعداد تشغيلية لتخطيط عمل المجلس. وهي ليست نسبًا: فقضايا المجلس ليس لها مقام سكاني، لذلك لا يُستنتج منها أي معدل للطلاق أو للموافقة.",
       statsPartial: "تشمل الأعداد أحدث ١٠٠ قضية أو جلسة معروضة في هذه الصفحة. وتحتاج الأرقام الكاملة إلى ملخص من الخادم.",
       statsCases: "القضايا",
       statsOpen: "القضايا المفتوحة",
@@ -2923,7 +2921,6 @@
       P.Stack,
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("statsTitle")),
-      h(P.Notice, { tone: "info" }, t("statsScope")),
       s.partial ? h(P.Notice, { tone: "warning" }, t("statsPartial")) : null,
       h(
         P.Panel,
