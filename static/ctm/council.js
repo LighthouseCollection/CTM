@@ -469,7 +469,8 @@
       deferred: "Deferred — awaiting manual placement",
       assigned: "Assigned case manager",
       unassigned: "Not yet assigned",
-      notRecorded: "Not recorded",
+      notRecorded: "Not Recorded",
+      readRecommendation: "Read Recommendation",
       recordAssignment: "Record assignment",
       recordReassignment: "Record reassignment",
       assignTitle: "Record case manager assignment",
@@ -778,6 +779,7 @@
       assigned: "مسؤول القضية",
       unassigned: "لم يُعيَّن بعد",
       notRecorded: "غير مسجل",
+      readRecommendation: "قراءة التوصية",
       recordAssignment: "تسجيل التعيين",
       recordReassignment: "تسجيل إعادة التعيين",
       assignTitle: "تسجيل تعيين مسؤول القضية",
@@ -1011,6 +1013,26 @@
       title: error && error.status === 401 ? t("expired") : t("loadFailed"),
       action: h(P.Button, { onClick: retry }, t("retry")),
     });
+  }
+
+  function PreviousRecommendationCell({ value, lang }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [open, setOpen] = R.useState(false);
+    const recommendation = String(value || "").trim();
+    if (!recommendation) return t("notRecorded");
+    return h(
+      R.Fragment,
+      null,
+      h(P.Button, { size: "xs", icon: "document", onClick: () => setOpen(true) }, t("readRecommendation")),
+      h(
+        P.Dialog,
+        { open: open, size: "lg", title: t("previousRecommendation"), closeLabel: t("cancel"), onClose: () => setOpen(false) },
+        h(P.Text, { as: "p" }, recommendation),
+      ),
+    );
   }
 
   const feeLabel = (row, t) => (row.fee ? t(row.fee.status) : t("unknown"));
@@ -1549,7 +1571,7 @@
                   { title: t("respondent"), field: "respondent", type: "person", minWidth: "10rem" },
                   { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
                   { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
-                  { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, render: (row) => row.previous_recommendation || t("notRecorded") },
+                  { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, render: (row) => h(PreviousRecommendationCell, { value: row.previous_recommendation, lang }) },
                   { title: t("actions"), field: "case_id", minWidth: "6rem", pill: false, render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
                 ],
               }),
@@ -2362,7 +2384,7 @@
             { title: t("applicant"), field: "applicant", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
             { title: t("respondent"), field: "respondent", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "11rem", pill: false, render: (row) => row.previous_recommendation || t("notRecorded") },
+            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "11rem", pill: false, render: (row) => h(PreviousRecommendationCell, { value: row.previous_recommendation, lang }) },
             { title: t("actions"), field: "open_action", minWidth: "7rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },

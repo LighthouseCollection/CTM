@@ -270,6 +270,10 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(sessionWorkspace, /\{ value: "assign", label: t\("casesToAssign"\), content: agendaTable\(1\) \}/);
   assert.doesNotMatch(agendaTable, /P\.Panel/);
   assert.match(agendaTable, /previousRecommendation/);
+  assert.match(agendaTable, /h\(PreviousRecommendationCell, \{ value: row\.previous_recommendation, lang \}\)/);
+  assert.match(council, /function PreviousRecommendationCell\(\{ value, lang \}\)/);
+  assert.match(council, /t\("readRecommendation"\)/);
+  assert.match(council, /open: open, size: "lg", title: t\("previousRecommendation"\)/);
   assert.doesNotMatch(agendaTable, /field: "record"/);
   assert.match(agendaTable, /title: t\("actions"\), field: "open_action"/);
   assert.match(council, /empty: t\(`part\$\{n\}Empty`\), isStatic: true/);
