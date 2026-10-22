@@ -532,3 +532,9 @@ test("home attention empty state uses a calm reassurance", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /nothingNeedsAttention: "You’re all caught up for now\."/);
 });
+
+test("neutral table pill treatment does not override CDN gender categories", () => {
+  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  assert.match(css, /\.plx-data-grid \.plx-data-pill:not\(\[data-plx-category\]\),\s*\.plx-data-grid \.plx-data-pill\[data-plx-category="grey"\]/);
+  assert.doesNotMatch(css, /\.plx-data-grid \.plx-data-pill\s*\{\s*background-color/);
+});

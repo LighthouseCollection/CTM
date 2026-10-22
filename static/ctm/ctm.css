@@ -325,6 +325,7 @@
 }
 
 /* Neutral table pills use the tokenized off-white surface instead of a disabled gray. */
-.plx-data-grid .plx-data-pill {
+.plx-data-grid .plx-data-pill:not([data-plx-category]),
+.plx-data-grid .plx-data-pill[data-plx-category="grey"] {
   background-color: var(--plx-sys-color-surface-subtle, #f8fafc);
 }
