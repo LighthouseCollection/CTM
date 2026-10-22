@@ -68,6 +68,8 @@ try:
         documents = {"can_upload":True,"items":[],"requirements":[{
             "category":"RO","context":"order-a","label_en":"Order copy","label_ar":"نسخة الأمر","required":True}]}
         uploads = []
+        start_status = 400
+        start_requests = []
 
         def api(route):
             path = route.request.url.split("/api/", 1)[1]
@@ -76,7 +78,11 @@ try:
             elif path == "cases/":
                 route.fulfill(json={"items": []})
             elif path == "applications/":
-                route.fulfill(json={"items": [app]})
+                if route.request.method == "POST":
+                    start_requests.append(route.request.post_data_json)
+                    route.fulfill(status=start_status, json=app if start_status==201 else {"error":"synthetic eligibility denial"})
+                else:
+                    route.fulfill(json={"items": [app]})
             elif path == "applications/synthetic/files/":
                 route.fulfill(json=documents)
             elif path == "files/":
@@ -170,6 +176,17 @@ try:
             assert page.locator("[style]").count() == 0
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         checks.append("Context upload controls render in Arabic RTL without runtime styles/overflow")
+        page.set_viewport_size({"width":1280,"height":1000})
+        page.get_by_role("button", name="English", exact=True).click()
+        page.get_by_role("navigation").get_by_role("button", name="My application", exact=True).click()
+        page.get_by_role("button", name="Start or resume application", exact=True).click()
+        expect(page.get_by_text("Unable to open an application.", exact=False)).to_be_visible()
+        expect(page.get_by_role("button", name="Open application", exact=True)).to_be_visible()
+        start_status = 201
+        page.get_by_role("button", name="Start or resume application", exact=True).click()
+        expect(page.get_by_label("Synthetic name")).to_have_value("Saved")
+        assert start_requests == [{"kind":"petition"},{"kind":"petition"}]
+        checks.append("Start/resume delegates eligibility and existing-draft reuse to server; error preserves existing list")
         assert not errors, errors
         browser.close()
 finally:

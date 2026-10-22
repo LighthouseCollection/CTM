@@ -64,7 +64,7 @@
       savedContext:"رفع الملفات متوقف أثناء تعديل الإجابات أو تنفيذ إجراء لتقديم الطلب.", additional:"أصول إضافية مرفوعة",
     },
   };
-  function ApplicationFiles({applicationId, api, lang="en", disabled=false, onBusyChange, onChanged, onReadyChange}) {
+  function ApplicationFiles({applicationId, answerVersion, api, lang="en", disabled=false, onBusyChange, onChanged, onReadyChange}) {
     const R=window.React, P=window.Plenix, h=R.createElement;
     const t=k=>words[lang === "ar" ? "ar" : "en"][k];
     const [data,setData]=R.useState(null), [error,setError]=R.useState(null);
@@ -86,7 +86,7 @@
         if([401,403].includes(e?.status))setLocked(true);
       }});
       return()=>{active=false;};
-    },[applicationId,api,revision]);
+    },[applicationId,answerVersion,api,revision]);
     const send=async(requirement,replacement,key)=>{
       if(busy || disabled || locked || needsRefresh || data?.can_upload !== true || !selected[key])return;
       setBusy(true);setError(null);setReceived(false);

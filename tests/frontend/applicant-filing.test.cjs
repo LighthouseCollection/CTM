@@ -74,6 +74,15 @@ test('uncertain submission retry freezes the original attestation and reviewed v
   assert.equal(session.state.attempted, true);
 });
 
+test('uncertain checkout retry preserves the original signature for the same candidate', async () => {
+  const requests=[];const app=fixture();
+  const session=F.createFilingSession(app,async(url,options)=>{requests.push(JSON.parse(options.body));throw new Error('network');},()=> 'k');
+  await session.checkout({accepted:true,name:'First signature'});
+  await session.checkout({accepted:true,name:'Changed signature'});
+  assert.deepEqual(requests[0],requests[1]);
+  assert.equal(session.state.attempted,true);
+});
+
 test('returned resubmission reuses signature and fee without checkout or new attestation', async () => {
   const app = fixture(); app.status = 'returned'; app.can_resubmit = true; app.fee.status = 'paid';
   let payload;

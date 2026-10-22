@@ -26,7 +26,7 @@
   }
   function createFilingSession(app, api, makeKey, changed = () => {}) {
     const state = { busy: false, locked: false, error: null, submitted: false, attempted: false };
-    let key, frozenSubmission;
+    let key, frozenSubmission, frozenCheckout;
     const allowed = () => !state.busy && !state.locked && !state.submitted;
     const fail = (error, fallback) => {
       state.error = error?.status === 401 ? "expired" : [403,404].includes(error?.status) ? "accessDenied" : fallback;
@@ -38,8 +38,10 @@
         if (!allowed() || !availability(app).checkout || !validAttestation(attestation)) return null;
         state.busy = true; state.error = null; changed();
         try {
+          frozenCheckout ||= {attestation:{accepted:true,name:attestation.name}, expected_version:app.version};
+          state.attempted = true;
           const result = await api(`/api/applications/${encodeURIComponent(app.id)}/checkout/`, {
-            method: "POST", body: JSON.stringify({ attestation, expected_version: app.version }),
+            method: "POST", body: JSON.stringify(frozenCheckout),
           });
           const url = checkoutURL(result?.checkout_url);
           if (!result?.intent || !url) throw new Error("Invalid checkout response");

@@ -1,7 +1,7 @@
 /* CTM applicant workflow. Plenix stays on the pinned external CDN. */
 (() => {
   "use strict";
-  const types = new Set(["text", "textarea", "date", "choice", "list"]);
+  const types = new Set(["text", "textarea", "date", "choice", "list", "boolean"]);
   const label = (item, lang) => item[`label_${lang === "ar" ? "ar" : "en"}`];
   const bilingual = (item) => ["label_en", "label_ar"].every(
     (key) => typeof item?.[key] === "string" && item[key].trim());
@@ -51,9 +51,19 @@
       if (field.type === "list") {
         if (!Array.isArray(value) || value.some(v => typeof v !== "string"))
           return "answersUnavailable";
+      } else if (field.type === "boolean") {
+        if (typeof value !== "boolean") return "answersUnavailable";
       } else if (typeof value !== "string") return "answersUnavailable";
     }
     return null;
+  }
+
+  async function startDraft(api) {
+    const result = await api("/api/applications/", {
+      method:"POST", body:JSON.stringify({kind:"petition"}),
+    });
+    if (typeof result?.id !== "string" || !result.id) throw new Error("Invalid draft response");
+    return result.id;
   }
 
   function createDraftSession(app, api, changed = () => {}) {
@@ -112,6 +122,10 @@
       fee: "The application fee is USD 250 and is nonrefundable. Saving a draft does not submit your application or complete payment.",
       draftNotice: "You may save an incomplete draft. Required answers and documents are checked before submission.",
       required: "Required", reviewNotice: "Review your answers. Submission and payment are separate steps.",
+      yes:"Yes", no:"No", start:"Start or resume application", starting:"Opening application…",
+      startHelp:"Prepare your marriage certificates, finalized civil divorce decree and applicant photo. You may type your petition statement or upload a PDF or Word document. Any reported restraining order needs its own copy.",
+      startFailed:"Unable to open an application. Try again to resume any existing draft, or contact the tribunal.",
+      saveCorrections:"Save corrections",
     },
     ar: {
       title: "طلبي", loading: "جارٍ تحميل الطلب…", back: "رجوع",
@@ -130,8 +144,29 @@
       fee: "رسوم الطلب ٢٥٠ دولارًا أمريكيًا وغير قابلة للاسترداد. حفظ المسودة لا يرسل الطلب ولا يُتم الدفع.",
       draftNotice: "يمكنك حفظ مسودة غير مكتملة. يتم التحقق من الإجابات والمستندات المطلوبة قبل الإرسال.",
       required: "مطلوب", reviewNotice: "راجع إجاباتك. الإرسال والدفع خطوتان منفصلتان.",
+      yes:"نعم", no:"لا", start:"بدء الطلب أو متابعته", starting:"جارٍ فتح الطلب…",
+      startHelp:"جهّز شهادات الزواج وحكم الطلاق المدني النهائي وصورتك الشخصية. يمكنك كتابة بيان الطلب أو رفعه بصيغة PDF أو Word. يلزم إرفاق نسخة مستقلة من كل أمر تقييدي يتم الإبلاغ عنه.",
+      startFailed:"تعذر فتح طلب. حاول مجددًا لمتابعة أي مسودة موجودة أو تواصل مع المجلس.",
+      saveCorrections:"حفظ التصحيحات",
     },
   };
+
+  function StartApplication({api,lang="en",onOpen}) {
+    const R=window.React,P=window.Plenix,h=R.createElement;
+    const t=key=>words[lang==="ar"?"ar":"en"][key];
+    const [busy,setBusy]=R.useState(false),[error,setError]=R.useState(null);
+    const start=async()=>{
+      if(busy)return;
+      setBusy(true);setError(null);
+      try { const id=await startDraft(api); onOpen(id); }
+      catch(e){setError(e?.status===401?"expired":"startFailed");}
+      finally{setBusy(false);}
+    };
+    return h(P.Panel,{title:t("start")},h(P.Stack,null,
+      h(P.Notice,null,t("fee")),h(P.Text,null,t("startHelp")),
+      error?h(P.Notice,{tone:"danger",role:"alert"},t(error)):null,
+      h(P.Button,{disabled:busy,onClick:start},t(busy?"starting":"start"))));
+  }
 
   function ApplicationEditor({ applicationId, api, lang = "en", onBack,
     onNavigationGuard }) {
@@ -204,6 +239,7 @@
         const display = value === undefined || value === "" || (Array.isArray(value) && !value.length)
           ? t("empty") : Array.isArray(value)
             ? value.map(v => options.find(o => o.value === v)?.label || v).join("، ")
+            : typeof value === "boolean" ? t(value ? "yes" : "no")
             : options.find(o => o.value === value)?.label || String(value);
         if (review || !state.editable) return h(P.Panel, {
           key: field.code, title: fieldLabel,
@@ -213,6 +249,13 @@
           value: value ?? "", disabled: state.saving || filingBusy || filingLocked || uploadBusy,
           onChange: event => session.change(field.code, event.target.value),
         };
+        if (field.type === "boolean") return h(P.RadioGroup, {key:field.code,
+          label:fieldLabel + (field.required ? ` (${t("required")})` : ""),
+          value:typeof value === "boolean" ? String(value) : "",
+          options:[{value:"true",label:t("yes"),disabled:shared.disabled},
+            {value:"false",label:t("no"),disabled:shared.disabled}],
+          onChange:next => session.change(field.code,next === "true"),
+        });
         if (field.type === "list") return h(P.Fieldset, { key: field.code,
           legend: fieldLabel + (field.required ? ` (${t("required")})` : "") },
           ...options.map(option => h(P.Checkbox, {
@@ -238,14 +281,14 @@
         review ? h(P.Notice, null, t("reviewNotice")) : null,
         ...fields.filter(field => isVisible(field, state.answers)).map(renderField),
         h(P.Inline, { wrap: true },
-          state.editable ? button(state.saving ? "saving" : "save", () => session.save(),
+          state.editable ? button(state.saving ? "saving" : record.status === "draft" ? "save" : "saveCorrections", () => session.save(),
             { disabled: state.saving || filingBusy || filingLocked || uploadBusy || !state.dirty }) : null,
           state.editable ? button(review ? "edit" : "review", () => setReview(!review),
             { variant: "secondary", disabled:state.saving || filingBusy || filingLocked || uploadBusy })
             : button("review", () => setReview(true), {variant:"secondary", disabled:review || filingBusy || filingLocked || uploadBusy}),
         ),
         window.CTMApplicantFiles ? h(window.CTMApplicantFiles.ApplicationFiles, {
-          key: "documents", applicationId, api, lang,
+          key: "documents", applicationId, answerVersion:state.version, api, lang,
           disabled: state.dirty || state.saving || filingBusy || filingLocked,
           onBusyChange: setUploadBusy, onChanged: documentsChanged,
           onReadyChange: documentsReadinessChanged,
@@ -268,6 +311,6 @@
       body));
   }
 
-  window.CTMApplicant = { ApplicationEditor, createDraftSession, definitionProblem,
+  window.CTMApplicant = { ApplicationEditor, StartApplication, startDraft, createDraftSession, definitionProblem,
     answerProblem, fieldChoices, isVisible };
 })();

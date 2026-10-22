@@ -1,4 +1,4 @@
-# Desktop-R first-slice evidence
+# Desktop-R applicant workflow evidence
 
 Validation performed 2026-10-21 against base `6928c484aeafd580434db794bcdcf4b95052bab2`.
 All records are synthetic. No operational data, external payment, provider sign-in,
@@ -6,9 +6,9 @@ deployment or production-readiness acceptance is represented by these checks.
 
 | Check | Result | Scope |
 | --- | --- | --- |
-| `node --test tests/frontend/applicant.test.cjs` | 11 passed | Bound bilingual definitions, partial save, opaque-field retention, optimistic version, error recovery, permission lock, duplicate-save guard, condition predicate, malformed-data rejection |
-| `uv run --group browser python scripts/browser_applicant.py` | 7 scenario groups passed; no page errors | Real pinned Plenix 0.58.0 CDN, synthetic API contract; escaped review, save, language switch, unsaved navigation/reload; EN/AR at 1280/390px: no `[style]` or horizontal overflow |
-| `uv run --group browser python scripts/browser_applicant_shell.py` | 5 scenario groups passed; no page errors | Proposed shell patch applied only to temporary copies; actual shell helper; sidebar cancel/discard, back, successful/failed preference switch, 403/404 write lock |
+| `node --test tests/frontend/*.test.cjs` | 26 passed | Bound definitions, incomplete save, opaque-field retention, optimistic versions, errors/permission lock, boolean false/unanswered, conditional retention, start/reuse, filing eligibility, immutable signature/idempotency retry, private download paths, context replacement, size gates, malformed current-file projection |
+| `uv run --group browser python scripts/browser_applicant.py` | 14 scenario groups passed; no page errors | Real Plenix 0.58.0 CDN, synthetic API; escaped review, save, language/RTL, unsaved guards, declaration/fee/signature desktop/mobile layout, waived filing, read-only returned resubmission, unsafe checkout rejection, uncertain upload/readiness, boolean conditional save, automatic contextual checklist refresh |
+| `uv run --group browser python scripts/browser_applicant_shell.py` | 8 scenario groups passed; no page errors | Proposed shell patch applied only to temporary copies; actual helper, sidebar/back, preference success/failure, 403/404 lock, multipart boundary/context/replacement, pending-scan links, Arabic layout, start/reuse/eligibility error |
 | `uv run pytest tests/test_workflows.py tests/test_input_validation.py tests/test_row_security.py tests/test_shell.py -q` | 15 passed; 37 skipped | SQLite local regression; PostgreSQL-only checks skipped, not passed |
 | `git apply --check docs/implementation/applicant/shell-integration.patch` | Passed | Clean base shared shell; governance must recheck when integrating |
 | `git diff --check` | Passed | Whitespace validation |
@@ -18,6 +18,7 @@ Browser screenshots and raw result JSON are generated under ignored
 screenshots were inspected. Controls use documented Plenix components and locale
 direction. No temporary Arabic CSS or unapproved typography tokens were invented.
 Institutional Arabic typography acceptance remains separate from these layout checks.
+Both desktop/mobile EN/AR runs assert no runtime `[style]` or horizontal overflow.
 
 Independent code review identified that the existing shell API helper discards
 403/404 status. The proposed integration patch preserves it, and the isolated shell
@@ -28,14 +29,27 @@ through the shell's global error view. The patch uses a separate, non-unmounting
 preference error notice. Its browser regression failed before the fix and passes
 with local answers retained after the synthetic 500 response.
 
+Follow-up reviews caught and corrected these workflow interactions:
+
+- Filing review must remain available when answer-edit permission is false.
+- An uncertain upload invalidates document review and blocks filing until the
+  authoritative list is refreshed, required originals are safe and review is explicit.
+- Document refresh during a frozen submission retry must be disabled so it cannot
+  invalidate review and strand the original idempotency key.
+- A saved answer-version change must automatically refresh contextual requirements.
+
+Each has browser regression coverage. Checkout and submission retries retain their
+original signature/version; returned resubmission sends no new attestation/payment.
+
 ## Open dependencies
 
 - VM-FRM: bound questionnaire projection, authoritative `can_edit`, own draft-file
   listing, returned instructions/action eligibility, submission/checklist projection.
 - Governance/content: approved published bilingual applicant form definition,
   declarations and repeat-field contracts; apply shared shell hooks serially.
-- Later acceptance: real-API applicant isolation and PostgreSQL lifecycle checks,
-  uploads/scan handling, declaration/payment/submission/returned application flow.
+- Later acceptance: connect implemented frontend upload/scan/declaration/payment/
+  submission/returned controls to agreed real projections; prove real-API applicant
+  isolation, PostgreSQL lifecycle/races, provider payment and required-file safety.
 
 The full applicant workflow is not complete. PR #5 remains draft until these
 dependencies and subsequent slices are implemented and reviewed.

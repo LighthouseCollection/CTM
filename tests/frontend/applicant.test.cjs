@@ -138,3 +138,24 @@ test('invalid optimistic version blocks editing instead of sending a blind save'
     assert.equal(A.createDraftSession(app, async () => {}).state.editable, false);
   }
 });
+
+test('published boolean questions retain unanswered and explicit false states', async () => {
+  const app=fixture();
+  app.questionnaire.definition.fields.push({code:'has_order',type:'boolean',required:true,
+    label_en:'Has order?',label_ar:'هل يوجد أمر؟'});
+  assert.equal(A.definitionProblem(app),null);
+  let saved;
+  const draft=A.createDraftSession(app,async(url,options)=>{saved=JSON.parse(options.body);return{version:4};});
+  assert.equal(draft.state.answers.has_order,undefined);
+  draft.change('has_order',false); await draft.save();
+  assert.equal(saved.answers.has_order,false);
+});
+
+test('draft creation delegates eligibility and reuse to server without posting local case claims', async () => {
+  let payload;
+  const result=await A.startDraft(async(url,options)=>{
+    assert.equal(url,'/api/applications/'); payload=JSON.parse(options.body); return{id:'reused-draft'};
+  });
+  assert.deepEqual(payload,{kind:'petition'});
+  assert.equal(result,'reused-draft');
+});

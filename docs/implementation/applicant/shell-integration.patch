@@ -124,7 +124,17 @@
        if (page === "notifications")
          return h(NotificationInbox, {
            key: revision,
-@@ -1556,7 +1581,10 @@
+@@ -1513,6 +1538,9 @@
+           P.Stack,
+           null,
+           heading(t(page)),
++          !council && window.CTMApplicant ? h(window.CTMApplicant.StartApplication, {
++            api, lang, onOpen: (id) => go("application", id),
++          }) : null,
+           ...data.items.map(applicationCard),
+         );
+       if (page === "home" && !council) {
+@@ -1556,7 +1584,10 @@
      return h(
        P.AppShell,
        { header, sideNav: nav, page: "workspace", strings: { skip: t("skip") } },

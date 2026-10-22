@@ -86,7 +86,11 @@ try:
 
         def route_api(route):
             if route.request.url.endswith("/files/"):
-                route.fulfill(json=documents)
+                projection=documents
+                if app["answers"].get("has_order") is True:
+                    projection={**documents,"requirements":[*documents["requirements"],{
+                        "category":"RO","context":"order-b","label_en":"Second order copy","label_ar":"نسخة الأمر الثاني","required":True}]}
+                route.fulfill(json=projection)
             elif route.request.url.endswith("/submit/"):
                 action_requests.append(route.request.post_data_json)
                 if fail_submit:
@@ -179,6 +183,17 @@ try:
         page.get_by_role("button", name="Review answers", exact=True).click()
         page.get_by_label("I have read and accept this declaration.", exact=True).check()
         page.get_by_label("Your full name", exact=False).fill("Synthetic Applicant")
+        for width in (1280,390):
+            page.set_viewport_size({"width":width,"height":1000})
+            for lang in ("en","ar"):
+                if page.locator("html").get_attribute("lang") != lang:
+                    page.get_by_role("button", name="العربية" if lang=="ar" else "English", exact=True).click()
+                expect(page.get_by_label("اسمك الكامل" if lang=="ar" else "Your full name",exact=False)).to_have_value("Synthetic Applicant")
+                assert page.locator("[style]").count() == 0
+                assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+                page.screenshot(path=str(OUT/f"filing-{lang}-{width}.png"),full_page=True,caret="initial")
+        page.get_by_role("button", name="English", exact=True).click()
+        checks.append("Declaration/signature/fee controls retain consent in EN/AR at desktop/mobile without styles/overflow")
         fail_submit = True
         page.get_by_role("button", name="Submit application", exact=True).click()
         expect(page.get_by_text("Submission was not confirmed.", exact=False)).to_be_visible()
@@ -244,6 +259,33 @@ try:
         page.get_by_label("Your full name", exact=False).fill("Synthetic Applicant")
         expect(page.get_by_role("button", name="Submit application", exact=True)).to_be_enabled()
         checks.append("Uncertain replacement blocks filing until refreshed safe documents and explicit review/signature")
+        app = fixture()
+        app["questionnaire"]["definition"]["fields"].extend([
+            {"code":"has_order","type":"boolean","required":True,"label_en":"Has order?","label_ar":"هل يوجد أمر؟"},
+            {"code":"order_details","type":"text","label_en":"Order details","label_ar":"تفاصيل الأمر",
+             "when":{"field":"has_order","equals":True}}])
+        fail_save = False
+        page.reload(wait_until="networkidle")
+        expect(page.get_by_role("radio", name="No", exact=True)).not_to_be_checked()
+        expect(page.get_by_role("radio", name="Yes", exact=True)).not_to_be_checked()
+        assert page.get_by_label("Order details", exact=True).count() == 0
+        page.get_by_role("radio", name="Yes", exact=True).check()
+        page.get_by_label("Order details", exact=True).fill("Retained contextual detail")
+        page.get_by_role("radio", name="No", exact=True).check()
+        assert page.get_by_label("Order details", exact=True).count() == 0
+        page.get_by_role("button", name="Save draft", exact=True).click()
+        expect(page.get_by_text("Your answers have been saved.", exact=True)).to_be_visible()
+        assert writes[-1]["answers"]["has_order"] is False
+        assert writes[-1]["answers"]["order_details"] == "Retained contextual detail"
+        page.get_by_role("button", name="العربية", exact=True).click()
+        expect(page.get_by_role("radio", name="لا", exact=True)).to_be_checked()
+        checks.append("Boolean unanswered/false values and conditional hidden answers survive save and Arabic switch")
+        page.get_by_role("button", name="English", exact=True).click()
+        page.get_by_role("radio", name="Yes", exact=True).check()
+        page.get_by_role("button", name="Save draft", exact=True).click()
+        expect(page.get_by_text("Your answers have been saved.", exact=True)).to_be_visible()
+        expect(page.get_by_role("region", name="Second order copy", exact=True)).to_be_visible()
+        checks.append("Acknowledged answer save automatically refreshes newly required document contexts")
         assert not errors, errors
         browser.close()
 finally:
