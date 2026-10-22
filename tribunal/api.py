@@ -1574,7 +1574,7 @@ def reports(request, case_id):
                     "author_id": str(report.author_id) if report.author_id else None,
                     "author": f"{report.author.first_name} {report.author.last_name}".strip() if report.author else None,
                     "submitted_at": report.created_at.isoformat(), "method": report.method,
-                    "can_revise": bool(report.method != "paper" and report.author_id == request.user.pk and report.author
+                    "can_revise": bool(report.method not in {"paper", "recording"} and report.author_id == request.user.pk and report.author
                         and report.author.role != "applicant" and report.request.proceeding.status == "open"
                         and report.request.case.status == "open" and (request.user.role in {"admin", "secretary"}
                             or report.request.case.assigned_member_id == request.user.pk))}

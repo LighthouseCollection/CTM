@@ -338,8 +338,8 @@ def revise_report(actor, report_id, answers, observations="", *, expected_versio
         .get(pk=report_id)
     )
     writer(actor, report.request.case)
-    if report.method == "paper":
-        raise PermissionDenied("The paper original is retained; use a separate follow-up request.")
+    if report.method in {"paper", "recording"}:
+        raise PermissionDenied("The original is retained; use a separate follow-up request.")
     if report.author_id != actor.pk or report.author.role == "applicant":
         raise PermissionDenied(
             "Only the original authorized council author can revise this report."
@@ -603,7 +603,7 @@ def external_status_receipt(request_id, token):
         if (source.kind != 'external_priest' or source.proceeding.case_id != source.case_id or not source.expires_at
                 or not source.token_hash or not constant_time_compare(source.token_hash, hashlib.sha256(token.encode()).hexdigest())):
             raise PermissionDenied("Invalid report capability.")
-        report = Report.objects.filter(Q(method='external', author__isnull=True) | Q(method='paper'), request=source).first()
+        report = Report.objects.filter(Q(method='external', author__isnull=True) | Q(method__in=['paper','recording']), request=source).first()
         expired = timezone.now() >= source.expires_at
         receipt = None
         if expired:

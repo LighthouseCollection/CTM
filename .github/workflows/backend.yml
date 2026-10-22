@@ -22,6 +22,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: '0.8.22'
+      - name: Install local PDF renderer libraries and Arabic-capable fonts
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core poppler-utils
       - run: uv sync --frozen --python 3.12
       - uses: actions/setup-node@v4
         with:

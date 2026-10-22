@@ -8,14 +8,21 @@ asgiref==3.12.1
     #   django-allauth
 billiard==4.3.1
     # via celery
+brotli==1.2.0 ; platform_python_implementation == 'CPython'
+    # via fonttools
+brotlicffi==1.2.0.2 ; platform_python_implementation != 'CPython'
+    # via fonttools
 celery==5.6.3
     # via
     #   ctm
     #   django-celery-beat
 certifi==2026.10.19
     # via requests
-cffi==2.1.1 ; platform_python_implementation != 'PyPy'
-    # via cryptography
+cffi==2.1.1
+    # via
+    #   brotlicffi
+    #   cryptography
+    #   weasyprint
 charset-normalizer==3.5.2
     # via requests
 click==8.5.0
@@ -34,6 +41,8 @@ cron-descriptor==1.4.5
     # via django-celery-beat
 cryptography==50.0.2
     # via pyjwt
+cssselect2==0.10.1
+    # via weasyprint
 dj-database-url==3.1.2
     # via ctm
 django==5.2.18
@@ -49,6 +58,8 @@ django-celery-beat==2.9.0
     # via ctm
 django-timezone-field==7.2.2
     # via django-celery-beat
+fonttools==4.67.0
+    # via weasyprint
 gunicorn==23.0.0
     # via ctm
 idna==3.20
@@ -61,16 +72,22 @@ packaging==26.3
     # via
     #   gunicorn
     #   kombu
+pillow==13.0.0
+    # via weasyprint
 prompt-toolkit==3.0.53
     # via click-repl
 psycopg==3.3.6
     # via ctm
 psycopg-binary==3.3.6 ; implementation_name != 'pypy'
     # via psycopg
-pycparser==3.11 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
+pycparser==3.11 ; implementation_name != 'PyPy'
     # via cffi
+pydyf==0.13.0
+    # via weasyprint
 pyjwt==2.15.1
     # via django-allauth
+pyphen==0.18.1
+    # via weasyprint
 python-crontab==3.4.0
     # via django-celery-beat
 python-dateutil==2.9.0.post0
@@ -88,6 +105,12 @@ sqlparse==0.6.0
     # via django
 stripe==14.4.1
     # via ctm
+tinycss2==1.5.1
+    # via
+    #   cssselect2
+    #   weasyprint
+tinyhtml5==2.1.0
+    # via weasyprint
 typing-extensions==4.16.0
     # via
     #   click-repl
@@ -111,5 +134,14 @@ vine==5.1.0
     #   kombu
 wcwidth==0.9.3
     # via prompt-toolkit
+weasyprint==70.0
+    # via ctm
+webencodings==0.6.1
+    # via
+    #   cssselect2
+    #   tinycss2
+    #   tinyhtml5
 whitenoise==6.12.0
     # via ctm
+zopfli==0.4.3
+    # via fonttools

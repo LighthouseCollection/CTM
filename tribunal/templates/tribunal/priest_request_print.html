@@ -7,7 +7,7 @@
   <title>{{ title }}</title>
   <style>
     @page { size: A4; margin: 20mm; }
-    body { font-family: sans-serif; max-width: 170mm; margin: 20mm auto; color: #000; background: #fff; }
+    body { font-family: "DejaVu Sans", sans-serif; max-width: 170mm; margin: 20mm auto; color: #000; background: #fff; }
     h1, p { overflow-wrap: anywhere; }
     .instructions { white-space: pre-wrap; }
     .identifier { font-size: 9pt; }
@@ -16,11 +16,11 @@
   </style>
 </head>
 <body>
-  <h1 dir="auto">{{ title }}</h1>
+  <h1 dir="{{ title_direction }}">{{ title }}</h1>
   <p class="identifier"><bdi>{{ request_id }}</bdi></p>
-  <p dir="auto">{{ subject_name }}</p>
-  {% if priest_name %}<p dir="auto">{{ priest_name }}</p>{% endif %}
-  {% if instructions %}<p class="instructions" dir="auto">{{ instructions }}</p>{% endif %}
+  <p dir="{{ subject_name_direction }}">{{ subject_name }}</p>
+  {% if priest_name %}<p dir="{{ priest_name_direction }}">{{ priest_name }}</p>{% endif %}
+  {% if instructions %}<p class="instructions" dir="{{ instructions_direction }}">{{ instructions }}</p>{% endif %}
   <div aria-hidden="true">{% for line in lines %}<div class="line"></div>{% endfor %}</div>
 </body>
 </html>

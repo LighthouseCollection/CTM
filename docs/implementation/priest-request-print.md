@@ -1,3 +1,5 @@
+Direct-download successor: GET /api/requests/{id}/print.pdf now returns an actual PDF; see priest-request-pdf.md. This document describes the separate HTML transport below.
+
 # External-priest request print transport
 
 `GET /api/requests/{request_id}/print/` returns a private HTML document suitable
@@ -12,7 +14,7 @@ notification, completion or audit side effect. Non-GET returns405.
 The projection contains only the saved title, instructions, subject name, priest
 name, language and request ID, followed by blank writing lines. Django escapes
 all content. Arabic requests use Arabic language/RTL; individual saved text
-blocks use automatic direction for mixed scripts. No substitute question,
+blocks use explicit first-strong direction for mixed scripts. No substitute question,
 testimony, signature or approved wording is generated. A draft request need not
 have an issued online link to be printed.
 
@@ -22,8 +24,7 @@ token hash, email address, saved response or completed report is rendered.
 Private-response middleware preserves an explicit stricter referrer policy.
 
 Council owns the link/button and browser print experience. The council user can
-save the resulting print output as PDF. A direct generated-PDF contract remains
-unfinished; do not label this endpoint `application/pdf` or promise automatic
+save the resulting print output as PDF. A direct generated-PDF contract is now implemented separately; do not label this endpoint `application/pdf` or promise automatic
 printing. This view does not upload or complete the request. The separate
 paper-completion API retains a validated uploaded original.
 

@@ -160,4 +160,5 @@ def test_policy_upgrade_and_reverse_preserve_strict_medical_consent(granted_role
             with granted_roles('ctm_app',people['admin']):
                 assert not m.FileVersion.objects.filter(pk=file.pk).exists()
     finally:
-        MigrationExecutor(connection).migrate([('tribunal','0051_runtime_settings_consumers')])
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes('tribunal'))
