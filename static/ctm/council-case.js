@@ -2803,41 +2803,54 @@
     );
   }
 
-  function CaseSeparation({ api, lang, caseId }) {
+  function CouncilEditablePanel({ api, P, h, t, user, record, scope, title, icon, fields, values }) {
+    const R = window.React;
+    const [editing, setEditing] = R.useState(false);
+    const [form, setForm] = R.useState({});
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const proceeding = openProceeding(record);
+    const canWrite = writerFor(user, null, record) && proceeding?.status === "open";
+    const startEditing = () => { setForm(Object.fromEntries(fields.map(([key]) => [key, values[key] || ""]))); setFailure(null); setEditing(true); };
+    const save = async (event) => {
+      event.preventDefault();
+      setPending(true); setFailure(null);
+      try {
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`, {
+          method: "POST", body: JSON.stringify({ fact_code: `case_card.${scope}`, value: form }),
+        });
+        setEditing(false); window.location.reload();
+      } catch (error) { setFailure(base.serverMessage(error, t)); }
+      finally { setPending(false); }
+    };
+    return h(P.Panel, { title, icon }, h(P.Stack, { gap: "md" },
+      canWrite && !editing ? h(P.Inline, { justify: "end" }, h(P.Button, { size: "sm", onClick: startEditing }, "Edit")) : null,
+      editing ? h(P.Form, { onSubmit: save, label: title, noValidate: true },
+        h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+        h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
+      ) : h(P.PropertyList, { columns: 3 }, ...fields.map(([key, label]) => h(P.PropertyList.Item, { key, label }, values[key] || "—"))),
+    ));
+  }
+
+  function CaseSeparation({ api, lang, user, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`), [caseId]);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const separation = state.data.separation || {}, value = (item) => item || "—";
+    const record = state.data, separation = record.separation || {};
     const initiator = separation.initiated_by;
-    const initiatorValue = initiator?.party
-      ? h(P.DataPill, { gender: initiator.party.gender === "M" ? "male" : initiator.party.gender === "F" ? "female" : undefined, fill: true }, `${initiator.party.name} (${initiator.party.slot === "A" ? "Applicant" : "Spouse"})`)
-      : value(initiator?.value);
-    const section = (title, icon, items) => h(P.Panel, { title, icon }, h(P.PropertyList, { columns: 3 }, ...items));
-    const item = (label, content) => h(P.PropertyList.Item, { label }, value(content));
-    const civil = separation.civil_divorce || {}, reconciliation = separation.reconciliation || {};
+    const initiatorValue = initiator?.party ? `${initiator.party.name} (${initiator.party.slot === "A" ? "Applicant" : "Spouse"})` : initiator?.value;
+    const details = councilCardValues(record, "separation_details", { marital_status: separation.marital_status, separation_date: separation.separation_date, initiated_by: initiatorValue, reason: separation.reason });
+    const civil = councilCardValues(record, "civil_divorce", separation.civil_divorce || {});
+    const reconciliation = councilCardValues(record, "reconciliation", separation.reconciliation || {});
+    const order = councilCardValues(record, "restraining_order", separation.restraining_orders?.[0] || {});
     return h(P.Stack, { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("separation")),
-      section("Separation Details", "move", [
-        item("Current Marital Status", separation.marital_status),
-        item("Date of Separation", separation.separation_date),
-        item("Initiated By", initiatorValue),
-        item("Reason for Divorce", separation.reason),
-      ]),
-      section("Civil Divorce", "document", [
-        item("Civil Divorce Filed?", civil.filed), item("Date of Civil Divorce", civil.date), item("Name of Court", civil.court),
-        item("Court Street Address / Location", civil.location), item("Civil Case Number", civil.case_number), item("Civil Divorce Status", civil.status),
-      ]),
-      ...(separation.restraining_orders || []).map((order, index) => section(`Restraining Order${separation.restraining_orders.length > 1 ? ` ${index + 1}` : ""}`, "shield", [
-        item("Restraining Order Filed?", order.filed), item("Date of Restraining Order", order.date), item("Restraining Order Expiration Date", order.expiration_date),
-        item("Name Listed on Order", order.name_listed), item("Name of Court", order.court), item("Restraining Order Case Number", order.case_number), item("Restraining Order Status", order.status),
-      ])),
-      !separation.restraining_orders?.length ? section("Restraining Order", "shield", [item("Restraining Order Filed?", null)]) : null,
-      section("Reconciliation", "settings-users", [
-        item("Clergy Counseling / Reconciliation Attempted?", reconciliation.attempted),
-        item("Previously Applied for Ecclesiastical Marriage Permit?", reconciliation.previously_applied),
-        item("When Did You Previously Apply?", reconciliation.when), item("Where Did You Previously Apply?", reconciliation.where), item("Decision Outcome", reconciliation.outcome),
-      ]),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, scope: "separation_details", title: "Separation Details", icon: "move", values: details, fields: [["marital_status", "Current Marital Status"], ["separation_date", "Date of Separation", "date"], ["initiated_by", "Initiated By"], ["reason", "Reason for Divorce"]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, scope: "civil_divorce", title: "Civil Divorce", icon: "document", values: civil, fields: [["filed", "Civil Divorce Filed?"], ["date", "Date of Civil Divorce", "date"], ["court", "Name of Court"], ["location", "Court Street Address / Location"], ["case_number", "Civil Case Number"], ["status", "Civil Divorce Status"]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, scope: "restraining_order", title: "Restraining Order", icon: "shield", values: order, fields: [["filed", "Restraining Order Filed?"], ["date", "Date of Restraining Order", "date"], ["expiration_date", "Restraining Order Expiration Date", "date"], ["name_listed", "Name Listed on Order"], ["court", "Name of Court"], ["case_number", "Restraining Order Case Number"], ["status", "Restraining Order Status"]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, scope: "reconciliation", title: "Reconciliation", icon: "settings-users", values: reconciliation, fields: [["attempted", "Clergy Counseling / Reconciliation Attempted?"], ["previously_applied", "Previously Applied for Ecclesiastical Marriage Permit?"], ["when", "When Did You Previously Apply?"], ["where", "Where Did You Previously Apply?"], ["outcome", "Decision Outcome"]] }),
     );
   }
 
