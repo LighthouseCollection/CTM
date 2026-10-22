@@ -345,6 +345,8 @@ def create_recording(
     actor, file_id, report_id=None, appointment_id=None, notice_recorded=False
 ):
     staff(actor)
+    if type(notice_recorded) is not bool:
+        raise ValidationError("Recording notice must be an explicit boolean.")
     if bool(report_id) == bool(appointment_id):
         raise ValidationError(
             "Associate the whole recording with one report or testimony appointment."
@@ -386,7 +388,9 @@ def create_recording(
         if case.status != "open" or appointment.state == "cancelled":
             raise ValidationError("Testimony is not active.")
     writer(actor, case)
-    if file.attachment.case_id != case.pk:
+    if (file.attachment.case_id != case.pk
+            or (report and file.attachment.proceeding_id != report.request.proceeding_id)
+            or file.attachment.report_request_id or file.attachment.application_id):
         raise PermissionDenied("Recording belongs to another case.")
     existing = Recording.objects.filter(file=file).first()
     if existing:
@@ -427,6 +431,11 @@ def finalize_recording(actor, recording_id):
         raise ValidationError(
             "Closed case cannot accept new testimony recording finalization."
         )
+    if recording.appointment_id:
+        from tribunal.models import TestimonyAppointment
+        appointment = TestimonyAppointment.objects.select_for_update(of=("self",)).get(pk=recording.appointment_id)
+        if appointment.state == "cancelled" or appointment.agenda.case_id != case.pk:
+            raise ValidationError("Recording appointment is no longer active.")
     if not recording.notice_recorded or not safe_file(recording.file):
         raise ValidationError("Recording notice and technical validation required.")
     if recording.finalized_at:
@@ -448,14 +457,27 @@ def finalize_recording(actor, recording_id):
 @transaction.atomic
 def review_transcript(actor, revision_id):
     revision = TranscriptRevision.objects.select_related(
-        "recording__report__request__case"
+        "recording__report__request__case", "recording__file__attachment", "run"
     ).get(pk=revision_id)
+    staff(actor)
+    recording = Recording.objects.select_for_update(of=("self",)).get(pk=revision.recording_id)
+    if (not recording.finalized_at or revision.run.file_id != recording.file_id
+            or revision.run.purpose != "transcription" or revision.run.state != "completed"
+            or not safe_file(revision.recording.file)):
+        raise ValidationError("Only validated output for this finalized recording can be reviewed.")
     if revision.recording.report:
         case = revision.recording.report.request.case
         writer(actor, case)
+        if revision.recording.report.request.kind in ASSESSMENTS:
+            raise PermissionDenied("Assessment material cannot enter ordinary transcript review.")
     else:
         from tribunal.policy import administrator
 
         administrator(actor)
-    record = TranscriptReview.objects.create(revision=revision, actor=actor)
+    if TranscriptRevision.objects.filter(recording=recording, language=revision.language,
+            kind=revision.kind, number__gt=revision.number).exists():
+        raise ValidationError("A newer transcript version requires review.")
+    record, created = TranscriptReview.objects.get_or_create(revision=revision, actor=actor)
+    if created:
+        audit(actor, "transcript_reviewed", record, revision.recording.file.attachment.case)
     return record

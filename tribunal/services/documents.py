@@ -16,9 +16,11 @@ def extract_local(file_id):
     if not safe_file(file):
         raise ValidationError("Technical validation required first.")
     if (
-        file.attachment.visibility == "medical"
+        (file.attachment.visibility == "medical" or (file.attachment.report_request_id
+            and file.attachment.report_request.kind in {"medical", "psychological"}))
         and not MedicalRelease.objects.filter(
-            request_id=file.attachment.report_request_id, scope__council=True
+            request_id=file.attachment.report_request_id, subject_id=file.attachment.owner_id,
+            request__subject__account_id=file.attachment.owner_id, scope__council=True
         ).exists()
     ):
         raise ValidationError("Await signed medical disclosure before extraction.")

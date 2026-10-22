@@ -12,6 +12,7 @@ from tribunal.models import (
 )
 from tribunal.policy import case_for, writer
 from .common import audit, notify, notify_manager
+from .files import authorized_file
 
 
 def messages_for(actor, case_id):
@@ -60,16 +61,23 @@ def send_message(
     elif email_timing != "immediate":
         raise ValidationError("Select immediate or after council session.")
     links = []
+    if file_ids is not None and (not isinstance(file_ids, list) or len(set(map(str, file_ids))) != len(file_ids)):
+        raise ValidationError("Provide distinct document identifiers as a list.")
     for file_id in file_ids or []:
         file = FileVersion.objects.select_related("attachment").get(pk=file_id)
         if file.attachment.case_id != case.pk:
             raise ValidationError("Document belongs to another case.")
+        file = authorized_file(actor, file_id)
         if any(
             file.attachment.owner_id != party.account_id
             or file.attachment.visibility != "own"
             for party in parties
         ):
             raise PermissionDenied("Document link would disclose restricted material.")
+        if file.attachment.report_request_id:
+            raise PermissionDenied("Requested-report sources use their separate protected workflow.")
+        if file.attachment.versions.order_by("-number").first().pk != file.pk:
+            raise PermissionDenied("Use the current authorized document version.")
         links.append(str(file.pk))
     message = Message.objects.create(
         case=case,
@@ -112,7 +120,8 @@ def log_call(actor, case_id, party_id, occurred_at, outcome, notes=""):
 
     case = case_for(actor, case_id, write=True)
     party = Party.objects.get(pk=party_id, case=case)
-    if not outcome.strip() or not timezone.is_aware(occurred_at):
+    if (not isinstance(outcome, str) or not outcome.strip() or len(outcome) > 150
+            or not isinstance(notes, str) or len(notes) > 100000 or not timezone.is_aware(occurred_at)):
         raise ValidationError(
             "Call outcome and actual timestamp with timezone are required."
         )

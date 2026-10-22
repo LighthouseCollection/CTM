@@ -343,6 +343,8 @@ class CheckoutIntent(Root):
     payment_reference = models.CharField(max_length=250, blank=True, default="", db_index=True)
     state = models.CharField(max_length=25, default="pending")
     failure = models.CharField(max_length=250, blank=True)
+    checkout_url = models.TextField(blank=True, default="")
+    checkout_expires_at = models.DateTimeField(null=True)
 
 
 class CompletenessReview(Immutable):

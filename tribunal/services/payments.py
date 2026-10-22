@@ -7,6 +7,8 @@ from django.db.models import Q
 from django.utils import timezone
 import stripe
 from functools import wraps
+from datetime import datetime, timezone as datetime_timezone
+from urllib.parse import urlsplit
 from tribunal.models import (
     CheckoutIntent,
     FeeObligation,
@@ -27,6 +29,48 @@ from .applications import (
 from .common import audit, notify, lock_key
 from tribunal.validation import validate_answers, validate_attestation
 from tribunal.db.context import database_actor, database_settings
+
+
+def safe_checkout_url(value):
+    if not isinstance(value, str) or any(ord(c) < 33 for c in value):
+        return ""
+    try:
+        url = urlsplit(value)
+        return value if (url.scheme == "https" and url.hostname == "checkout.stripe.com"
+            and not url.username and not url.password and url.port in {None, 443}) else ""
+    except ValueError:
+        return ""
+
+
+def own_pending_checkout(app, actor):
+    result = {"can_resume_checkout": False, "pending_checkout": None}
+    fee = getattr(app, "fee", None)
+    if (app.owner_id != actor.pk or not actor.is_active or not actor.email_verified
+            or app.status != "draft" or app.submitted_at or app.duplicate_hold or not fee or fee.status != "due"):
+        return result
+    intents = list(app.checkoutintent_set.filter(state__in=["pending", "processing", "paid", "needs_review"]).select_related("revision__questionnaire"))
+    if len(intents) != 1:
+        return result
+    intent = intents[0]
+    definition = intent.revision.questionnaire
+    if (intent.state != "pending" or intent.revision.number != app.current_version
+            or not safe_checkout_url(intent.checkout_url) or not intent.provider_reference
+            or not intent.checkout_expires_at or intent.checkout_expires_at <= timezone.now()
+            or not definition or not definition.published or not definition.declaration_en.strip() or not definition.declaration_ar.strip()):
+        return result
+    try:
+        validate_attestation(intent.attestation)
+        files = required_documents(app, intent.revision.answers)
+    except (ValidationError, PermissionDenied):
+        return result
+    if intent.manifest != [{"id": str(file.pk), "sha256": file.sha256} for file in files]:
+        return result
+    result.update(can_resume_checkout=True, pending_checkout={"id": str(intent.pk),
+        "version": intent.revision.number, "checkout_url": intent.checkout_url,
+        "expires_at": intent.checkout_expires_at.isoformat(),
+        "attestation": {key: intent.attestation.get(key) for key in ["accepted", "name"]},
+        "declaration_en": definition.declaration_en, "declaration_ar": definition.declaration_ar})
+    return result
 
 
 def provider_event_context(command):
@@ -114,13 +158,19 @@ def create_checkout(actor, app_id, attestation, base_url, *, expected_version=No
         cancel_url=base_url + "/?payment=cancelled",
         idempotency_key=f"ctm-checkout:{intent.pk}",
     )
-    with database_settings({"ctm.checkout_created": str(intent.pk), "ctm.created_reference": session.id}), transaction.atomic():
+    with database_actor(actor), database_settings({"ctm.checkout_created": str(intent.pk), "ctm.created_reference": session.id}), transaction.atomic():
         current = CheckoutIntent.objects.select_for_update(of=("self",)).get(
             pk=intent.pk
         )
         current.provider_reference = session.id
-        current.save(update_fields=["provider_reference"])
-    return {"intent": str(intent.pk), "checkout_url": session.url}
+        current.checkout_url = safe_checkout_url(session.url)
+        expires = getattr(session, "expires_at", None)
+        current.checkout_expires_at = (datetime.fromtimestamp(expires, tz=datetime_timezone.utc)
+            if type(expires) in {int, float} and 0 < expires < 253402300799 else None)
+        current.save(update_fields=["provider_reference", "checkout_url", "checkout_expires_at"])
+    if not current.checkout_url:
+        raise ValidationError("Provider checkout URL is unavailable; no new payment should be created.")
+    return {"intent": str(intent.pk), "checkout_url": current.checkout_url}
 
 
 @provider_event_context

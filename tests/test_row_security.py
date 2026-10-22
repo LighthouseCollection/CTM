@@ -77,6 +77,8 @@ def runtime():
             "ctm_report_root_readable(jsonb)",
             "ctm_report_root_writable(jsonb)",
             "ctm_request_source_writable(text,jsonb)",
+            "ctm_call_readable()",
+            "ctm_call_writable(jsonb)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -675,7 +677,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0023_request_privacy")])
+        MigrationExecutor(connection).migrate([("tribunal", "0025_communication_and_checkout_guards")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -845,7 +847,7 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 49
+        assert report["checks"]["forced_rls_table_count"] == 50
         assert "tribunal_reportrequest" not in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
@@ -1603,3 +1605,74 @@ def test_external_request_read_save_submit_under_runtime_role(runtime, ready_app
         assert response.status_code == 201
         assert client.get(url, HTTP_AUTHORIZATION=f"Bearer {token}").status_code == 403
         assert not ReportRequest.objects.exists() and not Report.objects.exists()
+
+
+def test_call_record_runtime_scope_and_retained_provenance(runtime, ready_application, people):
+    from tribunal.models import CallRecord, Party
+    from tribunal.services.communications import log_call
+    from tribunal.services.decisions import close_case
+    from django.utils import timezone
+    from django.db import DatabaseError
+    app = ready_application
+    submit_application(app.owner, app.pk, "call-runtime", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    with runtime(people["admin"]):
+        record = log_call(people["admin"], app.case_id, app.party_id, timezone.now(), "Reached", "Synthetic private call")
+    with runtime(app.owner):
+        assert not CallRecord.objects.exists()
+    with runtime():
+        assert not CallRecord.objects.exists()
+    with runtime(people["member"]):
+        assert CallRecord.objects.get(pk=record.pk).actor_id == people["admin"].pk
+    for actor in [app.owner, people["member"]]:
+        with pytest.raises(DatabaseError), runtime(actor):
+            CallRecord.objects.create(case=app.case, party=app.party, actor=actor, occurred_at=timezone.now(), outcome="Forged")
+    with pytest.raises(DatabaseError), runtime(people["admin"]):
+        CallRecord.objects.create(case=app.case, party=app.party, actor=people["member"], occurred_at=timezone.now(), outcome="Wrong actor")
+    with runtime(people["admin"]):
+        assert CallRecord.objects.filter(pk=record.pk).update(notes="rewrite") == 0
+        assert CallRecord.objects.filter(pk=record.pk).delete()[0] == 0
+    close_case(people["admin"], app.case, "synthetic_close")
+    with runtime(people["secretary"]):
+        assert log_call(people["secretary"], app.case_id, app.party_id, timezone.now(), "Closed-case communication").pk
+
+
+def test_legacy_string_medical_consent_does_not_grant_council_content(runtime, ready_application, people):
+    from tests.test_own_requests import sent, consent
+    from tribunal.models import Report, ReportRevision, MedicalRelease
+    from tribunal.services.files import authorized_file
+    from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+    app = ready_application
+    submit_application(app.owner, app.pk, "strict-medical-scope", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    row = sent(app, people, "medical")
+    file = consent(app, row, category="REPORT")
+    release = MedicalRelease.objects.create(request=row, subject=app.owner, signature=file,
+        declaration=QuestionnaireVersion.objects.get(purpose="medical_release"), scope={"council": "true"})
+    report = Report.objects.create(request=row, author=app.owner)
+    revision = ReportRevision.objects.create(report=report, number=1, actor=app.owner, answers={"private": "Synthetic protected narrative"})
+    with runtime(people["admin"]):
+        assert not MedicalRelease.objects.filter(pk=release.pk).exists()
+        assert not ReportRevision.objects.filter(pk=revision.pk).exists()
+        assert not FileVersion.objects.filter(pk=file.pk).exists()
+        with pytest.raises((ObjectDoesNotExist, PermissionDenied)):
+            authorized_file(people["admin"], file.pk)
+    with runtime(app.owner):
+        assert MedicalRelease.objects.get(pk=release.pk).scope == {"council": "true"}
+        assert ReportRevision.objects.filter(pk=revision.pk).exists()
+
+
+def test_provider_checkout_resume_binding_under_real_runtime_role(runtime, unpaid_application, settings):
+    from tests.test_backend_followups import provider_checkout
+    from tribunal.services.payments import own_pending_checkout
+    from tribunal.models import CheckoutIntent
+    from django.db import DatabaseError
+    app = unpaid_application
+    with runtime(app.owner):
+        intent, _ = provider_checkout(app, settings)
+        assert own_pending_checkout(app, app.owner)["pending_checkout"]["id"] == str(intent.pk)
+    with pytest.raises(DatabaseError), runtime(app.owner):
+        CheckoutIntent.objects.filter(pk=intent.pk).update(checkout_url="https://checkout.stripe.com/c/other")
+    with pytest.raises(DatabaseError), runtime(app.owner):
+        CheckoutIntent.objects.create(application=app, revision=intent.revision,
+            checkout_url="https://checkout.stripe.com/c/forged")

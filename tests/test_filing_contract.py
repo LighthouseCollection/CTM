@@ -138,7 +138,7 @@ def test_current_checkout_freezes_revision_without_claiming_payment(client, unpa
     assert data["can_checkout"] and not data["can_submit"]
     with override_settings(STRIPE_SECRET_KEY="test-key"), patch(
         "stripe.checkout.Session.create",
-        return_value=SimpleNamespace(id="cs_unit_test", url="https://example.test/checkout"),
+        return_value=SimpleNamespace(id="cs_unit_test", url="https://checkout.stripe.com/c/synthetic"),
     ) as provider:
         response = post(client, app, "checkout", attestation=ATTESTATION, expected_version=1)
     assert response.status_code == 200

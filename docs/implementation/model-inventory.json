@@ -1077,6 +1077,20 @@
           "type": "CharField",
           "nullable": false,
           "primary_key": false
+        },
+        {
+          "name": "checkout_url",
+          "column": "checkout_url",
+          "type": "TextField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "checkout_expires_at",
+          "column": "checkout_expires_at",
+          "type": "DateTimeField",
+          "nullable": true,
+          "primary_key": false
         }
       ]
     },

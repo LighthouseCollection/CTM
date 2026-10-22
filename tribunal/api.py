@@ -112,6 +112,10 @@ def application_data(app, actor):
         else None,
     )
     if app.owner_id == actor.pk:
+        from tribunal.services.filing_actions import own_filing_actions
+        from tribunal.services.payments import own_pending_checkout
+        result.update(own_filing_actions(app, actor))
+        result.update(own_pending_checkout(app, actor))
         from tribunal.services.applications import (
             required_documents,
             validate_petition,
@@ -165,6 +169,7 @@ def application_data(app, actor):
             can_edit=editable,
             can_checkout=bool(
                 ready and not unresolved and not stale_checkout
+                and not m.CheckoutIntent.objects.filter(application=app, state="pending").exists()
                 and app.status == "draft" and fee and fee.status == "due"
             ),
             can_submit=bool(ready and satisfied and not returned and not unresolved),
@@ -339,7 +344,9 @@ def waiver(request, app_id):
 def withdraw(request, app_id):
     from tribunal.services.decisions import withdraw_application
 
-    return JsonResponse(encoded(withdraw_application(request.user, app_id)))
+    data = body(request)
+    concurrency = {"expected_version": filing_version(data)} if request.user.role == "applicant" or "expected_version" in data else {}
+    return JsonResponse(encoded(withdraw_application(request.user, app_id, **concurrency)))
 
 
 @endpoint(("POST",))
@@ -983,7 +990,8 @@ def complete_report_request(request, request_id):
 @endpoint()
 def reports(request, case_id):
     case = case_for(request.user, case_id)
-    qs = m.Report.objects.filter(request__case=case).select_related("request__subject")
+    qs = m.Report.objects.filter(request__case=case).select_related(
+        "request__subject", "request__proceeding", "request__case", "author")
     if request.user.role == "applicant":
         qs = qs.filter(
             request__subject__account=request.user, author=request.user
@@ -1016,6 +1024,14 @@ def reports(request, case_id):
                 observations=revision.observations
                 if revision and request.user.is_staff
                 else None,
+                **({"author_id": str(report.author_id) if report.author_id else None,
+                    "author": f"{report.author.first_name} {report.author.last_name}".strip() if report.author else None,
+                    "submitted_at": report.created_at.isoformat(), "method": report.method,
+                    "can_revise": bool(report.author_id == request.user.pk and report.author
+                        and report.author.role != "applicant" and report.request.proceeding.status == "open"
+                        and report.request.case.status == "open" and (request.user.role in {"admin", "secretary"}
+                            or report.request.case.assigned_member_id == request.user.pk))}
+                   if request.user.role != "applicant" else {}),
             )
         )
     return JsonResponse({"items": items})
@@ -1408,7 +1424,7 @@ def search(request):
 def delete_draft(request, app_id):
     from tribunal.services.retention import remove_draft
 
-    return JsonResponse(encoded(remove_draft(request.user, app_id)))
+    return JsonResponse(encoded(remove_draft(request.user, app_id, expected_version=filing_version(body(request)))))
 
 
 @endpoint(("POST",))
@@ -1483,6 +1499,7 @@ def calls(request, case_id):
                         recorded_at=x.created_at.isoformat(),
                         outcome=x.outcome,
                         notes=x.notes,
+                        actor_id=str(x.actor_id),
                     )
                     for x in m.CallRecord.objects.filter(case=case).order_by(
                         "-occurred_at"

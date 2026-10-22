@@ -1,5 +1,33 @@
 # VM-FRM backend progress
 
+## Next ten consecutive lifecycle and privacy batches
+
+1. Own draft-delete capability and locked expected-version enforcement.
+2. Own withdrawal capability and locked expected-version enforcement, retaining
+   existing participation and pending-filing rules.
+3. Persist original provider checkout URL/expiry with context/provenance guards
+   (migration0024 fields,0025 guards); no invented legacy backfill.
+4. Safe own frozen-checkout resume projection: one current pending candidate,
+   exact declaration/attestation/files, trusted URL/expiry, no new provider write.
+5. D19 council report authorship and original-author-only `can_revise` projection.
+6. Strict JSON boolean medical scope in PostgreSQL; exact-owner local extraction
+   and no own unsubmitted report narrative leakage through revision queries.
+7. Safe current contextual communication links, excluding request/consent sources.
+8. CallRecord forced RLS, actor/party provenance, retained history and validation;
+   closed-case communication preserved.
+9. Recording report/proceeding scope and source/finalization guards, literal notice
+   acceptance and cancelled-testimony finalization denial.
+10. Exact latest transcript version, matching completed processing output, safe
+    original and reviewer checks; retained idempotent review/audit.
+
+Contracts and limitations: [filing-actions-and-resume.md](filing-actions-and-resume.md).
+Full isolated PostgreSQL suite: **370 passed, 1 skipped**; no model drift;
+migration rollback/reapply through0025 and restricted-role permission checks pass.
+50 forced-RLS tables /63 domain models /151 approved target;80 routes.13 domain
+table policy reviews remain. D20/D21 recording read/retry/routes and unlimited
+streaming capture remain deferred dependencies; no transcription success claimed.
+No operational migrations/configuration/credentials, deployment or merge.
+
 ## Ten consecutive requested-report batches
 
 Completed consecutively for the user's ten-batch request. Contracts are in

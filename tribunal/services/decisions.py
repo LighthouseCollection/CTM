@@ -275,7 +275,7 @@ def release_decree(actor, decree_id, party_id, action="release"):
 
 
 @transaction.atomic
-def withdraw_application(actor, application_id):
+def withdraw_application(actor, application_id, *, expected_version=None):
     app = application_for(actor, application_id)
     app = (
         Application.objects.select_for_update(of=("self",))
@@ -284,6 +284,8 @@ def withdraw_application(actor, application_id):
     )
     if app.owner_id != actor.pk and actor.role != "admin":
         raise PermissionDenied("Only owner or admin can withdraw petition.")
+    from .applications import check_filing_version
+    check_filing_version(app, expected_version)
     if app.status not in {"submitted", "accepted", "returned"}:
         raise ValidationError("Filing is not eligible for withdrawal.")
     if app.kind == "appeal" or (app.origin == CLOSED_INTAKE and app.status == "submitted"):
