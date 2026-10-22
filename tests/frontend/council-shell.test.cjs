@@ -375,6 +375,8 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(app, /M12 3v17M5 7h14/);
   assert.match(app, /groups: collaborationGroups/);
   assert.match(app, /page === "notes" && council && councilModule\?\.CaseNotesWorkspace/);
+  assert.match(app, /onGoDecision: \(\) => go\(\"decision\"\)/);
+  assert.match(fs.readFileSync("static/ctm/council-decree.js", "utf8"), /decreeProtocolMessage/);
   assert.match(app, /page === "marriage" && council && councilModule\?\.CaseMarriage/);
 });
 

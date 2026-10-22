@@ -95,6 +95,9 @@
       decree: "Decree",
       adminOnly: "Only the administrator or secretary prepares, issues and releases the decree. You can follow its status here.",
       readMissing: "The decision record cannot be read from this server yet, so the decree cannot be prepared here.",
+      decreeProtocolTitle: "A decree follows a formal, documented decision.",
+      decreeProtocolMessage: "Record the decision, council votes, and presidential approval in Decision & Voting before preparing a decree.",
+      goDecisionVoting: "Go to Decision & Voting",
       noDecision: "No decision has been recorded yet.",
       notCurrent: "The decision shown is not the current version.",
       needsApproval: "The current decision version needs presidential approval before a decree can be prepared.",
@@ -212,6 +215,9 @@
       decree: "الشهادة",
       adminOnly: "يُعِدّ مسؤول المجلس أو السكرتير الشهادة ويُصدرها ويتيحها فقط. يمكنك متابعة حالتها هنا.",
       readMissing: "لا يمكن قراءة سجل القرار من هذا الخادم بعد، لذلك لا يمكن إعداد الشهادة هنا.",
+      decreeProtocolTitle: "تتبع الشهادة قرارًا رسميًا موثقًا.",
+      decreeProtocolMessage: "سجّل القرار وأصوات المجلس واعتماد الرئيس في صفحة القرار والتصويت قبل إعداد الشهادة.",
+      goDecisionVoting: "الانتقال إلى القرار والتصويت",
       noDecision: "لم يُسجَّل قرار بعد.",
       notCurrent: "القرار المعروض ليس الإصدار الحالي.",
       needsApproval: "يحتاج الإصدار الحالي من القرار إلى اعتماد الرئيس قبل إعداد الشهادة.",
@@ -690,7 +696,17 @@
     );
   }
 
-  function DecreeWorkspace({ api, lang, user, caseId }) {
+  function DecreeProtocolGuide({ lang, onGoDecision }) {
+    const P = window.Plenix, h = window.React.createElement, t = translator(lang);
+    return h(
+      P.Panel,
+      { icon: "doc-text", title: t("decree") },
+      h(P.Text, { as: "h2", variant: "heading" }, t("decreeProtocolTitle")),
+      h(P.Text, { as: "p", variant: "secondary" }, t("decreeProtocolMessage")),
+      h(P.Inline, null, h(P.Button, { variant: "primary", onClick: onGoDecision }, t("goDecisionVoting"))),
+    );
+  }
+  function DecreeWorkspace({ api, lang, user, caseId, onGoDecision }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -717,7 +733,7 @@
     const [local, setLocal] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
-    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    if (state.error) return h(DecreeProtocolGuide, { lang, onGoDecision });
     const { record, members, proceeding, versions } = state.data;
     const manage = base.canManage(user);
     const current = versions && versions.length ? [...versions].sort((a, b) => b.number - a.number)[0] : null;
@@ -729,6 +745,7 @@
       content = h(IssuedDecree, { api, lang, manage, decree, decision: current, record, onChange: setLocal });
     else if (record.status === "closed" && current && !eligibility)
       content = h(P.Notice, { tone: "info" }, t("unknownIssued"));
+    else if (eligibility === "noDecision") content = h(DecreeProtocolGuide, { lang, onGoDecision });
     else if (eligibility) content = h(P.EmptyState, { title: t(eligibility) });
     else if (!manage) content = h(P.Notice, { tone: "info" }, t("adminOnly"));
     else

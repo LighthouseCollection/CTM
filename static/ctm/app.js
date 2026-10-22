@@ -1731,6 +1731,7 @@
           lang,
           user,
           caseId: selection,
+          onGoDecision: () => go("decision"),
         });
       if (page === "decision" && council && councilModule?.DecisionWorkspace)
         return h(councilModule.DecisionWorkspace, {
