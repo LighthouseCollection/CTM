@@ -295,7 +295,7 @@ test("upcoming sessions expose create edit and save actions in a Plenix toolbar"
   const source = council.slice(council.indexOf("function SessionList"), council.indexOf("function AgendaItemCard"));
   assert.match(source, /h\(P\.Toolbar, \{ label: t\("tribunalSession"\) \}/);
   assert.match(source, /icon: "add"/);
-  assert.match(source, /icon: "edit"/);
+  assert.match(source, /icon: "pencil"/);
   assert.match(source, /icon: "save"/);
   assert.match(source, /form: "ctm-session-form"/);
   assert.doesNotMatch(source, /SessionFilters/);
