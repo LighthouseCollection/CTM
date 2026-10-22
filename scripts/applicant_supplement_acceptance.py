@@ -1,4 +1,5 @@
 """Real own supplement read/write/recovery checks with isolated synthetic records."""
+import os
 import uuid
 from pathlib import Path
 from playwright.sync_api import expect
@@ -20,26 +21,54 @@ def run(page,context,staff,base,csrf,staff_csrf,app_id,source_file_id,fixture_db
         outsider.add_cookies([{"name":session_cookie_name,"value":outsider_cookie,"url":base}])
         outsider.request.get(base+"/api/session/")
         other_csrf=next(cookie["value"] for cookie in outsider.cookies() if cookie["name"]=="csrftoken")
-        assert outsider.request.get(f"{base}/api/applications/{app_id}/").status==403
-        response=outsider.request.post(url,data={"text":"Foreign addition","file_ids":[],"expected_version":row["version"],"idempotency_key":str(uuid.uuid4())},headers={"X-CSRFToken":other_csrf})
-        assert response.status==403,response.text()
+        foreign_payload={"text":"Foreign addition","file_ids":[],"expected_version":row["version"],"idempotency_key":str(uuid.uuid4())}
+        foreign_detail=outsider.request.get(f"{base}/api/applications/{app_id}/")
+        foreign_addition=outsider.request.post(url,data=foreign_payload,headers={"X-CSRFToken":other_csrf})
+        if os.environ.get("CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT")=="hidden404":
+            absent_id=uuid.uuid4()
+            absent_detail=outsider.request.get(f"{base}/api/applications/{absent_id}/")
+            absent_addition=outsider.request.post(f"{base}/api/appeals/{absent_id}/additions/",data=foreign_payload,headers={"X-CSRFToken":other_csrf})
+            assert foreign_detail.status==absent_detail.status==404,(foreign_detail.status,absent_detail.status)
+            assert foreign_detail.json()==absent_detail.json(),(foreign_detail.text(),absent_detail.text())
+            assert foreign_addition.status==absent_addition.status==404,(foreign_addition.status,absent_addition.status)
+            assert foreign_addition.json()==absent_addition.json(),(foreign_addition.text(),absent_addition.text())
+        else:
+            assert foreign_detail.status==403,foreign_detail.text()
+            assert foreign_addition.status==403,foreign_addition.text()
     finally:outsider.close()
+    after_foreign=detail().json()
+    assert after_foreign["version"]==row["version"] and after_foreign["answers"]==row["answers"] and after_foreign["supplements"]==[]
+    assert fixture_db(lambda:m.AppealSupplement.objects.filter(application_id=app_id).count())==0
     checks.append("A distinct other applicant cannot read another applicant's supplement history or author additions")
     version=row["version"]
     baseline={"text":"Version-bound supplement","file_ids":[],"expected_version":version,"idempotency_key":str(uuid.uuid4())}
     for payload in [{k:v for k,v in baseline.items() if k!="idempotency_key"},{**baseline,"expected_version":version-1},
         {**baseline,"file_ids":"not-a-list"},{**baseline,"file_ids":[evidence["id"],evidence["id"]]}]:
         response=post(payload);assert response.status==422,response.text()
-    assert post({**baseline,"file_ids":[source_file_id]}).status==403
+    def source_snapshot():
+        from tribunal.services.files import private_path
+        source=m.FileVersion.objects.select_related("attachment").get(pk=source_file_id)
+        return {"attachment_id":str(source.attachment_id),"application_id":str(source.attachment.application_id),
+            "owner_id":str(source.attachment.owner_id),"number":source.number,"bytes":private_path(source.object_key).read_bytes()}
+    retained_source=fixture_db(source_snapshot)
+    cross_application=post({**baseline,"file_ids":[source_file_id]})
+    assert cross_application.status==403,cross_application.text()
     staff_denied=staff.request.post(url,data=baseline,headers={"X-CSRFToken":staff_csrf});assert staff_denied.status==403
     assert detail().json()["supplements"]==[]
+    assert fixture_db(source_snapshot)==retained_source
     checks.append("Actual supplement append rejects absent key, stale version, malformed/duplicate evidence, other-application file and staff authorship")
     replaced=evidence
     replacement=context.request.post(base+"/api/files/",multipart={"application_id":app_id,"category":evidence["category"],"attachment_id":evidence["attachment_id"],
         "file":{"name":"supplement-current.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.7 synthetic current supplement evidence"}},headers={"X-CSRFToken":csrf})
     assert replacement.status==201,replacement.text()
     current_id=replacement.json()["id"]
-    assert post({**baseline,"file_ids":[replaced["id"]]}).status==403
+    superseded=post({**baseline,"file_ids":[replaced["id"]]})
+    if os.environ.get("CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT")=="hidden404":
+        absent_file=post({**baseline,"file_ids":[str(uuid.uuid4())]})
+        assert superseded.status==absent_file.status==404,(superseded.status,absent_file.status)
+        assert superseded.json()==absent_file.json(),(superseded.text(),absent_file.text())
+    else:assert superseded.status==403,superseded.text()
+    assert detail().json()["supplements"]==[]
     fixture_db(lambda:m.FileTechnicalEvent.objects.create(file_id=current_id,task="scan",result="pending"))
     assert post({**baseline,"file_ids":[current_id]}).status==403
     pending_file=next(file for file in context.request.get(f"{base}/api/applications/{app_id}/files/").json()["items"] if file["id"]==current_id)

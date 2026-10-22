@@ -23,6 +23,7 @@ SOURCE = Path(__file__).resolve().parents[1]
 BACKEND_REF = os.environ.get("CTM_APPLICANT_BACKEND_REF", "origin/work/vm-frm-backend")
 INTEGRATED = os.environ.get("CTM_APPLICANT_INTEGRATED", "false") == "true"
 CHECK_RETURNED_PRIVACY = os.environ.get("CTM_APPLICANT_ACCEPTANCE", "returned_privacy") == "returned_privacy"
+SHARED_LOOPBACK = len(sys.argv) >= 2 and sys.argv[1] == "--shared-loopback"
 
 if len(sys.argv) == 1:
     backend_sha = subprocess.check_output(["git","rev-parse",BACKEND_REF],cwd=SOURCE,text=True).strip()
@@ -40,6 +41,32 @@ if len(sys.argv) == 1:
     result=subprocess.run([sys.executable,__file__,"--run",str(target)],cwd=target,env=environment)
     raise SystemExit(result.returncode)
 
+if len(sys.argv) != 3 or sys.argv[1] not in {"--run", "--shared-loopback"}:
+    raise RuntimeError("Use --run <isolated archive> or --shared-loopback <immutable release>.")
+
+shared_config = None
+image_evidence = {}
+if SHARED_LOOPBACK:
+    from applicant_shared_loopback import (
+        build_config,
+        inspect_image_evidence,
+        redact_runtime_environment,
+        safe_preflight_evidence,
+    )
+    shared_config = build_config(os.environ)
+    if Path(sys.argv[2]).resolve() != shared_config.source_dir:
+        raise RuntimeError("Shared-loopback argument must match the guarded immutable release.")
+    image_evidence = inspect_image_evidence(shared_config)
+    owner_database_url = shared_config.owner_url
+    app_database_url = shared_config.app_url
+    sanitized_environment = redact_runtime_environment(os.environ)
+    os.environ.clear()
+    os.environ.update(sanitized_environment)
+    os.environ["CTM_TEST_BACKEND_SHA"] = shared_config.expected_sha
+else:
+    owner_database_url = os.environ.get("CTM_APPLICANT_POSTGRES_OWNER_URL")
+    app_database_url = os.environ.get("CTM_APPLICANT_POSTGRES_APP_URL")
+
 ROOT=Path(sys.argv[2]).resolve()
 if Path.cwd().resolve()!=ROOT:
     raise RuntimeError("Run isolated acceptance from its archive directory to prevent mixed imports.")
@@ -47,15 +74,17 @@ sys.path.insert(0,str(ROOT))
 os.environ["DJANGO_SETTINGS_MODULE"]="ctm.settings_test"
 from django.conf import settings
 
-POSTGRES_OWNER=os.environ.get("CTM_APPLICANT_POSTGRES_OWNER_URL")
+POSTGRES_OWNER=owner_database_url
 if POSTGRES_OWNER:
     import dj_database_url
     settings.DATABASES={"default":dj_database_url.parse(POSTGRES_OWNER)}
 else:
     settings.DATABASES["default"]["NAME"]=str(ROOT/"isolated.sqlite3")
-settings.MEDIA_ROOT=ROOT/"test-media"
-settings.DEBUG=True
-settings.ALLOWED_HOSTS=["127.0.0.1","localhost","testserver"]
+ARTIFACT_ROOT=shared_config.acceptance_root if shared_config else ROOT
+OUTPUT_PATH=shared_config.output_path if shared_config else ROOT/"result.json"
+settings.MEDIA_ROOT=shared_config.media_dir if shared_config else ROOT/"test-media"
+settings.DEBUG=not SHARED_LOOPBACK
+settings.ALLOWED_HOSTS=["127.0.0.1"] if SHARED_LOOPBACK else ["127.0.0.1","localhost","testserver"]
 import django
 django.setup()
 import tribunal.models as isolated_models
@@ -67,11 +96,12 @@ from django.test import Client
 from tribunal.models import Account,QuestionnaireVersion
 
 call_command("migrate",verbosity=0,interactive=False)
-owner=Account.objects.create_user(email="applicant@example.test",email_verified=True,first_name="Synthetic",last_name="Applicant")
-outsider=Account.objects.create_user(email="outsider@example.test",email_verified=True)
-admin=Account.objects.create_user(email="admin@example.test",email_verified=True,role="admin")
-member=Account.objects.create_user(email="member@example.test",email_verified=True,role="member")
-president=Account.objects.create_user(email="president@example.test",email_verified=True,role="president")
+fixture_tag=(shared_config.run_id if shared_config else uuid.uuid4().hex).lower()
+owner=Account.objects.create_user(email=f"applicant-{fixture_tag}@example.invalid",email_verified=True,first_name="Synthetic",last_name="Applicant")
+outsider=Account.objects.create_user(email=f"outsider-{fixture_tag}@example.invalid",email_verified=True)
+admin=Account.objects.create_user(email=f"admin-{fixture_tag}@example.invalid",email_verified=True,role="admin")
+member=Account.objects.create_user(email=f"member-{fixture_tag}@example.invalid",email_verified=True,role="member")
+president=Account.objects.create_user(email=f"president-{fixture_tag}@example.invalid",email_verified=True,role="president")
 fields=[{"code":code,"type":kind,"required":True,"label_en":en,"label_ar":ar}
         for code,kind,en,ar in [
             ("first_name","text","First name","الاسم الأول"),
@@ -93,14 +123,18 @@ fields.append({"code":"restraining_orders","type":"list","label_en":"Restraining
     {"code":"number","type":"text","label_en":"Order case number","label_ar":"رقم قضية الأمر"},
     {"code":"status","type":"choice","label_en":"Order status","label_ar":"حالة الأمر","choices":["active"],
      "choice_labels":{"active":{"label_en":"Active","label_ar":"ساري"}}}]})
-QuestionnaireVersion.objects.create(purpose="petition",number=1,published=True,
+def next_questionnaire_number(purpose):
+    latest=QuestionnaireVersion.objects.filter(purpose=purpose).order_by("-number").values_list("number",flat=True).first()
+    return (latest or 0)+1
+
+QuestionnaireVersion.objects.create(purpose="petition",number=next_questionnaire_number("petition"),published=True,
     definition={"fields":fields,"required_document_categories":["CMC"]},
     declaration_en="Synthetic test declaration only",declaration_ar="إقرار تجريبي للاختبار فقط")
-QuestionnaireVersion.objects.create(purpose="appeal",number=1,published=True,
+QuestionnaireVersion.objects.create(purpose="appeal",number=next_questionnaire_number("appeal"),published=True,
     definition={"fields":[{"code":"new_information","type":"textarea","required":True,
         "label_en":"New information for consideration","label_ar":"معلومات جديدة للنظر فيها"}]},
     declaration_en="Synthetic appeal declaration only",declaration_ar="إقرار استئناف تجريبي للاختبار فقط")
-release_definition=QuestionnaireVersion.objects.create(purpose="medical_release",number=1,published=True,definition={},
+release_definition=QuestionnaireVersion.objects.create(purpose="medical_release",number=next_questionnaire_number("medical_release"),published=True,definition={},
     declaration_en="Synthetic bound professional disclosure only",declaration_ar="تفويض إفصاح مهني تجريبي مرتبط فقط")
 
 def session_cookie(account):
@@ -124,7 +158,7 @@ def runtime_application(environ,start_response):
         if connection.settings_dict["USER"]!="ctm_app":
             connection.close()
             # Change only this HTTP thread's wrapper, never the fixture/setup connection.
-            connection.settings_dict={**connection.settings_dict,**dj_database_url.parse(os.environ["CTM_APPLICANT_POSTGRES_APP_URL"])}
+            connection.settings_dict={**connection.settings_dict,**dj_database_url.parse(app_database_url)}
         if runtime_database["mode"]!="postgresql_runtime":
             with connection.cursor() as cursor:
                 cursor.execute("SELECT current_user,session_user,rolsuper,rolbypassrls,rolinherit FROM pg_roles WHERE rolname=current_user")
@@ -135,7 +169,7 @@ def runtime_application(environ,start_response):
                 total,forced,owned=cursor.fetchone();assert total==forced and owned==0
             runtime_database.update(mode="postgresql_runtime",current_user=user,session_user=session,superuser=superuser,bypass_rls=bypass,inherit=inherit,domain_tables=total,forced_rls_tables=forced,owner_memberships=owned)
     return application(environ,start_response)
-server=make_server("127.0.0.1",0,runtime_application,handler_class=Quiet)
+server=make_server(shared_config.bind_host if shared_config else "127.0.0.1",shared_config.bind_port if shared_config else 0,runtime_application,handler_class=Quiet)
 threading.Thread(target=server.serve_forever,daemon=True).start()
 BASE=f"http://127.0.0.1:{server.server_port}"
 from playwright.sync_api import sync_playwright,expect
@@ -212,9 +246,9 @@ try:
         checks.append("Real concurrent save rejects stale editor write and explicit reload preserves immutable prior answer history")
         if POSTGRES_OWNER:
             from applicant_postgres_acceptance import run as run_postgres_focus
-            run_postgres_focus(browser,BASE,settings,fixture_db,session_cookie,cookies["admin"],ROOT,runtime_database,errors)
+            run_postgres_focus(browser,BASE,settings,fixture_db,session_cookie,cookies["admin"],ARTIFACT_ROOT,runtime_database,errors)
         from applicant_history_notice_acceptance import history_checks
-        checks.extend(history_checks(browser,page,context,BASE,app_id,cookies,settings,ROOT))
+        checks.extend(history_checks(browser,page,context,BASE,app_id,cookies,settings,ARTIFACT_ROOT))
         for name in ("outsider","admin"):
             other=browser.new_context()
             other.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies[name],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
@@ -279,7 +313,12 @@ try:
         assert latest.attachment_id==original.attachment_id and latest.number==original.number+1
         assert private_path(original.object_key).read_bytes()==original_bytes
         assert private_path(latest.object_key).read_bytes()==replacement
-        assert context.request.get(f"{BASE}/api/files/{file_id}/").status==403
+        superseded_original=context.request.get(f"{BASE}/api/files/{file_id}/")
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            absent_original=context.request.get(f"{BASE}/api/files/{uuid.uuid4()}/")
+            assert superseded_original.status==absent_original.status==404,(superseded_original.status,absent_original.status)
+            assert superseded_original.json()==absent_original.json(),(superseded_original.text(),absent_original.text())
+        else:assert superseded_original.status==403,superseded_original.text()
         checks.append("Browser original correction retains original bytes/version and exposes only the current same-context original")
         # Synthetic technical events exercise projection/download gates, not a live scanner.
         fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=replacement_id,task="scan",result="pending"))
@@ -401,7 +440,8 @@ try:
             finally:settings.STRIPE_SECRET_KEY=original
         retained_intent=fixture_db(retained_checkout_fixture)
         retained=context.request.get(f"{BASE}/api/applications/{app_id}/")
-        original_checkout=retained.json()["pending_checkout"]
+        retained_payload=retained.json()
+        original_checkout=retained_payload["pending_checkout"]
         assert "no-store" in retained.headers["cache-control"] and retained.json()["can_resume_checkout"]
         assert not retained.json()["can_checkout"] and not retained.json()["can_delete_draft"]
         assert original_checkout["id"]==retained_intent and original_checkout["version"]==ready_version
@@ -415,7 +455,7 @@ try:
         expect(page.get_by_text(original_checkout["declaration_ar"],exact=True)).to_be_visible()
         expect(page.get_by_role("button",name="استئناف محاولة الدفع الآمنة القائمة",exact=True)).to_be_visible()
         assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
-        page.screenshot(path=str(ROOT/"ar-retained-checkout-390.png"),full_page=True,caret="initial")
+        page.screenshot(path=str(ARTIFACT_ROOT/"ar-retained-checkout-390.png"),full_page=True,caret="initial")
         page.get_by_role("button",name="English",exact=True).click();page.set_viewport_size({"width":1280,"height":1000})
         checkout_posts=[]
         page.on("request",lambda request:checkout_posts.append(request.url) if request.method=="POST" and "/checkout/" in request.url else None)
@@ -436,14 +476,62 @@ try:
             assert hidden_app.status==absent_app.status==404 and hidden_app.json()==absent_app.json()
         else:assert hidden_app.status==403
         probe.close()
-        for payment_state in ["processing","paid","needs_review"]:
-            fixture_db(lambda state=payment_state:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state=state))
-            page.get_by_role("button",name="Refresh application status",exact=True).click()
-            expect(page.get_by_text("An existing payment attempt must be resolved",exact=False)).to_be_visible()
-            expect(page.get_by_role("button",name="Resume existing secure checkout",exact=True)).to_have_count(0)
-            assert page.get_by_label("Your full name",exact=True).count()==0 and not checkout_posts
-        checks.append("Actual processing/paid/reconciliation candidates remove resume and fresh signature; foreign owner cannot read original checkout")
-        fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state="pending"))
+        if POSTGRES_OWNER:
+            # Finance states are monotonic in PostgreSQL. Exercise each terminal or
+            # in-flight projection on its own clone-only synthetic application
+            # instead of rewinding a successful payment candidate.
+            def finance_candidate_fixture():
+                import hashlib
+                from tribunal.models import Application,AnswerRevision,Attachment,FeeObligation,FileVersion,FileTechnicalEvent
+                from tribunal.services.applications import required_documents
+                from tribunal.services.files import private_path,write_private_original
+                source=Application.objects.select_related("questionnaire").get(pk=app_id)
+                actor=Account.objects.create_user(email=f"finance-{uuid.uuid4().hex}@example.invalid",email_verified=True)
+                candidate=Application.objects.create(owner=actor,kind="petition",status="draft",current_version=1,questionnaire=source.questionnaire)
+                FeeObligation.objects.create(application=candidate)
+                revision=AnswerRevision.objects.create(application=candidate,number=1,answers=retained_payload["answers"],actor=actor,questionnaire=source.questionnaire)
+                for source_file in required_documents(source,retained_payload["answers"]):
+                    payload=private_path(source_file.object_key).read_bytes()
+                    attachment=Attachment.objects.create(application=candidate,owner=actor,category=source_file.attachment.category,
+                        context=source_file.attachment.context,visibility="own")
+                    copied=FileVersion.objects.create(attachment=attachment,number=1,object_key=f"synthetic-finance/{uuid.uuid4().hex}",
+                        original_name=source_file.original_name,display_name=source_file.display_name,mime_type=source_file.mime_type,
+                        byte_count=len(payload),sha256=hashlib.sha256(payload).hexdigest(),actor=actor)
+                    FileTechnicalEvent.objects.create(file=copied,task="scan",result="clean")
+                    write_private_original(private_path(copied.object_key),payload)
+                return str(candidate.pk),str(revision.pk),actor
+            def finance_state_fixture(candidate_id,revision_id,state):
+                from tribunal.models import Application,AnswerRevision,CheckoutIntent
+                from tribunal.services.applications import required_documents
+                candidate=Application.objects.get(pk=candidate_id);revision=AnswerRevision.objects.get(pk=revision_id)
+                manifest=[{"id":str(file.pk),"sha256":file.sha256} for file in required_documents(candidate,revision.answers)]
+                intent=CheckoutIntent.objects.create(application=candidate,revision=revision,attestation={"accepted":True,"name":"Synthetic finance state"},manifest=manifest,
+                    provider_reference=f"cs_{state}_{uuid.uuid4().hex}",state=state)
+                return str(intent.pk)
+            for payment_state in ["processing","paid","needs_review"]:
+                candidate_id,candidate_revision,candidate_actor=fixture_db(finance_candidate_fixture)
+                candidate_context=browser.new_context()
+                try:
+                    candidate_cookie=fixture_db(lambda actor=candidate_actor:session_cookie(actor))
+                    candidate_context.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":candidate_cookie,"url":BASE}])
+                    ready_candidate=candidate_context.request.get(f"{BASE}/api/applications/{candidate_id}/").json()
+                    assert ready_candidate["can_checkout"] and not ready_candidate["can_resume_checkout"]
+                    candidate_intent=fixture_db(lambda state=payment_state:finance_state_fixture(candidate_id,candidate_revision,state))
+                    candidate_projection=candidate_context.request.get(f"{BASE}/api/applications/{candidate_id}/").json()
+                    assert not candidate_projection["can_resume_checkout"] and candidate_projection["pending_checkout"] is None
+                    assert not candidate_projection["can_checkout"]
+                    assert fixture_db(lambda intent=candidate_intent:isolated_models.CheckoutIntent.objects.get(pk=intent).state)==payment_state
+                finally:candidate_context.close()
+        else:
+            for payment_state in ["processing","paid","needs_review"]:
+                fixture_db(lambda state=payment_state:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state=state))
+                page.get_by_role("button",name="Refresh application status",exact=True).click()
+                expect(page.get_by_text("An existing payment attempt must be resolved",exact=False)).to_be_visible()
+                expect(page.get_by_role("button",name="Resume existing secure checkout",exact=True)).to_have_count(0)
+                assert page.get_by_label("Your full name",exact=True).count()==0 and not checkout_posts
+            fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state="pending"))
+        assert fixture_db(lambda:isolated_models.CheckoutIntent.objects.get(pk=retained_intent).state)=="pending"
+        checks.append("Actual processing/paid/reconciliation candidates remove checkout/resume capability from otherwise-ready filings while preserving exact immutable states; foreign owner cannot read original checkout")
         from unittest.mock import patch
         from django.utils import timezone
         future=timezone.now()+timezone.timedelta(hours=2)
@@ -452,7 +540,7 @@ try:
         assert expired_projection["pending_checkout"] is None and not expired_projection["can_resume_checkout"] and not expired_projection["can_checkout"]
         assert fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.get(pk=retained_intent).state)=="pending"
         checks.append("Authoritative provider-expiry read hides resume while preserving pending candidate and blocking fresh charge; elapsed time is not payment reconciliation")
-        changed_answers={**retained.json()["answers"],"statement":"Changed after original checkout"}
+        changed_answers={**retained_payload["answers"],"statement":"Changed after original checkout"}
         changed=context.request.post(f"{BASE}/api/applications/{app_id}/",data={"answers":changed_answers,"expected_version":ready_version},headers={"X-CSRFToken":csrf})
         assert changed.status==201,changed.text()
         changed_projection=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
@@ -476,7 +564,46 @@ try:
         assert financial.status==200 and financial.json()["verified_payment"] is False
         assert financial.json()["fee"]["status"]=="waived" and financial.json()["events"]==[]
         checks.append("Real owner payment history shows authorized waiver without fabricating provider success; outsider and staff draft reads denied")
-        page.get_by_role("button",name="Review answers",exact=True).click()
+        initial_review_trace={"before_refresh":{"status":ready["status"],"version":ready["version"],
+            "fee_status":ready["fee"]["status"],"can_submit":ready["can_submit"]},"responses":[]}
+        initial_detail_url=f"{BASE}/api/applications/{app_id}/";initial_files_url=f"{BASE}/api/applications/{app_id}/files/"
+        def record_initial_review(response):
+            if response.request.method=="GET" and response.url in {initial_detail_url,initial_files_url}:
+                initial_review_trace["responses"].append({"url":response.url,"status":response.status})
+        page.on("response",record_initial_review)
+        try:
+            with page.expect_response(lambda response:response.url==initial_detail_url and response.request.method=="GET") as initial_detail_received, \
+                    page.expect_response(lambda response:response.url==initial_files_url and response.request.method=="GET") as initial_files_received:
+                page.get_by_role("button",name="Refresh application status",exact=True).click()
+            refreshed_initial=initial_detail_received.value;refreshed_initial_files=initial_files_received.value
+            refreshed_initial_payload=refreshed_initial.json();refreshed_initial_files_payload=refreshed_initial_files.json()
+            initial_required={(row["category"],row.get("context") or "") for row in refreshed_initial_files_payload["requirements"] if row["required"]}
+            initial_clean={(row["category"],row.get("context") or "") for row in refreshed_initial_files_payload["items"] if row["scan_state"]=="clean"}
+            initial_review_trace["refreshed"]={"application_status":refreshed_initial.status,"files_status":refreshed_initial_files.status,
+                "status":refreshed_initial_payload.get("status"),"version":refreshed_initial_payload.get("version"),
+                "fee_status":(refreshed_initial_payload.get("fee") or {}).get("status"),"can_submit":refreshed_initial_payload.get("can_submit"),
+                "required_keys":sorted(initial_required),"clean_keys":sorted(initial_clean)}
+            assert refreshed_initial.status==refreshed_initial_files.status==200
+            assert refreshed_initial_payload["status"]=="draft" and refreshed_initial_payload["can_submit"] is True
+            assert initial_required<=initial_clean
+            initial_review=page.get_by_role("button",name="Review answers",exact=True)
+            expect(initial_review).to_be_enabled();initial_review.click()
+            expect(page.get_by_text("Review your answers. Submission and payment are separate steps.",exact=True)).to_be_visible()
+            expect(page.get_by_label("I have read and accept this declaration.",exact=True)).to_be_enabled()
+        except Exception:
+            initial_review_trace["failure_state"]={"server_application":context.request.get(initial_detail_url).json(),
+                "server_files":context.request.get(initial_files_url).json(),"url":page.url,
+                "buttons":page.get_by_role("button").all_text_contents(),
+                "review_notice":page.get_by_text("Review your answers. Submission and payment are separate steps.",exact=True).count(),
+                "declaration_count":page.get_by_label("I have read and accept this declaration.",exact=True).count(),
+                "declaration_enabled":page.get_by_label("I have read and accept this declaration.",exact=True).count()==1 and
+                    page.get_by_label("I have read and accept this declaration.",exact=True).is_enabled(),
+                "body":page.locator("body").inner_text(),"viewport":page.viewport_size}
+            (ARTIFACT_ROOT/"initial-review-readiness-failure.json").write_text(json.dumps(initial_review_trace,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+            (ARTIFACT_ROOT/"initial-review-readiness-failure.html").write_text(page.content(),encoding="utf-8")
+            page.screenshot(path=str(ARTIFACT_ROOT/"initial-review-readiness-failure.png"),full_page=True,caret="initial")
+            raise
+        finally:page.remove_listener("response",record_initial_review)
         page.get_by_label("I have read and accept this declaration.",exact=True).check()
         page.get_by_label("Your full name",exact=False).fill("Synthetic Applicant")
         with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{app_id}/submit/" and response.request.method=="POST") as received:
@@ -594,11 +721,65 @@ try:
                     "checks":privacy,"owner_checks":owner_checks,"pending_scan_checks":pending_scan_checks,
                     "remaining_surfaces":["live search integration","live email delivery","PostgreSQL RLS"],
                     "scope":"Isolated SQLite/browser API fixtures; no actual case data"}
-            (ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
             print(json.dumps(report,indent=2))
             assert all(privacy.values()) and all(owner_checks.values()),"Returned privacy acceptance failed; see returned-privacy-result.json"
             checks.append("Returned privacy isolates pending answers/originals/audit/alerts while owner retains corrections and council retains formal snapshot")
-        page.get_by_role("button",name="Review answers",exact=True).click()
+        ready_to_resubmit=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
+        assert ready_to_resubmit["status"]=="returned" and ready_to_resubmit["can_resubmit"]
+        ready_files=context.request.get(f"{BASE}/api/applications/{app_id}/files/").json()
+        required_keys={(row["category"],row.get("context") or "") for row in ready_files["requirements"] if row["required"]}
+        current_items=ready_files["items"]
+        current_safe_items=[item for item in current_items if item["scan_state"]=="clean"]
+        current_safe_keys={(item["category"],item.get("context") or "") for item in current_safe_items}
+        assert required_keys<=current_safe_keys and len(current_safe_items)==len(current_items)
+        assert {item["context"] for item in current_safe_items if item["category"]=="RO"}==set(contexts)
+        detail_url=f"{BASE}/api/applications/{app_id}/"
+        files_url=f"{BASE}/api/applications/{app_id}/files/"
+        refresh_responses=[]
+        def record_readiness_response(response):
+            if response.url in {detail_url,files_url} and response.request.method=="GET":
+                refresh_responses.append({"url":response.url,"status":response.status})
+        page.on("response",record_readiness_response)
+        readiness_trace={"before_refresh":{
+            "application":{"status":ready_to_resubmit["status"],"can_resubmit":ready_to_resubmit["can_resubmit"],"version":ready_to_resubmit["version"]},
+            "required_keys":sorted(required_keys),"current_safe_keys":sorted(current_safe_keys),"current_original_count":len(current_safe_items)}}
+        try:
+            with page.expect_response(lambda response:response.url==detail_url and response.request.method=="GET") as refreshed_detail_received, \
+                    page.expect_response(lambda response:response.url==files_url and response.request.method=="GET") as refreshed_files_received:
+                page.get_by_role("button",name="Refresh application status",exact=True).click()
+            refreshed_detail=refreshed_detail_received.value
+            refreshed_files=refreshed_files_received.value
+            refreshed_detail_payload=refreshed_detail.json()
+            refreshed_files_payload=refreshed_files.json()
+            readiness_trace["reload_responses"]={
+                "application":{"status_code":refreshed_detail.status,"status":refreshed_detail_payload.get("status"),
+                    "can_resubmit":refreshed_detail_payload.get("can_resubmit"),"version":refreshed_detail_payload.get("version")},
+                "files":{"status_code":refreshed_files.status,"item_count":len(refreshed_files_payload.get("items",[])),
+                    "requirement_count":len(refreshed_files_payload.get("requirements",[]))}}
+            assert refreshed_detail.status==200 and refreshed_detail_payload["status"]=="returned" and refreshed_detail_payload["can_resubmit"]
+            assert refreshed_files.status==200 and len(refreshed_files_payload["items"])==len(current_safe_items)
+            review_button=page.get_by_role("button",name="Review answers",exact=True)
+            expect(review_button).to_be_enabled()
+            expect(page.get_by_role("link",name="Download original",exact=True)).to_have_count(len(current_safe_items))
+            review_button.click()
+            expect(page.get_by_text("Review your answers. Submission and payment are separate steps.",exact=True)).to_be_visible()
+            expect(page.get_by_role("button",name="Resubmit corrections",exact=True)).to_be_enabled()
+        except Exception:
+            readiness_trace["observed_responses"]=refresh_responses
+            readiness_trace["failure_state"]={
+                "review_buttons":page.get_by_role("button",name="Review answers",exact=True).count(),
+                "edit_buttons":page.get_by_role("button",name="Continue editing",exact=True).count(),
+                "resubmit_buttons":page.get_by_role("button",name="Resubmit corrections",exact=True).count(),
+                "resubmit_enabled":page.get_by_role("button",name="Resubmit corrections",exact=True).count()==1 and
+                    page.get_by_role("button",name="Resubmit corrections",exact=True).is_enabled(),
+                "download_links":page.get_by_role("link",name="Download original",exact=True).count()}
+            (ARTIFACT_ROOT/"resubmit-readiness-failure.json").write_text(json.dumps(readiness_trace,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"resubmit-readiness-failure.html").write_text(page.content(),encoding="utf-8")
+            page.screenshot(path=str(ARTIFACT_ROOT/"resubmit-readiness-failure.png"),full_page=True)
+            raise
+        finally:
+            page.remove_listener("response",record_readiness_response)
         with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{app_id}/submit/" and response.request.method=="POST") as received:
             page.get_by_role("button",name="Resubmit corrections",exact=True).click()
         response=received.value
@@ -619,7 +800,7 @@ try:
                 "council_can_download_resubmitted_original":staff.request.get(f"{BASE}/api/files/{pending_file}/").status==200,
                 "earlier_submitted_original_retained":private_path(latest.object_key).read_bytes()==replacement,
             }
-            (ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
             assert all(report["post_resubmission_checks"].values()),"Formal resubmission visibility failed"
             checks.append("Formal resubmission publishes corrected answers/exact current original while retaining prior submitted bytes")
         assert context.request.get(f"{BASE}/api/applications/{app_id}/").json()["fee"]["status"]=="waived"
@@ -681,7 +862,18 @@ try:
         assert forbidden.status==422,forbidden.text()
         stranger.request.get(BASE+"/api/session/")
         stranger_csrf=next(cookie["value"] for cookie in stranger.cookies() if cookie["name"]=="csrftoken")
-        assert stranger.request.post(f"{BASE}/api/appointments/{invitation_id}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf}).status==403
+        def appointment_snapshot():
+            from tribunal.models import AppointmentResponse,TestimonyAppointment
+            return (TestimonyAppointment.objects.filter(pk=invitation_id).values("version","state").get(),
+                AppointmentResponse.objects.filter(appointment_id=invitation_id).count())
+        before_foreign_response=fixture_db(appointment_snapshot)
+        foreign_response=stranger.request.post(f"{BASE}/api/appointments/{invitation_id}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf})
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            missing_response=stranger.request.post(f"{BASE}/api/appointments/{uuid.uuid4()}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf})
+            assert foreign_response.status==missing_response.status==404,(foreign_response.status,missing_response.status)
+            assert foreign_response.json()==missing_response.json(),(foreign_response.text(),missing_response.text())
+        else:assert foreign_response.status==403,foreign_response.text()
+        assert fixture_db(appointment_snapshot)==before_foreign_response
         stranger.close()
         checks.append("Actual cancellation removes browser response actions; cancelled and outsider responses are denied by server")
         def own_requests_fixture():
@@ -697,7 +889,17 @@ try:
                         "en":"Own bound request question" if title=="Own sent intake" else "Unresolved bound question",
                         "ar":"سؤال خاص بالطلب"}] if kind=="intake" else [])
         fixture_db(own_requests_fixture)  # Synthetic sent snapshots; not institution wording/send acceptance.
-        own_requests=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"]
+        def own_request_items(stage):
+            response=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/")
+            try:payload=response.json()
+            except Exception:payload={"non_json_body":response.text()[:5000]}
+            if response.status!=200 or not isinstance(payload,dict) or not isinstance(payload.get("items"),list):
+                diagnostic={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"stage":stage,
+                    "status":response.status,"payload":payload,"runtime_database":runtime_database}
+                (ARTIFACT_ROOT/f"request-list-{stage}-failure.json").write_text(json.dumps(diagnostic,indent=2),encoding="utf-8")
+                raise AssertionError(f"Own request list failed at {stage}: HTTP {response.status} {json.dumps(payload)[:1000]}")
+            return payload["items"]
+        own_requests=own_request_items("initial")
         assert {row["title"] for row in own_requests}=={"Own sent intake","Own unresolved intake","Own assessment"}
         assert all(isinstance(row["can_respond"],bool) and len(row["request_version"])==64 for row in own_requests)
         intake_request=next(row for row in own_requests if row["title"]=="Own sent intake")
@@ -750,11 +952,35 @@ try:
         files=request_files.json()["items"];consent_original=next(file for file in files if file["purpose"]=="consent")
         report_original=next(file for file in files if file["purpose"]=="report")
         assert all(file["scan_state"]=="clean" and file["download_url"]==f"/api/files/{file['id']}/" for file in files)
-        assert staff.request.get(f"{BASE}/api/files/{report_original['id']}/").status==403
+        def request_original_snapshot():
+            from tribunal.models import FileVersion
+            from tribunal.services.files import private_path
+            row=FileVersion.objects.select_related("attachment").get(pk=report_original["id"])
+            return {"attachment_id":str(row.attachment_id),"owner_id":str(row.attachment.owner_id),
+                "visibility":row.attachment.visibility,"report_request_id":str(row.attachment.report_request_id),
+                "bytes":private_path(row.object_key).read_bytes()}
+        original_snapshot=fixture_db(request_original_snapshot)
+        staff_denied=staff.request.get(f"{BASE}/api/files/{report_original['id']}/")
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            staff_missing=staff.request.get(f"{BASE}/api/files/{uuid.uuid4()}/")
+            assert staff_denied.status==staff_missing.status==404,(staff_denied.status,staff_missing.status)
+            assert staff_denied.json()==staff_missing.json(),(staff_denied.text(),staff_missing.text())
+        else:assert staff_denied.status==403,staff_denied.text()
         alien=browser.new_context();alien.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["outsider"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
-        assert alien.request.get(f"{BASE}/api/requests/{assessment_request['id']}/files/").status==403
-        assert alien.request.get(f"{BASE}/api/files/{report_original['id']}/").status==403
+        alien_listing=alien.request.get(f"{BASE}/api/requests/{assessment_request['id']}/files/")
+        alien_file=alien.request.get(f"{BASE}/api/files/{report_original['id']}/")
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            missing_listing=alien.request.get(f"{BASE}/api/requests/{uuid.uuid4()}/files/")
+            missing_file=alien.request.get(f"{BASE}/api/files/{uuid.uuid4()}/")
+            assert alien_listing.status==missing_listing.status==404,(alien_listing.status,missing_listing.status)
+            assert alien_listing.json()==missing_listing.json(),(alien_listing.text(),missing_listing.text())
+            assert alien_file.status==missing_file.status==404,(alien_file.status,missing_file.status)
+            assert alien_file.json()==missing_file.json(),(alien_file.text(),missing_file.text())
+        else:
+            assert alien_listing.status==403,alien_listing.text()
+            assert alien_file.status==403,alien_file.text()
         alien.close()
+        assert fixture_db(request_original_snapshot)==original_snapshot
         checks.append("Actual request multipart uploads derive subject/case/proceeding, preserve consent/report purpose and deny other subjects and unconsented council bytes")
         fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=report_original["id"],task="scan",result="pending"))
         page.get_by_role("button",name="Refresh request and files",exact=True).click()
@@ -780,7 +1006,7 @@ try:
         assert consent_payload=={"expected_version":assessment_request["request_version"],"declaration_id":str(release_definition.pk),
             "accepted":True,"file_id":consent_original["id"],"scope":{"council":True}}
         expect(page.get_by_text("A signed release for this request and purpose is recorded.",exact=True)).to_be_visible()
-        own_after_sign=next(row for row in context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"] if row["id"]==assessment_request["id"])
+        own_after_sign=next(row for row in own_request_items("after-release") if row["id"]==assessment_request["id"])
         assert own_after_sign["can_respond"] and not own_after_sign["can_sign_release"]
         assert own_after_sign["signed_releases"][0]["scope"]=={"council":True,"purpose":"medical","request_id":assessment_request["id"],"proceeding_id":assessment_request["proceeding_id"]}
         assert staff.request.get(f"{BASE}/api/files/{report_original['id']}/").status==200
@@ -845,8 +1071,58 @@ try:
         expect(appeal_slot.get_by_role("link",name="Download original",exact=True)).to_be_visible()
         waived=staff.request.post(f"{BASE}/api/applications/{appeal_id}/waiver/",data={},headers={"X-CSRFToken":staff_csrf})
         assert waived.status==201,waived.text()
-        page.get_by_role("button",name="Refresh application status",exact=True).click()
-        page.get_by_role("button",name="Review answers",exact=True).click()
+        appeal_ready=context.request.get(f"{BASE}/api/applications/{appeal_id}/").json()
+        appeal_files=context.request.get(f"{BASE}/api/applications/{appeal_id}/files/").json()
+        appeal_required={(row["category"],row.get("context") or "") for row in appeal_files["requirements"] if row["required"]}
+        appeal_clean_items=[row for row in appeal_files["items"] if row["scan_state"]=="clean"]
+        appeal_clean={(row["category"],row.get("context") or "") for row in appeal_clean_items}
+        assert appeal_ready["status"]=="draft" and appeal_ready["fee"]["status"]=="waived" and appeal_ready["can_submit"]
+        assert appeal_required<=appeal_clean and len(appeal_clean_items)==len(appeal_files["items"])
+        appeal_detail_url=f"{BASE}/api/applications/{appeal_id}/"
+        appeal_files_url=f"{BASE}/api/applications/{appeal_id}/files/"
+        appeal_refresh_responses=[]
+        def record_appeal_refresh(response):
+            if response.url in {appeal_detail_url,appeal_files_url} and response.request.method=="GET":
+                appeal_refresh_responses.append({"url":response.url,"status":response.status})
+        page.on("response",record_appeal_refresh)
+        appeal_trace={"before_refresh":{"application":{"status":appeal_ready["status"],"version":appeal_ready["version"],
+            "fee_status":appeal_ready["fee"]["status"],"can_submit":appeal_ready["can_submit"]},
+            "required_keys":sorted(appeal_required),"clean_keys":sorted(appeal_clean)}}
+        try:
+            with page.expect_response(lambda response:response.url==appeal_detail_url and response.request.method=="GET") as appeal_detail_received, \
+                    page.expect_response(lambda response:response.url==appeal_files_url and response.request.method=="GET") as appeal_files_received:
+                page.get_by_role("button",name="Refresh application status",exact=True).click()
+            refreshed_appeal=appeal_detail_received.value
+            refreshed_appeal_files=appeal_files_received.value
+            refreshed_appeal_payload=refreshed_appeal.json()
+            refreshed_appeal_files_payload=refreshed_appeal_files.json()
+            appeal_trace["reload_responses"]={
+                "application":{"status_code":refreshed_appeal.status,"status":refreshed_appeal_payload.get("status"),
+                    "fee_status":(refreshed_appeal_payload.get("fee") or {}).get("status"),"can_submit":refreshed_appeal_payload.get("can_submit")},
+                "files":{"status_code":refreshed_appeal_files.status,"item_count":len(refreshed_appeal_files_payload.get("items",[]))}}
+            assert refreshed_appeal.status==200 and refreshed_appeal_payload["can_submit"] and refreshed_appeal_payload["fee"]["status"]=="waived"
+            assert refreshed_appeal_files.status==200 and len(refreshed_appeal_files_payload["items"])==len(appeal_files["items"])
+            appeal_review=page.get_by_role("button",name="Review answers",exact=True)
+            expect(appeal_review).to_be_enabled()
+            expect(page.get_by_role("link",name="Download original",exact=True)).to_have_count(len(appeal_files["items"]))
+            appeal_review.click()
+            expect(page.get_by_text("Review your answers. Submission and payment are separate steps.",exact=True)).to_be_visible()
+            expect(page.get_by_label("I have read and accept this declaration.",exact=True)).to_be_enabled()
+        except Exception:
+            appeal_trace["observed_responses"]=appeal_refresh_responses
+            appeal_trace["failure_state"]={
+                "review_buttons":page.get_by_role("button",name="Review answers",exact=True).count(),
+                "edit_buttons":page.get_by_role("button",name="Continue editing",exact=True).count(),
+                "declaration_checkboxes":page.get_by_label("I have read and accept this declaration.",exact=True).count(),
+                "declaration_enabled":page.get_by_label("I have read and accept this declaration.",exact=True).count()==1 and
+                    page.get_by_label("I have read and accept this declaration.",exact=True).is_enabled(),
+                "download_links":page.get_by_role("link",name="Download original",exact=True).count()}
+            (ARTIFACT_ROOT/"appeal-readiness-failure.json").write_text(json.dumps(appeal_trace,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"appeal-readiness-failure.html").write_text(page.content(),encoding="utf-8")
+            page.screenshot(path=str(ARTIFACT_ROOT/"appeal-readiness-failure.png"),full_page=True)
+            raise
+        finally:
+            page.remove_listener("response",record_appeal_refresh)
         page.get_by_label("I have read and accept this declaration.",exact=True).check()
         page.get_by_label("Your full name",exact=False).fill("Synthetic Applicant")
         with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{appeal_id}/submit/") as appeal_submitted:
@@ -857,15 +1133,16 @@ try:
         assert context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["status"]=="closed"
         checks.append("Browser appeal evidence/declaration and actual authorized waiver submit to same closed case without reopening or mutating original proceeding")
         from applicant_supplement_acceptance import run as run_supplement_acceptance
-        checks.extend(run_supplement_acceptance(page,context,staff,BASE,csrf,staff_csrf,appeal_id,uploaded[0][0],fixture_db,ROOT,cookies["outsider"],settings.SESSION_COOKIE_NAME))
+        checks.extend(run_supplement_acceptance(page,context,staff,BASE,csrf,staff_csrf,appeal_id,uploaded[1][0],fixture_db,ARTIFACT_ROOT,cookies["outsider"],settings.SESSION_COOKIE_NAME))
         def sibling_reopened_fixture():
-            from tribunal.models import Case,Proceeding,Party,OpenCaseClaim
+            from tribunal.models import Case,Proceeding,OpenCaseClaim
+            from tribunal.services.identity import link_party
             Case.objects.filter(pk=current["case_id"]).update(status="open")
             Application.objects.filter(pk=appeal_id).update(status="accepted")
             proceeding=Proceeding.objects.filter(case_id=current["case_id"]).order_by("-sequence").first()
             Proceeding.objects.create(case_id=current["case_id"],kind="appeal",status="open",sequence=proceeding.sequence+1)
-            Party.objects.update_or_create(case_id=current["case_id"],slot="B",defaults={
-                "person_id":outsider.person_id,"account":outsider,"name":"Synthetic linked spouse"})
+            linked=link_party(admin,Case.objects.get(pk=current["case_id"]),outsider)
+            assert linked.person_id==outsider.person_id and linked.account_id==outsider.pk
             for actor in (owner,outsider):
                 OpenCaseClaim.objects.update_or_create(person_id=actor.person_id,defaults={"case_id":current["case_id"]})
         fixture_db(sibling_reopened_fixture)  # State fixture only; not council acceptance or identity-linking proof.
@@ -884,8 +1161,19 @@ try:
             assert hidden_appeal.status==absent_appeal.status==404 and hidden_appeal.json()==absent_appeal.json()
         else:assert hidden_appeal.status==403
         sibling_csrf=next(cookie["value"] for cookie in sibling.cookies() if cookie["name"]=="csrftoken")
-        assert sibling.request.post(f"{BASE}/api/appeals/{appeal_id}/additions/",data={"text":"Not my supplement","file_ids":[],
-            "expected_version":pending_appeal["version"],"idempotency_key":str(uuid.uuid4())},headers={"X-CSRFToken":sibling_csrf}).status==403
+        def sibling_denial_state():
+            from tribunal.models import Application,AppealSupplement
+            app=Application.objects.get(pk=appeal_id)
+            return {"status":app.status,"version":app.current_version,"supplements":AppealSupplement.objects.filter(application=app).count()}
+        before_sibling_denial=fixture_db(sibling_denial_state)
+        sibling_payload={"text":"Not my supplement","file_ids":[],"expected_version":pending_appeal["version"],"idempotency_key":str(uuid.uuid4())}
+        sibling_addition=sibling.request.post(f"{BASE}/api/appeals/{appeal_id}/additions/",data=sibling_payload,headers={"X-CSRFToken":sibling_csrf})
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            absent_addition=sibling.request.post(f"{BASE}/api/appeals/{uuid.uuid4()}/additions/",data=sibling_payload,headers={"X-CSRFToken":sibling_csrf})
+            assert sibling_addition.status==absent_addition.status==404,(sibling_addition.status,absent_addition.status)
+            assert sibling_addition.json()==absent_addition.json(),(sibling_addition.text(),absent_addition.text())
+        else:assert sibling_addition.status==403,sibling_addition.text()
+        assert fixture_db(sibling_denial_state)==before_sibling_denial
         checks.append("Linked spouse cannot read another applicant's requests or supplement history, or author additions")
         expect(sibling_page.get_by_role("button",name="Start or resume appeal",exact=True)).to_be_visible()
         sibling_page.get_by_role("button",name="Start or resume appeal",exact=True).click()
@@ -898,24 +1186,33 @@ try:
         signed_bytes=context.request.get(f"{BASE}/api/files/{signed_file}/").body()
         def decree_access_fixture():
             import hashlib
-            from django.utils import timezone
-            from tribunal.models import DecisionRevision,Decree,Proceeding,Attachment,FileVersion,FileTechnicalEvent,Case
+            from tribunal.models import Proceeding,Attachment,FileVersion,FileTechnicalEvent,Case,Party
+            from tribunal.services.decisions import record_decision,approve_decision,attest_signature,issue_decree
             from tribunal.services.files import write_private_original,private_path
-            proceeding=Proceeding.objects.filter(case_id=current["case_id"],kind="initial").first()
+            case=Case.objects.get(pk=current["case_id"])
+            proceeding=Proceeding.objects.filter(case=case,status="open").order_by("-sequence").first()
+            if proceeding is None:raise AssertionError("Synthetic decree requires the current open proceeding")
             attachment=Attachment.objects.create(case_id=current["case_id"],proceeding=proceeding,category="DEC",visibility="council")
             file=FileVersion.objects.create(attachment=attachment,number=1,object_key=f"synthetic-decrees/{uuid.uuid4().hex}.pdf",
                 original_name="synthetic-signed.pdf",display_name="synthetic-signed.pdf",mime_type="application/pdf",
                 byte_count=len(signed_bytes),sha256=hashlib.sha256(signed_bytes).hexdigest(),actor=admin)
             FileTechnicalEvent.objects.create(file=file,task="scan",result="clean")
             write_private_original(private_path(file.object_key),signed_bytes)
-            decision=DecisionRevision.objects.create(proceeding=proceeding,number=1,type="nullity",grounds="Synthetic access test only",actor=admin,
-                entitlements={party_id:"certificate"})
-            decree=Decree.objects.create(decision=decision,reference="DCR-SYNTHETIC-ACCESS",language="both",
-                signed_file=file,signer=president,issued_at=timezone.now())
-            Case.objects.filter(pk=current["case_id"]).update(status="closed")
-            return str(decree.pk),str(file.pk)
-        decree_id,signed_file=fixture_db(decree_access_fixture)  # Synthetic stored signed bytes/closed state only, not issuance/signature acceptance.
-        assert context.request.get(f"{BASE}/api/files/{signed_file}/").status==403
+            entitlements={str(pk):("certificate" if str(pk)==party_id else "notice_only")
+                for pk in Party.objects.filter(case=case).values_list("pk",flat=True)}
+            decision=record_decision(admin,proceeding.pk,"diss-applicant","Synthetic access test only",entitlements)
+            approve_decision(admin,decision.pk,president.pk)
+            attest_signature(admin,file.pk,president.pk,"signed_scan",{"confirmed_signed":True,"fixture":"applicant access"})
+            decree=issue_decree(admin,decision.pk,file.pk,president.pk,"both")
+            return str(decree.pk),str(file.pk),decree.reference
+        # Authorized issuance over synthetic stored bytes/evidence; no live e-signature acceptance.
+        decree_id,signed_file,decree_reference=fixture_db(decree_access_fixture)
+        missing_signed_file=str(uuid.uuid4())
+        unreleased=context.request.get(f"{BASE}/api/files/{signed_file}/")
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            absent_unreleased=context.request.get(f"{BASE}/api/files/{missing_signed_file}/")
+            assert unreleased.status==absent_unreleased.status==404 and unreleased.json()==absent_unreleased.json()
+        else:assert unreleased.status==403,unreleased.text()
         release=staff.request.post(f"{BASE}/api/decrees/{decree_id}/release/",data={"party_id":party_id,"action":"release"},headers={"X-CSRFToken":staff_csrf})
         assert release.status==201,release.text()
         case_detail=context.request.get(f"{BASE}/api/cases/{current['case_id']}/")
@@ -925,7 +1222,7 @@ try:
         assert released_row["signed_file"]["download_url"]==f"/api/files/{signed_file}/"
         page.get_by_role("button",name="Past cases",exact=True).click()
         page.get_by_text(current["case_number"],exact=True).click()
-        expect(page.get_by_text("DCR-SYNTHETIC-ACCESS",exact=True)).to_be_visible()
+        expect(page.get_by_text(decree_reference,exact=True)).to_be_visible()
         expect(page.get_by_text("English and Arabic",exact=True)).to_be_visible()
         certificate=page.get_by_role("link",name="View or download signed PDF",exact=True)
         expect(certificate).to_have_attribute("href",f"/api/files/{signed_file}/")
@@ -940,7 +1237,11 @@ try:
         other_recipient=browser.new_context()
         other_recipient.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["outsider"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
         assert other_recipient.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["released_decrees"]==[]
-        assert other_recipient.request.get(f"{BASE}/api/files/{signed_file}/").status==403
+        foreign_certificate=other_recipient.request.get(f"{BASE}/api/files/{signed_file}/")
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            absent_certificate=other_recipient.request.get(f"{BASE}/api/files/{missing_signed_file}/")
+            assert foreign_certificate.status==absent_certificate.status==404 and foreign_certificate.json()==absent_certificate.json()
+        else:assert foreign_certificate.status==403,foreign_certificate.text()
         other_recipient.close()
         checks.append("Actual own release list renders bilingual certificate metadata and exact PDF action while linked spouse receives no release or bytes")
         released=context.request.get(f"{BASE}/api/files/{signed_file}/")
@@ -954,27 +1255,35 @@ try:
         expect(certificate).to_have_count(0)
         assert context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["released_decrees"]==[]
         for suffix,headers in [("",{}),("",{"Range":"bytes=0-3"}),("?view=1",{})]:
-            assert context.request.get(f"{BASE}/api/files/{signed_file}/{suffix}",headers=headers).status==403
+            revoked_file=context.request.get(f"{BASE}/api/files/{signed_file}/{suffix}",headers=headers)
+            if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+                absent_file=context.request.get(f"{BASE}/api/files/{missing_signed_file}/{suffix}",headers=headers)
+                assert revoked_file.status==absent_file.status==404,(revoked_file.status,absent_file.status)
+                assert revoked_file.json()==absent_file.json(),(revoked_file.text(),absent_file.text())
+            else:assert revoked_file.status==403,revoked_file.text()
         head=http.client.HTTPConnection("127.0.0.1",server.server_port)
         try:
             head.request("HEAD",f"/api/files/{signed_file}/",headers={"Cookie":f"{settings.SESSION_COOKIE_NAME}={cookies['owner']}"})
-            assert head.getresponse().status==403
+            revoked_head=head.getresponse().status
         finally:head.close()
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            absent_head=http.client.HTTPConnection("127.0.0.1",server.server_port)
+            try:
+                absent_head.request("HEAD",f"/api/files/{missing_signed_file}/",headers={"Cookie":f"{settings.SESSION_COOKIE_NAME}={cookies['owner']}"})
+                assert revoked_head==absent_head.getresponse().status==404
+            finally:absent_head.close()
+        else:assert revoked_head==403
         checks.append("Real explicit decree release grants exact stored synthetic PDF; withdrawal revokes retained full/range/preview/HEAD URLs with no-store delivery")
         # Default acceptance includes closure privacy. Explicit 0 is a baseline-only run.
         if os.environ.get("CTM_APPLICANT_REQUEST_CLOSURE_AUDIT","1")=="1":
-            def close_requests_fixture():
-                from tribunal.models import Case
-                from tribunal.services.decisions import close_case
-                close_case(admin,Case.objects.get(pk=current["case_id"]),"synthetic_request_closure_audit",notify_parties=False)
-            fixture_db(close_requests_fixture)
-            closed_requests=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"]
+            assert fixture_db(lambda:isolated_models.Case.objects.get(pk=current["case_id"]).status)=="closed"
+            closed_requests=own_request_items("after-case-closure")
             closure_report={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],
                 "scope":"Isolated synthetic request closure privacy diagnostic",
                 "preceding_scenario_groups_passed":len(checks),
                 "unsent_staff_draft_excluded":not any(row["title"]=="Private staff draft" for row in closed_requests),
                 "sent_request_retained":any(row["title"]=="Own unresolved intake" and row["state"]=="closed" for row in closed_requests)}
-            (ROOT/"request-closure-privacy-result.json").write_text(json.dumps(closure_report,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"request-closure-privacy-result.json").write_text(json.dumps(closure_report,indent=2),encoding="utf-8")
             print(json.dumps(closure_report,indent=2))
             assert closure_report["unsent_staff_draft_excluded"],"Backend request closure exposes unsent staff draft; see request-closure-privacy-result.json"
             assert closure_report["sent_request_retained"]
@@ -984,11 +1293,11 @@ try:
                 assert recovered.status==201 and recovered.json()["id"]==report_id
             checks.append("Actual closure preserves never-sent draft privacy and sent closed reads; exact intake/assessment receipt replays still recover after closure")
         from applicant_filing_acceptance import run as run_filing_acceptance
-        checks.extend(run_filing_acceptance(browser,BASE,settings,fixture_db,session_cookie,staff,staff_csrf,errors))
+        checks.extend(run_filing_acceptance(browser,BASE,settings,fixture_db,session_cookie,staff,staff_csrf,errors,ARTIFACT_ROOT,admin.pk))
         from applicant_message_acceptance import run as run_message_acceptance
-        checks.extend(run_message_acceptance(browser,page,context,staff,BASE,csrf,staff_csrf,current["case_id"],current["case_number"],party_id,cookies["outsider"],settings,fixture_db,ROOT))
+        checks.extend(run_message_acceptance(browser,page,context,staff,BASE,csrf,staff_csrf,current["case_id"],current["case_number"],party_id,cookies["outsider"],settings,fixture_db,ARTIFACT_ROOT,admin.pk))
         from applicant_history_notice_acceptance import notification_checks
-        checks.extend(notification_checks(browser,page,context,BASE,str(owner.pk),cookies,settings,fixture_db,ROOT))
+        checks.extend(notification_checks(browser,page,context,BASE,str(owner.pk),cookies,settings,fixture_db,ARTIFACT_ROOT))
         staff.close()
         assert page.locator("[style]").count()==0
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
@@ -996,11 +1305,19 @@ try:
         browser.close()
 except Exception as failure:
     partial={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"completed_groups":len(checks),"checks":checks,"page_errors":errors,"runtime_database":runtime_database,"failure":{"type":type(failure).__name__,"message":str(failure)[:5000]},"scope":"Interrupted isolated acceptance; completed groups are not a full-suite pass"}
-    (ROOT/"partial-result.json").write_text(json.dumps(partial,indent=2),encoding="utf-8")
+    if shared_config:partial["preflight"]=safe_preflight_evidence(shared_config,image_evidence)
+    (ARTIFACT_ROOT/"partial-result.json").write_text(json.dumps(partial,indent=2),encoding="utf-8")
     raise
 finally:
     server.shutdown()
 result={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"passed":len(checks),"checks":checks,
         "page_errors":errors,"runtime_database":runtime_database,"scope":"Real Django APIs, isolated "+("PostgreSQL runtime role" if POSTGRES_OWNER else "SQLite")+"/synthetic sessions; authorized fixture waiver; scanner bypass test policy; no live provider payment/antivirus acceptance"}
-(ROOT/"result.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
+if shared_config:
+    from applicant_shared_loopback import source_tree_sha256
+    ending_source_hash=source_tree_sha256(shared_config.source_dir)
+    if ending_source_hash!=shared_config.expected_source_tree_sha256:
+        raise RuntimeError("Immutable source tree changed during shared-loopback acceptance.")
+    result["preflight"]=safe_preflight_evidence(shared_config,image_evidence)
+    result["source_tree_sha256_after"]=ending_source_hash
+OUTPUT_PATH.write_text(json.dumps(result,indent=2),encoding="utf-8")
 print(json.dumps(result,indent=2))

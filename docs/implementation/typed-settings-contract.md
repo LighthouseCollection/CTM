@@ -1,7 +1,12 @@
+Document-category consumer continuation: owner filing-file requirement labels now
+consume only valid latest configured bilingual labels; requiredness/context/scan/
+submission rules remain unchanged. runtime_consumers=document_categories→
+filing_document_labels; invalid latest legacy content falls back to built-ins,
+without activating older revisions. See document-label-consumer.md.
+
 Current continuation: email_templates now supplies frozen account_suspended and
 account_reactivated messages only; other kinds retain existing generic delivery.
-Descriptors expose runtime_consumers (email_templates: account_status_email; other
-families: empty). Subjects reject CR/LF. activation_supported remains false because
+Descriptors expose runtime_consumers (email_templates: account_status_email; document_categories: filing_document_labels; other families: empty). Subjects reject CR/LF. activation_supported remains false because
 there is no separate activation operation. See account-administration-contract.md.
 The647-test/0039 evidence below describes the earlier storage-only checkpoint.
 
@@ -53,7 +58,7 @@ it and the mandatory HTTP contract have conflict detection.
 | translation_routing | Required mode ai/local. Optional primary/fallback slots each require provider/model text, enabled boolean, timeout_seconds integer1–300 and max_retries integer0–5. ai requires an explicitly enabled primary; local rejects enabled external slots. No endpoint, credential, header or secret locator is accepted. |
 | tribunal_contact | Nonempty object with supported display, email, phone, address text fields; email syntax checked. No arbitrary profile/role/provider data. |
 | email_templates | Required templates array; each record requires distinct supported notification code plus nonblank subject_en/subject_ar/body_en/body_ar. This stores versions; only account status notices now consume these templates; other worker messages remain generic. |
-| document_categories | Required categories array; distinct supported code plus nonblank label_en/label_ar. No requiredness, permissions, byte limits or arbitrary new categories. Filing rules and the MC church/CMC civil meanings cannot be relaxed through this setting. Stored labels do not yet replace the authoritative filing labels. |
+| document_categories | Required categories array; distinct supported code plus nonblank label_en/label_ar. No requiredness, permissions, byte limits or arbitrary new categories. Filing rules and the MC church/CMC civil meanings cannot be relaxed through this setting. Valid configured labels now replace only matching display labels; filing codes/requirements remain authoritative. |
 | recommended_doctors | Required doctors array; each record requires stable UUID id, name, specialty (medical/psychological/both), contact and active boolean. UUID duplicates are rejected even when spelled differently. No patient data, doctor portal or clinical automation is added. |
 
 Full field bounds and permitted notification/document codes are returned in each
@@ -79,7 +84,8 @@ schema_version describes the wire validator applied to the response/write. There
 is no newly asserted stored schema-version column on historical records. The
 current adapter remains SettingRevision; normalized system_setting_versions and
 translation_prompt_versions/job provenance still require the approved-schema work.
-No new model, route, grant or migration is introduced.
+The original typed-storage checkpoint introduced no model/route/grant/migration;
+later consumers have their separate documented function grants and migrations.
 
 ## Verification and remaining acceptance
 
@@ -91,6 +97,6 @@ setting-author tests, immutable-history and raw non-owner provenance checks rema
 
 Awaiting UI binding to these schema/version fields, governance serial integration,
 approved bilingual labels/content and exact successor-SHA acceptance. Provider
-activation, real translations, use of stored email/document/doctor configuration in
-consumer workflows, prompt job provenance/history UI and full normalized schema
+activation, real translations, remaining email/document/doctor consumers beyond
+status mail and filing labels, prompt job provenance/history UI and full normalized schema
 acceptance are distinct unfinished work; typed storage does not establish them.

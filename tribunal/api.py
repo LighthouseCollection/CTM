@@ -7,10 +7,11 @@ from pathlib import Path
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError, ObjectDoesNotExist
 from django.db import IntegrityError
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.vary import vary_on_headers
 from django.utils import timezone
 from django.shortcuts import render
 from tribunal import models as m
@@ -652,17 +653,40 @@ def sessions(request):
     from tribunal.projections import session_capabilities
     staff(request.user)
     if request.method == "GET":
-        return JsonResponse(
-            {
-                "items": [
-                    encoded(
-                        x, date=x.date.isoformat(), reference=x.reference, state=x.state,
-                        **session_capabilities(x, request.user)
-                    )
-                    for x in m.CouncilSession.objects.order_by("-date")[:100]
-                ]
-            }
-        )
+        from tribunal.pagination import page_records
+        qs = m.CouncilSession.objects.all()
+        filters = {}
+        for key in ("state", "date_from", "date_to"):
+            if key not in request.GET:
+                continue
+            raw = request.GET.get(key)
+            if len(request.GET.getlist(key)) != 1 or not raw:
+                raise ValidationError(f"Provide one nonempty {key} filter.")
+            if key == "state":
+                if raw not in {"planned", "closed"}:
+                    raise ValidationError("state must be planned or closed.")
+                qs = qs.filter(state=raw)
+            else:
+                try:
+                    parsed = date.fromisoformat(raw)
+                    if parsed.isoformat() != raw:
+                        raise ValueError
+                except ValueError:
+                    raise ValidationError(f"{key} must be a YYYY-MM-DD date.")
+                filters[key] = parsed
+        if filters.get("date_from", date.min) > filters.get("date_to", date.max):
+            raise ValidationError("date_from must not follow date_to.")
+        if "date_from" in filters:
+            qs = qs.filter(date__gte=filters["date_from"])
+        if "date_to" in filters:
+            qs = qs.filter(date__lte=filters["date_to"])
+        return JsonResponse(page_records(
+            qs.order_by("-date", "-id"), request, default_limit=100,
+            serialize=lambda x: encoded(
+                x, date=x.date.isoformat(), reference=x.reference, state=x.state,
+                **session_capabilities(x, request.user),
+            ),
+        ))
     from tribunal.services.council import create_session
 
     return JsonResponse(
@@ -788,14 +812,16 @@ def messages(request, case_id):
         offset = int(request.GET.get("offset", 0))
         if not 0 <= offset <= 2**63-52:
             raise ValidationError("Message offset is outside the supported range.")
-        rows = list(messages_for(request.user, case_id).select_related("sender").order_by("created_at", "id")[offset:offset+51])
+        rows = list(messages_for(request.user, case_id).order_by("created_at", "id")[offset:offset+51])
+        from tribunal.services.message_projection import message_sender_names
+        sender_names = message_sender_names(rows[:50])
         return JsonResponse(
             {
                 "items": [
                     encoded(
                         x,
                         body=x.body,
-                        sender=f"{x.sender.first_name} {x.sender.last_name}".strip(),
+                        sender=sender_names.get(str(x.pk)),
                         channel=x.channel,
                         timestamp=x.created_at.isoformat(),
                         file_links=x.file_links,
@@ -972,6 +998,10 @@ def report_requests(request, case_id):
                 .exclude(kind__in=["external_priest", "interview"])
                 .exclude(state="draft")
             )
+        from tribunal.services.request_projection import request_author_names, external_link_metadata
+        projection_time = timezone.now()
+        rows = list(qs.select_related("subject", "case", "proceeding").order_by("-created_at", "-id"))
+        author_names = request_author_names(rows)
         return JsonResponse(
             {
                 "items": [
@@ -988,13 +1018,14 @@ def report_requests(request, case_id):
                         created_at=x.created_at.isoformat(),
                         sent_at=x.sent_at.isoformat() if x.sent_at else None,
                         parent_report_id=str(x.parent_report_id) if x.parent_report_id else None,
-                        author=f"{x.author.first_name} {x.author.last_name}".strip(),
+                        author=author_names.get(str(x.pk)),
                         **release_metadata(x, request.user),
-                        **({"request_version": request_version(x)}
+                        **({"request_version": request_version(x),
+                            **external_link_metadata(x, request.user, now=projection_time)}
                             if request.user.role != "applicant" else {}),
                         **(own_request_data(x, request.user) if request.user.role == "applicant" else {}),
                     )
-                    for x in qs.order_by("-created_at")
+                    for x in rows
                 ]
             }
         )
@@ -1329,11 +1360,19 @@ def system_audit(request):
 
 
 @csrf_exempt
+@vary_on_headers("Accept", "Authorization")
 def external_report(request, request_id):
     from tribunal.services.reports import external_request, complete_external, lock_request
     from tribunal.db.context import database_external
     from django.db import transaction
 
+    # Browser navigation carries the capability only in its fragment. The existing
+    # council page removes it before fetching this route with a Bearer header.
+    # Do not inspect request existence or redirect query/header credentials.
+    if (request.method == "GET" and "Authorization" not in request.headers
+            and request.get_preferred_type(["application/json", "text/html"]) == "text/html"):
+        from django.templatetags.static import static
+        return HttpResponseRedirect(static("ctm/external-report.html"))
     token = request.headers.get("Authorization", "").removeprefix("Bearer ")
     if request.method not in {"GET", "POST"}:
         return JsonResponse({"error": "method_not_allowed"}, status=405)
@@ -1933,3 +1972,69 @@ def case_files(request, case_id):
     response = JsonResponse(result)
     response["Cache-Control"] = "private, no-store"
     return response
+
+
+@endpoint()
+def account_sessions(request):
+    from tribunal.pagination import page_records
+    from tribunal.services.account_sessions import active_sessions, owned_session, session_handle
+    return JsonResponse(page_records(
+        active_sessions(), request, default_limit=50,
+        visible=lambda row: owned_session(request.user, row),
+        serialize=lambda row: {
+            "handle": session_handle(request.user, row.session_key),
+            "current": row.session_key == request.session.session_key,
+            "expires_at": row.expire_date.isoformat(),
+        },
+    ))
+
+
+@endpoint(("POST",))
+def account_session_revoke(request, handle):
+    from tribunal.services.account_sessions import revoke_session
+    if body(request):
+        raise ValidationError("Session revocation accepts an empty object only.")
+    return JsonResponse(revoke_session(request.user, handle, request.session.session_key))
+
+
+@endpoint()
+def system_account_memberships(request, account_id):
+    from tribunal.pagination import page_records
+    from tribunal.services.member_history import membership_data
+    administrator(request.user)
+    account = m.Account.objects.exclude(role="applicant").get(pk=account_id)
+    now = timezone.now()
+    result = page_records(
+        m.StaffMembership.objects.filter(account=account).select_related("tribunal")
+        .order_by("-active_from", "-id"), request, default_limit=50,
+        serialize=lambda row: membership_data(account, row, now),
+    )
+    return JsonResponse({"account_id": str(account.pk), "account_role": account.role,
+                         "account_active": account.is_active, **result})
+
+
+@endpoint()
+def system_account_role_history(request, account_id):
+    from tribunal.pagination import page_records
+    from tribunal.services.member_history import role_history, role_data
+    administrator(request.user)
+    account = m.Account.objects.exclude(role="applicant").get(pk=account_id)
+    now = timezone.now()
+    result = page_records(role_history(account), request, default_limit=50,
+                          serialize=lambda row: role_data(account, row, now))
+    return JsonResponse({"account_id": str(account.pk), "account_role": account.role,
+                         "account_active": account.is_active, **result})
+
+
+@csrf_exempt
+@vary_on_headers("Authorization")
+def external_report_status(request, request_id):
+    from tribunal.services.reports import external_status_receipt
+    if request.method != 'GET':
+        return JsonResponse({'error':'method_not_allowed'}, status=405)
+    authorization = request.headers.get('Authorization','')
+    token = authorization[len('Bearer '):] if authorization.startswith('Bearer ') else ''
+    try:
+        return JsonResponse(external_status_receipt(request_id, token))
+    except (PermissionDenied, ValidationError, ObjectDoesNotExist):
+        return JsonResponse({'error':'link_unavailable'}, status=403)

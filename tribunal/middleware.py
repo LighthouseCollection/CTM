@@ -64,6 +64,8 @@ class PrivateResponseMiddleware:
             response["Cache-Control"] = "private, no-store"
             # Preserve same-origin form POST Origin checks; external navigation
             # still receives no referrer (including OAuth provider redirects).
-            response["Referrer-Policy"] = "same-origin"
+            response["Referrer-Policy"] = (
+                "no-referrer" if request.path.startswith("/external/reports/") else "same-origin"
+            )
             response["X-Content-Type-Options"] = "nosniff"
         return response

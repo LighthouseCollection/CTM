@@ -1,6 +1,6 @@
 from tribunal.db.context import core_operation
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import transaction
+from django.db import transaction, connection
 from django.db.models import Max
 from django.utils import timezone
 from tribunal.models import (
@@ -172,13 +172,18 @@ def close_case(actor, case, reason, notify_parties=True):
     Proceeding.objects.filter(case=case, status="open").update(
         status="closed", closed_at=now
     )
-    OpenCaseClaim.objects.filter(case=case).delete()
-    from tribunal.models import ReportRequest
+    if connection.vendor == 'postgresql':
+        # Cleanup crosses hidden claim/request rows without disclosing their data.
+        with database_actor(actor), connection.cursor() as cursor:
+            cursor.execute('SELECT public.ctm_closed_case_cleanup(%s)', [case.pk])
+    else:
+        OpenCaseClaim.objects.filter(case=case).delete()
+        from tribunal.models import ReportRequest
 
-    ReportRequest.objects.filter(case=case, state="draft").update(state="cancelled")
-    ReportRequest.objects.filter(case=case, state="sent").update(
-        state="closed"
-    )
+        ReportRequest.objects.filter(case=case, state="draft").update(state="cancelled")
+        ReportRequest.objects.filter(case=case, state="sent").update(
+            state="closed"
+        )
     audit(actor, reason, case, case)
     if notify_parties:
         for party in case.parties.select_related("account"):
@@ -326,9 +331,14 @@ def withdraw_application(actor, application_id, *, expected_version=None):
     if app.kind == "petition" and not pending_closed_intake and app.party:
         app.party.withdrawn_at = timezone.now()
         app.party.save(update_fields=["withdrawn_at"])
-        if not app.case.parties.filter(
-            participating=True, withdrawn_at__isnull=True
-        ).exists():
+        if connection.vendor == 'postgresql':
+            with database_actor(actor), connection.cursor() as cursor:
+                cursor.execute('SELECT public.ctm_withdrawal_can_close(%s)', [app.pk])
+                should_close = cursor.fetchone()[0]
+        else:
+            should_close = not app.case.parties.filter(
+                participating=True, withdrawn_at__isnull=True).exists()
+        if should_close:
             close_case(actor, app.case, "petitions_withdrawn", notify_parties=False)
     # Withdrawal never triggers other applicant notification.
     notify_manager(app.case, "filing_withdrawn", app)

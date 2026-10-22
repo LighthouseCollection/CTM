@@ -3,7 +3,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from tribunal import models as m
 from tribunal.services.applications import submit_application
-from tribunal.services.decisions import close_case
+from tribunal.services.decisions import withdraw_application
 from tribunal.services.reports import create_request, send_request, complete_request, sign_medical_release
 from tribunal.services.request_contracts import request_version, own_request_data
 from tribunal.services.files import upload, request_file_listing
@@ -50,7 +50,7 @@ def sign(app, row, file, **kwargs):
 def test_closure_never_publishes_unsent_drafts(client, filed, people):
     row = sent(filed, people)
     draft = create_request(people["admin"], filed.proceeding_id, filed.party_id, "intake", "PRIVATE DRAFT", [])
-    close_case(people["admin"], filed.case, "synthetic_close")
+    withdraw_application(filed.owner, filed.pk)
     login(client, filed.owner)
     response = client.get(f"/api/cases/{filed.case_id}/requests/")
     assert [x["id"] for x in response.json()["items"]] == [str(row.pk)]
@@ -169,7 +169,7 @@ def test_response_validation_safe_scoped_files_and_recovery_after_close(filed, p
     with pytest.raises(PermissionDenied):
         complete_request(filed.owner, row.pk, {"files": [str(file.pk)]})
     report = complete_request(filed.owner, row.pk, {"text": "retained"})
-    close_case(people["admin"], filed.case, "synthetic_close")
+    withdraw_application(filed.owner, filed.pk)
     assert complete_request(filed.owner, row.pk, {"text": "retained"}).pk == report.pk
     with pytest.raises(ValidationError):
         complete_request(filed.owner, row.pk, {"text": "changed"})
@@ -233,7 +233,7 @@ def test_request_writes_serialize_and_recover(filed, people, operation):
             future = pool.submit(waiting_write)
             assert started.wait(timeout=5)
             if operation == "close":
-                close_case(people["admin"], filed.case, "synthetic_close")
+                withdraw_application(filed.owner, filed.pk)
             elif operation == "sign":
                 first = sign(filed, row, signature).pk
             else:
