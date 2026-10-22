@@ -2472,7 +2472,6 @@ ${ar}` : en;
         h(P.Icon, { name: "message", label: t("contact") }),
         h(P.SectionHeading, { level: 2 }, t("contact")),
         h(P.Divider, { className: "ctm-spouse-profile-section__divider" }),
-        canWrite && !editing ? h(P.Button, { size: "sm", className: "ctm-spouse-profile-section__edit", onClick: startEditing }, t("editContact")) : null,
       ),
       editing
         ? h(

@@ -56,9 +56,10 @@
 .ctm-spouse-profile-section__divider {
   flex: 1 1 auto;
   min-inline-size: 0;
-  block-size: 1px;
+  block-size: 0;
   border: 0;
-  background: var(--ctm-spouse-section-accent);
+  border-block-start: 1px solid var(--ctm-spouse-section-accent);
+  background: transparent;
 }
 
 
@@ -134,6 +135,7 @@
 .ctm-spouse-photo-control__change {
   color: var(--plx-sys-color-text-primary);
   font-size: var(--plx-comp-badge-sm-font-size);
+  font-weight: 400;
   line-height: 1;
   cursor: pointer;
 }
