@@ -594,7 +594,7 @@
     ];
     return h(
       P.Panel,
-      { icon: "doc-text", title: t("attendance") },
+      { icon: "user", title: t("attendance"), collapsible: true },
       h(
         P.Stack,
         null,
@@ -611,11 +611,6 @@
                 label: member.name,
                 value,
                 options: [
-                  {
-                    value: "notRecorded",
-                    label: t("notRecorded"),
-                    disabled: true,
-                  },
                   { value: "present", label: t("present"), disabled: pending },
                   { value: "absent", label: t("absent"), disabled: pending },
                 ],

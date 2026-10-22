@@ -1173,7 +1173,7 @@
     );
   }
 
-  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onCase, onOutcome, onTestimony, onCancelTestimony, canAssign }) {
+  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onCase, onOutcome, onTestimony, onCancelTestimony, canAssign, compact = false }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1198,12 +1198,14 @@
     );
     const titled = row.part === 2 && Array.isArray(row.party_names) && row.party_names.length;
     return h(
-      P.Card,
-      {
+      compact ? P.Stack : P.Card,
+      compact ? { gap: "xs" } : {
         title: titled ? hearingTitle(row.party_names, session.date, t) : row.case_number,
         meta: [titled ? isolate(row.case_number) : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`].filter(Boolean).join(" · "),
         actions: h(P.Inline, { gap: "xs", wrap: true }, ...actions),
       },
+      compact ? h(P.Text, { variant: "secondary" }, [titled ? hearingTitle(row.party_names, session.date, t) : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`].filter(Boolean).join(" · ")) : null,
+      compact ? h(P.Inline, { gap: "xs", wrap: true }, ...actions) : null,
       h(
         P.Stack,
         { gap: "xs" },
@@ -1825,13 +1827,20 @@
 
     const part = (n) =>
       h(
-        P.Panel,
-        { icon: "doc-text", key: n, title: t(`part${n}`) },
+        P.Stack,
+        { key: n, gap: "sm" },
+        h(P.Text, { as: "h2", variant: "heading" }, t(`part${n}`)),
         h(
           P.Stack,
           { gap: "sm" },
-          ...groups[n].map((row) =>
-            h(AgendaItemCard, {
+          h(P.DataTable, {
+            label: t(`part${n}`), data: groups[n], index: "id", narrow: "table", mode: "fill",
+            empty: t(`part${n}Empty`),
+            columns: [
+              { title: t("caseNumber"), field: "case_number", kind: "name" },
+              { title: t("statusLabel"), field: "state", render: (row) => t(row.state === "assigned" ? "assigned_state" : row.state) },
+              { title: t("agenda"), field: "id", render: (row) => h(AgendaItemCard, {
+              compact: true,
               key: row.id,
               row,
               session,
@@ -1862,9 +1871,9 @@
                 setFailure(null);
                 setDialog({ kind: "cancelTestimony", appointment });
               },
-            }),
-          ),
-          !groups[n].length ? h(P.EmptyState, { title: t(`part${n}Empty`) }) : null,
+              }) },
+            ],
+          }),
           addControl(n, n === 1 ? c1 : c2),
         ),
       );
