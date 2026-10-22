@@ -20,6 +20,15 @@ BEGIN
   RAISE EXCEPTION 'CTM historical records cannot be overwritten' USING ERRCODE='23514';
 END $$;
 
+CREATE OR REPLACE FUNCTION public.ctm_guard_attendance_transfer_delete() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+  IF public.ctm_migration_caller() OR public.ctm_admin_case_purge_active() THEN RETURN OLD; END IF;
+  IF OLD.hearing_id IS NOT NULL OR NOT public.ctm_session_transfer_context(OLD.session_id) THEN
+    RAISE EXCEPTION 'Attendance history cannot be deleted outside planned reschedule' USING ERRCODE='23514';
+  END IF;
+  RETURN OLD;
+END $$;
 CREATE OR REPLACE FUNCTION public.ctm_guard_history_delete() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE disposable boolean=false;
 BEGIN
@@ -144,3 +153,4 @@ def remove_retired_demo(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [("tribunal", "0056_populate_archived_session_data")]
     operations = [migrations.RunSQL(FORWARD), migrations.RunPython(remove_retired_demo, migrations.RunPython.noop)]
+
