@@ -109,6 +109,8 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /party\.photo_url/);
   assert.match(councilCase, /collapsible: true/);
   assert.match(councilCase, /profile\?\.contact/);
+  assert.match(councilCase, /t\("personalDetails"\), "person", \[/);
+  assert.doesNotMatch(councilCase, /t\("personalDetails"\), "user", \[/);
 });
 
 test("case back navigation retains the workspace that opened the case", () => {

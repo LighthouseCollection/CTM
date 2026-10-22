@@ -2468,7 +2468,7 @@
             P.Stack,
             { gap: "lg" },
             spouseIdentity(P, h, t, party),
-            spouseProfileSection(P, h, t, t("personalDetails"), "user", [
+            spouseProfileSection(P, h, t, t("personalDetails"), "person", [
               ["otherNamesKnownBy", party.profile?.personal?.other_names],
               ["placeOfBirth", party.profile?.personal?.place_of_birth],
               ["nationality", party.profile?.personal?.nationality],
