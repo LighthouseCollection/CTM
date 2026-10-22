@@ -7,6 +7,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError, ObjectDoesNotExist
 from django.db import IntegrityError
+from django.db.models import Count, Q
 from django.http import JsonResponse, HttpResponse
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -947,7 +948,10 @@ def sessions(request):
             {
                 "items": [
                     encoded(x, **session_data(x, request.user))
-                    for x in m.CouncilSession.objects.select_related("presiding_member").order_by("-date")[:100]
+                    for x in m.CouncilSession.objects.select_related("presiding_member").annotate(
+                        assigned_case_count=Count("agenda", filter=Q(agenda__part=1)),
+                        hearing_case_count=Count("agenda", filter=Q(agenda__part=2)),
+                    ).order_by("-date")[:100]
                 ]
             }
         )

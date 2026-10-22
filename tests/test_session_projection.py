@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 import pytest
-from tribunal.services.council import create_session, set_session_adjourned
+from tribunal.services.council import create_session, place_agenda, set_session_adjourned
 
 pytestmark = pytest.mark.django_db
 
@@ -54,3 +54,18 @@ def test_adjournment_closes_session_and_retains_its_timestamp_for_current_view(c
     row = next(item for item in client.get("/api/sessions/").json()["items"] if item["id"] == str(session.pk))
     assert row["state"] == "closed"
     assert row["adjourned_at"] == ended_at.astimezone(ZoneInfo("UTC")).isoformat()
+
+
+def test_session_listing_projects_assigned_and_hearing_case_counts(client, people, ready_application):
+    from tribunal.services.applications import submit_application
+
+    submit_application(ready_application.owner, ready_application.pk, "session-counts", {"accepted": True, "name": "Applicant Test"})
+    ready_application.refresh_from_db()
+    session = create_session(people["admin"], date(2030, 1, 2))
+    place_agenda(people["admin"], session.pk, ready_application.case_id, part=1)
+
+    client.force_login(people["admin"], backend="allauth.account.auth_backends.AuthenticationBackend")
+    row = next(item for item in client.get("/api/sessions/").json()["items"] if item["id"] == str(session.pk))
+
+    assert row["assigned_case_count"] == 1
+    assert row["hearing_case_count"] == 0

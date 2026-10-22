@@ -162,6 +162,12 @@ def session_capabilities(session, actor):
 
 
 def session_data(session, actor):
+    assigned_case_count = getattr(session, "assigned_case_count", None)
+    hearing_case_count = getattr(session, "hearing_case_count", None)
+    if assigned_case_count is None:
+        assigned_case_count = session.agenda.filter(part=1).count()
+    if hearing_case_count is None:
+        hearing_case_count = session.agenda.filter(part=2).count()
     return {
         "date": session.date.isoformat(),
         "reference": session.reference,
@@ -170,6 +176,8 @@ def session_data(session, actor):
         "presiding_member_name": name(session.presiding_member) if session.presiding_member_id else None,
         "location": session.location or None,
         "adjourned_at": session.adjourned_at.isoformat() if session.adjourned_at else None,
+        "assigned_case_count": assigned_case_count,
+        "hearing_case_count": hearing_case_count,
         "state": session.state,
         **session_capabilities(session, actor),
     }
