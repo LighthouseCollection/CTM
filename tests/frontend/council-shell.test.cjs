@@ -162,9 +162,16 @@ test("case summary shows case details and recorded key-date milestones", () => {
 });
 
 test("case navigation groups notes and communications outside Case Overview", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(app, /notes: "Notes"/);
   assert.match(app, /caseCollaboration: "Notes & Communications"/);
   assert.match(app, /items: \["case", "timeline", "parties", "marriage", "separation"\]/);
+  assert.match(app, /page === "separation" && council && councilModule\?\.CaseSeparation/);
+  assert.match(councilCase, /function CaseSeparation\(\{ api, lang, caseId \}\)/);
+  assert.match(councilCase, /"Separation Details"/);
+  assert.match(councilCase, /"Civil Divorce"/);
+  assert.match(councilCase, /"Restraining Order"/);
+  assert.match(councilCase, /"Reconciliation"/);
   assert.match(app, /const collaborationGroups = \[/);
   assert.match(app, /items: \["notes", "communications"\]/);
   assert.match(app, /groups: collaborationGroups/);

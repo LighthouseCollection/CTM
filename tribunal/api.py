@@ -549,6 +549,57 @@ def _submitted_marriage(answers):
     }
 
 
+def _separation_value(answers, *keys):
+    """Read a submitted separation field by its stable code or legacy alias."""
+    expanded = []
+    for key in keys:
+        expanded.extend((key, key.replace(".", "_")))
+    return _profile_value(answers, *expanded)
+
+
+def _submitted_separation(answers, application, case):
+    """Project applicant assertions; never infer legal or relationship facts."""
+    source_party = application.party if application and application.party_id else None
+    other_party = next((party for party in case.parties.all() if not source_party or party.pk != source_party.pk), None)
+    initiated = _separation_value(answers, "separation.initiated_by", "initiated_by")
+    subject = source_party if initiated == "self" else other_party if initiated == "spouse" else None
+    orders = answers.get("restraining_orders") if isinstance(answers.get("restraining_orders"), list) else []
+    return {
+        "marital_status": _separation_value(answers, "separation.marital_status", "marital_status"),
+        "separation_date": _separation_value(answers, "separation.date", "separation_date", "date_of_separation"),
+        "initiated_by": {
+            "value": initiated,
+            "party": {"name": subject.name, "gender": subject.person.gender if subject and subject.person_id else None, "slot": subject.slot} if subject else None,
+        } if initiated else None,
+        "reason": _separation_value(answers, "grounds", "reason"),
+        "civil_divorce": {
+            "filed": _separation_value(answers, "civil_divorce.filed", "civil_divorce_filed"),
+            "date": _separation_value(answers, "civil_divorce.date", "civil_divorce_date", "date_of_civil_divorce"),
+            "court": _separation_value(answers, "civil_divorce.court", "court_name"),
+            "location": _separation_value(answers, "civil_divorce.location", "court_location", "court_address"),
+            "case_number": _separation_value(answers, "civil_divorce.case_number", "civil_case_number", "court_case_number"),
+            "status": _separation_value(answers, "civil_divorce.status", "civil_divorce_status"),
+        },
+        "restraining_orders": [{
+            "filed": _profile_value(order, "filed", "restraining_order_filed"),
+            "date": _profile_value(order, "date", "restraining_order_date"),
+            "expiration_date": _profile_value(order, "expiration_date", "expires_at"),
+            "name_listed": _profile_value(order, "name_listed", "protected_person"),
+            "court": _profile_value(order, "court", "court_name"),
+            "case_number": _profile_value(order, "case_number", "number"),
+            "status": _profile_value(order, "status"),
+        } for order in orders if isinstance(order, dict)],
+        "reconciliation": {
+            "attempted": _separation_value(answers, "counseling.attempted", "reconciliation_attempted", "counseling_attempted"),
+            "previously_applied": _separation_value(answers, "prior_application.applied", "previously_applied", "previously_applied_for_ecclesiastical_permit"),
+            "when": _separation_value(answers, "prior_application.when", "previous_application_date"),
+            "where": _separation_value(answers, "prior_application.where", "previous_application_where"),
+            "outcome": _separation_value(answers, "prior_application.outcome", "previous_application_outcome"),
+        },
+        "source": _applicant_submission_source(application),
+    }
+
+
 def _case_summary(case, application):
     """Case-summary values come only from a filing or a recorded council hearing."""
     answers = _submitted_answers(application)
@@ -638,6 +689,7 @@ def case_detail(request, case_id):
     marriage_application = (
         m.Application.objects.filter(case=case, kind="petition", submitted_at__isnull=False)
         .prefetch_related("revisions")
+        .select_related("party__person")
         .order_by("created_at", "id")
         .first()
     )
@@ -669,6 +721,7 @@ def case_detail(request, case_id):
             parties=party_data,
             marriage=_submitted_marriage(_submitted_answers(marriage_application)),
             marriage_source=_applicant_submission_source(marriage_application),
+            separation=_submitted_separation(_submitted_answers(marriage_application), marriage_application, case),
             summary=_case_summary(case, marriage_application),
             proceedings=[
                 encoded(p, kind=p.kind, status=p.status, sequence=p.sequence)

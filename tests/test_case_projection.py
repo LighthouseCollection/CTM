@@ -95,6 +95,25 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
     revision.__class__.objects.filter(pk=revision.pk).update(answers=revision.answers)
     submit_application(app.owner, app.pk, "case-profile", {"accepted": True, "name": "John Smith"})
     app.refresh_from_db()
+    revision.answers = {
+        **revision.answers,
+        "marital_status": "Separated",
+        "separation_date": "2024-11-03",
+        "initiated_by": "self",
+        "civil_divorce_filed": "Yes",
+        "civil_divorce_date": "2025-01-06",
+        "court_name": "Los Angeles Superior Court",
+        "court_location": "Los Angeles, CA",
+        "civil_case_number": "24STFL-09834",
+        "civil_divorce_status": "Finalized",
+        "restraining_orders": [{
+            "filed": "Yes", "date": "2024-11-10", "court": "Los Angeles Superior Court",
+            "case_number": "24DVRO-05217", "status": "Active", "name_listed": "John Smith",
+        }],
+        "reconciliation_attempted": "Yes",
+        "previously_applied": "No",
+    }
+    revision.__class__.objects.filter(pk=revision.pk).update(answers=revision.answers)
     spouse = Party.objects.create(case=app.case, slot="B", name="Jessica O'Brien")
     photo_attachment = Attachment.objects.create(
         application=app, owner=app.owner, category="PHOTO"
@@ -148,3 +167,9 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
     assert detail["summary"]["sources"]["reason"] == detail["marriage_source"]
     assert detail["summary"]["sources"]["children"] == detail["marriage_source"]
     assert detail["summary"]["sources"]["last_hearing_date"] is None
+    assert detail["separation"]["marital_status"] == "Separated"
+    assert detail["separation"]["initiated_by"]["value"] == "self"
+    assert detail["separation"]["civil_divorce"]["case_number"] == "24STFL-09834"
+    assert detail["separation"]["restraining_orders"][0]["case_number"] == "24DVRO-05217"
+    assert detail["separation"]["reconciliation"]["attempted"] == "Yes"
+    assert detail["separation"]["source"] == detail["marriage_source"]

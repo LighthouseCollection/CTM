@@ -1402,7 +1402,8 @@
               id === "case" ||
               (id === "parties" && councilModule?.CaseParties && council) ||
               (id === "timeline" && councilModule?.CaseTimeline && council) ||
-              (id === "marriage" && councilModule?.CaseMarriage && council)
+              (id === "marriage" && councilModule?.CaseMarriage && council) ||
+              (id === "separation" && councilModule?.CaseSeparation && council)
             ),
           }),
         ),
@@ -1717,6 +1718,8 @@
         return h(councilModule.CaseNotesWorkspace, { key: selection, api, lang, user, caseId: selection });
       if (page === "marriage" && council && councilModule?.CaseMarriage)
         return h(councilModule.CaseMarriage, { key: selection, api, lang, caseId: selection });
+      if (page === "separation" && council && councilModule?.CaseSeparation)
+        return h(councilModule.CaseSeparation, { key: selection, api, lang, caseId: selection });
       if (page === "hearings" && council && councilModule?.CaseHearings)
         return h(councilModule.CaseHearings, {
           key: selection,

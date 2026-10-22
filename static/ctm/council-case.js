@@ -2752,6 +2752,44 @@
     );
   }
 
+  function CaseSeparation({ api, lang, caseId }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`), [caseId]);
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const separation = state.data.separation || {}, value = (item) => item || "—";
+    const initiator = separation.initiated_by;
+    const initiatorValue = initiator?.party
+      ? h(P.DataPill, { gender: initiator.party.gender === "M" ? "male" : initiator.party.gender === "F" ? "female" : undefined, fill: true }, `${initiator.party.name} (${initiator.party.slot === "A" ? "Applicant" : "Spouse"})`)
+      : value(initiator?.value);
+    const section = (title, icon, items) => h(P.Panel, { title, icon }, h(P.PropertyList, { columns: 3 }, ...items));
+    const item = (label, content) => h(P.PropertyList.Item, { label }, value(content));
+    const civil = separation.civil_divorce || {}, reconciliation = separation.reconciliation || {};
+    return h(P.Stack, { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("separation")),
+      section("Separation Details", "move", [
+        item("Current Marital Status", separation.marital_status),
+        item("Date of Separation", separation.separation_date),
+        item("Initiated By", initiatorValue),
+        item("Reason for Divorce", separation.reason),
+      ]),
+      section("Civil Divorce", "document", [
+        item("Civil Divorce Filed?", civil.filed), item("Date of Civil Divorce", civil.date), item("Name of Court", civil.court),
+        item("Court Street Address / Location", civil.location), item("Civil Case Number", civil.case_number), item("Civil Divorce Status", civil.status),
+      ]),
+      ...(separation.restraining_orders || []).map((order, index) => section(`Restraining Order${separation.restraining_orders.length > 1 ? ` ${index + 1}` : ""}`, "shield", [
+        item("Restraining Order Filed?", order.filed), item("Date of Restraining Order", order.date), item("Restraining Order Expiration Date", order.expiration_date),
+        item("Name Listed on Order", order.name_listed), item("Name of Court", order.court), item("Restraining Order Case Number", order.case_number), item("Restraining Order Status", order.status),
+      ])),
+      !separation.restraining_orders?.length ? section("Restraining Order", "shield", [item("Restraining Order Filed?", null)]) : null,
+      section("Reconciliation", "settings-users", [
+        item("Clergy Counseling / Reconciliation Attempted?", reconciliation.attempted),
+        item("Previously Applied for Ecclesiastical Marriage Permit?", reconciliation.previously_applied),
+        item("When Did You Previously Apply?", reconciliation.when), item("Where Did You Previously Apply?", reconciliation.where), item("Decision Outcome", reconciliation.outcome),
+      ]),
+    );
+  }
+
   // Case timeline: milestone events from the case audit, oldest first. Routine edits
   // (answer saves, uploads, notes, votes) stay in Case Audit.
   const MILESTONES = new Set([
