@@ -863,47 +863,13 @@
   }
   function ReportReader({ rows, t, lang }) {
     const [selected, select] = R.useState(null);
-    const reports = rows.filter(
-      (row) =>
-        !["medical", "psychological"].includes(row.kind) && !row.restricted,
-    );
+    const reports = rows.filter((row) => !["medical", "psychological"].includes(row.kind) && !row.restricted).map((row) => ({ ...row, completedBy: row.author || t("unknown"), dateReceived: row.submitted_at ? new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium" }).format(new Date(row.submitted_at)) : "" }));
     const chosen = reports.find((row) => row.id === selected);
-    const reading = chosen
-      ? h(ReportDetail, {
-          key: chosen.id,
-          report: chosen,
-          t,
-          lang,
-          onOriginal: () => select(chosen.parent_report_id),
-        })
-      : h(P.EmptyState, { title: t("chooseReport") });
-    return h(
-      P.Stack,
-      null,
-      heading(t("reports")),
-      h(P.SplitView, {
-        label: t("reports"),
-        firstLabel: t("reports"),
-        first: h(
-          P.Stack,
-          null,
-          ...reports.map((row) =>
-            h(P.Card, { icon: "doc-text",
-              key: row.id,
-              title: row.title,
-              meta: `${row.date}${row.parent_report_id ? " · " + t("followUp") : ""}`,
-              onOpen: () => select(row.id),
-            }),
-          ),
-          !reports.length ? h(P.EmptyState, { title: t("noReports") }) : null,
-        ),
-        second: h(
-          P.ReadingPane,
-          { label: chosen?.title || t("chooseReport") },
-          reading,
-        ),
-      }),
-    );
+    const reading = chosen ? h(ReportDetail, { key: chosen.id, report: chosen, t, lang, onOriginal: () => select(chosen.parent_report_id) }) : h(P.EmptyState, { title: t("chooseReport") });
+    return h(window.CTMShell.Workspace, {
+      label: t("reports"), rows: reports, selected, onSelect: select, empty: t("noReports"), showDetailWhenEmpty: true,
+      columns: [{ title: "Completed by", field: "completedBy", kind: "name" }, { title: "Date received", field: "dateReceived" }],
+    }, reading);
   }
   function CaseFiles({ caseId, section, council, t }) {
     const [rows, setRows] = R.useState([]),
