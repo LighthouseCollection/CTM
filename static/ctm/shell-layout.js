@@ -2,13 +2,17 @@
 (() => {
   const R = window.React, P = window.Plenix, h = R.createElement;
   function Table({ label, rows, columns, selected, onSelect, empty }) {
-    const common = { label, data: rows, columns, index: "id", narrow: "table", empty };
-    // Session agenda tables are reference tables, not interactive workspaces.
-    // P.Table deliberately has no grid controls or internal horizontal scrolling.
-    if (!onSelect) return h(P.Table, common);
+    // All CTM tables remain documented DataTable grids.  Session agenda grids
+    // do not expose column menus or column resizing, which prevents their
+    // grid chrome from creating a needless horizontal scrolling workflow.
+    const gridColumns = (columns || []).map((column) => ({
+      ...column, headerSort: false, resizable: false,
+    }));
+    const common = { label, data: rows, columns: gridColumns, index: "id", narrow: "table", empty };
     return h(P.DataTable, {
       ...common, mode: "fill",
-      selected: selected ? [selected] : [], onRowClick: (row) => onSelect(row.id), empty,
+      headerMenu: false, rowMenuButton: false,
+      selected: selected ? [selected] : [], onRowClick: onSelect ? (row) => onSelect(row.id) : undefined, empty,
     });
   }
   function Workspace({ label, rows, columns, children, empty, selectionPrompt, selected, onSelect, showDetailWhenEmpty = false }) {

@@ -44,7 +44,7 @@ test("session lifecycle changes refresh their parent destination list", () => {
   assert.match(council, /onChanged: retry/);
 });
 
-test("the current session uses the default EntityHeader actions and static agenda tables", () => {
+test("the current session uses the default EntityHeader actions and non-resizable agenda grids", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /mode === "current"/);
   assert.match(council, /h\(P\.EntityHeader/);
@@ -75,7 +75,8 @@ test("the current session uses the default EntityHeader actions and static agend
   assert.doesNotMatch(agendaTable, /P\.SplitView/);
   assert.match(agendaTable, /previousRecommendation/);
   assert.match(agendaTable, /title: "", field: "open_action"/);
-  assert.match(shellLayout, /if \(!onSelect\) return h\(P\.Table/);
+  assert.match(shellLayout, /headerMenu: false/);
+  assert.match(shellLayout, /resizable: false/);
   assert.match(shellLayout, /return h\(P\.DataTable/);
 });
 
