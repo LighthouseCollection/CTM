@@ -367,3 +367,21 @@ test("exported council pages are wrapped in an error boundary", () => {
   for (const name of ["CaseSummary", "DecisionWorkspace", "ReportsWorkspace", "SessionWorkspace", "ReviewWorkspace"])
     assert.match(C[name].displayName || "", /^Guarded\(/, name);
 });
+
+test("case workspaces stack the record table above its selected detail", () => {
+  const layout = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
+  const media = fs.readFileSync("static/ctm/council-media.js", "utf8");
+  assert.match(layout, /orientation = "side-by-side"/);
+  const filesStart = media.indexOf("function CaseFilesWorkspace(");
+  const files = media.slice(filesStart, media.indexOf("  Object.assign(window.CTMCouncil", filesStart));
+  assert.match(files, /P\.SplitView, \{[\s\S]*orientation:\s*"stacked"/);
+});
+
+test("professional assessments use a request dialog instead of a side-pane form", () => {
+  const start = source.indexOf("function AssessmentsWorkspace(");
+  const end = source.indexOf("  // ---------- Parties and case hearings", start);
+  const workspace = source.slice(start, end);
+  assert.match(workspace, /P\.Toolbar/);
+  assert.match(workspace, /P\.Dialog/);
+  assert.match(workspace, /orientation:\s*"stacked"/);
+});

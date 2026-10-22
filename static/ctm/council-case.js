@@ -2050,6 +2050,7 @@
       h(P.Text, { variant: "secondary" }, t("auditCount", { n: rows.length })),
       h(window.CTMShell.Workspace, {
         label: t("caseAudit"), rows, empty: t("noAudit"),
+        orientation: "stacked",
         columns: [{ title: t("caseAudit"), field: "label", kind: "name" }, { title: t("recordedBy"), field: "actor" }],
       }, (row) => h(P.Stack, null,
         h(P.Text, { as: "h2", variant: "title" }, row.label),
@@ -2279,9 +2280,23 @@
       }
     }
     const err = (key) => (problem === key ? t(key) : undefined);
+    const requestDialog = composing
+      ? h(P.Dialog, { open: true, title: t("newAssessment"), size: "lg", onClose: () => !pending && setComposing(false) },
+          h(P.Form, { onSubmit: create, label: t("newAssessment"), noValidate: true },
+            h(P.FormSection, { title: t("newAssessment") },
+              h(P.Field, { label: t("subject"), required: true, error: err("chooseSubject") }, h(P.Select, { value: form.party, disabled: pending, onChange: (e) => update({ party: e.target.value }), options: [{ value: "", label: t("chooseSubject") }, ...record.parties.filter((p) => p.can_receive).map((p) => ({ value: p.id, label: p.name }))] })),
+              h(P.RadioGroup, { label: t("assessmentKind"), layout: "row", value: form.kind, onChange: (value) => update({ kind: value }), options: ASSESSMENT_KINDS.map((value) => ({ value, label: t(value), disabled: pending })) }),
+              h(P.Field, { label: t("title"), required: true, error: err("titleRequired") }, h(P.Input, { value: form.title, maxLength: 200, disabled: pending, onChange: (e) => update({ title: e.target.value }) })),
+              h(P.Field, { label: t("assessmentInstructions"), description: t("assessmentInstructionsHelp") }, h(P.Textarea, { rows: 4, value: form.instructions, maxLength: 10000, disabled: pending, onChange: (e) => update({ instructions: e.target.value }) })),
+            ),
+            h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setComposing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveDraft"))),
+          ),
+        )
+      : null;
     const detail = h(
       P.Stack,
       { gap: "lg" },
+      h(P.Toolbar, { label: t("assessments") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => setComposing(true) }, t("newAssessment")) : null),
       h(P.Text, { as: "h1", variant: "title" }, t("assessments")),
       h(P.Notice, { tone: "info" }, t("assessmentPrivacy")),
       h(P.Notice, { tone: "warning" }, t("releaseTextPending")),
@@ -2291,50 +2306,11 @@
         P.Panel,
         { icon: "lock",
           title: t("assessmentRequests"),
-          actions: canWrite && !composing ? h(P.Button, { size: "sm", variant: "primary", onClick: () => setComposing(true) }, t("newAssessment")) : null,
+          actions: null,
         },
         h(
           P.Stack,
           { gap: "sm" },
-          composing
-            ? h(
-                P.Form,
-                { onSubmit: create, label: t("newAssessment"), noValidate: true },
-                h(
-                  P.FormSection,
-                  { title: t("newAssessment") },
-                  h(
-                    P.Field,
-                    { label: t("subject"), required: true, error: err("chooseSubject") },
-                    h(P.Select, {
-                      value: form.party,
-                      disabled: pending,
-                      onChange: (e) => update({ party: e.target.value }),
-                      options: [{ value: "", label: t("chooseSubject") }, ...record.parties.filter((p) => p.can_receive).map((p) => ({ value: p.id, label: p.name }))],
-                    }),
-                  ),
-                  h(P.RadioGroup, {
-                    label: t("assessmentKind"),
-                    layout: "row",
-                    value: form.kind,
-                    onChange: (value) => update({ kind: value }),
-                    options: ASSESSMENT_KINDS.map((value) => ({ value, label: t(value), disabled: pending })),
-                  }),
-                  h(P.Field, { label: t("title"), required: true, error: err("titleRequired") }, h(P.Input, { value: form.title, maxLength: 200, disabled: pending, onChange: (e) => update({ title: e.target.value }) })),
-                  h(
-                    P.Field,
-                    { label: t("assessmentInstructions"), description: t("assessmentInstructionsHelp") },
-                    h(P.Textarea, { rows: 4, value: form.instructions, maxLength: 10000, disabled: pending, onChange: (e) => update({ instructions: e.target.value }) }),
-                  ),
-                ),
-                h(
-                  P.FormActions,
-                  { sticky: false },
-                  h(P.Button, { disabled: pending, onClick: () => setComposing(false) }, t("cancel")),
-                  h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveDraft")),
-                ),
-              )
-            : null,
           ...requests.filter((row) => row.id === selected).map((row) =>
             h(
               P.Card,
@@ -2350,7 +2326,7 @@
               row.instructions ? h(P.Text, { as: "p", variant: "secondary" }, row.instructions) : null,
             ),
           ),
-          !requests.length && !composing ? h(P.EmptyState, { title: t("noAssessments") }) : null,
+          !requests.length ? h(P.EmptyState, { title: t("noAssessments") }) : null,
           !canWrite ? h(P.Text, { variant: "secondary" }, t(proceeding ? "writerOnly" : "noOpenProceeding")) : null,
         ),
       ),
@@ -2391,10 +2367,11 @@
     );
     return h(window.CTMShell.Workspace, {
       label: t("assessments"), selected, onSelect: select, showDetailWhenEmpty: true,
+        orientation: "stacked",
       rows: [...requests, ...reports].map((row) => ({ ...row, title: row.restricted ? t("restrictedAssessment") : row.title })),
       empty: t("noAssessmentReports"),
       columns: [{ title: t("assessments"), field: "title", kind: "name" }, { title: t("assessmentKind"), field: "kind", render: (row) => row.kind ? t(row.kind) : "" }],
-    }, detail);
+    }, detail, requestDialog);
 
   }
 
@@ -2613,6 +2590,7 @@
       h(P.Text, { variant: "secondary" }, t("hearingsScope")),
       h(window.CTMShell.Workspace, {
         label: t("hearingsTitle"), rows: state.data.map(({ session, item }) => ({ id: item.id, session, item, date: session.date })),
+        orientation: "stacked",
         empty: t("noHearings"),
         columns: [{ title: t("hearingsTitle"), field: "date", kind: "name" }],
       }, ({ session, item }) => h(P.Stack, null,
@@ -2720,7 +2698,11 @@
       h(P.Text, { as: "h1", variant: "title" }, t("internalNotes")),
       h(P.Text, { as: "p", variant: "secondary" }, t("internalNotesHelp")),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-      notes.length ? h(P.Stack, { gap: "sm" }, ...notes.map((note) => h(P.Card, { icon: "doc-text", key: note.note_id, title: note.author ? `${note.author} · ${base.formatWhen(note.timestamp, lang)}` : t("note"), meta: `${t("version")} ${note.version}`, actions: note.can_edit && canWrite ? h(P.Button, { size: "xs", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); } }, t("editNote")) : null }, h(P.Text, { as: "p" }, note.text)))) : h(P.EmptyState, { title: t("noNotes") }),
+      h(window.CTMShell.Workspace, {
+        label: t("internalNotes"), orientation: "stacked", selected: editing, onSelect: (noteId) => { setEditing(noteId); setText(notes.find((note) => note.note_id === noteId)?.text || ""); setFailure(null); },
+        rows: notes.map((note) => ({ ...note, id: note.note_id, title: note.author || t("note"), preview: note.text, recorded: base.formatWhen(note.timestamp, lang) })), empty: t("noNotes"),
+        columns: [{ title: t("note"), field: "title", kind: "name" }, { title: t("recordedAt"), field: "recorded" }, { title: t("note"), field: "preview", kind: "wrap" }],
+      }, (note) => note ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h2", variant: "title" }, note.title), h(P.Text, { variant: "secondary" }, `${t("version")} ${note.version} · ${note.recorded}`), h(P.Text, { as: "p" }, note.text), note.can_edit && canWrite ? h(P.Button, { size: "sm", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); } }, t("editNote")) : null) : null),
       canWrite ? h(P.Form, { onSubmit: save, label: t("addNote"), noValidate: true },
         h(P.Field, { label: t(editing ? "editingNote" : "addNote"), description: editing ? t("editNoteHelp") : undefined }, h(P.Textarea, { rows: 4, autoGrow: true, value: text, maxLength: 50000, disabled: pending, onChange: (e) => { setText(e.target.value); setFailure(null); } })),
         failure ? h(P.Notice, { tone: "danger" }, failure) : null,
@@ -3177,3 +3159,4 @@
     CaseTimeline: base.guarded(CaseTimeline),
   });
 })();
+
