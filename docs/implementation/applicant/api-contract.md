@@ -1,8 +1,8 @@
 # Applicant frontend integration contract
 
 Coordinated on GitHub #1/#2; not an amendment to protected build-spec. Backend PR #7
-at `07c35ed` supplies the application projection and expected-version write guards;
-the proposed own-file listing remains pending there. Governance owns shared shell
+at `6e690b5` supplies the application projection, own-file/payment history and
+expected-version write guards. Governance owns shared shell
 integration. Existing backend remains the authorization authority.
 
 ## Application projection
@@ -148,3 +148,20 @@ fields are requested. Missing/invalid projection fails closed and never falls ba
 to council agenda. No self-rescheduling is provided. Backend read/lifecycle contract
 is requested on issue #2 and remains unimplemented at `6e89c22`; fixture tests are
 explicitly separate from real backend acceptance.
+
+## Own payment history
+
+GET `/api/applications/{id}/payments/` is available at backend `6e690b5`:
+`{fee:{amount_minor,currency,status},verified_payment:boolean,events:[],checkouts:[]}`.
+Events carry `id,kind,amount_minor,currency,amount_basis,timestamp`; checkout rows
+carry `id,state,version,timestamp`. No provider reference/secret is requested.
+The view only reads these server facts, never enables a filing action or performs
+reconciliation. Waiver/historical exemption are not verified provider payment.
+Processing, pending, paid-but-not-finalized and needs_review remain distinct from
+application submission. Unknown statuses show unavailable, not success. Refunded
+event amounts have `amount_basis:"cumulative_refunded"` and are labelled as a
+cumulative total, never added together as separate refunds. Other events use
+`amount_basis:"event"`. Invalid/unauthorized refresh clears previously shown facts.
+Refresh is explicit and also follows answer-version/application-status/fee changes.
+The pending-candidate attestation/resume contract remains a separate dependency;
+this read projection does not supply a checkout URL or original attestation.

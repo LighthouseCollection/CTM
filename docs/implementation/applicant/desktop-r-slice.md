@@ -74,6 +74,15 @@ dependency; tests use an explicit contract fixture. The shared shell patch propo
 applicant-only My appointments navigation and module loading, without modifying
 shared source files in this branch.
 
+`applicant-payments.js` exports `CTMApplicantPayments.PaymentHistory` for the own
+application's real payment read projection. It distinguishes outstanding fee,
+authorized waiver, verified provider payment, checkout processing/reconciliation
+and refund/dispute facts. Cumulative refund amounts are labelled without summing
+them. This view makes GET requests only and does not grant filing capabilities or
+offer applicant reconciliation/refund writes. Failed or invalid refresh clears old
+financial facts. Browser/API tests verify a real authorized fixture waiver remains
+distinct from provider payment; no provider success is invented.
+
 ## Proposed shell patch
 
 `shell-integration.patch` is for governance to review/apply serially, not an applied

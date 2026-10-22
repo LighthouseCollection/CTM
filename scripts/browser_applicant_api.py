@@ -165,7 +165,7 @@ try:
         for name in ("outsider","admin"):
             other=browser.new_context()
             other.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies[name],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
-            for suffix in ("","history/","files/"):
+            for suffix in ("","history/","files/","payments/"):
                 assert other.request.get(f"{BASE}/api/applications/{app_id}/{suffix}").status==403
             other.close()
         checks.append("Real API denies outsider and council draft/detail/history access")
@@ -241,6 +241,13 @@ try:
         ready=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
         assert ready["fee"]["status"]=="waived" and ready["can_submit"] and not ready["can_checkout"]
         page.get_by_role("button",name="Refresh application status",exact=True).click()
+        history=page.get_by_role("region",name="Payment status and history",exact=True)
+        expect(history.get_by_text("Application fee: $250.00 · Authorized fee waiver",exact=True)).to_be_visible()
+        expect(history.get_by_text("No verified provider payment is recorded.",exact=False)).to_be_visible()
+        financial=context.request.get(f"{BASE}/api/applications/{app_id}/payments/")
+        assert financial.status==200 and financial.json()["verified_payment"] is False
+        assert financial.json()["fee"]["status"]=="waived" and financial.json()["events"]==[]
+        checks.append("Real owner payment history shows authorized waiver without fabricating provider success; outsider and staff draft reads denied")
         page.get_by_role("button",name="Review answers",exact=True).click()
         page.get_by_label("I have read and accept this declaration.",exact=True).check()
         page.get_by_label("Your full name",exact=False).fill("Synthetic Applicant")

@@ -384,6 +384,10 @@
           dirty: state.dirty || state.saving || uploadBusy || !documentsReady || projectionPending || projectionFailure || record.version !== state.version, reviewed: review,
           onBusyChange: setFilingBusy, onLockChange: setFilingLocked,
           onRefresh: reloadAnswers,
+        }) : null,
+        window.CTMApplicantPayments ? h(window.CTMApplicantPayments.PaymentHistory, {
+          key:"payment-history",applicationId,api,lang,
+          refreshKey:`${record.version}:${record.status}:${record.fee?.status}`,
         }) : null);
     }
     return h(P.LocaleProvider, { locale: lang === "ar" ? "ar" : "en", dir: lang === "ar" ? "rtl" : "ltr" },
