@@ -1437,7 +1437,7 @@
     ];
     const casesNavigationItems = [
       { id: "myCases", icon: h(P.Icon, { name: "folder_shared", "aria-hidden": true }), label: t("myCases") },
-      ...(canManage(user) ? [{ id: "newApplications", icon: navigationIcon("newApplications"), label: t("newApplications") }] : []),
+      ...(councilModule?.canManage?.(user) ? [{ id: "newApplications", icon: navigationIcon("newApplications"), label: t("newApplications") }] : []),
       { id: "cases", icon: h(P.Icon, { name: "folder", "aria-hidden": true }), label: t("allCases") },
       { id: "archived", icon: navigationIcon("archived"), label: t("archivedCases") },
       { id: "statistics", icon: navigationIcon("statistics"), label: t("statistics"), disabled: unavailable.has("statistics") },

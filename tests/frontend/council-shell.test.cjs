@@ -200,6 +200,7 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.match(app, /sessionsArchived: "calendar_lock"/);
   assert.match(app, /\{ id: "sessions", icon: navigationIcon\("sessions"\), label: t\("sessionCurrent"\) \}/);
   assert.match(app, /heading: t\("tribunalSessions"\),\s*icon: navigationIcon\("sessionsGroup"\)/);
+  assert.match(app, /councilModule\?\.canManage\?\.\(user\)/);
   assert.match(app, /const appealsReturnIcon = \(\) =>/);
   assert.match(app, /id === "appeals"\s*\? appealsReturnIcon\(\)/);
   assert.doesNotMatch(app, /const casesNavigationItems = \[\s*\{ id: "search"/);
