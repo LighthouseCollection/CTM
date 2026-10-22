@@ -1040,10 +1040,18 @@
       setPending(true);
       setFailure(null);
       try {
-        await api(`/api/requests/${encodeURIComponent(request.id)}/complete/`, {
+        const report = await api(`/api/requests/${encodeURIComponent(request.id)}/complete/`, {
           method: "POST",
           body: JSON.stringify(interviewPayload(answers, observations, request.questions)),
         });
+        // Audio captured during the interview moves to the saved report, where it is submitted.
+        if (report && report.id && base.recordingStore) {
+          try {
+            await base.recordingStore().move(`request:${request.id}`, `report:${report.id}`);
+          } catch {
+            /* no local recording */
+          }
+        }
         onRecorded();
       } catch (error) {
         setFailure(base.serverMessage(error, t));
@@ -1054,6 +1062,9 @@
     return h(
       P.Form,
       { onSubmit: save, label: t("recordInterview"), noValidate: true },
+      base.ReportRecorder
+        ? h(base.ReportRecorder, { api, lang, storageKey: `request:${request.id}`, reportId: null, caseId: null, canSubmit: false, captureOnly: true })
+        : null,
       h(
         P.FormSection,
         { title: t("recordInterview"), description: t("interviewRecordHelp") },
@@ -1290,7 +1301,11 @@
       value: tab,
       onChange: setTab,
       items: [
-        { value: "reports", label: t("completedReports"), content: renderReports() },
+        {
+          value: "reports",
+          label: t("completedReports"),
+          content: base.ReportsReader ? h(base.ReportsReader, { api, lang, user, caseId, reports }) : renderReports(),
+        },
         {
           value: "requests",
           label: t("requests"),

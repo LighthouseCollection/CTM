@@ -90,6 +90,28 @@ const parties = (c) => [
   { id: "pa-" + c.id, name: "Synthetic Applicant", is_self: false, can_receive: true, reference: null },
   { id: "pb-" + c.id, name: "Synthetic Spouse", is_self: false, can_receive: true, reference: null },
 ];
+// Synthetic evidence bytes generated in memory (no real case material).
+function wavTone(seconds = 2, hz = 440, rate = 8000) {
+  const samples = seconds * rate;
+  const buf = Buffer.alloc(44 + samples * 2);
+  buf.write("RIFF", 0); buf.writeUInt32LE(36 + samples * 2, 4); buf.write("WAVE", 8); buf.write("fmt ", 12);
+  buf.writeUInt32LE(16, 16); buf.writeUInt16LE(1, 20); buf.writeUInt16LE(1, 22); buf.writeUInt32LE(rate, 24);
+  buf.writeUInt32LE(rate * 2, 28); buf.writeUInt16LE(2, 32); buf.writeUInt16LE(16, 34); buf.write("data", 36); buf.writeUInt32LE(samples * 2, 40);
+  for (let i = 0; i < samples; i++) buf.writeInt16LE(Math.round(Math.sin((2 * Math.PI * hz * i) / rate) * 8000), 44 + i * 2);
+  return buf;
+}
+const PNG_1PX = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+const MINI_PDF = Buffer.from(
+  "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 100]/Contents 4 0 R/Resources<</Font<</F1<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>>>>>>>endobj\n4 0 obj<</Length 44>>stream\nBT /F1 12 Tf 20 50 Td (Synthetic evidence) Tj ET\nendstream endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n",
+);
+const MEDIA = {
+  "ev-img": { name: "20261001-01-EVD-20261015-1000.png", category: "EVD", mime: "image/png", bytes: () => PNG_1PX },
+  "ev-aud": { name: "20261001-01-EVD-20261015-1001.wav", category: "EVD", mime: "audio/wav", bytes: () => wavTone() },
+  "ev-pdf": { name: "20261001-01-EVD-20261015-1002.pdf", category: "EVD", mime: "application/pdf", bytes: () => MINI_PDF },
+  "ev-doc": { name: "20261001-01-EVD-20261015-1003.doc", category: "EVD", mime: "application/msword", bytes: () => Buffer.from("synthetic word bytes") },
+  "dc-mc": { name: "20261001-01-MC-20261001-0900.pdf", category: "MC", mime: "application/pdf", bytes: () => MINI_PDF },
+};
+
 const members = () =>
   Object.values(people).map(({ id, name, role }) =>
     pr7
@@ -214,16 +236,50 @@ function api(req, res, url, body) {
       f.checked = true;
     }
     const rows = state.files.filter((f) => f.case === m[1] && f.scan_state === "clean" && !state.decrees.some((d) => d.signed_file_id === f.id));
-    return json(res, 200, {
-      items: rows.map((f) => ({ id: f.id, name: f.name, category: f.category, version: 1, mime_type: "application/pdf", download_url: `/api/files/${f.id}/` })),
-      next_offset: null,
-    });
+    const uploaded = rows.map((f) => ({
+      id: f.id, name: f.name, category: f.category, version: 1, mime_type: f.mime || "application/pdf", byte_count: f.size || 1024,
+      created_at: now(), download_url: `/api/files/${f.id}/`, preview_url: (f.mime || "application/pdf") === "application/pdf" ? `/api/files/${f.id}/?view=1` : null,
+    }));
+    const evidence = m[1] === "c-4" ? Object.entries(MEDIA).map(([id, x]) => ({
+      id, name: x.name, category: x.category, version: 1, mime_type: x.mime, byte_count: x.bytes().length, created_at: "2026-10-15T17:00:00Z",
+      download_url: `/api/files/${id}/`, preview_url: ["application/pdf", "image/png"].includes(x.mime) ? `/api/files/${id}/?view=1` : null,
+    })) : [];
+    return json(res, 200, { items: [...evidence, ...uploaded], next_offset: null });
   }
   if (p === "/api/files/") {
-    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
-    const f = { id: "f-" + (state.files.length + 1), case: body.case_id, category: body.category, name: `${body.case_number}-${body.category}-20261021-1800.pdf`, scan_state: state.files.length ? "clean" : "pending" };
+    const c = state.cases.find((x) => x.id === body.case_id);
+    if (!admin() && (!c || c.assigned !== me().id)) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    const audio = body.category === "REC";
+    const f = {
+      id: "f-" + (state.files.length + 1), case: body.case_id, category: body.category,
+      name: `${body.case_number}-${body.category}-20261021-1800.${audio ? "webm" : "pdf"}`,
+      mime: audio ? "video/webm" : "application/pdf", size: body.size || 0, scan_state: state.files.length ? "clean" : "pending",
+    };
     state.files.push(f);
     return json(res, 201, { id: f.id, name: f.name, scan_state: f.scan_state, sha256: "synthetic" });
+  }
+  if ((m = p.match(/^\/api\/files\/([^/]+)\/$/)) && MEDIA[m[1]]) {
+    const x = MEDIA[m[1]];
+    const data = x.bytes();
+    res.writeHead(200, { "Content-Type": x.mime, "Content-Length": data.length, "Accept-Ranges": "none", "Cache-Control": "private, no-store",
+      "Content-Disposition": url.searchParams.get("view") === "1" ? "inline" : `attachment; filename="${x.name}"` });
+    return res.end(data);
+  }
+  if (p === "/api/recordings/") {
+    const f = state.files.find((x) => x.id === body.file_id);
+    if (!f || !String(f.mime).startsWith("video/") && !String(f.mime).startsWith("audio/")) return json(res, 422, { error: "validation", messages: ["Store a technically validated council-only recording first."] });
+    if (!body.notice_recorded) return json(res, 422, { error: "validation", messages: ["Recording notice and technical validation required."] });
+    if (!state.recordings) state.recordings = [];
+    const existing = state.recordings.find((x) => x.file === f.id);
+    if (existing) return json(res, 201, { id: existing.id });
+    const rec = { id: "rec-" + (state.recordings.length + 1), file: f.id, report: body.report_id, finalized: false };
+    state.recordings.push(rec);
+    return json(res, 201, { id: rec.id });
+  }
+  if ((m = p.match(/^\/api\/recordings\/([^/]+)\/finalize\/$/))) {
+    const rec = (state.recordings || []).find((x) => x.id === m[1]);
+    rec.finalized = true;
+    return json(res, 201, { id: "run-" + rec.id });
   }
   if ((m = p.match(/^\/api\/files\/([^/]+)\/signature\/$/))) {
     if (role !== "president" && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
@@ -365,7 +421,20 @@ function api(req, res, url, body) {
     return json(res, 201, { id: "rel-" + decree.releases.length });
   }
   // Council projection of a medical report without a council-scope release.
-  if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/))) return json(res, 200, { items: m[1] === "c-4" ? [{ id: "rep-med-1", restricted: true }] : [] });
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/)))
+    return json(res, 200, {
+      items: m[1] === "c-4"
+        ? [
+            { id: "rep-med-1", restricted: true },
+            { id: "rep-int-1", title: "In-person interview", kind: "interview", subject: "Synthetic Applicant", version: 1, date: "2026-10-16",
+              parent_report_id: null, questions: [{ code: "DM-01", en: "Synthetic question one?", ar: "" }], answers: { "DM-01": "Synthetic answer." }, observations: "Synthetic council observation." },
+            { id: "rep-int-2", title: "Applicant intake", kind: "intake", subject: "Synthetic Spouse", version: 1, date: "2026-10-12",
+              parent_report_id: null, questions: [{ code: "DM-02", en: "Synthetic question two?", ar: "" }], answers: { "DM-02": "Spouse answer." }, observations: null },
+          ]
+        : [],
+    });
+  if ((m = p.match(/^\/api\/reports\/([^/]+)\/revisions\/$/)))
+    return json(res, 200, { items: [{ id: "rv-1", version: 1, answers: { "DM-01": "Synthetic answer." }, observations: "Synthetic council observation.", actor: "Fr. Synthetic Member", timestamp: "2026-10-16T18:00:00Z" }] });
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/assignment\/$/))) {
     if (!admin() && !(pr7 && role === "president")) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
     const c = state.cases.find((x) => x.id === m[1]);
@@ -575,6 +644,7 @@ http
             if (hit) body[field] = hit[1];
           }
           body.case_number = state.cases.find((x) => x.id === body.case_id)?.number || "case";
+          body.size = raw.length;
         } else {
           try { body = raw ? JSON.parse(raw) : {}; } catch { return json(res, 400, {}); }
         }

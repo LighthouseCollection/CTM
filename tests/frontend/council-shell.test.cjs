@@ -6,7 +6,7 @@ const shell = fs.readFileSync("tribunal/templates/tribunal/shell.html", "utf8");
 const app = fs.readFileSync("static/ctm/app.js", "utf8");
 
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
-  const order = ["cdn/0.58.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/app.js"].map((s) => shell.indexOf(s));
+  const order = ["cdn/0.58.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
   for (const index of order) assert.ok(index > 0);
   assert.deepEqual([...order].sort((a, b) => a - b), order);
   assert.doesNotMatch(shell, /cdn\/(?!0\.58\.0)\d+\.\d+\.\d+/);
