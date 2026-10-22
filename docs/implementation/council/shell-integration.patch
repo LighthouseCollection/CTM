@@ -1,5 +1,5 @@
 diff --git a/static/ctm/app.js b/static/ctm/app.js
-index 05009e1..d8a6ef8 100644
+index 05009e1..cab0504 100644
 --- a/static/ctm/app.js
 +++ b/static/ctm/app.js
 @@ -11,6 +11,8 @@
@@ -99,7 +99,24 @@ index 05009e1..d8a6ef8 100644
      return response.json();
    }
    function MessageComposer({ record, sessions, council, t, onSent }) {
-@@ -1032,7 +1048,7 @@
+@@ -501,7 +517,7 @@
+   }
+   const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
+   const heading = (value) => text(value, { as: "h1", variant: "title" });
+-  function SessionAttendance({ sessionId, session, members, initial, t }) {
++  function SessionAttendance({ sessionId, session, members, initial, t, onSaved }) {
+     const [records, setRecords] = R.useState(initial),
+       [pending, setPending] = R.useState(false),
+       [failed, setFailed] = R.useState(false);
+@@ -522,6 +538,7 @@
+             present: value === "present",
+           }),
+         });
++        if (onSaved) onSaved();
+       } catch {
+         setRecords(previous);
+         setFailed(true);
+@@ -1032,7 +1049,7 @@
            messages: messages.items,
            sessions: sessions.items,
          }));
@@ -108,7 +125,7 @@ index 05009e1..d8a6ef8 100644
          request = Promise.all([
            api(`/api/sessions/${selection}/agenda/`),
            api("/api/council/members/"),
-@@ -1042,6 +1058,12 @@
+@@ -1042,6 +1059,12 @@
            members: members.items,
            attendance: attendance.items,
          }));
@@ -121,7 +138,7 @@ index 05009e1..d8a6ef8 100644
        else if (page === "sessions") request = api("/api/sessions/");
        else if (page === "applications") request = api("/api/applications/");
        else if (["home", "cases", "archived", "past"].includes(page)) {
-@@ -1170,11 +1192,29 @@
+@@ -1170,11 +1193,29 @@
      const navItems = council
        ? ["home", "sessions", "cases", "search", "archived", "statistics"]
        : ["home", "applications", "past"];
@@ -155,7 +172,7 @@ index 05009e1..d8a6ef8 100644
      const caseGroups = [
        {
          heading: t("overview"),
-@@ -1182,7 +1222,11 @@
+@@ -1182,7 +1223,11 @@
            (id) => ({
              id,
              label: t(id === "case" ? "summary" : id),
@@ -168,7 +185,7 @@ index 05009e1..d8a6ef8 100644
            }),
          ),
        },
-@@ -1200,15 +1244,24 @@
+@@ -1200,15 +1245,24 @@
          ].map((id) => ({
            id,
            label: t(id),
@@ -197,7 +214,7 @@ index 05009e1..d8a6ef8 100644
          })),
        },
      ];
-@@ -1247,6 +1300,14 @@
+@@ -1247,6 +1301,14 @@
                  groups: reviewGroups,
                })
              : null,
@@ -212,7 +229,7 @@ index 05009e1..d8a6ef8 100644
          )
        : h(
            P.NavPane,
-@@ -1342,6 +1403,69 @@
+@@ -1342,6 +1404,69 @@
            lang,
            onCase: (id) => go("case", id),
          });
@@ -282,7 +299,7 @@ index 05009e1..d8a6ef8 100644
        if (page === "reports")
          return h(ReportReader, { key: selection, rows: data.items, t, lang });
        if (["documents", "evidence"].includes(page))
-@@ -1425,6 +1549,15 @@
+@@ -1425,6 +1550,15 @@
                  onSent: () => reload((n) => n + 1),
                })
              : null,
@@ -298,7 +315,7 @@ index 05009e1..d8a6ef8 100644
          );
        if (page === "case")
          return h(
-@@ -1456,6 +1589,50 @@
+@@ -1456,6 +1590,51 @@
              }),
            ),
          );
@@ -336,9 +353,10 @@ index 05009e1..d8a6ef8 100644
 +          onCase: (id) => go("case", id),
 +          onBack: () => go("sessions"),
 +          onSession: (id) => go("session", id),
-+          renderAttendance: ({ session, members, attendance, key }) =>
++          renderAttendance: ({ session, members, attendance, key, onSaved }) =>
 +            h(SessionAttendance, {
 +              key,
++              onSaved,
 +              sessionId: selection,
 +              session,
 +              members,
@@ -349,7 +367,7 @@ index 05009e1..d8a6ef8 100644
        if (page === "session")
          return h(
            P.Stack,
-@@ -1538,11 +1715,26 @@
+@@ -1538,11 +1717,26 @@
                : h(P.EmptyState, { title: t("noCurrent") }),
          );
        }
