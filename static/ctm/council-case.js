@@ -185,6 +185,12 @@
     return { answers: out, observations: String(observations || "").trim() };
   }
 
+  // Ordinary reports only: Professional Assessments never join the ordinary chain,
+  // even when their release makes them readable to the council.
+  function ordinaryReports(reports) {
+    return (reports || []).filter((r) => !r.restricted && !["medical", "psychological"].includes(r.kind));
+  }
+
   function openProceeding(record) {
     return (record?.proceedings || []).find((row) => row.status === "open") || null;
   }
@@ -717,7 +723,7 @@
           options: LANGUAGES.map((value) => ({ value, label: t(value), disabled: pending })),
         }),
         problem === "arabicMissing" ? h(P.Notice, { tone: "warning" }, t("arabicMissing")) : null,
-        reports.length
+        ordinaryReports(reports).length
           ? h(
               P.Field,
               { label: t("parent") },
@@ -727,7 +733,7 @@
                 onChange: (e) => update({ parent: e.target.value }),
                 options: [
                   { value: "", label: t("noParent") },
-                  ...reports.filter((r) => !r.restricted).map((r) => ({ value: r.id, label: `${r.title} · ${r.date}` })),
+                  ...ordinaryReports(reports).map((r) => ({ value: r.id, label: `${r.title} · ${r.date}` })),
                 ],
               }),
             )
@@ -2327,6 +2333,7 @@
     requestProblem,
     requestPayload,
     openProceeding,
+    ordinaryReports,
     ReportsWorkspace,
     RequestsPanel,
     DecisionWorkspace,

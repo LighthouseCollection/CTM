@@ -269,3 +269,8 @@ test("timeline keeps milestones only, oldest first, with readable labels", () =>
   );
   assert.deepEqual(plain(rows.map((r) => r.label)), ["Application submitted", "Decree issued"]);
 });
+
+test("follow-up parents exclude assessments even when readable by council", () => {
+  const reports = [{ id: "a", kind: "intake" }, { id: "b", kind: "medical", restricted: false }, { id: "c", restricted: true }, { id: "d", kind: "psychological" }];
+  assert.deepEqual(plain(C.ordinaryReports(reports).map((r) => r.id)), ["a"]);
+});
