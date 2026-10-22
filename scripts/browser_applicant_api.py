@@ -1147,20 +1147,24 @@ try:
         def decree_access_fixture():
             import hashlib
             from django.utils import timezone
-            from tribunal.models import DecisionRevision,Decree,Proceeding,Attachment,FileVersion,FileTechnicalEvent,Case
+            from tribunal.models import Decree,Proceeding,Attachment,FileVersion,FileTechnicalEvent,Case,Party
+            from tribunal.services.decisions import record_decision,close_case
             from tribunal.services.files import write_private_original,private_path
-            proceeding=Proceeding.objects.filter(case_id=current["case_id"],kind="initial").first()
+            case=Case.objects.get(pk=current["case_id"])
+            proceeding=Proceeding.objects.filter(case=case,status="open").order_by("-sequence").first()
+            if proceeding is None:raise AssertionError("Synthetic decree requires the current open proceeding")
             attachment=Attachment.objects.create(case_id=current["case_id"],proceeding=proceeding,category="DEC",visibility="council")
             file=FileVersion.objects.create(attachment=attachment,number=1,object_key=f"synthetic-decrees/{uuid.uuid4().hex}.pdf",
                 original_name="synthetic-signed.pdf",display_name="synthetic-signed.pdf",mime_type="application/pdf",
                 byte_count=len(signed_bytes),sha256=hashlib.sha256(signed_bytes).hexdigest(),actor=admin)
             FileTechnicalEvent.objects.create(file=file,task="scan",result="clean")
             write_private_original(private_path(file.object_key),signed_bytes)
-            decision=DecisionRevision.objects.create(proceeding=proceeding,number=1,type="nullity",grounds="Synthetic access test only",actor=admin,
-                entitlements={party_id:"certificate"})
+            entitlements={str(pk):("certificate" if str(pk)==party_id else "notice_only")
+                for pk in Party.objects.filter(case=case).values_list("pk",flat=True)}
+            decision=record_decision(admin,proceeding.pk,"diss-applicant","Synthetic access test only",entitlements)
             decree=Decree.objects.create(decision=decision,reference="DCR-SYNTHETIC-ACCESS",language="both",
                 signed_file=file,signer=president,issued_at=timezone.now())
-            Case.objects.filter(pk=current["case_id"]).update(status="closed")
+            close_case(admin,case,"synthetic_decree_access_fixture",notify_parties=False)
             return str(decree.pk),str(file.pk)
         decree_id,signed_file=fixture_db(decree_access_fixture)  # Synthetic stored signed bytes/closed state only, not issuance/signature acceptance.
         missing_signed_file=str(uuid.uuid4())
