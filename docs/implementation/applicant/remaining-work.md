@@ -1,5 +1,9 @@
 # Remaining applicant work
 
+## Five repeat-family UI verification
+
+Eight fresh pinned-CDN browser groups verify all five mapped repeat families: exact new values, original/opaque preservation, add/edit/remove/review/reload, failed-save retention and Arabic390px. Synthetic technical fields are not institution-approved content or backend validation acceptance. [Report](repeat-sections-report.md) | [Download JSON](repeat-sections-result.json). Named dependencies remain in the field-mapping report; owner requests posted to issues2 and12.
+
 ## Current linked first-petition checkpoint
 
 Linked-spouse first-petition entry is implemented; actual two-filer and closed-case first-petition submission coverage replaces prior constructed-filing state.94 frontend tests, six entry fixture groups and nine shell groups pass. Unmodified integration104e4fd passes75 applicant API/browser groups; the explicit local review candidate with the named module/minimal hook passes76. This is not an integrated successor or institutional acceptance. [Report and blockers](linked-petition-report.md) | [Candidate JSON](linked-petition-api-result.json). Earlier counts and fixture gaps below are historical snapshots.
