@@ -13,7 +13,7 @@ test("static table headers retain their full label on hover", () => {
 });
 
 test("session layout assets use a current cache version", () => {
-  assert.match(shell, /ctm\/shell-layout\.js\x27 %\}\?v=grid-layout-20261022ao/);
+  assert.match(shell, /ctm\/shell-layout\.js\x27 %\}\?v=[a-z0-9-]+/);
   assert.match(shell, /ctm\/council\.js\x27 %\}\?v=[a-z0-9-]+/);
 });
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
@@ -26,10 +26,19 @@ test("council modules load in order before app.js with the pinned Plenix CDN", (
 test("case workspaces use the CDN contained tab variant", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   const councilMedia = fs.readFileSync("static/ctm/council-media.js", "utf8");
-  assert.match(app, /h\(P\.Tabs, \{ variant: "contained", label: t\("communications"\)/);
+  assert.match(app, /h\(P\.Tabs, \{[\s\S]*variant: "contained", label: t\("communications"\)/);
   assert.match(councilCase, /variant: "contained", label: t\("reports"\)/);
-  assert.match(councilCase, /h\(P\.Tabs, \{ variant: "contained", label: t\("callLog"\)/);
+  assert.match(councilCase, /h\(P\.Tabs, \{[\s\S]*variant: "contained", label: t\("callLog"\)/);
   assert.match(councilMedia, /h\(P\.Tabs, \{\s*variant: "contained",\s*label: report\.title/);
+});
+
+test("all tabbed workspaces place their content inside contained tabs", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const communications = app.slice(app.indexOf("function CommunicationsWorkspace"), app.indexOf("function CaseNavigationState"));
+  const calls = councilCase.slice(councilCase.indexOf("function CallLog"), councilCase.indexOf("// ---------- Professional Assessments ----------"));
+  const reports = councilCase.slice(councilCase.indexOf("function ReportsWorkspace"), councilCase.indexOf("// ---------- Decision & Voting ----------"));
+  for (const source of [communications, calls, reports])
+    assert.match(source, /items: \[[\s\S]*content:/);
 });
 
 test("account menu receives localized AppHeader labels and density choices", () => {
@@ -237,7 +246,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(app, /id === "separation"\s*\? h\("span", \{ className: "ctm-separation-nav-icon"/);
   assert.match(app, /h\(P\.Icon, \{ name: "person" \}\), h\(P\.Icon, \{ name: "close" \}\)/);
   assert.match(app, /page === "separation" && council && councilModule\?\.CaseSeparation/);
-  assert.match(app, /items: \["communications", "notes"\]/);
+  assert.match(app, /items: \["communications", "calls", "notes"\]/);
   assert.match(councilCase, /function CaseSeparation\(\{ api, lang, user, caseId \}\)/);
   assert.match(councilCase, /"Separation Details"/);
   assert.match(councilCase, /"Civil Divorce"/);

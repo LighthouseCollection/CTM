@@ -1069,8 +1069,25 @@
     const rows = data.messages.filter((row) => tab === "sent" ? isSent(row) : !isSent(row));
     const chosen = rows.find((row) => row.id === selected) || null;
     const detail = chosen ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, chosen.sender), h(P.Text, { variant: "secondary" }, new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(chosen.timestamp))), text(chosen.body)) : h(P.EmptyState, { title: t("noMessages") });
-    return h(R.Fragment, null, composing ? h(MessageComposer, { key: `compose-${selection}`, record: data.record, sessions: data.sessions, council, t, onSent: () => { setComposing(false); reload((n) => n + 1); }, onClose: () => setComposing(false) }) : null,
-      h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" }, h(P.Toolbar, { label: t("communications") }, data.record.can_message ? h(P.Button, { variant: "primary", icon: "add", onClick: () => setComposing(true) }, t("newMessage")) : null), h(P.Tabs, { variant: "contained", label: t("communications"), value: tab, onChange: (value) => { setTab(value); select(null); }, items: [{ value: "received", label: "Received" }, { value: "sent", label: "Sent" }] }), h(window.CTMShell.Workspace, { label: t("communications"), rows, selected, onSelect: select, empty: t("noMessages"), showDetailWhenEmpty: true, columns: [{ title: "From", field: "sender", kind: "name" }, { title: t("message"), field: "body", kind: "wrap" }, { title: t("recordedAt"), field: "timestamp" }] }, detail)));
+    const workspace = h(window.CTMShell.Workspace, {
+      label: t("communications"), rows, selected, onSelect: select, empty: t("noMessages"),
+      showDetailWhenEmpty: true,
+      columns: [{ title: "From", field: "sender", kind: "name" }, { title: t("message"), field: "body", kind: "wrap" }, { title: t("recordedAt"), field: "timestamp" }],
+    }, detail);
+    return h(R.Fragment, null,
+      composing ? h(MessageComposer, { key: `compose-${selection}`, record: data.record, sessions: data.sessions, council, t, onSent: () => { setComposing(false); reload((n) => n + 1); }, onClose: () => setComposing(false) }) : null,
+      h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
+        h(P.Toolbar, { label: t("communications") }, data.record.can_message ? h(P.Button, { variant: "primary", icon: "add", onClick: () => setComposing(true) }, t("newMessage")) : null),
+        h(P.Tabs, {
+          variant: "contained", label: t("communications"), value: tab,
+          onChange: (value) => { setTab(value); select(null); },
+          items: [
+            { value: "received", label: "Received", content: workspace },
+            { value: "sent", label: "Sent", content: workspace },
+          ],
+        }),
+      ),
+    );
   }
   function CaseNavigationState({ caseId }) {
     const layout = P.useAppLayout();
