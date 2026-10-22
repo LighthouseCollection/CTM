@@ -1,5 +1,29 @@
 # VM-FRM backend progress
 
+## Typed settings schemas and conflict-safe HTTP editing
+
+**647 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply
+through0039. Inventory unchanged:63 models/91 routes/63 forced-RLS tables.
+
+All six current nonsecret setting families expose versioned field schemas with
+server validation; HTTP expected_version is required. Legacy values stay intact
+and incompatible/unsafe values receive review/redaction metadata. No provider or
+consumer activation is claimed. Exact contract and remaining scope:
+[typed-settings-contract.md](typed-settings-contract.md).
+
+
+## Runtime identity and authorized list continuation
+
+**617 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply
+through0039. Inventory unchanged:63 models/91 routes/63 forced-RLS tables.
+
+Actual SQL session identities are tested with bounded HTTP session/draft/history
+checks; private/nonexistent draft IDs retain identical404 behavior. Cases and
+case/system audit expose validated offset/limit/next_offset, preserving item fields
+and filtering private audit sources before paging. Exact contracts, external-stall
+limitations and acceptance: [runtime-pagination-continuation.md](runtime-pagination-continuation.md).
+
+
 ## Applicant validation checkpoint continuation
 
 **599 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply
