@@ -68,7 +68,7 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.match(app, /\["home", "myCases", "cases", "archived", "past"\]\.includes\(page\)/);
   assert.match(app, /view: page === "myCases" \? "mine" : page === "archived" \? "archived" : "active"/);
   assert.match(app, /const caseSearchIcon = \(\) =>/);
-  assert.match(app, /className: "ctm-case-search-nav-icon", width: 18, height: 18/);
+  assert.match(app, /className: "ctm-case-search-nav-icon", width: "1em", height: "1em"/);
   assert.match(app, /id === "search"\s*\? caseSearchIcon\(\)/);
   assert.match(app, /const appealsReturnIcon = \(\) =>/);
   assert.match(app, /id === "appeals"\s*\? appealsReturnIcon\(\)/);
