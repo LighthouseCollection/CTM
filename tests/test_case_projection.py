@@ -1,7 +1,7 @@
 import pytest
 from tribunal.models import Attachment, FileTechnicalEvent, FileVersion, Party
 from tribunal.services.applications import submit_application
-from tribunal.services.council import assign_case
+from tribunal.services.council import assign_case, save_finding
 
 pytestmark = pytest.mark.django_db
 
@@ -173,3 +173,29 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
     assert detail["separation"]["restraining_orders"][0]["case_number"] == "24DVRO-05217"
     assert detail["separation"]["reconciliation"]["attempted"] == "Yes"
     assert detail["separation"]["source"] == detail["marriage_source"]
+
+
+def test_council_case_detail_exposes_versioned_council_card_edits_only_to_council(
+    client, ready_application, people
+):
+    """Council changes supplement the applicant record instead of overwriting it."""
+    app = ready_application
+    submit_application(
+        app.owner, app.pk, "council-card-edit", {"accepted": True, "name": "John Smith"}
+    )
+    app.refresh_from_db()
+    save_finding(
+        people["admin"],
+        app.proceeding_id,
+        "case_card.marriage",
+        {"church_name": "St. Mark Coptic Orthodox Church"},
+    )
+    login = lambda actor: client.force_login(actor, backend="allauth.account.auth_backends.AuthenticationBackend")
+    login(people["secretary"])
+    council = client.get(f"/api/cases/{app.case_id}/").json()
+    assert council["council_edits"]["marriage"]["value"] == {
+        "church_name": "St. Mark Coptic Orthodox Church"
+    }
+    assert council["council_edits"]["marriage"]["source"]["kind"] == "council_record"
+    login(app.owner)
+    assert "council_edits" not in client.get(f"/api/cases/{app.case_id}/").json()

@@ -680,6 +680,41 @@ def _council_party_profiles(case, parties):
     return result
 
 
+def _council_case_edits(case):
+    """Return the latest council-owned supplement for each editable case card.
+
+    A submitted application is an immutable applicant record.  Council edits are
+    therefore stored as versioned findings and projected separately, with their
+    author and timestamp retained for the card that displays them.
+    """
+    proceeding = case.proceedings.filter(status="open").order_by("-sequence", "-id").first()
+    if not proceeding:
+        return {}
+    latest = {}
+    rows = (
+        m.FindingRevision.objects.filter(
+            proceeding=proceeding, fact_code__startswith="case_card."
+        )
+        .select_related("actor")
+        .order_by("fact_code", "-number", "-id")
+    )
+    for row in rows:
+        scope = row.fact_code.removeprefix("case_card.")
+        if scope and scope not in latest:
+            latest[scope] = {
+                "value": row.value,
+                "source": {
+                    "kind": "council_record",
+                    "record_type": "finding",
+                    "record_id": str(row.pk),
+                    "version": row.number,
+                    "actor": f"{row.actor.first_name} {row.actor.last_name}".strip(),
+                    "recorded_at": row.created_at.isoformat(),
+                },
+            }
+    return latest
+
+
 @endpoint()
 def case_detail(request, case_id):
     from tribunal.projections import case_capabilities
@@ -727,6 +762,7 @@ def case_detail(request, case_id):
                 encoded(p, kind=p.kind, status=p.status, sequence=p.sequence)
                 for p in case.proceedings.all()
             ],
+            **({"council_edits": _council_case_edits(case)} if request.user.role != "applicant" else {}),
         )
     )
 

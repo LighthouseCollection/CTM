@@ -2738,25 +2738,66 @@
     return lang === "ar" ? `${years} سنة و${remainder} شهر` : `${years} years, ${remainder} months`;
   }
 
-  function CaseMarriage({ api, lang, caseId }) {
+  function councilCardValues(record, scope, submitted) {
+    const edit = record.council_edits?.[scope]?.value;
+    return edit && typeof edit === "object" && !Array.isArray(edit) ? { ...submitted, ...edit } : submitted;
+  }
+
+  function CaseMarriage({ api, lang, user, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`), [caseId]);
+    const [editing, setEditing] = R.useState(false);
+    const [form, setForm] = R.useState({});
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const marriage = state.data.marriage || {}, value = (item) => item || "—";
+    const record = state.data;
+    const marriage = councilCardValues(record, "marriage", record.marriage || {}), value = (item) => item || "—";
+    const proceeding = openProceeding(record);
+    const canWrite = writerFor(user, null, record) && proceeding?.status === "open";
+    const fields = [
+      ["outside_coptic_church", t("marriedOutsideCoptic"), "text"],
+      ["outside_denomination", t("outsideDenomination"), "text"],
+      ["outside_marriage_date", t("outsideMarriageDate"), "date"],
+      ["church_marriage_date", t("churchMarriageDate"), "date"],
+      ["officiating_priest", t("officiatingPriest"), "text"],
+      ["church_name", t("churchName"), "text"],
+      ["church_location", t("churchLocation"), "text"],
+      ["diocese", t("diocese"), "text"],
+    ];
+    const startEditing = () => { setForm(Object.fromEntries(fields.map(([key]) => [key, marriage[key] || ""]))); setFailure(null); setEditing(true); };
+    const save = async (event) => {
+      event.preventDefault();
+      setPending(true); setFailure(null);
+      try {
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`, {
+          method: "POST", body: JSON.stringify({ fact_code: "case_card.marriage", value: form }),
+        });
+        setEditing(false); retry();
+      } catch (error) { setFailure(base.serverMessage(error, t)); }
+      finally { setPending(false); }
+    };
     return h(P.Stack, { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("marriageTitle")),
       h(P.Panel, { icon: "settings-users", title: t("churchMarriage") },
-        h(P.PropertyList, { columns: 3 },
-          h(P.PropertyList.Item, { label: t("marriedOutsideCoptic") }, value(marriage.outside_coptic_church)),
-          h(P.PropertyList.Item, { label: t("outsideDenomination") }, value(marriage.outside_denomination)),
-          h(P.PropertyList.Item, { label: t("outsideMarriageDate") }, value(marriage.outside_marriage_date)),
-          h(P.PropertyList.Item, { label: t("churchMarriageDate") }, value(marriage.church_marriage_date)),
-          h(P.PropertyList.Item, { label: t("officiatingPriest") }, value(marriage.officiating_priest)),
-          h(P.PropertyList.Item, { label: t("marriageDuration") }, value(marriageDuration(marriage.church_marriage_date, lang))),
-          h(P.PropertyList.Item, { label: t("churchName") }, value(marriage.church_name)),
-          h(P.PropertyList.Item, { label: t("churchLocation") }, value(marriage.church_location)),
-          h(P.PropertyList.Item, { label: t("diocese") }, value(marriage.diocese)),
+        h(P.Stack, { gap: "md" },
+          canWrite && !editing ? h(P.Inline, { justify: "end" }, h(P.Button, { size: "sm", onClick: startEditing }, "Edit")) : null,
+          editing ? h(P.Form, { onSubmit: save, label: t("churchMarriage"), noValidate: true },
+            h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+            failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+            h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
+          ) : h(P.PropertyList, { columns: 3 },
+            h(P.PropertyList.Item, { label: t("marriedOutsideCoptic") }, value(marriage.outside_coptic_church)),
+            h(P.PropertyList.Item, { label: t("outsideDenomination") }, value(marriage.outside_denomination)),
+            h(P.PropertyList.Item, { label: t("outsideMarriageDate") }, value(marriage.outside_marriage_date)),
+            h(P.PropertyList.Item, { label: t("churchMarriageDate") }, value(marriage.church_marriage_date)),
+            h(P.PropertyList.Item, { label: t("officiatingPriest") }, value(marriage.officiating_priest)),
+            h(P.PropertyList.Item, { label: t("marriageDuration") }, value(marriageDuration(marriage.church_marriage_date, lang))),
+            h(P.PropertyList.Item, { label: t("churchName") }, value(marriage.church_name)),
+            h(P.PropertyList.Item, { label: t("churchLocation") }, value(marriage.church_location)),
+            h(P.PropertyList.Item, { label: t("diocese") }, value(marriage.diocese)),
+          ),
         ),
       ),
     );

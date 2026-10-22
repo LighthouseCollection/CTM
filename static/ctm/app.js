@@ -1718,9 +1718,9 @@
       if (page === "notes" && council && councilModule?.CaseNotesWorkspace)
         return h(councilModule.CaseNotesWorkspace, { key: selection, api, lang, user, caseId: selection });
       if (page === "marriage" && council && councilModule?.CaseMarriage)
-        return h(councilModule.CaseMarriage, { key: selection, api, lang, caseId: selection });
+        return h(councilModule.CaseMarriage, { key: selection, api, lang, user, caseId: selection });
       if (page === "separation" && council && councilModule?.CaseSeparation)
-        return h(councilModule.CaseSeparation, { key: selection, api, lang, caseId: selection });
+        return h(councilModule.CaseSeparation, { key: selection, api, lang, user, caseId: selection });
       if (page === "hearings" && council && councilModule?.CaseHearings)
         return h(councilModule.CaseHearings, {
           key: selection,

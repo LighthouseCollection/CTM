@@ -132,6 +132,14 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /manage && record\.status === "open" && record\.parties\.length < 2/);
 });
 
+test("marriage card saves council-owned edits through the shared card finding layer", () => {
+  const app = read("static/ctm/council-case.js");
+  assert.match(app, /function councilCardValues\(record, scope, submitted\)/);
+  assert.match(app, /fact_code: "case_card\.marriage"/);
+  assert.match(app, /\/findings\//);
+  assert.match(app, /ctm-case-edit-grid/);
+});
+
 test("case back navigation retains the workspace that opened the case", () => {
   assert.match(app, /const \[caseOrigin, setCaseOrigin\] = R\.useState\(null\)/);
   assert.match(app, /const openCase = \(id, origin\) =>/);
