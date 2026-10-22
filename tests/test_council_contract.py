@@ -1,8 +1,10 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
+import json
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
-from tribunal.models import Account, AgendaItem, Notification, ReportQuestion
-from tribunal.services.applications import submit_application, review_application
+from tribunal.models import Account, AgendaItem, Notification, Party, ReportQuestion
+from tribunal.services.applications import submit_application, review_application, save_answers
 from tribunal.services.council import (
     assign_case, create_session, place_agenda, record_attendance, hear_case,
     save_hearing_outcome, close_session,
@@ -63,6 +65,76 @@ def test_assignment_part_one_is_completed_without_carryover(filed, people):
     close_session(people["admin"], session.pk)
     item.refresh_from_db()
     assert item.state == "assigned" and not following.agenda.exists()
+
+
+def test_session_workspace_projects_saved_header_and_assignment_facts(client, filed, people):
+    app = filed
+    Party.objects.create(case=app.case, slot="B", name="Mary Smith")
+    starts_at = datetime(2030, 1, 2, 10, 0, tzinfo=ZoneInfo("America/Los_Angeles"))
+    session = create_session(
+        people["admin"],
+        date(2030, 1, 2),
+        starts_at=starts_at,
+        presiding_member=people["president"],
+        location="St. George Coptic Orthodox Church, Bellflower, California",
+    )
+    place_agenda(people["admin"], session.pk, app.case_id, part=1)
+    login(client, people["secretary"])
+
+    data = client.get(f"/api/sessions/{session.pk}/agenda/").json()
+    assert data["session"] == {
+        **data["session"],
+        "reference": "CS20300102",
+        "starts_at": starts_at.isoformat(),
+        "presiding_member_id": str(people["president"].pk),
+        "presiding_member_name": "president Test",
+        "location": "St. George Coptic Orthodox Church, Bellflower, California",
+    }
+    row = data["items"][0]
+    assert row["applicant_name"] == "John Smith"
+    assert row["respondent_name"] == "Mary Smith"
+    assert row["reason"] == "infidelity"
+    assert row["married_years"] == 19
+    assert row["submitted_at"] == app.submitted_at.isoformat()
+    assert row["assignment_status"] == "unassigned"
+
+
+def test_session_create_api_persists_workspace_metadata(client, people):
+    login(client, people["admin"])
+    starts_at = "2030-01-02T10:00:00-08:00"
+    response = client.post(
+        "/api/sessions/",
+        data=json.dumps({
+            "date": "2030-01-02",
+            "starts_at": starts_at,
+            "presiding_member_id": str(people["president"].pk),
+            "location": "St. George Coptic Orthodox Church, Bellflower, California",
+        }),
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+    assert response.json() == {
+        **response.json(),
+        "reference": "CS20300102",
+        "starts_at": starts_at,
+        "presiding_member_id": str(people["president"].pk),
+        "presiding_member_name": "president Test",
+        "location": "St. George Coptic Orthodox Church, Bellflower, California",
+    }
+
+
+def test_session_agenda_hides_returned_private_correction(client, filed, people):
+    app = filed
+    review_application(people["secretary"], app.pk, "reject", "Correct the filing.")
+    visible = app.revisions.get(number=app.current_version).answers
+    save_answers(app.owner, app.pk, {**visible, "grounds": ["PRIVATE CORRECTION"]}, app.current_version)
+    session = create_session(people["admin"], date(2030, 1, 2))
+    place_agenda(people["admin"], session.pk, app.case_id, part=1)
+    login(client, people["secretary"])
+
+    row = client.get(f"/api/sessions/{session.pk}/agenda/").json()["items"][0]
+    assert row["reason"] == "infidelity"
+    assert "PRIVATE CORRECTION" not in row["reason"]
 
 
 def test_agenda_capabilities_match_presenter_attendance_and_hearing_state(client, filed, people):

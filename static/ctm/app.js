@@ -67,6 +67,10 @@
       sessions: "Tribunal Sessions - Current",
       sessionsUpcoming: "Tribunal Sessions - Upcoming",
       sessionsArchived: "Tribunal Sessions - Archived",
+      tribunalSessions: "Tribunal Sessions",
+      sessionCurrent: "Current",
+      sessionUpcoming: "Upcoming",
+      sessionArchived: "Archived",
       councilSession: "Council Session",
       archived: "Archived",
       search: "Search",
@@ -302,6 +306,10 @@
       sessions: "جلسات المجلس - الحالية",
       sessionsUpcoming: "جلسات المجلس - القادمة",
       sessionsArchived: "جلسات المجلس - المؤرشفة",
+      tribunalSessions: "جلسات المجلس",
+      sessionCurrent: "الحالية",
+      sessionUpcoming: "القادمة",
+      sessionArchived: "المؤرشفة",
       councilSession: "جلسة المجلس",
       archived: "الأرشيف",
       search: "البحث",
@@ -1396,6 +1404,19 @@
     const mainNavigationItems = navItems.map((id) => ({
       id, icon: navigationIcon(id), label: t(id), disabled: unavailable.has(id),
     }));
+    const sessionNavigationItems = [
+      { id: "sessions", icon: navigationIcon("sessions"), label: t("sessionCurrent") },
+      { id: "sessionsUpcoming", icon: navigationIcon("sessionsUpcoming"), label: t("sessionUpcoming") },
+      { id: "sessionsArchived", icon: navigationIcon("sessionsArchived"), label: t("sessionArchived") },
+    ];
+    const primaryNavigationItems = mainNavigationItems.filter((item) => !sessionNavigationItems.some((session) => session.id === item.id));
+    const mainRailItems = council
+      ? [
+          primaryNavigationItems[0],
+          { id: "sessions", icon: navigationIcon("sessions"), label: t("tribunalSessions"), active: sessionNavigationItems.some((item) => item.id === page) },
+          ...primaryNavigationItems.slice(1),
+        ]
+      : mainNavigationItems;
     const caseNavigationItems = [
       ...caseGroups.flatMap((group) => group.items),
       { id: "communications", label: t("communications"), icon: navigationIcon("communications") },
@@ -1405,7 +1426,7 @@
     const navigationRail = (items, onSelect) => h(R.Fragment, null,
       ...items.map((item) => h(P.ToolRail.Item, {
         key: item.id, icon: item.icon, label: item.label,
-        disabled: item.disabled, pressed: page === item.id,
+        disabled: item.disabled, pressed: item.active ?? page === item.id,
         onClick: () => onSelect(item.id),
       })),
     );
@@ -1465,17 +1486,28 @@
     const nav = h(
           P.NavPane,
           { title: t(council ? "council" : "applicant"), label: t("tribunal"),
-            rail: navigationRail(mainNavigationItems, (id) => go(id)) },
+            rail: navigationRail(mainRailItems, (id) => go(id)) },
+          council ? h(P.NavList, {
+            label: t("tribunal"),
+            value: page,
+            onSelect: (id) => go(id),
+            items: primaryNavigationItems.slice(0, 1),
+          }) : null,
+          council ? h(P.NavList, {
+            label: t("tribunalSessions"),
+            value: page,
+            onSelect: (id) => go(id),
+            groups: [{
+              heading: t("tribunalSessions"),
+              icon: navigationIcon("sessions"),
+              items: sessionNavigationItems,
+            }],
+          }) : null,
           h(P.NavList, {
             label: t("tribunal"),
             value: page,
             onSelect: (id) => go(id),
-            items: navItems.map((id) => ({
-              id,
-              icon: navigationIcon(id),
-              label: t(id),
-              disabled: unavailable.has(id),
-            })),
+            items: council ? primaryNavigationItems.slice(1) : primaryNavigationItems,
           }),
         );
     const accountIdentity = { name: user.name, email: user.email || "", src: user.avatar_url || null };

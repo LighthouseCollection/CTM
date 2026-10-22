@@ -172,9 +172,24 @@ def validate_finding_sources(actor, proceeding, sources):
 
 
 @transaction.atomic
-def create_session(actor, session_date):
+def create_session(actor, session_date, *, starts_at=None, presiding_member=None, location=""):
     administrator(actor)
-    session = CouncilSession.objects.create(date=session_date)
+    if starts_at is not None:
+        if not timezone.is_aware(starts_at):
+            raise ValidationError("Session start time must include a UTC offset.")
+        if starts_at.astimezone(ZoneInfo("America/Los_Angeles")).date() != session_date:
+            raise ValidationError("Session start time must fall on the session date in Los Angeles.")
+    if presiding_member is not None and (not presiding_member.is_active or presiding_member.role == "applicant"):
+        raise ValidationError("Presiding member must be an active council account.")
+    location = str(location or "").strip()
+    if len(location) > 300:
+        raise ValidationError("Session location is too long.")
+    session = CouncilSession.objects.create(
+        date=session_date,
+        starts_at=starts_at,
+        presiding_member=presiding_member,
+        location=location,
+    )
     audit(actor, "session_created", session)
     return session
 
@@ -532,7 +547,17 @@ def reschedule_session(actor, session_id, new_date, replacement_times, reason):
         if any(starts < prior_end and ends > prior_start for prior_start, prior_end in spans):
             raise ValidationError("Replacement testimony appointments overlap.")
         spans.append((starts, ends))
-    target = create_session(actor, new_date)
+    starts_at = None
+    if source.starts_at:
+        local = source.starts_at.astimezone(ZoneInfo("America/Los_Angeles"))
+        starts_at = datetime.combine(new_date, local.timetz())
+    target = create_session(
+        actor,
+        new_date,
+        starts_at=starts_at,
+        presiding_member=source.presiding_member,
+        location=source.location,
+    )
     snapshot = {"id": str(source.pk), "date": source.date.isoformat(), "reference": source.reference,
                 "attendance": [{"id": str(row.pk), "member_id": str(row.member_id), "present": row.present,
                                 "actor_id": str(row.actor_id), "timestamp": row.created_at.isoformat()}

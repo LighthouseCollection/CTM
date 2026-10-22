@@ -18,6 +18,8 @@ test("council navigation exposes current, upcoming, and archived tribunal sessio
   assert.match(app, /sessionsUpcoming: "Tribunal Sessions - Upcoming"/);
   assert.match(app, /sessionsArchived: "Tribunal Sessions - Archived"/);
   assert.match(app, /mode: page === "sessions" \? "current" : page === "sessionsUpcoming" \? "upcoming" : "archived"/);
+  assert.match(app, /heading: t\("tribunalSessions"\)/);
+  assert.match(app, /items: sessionNavigationItems/);
 });
 
 test("session lifecycle changes refresh their parent destination list", () => {
@@ -25,6 +27,16 @@ test("session lifecycle changes refresh their parent destination list", () => {
   assert.match(council, /function SessionWorkspace\(\{[^}]*onChanged/);
   assert.match(council, /"sessionClosed",\s*onChanged/);
   assert.match(council, /onChanged: retry/);
+});
+
+test("the current session is a record-header workspace with three workflow actions and two split tables", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(council, /mode === "current"/);
+  for (const key of ["addAssignmentCase", "addHearingCase", "attendance"])
+    assert.match(council, new RegExp(`t\\("${key}"\\)`), key);
+  assert.match(council, /t\("casesToAssign"\)/);
+  assert.match(council, /t\("scheduledCasesForHearing"\)/);
+  assert.match(council, /h\(P\.SplitView/);
 });
 
 test("council pages are enabled only when their module is loaded", () => {

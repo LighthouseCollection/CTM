@@ -60,6 +60,12 @@ test("session naming follows the contract", () => {
   );
 });
 
+test("missing session metadata stays missing instead of becoming an epoch date", () => {
+  assert.equal(C.formatSessionStart(null, "en"), null);
+  assert.equal(C.formatSessionStart("", "ar"), null);
+  assert.match(C.formatSessionStart("2030-01-02T10:00:00-08:00", "en"), /2030/);
+});
+
 test("one session per date and real calendar dates only", () => {
   const existing = [{ date: "2026-11-01" }];
   assert.equal(C.sessionDateProblem("2026-11-02", existing), null);

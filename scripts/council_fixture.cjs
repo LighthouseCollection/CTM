@@ -76,10 +76,17 @@ const state = {
     { id: "c-5", number: "20260901-01", status: "closed", assigned: "u-mem" },
   ],
   sessions: [
+    { id: "s-current", date: "2026-10-22", reference: "CS20261022", starts_at: "2026-10-22T10:00:00-07:00",
+      presiding_member_id: "u-pre", presiding_member_name: "Synthetic President",
+      location: "St. George Coptic Orthodox Church, Bellflower, California", state: "planned" },
     { id: "s-1", date: "2026-11-05", reference: "CS20261105", state: "planned" },
     { id: "s-0", date: "2026-10-08", reference: "CS20261008", state: "closed" },
   ],
-  agenda: [{ id: "i-s-0c-5", session: "s-0", case_id: "c-5", part: 2, state: "heard", position: 1 }],
+  agenda: [
+    { id: "i-current-c1", session: "s-current", case_id: "c-1", part: 1, state: "scheduled", position: 1 },
+    { id: "i-current-c4", session: "s-current", case_id: "c-4", part: 2, state: "scheduled", position: 1 },
+    { id: "i-s-0c-5", session: "s-0", case_id: "c-5", part: 2, state: "heard", position: 1 },
+  ],
   attendance: [],
   hearings: [{ id: "h-appeal", agenda: "i-s-0c-5", case_id: "c-5", state: "held", presenter_id: "u-mem" }],
   outcomes: [],
@@ -193,6 +200,7 @@ function appealExtras(a) {
 
 function agendaRow(item, s) {
   const c = state.cases.find((x) => x.id === item.case_id);
+  const application = state.applications.find((x) => x.case_id === c.id && x.kind === "petition");
   const row = { id: item.id, case_id: c.id, case_number: c.number, part: item.part, state: item.state, position: item.position };
   if (!pr7) return row;
   const hearing = state.hearings.find((h) => h.agenda === item.id);
@@ -203,6 +211,12 @@ function agendaRow(item, s) {
     assigned_member_id: c.assigned,
     assigned_member_name: nameOf(c.assigned),
     party_names: parties(c).map((p) => p.name),
+    applicant_name: parties(c)[0].name,
+    respondent_name: parties(c)[1].name,
+    reason: application?.answers?.grounds?.join(", ") || null,
+    married_years: 16,
+    submitted_at: application ? "2026-10-20T18:04:00Z" : null,
+    assignment_status: c.assigned ? "assigned" : "unassigned",
     can_present: Boolean(c.assigned === me().id && item.part === 2 && item.state === "scheduled" && s.state === "planned" && presence && presence.present),
     can_record_outcome: Boolean(hearing && (admin() || c.assigned === me().id) && c.status === "open"),
     testimony: state.testimony.filter((t) => t.agenda === item.id),
@@ -622,7 +636,9 @@ function api(req, res, url, body) {
     if (req.method === "POST") {
       if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
       if (state.sessions.some((s) => s.date === body.date)) return json(res, 409, { error: "conflict", detail: "The operation conflicts with another saved record." });
-      const s = { id: "s-" + body.date, date: body.date, reference: "CS" + body.date.replace(/-/g, ""), state: "planned" };
+      const s = { id: "s-" + body.date, date: body.date, reference: "CS" + body.date.replace(/-/g, ""),
+        starts_at: body.starts_at, presiding_member_id: body.presiding_member_id,
+        presiding_member_name: nameOf(body.presiding_member_id), location: body.location, state: "planned" };
       state.sessions.unshift(s);
       return json(res, 201, { id: s.id });
     }
@@ -639,7 +655,7 @@ function api(req, res, url, body) {
       state.agenda.push(item);
       return json(res, 201, { id: item.id });
     }
-    const session = { id: s.id, date: s.date, state: s.state, can_record_attendance: admin() && s.state === "planned" };
+    const session = { ...s, can_record_attendance: admin() && s.state === "planned" };
     if (pr7) Object.assign(session, { can_manage: admin() && s.state === "planned", can_close: admin() && s.state === "planned", can_reschedule: admin() && s.state === "planned" });
     return json(res, 200, { session, items: state.agenda.filter((x) => x.session === s.id).map((x) => agendaRow(x, s)) });
   }

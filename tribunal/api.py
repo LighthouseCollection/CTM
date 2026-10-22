@@ -590,45 +590,44 @@ def enroll(request):
 
 @endpoint(("GET", "POST"))
 def sessions(request):
-    from tribunal.projections import session_capabilities
+    from tribunal.projections import session_data
     staff(request.user)
     if request.method == "GET":
         return JsonResponse(
             {
                 "items": [
-                    encoded(
-                        x, date=x.date.isoformat(), reference=x.reference, state=x.state,
-                        **session_capabilities(x, request.user)
-                    )
-                    for x in m.CouncilSession.objects.order_by("-date")[:100]
+                    encoded(x, **session_data(x, request.user))
+                    for x in m.CouncilSession.objects.select_related("presiding_member").order_by("-date")[:100]
                 ]
             }
         )
     from tribunal.services.council import create_session
 
-    return JsonResponse(
-        encoded(
-            create_session(request.user, date.fromisoformat(body(request)["date"]))
-        ),
-        status=201,
+    data = body(request)
+    presiding_member = None
+    if data.get("presiding_member_id"):
+        presiding_member = m.Account.objects.get(pk=data["presiding_member_id"])
+    starts_at = datetime.fromisoformat(data["starts_at"]) if data.get("starts_at") else None
+    session = create_session(
+        request.user,
+        date.fromisoformat(data["date"]),
+        starts_at=starts_at,
+        presiding_member=presiding_member,
+        location=data.get("location", ""),
     )
+    return JsonResponse(encoded(session, **session_data(session, request.user)), status=201)
 
 
 @endpoint(("GET", "POST"))
 def agenda(request, session_id):
-    from tribunal.projections import agenda_item_data, session_capabilities
+    from tribunal.projections import agenda_item_data, session_data
     from tribunal.services.council import attendance_for
     staff(request.user)
     if request.method == "GET":
-        session = m.CouncilSession.objects.get(pk=session_id)
+        session = m.CouncilSession.objects.select_related("presiding_member").get(pk=session_id)
         return JsonResponse(
             {
-                "session": encoded(
-                    session,
-                    date=session.date.isoformat(),
-                    state=session.state,
-                    **session_capabilities(session, request.user),
-                ),
+                "session": encoded(session, **session_data(session, request.user)),
                 "items": [
                     agenda_item_data(x, request.user, attendance_for(request.user, session.pk))
                     for x in m.AgendaItem.objects.filter(session_id=session_id)

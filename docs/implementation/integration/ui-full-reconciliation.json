@@ -1107,7 +1107,7 @@
       "screen": "Tribunal Sessions/agenda",
       "source_module": "council.js SessionList/Workspace",
       "access": "Council read; authorized session writers",
-      "data_source": "CouncilSession/Agenda/Attendance/Hearing",
+      "data_source": "CouncilSession/Agenda/Attendance/Hearing/Application/Party",
       "gap_ids": "PA16 PA17 PA18",
       "ui_review_id": "UI-20",
       "prototype_pages": [
@@ -1116,11 +1116,10 @@
         "admin-sessions-historical.html",
         "admin-session-summary.html"
       ],
-      "controls_reconciled": "Table/detail, upcoming/past/date filters, create/reschedule/close, attendance and two agenda tables.",
-      "remaining_ui_or_acceptance": "Attendance/table/filter regressions fixed; timing/location/presiding/minutes projections and all action-journey acceptance remain.",
+      "controls_reconciled": "Expandable Current/Upcoming/Archived navigation tree; Current RecordPage header with saved reference/time/presiding/location and workflow actions; persistent-selection Cases to assign (Applicant, Respondent) and Scheduled Cases for Hearing (#, Applicant, Respondent, Assigned to) split tables; token-backed applicant/respondent/clergy pills; Upcoming create/reschedule/close and Archived table/detail.",
+      "remaining_ui_or_acceptance": "Full PostgreSQL migration/action-journey acceptance and minutes remain. Existing sessions without the new metadata show not recorded.",
       "dependencies": [
         "SESSION",
-        "PAGING",
         "COUNCIL"
       ],
       "current_modules": [

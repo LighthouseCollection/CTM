@@ -506,6 +506,11 @@ class Notification(Root):
 
 class CouncilSession(Root):
     date = models.DateField(unique=True)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    presiding_member = models.ForeignKey(
+        Account, null=True, blank=True, on_delete=models.PROTECT, related_name="presided_sessions"
+    )
+    location = models.CharField(max_length=300, blank=True)
     state = models.CharField(max_length=12, default="planned")
     closed_at = models.DateTimeField(null=True)
 

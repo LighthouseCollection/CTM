@@ -246,6 +246,27 @@
     }).format(d);
   }
 
+  function formatSessionStart(value, lang) {
+    if (!value) return null;
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return null;
+    return new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", {
+      dateStyle: "full",
+      timeStyle: "short",
+      timeZone: "America/Los_Angeles",
+    }).format(d);
+  }
+
+  function formatDate(value, lang) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value || "");
+    return new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", {
+      dateStyle: "medium",
+      timeZone: "America/Los_Angeles",
+    }).format(d);
+  }
+
   function answerText(value, t) {
     if (value === null || value === undefined || value === "") return t("notAnswered");
     if (typeof value === "string") return value;
@@ -314,13 +335,33 @@
       sessions: "Tribunal Sessions - Current",
       sessionsUpcoming: "Tribunal Sessions - Upcoming",
       sessionsArchived: "Tribunal Sessions - Archived",
+      tribunalSession: "Tribunal Session",
       noSessions: "No current council sessions are available.",
       noUpcomingSessions: "No upcoming council sessions are scheduled.",
       noArchivedSessions: "No archived council sessions are available.",
       newSession: "New council session",
       sessionDate: "Session date",
+      sessionTime: "Session time",
+      presiding: "Presiding",
+      location: "Location",
+      timeNotRecorded: "Time not recorded",
+      presidingNotRecorded: "Presiding member not recorded",
+      locationNotRecorded: "Location not recorded",
+      addAssignmentCase: "Add a Case to Be Assigned",
+      addHearingCase: "Add a Case to Hearings",
+      attendance: "Council Attendance",
+      scheduledCasesForHearing: "Scheduled Cases for Hearing",
+      respondent: "Respondent",
+      reason: "Reason",
+      married: "Married",
+      submitted: "Submitted",
+      assignedTo: "Assigned to",
+      years: "{n} years",
       createSession: "Create session",
       dateRequired: "Enter a valid session date.",
+      timeRequired: "Enter the session start time.",
+      presidingRequired: "Select the presiding member.",
+      locationRequired: "Enter the session location.",
       dateTaken: "A council session already exists on that date.",
       sessionCreated: "The council session was created.",
       planned: "Planned",
@@ -351,6 +392,7 @@
       deferred: "Deferred — awaiting manual placement",
       assigned: "Assigned case manager",
       unassigned: "Not yet assigned",
+      notRecorded: "Not recorded",
       recordAssignment: "Record assignment",
       recordReassignment: "Record reassignment",
       assignTitle: "Record case manager assignment",
@@ -551,13 +593,33 @@
       sessions: "جلسات المجلس - الحالية",
       sessionsUpcoming: "جلسات المجلس - القادمة",
       sessionsArchived: "جلسات المجلس - المؤرشفة",
+      tribunalSession: "جلسة المجلس",
       noSessions: "لا توجد جلسات مجلس حالية.",
       noUpcomingSessions: "لا توجد جلسات مجلس قادمة مجدولة.",
       noArchivedSessions: "لا توجد جلسات مجلس مؤرشفة.",
       newSession: "جلسة مجلس جديدة",
       sessionDate: "تاريخ الجلسة",
+      sessionTime: "وقت الجلسة",
+      presiding: "برئاسة",
+      location: "الموقع",
+      timeNotRecorded: "لم يُسجّل الوقت",
+      presidingNotRecorded: "لم يُسجّل العضو المترئس",
+      locationNotRecorded: "لم يُسجّل الموقع",
+      addAssignmentCase: "إضافة قضية للتعيين",
+      addHearingCase: "إضافة قضية لجلسات النظر",
+      attendance: "حضور أعضاء المجلس",
+      scheduledCasesForHearing: "القضايا المجدولة للنظر",
+      respondent: "الطرف الآخر",
+      reason: "السبب",
+      married: "مدة الزواج",
+      submitted: "تاريخ التقديم",
+      assignedTo: "مُعيَّنة إلى",
+      years: "{n} سنة",
       createSession: "إنشاء الجلسة",
       dateRequired: "أدخل تاريخًا صحيحًا للجلسة.",
+      timeRequired: "أدخل وقت بدء الجلسة.",
+      presidingRequired: "اختر العضو المترئس.",
+      locationRequired: "أدخل موقع الجلسة.",
       dateTaken: "توجد جلسة مجلس بالفعل في هذا التاريخ.",
       sessionCreated: "تم إنشاء جلسة المجلس.",
       planned: "مجدولة",
@@ -588,6 +650,7 @@
       deferred: "مؤجلة — في انتظار الجدولة اليدوية",
       assigned: "مسؤول القضية",
       unassigned: "لم يُعيَّن بعد",
+      notRecorded: "غير مسجل",
       recordAssignment: "تسجيل التعيين",
       recordReassignment: "تسجيل إعادة التعيين",
       assignTitle: "تسجيل تعيين مسؤول القضية",
@@ -1130,15 +1193,22 @@
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [state, retry] = useLoad(() => api("/api/sessions/"), [user?.id]);
+    const [state, retry] = useLoad(
+      () => Promise.all([api("/api/sessions/"), api("/api/council/members/")]).then(([sessions, members]) => ({ sessions, members })),
+      [user?.id],
+    );
     const [selected, select] = R.useState(null);
     const [filters, setFilters] = R.useState({});
     const [date, setDate] = R.useState("");
+    const [time, setTime] = R.useState("");
+    const [presiding, setPresiding] = R.useState("");
+    const [location, setLocation] = R.useState("");
     const [problem, setProblem] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [created, setCreated] = R.useState(false);
-    const loaded = state.data?.items || [];
+    const loaded = state.data?.sessions?.items || [];
+    const presidingMembers = assignmentAuthorizers(state.data?.members?.items || []);
     const today = todayInLosAngeles();
     const buckets = sessionBuckets(loaded, today);
     const rows = window.CTMUI.filterSessions(buckets[mode] || [], { ...filters, view: "all" }, today);
@@ -1148,14 +1218,21 @@
     async function create(event) {
       event.preventDefault();
       const issue = sessionDateProblem(date, loaded);
-      setProblem(issue);
+      const validation = issue || (!time ? "timeRequired" : !presiding ? "presidingRequired" : !location.trim() ? "locationRequired" : null);
+      setProblem(validation);
       setCreated(false);
-      if (issue) return;
+      if (validation) return;
       setPending(true);
       setFailure(null);
       try {
-        await api("/api/sessions/", { method: "POST", body: JSON.stringify({ date }) });
+        await api("/api/sessions/", {
+          method: "POST",
+          body: JSON.stringify({ date, starts_at: laIso(date, time), presiding_member_id: presiding, location: location.trim() }),
+        });
         setDate("");
+        setTime("");
+        setPresiding("");
+        setLocation("");
         setCreated(true);
         retry();
       } catch (error) {
@@ -1164,6 +1241,14 @@
         setPending(false);
       }
     }
+
+    if (state.pending && !state.data) return loadingView(P, h, t);
+    if (state.error) return loadFailure(P, h, t, retry, state.error);
+    if (mode === "current")
+      return rows.length
+        ? h(SessionWorkspace, { key: rows[0].id, api, lang, user, sessionId: rows[0].id, current: true,
+            onCase, onSession: select, onChanged: retry, renderAttendance })
+        : h(P.Stack, { gap: "lg" }, h(P.Text, { as: "h1", variant: "title" }, t(titleKey)), h(P.EmptyState, { title: t(emptyKey) }));
 
     return h(
       P.Stack,
@@ -1179,7 +1264,7 @@
               { onSubmit: create, label: t("newSession"), noValidate: true },
               h(
                 P.Field,
-                { label: t("sessionDate"), required: true, error: problem ? t(problem) : undefined },
+                { label: t("sessionDate"), required: true, error: problem === "dateRequired" || problem === "dateTaken" ? t(problem) : undefined },
                 h(P.Input, {
                   type: "date",
                   value: date,
@@ -1191,6 +1276,16 @@
                   },
                 }),
               ),
+              h(P.Field, { label: t("sessionTime"), required: true, error: problem === "timeRequired" ? t(problem) : undefined },
+                h(P.Input, { type: "time", value: time, width: "sm", disabled: pending,
+                  onChange: (event) => { setTime(event.target.value); setProblem(null); } })),
+              h(P.Field, { label: t("presiding"), required: true, error: problem === "presidingRequired" ? t(problem) : undefined },
+                h(P.Select, { value: presiding, disabled: pending,
+                  onChange: (event) => { setPresiding(event.target.value); setProblem(null); },
+                  options: [{ value: "", label: t("presidingRequired") }, ...presidingMembers.map((row) => ({ value: row.id, label: row.name || row.id }))] })),
+              h(P.Field, { label: t("location"), required: true, error: problem === "locationRequired" ? t(problem) : undefined },
+                h(P.Input, { value: location, maxLength: 300, disabled: pending,
+                  onChange: (event) => { setLocation(event.target.value); setProblem(null); } })),
               failure ? h(P.Notice, { tone: "danger" }, failure) : null,
               created ? h(P.Notice, { tone: "success" }, t("sessionCreated")) : null,
               h(
@@ -1201,11 +1296,7 @@
             ),
           )
         : null,
-      state.pending && !state.data
-        ? loadingView(P, h, t)
-        : state.error
-          ? loadFailure(P, h, t, retry, state.error)
-          : h(P.SplitView, {
+      h(P.SplitView, {
               label: t(titleKey), firstLabel: t(titleKey),
               first: h(window.CTMShell.Table, {
                 label: t(titleKey), rows, selected, onSelect: select, empty: t(emptyKey),
@@ -1748,7 +1839,7 @@
 
   // renderAttendance({ session, members, attendance, key }) lets the shell keep its
   // existing attendance component while this module supplies fresh data after each action.
-  function SessionWorkspace({ api, lang, user, sessionId, renderAttendance, onCase, onBack, onSession, onChanged, compact = false }) {
+  function SessionWorkspace({ api, lang, user, sessionId, renderAttendance, onCase, onBack, onSession, onChanged, compact = false, current = false }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1778,6 +1869,9 @@
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
+    const [selectedPart1, setSelectedPart1] = R.useState(null);
+    const [selectedPart2, setSelectedPart2] = R.useState(null);
+    const [attendanceVisible, setAttendanceVisible] = R.useState(!current);
 
     if (state.pending && !state.data) return loadingView(P, h, t);
     if (state.error) return loadFailure(P, h, t, retry, state.error);
@@ -1795,7 +1889,7 @@
     const recorder = canRecordAssignment(user, data.members);
     const memberRows = assignableMembers(data.members);
     const sessionIdentity = h(P.Inline, { wrap: true },
-      h(P.Text, { variant: "muted" }, sessionReference(session.date) || ""),
+      h(P.Text, { variant: "muted" }, session.reference || sessionReference(session.date) || ""),
       h(P.Badge, { tone: planned ? "active" : "neutral" }, t(session.state)),
     );
     const sessionMetrics = h(P.Metric.Group, { label: t("sessionSummary") },
@@ -1803,6 +1897,15 @@
       h(P.Metric, { value: String(scheduledHearings), label: t("scheduledHearings") }),
     );
     const sessionActions = h(P.Stack, { gap: "xs" },
+      current && planned && manage
+        ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) }, t("addAssignmentCase"))
+        : null,
+      current && planned
+        ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) }, t("addHearingCase"))
+        : null,
+      current
+        ? h(P.Button, { disabled: pending, onClick: () => setAttendanceVisible((visible) => !visible) }, t("attendance"))
+        : null,
       session.can_reschedule === true
         ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }, t("rescheduleAction"))
         : null,
@@ -1945,25 +2048,110 @@
         ),
       );
 
+    const agendaCallbacks = {
+      onCase,
+      onAssign: (item) => {
+        setProblem(null);
+        setFailure(null);
+        setChoice((old) => ({ ...old, member: "", president: "" }));
+        setDialog({ kind: "assign", row: item });
+      },
+      onPresent: (item) => {
+        setFailure(null);
+        setDialog({ kind: "present", row: item });
+      },
+      onOutcome: (item) => {
+        setFailure(null);
+        setDialog({ kind: "outcome", row: item });
+      },
+      onTestimony: (item) => {
+        setFailure(null);
+        setDialog({ kind: "testimony", row: item });
+      },
+      onCancelTestimony: (appointment) => {
+        setFailure(null);
+        setDialog({ kind: "cancelTestimony", appointment });
+      },
+    };
+
+    const selectedAgenda = (rows, selected) => rows.find((row) => row.id === selected);
+    const personPill = (value, kind) => value
+      ? h(P.Badge, { icon: "user", tone: kind === "applicant" ? "active" : kind === "respondent" ? "negative" : "neutral" }, value)
+      : t(kind === "clergy" ? "unassigned" : "notRecorded");
+    const splitPart = (n) => {
+      const first = n === 1;
+      const rows = groups[n];
+      const selected = first ? selectedPart1 : selectedPart2;
+      const select = first ? setSelectedPart1 : setSelectedPart2;
+      const chosen = selectedAgenda(rows, selected);
+      const title = first ? t("casesToAssign") : t("scheduledCasesForHearing");
+      const columns = first
+        ? [
+            { title: t("applicant"), field: "applicant_name", kind: "name", render: (row) => personPill(row.applicant_name, "applicant") },
+            { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent") },
+          ]
+        : [
+            { title: "#", field: "position", kind: "name" },
+            { title: t("applicant"), field: "applicant_name", render: (row) => personPill(row.applicant_name, "applicant") },
+            { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent") },
+            { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
+          ];
+      return h(P.Panel, { key: n, title: first ? t("casesToAssign") : t("scheduledCasesForHearing") },
+        h(P.SplitView, {
+          label: title,
+          firstLabel: title,
+          first: h(window.CTMShell.Table, {
+            label: title,
+            rows,
+            columns,
+            selected,
+            onSelect: select,
+            empty: t(`part${n}Empty`),
+          }),
+          second: h(P.ReadingPane, { label: chosen?.case_number || title },
+            chosen
+              ? h(AgendaItemCard, {
+                  compact: true,
+                  row: chosen,
+                  session,
+                  caseRow: caseById[chosen.case_id],
+                  user,
+                  lang,
+                  canAssign: recorder,
+                  ...agendaCallbacks,
+                })
+              : h(P.EmptyState, { title }),
+          ),
+        }),
+      );
+    };
+
+    const currentMeta = h(P.Stack, { gap: "xs" },
+      sessionIdentity,
+      h(P.Text, { variant: "strong" }, formatSessionStart(session.starts_at, lang) || t("timeNotRecorded")),
+      h(P.Text, null, `${t("presiding")}: ${session.presiding_member_name || t("presidingNotRecorded")}`),
+      h(P.Text, null, `${t("location")}: ${session.location || t("locationNotRecorded")}`),
+    );
+
     return h(
       P.Stack,
       { gap: "lg" },
-      h(P.Inline, null, h(P.Button, { variant: "ghost", onClick: onBack }, t("backSessions"))),
+      !current && onBack ? h(P.Inline, null, h(P.Button, { variant: "ghost", onClick: onBack }, t("backSessions"))) : null,
       h(P.RecordPage.Header, {
-        title: sessionLabel(session.date, t),
-        description: t("sessionHeaderDescription"),
+        title: current
+          ? `${t("tribunalSession")} ${session.reference || sessionReference(session.date) || session.id}`
+          : sessionLabel(session.date, t),
+        description: current ? undefined : t("sessionHeaderDescription"),
         surface: "card",
-        meta: h(P.Stack, { gap: "sm" },
-          sessionIdentity,
-          compact ? sessionMetrics : null,
-          compact ? sessionActions : null,
-        ),
-        actions: compact ? null : h(P.Stack, { gap: "sm" }, sessionMetrics, sessionActions),
+        meta: current
+          ? currentMeta
+          : h(P.Stack, { gap: "sm" }, sessionIdentity, compact ? sessionMetrics : null, compact ? sessionActions : null),
+        actions: compact ? null : h(P.Stack, { gap: "sm" }, current ? null : sessionMetrics, sessionActions),
       }),
       !planned ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
-      renderAttendance
+      renderAttendance && attendanceVisible
         ? renderAttendance({
             session,
             members: data.members,
@@ -1973,9 +2161,9 @@
             onSaved: retry,
           })
         : null,
-      h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
-      part(1),
-      part(2),
+      current ? splitPart(1) : h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
+      current ? splitPart(2) : part(1),
+      current ? null : part(2),
       data.items.length && !data.items.some((row) => "hearing_id" in row) ? h(P.Notice, { tone: "info" }, t("outcomeDependency")) : null,
       dialog?.kind === "outcome"
         ? h(HearingOutcomeDialog, {
@@ -2007,6 +2195,40 @@
               if (onSession) onSession(targetId);
             },
           })
+        : null,
+      dialog?.kind === "place"
+        ? h(
+            P.Dialog,
+            {
+              open: true,
+              title: t(dialog.part === 1 ? "addAssignmentCase" : "addHearingCase"),
+              closeLabel: t("cancel"),
+              onClose: () => !pending && setDialog(null),
+              footer: h(P.Inline, null,
+                h(P.Button, { disabled: pending, onClick: () => setDialog(null) }, t("cancel")),
+                h(P.Button, {
+                  variant: "primary",
+                  loading: pending,
+                  disabled: pending || !choice[`part${dialog.part}`],
+                  onClick: () => place(dialog.part),
+                }, t("addCase")),
+              ),
+            },
+            h(P.Stack, { gap: "md" },
+              h(P.Field, { label: t(dialog.part === 1 ? "addToPart1" : "addToPart2") },
+                h(P.Select, {
+                  value: choice[`part${dialog.part}`],
+                  disabled: pending,
+                  onChange: (event) => setChoice((old) => ({ ...old, [`part${dialog.part}`]: event.target.value })),
+                  options: [
+                    { value: "", label: (dialog.part === 1 ? c1 : c2).length ? t("chooseCase") : t("noCandidates") },
+                    ...(dialog.part === 1 ? c1 : c2).map((row) => ({ value: row.id, label: row.number })),
+                  ],
+                }),
+              ),
+              failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+            ),
+          )
         : null,
       h(
         P.ConfirmDialog,
@@ -2510,6 +2732,7 @@
     answerText,
     fieldLabel,
     formatWhen,
+        formatSessionStart,
     useLoad,
     loadFailure,
     loadingView,
