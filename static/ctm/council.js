@@ -1269,6 +1269,13 @@
     const [created, setCreated] = R.useState(false);
     const loaded = state.data?.sessions?.items || [];
     const presidingMembers = assignmentAuthorizers(state.data?.members?.items || []);
+    const defaultPresiding = presidingMembers.find((row) => row.name === "H.E. Metropolitan Serapion")
+      || presidingMembers.find((row) => row.name?.includes("Metropolitan Serapion"))
+      || presidingMembers.find((row) => row.president)
+      || presidingMembers[0];
+    R.useEffect(() => {
+      if (!presiding && defaultPresiding?.id) setPresiding(defaultPresiding.id);
+    }, [presiding, defaultPresiding?.id]);
     const today = todayInLosAngeles();
     const buckets = sessionBuckets(loaded, today);
     const rows = window.CTMUI.filterSessions(buckets[mode] || [], { ...filters, view: "all" }, today);

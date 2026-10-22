@@ -251,3 +251,10 @@ test("agenda tables reserve enough space for complete header labels", () => {
   assert.match(council, /assignedTo"\), field: "assigned_member_name", minWidth: "9rem"/);
   assert.match(css, /ctm-session-agenda-grid[\s\S]*white-space: nowrap/);
 });
+
+
+test("new council sessions preselect Metropolitan Serapion as presiding", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(council, /row\.name === "H\.E\. Metropolitan Serapion"/);
+  assert.match(council, /if \(!presiding && defaultPresiding\?\.id\) setPresiding\(defaultPresiding\.id\)/);
+});
