@@ -983,6 +983,41 @@ ${ar}` : en;
     );
   }
 
+  function ReportPartySelector({ P, h, t, parties, kind, interviewReady, value, disabled, error, onChange }) {
+    const eligible = (parties || []).filter((party) => party.can_receive || (kind === "interview" && interviewReady));
+    const selected = value === "both" ? eligible.map((party) => party.id) : value ? [value] : [];
+    const changeSelection = (partyId, checked) => {
+      const next = checked ? [...new Set([...selected, partyId])] : selected.filter((id) => id !== partyId);
+      onChange(next.length === eligible.length && eligible.length > 1 ? "both" : next[0] || "");
+    };
+    return h(
+      P.Field,
+      { label: t("subject"), required: true, error },
+      h(
+        "div",
+        { className: "ctm-report-party-cards", role: "group", "aria-label": t("subject") },
+        ...eligible.map((party) => {
+          const checked = selected.includes(party.id);
+          return h(
+            "div",
+            { key: party.id, className: `ctm-report-party-card${checked ? " is-selected" : ""}` },
+            h(P.Checkbox, {
+              checked,
+              disabled,
+              onChange: (event) => changeSelection(party.id, event.target.checked),
+              label: h(
+                P.Inline,
+                { gap: "sm", align: "center" },
+                h(P.Avatar, { src: party.photo_url || undefined, name: party.name, size: "lg", label: party.name }),
+                h(P.Text, { as: "span", variant: "strong" }, party.name),
+              ),
+            }),
+          );
+        }),
+      ),
+    );
+  }
+
   function RequestComposer({ api, lang, record, questions, reports, templates, onTemplatesChanged, onSaved, onCancel }) {
     const R = window.React,
       P = window.Plenix,
@@ -990,7 +1025,8 @@ ${ar}` : en;
       t = translator(lang);
     const proceeding = openProceeding(record);
     const [form, setForm] = R.useState({
-      kind: "intake",
+      // Applicant delivery is not available yet, so reports begin as an internal interview.
+      kind: "interview",
       party: "",
       title: "",
       language: "en",
@@ -1040,31 +1076,22 @@ ${ar}` : en;
       h(
         P.FormSection,
         { title: t("newRequest") },
-        h(
-          P.Field,
-          { label: t("subject"), required: true, error: err("chooseSubject") },
-          h(P.Select, {
-            value: form.party,
-            disabled: pending,
-            onChange: (e) => update({ party: e.target.value }),
-            options: [
-              { value: "", label: t("chooseSubject") },
-              ...record.parties
-                .filter((p) => p.can_receive || (form.kind === "interview" && interviewReady))
-                .map((p) => ({ value: p.id, label: p.name })),
-              ...(record.parties.length > 1 ? [{ value: "both", label: t("bothSpouses") }] : []),
-            ],
-          }),
-        ),
+        h(ReportPartySelector, {
+          P, h, t, parties: record.parties, kind: form.kind, interviewReady,
+          value: form.party, disabled: pending, error: err("chooseSubject"),
+          onChange: (party) => update({ party }),
+        }),
         h(P.RadioGroup, {
           label: t("method"),
           value: form.kind,
-          onChange: (value) => update({ kind: value }),
+          onChange: (value) => update({ kind: value, party: "" }),
           options: [
-            { value: "intake", label: t("methodApplicant"), disabled: pending },
+            // Applicant delivery is deliberately visible but unavailable until the
+            // applicant delivery workflow is ready for release.
+            { value: "intake", label: t("methodApplicant"), disabled: true },
             interviewReady
-              ? { value: "interview", label: t("methodInterview"), description: t("interviewHelp"), disabled: pending }
-              : { value: "interview", label: t("methodInterview"), description: t("interviewBlocked"), disabled: true },
+              ? { value: "interview", label: t("methodInterview"), disabled: pending }
+              : { value: "interview", label: t("methodInterview"), disabled: true },
           ],
         }),
         h(

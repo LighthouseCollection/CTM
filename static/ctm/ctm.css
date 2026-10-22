@@ -194,3 +194,31 @@
   border-radius: 999px;
   background: var(--plx-color-surface, #fff);
 }
+
+/* Report recipients are selected independently so a joint report is intentional. */
+.ctm-report-party-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--plx-sys-space-stack-sm, 0.75rem);
+}
+
+.ctm-report-party-card {
+  min-inline-size: 0;
+  padding: var(--plx-sys-space-stack-sm, 0.75rem);
+  border: var(--plx-sys-border-width-hairline, 1px) solid var(--plx-sys-color-border-subtle, #d4d8df);
+  border-radius: var(--plx-sys-radius-md, 0.5rem);
+  background: var(--plx-sys-color-surface-default, #fff);
+}
+
+.ctm-report-party-card.is-selected {
+  border-color: var(--plx-sys-color-border-interactive, #1769e0);
+  background: var(--plx-sys-color-surface-selected, #edf4ff);
+}
+
+.ctm-report-party-card .plx-check {
+  inline-size: 100%;
+}
+
+@media (max-width: 42rem) {
+  .ctm-report-party-cards { grid-template-columns: minmax(0, 1fr); }
+}

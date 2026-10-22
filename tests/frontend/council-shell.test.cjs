@@ -47,10 +47,24 @@ test("report templates are an inline category-to-question workspace", () => {
   assert.match(councilCase, /label: t\("reportTemplates"\)/);
   assert.match(councilCase, /title: t\("questionCategories"\)/);
   assert.match(councilCase, /title: t\("questionSelection"\)/);
-  assert.match(councilCase, /value: "both", label: t\("bothSpouses"\)/);
+  assert.match(councilCase, /function ReportPartySelector/);
+  assert.match(councilCase, /ctm-report-party-cards/);
+  assert.match(councilCase, /next\.length === eligible\.length && eligible\.length > 1 \? "both"/);
   assert.match(councilCase, /const partyIds = form\.party === "both"/);
   assert.match(councilCase, /party_ids: partyIds/);
   assert.doesNotMatch(councilCase.slice(councilCase.indexOf("function RequestsPanel"), councilCase.indexOf("function ReportsWorkspace")), /h\(P\.Dialog/);
+});
+
+
+test("report template intake uses selectable spouse cards and keeps applicant delivery disabled", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  assert.match(councilCase, /h\(P\.Avatar, \{ src: party\.photo_url/);
+  assert.match(councilCase, /kind: "interview"/);
+  assert.match(councilCase, /\{ value: "intake", label: t\("methodApplicant"\), disabled: true \}/);
+  assert.doesNotMatch(councilCase.slice(councilCase.indexOf("function RequestComposer"), councilCase.indexOf("const interviewDraftKey")), /description: t\("interviewHelp"\)/);
+  assert.match(css, /\.ctm-report-party-cards \{/);
+  assert.match(css, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
 });
 
 test("report template questions hide internal question-bank codes", () => {
