@@ -1486,3 +1486,32 @@ def test_f12_council_result_context_is_status_only_and_cannot_skip_claims(runtim
         AppealDisposition.objects.create(application=app, hearing=hearing, actor=people["member"], result="accept")
     app.refresh_from_db()
     assert app.status == "submitted" and not AppealDisposition.objects.filter(application=app).exists()
+
+
+def test_own_released_decree_projection_obeys_recipient_rls(runtime, ready_application, people):
+    from tribunal.models import Attachment, FileVersion, FileTechnicalEvent
+    from tribunal.services.decisions import record_decision, approve_decision, attest_signature, issue_decree, release_decree
+    from tribunal.projections import released_decrees
+    app = ready_application
+    submit_application(app.owner, app.pk, "own-decree-runtime", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    decision = record_decision(people["admin"], app.proceeding_id, "diss-applicant", "Grounds", {str(app.party_id): "certificate"})
+    approve_decision(people["president"], decision.pk)
+    attachment = Attachment.objects.create(case=app.case, proceeding=app.proceeding, category="DEC", visibility="council")
+    file = FileVersion.objects.create(attachment=attachment, number=1, object_key="rls/own-release.pdf",
+        original_name="signed.pdf", display_name="signed.pdf", mime_type="application/pdf", byte_count=5,
+        sha256="d"*64, actor=people["admin"])
+    FileTechnicalEvent.objects.create(file=file, task="scan", result="clean")
+    attest_signature(people["president"], file.pk, people["president"].pk, "signed_scan", {"confirmed_signed": True})
+    decree = issue_decree(people["admin"], decision.pk, file.pk, people["president"].pk)
+    with runtime(app.owner):
+        assert released_decrees(app.case, app.owner) == []
+    with runtime(people["secretary"]):
+        release_decree(people["secretary"], decree.pk, app.party_id)
+    with runtime(app.owner):
+        rows = released_decrees(app.case, app.owner)
+        assert len(rows) == 1 and rows[0]["signed_file"]["id"] == str(file.pk)
+    with runtime(people["secretary"]):
+        release_decree(people["secretary"], decree.pk, app.party_id, "withdraw")
+    with runtime(app.owner):
+        assert released_decrees(app.case, app.owner) == []

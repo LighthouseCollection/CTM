@@ -394,3 +394,46 @@ closed F08 is made by the earlier test counts.
   paid-candidate finalization (mock provider, no real charge), owner/non-owner
   privacy, raw guards, shared reopening, conflict rollback and lock contention.
   F12 browser acceptance and broader schema/identity reconciliation remain open.
+
+## Own released-decree read contract
+
+- Applicant `GET /api/cases/{id}/` now always returns `released_decrees:[]` or
+  current own release rows: `{id,reference,language:en|ar|bilingual,released_at,
+  signed_file:{id,name,scan_state:'clean',download_url}}`. Stored `both` maps to
+  `bilingual` in this own projection. Council decision/release contracts are unchanged.
+- Each row requires issuance, the exact authenticated recipient's latest release
+  event and current authorized safe access to the exact stored signed PDF. No
+  unreleased/revoked/other-recipient history, raw storage keys, unsigned replacements
+  or council decision internals are exposed. A current unsafe scan hides the link.
+- The case detail response is private/no-store. The lookup follows the released
+  signed file's case binding, avoiding applicant joins through council-only
+  decision rows. Existing forced RLS is retained, not relaxed for the read projection.
+- Full original, Range, HEAD and inline preview bytes are tested before withdrawal;
+  every retained URL is denied afterward and the list becomes empty. Independent
+  runtime-role tests verify list appearance/disappearance under existing policies.
+  No decree issuance/release mutation endpoint was added for applicants.
+
+## F20 / C5 hearing applicant update timing
+
+- `POST /api/hearings/{id}/outcome/` accepts `email_timing:immediate|after_session`
+  and `session_id` on the first applicant update, delegated to the existing private
+  message validation. A selected session must be planned; invalid first-send
+  settings roll back the outcome/message together. Default remains immediate.
+- This field controls email timing; portal visibility retains existing private
+  message semantics. Deferred jobs wait for the selected session to close and
+  retain the existing send-time closure/rebinding checks. No delivery is fabricated.
+- Revision timing inputs never resend, reschedule or rewrite the first message.
+  Advisory serialization on the hearing prevents concurrent first-save requests
+  from creating duplicate applicant messages. Outcome revision history is retained.
+- Automatic updates from closed-case hearings without an open proceeding target
+  only the current pending filing owners; they do not reveal a private pending
+  appeal/first filing to another spouse. Ordinary open-proceeding updates retain
+  their established registered-spouse recipients.
+- Full isolated PostgreSQL suite: **324 passed, 1 skipped**; includes exact own
+  certificate bytes/revocation, restricted-role projection, first-email timing,
+  invalid-timing rollback, concurrent revision and pending-spouse notice isolation.
+- Current remaining work includes own request/consent response contracts and
+  concurrency identity, **16 existing domain-table policy reviews**, broader
+  schema/identity/role reconciliation, independent F12/F15/browser integration,
+  approved institutional content and live provider acceptance. Draft-only; no
+  operational migration, institution/grant setup, credentials, deployment or merge.

@@ -342,3 +342,67 @@ def test_assessment_parent_cannot_be_used_for_ordinary_followup(filed, people, p
             create_request(people["admin"], filed.proceeding_id, filed.party_id, kind, "Follow-up", [], parent_id=parent.pk)
     followup = create_request(people["admin"], filed.proceeding_id, filed.party_id, parent_kind, "Assessment follow-up", [], parent_id=parent.pk)
     assert followup.parent_report_id == parent.pk
+
+
+def test_f20_first_hearing_update_can_wait_for_selected_session_and_revision_never_resends(client, hearing, filed, people):
+    from tribunal.models import Message, Outbox, HearingOutcome
+    from django.utils import timezone
+    login(client, people["member"])
+    response = client.post(f"/api/hearings/{hearing.pk}/outcome/", data={"internal_text": "Internal",
+        "recommendations": "Recommendation", "applicant_message": "Private update",
+        "email_timing": "after_session", "session_id": str(hearing.agenda.session_id)}, content_type="application/json")
+    assert response.status_code == 201
+    message = Message.objects.get(case=filed.case)
+    assert message.email_timing == "after_session" and message.session_id == hearing.agenda.session_id
+    jobs = Outbox.objects.filter(kind="message_session", case=filed.case)
+    assert jobs.count() == 1 and jobs.get().due_at > timezone.now()
+    # Timing fields on a revision cannot create/reschedule/resend a message.
+    assert client.post(f"/api/hearings/{hearing.pk}/outcome/", data={"internal_text": "Revised",
+        "email_timing": "immediate"}, content_type="application/json").status_code == 201
+    assert HearingOutcome.objects.filter(hearing=hearing).count() == 2
+    assert Message.objects.filter(case=filed.case).count() == 1 and jobs.count() == 1
+    close_session(people["admin"], hearing.agenda.session_id)
+    assert jobs.get().due_at <= timezone.now() and jobs.get().delivered_at is None
+
+
+def test_f20_invalid_first_send_timing_rolls_back_outcome_and_message(hearing, filed, people):
+    from tribunal.models import HearingOutcome, Message, CouncilSession
+    with pytest.raises(ValidationError):
+        save_hearing_outcome(people["member"], hearing.pk, "Internal", "Recommendation", email_timing="unsupported")
+    assert not HearingOutcome.objects.filter(hearing=hearing).exists() and not Message.objects.filter(case=filed.case).exists()
+    closed = create_session(people["admin"], date(2030, 1, 9))
+    close_session(people["admin"], closed.pk)
+    with pytest.raises(CouncilSession.DoesNotExist):
+        save_hearing_outcome(people["member"], hearing.pk, "Internal", "Recommendation", email_timing="after_session", session_id=closed.pk)
+    assert not HearingOutcome.objects.filter(hearing=hearing).exists()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_f20_concurrent_outcome_revision_does_not_repeat_first_message(hearing, filed, people):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    from django.db import connection, connections, transaction
+    from tribunal.services.common import lock_key
+    from tribunal.models import Message, HearingOutcome, Account
+    if connection.vendor != "postgresql":
+        pytest.skip("PostgreSQL advisory serialization")
+    started = Event()
+
+    def revise():
+        try:
+            actor = Account.objects.get(pk=people["member"].pk)
+            started.set()
+            return save_hearing_outcome(actor, hearing.pk, "Second", "Second recommendation")
+        finally:
+            connections.close_all()
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with transaction.atomic():
+            lock_key(f"hearing-outcome:{hearing.pk}")
+            future = pool.submit(revise)
+            assert started.wait(timeout=5)
+            save_hearing_outcome(people["member"], hearing.pk, "First", "First recommendation", email_timing="after_session", session_id=hearing.agenda.session_id)
+        future.result(timeout=10)
+    assert HearingOutcome.objects.filter(hearing=hearing).count() == 2
+    assert Message.objects.filter(case=filed.case).count() == 1
+    assert Message.objects.get(case=filed.case).email_timing == "after_session"

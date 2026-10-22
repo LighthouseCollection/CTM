@@ -26,7 +26,7 @@ from tribunal.models import (
     Message,
 )
 from tribunal.policy import active, administrator, staff, writer, open_proceeding
-from .common import audit, notify, notify_manager
+from .common import audit, notify, notify_manager, lock_key
 from .closed_filings import pending_council_filings
 from tribunal.db.context import database_settings, database_actor
 
@@ -336,8 +336,10 @@ def hear_case(actor, item_id):
 
 @transaction.atomic
 def save_hearing_outcome(
-    actor, hearing_id, internal_text, recommendations, applicant_message=None
+    actor, hearing_id, internal_text, recommendations, applicant_message=None,
+    *, email_timing="immediate", session_id=None,
 ):
+    lock_key(f"hearing-outcome:{hearing_id}")
     hearing = Hearing.objects.select_related("agenda__case").get(pk=hearing_id)
     writer(actor, hearing.agenda.case)
     if hearing.state != "held":
@@ -356,16 +358,16 @@ def save_hearing_outcome(
     if not prior:
         from .communications import send_message
 
-        party_ids = list(
-            hearing.agenda.case.parties.filter(account__isnull=False).values_list(
-                "pk", flat=True
-            )
-        )
+        recipients = hearing.agenda.case.parties.filter(account__isnull=False)
+        if hearing.proceeding_id is None:
+            recipients = recipients.filter(account_id__in=pending_council_filings(hearing.agenda.case).values("owner_id"))
+        party_ids = list(recipients.values_list("pk", flat=True))
         body = f"Your case was presented on {hearing.agenda.session.date}. Your case is still pending."
         if applicant_message:
             body += "\n\n" + applicant_message
         if party_ids:
-            send_message(actor, hearing.agenda.case_id, body, party_ids)
+            send_message(actor, hearing.agenda.case_id, body, party_ids,
+                         email_timing=email_timing, session_id=session_id)
     audit(actor, "hearing_outcome_saved", result, hearing.agenda.case)
     return result
 

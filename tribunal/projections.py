@@ -5,6 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 import json
 from django.db import connection
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from tribunal.services.closed_filings import CLOSED_INTAKE, council_filing, pending_council_filings
 
 
@@ -124,7 +125,28 @@ def case_capabilities(case, actor):
         can_start = bool(linked and not already_filed and not conflict and (not draft or draft.case_id == case.pk))
         result["can_start_petition"] = can_start
         result["can_start_closed_intake"] = can_start and case.status == "closed"
+        result["released_decrees"] = released_decrees(case, actor)
     return result
+
+
+def released_decrees(case, actor):
+    from tribunal.services.files import authorized_file, display_filename
+
+    rows = []
+    for decree in m.Decree.objects.filter(signed_file__attachment__case=case, issued_at__isnull=False).order_by("-issued_at", "-id"):
+        release = m.DecreeRelease.objects.filter(decree=decree, party__account=actor).order_by("-created_at", "-id").first()
+        if not release or release.action != "release":
+            continue
+        try:
+            file = authorized_file(actor, decree.signed_file_id)
+        except (PermissionDenied, ObjectDoesNotExist):
+            continue
+        rows.append({"id": str(decree.pk), "reference": decree.reference,
+            "language": "bilingual" if decree.language == "both" else decree.language,
+            "released_at": release.created_at.isoformat(),
+            "signed_file": {"id": str(file.pk), "name": display_filename(file),
+                            "scan_state": "clean", "download_url": f"/api/files/{file.pk}/"}})
+    return rows
 
 
 def session_capabilities(session, actor):

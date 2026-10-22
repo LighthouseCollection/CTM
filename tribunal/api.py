@@ -463,7 +463,7 @@ def case_detail(request, case_id):
     from tribunal.projections import case_capabilities
     case = case_for(request.user, case_id)
     parties = case.parties.all()
-    return JsonResponse(
+    response = JsonResponse(
         encoded(
             case,
             number=case.number,
@@ -489,6 +489,9 @@ def case_detail(request, case_id):
             ],
         )
     )
+
+    response["Cache-Control"] = "private, no-store"
+    return response
 
 
 @endpoint(("POST",))
@@ -1548,6 +1551,8 @@ def hearing_outcome(request, hearing_id):
                 data.get("internal_text", ""),
                 data.get("recommendations", ""),
                 data.get("applicant_message"),
+                email_timing=data.get("email_timing", "immediate"),
+                session_id=data.get("session_id"),
             )
         ),
         status=201,

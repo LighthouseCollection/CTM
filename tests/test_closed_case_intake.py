@@ -258,3 +258,17 @@ def test_f12_http_result_and_staff_projection(client, closed_case, people):
     assert data["disposition"]["reopened_proceeding_id"]
     login(client, spouse)
     assert client.post(f"/api/applications/{app.pk}/closed-case-result/", data={}, content_type="application/json").status_code == 403
+
+
+def test_f12_pending_hearing_update_does_not_notify_nonfiling_spouse(closed_case, people):
+    from tribunal.services.council import save_hearing_outcome
+    original, spouse, party = closed_case
+    app = prepare(spouse, original.case, people)
+    submit_application(spouse, app.pk, "f12-hearing-notice", ATTESTATION)
+    hearing = present(app, people)
+    before = set(m.Notification.objects.filter(recipient=original.owner).values_list("pk", flat=True))
+    save_hearing_outcome(people["member"], hearing.pk, "Internal", "Council consideration",
+        email_timing="after_session", session_id=hearing.agenda.session_id)
+    assert set(m.Notification.objects.filter(recipient=original.owner).values_list("pk", flat=True)) == before
+    message = m.Message.objects.get(case=original.case)
+    assert list(message.recipients.values_list("party__account_id", flat=True)) == [spouse.pk]
