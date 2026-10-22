@@ -300,6 +300,13 @@ ${ar}` : en;
       typeLabelNotice: "Approved Arabic decision-type labels are not yet supplied; the approved English label is shown.",
       deferralNotice: "To defer for further investigation, record it in the hearing recommendations. Deferral is not voted on or approved as a decision.",
       votes: "Council votes",
+      councilVote: "Council vote",
+      councilVoteDescription: "Record each council member's vote before proceeding to the decision.",
+      voteRecord: "Vote record",
+      councilMember: "Council member",
+      recordVotesContinue: "Record votes & continue",
+      saveVoteDraft: "Save draft",
+      voteDraftSaved: "The current vote entries were saved.",
       rosterNotice: "Every council member is listed, regardless of attendance.",
       approve: "Approve",
       deny: "Deny",
@@ -612,6 +619,13 @@ ${ar}` : en;
       typeLabelNotice: "لم تُتَح بعد التسميات العربية المعتمدة لأنواع القرار؛ تُعرض التسمية الإنجليزية المعتمدة.",
       deferralNotice: "لتأجيل القرار لمزيد من التحقيق، سجّل ذلك في توصيات الجلسة. لا يُصوَّت على التأجيل ولا يُعتمد كقرار.",
       votes: "أصوات أعضاء المجلس",
+      councilVote: "تصويت المجلس",
+      councilVoteDescription: "سجّل صوت كل عضو في المجلس قبل متابعة القرار.",
+      voteRecord: "سجل التصويت",
+      councilMember: "عضو المجلس",
+      recordVotesContinue: "سجّل الأصوات وتابع",
+      saveVoteDraft: "حفظ المسودة",
+      voteDraftSaved: "تم حفظ إدخالات التصويت الحالية.",
       rosterNotice: "يُدرج جميع أعضاء المجلس بغض النظر عن الحضور.",
       approve: "موافقة",
       deny: "رفض",
@@ -1426,7 +1440,95 @@ ${ar}` : en;
     );
   }
 
-  function DecisionVersion({ api, lang, user, record, decision, members, readAvailable, onChange }) {
+  function CouncilVoteRecord({ api, lang, user, decision, members, readAvailable, onChange }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const roster = councilRoster(members);
+    const { rows, counts } = tally(decision.votes, roster);
+    const manage = canRecordFor(user);
+    const canVote = decision.can_vote !== false;
+    const initialChoices = () => Object.fromEntries(rows.map((row) => [row.member.id, row.vote?.choice || ""]));
+    const [choices, setChoices] = R.useState(initialChoices);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const [notice, setNotice] = R.useState(null);
+
+    R.useEffect(() => setChoices(initialChoices()), [decision.id, decision.votes]);
+    const changes = rows.filter((row) => choices[row.member.id] && choices[row.member.id] !== (row.vote?.choice || ""));
+
+    async function saveVotes(continueAfter) {
+      if (!changes.length) return;
+      setPending(true);
+      setFailure(null);
+      setNotice(null);
+      try {
+        let votes = [...(decision.votes || [])];
+        for (const row of changes) {
+          const body = manage ? { choice: choices[row.member.id], member_id: row.member.id } : { choice: choices[row.member.id] };
+          await api(`/api/decisions/${encodeURIComponent(decision.id)}/vote/`, { method: "POST", body: JSON.stringify(body) });
+          votes = [...votes.filter((vote) => vote.member_id !== row.member.id), { member_id: row.member.id, choice: choices[row.member.id], actor_id: user.id }];
+        }
+        onChange({ ...decision, votes }, true);
+        setNotice(continueAfter ? "voteRecorded" : "voteDraftSaved");
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+
+    return h(
+      P.Panel,
+      { icon: "check-square", title: t("councilVote"), description: t("councilVoteDescription") },
+      h(
+        "div",
+        { className: "ctm-council-vote-table", role: "table", "aria-label": t("voteRecord") },
+        h("div", { className: "ctm-council-vote-table__header", role: "row" },
+          h("div", { role: "columnheader" }, t("councilMember")),
+          ...VOTES.map((choice) => h("div", { key: choice, role: "columnheader" }, t(choice))),
+        ),
+        ...rows.map((row) => {
+          const canEditRow = canVote && !pending && (manage || row.member.id === user.id);
+          return h("div", { key: row.member.id, className: "ctm-council-vote-table__row", role: "row" },
+            h("div", { className: "ctm-council-vote-member", role: "cell" },
+              h(P.Avatar, { name: row.member.name || row.member.id, size: "md" }),
+              h("div", null,
+                h(P.Text, { as: "div", variant: "strong" }, row.member.name || row.member.id),
+                h(P.Text, { as: "div", variant: "secondary" }, row.member.former ? t("formerMember") : t(row.member.role || "member")),
+              ),
+            ),
+            ...VOTES.map((choice) => h("label", { key: choice, className: "ctm-council-vote-choice", role: "cell" },
+              h("input", {
+                type: "radio",
+                name: `decision-${decision.id}-member-${row.member.id}`,
+                value: choice,
+                checked: choices[row.member.id] === choice,
+                disabled: !canEditRow,
+                "aria-label": `${t(choice)}: ${row.member.name || row.member.id}`,
+                onChange: () => setChoices((old) => ({ ...old, [row.member.id]: choice })),
+              }),
+            )),
+          );
+        }),
+        h("div", { className: "ctm-council-vote-table__summary", role: "row" },
+          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--approve" }, `${t("approve")}: ${counts.approve}`)),
+          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--deny" }, `${t("deny")}: ${counts.deny}`)),
+          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--abstain" }, `${t("abstain")}: ${counts.abstain}`)),
+        ),
+      ),
+      !readAvailable ? h(P.Notice, { tone: "warning" }, t("sessionVotesNotice")) : null,
+      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+      failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
+      canVote ? h(P.FormActions, { sticky: false },
+        h(P.Button, { disabled: pending || !changes.length, onClick: () => saveVotes(false) }, t("saveVoteDraft")),
+        h(P.Button, { variant: "primary", loading: pending, disabled: pending || !changes.length, onClick: () => saveVotes(true) }, t("recordVotesContinue")),
+      ) : null,
+    );
+  }
+
+  function DecisionVersion({ api, lang, user, record, decision, members, readAvailable, onChange, showVoting = true, showApproval = true }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1521,7 +1623,8 @@ ${ar}` : en;
       ),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !confirm ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
-      h(
+      showVoting
+        ? h(
         P.Panel,
         { icon: "doc-text", title: t("votes"), description: t("rosterNotice") },
         h(
@@ -1572,8 +1675,10 @@ ${ar}` : en;
                 h(P.Button, { disabled: pending || !vote, loading: pending && Boolean(vote), onClick: submitVote }, t("recordVote")),
               ),
         ),
-      ),
-      h(
+      )
+        : null,
+      showApproval
+        ? h(
         P.Panel,
         { icon: "doc-text", title: t("approval") },
         decision.approval
@@ -1616,7 +1721,8 @@ ${ar}` : en;
                 ),
               )
             : h(P.Text, { as: "p", variant: "secondary" }, t("notApproved")),
-      ),
+      )
+        : null,
       h(
         P.ConfirmDialog,
         {
@@ -1675,10 +1781,10 @@ ${ar}` : en;
     const current = local || (latestSaved ? { votes: [], approval: null, ...latestSaved } : null);
     const earlier = readAvailable ? [...versions].sort((a, b) => b.number - a.number).slice(1) : [];
     const canWrite = writerFor(user, caseRow, record) && Boolean(proceeding);
+    const updateDecision = (next, saved) => (readAvailable && saved ? retry() : setLocal(next));
     const detail = h(
       P.Stack,
       { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("decisionVoting")),
       noticeKey ? h(P.Notice, { tone: "info" }, t(noticeKey)) : null,
       !proceeding ? h(P.Notice, { tone: "info" }, t("noOpenProceeding")) : null,
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
@@ -1692,8 +1798,8 @@ ${ar}` : en;
             decision: current,
             members,
             readAvailable,
-            // With the server read available, reload the saved record after each action.
-            onChange: (next, saved) => (readAvailable && saved ? retry() : setLocal(next)),
+            showVoting: false,
+            onChange: updateDecision,
           })
         : h(P.EmptyState, { title: t("noDecision") }),
       earlier.length
@@ -1727,11 +1833,23 @@ ${ar}` : en;
           : h(P.Notice, { tone: "info" }, t("writerDecision"))
         : null,
     );
-    return h(window.CTMShell.Workspace, {
-      label: t("decisionVoting"), rows: current ? [{ ...current, title: t("decisionVoting") }] : proceeding ? [{ id: proceeding.id, title: t("recordDecision") }] : [],
-      showDetailWhenEmpty: true, empty: t("noDecision"),
-      columns: [{ title: t("decisionVoting"), field: "title", kind: "name" }, { title: t("version"), field: "number" }],
-    }, detail);
+    return h(
+      P.Stack,
+      { gap: "lg", className: "ctm-decision-voting-workspace" },
+      h(P.Panel, { icon: "doc-text", title: t("decisionVoting") }, detail),
+      current
+        ? h(CouncilVoteRecord, {
+            key: `vote-${current.id}`,
+            api,
+            lang,
+            user,
+            decision: current,
+            members,
+            readAvailable,
+            onChange: updateDecision,
+          })
+        : null,
+    );
 
   }
 

@@ -120,6 +120,17 @@ test("Arabic report questions use an RTL reading surface", () => {
   assert.match(css, /direction: rtl/);
 });
 
+test("Decision & Voting uses stacked decision and council-vote containers", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const decisionWorkspace = councilCase.slice(councilCase.indexOf("function DecisionWorkspace"), councilCase.indexOf("// ---------- Case audit"));
+  assert.match(councilCase, /function CouncilVoteRecord\(/);
+  assert.match(decisionWorkspace, /ctm-decision-voting-workspace/);
+  assert.doesNotMatch(decisionWorkspace, /window\.CTMShell\.Workspace/);
+  assert.match(councilCase, /ctm-council-vote-table/);
+  assert.match(councilCase, /recordVotesContinue/);
+  assert.match(councilCase, /ctm-vote-total/);
+});
+
 test("report template wording follows the selected request language", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(councilCase, /if \(lang === "ar"\) return ar \|\| en/);

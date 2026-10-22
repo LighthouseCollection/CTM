@@ -235,3 +235,96 @@
   direction: rtl;
   text-align: right;
 }
+/* Council-vote record: member identity, one decision per row, and live totals. */
+.ctm-council-vote-table {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) repeat(3, minmax(5.5rem, 7.5rem));
+  border: 1px solid var(--plx-color-border, #d7dce3);
+  border-radius: var(--plx-radius-md, 8px);
+  overflow: hidden;
+}
+
+.ctm-council-vote-table__header,
+.ctm-council-vote-table__row,
+.ctm-council-vote-table__summary {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.ctm-council-vote-table__header > div,
+.ctm-council-vote-table__row > div,
+.ctm-council-vote-table__row > label,
+.ctm-council-vote-table__summary > div {
+  min-block-size: 3.75rem;
+  padding: var(--plx-space-sm, 0.75rem);
+  border-inline-end: 1px solid var(--plx-color-border, #d7dce3);
+  border-block-end: 1px solid var(--plx-color-border, #d7dce3);
+}
+
+.ctm-council-vote-table__header > div {
+  min-block-size: auto;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+  font-size: .8125rem;
+  background: var(--plx-color-surface-subtle, #f5f7fa);
+}
+
+.ctm-council-vote-member {
+  display: flex;
+  align-items: center;
+  gap: var(--plx-space-sm, 0.75rem);
+}
+
+.ctm-council-vote-choice {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.ctm-council-vote-choice input {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  accent-color: var(--plx-color-primary, #2563eb);
+}
+
+.ctm-council-vote-choice:has(input:disabled) {
+  cursor: default;
+  opacity: .55;
+}
+
+.ctm-council-vote-table__summary {
+  background: var(--plx-color-surface-subtle, #f5f7fa);
+}
+
+.ctm-council-vote-table__summary > div {
+  display: flex;
+  align-items: center;
+  border-block-end: 0;
+}
+
+.ctm-council-vote-table__summary > div:first-child {
+  grid-column: 1 / 3;
+}
+
+.ctm-vote-total::before {
+  content: "";
+  display: inline-block;
+  inline-size: .625rem;
+  block-size: .625rem;
+  margin-inline-end: .5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ctm-vote-total--approve { color: #15803d; }
+.ctm-vote-total--deny { color: #b91c1c; }
+.ctm-vote-total--abstain { color: #9a7b43; }
+
+@media (max-width: 720px) {
+  .ctm-council-vote-table { grid-template-columns: minmax(12rem, 1fr) repeat(3, minmax(3.75rem, 1fr)); }
+  .ctm-council-vote-table__header > div { font-size: .6875rem; padding-inline: .25rem; }
+  .ctm-council-vote-table__row > div,
+  .ctm-council-vote-table__row > label { padding: .5rem; }
+}
