@@ -429,7 +429,7 @@ function api(req, res, url, body) {
       return json(res, 422, { error: "validation", messages: ["Another applicant's testimony overlaps this appointment."] });
     const party = parties(c).find((x) => x.id === body.party_id);
     const appt = { id: "t-" + (state.testimony.length + 1), agenda: item.id, session: s.id, party_id: party.id, party_name: party.name,
-      starts_at: body.starts_at + ":00-08:00", ends_at: body.ends_at + ":00-08:00", instructions: body.instructions, version: 1, state: "scheduled", response: null };
+      starts_at: /[+-]\d{2}:\d{2}$/.test(body.starts_at) ? body.starts_at : body.starts_at + ":00-08:00", ends_at: /[+-]\d{2}:\d{2}$/.test(body.ends_at) ? body.ends_at : body.ends_at + ":00-08:00", instructions: body.instructions, version: 1, state: "scheduled", response: null };
     state.testimony.push(appt);
     return json(res, 201, { id: appt.id });
   }

@@ -140,6 +140,7 @@
       withdrawDone: "Access was withdrawn.",
       noticeOnly: "Official decision notice only",
       cancel: "Cancel",
+      signerMissing: "The approving President is not identified in the decision record, so the signature cannot be recorded here.",
       appeals: "Appeals",
       appeal: "Appeal",
       noAppeals: "No appeals have been filed for this case.",
@@ -241,6 +242,7 @@
       withdrawDone: "تم سحب الإتاحة.",
       noticeOnly: "إخطار رسمي بالقرار فقط",
       cancel: "إلغاء",
+      signerMissing: "لم يُحدَّد الرئيس المعتمِد في سجل القرار، لذلك لا يمكن تسجيل التوقيع هنا.",
       appeals: "الاستئنافات",
       appeal: "استئناف",
       noAppeals: "لم يُقدَّم أي استئناف في هذه القضية.",
@@ -450,6 +452,11 @@
       });
 
     const attest = () => {
+      if (!signerId) {
+        setProblem(null);
+        setFailure(t("signerMissing"));
+        return;
+      }
       const issue = attestationProblem(sign);
       setProblem(issue);
       if (issue) return;
@@ -469,6 +476,7 @@
 
     const issue = () =>
       run(async () => {
+        if (!signerId) throw { data: { detail: t("signerMissing") } };
         const created = await api(`/api/decisions/${encodeURIComponent(decision.id)}/decree/`, {
           method: "POST",
           body: JSON.stringify({ file_id: work.file.id, signer_id: signerId, language: work.language }),
@@ -712,9 +720,7 @@
     const [confirm, setConfirm] = R.useState(false);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
-    const writer =
-      base.canManage(user) ||
-      (record.assigned_member_id !== undefined ? record.assigned_member_id === user.id : false);
+    const writer = base.writerFor(user, null, record);
     const pendingAppeal = row.status === "submitted";
     const answers = Object.entries(row.answers || {});
     async function save() {
@@ -836,7 +842,7 @@
       t = translator(lang);
     const [state, retry] = base.useLoad(
       () =>
-        Promise.all([api("/api/applications/"), api(`/api/cases/${encodeURIComponent(caseId)}/`), api("/api/sessions/")]).then(
+        Promise.all([api("/api/applications/"), api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => base.withAssignee(api, r)), api("/api/sessions/")]).then(
           async ([apps, record, sessions]) => {
             const recent = (sessions.items || []).slice(0, 24);
             const agendas = await Promise.all(

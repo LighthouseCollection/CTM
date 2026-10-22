@@ -274,3 +274,15 @@ test("follow-up parents exclude assessments even when readable by council", () =
   const reports = [{ id: "a", kind: "intake" }, { id: "b", kind: "medical", restricted: false }, { id: "c", restricted: true }, { id: "d", kind: "psychological" }];
   assert.deepEqual(plain(C.ordinaryReports(reports).map((r) => r.id)), ["a"]);
 });
+
+test("assigned manager keeps write controls on servers without assigned_member_id", async () => {
+  const member = { id: "m", name: "Fr. Member", role: "member", portal: "council" };
+  assert.equal(C.writerFor(member, null, { assigned_member_id: "m" }), true);
+  assert.equal(C.writerFor(member, null, { assigned_member_id: "x" }), false);
+  assert.equal(C.writerFor(member, null, { assigned_member: "Fr. Member" }), true);
+  assert.equal(C.writerFor(member, null, {}), false);
+  const enriched = await C.withAssignee(async () => ({ items: [{ id: "c1", assigned_member: "Fr. Member" }] }), { id: "c1", parties: [] });
+  assert.equal(enriched.assigned_member, "Fr. Member");
+  const untouched = { id: "c1", assigned_member_id: "m" };
+  assert.equal(await C.withAssignee(async () => { throw new Error("not called"); }, untouched), untouched);
+});

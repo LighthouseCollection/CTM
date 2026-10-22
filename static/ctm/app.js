@@ -517,7 +517,7 @@
   }
   const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
   const heading = (value) => text(value, { as: "h1", variant: "title" });
-  function SessionAttendance({ sessionId, session, members, initial, t }) {
+  function SessionAttendance({ sessionId, session, members, initial, t, onSaved }) {
     const [records, setRecords] = R.useState(initial),
       [pending, setPending] = R.useState(false),
       [failed, setFailed] = R.useState(false);
@@ -538,6 +538,7 @@
             present: value === "present",
           }),
         });
+        if (onSaved) onSaved();
       } catch {
         setRecords(previous);
         setFailed(true);
@@ -1623,9 +1624,10 @@
           onCase: (id) => go("case", id),
           onBack: () => go("sessions"),
           onSession: (id) => go("session", id),
-          renderAttendance: ({ session, members, attendance, key }) =>
+          renderAttendance: ({ session, members, attendance, key, onSaved }) =>
             h(SessionAttendance, {
               key,
+              onSaved,
               sessionId: selection,
               session,
               members,

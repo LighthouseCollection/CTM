@@ -620,7 +620,18 @@
     if (base.canManage(user)) return true;
     if (record && record.assigned_member_id !== undefined)
       return Boolean(user && record.assigned_member_id === user.id);
-    return Boolean(caseRow?.assigned_member && caseRow.assigned_member === user?.name);
+    // Older servers: display-only fallback on the shown manager name; the server decides.
+    const shown = caseRow?.assigned_member ?? record?.assigned_member ?? null;
+    return Boolean(shown && shown === user?.name);
+  }
+
+  // Older servers omit assigned_member_id from case detail; add the shown manager
+  // name from the case list so the display fallback above can work.
+  async function withAssignee(api, record) {
+    if (!record || record.assigned_member_id !== undefined || record.assigned_member !== undefined) return record;
+    const list = await api("/api/cases/");
+    const row = (list.items || []).find((c) => c.id === record.id);
+    return { ...record, assigned_member: row ? row.assigned_member : null };
   }
 
   // ---------- Report requests ----------
@@ -965,7 +976,7 @@
     const [state, retry] = base.useLoad(
       () =>
         Promise.all([
-          api(`/api/cases/${encodeURIComponent(caseId)}/`),
+          api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
           api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
           api("/api/report-questions/"),
           api("/api/cases/"),
@@ -1222,7 +1233,7 @@
         onChange(
           {
             ...decision,
-            votes: [...decision.votes.filter((v) => v.member_id !== memberId), { member_id: memberId, choice: vote, actor_id: user.id }],
+            votes: [...(decision.votes || []).filter((v) => v.member_id !== memberId), { member_id: memberId, choice: vote, actor_id: user.id }],
           },
           true,
         );
@@ -1404,7 +1415,7 @@
     const [state, retry] = base.useLoad(
       () =>
         Promise.all([
-          api(`/api/cases/${encodeURIComponent(caseId)}/`),
+          api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
           api("/api/council/members/"),
           api("/api/cases/"),
         ]).then(async ([record, members, cases]) => {
@@ -1662,7 +1673,7 @@
       t = translator(lang);
     const [state, retry] = base.useLoad(
       () =>
-        Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/`), api(`/api/cases/${encodeURIComponent(caseId)}/calls/`)]).then(
+        Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)), api(`/api/cases/${encodeURIComponent(caseId)}/calls/`)]).then(
           ([record, calls]) => ({ record, calls: calls.items }),
         ),
       [caseId],
@@ -1800,7 +1811,7 @@
     const [state, retry] = base.useLoad(
       () =>
         Promise.all([
-          api(`/api/cases/${encodeURIComponent(caseId)}/`),
+          api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
           api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
           api(`/api/cases/${encodeURIComponent(caseId)}/reports/`),
         ]).then(([record, requests, reports]) => ({
@@ -1999,7 +2010,7 @@
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`), [caseId]);
+    const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)), [caseId]);
     const [form, setForm] = R.useState({ first: "", last: "", email: "" });
     const [open, setOpen] = R.useState(false);
     const [problem, setProblem] = R.useState(null);
@@ -2334,6 +2345,8 @@
     requestPayload,
     openProceeding,
     ordinaryReports,
+    writerFor,
+    withAssignee,
     ReportsWorkspace,
     RequestsPanel,
     DecisionWorkspace,

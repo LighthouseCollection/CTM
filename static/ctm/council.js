@@ -324,6 +324,7 @@
       statsClosed: "Closed cases",
       statsByManager: "Open cases by case manager",
       statsSessions: "Council sessions",
+      statsNoAssigned: "No open case has a case manager yet.",
       casesTitle: "Cases",
       archivedTitle: "Archived",
       searchCases: "Find a case by number or case manager",
@@ -535,6 +536,7 @@
       statsClosed: "القضايا المغلقة",
       statsByManager: "القضايا المفتوحة حسب مسؤول القضية",
       statsSessions: "جلسات المجلس",
+      statsNoAssigned: "لا توجد قضية مفتوحة معيَّن لها مسؤول بعد.",
       casesTitle: "القضايا",
       archivedTitle: "الأرشيف",
       searchCases: "ابحث عن قضية برقمها أو بمسؤولها",
@@ -851,9 +853,11 @@
         message: t("acceptMessage"),
         confirmLabel: t("accept"),
         cancelLabel: t("cancel"),
-        onConfirm: () => submit("accept"),
+        onConfirm: () => !pending && submit("accept"),
         onCancel: () => !pending && setMode(null),
-      }),
+      },
+        failure && mode === "accept" ? h(P.Notice, { tone: "danger" }, failure) : null,
+      ),
       h(
         P.Dialog,
         {
@@ -1254,8 +1258,8 @@
           // Los Angeles wall-clock times on the session date (the server's time zone).
           body: JSON.stringify({
             party_id: form.party,
-            starts_at: `${sessionDate}T${form.start}`,
-            ends_at: `${sessionDate}T${form.end}`,
+            starts_at: laIso(sessionDate, form.start),
+            ends_at: laIso(sessionDate, form.end),
             instructions: form.instructions.trim(),
           }),
         });
@@ -1687,12 +1691,14 @@
             members: data.members,
             attendance: data.attendance,
             key: `${sessionId}-${data.loadedAt}`,
+            // Presenter capability depends on attendance, so reload the agenda after each save.
+            onSaved: retry,
           })
         : null,
       h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
       part(1),
       part(2),
-      !data.items.some((row) => "hearing_id" in row) ? h(P.Notice, { tone: "info" }, t("outcomeDependency")) : null,
+      data.items.length && !data.items.some((row) => "hearing_id" in row) ? h(P.Notice, { tone: "info" }, t("outcomeDependency")) : null,
       dialog?.kind === "outcome"
         ? h(HearingOutcomeDialog, {
             api,
@@ -2143,7 +2149,7 @@
         { title: t("statsByManager") },
         s.byManager.length
           ? h(P.PropertyList, null, ...s.byManager.map(([name, count]) => h(P.PropertyList.Item, { key: name, label: name }, n(count))))
-          : h(P.EmptyState, { title: t("noMyCases") }),
+          : h(P.EmptyState, { title: t("statsNoAssigned") }),
       ),
       h(
         P.Panel,
