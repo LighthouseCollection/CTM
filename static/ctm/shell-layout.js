@@ -9,12 +9,11 @@
       ...column, headerSort: false, resizable: false,
     }));
     const common = { label, data: rows, columns: gridColumns, index: "id", narrow: "table", empty };
-    return h(P.DataTable, {
+    return h("div", { className }, h(P.DataTable, {
       ...common, mode: "fill",
-      className,
       headerMenu: false, rowMenuButton: false,
       selected: selected ? [selected] : [], onRowClick: onSelect ? (row) => onSelect(row.id) : undefined, empty,
-    });
+    }));
   }
   function Workspace({ label, rows, columns, children, empty, selectionPrompt, selected, onSelect, showDetailWhenEmpty = false }) {
     const [own, select] = R.useState(null);
