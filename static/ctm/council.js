@@ -1346,12 +1346,20 @@
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t(titleKey)),
       mode === "upcoming" && canManage(user)
+        ? h(P.Toolbar, { label: t("tribunalSession") },
+            h(P.Button, { icon: "add", onClick: resetSessionForm, disabled: pending }, t("createSession")),
+            h(P.Button, { icon: "edit", onClick: () => selectedSession && editSession(selectedSession), disabled: pending || !selectedSession }, t("editSession")),
+            h(P.Toolbar.Spacer),
+            h(P.Button, { icon: "save", type: "submit", form: "ctm-session-form", variant: "primary", disabled: pending, loading: pending }, t(editing ? "saveSession" : "createSession")),
+          )
+        : null,
+      mode === "upcoming" && canManage(user)
         ? h(
             P.Panel,
             { icon: "calendar", title: t(editing ? "editSession" : "newSession") },
             h(
               P.Form,
-              { onSubmit: create, label: t("newSession"), noValidate: true, className: "ctm-session-form" },
+              { id: "ctm-session-form", onSubmit: create, label: t("newSession"), noValidate: true, className: "ctm-session-form" },
               h("div", { className: "ctm-session-form-grid" },
               h(
                 P.Field,
@@ -1380,12 +1388,6 @@
               ),
               failure ? h(P.Notice, { tone: "danger" }, failure) : null,
               created ? h(P.Notice, { tone: "success" }, t(created)) : null,
-              h(
-                P.FormActions,
-                { sticky: false },
-                editing ? h(P.Button, { type: "button", variant: "secondary", disabled: pending, onClick: resetSessionForm }, t("cancel")) : null,
-                h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t(editing ? "saveSession" : "createSession")),
-              ),
             ),
           )
         : null,
