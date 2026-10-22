@@ -25,6 +25,27 @@ from .common import audit, lock_key, notify, notify_manager
 GROUNDS = {"infidelity", "desertion", "abuse", "faith", "addiction", "concealment"}
 
 
+def check_filing_version(app, expected_version):
+    """Called after locking the application; legacy internal callers may omit it."""
+    if expected_version is not None and (
+        type(expected_version) is not int
+        or expected_version < 0
+        or app.current_version != expected_version
+    ):
+        raise ValidationError("Another change was saved. Reload before filing.")
+
+
+def validate_filing_declaration(app):
+    questionnaire = app.questionnaire
+    if (
+        questionnaire is None
+        or not questionnaire.published
+        or not questionnaire.declaration_en.strip()
+        or not questionnaire.declaration_ar.strip()
+    ):
+        raise ValidationError("A published bilingual declaration is required before filing.")
+
+
 @transaction.atomic
 def start_application(actor, case_id=None, kind="petition"):
     active(actor)
@@ -215,7 +236,7 @@ def validate_petition(answers):
 
 
 @transaction.atomic
-def submit_application(actor, app_id, idempotency_key, attestation=None):
+def submit_application(actor, app_id, idempotency_key, attestation=None, *, expected_version=None):
     app = application_for(actor, app_id)
     if actor.pk != app.owner_id:
         raise PermissionDenied("Only the applicant can attest and submit.")
@@ -230,6 +251,7 @@ def submit_application(actor, app_id, idempotency_key, attestation=None):
         if previous.application_id != app.pk:
             raise ValidationError("Idempotency key belongs to another operation.")
         return previous
+    check_filing_version(app, expected_version)
     if not actor.email_verified:
         raise ValidationError("Verify your email before submission.")
     if app.duplicate_hold:
@@ -257,6 +279,7 @@ def submit_application(actor, app_id, idempotency_key, attestation=None):
     if first_submission:
         from tribunal.validation import validate_attestation
 
+        validate_filing_declaration(app)
         validate_attestation(attestation)
     if app.kind == "petition":
         dob = date.fromisoformat(answers["birth_date"])

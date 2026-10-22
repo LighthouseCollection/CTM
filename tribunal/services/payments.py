@@ -15,14 +15,17 @@ from tribunal.models import (
     Outbox,
 )
 from tribunal.policy import application_for
-from .applications import required_documents, validate_petition, submit_application
+from .applications import (
+    required_documents, validate_petition, submit_application,
+    check_filing_version, validate_filing_declaration,
+)
 from .common import audit, notify, lock_key
 from tribunal.validation import validate_answers, validate_attestation
 from tribunal.db.context import database_actor
 
 
 @transaction.atomic
-def prepare_checkout(actor, app_id, attestation):
+def prepare_checkout(actor, app_id, attestation, *, expected_version=None):
     app = application_for(actor, app_id)
     app = (
         Application.objects.select_for_update(of=("self",))
@@ -31,10 +34,12 @@ def prepare_checkout(actor, app_id, attestation):
     )
     if app.owner_id != actor.pk or not actor.email_verified:
         raise PermissionDenied("Only the verified filing applicant can pay.")
+    check_filing_version(app, expected_version)
     if app.duplicate_hold or app.status != "draft":
         raise ValidationError("Resolve filing eligibility before payment.")
     if app.fee.status != "due":
         raise ValidationError("This fee is already satisfied.")
+    validate_filing_declaration(app)
     validate_attestation(attestation)
     revision = app.revisions.filter(number=app.current_version).first()
     if not revision:
@@ -56,12 +61,12 @@ def prepare_checkout(actor, app_id, attestation):
     )
 
 
-def create_checkout(actor, app_id, attestation, base_url):
+def create_checkout(actor, app_id, attestation, base_url, *, expected_version=None):
     if not settings.STRIPE_SECRET_KEY:
         raise ValidationError(
             "Payment provider is not configured; no charge was attempted."
         )
-    intent = prepare_checkout(actor, app_id, attestation)
+    intent = prepare_checkout(actor, app_id, attestation, expected_version=expected_version)
     stripe.api_key = settings.STRIPE_SECRET_KEY
     session = stripe.checkout.Session.create(
         mode="payment",

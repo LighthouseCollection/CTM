@@ -77,10 +77,17 @@ def encoded(obj, **extra):
     return {"id": str(obj.pk), **extra}
 
 
-def application_data(app):
+def filing_version(data):
+    version = data.get("expected_version")
+    if type(version) is not int or version < 0:
+        raise ValidationError("expected_version must be a non-negative integer.")
+    return version
+
+
+def application_data(app, actor):
     revision = app.revisions.filter(number=app.current_version).first()
     fee = getattr(app, "fee", None)
-    return encoded(
+    result = encoded(
         app,
         kind=app.kind,
         status=app.status,
@@ -96,6 +103,58 @@ def application_data(app):
         if fee
         else None,
     )
+    if app.owner_id == actor.pk:
+        from tribunal.services.applications import (
+            required_documents, validate_petition, validate_filing_declaration,
+        )
+        from tribunal.validation import validate_answers
+
+        questionnaire = app.questionnaire
+        result["questionnaire"] = encoded(
+            questionnaire,
+            version=questionnaire.number,
+            published=questionnaire.published,
+            definition=questionnaire.definition,
+            declaration_en=questionnaire.declaration_en,
+            declaration_ar=questionnaire.declaration_ar,
+        ) if questionnaire else None
+        editable = app.status not in {"withdrawn", "expired", "deleted"}
+        if app.submitted_at:
+            editable = bool(
+                editable and app.kind == "petition" and app.proceeding
+                and app.proceeding.status == "open" and app.case.status == "open"
+            )
+        ready = bool(
+            editable and actor.email_verified and not app.duplicate_hold
+            and app.status in {"draft", "returned"} and revision and questionnaire
+        )
+        if ready:
+            try:
+                validate_answers(questionnaire, revision.answers)
+                if app.kind == "petition":
+                    validate_petition(revision.answers)
+                elif not revision.answers.get("new_information"):
+                    ready = False
+                required_documents(app, revision.answers)
+                if not app.submitted_at:
+                    validate_filing_declaration(app)
+            except ValidationError:
+                ready = False
+        satisfied = bool(fee and fee.status in {"paid", "waived", "historical_exempt"})
+        returned = bool(app.status == "returned" and app.submitted_at)
+        latest_review = m.CompletenessReview.objects.filter(
+            submission__application=app
+        ).order_by("-created_at", "-id").first()
+        result.update(
+            can_edit=editable,
+            can_checkout=bool(ready and app.status == "draft" and fee and fee.status == "due"),
+            can_submit=bool(ready and satisfied and not returned),
+            can_resubmit=bool(ready and satisfied and returned),
+            duplicate_hold=app.duplicate_hold,
+            return_instructions=(latest_review.instructions if returned and latest_review
+                                 and latest_review.result == "reject" else ""),
+        )
+    return result
 
 
 @require_GET
@@ -157,7 +216,7 @@ def applications(request):
         return JsonResponse(
             {
                 "items": [
-                    application_data(x)
+                    application_data(x, request.user)
                     for x in visible_applications(request.user)[:100]
                 ]
             }
@@ -168,13 +227,13 @@ def applications(request):
     result = start_application(
         request.user, data.get("case_id"), data.get("kind", "petition")
     )
-    return JsonResponse(application_data(result), status=201)
+    return JsonResponse(application_data(result, request.user), status=201)
 
 
 @endpoint(("GET", "POST"))
 def application(request, app_id):
     if request.method == "GET":
-        return JsonResponse(application_data(application_for(request.user, app_id)))
+        return JsonResponse(application_data(application_for(request.user, app_id), request.user))
     from tribunal.services.applications import save_answers
 
     data = body(request)
@@ -209,7 +268,8 @@ def submit(request, app_id):
 
     data = body(request)
     result = submit_application(
-        request.user, app_id, data["idempotency_key"], data.get("attestation")
+        request.user, app_id, data["idempotency_key"], data.get("attestation"),
+        expected_version=filing_version(data),
     )
     return JsonResponse(encoded(result), status=201)
 
@@ -254,7 +314,8 @@ def checkout(request, app_id):
         else request.build_absolute_uri("/").rstrip("/")
     )
     return JsonResponse(
-        create_checkout(request.user, app_id, data["attestation"], base)
+        create_checkout(request.user, app_id, data["attestation"], base,
+                        expected_version=filing_version(data))
     )
 
 
