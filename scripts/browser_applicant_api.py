@@ -850,7 +850,17 @@ try:
                         "en":"Own bound request question" if title=="Own sent intake" else "Unresolved bound question",
                         "ar":"سؤال خاص بالطلب"}] if kind=="intake" else [])
         fixture_db(own_requests_fixture)  # Synthetic sent snapshots; not institution wording/send acceptance.
-        own_requests=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"]
+        def own_request_items(stage):
+            response=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/")
+            try:payload=response.json()
+            except Exception:payload={"non_json_body":response.text()[:5000]}
+            if response.status!=200 or not isinstance(payload,dict) or not isinstance(payload.get("items"),list):
+                diagnostic={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"stage":stage,
+                    "status":response.status,"payload":payload,"runtime_database":runtime_database}
+                (ARTIFACT_ROOT/f"request-list-{stage}-failure.json").write_text(json.dumps(diagnostic,indent=2),encoding="utf-8")
+                raise AssertionError(f"Own request list failed at {stage}: HTTP {response.status} {json.dumps(payload)[:1000]}")
+            return payload["items"]
+        own_requests=own_request_items("initial")
         assert {row["title"] for row in own_requests}=={"Own sent intake","Own unresolved intake","Own assessment"}
         assert all(isinstance(row["can_respond"],bool) and len(row["request_version"])==64 for row in own_requests)
         intake_request=next(row for row in own_requests if row["title"]=="Own sent intake")
@@ -933,7 +943,7 @@ try:
         assert consent_payload=={"expected_version":assessment_request["request_version"],"declaration_id":str(release_definition.pk),
             "accepted":True,"file_id":consent_original["id"],"scope":{"council":True}}
         expect(page.get_by_text("A signed release for this request and purpose is recorded.",exact=True)).to_be_visible()
-        own_after_sign=next(row for row in context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"] if row["id"]==assessment_request["id"])
+        own_after_sign=next(row for row in own_request_items("after-release") if row["id"]==assessment_request["id"])
         assert own_after_sign["can_respond"] and not own_after_sign["can_sign_release"]
         assert own_after_sign["signed_releases"][0]["scope"]=={"council":True,"purpose":"medical","request_id":assessment_request["id"],"proceeding_id":assessment_request["proceeding_id"]}
         assert staff.request.get(f"{BASE}/api/files/{report_original['id']}/").status==200
@@ -1121,7 +1131,7 @@ try:
                 from tribunal.services.decisions import close_case
                 close_case(admin,Case.objects.get(pk=current["case_id"]),"synthetic_request_closure_audit",notify_parties=False)
             fixture_db(close_requests_fixture)
-            closed_requests=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"]
+            closed_requests=own_request_items("after-case-closure")
             closure_report={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],
                 "scope":"Isolated synthetic request closure privacy diagnostic",
                 "preceding_scenario_groups_passed":len(checks),
