@@ -2895,7 +2895,6 @@ ${ar}` : en;
     foundationalCodes,
     missingArabic,
     requestProblem,
-    templateSelection,
     requestPayload,
     openProceeding,
     ordinaryReports,

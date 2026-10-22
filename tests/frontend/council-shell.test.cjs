@@ -81,6 +81,11 @@ test("report template intake uses selectable spouse cards and keeps applicant de
   assert.match(css, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
 });
 
+test("council case module has no stale template exports", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.doesNotMatch(councilCase, /templateSelection/);
+});
+
 test("report maker omits applicant instructions and reusable question-template controls", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   const reportMaker = councilCase.slice(councilCase.indexOf("function RequestComposer"), councilCase.indexOf("const interviewDraftKey"));
