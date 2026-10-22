@@ -44,7 +44,13 @@ class AccountAdapter(DefaultSocialAccountAdapter):
 
     def pre_social_login(self, request, sociallogin):
         with provider_identity(sociallogin):
-            return self._pre_social_login(request, sociallogin)
+            result = self._pre_social_login(request, sociallogin)
+        # allauth rechecks is_existing and completes login after this hook.
+        # Extend only a successfully validated identity to the response boundary.
+        scope = getattr(request, "_ctm_provider_scope", None)
+        if scope is not None:
+            scope.enter_context(provider_identity(sociallogin))
+        return result
 
     def _pre_social_login(self, request, sociallogin):
         provider = sociallogin.account.provider
