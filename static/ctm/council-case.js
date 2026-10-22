@@ -80,6 +80,11 @@
       member,
       vote: latest[member.id] || null,
     }));
+    // Votes already recorded by a member who is no longer active stay counted and
+    // visible (F19): the roster lists current members, history keeps every vote.
+    const listed = new Set((roster || []).map((member) => member.id));
+    for (const [memberId, vote] of Object.entries(latest))
+      if (!listed.has(memberId)) rows.push({ member: { id: memberId, name: null, former: true }, vote });
     const counts = { approve: 0, deny: 0, abstain: 0, none: 0 };
     for (const row of rows) counts[row.vote ? row.vote.choice : "none"] += 1;
     return { rows, counts };
@@ -324,6 +329,7 @@
         "Only the assigned case manager, or the administrator or secretary, enters the decision type and grounds.",
       actionFailed: "The action could not be completed. Nothing was changed.",
       back: "Back",
+      formerMember: "Former council member",
       managerHistory: "Case manager history",
       authorizedBy: "authorized by",
       recordedByInline: "recorded by",
@@ -551,6 +557,7 @@
       writerDecision: "يُدخل نوع القرار وأسبابه مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط.",
       actionFailed: "تعذر إتمام الإجراء. لم يتم تغيير أي شيء.",
       back: "رجوع",
+      formerMember: "عضو سابق في المجلس",
       managerHistory: "سجل مسؤولي القضية",
       authorizedBy: "باعتماد",
       recordedByInline: "وسجّله",
@@ -1495,7 +1502,7 @@
             ...rows.map((row) =>
               h(
                 P.PropertyList.Item,
-                { key: row.member.id, label: row.member.name || row.member.id },
+                { key: row.member.id, label: row.member.former ? t("formerMember") : row.member.name || row.member.id },
                 row.vote
                   ? h(P.Badge, { tone: row.vote.choice === "approve" ? "success" : row.vote.choice === "deny" ? "negative" : "neutral" }, t(row.vote.choice))
                   : h(P.Text, { variant: "secondary" }, t("notVoted")),

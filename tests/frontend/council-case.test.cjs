@@ -307,3 +307,11 @@ test("templates pre-fill only published, non-foundational codes and skip retired
   assert.deepEqual(plain(C.usableTemplates(templates).map((t) => t.id)), ["t1"]);
   assert.deepEqual(plain(C.templateSelection(templates[0], bank)), ["DM-01"]);
 });
+
+test("F19: votes of members no longer on the active roster stay counted as former members", () => {
+  const roster = [{ id: "m1", name: "A", role: "member" }];
+  const result = C.tally([{ member_id: "m1", choice: "approve" }, { member_id: "gone", choice: "deny" }], roster);
+  assert.equal(result.rows.length, 2);
+  assert.equal(result.rows[1].member.former, true);
+  assert.deepEqual(plain(result.counts), { approve: 1, deny: 1, abstain: 0, none: 0 });
+});
