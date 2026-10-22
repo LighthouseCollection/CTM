@@ -36,6 +36,10 @@
       h("circle", { cx: "14.5", cy: "14", r: "2.5" }),
       h("path", { d: "m16.4 15.9 2.4 2.4" }),
     );
+  const appealsReturnIcon = () =>
+    h("svg", { className: "ctm-appeals-nav-icon", width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
+      h("path", { d: "m9 7-5 5 5 5M5 12h8a6 6 0 0 1 6 6v1" }),
+    );
   const navigationIcon = (id) =>
     id === "search"
       ? caseSearchIcon()
@@ -45,7 +49,9 @@
         ? decisionBalanceIcon()
         : id === "decree"
           ? decreeCertificateIcon()
-          : h(P.Icon, { name: navigationIcons[id] });
+          : id === "appeals"
+            ? appealsReturnIcon()
+            : h(P.Icon, { name: navigationIcons[id] });
   const words = {
     en: {
       event_report_requested: "A report has been requested.",

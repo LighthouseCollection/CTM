@@ -52,6 +52,8 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.match(app, /const caseSearchIcon = \(\) =>/);
   assert.match(app, /className: "ctm-case-search-nav-icon", width: 18, height: 18/);
   assert.match(app, /id === "search"\s*\? caseSearchIcon\(\)/);
+  assert.match(app, /const appealsReturnIcon = \(\) =>/);
+  assert.match(app, /id === "appeals"\s*\? appealsReturnIcon\(\)/);
   assert.match(app, /const casesNavigationItems = \[\s*\{ id: "search", icon: navigationIcon\("search"\), label: t\("search"\) \}/);
 });
 
