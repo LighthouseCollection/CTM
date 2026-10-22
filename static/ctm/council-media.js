@@ -251,14 +251,34 @@
       saveRevision: "Save as new version",
       revisionSaved: "Saved as version {version}.",
       revisionNoChange: "Nothing has changed from the current version.",
-      revisionStale:
-        "Version {version} was saved by {actor} after you started editing. Your text is kept below. Review the latest version in the revision history, then save your text as a new version or discard it.",
+      revisionConflict:
+        "Version {version} was saved by {actor} after you started editing. Your text is kept below and has not been saved. Look at version {version}, then save your text as version {next} or discard it.",
+      showVersion: "Show version {version}",
+      hideVersion: "Hide version {version}",
+      latestVersionTitle: "Version {version} · {when} · {actor}",
+      overwriteTitle: "Save your text as version {next}?",
+      overwriteMessage:
+        "Version {version} stays in the revision history unchanged. Your text becomes version {next}. Attachments and other non-text answers are taken from version {version}.",
+      overwriteConfirm: "Save as version {next}",
+      previousSaveReceived: "Your earlier save was received as version {version}. Changes you made after it are not saved yet.",
+      saveUncertain:
+        "The server did not confirm this save. Your text is kept. It may already be saved: “Try again” sends exactly the same version, which the server never saves twice.",
+      retrySave: "Try again",
+      revisionFixAndSave: "Correct the text and save again. Your text is kept.",
+      sessionExpiredKept: "Your session has ended. Sign in again in a new tab, then save here. Your text stays on this page while it is open.",
+      reportMissing: "This report is no longer available to you. Your text is still shown so you can copy it.",
+      discardUncertainMessage:
+        "The text you typed will be removed from this page. Your last save was not confirmed by the server and may already be stored as a new version.",
       saveAnyway: "Save my text as a new version",
       discardChanges: "Discard my changes",
       revisionDenied: "This revision was not allowed. Your text is still shown so you can copy it.",
       revisionKept: "Your text is kept; try again.",
       nonTextKept: "Attached files and other non-text answers are kept unchanged.",
       unsavedRevision: "A report revision has not been saved.",
+      revisionRestored: "Your unsaved revision was restored. Save it as a new version or discard it.",
+      discardRevisionTitle: "Discard unsaved changes?",
+      discardRevisionMessage: "The text you typed in this revision will be removed. Nothing has been saved.",
+      keepEditing: "Keep editing",
       reportAuthor: "Author",
       reportSubmitted: "Submitted",
       reportMethod: "Method",
@@ -375,14 +395,34 @@
       saveRevision: "الحفظ كإصدار جديد",
       revisionSaved: "تم الحفظ كالإصدار {version}.",
       revisionNoChange: "لا يوجد أي تغيير عن الإصدار الحالي.",
-      revisionStale:
-        "حفظ {actor} الإصدار {version} بعد أن بدأت التعديل. وما زال نصك محفوظًا أدناه. راجع أحدث إصدار في سجل التعديلات، ثم احفظ نصك كإصدار جديد أو تجاهله.",
+      revisionConflict:
+        "حفظ {actor} الإصدار {version} بعد أن بدأت التعديل. وما زال نصك معروضًا أدناه ولم يُحفظ. اطّلع على الإصدار {version}، ثم احفظ نصك كإصدار {next} أو تجاهله.",
+      showVersion: "عرض الإصدار {version}",
+      hideVersion: "إخفاء الإصدار {version}",
+      latestVersionTitle: "الإصدار {version} · {when} · {actor}",
+      overwriteTitle: "هل تريد حفظ نصك كإصدار {next}؟",
+      overwriteMessage:
+        "يبقى الإصدار {version} في سجل التعديلات دون تغيير. ويصبح نصك الإصدار {next}. وتؤخذ المرفقات والإجابات غير النصية من الإصدار {version}.",
+      overwriteConfirm: "الحفظ كإصدار {next}",
+      previousSaveReceived: "استُلم حفظك السابق كإصدار {version}. والتغييرات التي أجريتها بعده لم تُحفظ بعد.",
+      saveUncertain:
+        "لم يؤكد الخادم هذا الحفظ. وما زال نصك محفوظًا هنا. وقد يكون حُفظ بالفعل: يرسل زر «إعادة المحاولة» الإصدار نفسه تمامًا، ولا يحفظه الخادم مرتين.",
+      retrySave: "إعادة المحاولة",
+      revisionFixAndSave: "صحّح النص ثم احفظ مجددًا. وما زال نصك محفوظًا هنا.",
+      sessionExpiredKept: "انتهت جلستك. سجّل الدخول مجددًا في علامة تبويب جديدة، ثم احفظ هنا. ويبقى نصك في هذه الصفحة ما دامت مفتوحة.",
+      reportMissing: "لم يعد هذا التقرير متاحًا لك. وما زال نصك معروضًا لتتمكن من نسخه.",
+      discardUncertainMessage:
+        "سيُحذف النص الذي كتبته من هذه الصفحة. ولم يؤكد الخادم حفظك الأخير، وقد يكون مخزنًا بالفعل كإصدار جديد.",
       saveAnyway: "حفظ نصي كإصدار جديد",
       discardChanges: "تجاهل تغييراتي",
       revisionDenied: "لم يُسمح بهذا التعديل. وما زال نصك معروضًا لتتمكن من نسخه.",
       revisionKept: "نصك محفوظ؛ حاول مجددًا.",
       nonTextKept: "تبقى الملفات المرفقة والإجابات غير النصية دون تغيير.",
       unsavedRevision: "يوجد تعديل على التقرير لم يُحفظ.",
+      revisionRestored: "تمت استعادة تعديلك غير المحفوظ. احفظه كإصدار جديد أو تجاهله.",
+      discardRevisionTitle: "هل تريد تجاهل التغييرات غير المحفوظة؟",
+      discardRevisionMessage: "سيُحذف النص الذي كتبته في هذا التعديل. لم يُحفظ أي شيء.",
+      keepEditing: "متابعة التعديل",
       reportAuthor: "الكاتب",
       reportSubmitted: "تاريخ التقديم",
       reportMethod: "الطريقة",
@@ -437,7 +477,7 @@
     return (key, vars) => {
       let value = own[key] ?? words.en[key];
       if (value === undefined) return fallback(key, vars);
-      if (vars) for (const [k, v] of Object.entries(vars)) value = value.replace(`{${k}}`, v);
+      if (vars) for (const [k, v] of Object.entries(vars)) value = value.split(`{${k}}`).join(v); // every occurrence
       return value;
     };
   }
@@ -856,6 +896,8 @@
     return Object.entries(answers || {}).sort((a, b) => rank(a[0]) - rank(b[0]));
   }
 
+  const revisionDraftKey = (report) => `revision:${report.id}`;
+
   function revisionDraft(report, latest) {
     const answers = (latest && latest.answers) || {};
     return {
@@ -882,19 +924,65 @@
     return before.observations !== after.observations;
   }
 
-  function ReportRevisionEditor({ api, lang, report, latest, onCancel, onSaved, onHistory, onDenied }) {
+  // Classifies a failed save by the backend's published contract (backend #7 tribunal/api.py endpoint()):
+  // 409 {error:"version_conflict", current_version} or {error:"conflict", detail}; 403 {detail}; 422 {messages};
+  // 401; 404. No status (network failure) or 5xx means the outcome is unknown: the server may have saved it.
+  function saveFailure(error) {
+    const status = error && error.status;
+    if (!status || status >= 500) return "uncertain";
+    if (status === 409) return "conflict";
+    if (status === 403) return "denied";
+    if (status === 401) return "expired";
+    if (status === 404) return "missing";
+    if (status === 422) return "invalid";
+    return "failed";
+  }
+
+  // Key-order-independent JSON (PostgreSQL jsonb does not keep key order).
+  function stableJson(value) {
+    if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+    if (value && typeof value === "object")
+      return `{${Object.keys(value)
+        .sort()
+        .map((k) => `${JSON.stringify(k)}:${stableJson(value[k])}`)
+        .join(",")}}`;
+    return JSON.stringify(value === undefined ? null : value);
+  }
+
+  // The server's replay rule: the stored version right after expected_version holds exactly this content.
+  function isSameSave(row, payload) {
+    return Boolean(
+      row &&
+        payload &&
+        row.version === payload.expected_version + 1 &&
+        stableJson(row.answers || {}) === stableJson(payload.answers || {}) &&
+        (row.observations || "") === (payload.observations || ""),
+    );
+  }
+
+  function ReportRevisionEditor({ api, lang, report, latest, restored, onCancel, onSaved, onHistory, onDenied }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [draft, setDraft] = R.useState(() => revisionDraft(report, latest));
-    const [base0, setBase0] = R.useState(latest);
+    const draftKey = revisionDraftKey(report);
+    const [stored] = R.useState(() => base.unsavedDrafts.get(draftKey) || null);
+    const [draft, setDraft] = R.useState(() => (stored ? stored.draft : revisionDraft(report, latest)));
+    const [base0, setBase0] = R.useState(() => (stored ? stored.base : latest)); // version the edit is based on
     const [pending, setPending] = R.useState(false);
-    const [failure, setFailure] = R.useState(null);
-    const [denied, setDenied] = R.useState(false);
-    const [stale, setStale] = R.useState(null);
-    const [problem, setProblem] = R.useState(null);
-    const dirty = revisionChanged(base0, draft);
+    const [failure, setFailure] = R.useState(null); // { kind, message }
+    const [conflict, setConflict] = R.useState(null); // newest saved version when it is not base0
+    const [showLatest, setShowLatest] = R.useState(false);
+    const [attempt, setAttempt] = R.useState(null); // exact request whose outcome is unknown
+    const [info, setInfo] = R.useState(null); // { key, vars }
+    const [confirm, setConfirm] = R.useState(null); // "discard" | "overwrite"
+    const [done, setDone] = R.useState(false); // a save was confirmed by the server
+    const dirty = revisionChanged(base0, draft) && !done;
+    // Keep unsaved text across in-app navigation (the editor unmounts when another page opens).
+    R.useEffect(() => {
+      if (dirty) base.unsavedDrafts.set(draftKey, { base: base0, draft });
+      else base.unsavedDrafts.delete(draftKey);
+    }, [draft, base0]);
     R.useEffect(() => {
       if (!dirty) return undefined;
       const guard = (event) => {
@@ -906,53 +994,136 @@
       return () => window.removeEventListener("beforeunload", guard);
     }, [dirty]);
     const url = `/api/reports/${encodeURIComponent(report.id)}/revisions/`;
-    async function save(event, force) {
-      if (event && event.preventDefault) event.preventDefault();
-      setFailure(null);
-      setProblem(null);
-      if (!force && !revisionChanged(base0, draft)) return setProblem("revisionNoChange");
+    const payload = revisionPayload(base0, draft);
+    // Unchanged text after an unconfirmed save: resend the identical request; the server replays it.
+    const retrying = Boolean(attempt) && stableJson(attempt) === stableJson(payload);
+    const blocked = failure && (failure.kind === "denied" || failure.kind === "missing");
+
+    async function readHistory() {
+      const data = await api(url);
+      const items = data.items || [];
+      onHistory(items);
+      return items;
+    }
+    function finish(version) {
+      setDone(true);
+      base.unsavedDrafts.delete(draftKey);
+      setAttempt(null);
+      onSaved(version);
+    }
+    // After a 409, learn what the server holds. Our own identical earlier save is a confirmation, not a conflict.
+    async function settleConflict(sent) {
+      const newest = (await readHistory())[0] || null;
+      if (isSameSave(newest, sent)) return finish(newest.version);
+      if (attempt && isSameSave(newest, attempt)) {
+        setAttempt(null);
+        setBase0(newest);
+        setInfo({ key: "previousSaveReceived", vars: { version: String(newest.version) } });
+        return undefined;
+      }
+      setConflict(newest);
+      setShowLatest(false);
+      return undefined;
+    }
+    async function submit(body) {
       setPending(true);
+      setFailure(null);
+      setInfo(null);
       try {
-        // Preflight offers a helpful stale warning; the bound version also guards the write race.
-        const current = await api(url);
-        const newest = (current.items || [])[0] || null;
-        onHistory(current.items || []);
-        if (!force && newest && base0 && newest.version !== base0.version) {
-          setStale(newest);
+        const saved = await api(url, { method: "POST", body: JSON.stringify(body) });
+        // The contract returns {id, version} for a new save and for a replay; older servers may omit version.
+        const version = saved && saved.version != null ? saved.version : ((await readHistory().catch(() => []))[0] || {}).version;
+        finish(version ?? null);
+      } catch (error) {
+        const kind = saveFailure(error);
+        if (kind === "conflict") {
+          try {
+            await settleConflict(body);
+          } catch {
+            setAttempt(body);
+            setFailure({ kind: "uncertain", message: "" });
+          }
           return;
         }
-        await api(url, { method: "POST", body: JSON.stringify(revisionPayload(newest || base0, draft)) });
-        const after = await api(url).catch(() => null);
-        if (after) onHistory(after.items || []);
-        onSaved(after?.items?.[0]?.version ?? null);
-      } catch (error) {
-        setFailure(base.serverMessage(error, t));
-        if (error && error.status === 403) {
-          setDenied(true);
-          if (onDenied) onDenied(); // refresh rows so can_revise reflects the withdrawn authority
-        }
+        if (kind === "uncertain") setAttempt(body);
+        if (kind === "denied" && onDenied) onDenied(); // refresh rows so can_revise reflects withdrawn authority
+        setFailure({ kind, message: base.serverMessage(error, t) });
       } finally {
         setPending(false);
       }
     }
-    function adoptLatest() {
-      setBase0(stale);
-      setStale(null);
-      save(null, true);
+    async function save(event) {
+      if (event && event.preventDefault) event.preventDefault();
+      setFailure(null);
+      setInfo(null);
+      if (retrying) return submit(attempt);
+      if (!dirty) return setInfo({ key: "revisionNoChange" });
+      setPending(true);
+      try {
+        // Early, friendly check; the server's expected_version check remains the authority.
+        const newest = (await readHistory())[0] || null;
+        if (attempt && isSameSave(newest, attempt)) {
+          setAttempt(null);
+          setBase0(newest);
+          setInfo({ key: "previousSaveReceived", vars: { version: String(newest.version) } });
+          return undefined;
+        }
+        if (newest && base0 && newest.version !== base0.version) {
+          setConflict(newest);
+          setShowLatest(false);
+          return undefined;
+        }
+      } catch {
+        /* history unreadable: still safe to send, a stale version is refused with 409 */
+      } finally {
+        setPending(false);
+      }
+      return submit(payload);
+    }
+    // Deliberate choice after reviewing the newer version: the text becomes the next version.
+    function overwrite() {
+      const next = conflict;
+      setConfirm(null);
+      setConflict(null);
+      setBase0(next);
+      if (!revisionChanged(next, draft)) return setInfo({ key: "revisionNoChange" });
+      return submit(revisionPayload(next, draft));
+    }
+    function discard() {
+      base.unsavedDrafts.delete(draftKey);
+      setConfirm(null);
+      onCancel();
     }
     const questions = report.questions || [];
-    const kept = Object.entries((latest && latest.answers) || {}).some(([, v]) => typeof v !== "string");
+    const label = (code) => {
+      const q = questions.find((x) => x.code === code);
+      return q ? `${code} — ${base.isolate((lang === "ar" && q.ar) || q.en || code)}` : code;
+    };
+    const kept = Object.entries((base0 && base0.answers) || {}).some(([, v]) => typeof v !== "string");
+    const failureText = failure
+      ? {
+          uncertain: t("saveUncertain"),
+          denied: `${failure.message} ${t("revisionDenied")}`,
+          invalid: `${failure.message} ${t("revisionFixAndSave")}`,
+          expired: t("sessionExpiredKept"),
+          missing: `${failure.message} ${t("reportMissing")}`,
+          failed: `${failure.message} ${t("revisionKept")}`,
+        }[failure.kind]
+      : null;
+    const conflictVars = conflict
+      ? { version: String(conflict.version), next: String(conflict.version + 1), actor: conflict.actor ? base.isolate(conflict.actor) : "—" }
+      : null;
     return h(
       P.Form,
-      { onSubmit: (e) => save(e, false), label: t("reviseTitle"), noValidate: true },
+      { onSubmit: save, label: t("reviseTitle"), noValidate: true },
+      restored && stored ? h(P.Notice, { tone: "info" }, t("revisionRestored")) : null,
       h(
         P.FormSection,
         { title: t("reviseTitle"), description: t("reviseHelp") },
-        ...revisionFields(report, latest).map((code) => {
-          const q = questions.find((x) => x.code === code);
-          return h(
+        ...revisionFields(report, base0).map((code) =>
+          h(
             P.Field,
-            { key: code, label: q ? `${code} — ${base.isolate((lang === "ar" && q.ar) || q.en || code)}` : code },
+            { key: code, label: label(code) },
             h(P.Textarea, {
               dir: "auto",
               rows: 3,
@@ -963,16 +1134,16 @@
               onChange: (e) => {
                 const value = e.target.value;
                 setDraft((old) => ({ ...old, answers: { ...old.answers, [code]: value } }));
-                setProblem(null);
+                setInfo(null);
               },
             }),
-          );
-        }),
+          ),
+        ),
         h(
           P.Field,
           { label: t("observations") },
           h(P.Textarea, {
-              dir: "auto",
+            dir: "auto",
             rows: 4,
             autoGrow: true,
             value: draft.observations,
@@ -981,37 +1152,83 @@
             onChange: (e) => {
               const value = e.target.value;
               setDraft((old) => ({ ...old, observations: value }));
-              setProblem(null);
+              setInfo(null);
             },
           }),
         ),
         kept ? h(P.Text, { variant: "secondary" }, t("nonTextKept")) : null,
       ),
-      stale
+      conflict
         ? h(
             P.Notice,
             { tone: "warning" },
             h(
               P.Stack,
               { gap: "sm" },
-              h(P.Text, { as: "p" }, t("revisionStale", { version: String(stale.version), actor: stale.actor ? base.isolate(stale.actor) : "—" })),
+              h(P.Text, { as: "p" }, t("revisionConflict", conflictVars)),
               h(
                 P.Inline,
-                null,
-                h(P.Button, { size: "sm", disabled: pending, onClick: adoptLatest }, t("saveAnyway")),
-                h(P.Button, { size: "sm", disabled: pending, onClick: onCancel }, t("discardChanges")),
+                { wrap: true },
+                h(P.Button, { size: "sm", disabled: pending, onClick: () => setShowLatest(!showLatest) }, t(showLatest ? "hideVersion" : "showVersion", conflictVars)),
+                h(P.Button, { size: "sm", disabled: pending, onClick: () => setConfirm("overwrite") }, t("saveAnyway")),
+                h(P.Button, { size: "sm", disabled: pending, onClick: () => setConfirm("discard") }, t("discardChanges")),
               ),
             ),
           )
         : null,
-      problem ? h(P.Notice, { tone: "info" }, t(problem)) : null,
-      failure ? h(P.Notice, { tone: "danger" }, `${failure} ${t(denied ? "revisionDenied" : "revisionKept")}`) : null,
+      conflict && showLatest
+        ? h(
+            P.Panel,
+            {
+              icon: "document",
+              title: t("latestVersionTitle", { ...conflictVars, when: conflict.timestamp ? base.formatWhen(conflict.timestamp, lang) : "—" }),
+            },
+            h(
+              P.Stack,
+              { gap: "sm" },
+              ...answerEntries(report, conflict.answers).map(([code, answer]) =>
+                h(
+                  P.Stack,
+                  { key: code, gap: "xs" },
+                  h(P.Text, { variant: "secondary" }, label(code)),
+                  h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)),
+                ),
+              ),
+              conflict.observations
+                ? h(P.Stack, { gap: "xs" }, h(P.Text, { variant: "secondary" }, t("observations")), h(P.Text, { as: "p", dir: "auto" }, conflict.observations))
+                : null,
+            ),
+          )
+        : null,
+      info ? h(P.Notice, { tone: "info" }, t(info.key, info.vars)) : null,
+      failureText ? h(P.Notice, { tone: failure.kind === "uncertain" ? "warning" : "danger" }, failureText) : null,
       h(
         P.FormActions,
         { sticky: false },
-        h(P.Button, { disabled: pending, onClick: onCancel }, t("cancel")),
-        denied || stale ? null : h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveRevision")),
+        h(P.Button, { disabled: pending, onClick: () => (dirty || attempt ? setConfirm("discard") : discard()) }, t("cancel")),
+        blocked || conflict
+          ? null
+          : h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t(retrying ? "retrySave" : "saveRevision")),
       ),
+      h(P.ConfirmDialog, {
+        open: confirm === "discard",
+        title: t("discardRevisionTitle"),
+        message: t(attempt ? "discardUncertainMessage" : "discardRevisionMessage"),
+        confirmLabel: t("discardChanges"),
+        cancelLabel: t("keepEditing"),
+        destructive: true,
+        onConfirm: discard,
+        onCancel: () => setConfirm(null),
+      }),
+      h(P.ConfirmDialog, {
+        open: confirm === "overwrite",
+        title: t("overwriteTitle", conflictVars || {}),
+        message: t("overwriteMessage", conflictVars || {}),
+        confirmLabel: t("overwriteConfirm", conflictVars || {}),
+        cancelLabel: t("keepEditing"),
+        onConfirm: overwrite,
+        onCancel: () => setConfirm(null),
+      }),
     );
   }
 
@@ -1026,7 +1243,9 @@
     const [history, setHistory] = R.useState(null);
     const [version, setVersion] = R.useState(null);
     const [failure, setFailure] = R.useState(null);
-    const [editing, setEditing] = R.useState(null); // latest revision the edit started from
+    // Unsaved text left by in-app navigation reopens the editor where the author stopped.
+    const [restored] = R.useState(() => base.unsavedDrafts.get(revisionDraftKey(report)) || null);
+    const [editing, setEditing] = R.useState(() => (restored ? restored.base : null)); // version the edit started from
     const [opening, setOpening] = R.useState(false);
     const [saved, setSaved] = R.useState(null);
     const historyUrl = `/api/reports/${encodeURIComponent(report.id)}/revisions/`;
@@ -1071,6 +1290,7 @@
           lang,
           report,
           latest: editing,
+          restored: Boolean(restored),
           onCancel: () => setEditing(null),
           onHistory: showHistory,
           onDenied: onRevised,
@@ -1349,12 +1569,17 @@
   Object.assign(window.CTMCouncil, {
     mediaWords: words,
     mediaTranslator: translator,
+    ReportRevisionEditor, // exported for the unsaved-text regression test
+    ReportDetailTabs,
     chooseMimeType,
     revisionAccess,
     revisionFields,
     revisionDraft,
     revisionPayload,
     revisionChanged,
+    saveFailure,
+    stableJson,
+    isSameSave,
     answerEntries,
     extensionFor,
     sizeLimitBytes,

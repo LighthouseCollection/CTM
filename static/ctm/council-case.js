@@ -449,6 +449,12 @@
       startInterviewMessage: "The question list is frozen. The applicant is not notified.",
       interviewStarted: "The interview was started. Record the answers when ready.",
       recordInterview: "Record interview answers",
+      interviewRestored: "Your unsaved interview answers were restored. Save them or discard them.",
+      interviewUnsaved: "Interview answers have not been saved.",
+      interviewDiscardTitle: "Discard unsaved interview answers?",
+      interviewDiscardMessage: "The answers and observations you typed will be removed. Nothing has been saved.",
+      interviewDiscard: "Discard answers",
+      interviewKeepEditing: "Keep editing",
       interviewRecordHelp: "Enter what the applicant said for each question. Leave a question empty if it was not asked.",
       internalObservations: "Internal observations (council only)",
       internalObservationsHelp: "Kept separate from the applicant's answers and never shown to applicants.",
@@ -685,6 +691,12 @@
       startInterviewMessage: "يتم تثبيت قائمة الأسئلة. ولا يتم إخطار مقدم الطلب.",
       interviewStarted: "بدأت المقابلة. سجّل الإجابات عندما تكون جاهزًا.",
       recordInterview: "تسجيل إجابات المقابلة",
+      interviewRestored: "تمت استعادة إجابات المقابلة غير المحفوظة. احفظها أو تجاهلها.",
+      interviewUnsaved: "لم تُحفظ إجابات المقابلة.",
+      interviewDiscardTitle: "هل تريد تجاهل إجابات المقابلة غير المحفوظة؟",
+      interviewDiscardMessage: "ستُحذف الإجابات والملاحظات التي كتبتها. لم يُحفظ أي شيء.",
+      interviewDiscard: "تجاهل الإجابات",
+      interviewKeepEditing: "متابعة التعديل",
       interviewRecordHelp: "أدخل ما قاله مقدم الطلب عن كل سؤال. اترك السؤال فارغًا إذا لم يُطرح.",
       internalObservations: "ملاحظات داخلية (للمجلس فقط)",
       internalObservationsHelp: "تُحفظ منفصلة عن إجابات مقدم الطلب ولا تُعرض على مقدمي الطلبات أبدًا.",
@@ -1022,16 +1034,40 @@
     );
   }
 
+  const interviewDraftKey = (request) => `interview:${request.id}`;
+
   function InterviewForm({ api, lang, request, onRecorded, onCancel }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [answers, setAnswers] = R.useState({});
-    const [observations, setObservations] = R.useState("");
+    const draftKey = interviewDraftKey(request);
+    const [stored] = R.useState(() => base.unsavedDrafts.get(draftKey) || null);
+    const [answers, setAnswers] = R.useState(() => (stored ? stored.answers : {}));
+    const [observations, setObservations] = R.useState(() => (stored ? stored.observations : ""));
     const [problem, setProblem] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
+    const [confirmDiscard, setConfirmDiscard] = R.useState(false);
+    const dirty = Object.values(answers).some((v) => String(v || "").trim()) || Boolean(observations.trim());
+    // Keep typed answers across in-app navigation; warn before the page itself unloads.
+    R.useEffect(() => {
+      if (dirty) base.unsavedDrafts.set(draftKey, { answers, observations });
+      else base.unsavedDrafts.delete(draftKey);
+      if (!dirty) return undefined;
+      const guard = (event) => {
+        event.preventDefault();
+        event.returnValue = t("interviewUnsaved");
+        return event.returnValue;
+      };
+      window.addEventListener("beforeunload", guard);
+      return () => window.removeEventListener("beforeunload", guard);
+    }, [answers, observations]);
+    function discard() {
+      base.unsavedDrafts.delete(draftKey);
+      setConfirmDiscard(false);
+      onCancel();
+    }
     async function save(event) {
       event.preventDefault();
       const issue = interviewProblem(answers, request.questions);
@@ -1044,6 +1080,7 @@
           method: "POST",
           body: JSON.stringify(interviewPayload(answers, observations, request.questions)),
         });
+        base.unsavedDrafts.delete(draftKey);
         // Audio captured during the interview moves to the saved report, where it is submitted.
         if (report && report.id && base.recordingStore) {
           try {
@@ -1062,6 +1099,7 @@
     return h(
       P.Form,
       { onSubmit: save, label: t("recordInterview"), noValidate: true },
+      stored ? h(P.Notice, { tone: "info" }, t("interviewRestored")) : null,
       base.ReportRecorder
         ? h(base.ReportRecorder, { api, lang, storageKey: `request:${request.id}`, reportId: null, caseId: null, canSubmit: false, captureOnly: true })
         : null,
@@ -1096,9 +1134,19 @@
       h(
         P.FormActions,
         { sticky: false },
-        h(P.Button, { disabled: pending, onClick: onCancel }, t("cancel")),
+        h(P.Button, { disabled: pending, onClick: () => (dirty ? setConfirmDiscard(true) : discard()) }, t("cancel")),
         h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveInterview")),
       ),
+      h(P.ConfirmDialog, {
+        open: confirmDiscard,
+        title: t("interviewDiscardTitle"),
+        message: t("interviewDiscardMessage"),
+        confirmLabel: t("interviewDiscard"),
+        cancelLabel: t("interviewKeepEditing"),
+        destructive: true,
+        onConfirm: discard,
+        onCancel: () => setConfirmDiscard(false),
+      }),
     );
   }
 
@@ -1110,7 +1158,8 @@
     const [confirm, setConfirm] = R.useState(false);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
-    const [recording, setRecording] = R.useState(false);
+    // Reopen the answer form when typed answers were left by in-app navigation.
+    const [recording, setRecording] = R.useState(() => base.unsavedDrafts.has(interviewDraftKey(request)));
     const interview = request.kind === "interview";
     async function send() {
       setPending(true);
@@ -2713,6 +2762,8 @@
   Object.assign(window.CTMCouncil, {
     caseWords: words,
     caseTranslator: translator,
+    InterviewForm, // exported for the unsaved-text regression test
+    RequestDetail,
     DECISION_TYPES,
     typeLabel,
     needsEntitlements,

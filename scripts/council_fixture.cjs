@@ -9,7 +9,8 @@
    (review projection, agenda capabilities, hearing read, decision read,
    question taxonomy, request metadata, interview boundary, D19 report
    authorship and can_revise). Report revisions are stateful; POST
-   /__revise_fail/ {mode:"403"|"500"} fails the next revision save and
+   /__revise_fail/ {mode:"403"|"500"|"lostack"} fails the next revision save
+   ("lostack" stores it, then drops the connection) and
    /__revise_bump/ {report} adds a concurrent revision by another actor. */
 const http = require("node:http");
 const fs = require("node:fs");
@@ -467,9 +468,20 @@ function api(req, res, url, body) {
       if (state.reviseFail === "403" || !canRevise(report))
         return json(res, 403, { error: "forbidden", detail: "Only the original authorized council author can revise this report." });
       if (!body || typeof body.answers !== "object") return json(res, 400, { error: "resource_or_input_invalid" });
+      // Backend #7 contract: required expected_version, exact replay returns the retained revision, else 409.
+      if (!Number.isInteger(body.expected_version) || body.expected_version < 0)
+        return json(res, 422, { error: "validation", messages: ["expected_version must be a non-negative integer."] });
+      const last = list[list.length - 1];
+      const sorted = (v) => JSON.stringify(v, Object.keys(v || {}).sort());
+      if (last && last.version === body.expected_version + 1 && last.actor === me().name
+          && sorted(last.answers) === sorted(body.answers) && last.observations === (body.observations || ""))
+        return json(res, 201, { id: last.id, version: last.version });
+      if (body.expected_version !== list.length) return json(res, 409, { error: "version_conflict", current_version: list.length });
       const rev = { id: "rv-" + (list.length + 1), version: list.length + 1, answers: body.answers, observations: body.observations || "", actor: me().name, timestamp: now() };
       list.push(rev);
-      return json(res, 201, { id: rev.id });
+      // "lostack": the save is stored but the reply never arrives (simulated lost acknowledgement).
+      if (state.reviseFail === "lostack") { state.reviseFail = null; return res.socket.destroy(); }
+      return json(res, 201, { id: rev.id, version: rev.version });
     }
     return json(res, 200, { items: [...list].reverse() });
   }

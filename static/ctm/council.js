@@ -16,6 +16,11 @@
     return text ? `\u2068${text}\u2069` : text;
   }
 
+  // Unsaved report text, kept in page memory only (never browser storage), so moving to another
+  // page inside CTM and back restores it instead of discarding it. A reload or sign-out clears it;
+  // the editors warn before the page unloads.
+  const unsavedDrafts = new Map();
+
   function canManage(user) {
     return Boolean(user && user.portal === "council" && ADMIN_ROLES.has(user.role));
   }
@@ -2405,6 +2410,7 @@
     translator,
     canManage,
     isolate,
+    unsavedDrafts,
     awaitingReview,
     reviewProblem,
     sessionLabel,

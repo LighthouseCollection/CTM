@@ -127,22 +127,31 @@ test("D19: text answers are editable; files and structured answers are carried u
   assert.equal(C.revisionChanged(latest, { answers: {}, observations: "obs 2" }), true);
 });
 
-test("D19: save re-reads history first and stops on a newer version; failures keep the text", () => {
-  const editor = source.slice(source.indexOf("function ReportRevisionEditor("), source.indexOf("// ---------- Completed reports reader"));
-  const read = editor.indexOf("const current = await api(url)");
-  const staleCheck = editor.indexOf("newest.version !== base0.version");
-  const post = editor.indexOf('method: "POST"');
-  assert.ok(read > 0 && staleCheck > read && post > staleCheck);
-  assert.match(editor, /error\.status === 403\) \{\s*setDenied\(true\)/);
-  // The draft is never cleared on failure; only onSaved closes the editor.
-  assert.doesNotMatch(editor, /setDraft\(\s*revisionDraft[^)]*\)\s*;\s*\}\s*catch/);
-  assert.match(editor, /beforeunload/);
+test("C-02: failed saves are classified by the backend's published error contract", () => {
+  assert.equal(C.saveFailure(new TypeError("Failed to fetch")), "uncertain"); // no answer: may have saved
+  assert.equal(C.saveFailure({ status: 502 }), "uncertain");
+  assert.equal(C.saveFailure({ status: 500 }), "uncertain");
+  assert.equal(C.saveFailure({ status: 409, data: { error: "version_conflict", current_version: 3 } }), "conflict");
+  assert.equal(C.saveFailure({ status: 409, data: { error: "conflict", detail: "x" } }), "conflict");
+  assert.equal(C.saveFailure({ status: 403 }), "denied");
+  assert.equal(C.saveFailure({ status: 401 }), "expired");
+  assert.equal(C.saveFailure({ status: 404 }), "missing");
+  assert.equal(C.saveFailure({ status: 422 }), "invalid");
+  assert.equal(C.saveFailure({ status: 400 }), "failed");
 });
 
-test("D19: answers read in the request's question order; a refused save refreshes the rows", () => {
+test("C-02: a stored version is recognised as our own save only under the server's replay rule", () => {
+  const payload = { expected_version: 2, answers: { Q1: "a", files: ["f"] }, observations: "o" };
+  assert.equal(C.isSameSave({ version: 3, answers: { files: ["f"], Q1: "a" }, observations: "o" }, payload), true); // jsonb key order
+  assert.equal(C.isSameSave({ version: 4, answers: payload.answers, observations: "o" }, payload), false); // not the next version
+  assert.equal(C.isSameSave({ version: 3, answers: { Q1: "b", files: ["f"] }, observations: "o" }, payload), false);
+  assert.equal(C.isSameSave({ version: 3, answers: payload.answers, observations: "other" }, payload), false);
+  assert.equal(C.isSameSave(null, payload), false);
+  assert.equal(C.stableJson({ b: [1, { d: 1, c: 2 }], a: null }), C.stableJson({ a: null, b: [1, { c: 2, d: 1 }] }));
+});
+
+test("D19: answers read in the request's question order", () => {
   const report = { questions: [{ code: "BASIS-01" }, { code: "OPEN-01" }] };
   const answers = { attendance: ["applicant"], "OPEN-01": "b", "BASIS-01": "a" }; // PostgreSQL jsonb key order
   assert.deepEqual([...C.answerEntries(report, answers)].map(([k]) => k), ["BASIS-01", "OPEN-01", "attendance"]);
-  const editor = source.slice(source.indexOf("function ReportRevisionEditor("), source.indexOf("// ---------- Completed reports reader"));
-  assert.match(editor, /setDenied\(true\);\s*if \(onDenied\) onDenied\(\)/);
 });
