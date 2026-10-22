@@ -59,7 +59,7 @@ The preview uses a COPY of the existing isolated local review database/media wit
 | Council | Appeals/later petitions | Queue/detail, hearing eligibility and per-filing accept/decline | Combined actual two-spouse reopening/decree cycle acceptance | Read smoke + backend tests |
 | Council | Communications/calls | Private recipient messages and manual call log | Inbound/live email, full subject/contact/duration mapping | Read-only API smoke; backend delivery tests |
 | Council | Case Audit | Case event list/search | Structured filters, full pagination and target context | Read-only API smoke |
-| Council | Q Search | Document query and history toggle | Unified case/person/session results and advanced filters; live index acceptance | Screen renders; live query not accepted |
+| Council | Search | Document query and history toggle | Unified case/person/session results and advanced filters; live index acceptance | Screen renders; live query not accepted |
 | Council | Statistics and Reports | Open/closed/unassigned/workload/session counts | Complete server metrics/periods/charts; max100 limitation | Read-only API smoke |
 | Council | Member profile/history | Roster only | Member details/current/past assignment workspace | Not implemented |
 | Shared | My Profile | Name/portal display | Editable profile/contact/photo relationship and own activity | Stub |
@@ -109,7 +109,7 @@ The preview uses a COPY of the existing isolated local review database/media wit
 | Appeals/later petitions | Defined; exceptions in linked gap review | Planned; full semantic reconciliation open | Partial adapter implemented | Partial | Read smoke + backend tests | Not accepted; no redesign performed | Partial; evidence scope below |
 | Communications/calls | Defined; exceptions in linked gap review | Planned; full semantic reconciliation open | Partial adapter implemented | Partial | Read-only API smoke; backend delivery tests | Not accepted; no redesign performed | Partial; evidence scope below |
 | Case Audit | Defined; exceptions in linked gap review | Planned; full semantic reconciliation open | Partial adapter implemented | Partial | Read-only API smoke | Not accepted; no redesign performed | Partial; evidence scope below |
-| Q Search | Defined; exceptions in linked gap review | Planned; full semantic reconciliation open | Partial adapter implemented | Partial | Screen renders; live query not accepted | Not accepted; no redesign performed | Partial; evidence scope below |
+| Search | Defined; exceptions in linked gap review | Planned; full semantic reconciliation open | Partial adapter implemented | Partial | Screen renders; live query not accepted | Not accepted; no redesign performed | Partial; evidence scope below |
 | Statistics and Reports | Defined; exceptions in linked gap review | Planned; full semantic reconciliation open | Partial adapter implemented | Partial | Read-only API smoke | Not accepted; no redesign performed | Partial; evidence scope below |
 | Member profile/history | Defined; exceptions in linked gap review | Planned; full semantic reconciliation open | Partial adapter implemented | Missing | Not implemented | Not accepted; no redesign performed | Partial; evidence scope below |
 | My Profile | Defined; exceptions in linked gap review | Planned; full semantic reconciliation open | Partial adapter implemented | Partial | Stub | Not accepted; no redesign performed | Partial; evidence scope below |

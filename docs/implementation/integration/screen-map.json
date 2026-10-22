@@ -629,7 +629,7 @@
     },
     {
       "portal": "Council",
-      "screen": "Q Search",
+      "screen": "Search",
       "source_module": "council.js SearchWorkspace",
       "implemented": "Document query and history toggle",
       "remaining": "Unified case/person/session results and advanced filters; live index acceptance",

@@ -57,7 +57,7 @@
       sessions: "Tribunal Sessions",
       councilSession: "Council Session",
       archived: "Archived",
-      search: "Q Search",
+      search: "Search",
       statistics: "Statistics and Reports",
       applications: "My application",
       past: "Past cases",

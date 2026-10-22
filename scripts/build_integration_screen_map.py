@@ -95,7 +95,7 @@ screen('Council','Communications/calls','app.js + council-case.js CallLog','Priv
  'Read-only API smoke; backend delivery tests','Assigned case writer; approved closed-case communication policy','Message/Recipient/CallRecord','PA20 PA21')
 screen('Council','Case Audit','council-case.js CaseAudit','Case event list/search','Structured filters, full pagination and target context',
  'Read-only API smoke','All council','AuditEvent','PA22')
-screen('Council','Q Search','council.js SearchWorkspace','Document query and history toggle','Unified case/person/session results and advanced filters; live index acceptance',
+screen('Council','Search','council.js SearchWorkspace','Document query and history toggle','Unified case/person/session results and advanced filters; live index acceptance',
  'Screen renders; live query not accepted','Council; source reauthorization','Meilisearch + DocumentText','PA09')
 screen('Council','Statistics and Reports','council.js StatisticsWorkspace','Open/closed/unassigned/workload/session counts','Complete server metrics/periods/charts; max100 limitation',
  'Read-only API smoke','Council','Cases/sessions list','PA11')
