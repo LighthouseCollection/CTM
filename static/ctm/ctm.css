@@ -31,6 +31,30 @@
   min-inline-size: 0;
 }
 
+
+/* Separation is represented by the available profile icon with a small removal mark. */
+.ctm-separation-nav-icon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.ctm-separation-nav-icon > .plx-icon:first-child {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.ctm-separation-nav-icon > .plx-icon:last-child {
+  position: absolute;
+  inset-inline-end: -0.15rem;
+  inset-block-end: -0.15rem;
+  inline-size: 0.55rem;
+  block-size: 0.55rem;
+  background-color: var(--plx-sys-color-surface-default, white);
+  border-radius: 999px;
+}
 /* Contact is a balanced two-column details grid; the long address has its own row. */
 .ctm-spouse-profile-section--two-columns .plx-property-list {
   display: grid;

@@ -22,7 +22,10 @@
     medical: "lock", decision: "scale", decree: "certificate", appeals: "progress",
     communications: "message", notes: "message", audit: "list-lines",
   };
-  const navigationIcon = (id) => h(P.Icon, { name: navigationIcons[id] });
+  const navigationIcon = (id) =>
+    id === "separation"
+      ? h("span", { className: "ctm-separation-nav-icon", "aria-hidden": true }, h(P.Icon, { name: "person" }), h(P.Icon, { name: "close" }))
+      : h(P.Icon, { name: navigationIcons[id] });
   const words = {
     en: {
       event_report_requested: "A report has been requested.",
