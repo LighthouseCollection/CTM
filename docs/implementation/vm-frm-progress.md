@@ -250,3 +250,32 @@ closed F08 is made by the earlier test counts.
   remain unapproved; neither permission is inferred. D14 approved bilingual decree
   templates/rendering and the medical release declaration remain institutional
   content dependencies. Public/provider/end-to-end acceptance remains incomplete.
+
+## Governance withdrawal regression and council security follow-ups
+
+- F08 follow-up: staff detail/list now tests current revision visibility rather
+  than only `status == returned`. After a returned private edit followed by
+  withdrawal/closure, privileged connections still fall back to the last formal
+  revision; runtime connections do the same when RLS hides the current revision.
+  The applicant retains their own saved work. Formal answers are never replaced
+  with empty answers just because the private current row is invisible.
+- `POST /api/search/` now accepts JSON `{q, history?:boolean, case_id?:uuid}`;
+  GET is refused (405). Existing authentication/CSRF protections apply. Search
+  phrases therefore need not be put in URLs by clients; council must switch its
+  caller to POST. Invalid non-boolean history values are refused.
+- Search results and index writes exclude medical/psychological request files,
+  plus all medical-visibility files, regardless of council disclosure consent.
+  Cached hits are rejected before derivative/snippet retrieval and result counts.
+  Dedicated authorized assessment access remains separate. Existing external
+  indexes may retain previously indexed text and need an operational review/purge;
+  this implementation does not claim to have removed external indexed content.
+- Ordinary follow-up requests cannot use medical/psychological reports as parent.
+  Assessment follow-ups remain allowed. Migration 0019 also enforces this for raw
+  database writes, same-case parent binding, retained request scope/identity and
+  retained Report.request identity. Existing historical rows are not rewritten;
+  lifecycle updates remain possible without rebinding their source.
+- Full isolated PostgreSQL suite: **290 passed, 1 skipped**, including detail/list
+  withdrawal under a non-owner role, both assessment kinds and visibility paths,
+  consent-bearing cached hits/index suppression, POST-only request contract,
+  raw parent/rebinding denials and migration rollback/reapply through 0019.
+  Prior council head `e2f714a` passed both GitHub PostgreSQL checks.

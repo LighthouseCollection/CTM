@@ -58,6 +58,8 @@ def create_request(
         parent = Report.objects.select_related("request").get(
             pk=parent_id, request__case=proceeding.case
         )
+        if parent.request.kind in {"medical", "psychological"} and kind not in {"medical", "psychological"}:
+            raise ValidationError("Assessment reports cannot be parents of ordinary follow-up requests.")
     snapshots = []
     selected = set()
     if kind in {"intake", "interview"}:

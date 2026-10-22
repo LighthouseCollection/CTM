@@ -662,7 +662,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0018_council_library_privacy")])
+        MigrationExecutor(connection).migrate([("tribunal", "0019_assessment_parent_guard")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -1194,3 +1194,41 @@ def test_assessment_metadata_does_not_grant_raw_medical_scope(runtime, ready_app
             cursor.execute("SELECT public.ctm_assessment_release_metadata(%s)", [str(request.pk)])
             value = cursor.fetchone()[0]
             assert value in [{}, "{}"]
+
+
+def test_f08_withdrawn_detail_and_list_fall_back_when_rls_hides_current(runtime, ready_application, people, settings, client):
+    from tests.test_returned_privacy import correction, login
+    from tribunal.services.decisions import withdraw_application
+    settings.CTM_SCAN_REQUIRED = False
+    app, formal, draft, old, new = correction(ready_application, people)
+    withdraw_application(app.owner, app.pk)
+    login(client, people["secretary"])
+    with runtime(people["secretary"]):
+        assert not AnswerRevision.objects.filter(pk=draft.pk).exists()
+        detail = client.get(f"/api/applications/{app.pk}/").json()
+        listing = client.get("/api/applications/").json()["items"]
+        row = next(item for item in listing if item["id"] == str(app.pk))
+        for item in [detail, row]:
+            assert item["answers"] == formal.revision.answers and item["version"] == formal.revision.number
+
+
+def test_assessment_parent_scope_is_enforced_for_raw_database_writes(runtime, ready_application, people):
+    from tribunal.models import ReportRequest, Report
+    from tribunal.services.reports import create_request
+    from django.db import DatabaseError
+    app = ready_application
+    submit_application(app.owner, app.pk, "assessment-parent", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    assessment = create_request(people["admin"], app.proceeding_id, app.party_id, "medical", "Assessment", [])
+    parent = Report.objects.create(request=assessment, author=app.owner)
+    with pytest.raises(DatabaseError), runtime(people["admin"]):
+        ReportRequest.objects.create(case=app.case, proceeding=app.proceeding, subject=app.party,
+            author=people["admin"], kind="interview", title="Forbidden followup", parent_report=parent)
+    with pytest.raises(DatabaseError), runtime(people["admin"]):
+        ReportRequest.objects.filter(pk=assessment.pk).update(kind="interview")
+    ordinary = create_request(people["admin"], app.proceeding_id, app.party_id, "interview", "Interview", [])
+    with pytest.raises(DatabaseError), runtime(people["admin"]):
+        Report.objects.filter(pk=parent.pk).update(request=ordinary)
+    with runtime(people["admin"]):
+        followup = create_request(people["admin"], app.proceeding_id, app.party_id, "psychological", "Permitted", [], parent_id=parent.pk)
+        assert followup.parent_report_id == parent.pk

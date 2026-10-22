@@ -85,8 +85,10 @@ def filing_version(data):
 
 
 def application_data(app, actor):
+    from tribunal.services.filing_privacy import revision_visible
+
     revision = app.revisions.filter(number=app.current_version).first()
-    if actor.pk != app.owner_id and app.status == "returned":
+    if actor.pk != app.owner_id and (revision is None or not revision_visible(revision)):
         formal = app.submissions.select_related("revision").order_by("-created_at", "-id").first()
         revision = formal.revision if formal else None
     fee = getattr(app, "fee", None)
@@ -1302,16 +1304,20 @@ def account_settings(request):
     )
 
 
-@endpoint()
+@endpoint(("POST",))
 def search(request):
     from tribunal.services.search import search as command
 
+    data = body(request)
+    history = data.get("history", False)
+    if type(history) is not bool:
+        raise ValidationError("history must be a boolean.")
     return JsonResponse(
         command(
             request.user,
-            request.GET.get("q", ""),
-            request.GET.get("history") == "true",
-            request.GET.get("case_id"),
+            data.get("q", ""),
+            history,
+            data.get("case_id"),
         )
     )
 

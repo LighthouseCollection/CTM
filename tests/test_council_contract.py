@@ -330,3 +330,15 @@ def test_d18_template_projection_publication_and_retirement(client, people):
     assert client.post(f"/api/templates/{personal.pk}/retire/").json()["retired"]
     login(client, people["admin"])
     assert client.post(f"/api/templates/{shared['id']}/retire/").json()["retired"]
+
+
+@pytest.mark.parametrize("parent_kind", ["medical", "psychological"])
+def test_assessment_parent_cannot_be_used_for_ordinary_followup(filed, people, parent_kind):
+    from tribunal.models import Report
+    assessment = create_request(people["admin"], filed.proceeding_id, filed.party_id, parent_kind, "Assessment", [])
+    parent = Report.objects.create(request=assessment, author=filed.owner)
+    for kind in ["intake", "interview", "external_priest"]:
+        with pytest.raises(ValidationError, match="Assessment"):
+            create_request(people["admin"], filed.proceeding_id, filed.party_id, kind, "Follow-up", [], parent_id=parent.pk)
+    followup = create_request(people["admin"], filed.proceeding_id, filed.party_id, parent_kind, "Assessment follow-up", [], parent_id=parent.pk)
+    assert followup.parent_report_id == parent.pk

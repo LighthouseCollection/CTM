@@ -9,6 +9,13 @@ from .files import authorized_file
 from .filing_privacy import file_visible
 
 
+def excluded_assessment(file):
+    attachment = file.attachment
+    return attachment.visibility == "medical" or bool(
+        attachment.report_request_id and attachment.report_request.kind in {"medical", "psychological"}
+    )
+
+
 def search(actor, query, include_history=False, case_id=None):
     staff(actor)
     if not isinstance(query, str) or not 2 <= len(query.strip()) <= 200:
@@ -36,6 +43,8 @@ def search(actor, query, include_history=False, case_id=None):
         try:
             file = authorized_file(actor, hit["file_id"])
         except (PermissionDenied, ObjectDoesNotExist, ValueError, KeyError):
+            continue
+        if excluded_assessment(file):
             continue
         if case_id and str(file.attachment.case_id) != str(case_id):
             continue
@@ -66,11 +75,13 @@ def search(actor, query, include_history=False, case_id=None):
 
 
 def index_text(derivative):
+    file = derivative.file
+    if excluded_assessment(file):
+        return None
     url = os.environ.get("MEILI_URL", "").rstrip("/")
     key = os.environ.get("MEILI_MASTER_KEY", "")
     if not url or not key:
         raise ValidationError("Search engine is not configured.")
-    file = derivative.file
     # Applicant drafts are not published into council search.
     app = file.attachment.application
     if app and (not app.submitted_at or not file_visible(file)):

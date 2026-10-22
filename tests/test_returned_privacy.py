@@ -127,3 +127,18 @@ def test_old_pending_alerts_are_hidden_and_discarded(client, ready_application, 
     assert jobs.count() == 2
     assert not jobs.filter(discarded_at__isnull=True).exists()
     assert not jobs.filter(delivered_at__isnull=False).exists()
+
+
+def test_f08_withdrawal_keeps_formal_snapshot_in_staff_detail_and_list(client, ready_application, people, settings):
+    from tribunal.services.decisions import withdraw_application
+    settings.CTM_SCAN_REQUIRED = False
+    app, formal, draft, old, new = correction(ready_application, people)
+    withdraw_application(app.owner, app.pk)
+    login(client, people["admin"])
+    for data in [client.get(f"/api/applications/{app.pk}/").json(),
+                 next(row for row in client.get("/api/applications/").json()["items"] if row["id"] == str(app.pk))]:
+        assert data["status"] == "withdrawn"
+        assert data["answers"] == formal.revision.answers
+        assert data["version"] == formal.revision.number
+    login(client, app.owner)
+    assert client.get(f"/api/applications/{app.pk}/").json()["answers"] == draft.answers
