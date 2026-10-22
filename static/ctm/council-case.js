@@ -2860,10 +2860,10 @@ ${ar}` : en;
         const filingParty = row.filing_party_name ? h(
           "span",
           { className: "ctm-petition-header__party" },
-          h(P.Text, { as: "span", variant: "secondary" }, row.filing_party_name),
+          h(P.Text, { as: "span", variant: "strong", className: "ctm-petition-header__name" }, row.filing_party_name),
           row.filing_party_role ? h(P.Badge, { tone: row.filing_party_role === "applicant" ? "info" : "waiting" }, t(row.filing_party_role)) : null,
         ) : null;
-        return h(P.Panel, { icon: "doc-text", key: row.id, title: h("span", { className: "ctm-petition-header" }, h("span", null, t("petition")), filingParty), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
+        return h(P.Panel, { icon: "doc-text", key: row.id, title: h("span", { className: "ctm-petition-header" }, h("span", { className: "ctm-petition-header__title" }, t("petition")), filingParty), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
           h(P.Stack, { gap: "sm" },
             answers.length ? h(P.PropertyList, { layout: "stacked" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
           ),

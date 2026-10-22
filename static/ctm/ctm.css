@@ -22,12 +22,22 @@
   min-inline-size: 10rem;
 }
 
-.ctm-petition-header,
+.ctm-petition-header {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--plx-sys-space-stack-2xs);
+}
+
 .ctm-petition-header__party {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--plx-sys-space-inline-sm);
+}
+
+.ctm-petition-header__name {
+  font-size: inherit;
 }
 
 .ctm-spouse-profile-section {
