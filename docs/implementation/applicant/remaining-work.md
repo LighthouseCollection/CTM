@@ -1,5 +1,27 @@
 # Remaining applicant work
 
+## Schema reconciliation: next ten audit batches completed
+
+The source-only comparison at backend d724ba5 / applicant 72ee829 covers 101 of
+151 contract tables and 839 columns; the other 50 tables are listed outside this
+applicant/dependency scope. It identifies 37 table-to-model candidates and 64 tables
+without a standalone model mapping in the domain inventory. These are reconciliation
+counts, not missing-feature counts or an implementation completion percentage.
+
+[Consolidated findings and source targets](schema-reconciliation/README.md),
+[Download JSON](schema-reconciliation/result.json) and
+[field-level CSV](schema-reconciliation/field-mapping.csv) record ten audit batches.
+Seven new reconciliation tests and one Python selected-ref replay regression pass;
+the full frontend suite now has 75 passing tests.
+No runtime frontend/backend/schema behavior changed in these audit batches. The
+prior 54 real API/browser groups retain their previous scope and were not rerun.
+
+Full approved-schema implementation remains an owner-managed backend/governance
+workstream: typed assertions/repeat relations, candidate/payment separation,
+identity/version history, clinical and decree provenance need explicit mapping
+and guarded migration plans. The supplement read/capability dependency remains
+unresolved. Do not treat this completed audit as completion of those migrations.
+
 ## Current filing/recovery verification (2026-10-21)
 
 The next ten batches integrate backend `d724ba56b8bd5cf501d55fbbca416470108f963a`
@@ -32,6 +54,7 @@ owners; applicant PR #5 remains draft.
 | 6 | Complete approved bilingual forms | Technical candidate checker and source JSON inventory added. Reference seed contains 59 English questions and no Arabic wording; this is not a bound applicant form. Institution-approved questionnaire/declaration/repeat labels and backend nested repeat validation remain pending. Synthetic fixtures are test data, not approval of content. |
 | 7 | Governance integration | Apply/reconcile shared shell patch serially, integrate applicant/council/backend branches and test the complete journey. No independent merge/deploy. |
 | 8 | Acceptance outside local fixtures | PostgreSQL roles/RLS/races, real provider login/payment callbacks, live antivirus, live search/email, signed documents and delivery. Keep these separate from SQLite and controlled provider tests. |
+| 9 | Approved schema reconciliation | Ten source audit batches completed; backend/governance must resolve the explicit field/entity mappings and migration gaps. Working adapter behavior does not prove full contract parity. |
 
 ## Appeal entry slice completed
 
