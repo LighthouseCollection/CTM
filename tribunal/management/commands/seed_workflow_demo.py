@@ -551,8 +551,10 @@ class Command(BaseCommand):
             )
             proceeding = m.Proceeding.objects.create(
                 case=case,
-                status="closed" if closed else "open",
-                closed_at=now if closed else None,
+                # The database protects closed proceedings from new revisions.
+                # Seed the immutable filings first, then close completed scenarios.
+                status="open",
+                closed_at=None,
             )
             parties = []
             for slot, owner in (("A", a), ("B", b)):
@@ -708,6 +710,10 @@ class Command(BaseCommand):
                     actor=a,
                     text="Newly located supporting correspondence is submitted for consideration.",
                 )
+            if closed:
+                proceeding.status = "closed"
+                proceeding.closed_at = now
+                proceeding.save(update_fields=["status", "closed_at"])
             m.AuditEvent.objects.create(
                 case=case,
                 actor=admin,
