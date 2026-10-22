@@ -369,9 +369,12 @@
     const response = await fetch(url, {
       ...options,
       credentials: "same-origin",
+      // FormData sets its own multipart boundary; JSON bodies keep the JSON type.
       headers: {
         Accept: "application/json",
-        "Content-Type": "application/json",
+        ...(options.body instanceof FormData
+          ? {}
+          : { "Content-Type": "application/json" }),
         "X-CSRFToken": csrf(),
       },
       cache: "no-store",
@@ -1058,7 +1061,7 @@
       else if (
         councilModule &&
         user.portal === "council" &&
-        ["review", "sessions", "session", "decision"].includes(page)
+        ["review", "sessions", "session", "decision", "decree"].includes(page)
       )
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
@@ -1198,6 +1201,7 @@
         "evidence",
         "reports",
         "decision",
+        "decree",
       ].includes(page) && selection;
     const caseGroups = [
       {
@@ -1232,7 +1236,10 @@
         items: ["decision", "decree", "appeals"].map((id) => ({
           id,
           label: t(id === "decision" ? "decisionVoting" : id),
-          disabled: !(id === "decision" && councilModule?.DecisionWorkspace),
+          disabled: !(
+            (id === "decision" && councilModule?.DecisionWorkspace) ||
+            (id === "decree" && councilModule?.DecreeWorkspace)
+          ),
         })),
       },
     ];
@@ -1376,6 +1383,14 @@
           reports: data.items,
           renderReports: () =>
             h(ReportReader, { key: selection, rows: data.items, t, lang }),
+        });
+      if (page === "decree" && council && councilModule?.DecreeWorkspace)
+        return h(councilModule.DecreeWorkspace, {
+          key: selection,
+          api,
+          lang,
+          user,
+          caseId: selection,
         });
       if (page === "decision" && council && councilModule?.DecisionWorkspace)
         return h(councilModule.DecisionWorkspace, {
