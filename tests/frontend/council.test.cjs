@@ -323,3 +323,25 @@ test("search posts the phrase in the body and falls back to GET only on 405", as
   assert.deepEqual(legacyCalls, ["/api/search/", "/api/search/?q=Smith%20Jr&history=true"]);
   await assert.rejects(C.runSearch(async () => { throw Object.assign(new Error("x"), { status: 422 }); }, "ab", false));
 });
+
+test("F15: assignment authorizers and recorders follow server flags; one person may hold both", () => {
+  const legacy = [{ id: "p", role: "president" }, { id: "s", role: "secretary" }];
+  assert.deepEqual([...C.assignmentAuthorizers(legacy)].map((m) => m.id), ["p"]);
+  assert.equal(C.canRecordAssignment(admin, legacy), true);
+  assert.equal(C.canRecordAssignment(member, legacy), false);
+  const flagged = [
+    { id: "a", role: "admin", can_authorize_assignment: true, can_record_assignment: true },
+    { id: "m", role: "member", can_authorize_assignment: false, can_record_assignment: false },
+    { id: "p", role: "president", can_authorize_assignment: true, can_record_assignment: true },
+  ];
+  assert.deepEqual([...C.assignmentAuthorizers(flagged)].map((m) => m.id), ["a", "p"]);
+  assert.equal(C.canRecordAssignment({ id: "p", role: "president", portal: "council" }, flagged), true);
+  assert.equal(C.canRecordAssignment({ id: "m", role: "member", portal: "council" }, flagged), false);
+  // Same person as authorizer and recorder is valid.
+  assert.equal(C.assignmentProblem("m", "a", flagged), null);
+  // President approval list is unchanged by the assignment flags.
+  assert.deepEqual([...C.presidents(flagged)].map((m) => m.id), ["p"]);
+  const part1 = { part: 1, state: "scheduled" };
+  assert.equal(C.agendaActions(part1, { state: "planned", can_manage: false }, { id: "p", role: "president" }, null, { canRecordAssignment: true }).assign, true);
+  assert.equal(C.agendaActions(part1, { state: "planned", can_manage: true }, admin, null, { canRecordAssignment: false }).assign, false);
+});

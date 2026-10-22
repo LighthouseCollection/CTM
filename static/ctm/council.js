@@ -81,6 +81,23 @@
     return (members || []).filter((row) => row.role === "president");
   }
 
+  // Assignment authority (F15): newer servers flag who may authorize and who may
+  // record an assignment; one person may hold both. Older servers: President role
+  // authorizes, admin/secretary record. President approval and decree signing keep
+  // using presidents() (the role flag), unchanged.
+  function assignmentAuthorizers(members) {
+    const rows = members || [];
+    return rows.some((m) => typeof m.can_authorize_assignment === "boolean")
+      ? rows.filter((m) => m.can_authorize_assignment)
+      : presidents(rows);
+  }
+
+  function canRecordAssignment(user, members) {
+    const me = (members || []).find((m) => m.id === user?.id);
+    if (me && typeof me.can_record_assignment === "boolean") return me.can_record_assignment;
+    return canManage(user);
+  }
+
   function assignableMembers(members) {
     return (members || []).filter((row) => row.role !== "applicant");
   }
@@ -88,7 +105,7 @@
   function assignmentProblem(memberId, presidentId, members) {
     if (!memberId) return "chooseMember";
     if (!presidentId) return "choosePresident";
-    if (!presidents(members).some((row) => row.id === presidentId))
+    if (!assignmentAuthorizers(members).some((row) => row.id === presidentId))
       return "choosePresident";
     if (!assignableMembers(members).some((row) => row.id === memberId))
       return "chooseMember";
@@ -103,7 +120,7 @@
 
   // Which controls an agenda row shows. Server capability flags win when present;
   // the role/name fallback only applies to servers without them.
-  function agendaActions(row, session, user, caseRow) {
+  function agendaActions(row, session, user, caseRow, options = {}) {
     const planned = session.state === "planned";
     const scheduled = row.state === "scheduled";
     const manage = typeof session.can_manage === "boolean" ? session.can_manage : canManage(user) && planned;
@@ -115,7 +132,11 @@
     const present =
       typeof row.can_present === "boolean" ? row.can_present : planned && scheduled && row.part === 2 && mine;
     return {
-      assign: planned && scheduled && row.part === 1 && manage,
+      assign:
+        planned &&
+        scheduled &&
+        row.part === 1 &&
+        (typeof options.canRecordAssignment === "boolean" ? options.canRecordAssignment : manage),
       present,
       presentNeedsAttendance: !present && planned && scheduled && row.part === 2 && mine && typeof row.can_present === "boolean",
       outcome: row.can_record_outcome === true && Boolean(row.hearing_id),
@@ -1058,12 +1079,12 @@
     );
   }
 
-  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onCase, onOutcome, onTestimony, onCancelTestimony }) {
+  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onCase, onOutcome, onTestimony, onCancelTestimony, canAssign }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const flags = agendaActions(row, session, user, caseRow);
+    const flags = agendaActions(row, session, user, caseRow, { canRecordAssignment: canAssign });
     const assignedName = row.assigned_member_name ?? caseRow?.assigned_member ?? null;
     const actions = [];
     if (flags.assign)
@@ -1533,7 +1554,8 @@
     const groups = groupAgenda(data.items);
     const c1 = part1Candidates(data.cases, data.items);
     const c2 = part2Candidates(data.cases, data.items, user);
-    const presidentRows = presidents(data.members);
+    const presidentRows = assignmentAuthorizers(data.members);
+    const recorder = canRecordAssignment(user, data.members);
     const memberRows = assignableMembers(data.members);
 
     async function run(action, success, extra) {
@@ -1631,6 +1653,7 @@
               caseRow: caseById[row.case_id],
               user,
               lang,
+              canAssign: recorder,
               onCase,
               onAssign: (item) => {
                 setProblem(null);
@@ -2188,6 +2211,8 @@
     part1Candidates,
     part2Candidates,
     presidents,
+    assignmentAuthorizers,
+    canRecordAssignment,
     assignableMembers,
     assignmentProblem,
     groupAgenda,

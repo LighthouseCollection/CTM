@@ -86,7 +86,12 @@ const parties = (c) => [
   { id: "pb-" + c.id, name: "Synthetic Spouse", is_self: false, can_receive: true, reference: null },
 ];
 const members = () =>
-  Object.values(people).map(({ id, name, role }) => (pr7 ? { id, name, role, president: role === "president", active: true } : { id, name, role }));
+  Object.values(people).map(({ id, name, role }) =>
+    pr7
+      ? { id, name, role, president: role === "president", active: true,
+          // Synthetic combined authority: the President may also record assignments (F15).
+          can_authorize_assignment: role === "president", can_record_assignment: ["secretary", "admin", "president"].includes(role) }
+      : { id, name, role });
 const json = (res, status, body) => {
   res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
   res.end(JSON.stringify(body));
@@ -190,7 +195,8 @@ function api(req, res, url, body) {
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/$/))) {
     const c = state.cases.find((x) => x.id === m[1]);
     const extra = pr7
-      ? { assigned_member_id: c.assigned, can_place_part2: admin() || c.assigned === me().id, can_assign: admin() && c.status === "open" }
+      ? { assigned_member_id: c.assigned, can_place_part2: admin() || c.assigned === me().id, can_assign: admin() && c.status === "open",
+          assignment_history: (state.assignments || []).filter((x) => x.case === c.id) }
       : {};
     return json(res, 200, { ...caseRow(c), ...extra, can_message: true, parties: parties(c), proceedings: [{ id: "p-" + c.id, kind: "initial", status: c.status, sequence: 1 }] });
   }
@@ -352,10 +358,13 @@ function api(req, res, url, body) {
   // Council projection of a medical report without a council-scope release.
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/))) return json(res, 200, { items: m[1] === "c-4" ? [{ id: "rep-med-1", restricted: true }] : [] });
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/assignment\/$/))) {
-    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    if (!admin() && !(pr7 && role === "president")) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
     const c = state.cases.find((x) => x.id === m[1]);
     if (!members().some((x) => x.id === body.president_id && x.role === "president")) return json(res, 404, { error: "resource_or_input_invalid" });
     c.assigned = body.member_id;
+    if (!state.assignments) state.assignments = [];
+    state.assignments.push({ id: "as-" + state.assignments.length, case: c.id, member_id: body.member_id, member: nameOf(body.member_id),
+      president_id: body.president_id, president: nameOf(body.president_id), actor_id: me().id, actor: me().name, timestamp: now() });
     return json(res, 201, { id: "as-" + c.id });
   }
   if (p === "/api/council/members/") return json(res, 200, { items: members() });

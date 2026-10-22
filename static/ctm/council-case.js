@@ -324,6 +324,10 @@
         "Only the assigned case manager, or the administrator or secretary, enters the decision type and grounds.",
       actionFailed: "The action could not be completed. Nothing was changed.",
       back: "Back",
+      managerHistory: "Case manager history",
+      authorizedBy: "authorized by",
+      recordedByInline: "recorded by",
+      noManagerHistory: "No case manager has been assigned yet.",
       templates: "Question templates",
       templatesHelp: "Reusable selections of published questions. Templates never contain applicant answers.",
       startFromTemplate: "Start from a template",
@@ -547,6 +551,10 @@
       writerDecision: "يُدخل نوع القرار وأسبابه مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط.",
       actionFailed: "تعذر إتمام الإجراء. لم يتم تغيير أي شيء.",
       back: "رجوع",
+      managerHistory: "سجل مسؤولي القضية",
+      authorizedBy: "باعتماد",
+      recordedByInline: "وسجّله",
+      noManagerHistory: "لم يُعيَّن مسؤول للقضية بعد.",
       templates: "نماذج الأسئلة",
       templatesHelp: "مجموعات قابلة لإعادة الاستخدام من الأسئلة المنشورة. ولا تحتوي النماذج أبدًا على إجابات مقدمي الطلبات.",
       startFromTemplate: "البدء من نموذج",
@@ -2548,10 +2556,17 @@
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/audit/`), [caseId]);
+    const [state, retry] = base.useLoad(
+      () =>
+        Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/audit/`), api(`/api/cases/${encodeURIComponent(caseId)}/`)]).then(
+          ([audit, record]) => ({ items: audit.items, history: record.assignment_history || null }),
+        ),
+      [caseId],
+    );
     if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const rows = timelineRows(state.data.items, lang);
+    const history = state.data.history;
     return h(
       P.Stack,
       { gap: "lg" },
@@ -2563,6 +2578,20 @@
             items: rows.map((row) => ({ children: `${base.formatWhen(row.timestamp, lang)} — ${row.label}` })),
           })
         : h(P.EmptyState, { title: t("noTimeline") }),
+      history
+        ? h(
+            P.Panel,
+            { title: t("managerHistory") },
+            history.length
+              ? h(P.List, {
+                  variant: "bullets",
+                  items: history.map((row) => ({
+                    children: `${base.formatWhen(row.timestamp, lang)} — ${row.member} · ${t("authorizedBy")} ${row.president} · ${t("recordedByInline")} ${row.actor}`,
+                  })),
+                })
+              : h(P.EmptyState, { title: t("noManagerHistory") }),
+          )
+        : null,
     );
   }
 
