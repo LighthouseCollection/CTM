@@ -28,7 +28,7 @@ test("account menu receives localized AppHeader labels and density choices", () 
 });
 
 test("council navigation groups sessions and cases into their requested destinations", () => {
-  assert.match(app, /\["home", "sessions", "sessionsUpcoming", "sessionsArchived", "myCases", "cases", "search", "archived", "statistics"\]/);
+  assert.match(app, /\["home", "sessions", "sessionsUpcoming", "sessionsArchived", "search", "myCases", "cases", "archived", "statistics"\]/);
   assert.match(app, /sessions: "Tribunal Sessions - Current"/);
   assert.match(app, /sessionsUpcoming: "Tribunal Sessions - Upcoming"/);
   assert.match(app, /sessionsArchived: "Tribunal Sessions - Archived"/);
@@ -38,7 +38,10 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.match(app, /heading: t\("cases"\)/);
   for (const key of ["myCases", "allCases", "archivedCases"])
     assert.match(app, new RegExp(`t\\("${key}"\\)`), key);
-  assert.match(app, /statistics: "Reports only"/);
+  assert.match(app, /statistics: "Reports"/);
+  assert.match(app, /const caseSearchIcon = \(\) =>/);
+  assert.match(app, /id === "search"\s*\? caseSearchIcon\(\)/);
+  assert.match(app, /const casesNavigationItems = \[\s*\{ id: "search", icon: navigationIcon\("search"\), label: t\("search"\) \}/);
 });
 
 test("session lifecycle changes refresh their parent destination list", () => {

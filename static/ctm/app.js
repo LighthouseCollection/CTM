@@ -30,8 +30,16 @@
     h("svg", { className: "ctm-decree-nav-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
       h("path", { d: "M6 3h9l3 3v15H6zM15 3v4h4M9 11h6M9 15h3M15 16.5a2.5 2.5 0 1 0-2 0v2l2-1 2 1v-2a2.5 2.5 0 0 0-2 0z" }),
     );
+  const caseSearchIcon = () =>
+    h("svg", { className: "ctm-case-search-nav-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
+      h("path", { d: "M3.5 7.5h6l1.8 2H20a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 20 18.5H4A1.5 1.5 0 0 1 2.5 17v-8A1.5 1.5 0 0 1 4 7.5z" }),
+      h("circle", { cx: "14.5", cy: "14", r: "2.5" }),
+      h("path", { d: "m16.4 15.9 2.4 2.4" }),
+    );
   const navigationIcon = (id) =>
-    id === "separation"
+    id === "search"
+      ? caseSearchIcon()
+      : id === "separation"
       ? h("span", { className: "ctm-separation-nav-icon", "aria-hidden": true }, h(P.Icon, { name: "person" }), h(P.Icon, { name: "close" }))
       : id === "decision"
         ? decisionBalanceIcon()
@@ -92,7 +100,7 @@
       councilSession: "Council Session",
       archived: "Archived",
       search: "Search",
-      statistics: "Reports only",
+      statistics: "Reports",
       applications: "My application",
       past: "Past cases",
       loading: "Loading…",
@@ -347,7 +355,7 @@
       councilSession: "جلسة المجلس",
       archived: "الأرشيف",
       search: "البحث",
-      statistics: "التقارير فقط",
+      statistics: "التقارير",
       applications: "طلبي",
       past: "القضايا السابقة",
       loading: "جارٍ التحميل…",
@@ -1377,7 +1385,7 @@
       go(origin.page, origin.selection || null);
     };
     const navItems = council
-      ? ["home", "sessions", "sessionsUpcoming", "sessionsArchived", "myCases", "cases", "search", "archived", "statistics"]
+      ? ["home", "sessions", "sessionsUpcoming", "sessionsArchived", "search", "myCases", "cases", "archived", "statistics"]
       : ["home", "applications", "appointments", "past"];
     const unavailable = new Set(
       [
@@ -1484,9 +1492,9 @@
       { id: "sessionsArchived", icon: navigationIcon("sessionsArchived"), label: t("sessionArchived") },
     ];
     const casesNavigationItems = [
+      { id: "search", icon: navigationIcon("search"), label: t("search") },
       { id: "myCases", icon: navigationIcon("cases"), label: t("myCases") },
       { id: "cases", icon: navigationIcon("cases"), label: t("allCases") },
-      { id: "search", icon: navigationIcon("search"), label: t("search") },
       { id: "archived", icon: navigationIcon("archived"), label: t("archivedCases") },
       { id: "statistics", icon: navigationIcon("statistics"), label: t("statistics"), disabled: unavailable.has("statistics") },
     ];
