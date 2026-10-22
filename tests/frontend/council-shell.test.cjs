@@ -17,10 +17,10 @@ test("session layout assets use a current cache version", () => {
   assert.match(shell, /ctm\/council\.js\x27 %\}\?v=[a-z0-9-]+/);
 });
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
-  const order = ["cdn/0.61.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
+  const order = ["cdn/0.65.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
   for (const index of order) assert.ok(index > 0);
   assert.deepEqual([...order].sort((a, b) => a - b), order);
-  assert.doesNotMatch(shell, /cdn\/(?!0\.61\.0)\d+\.\d+\.\d+/);
+  assert.doesNotMatch(shell, /cdn\/(?!0\.65\.0)\d+\.\d+\.\d+/);
 });
 
 test("case workspaces use the CDN contained tab variant", () => {
@@ -39,6 +39,17 @@ test("all tabbed workspaces place their content inside contained tabs", () => {
   const reports = councilCase.slice(councilCase.indexOf("function ReportsWorkspace"), councilCase.indexOf("// ---------- Decision & Voting ----------"));
   for (const source of [communications, calls, reports])
     assert.match(source, /items: \[[\s\S]*content:/);
+});
+
+test("report templates are an inline category-to-question workspace", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(councilCase, /label: t\("reportTemplates"\)/);
+  assert.match(councilCase, /title: t\("questionCategories"\)/);
+  assert.match(councilCase, /title: t\("questionSelection"\)/);
+  assert.match(councilCase, /value: "both", label: t\("bothSpouses"\)/);
+  assert.match(councilCase, /const partyIds = form\.party === "both"/);
+  assert.match(councilCase, /party_ids: partyIds/);
+  assert.doesNotMatch(councilCase.slice(councilCase.indexOf("function RequestsPanel"), councilCase.indexOf("function ReportsWorkspace")), /h\(P\.Dialog/);
 });
 
 test("account menu receives localized AppHeader labels and density choices", () => {

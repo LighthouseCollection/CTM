@@ -176,10 +176,11 @@
     return null;
   }
 
-  function requestPayload(form, proceedingId) {
+  function requestPayload(form, proceedingId, parties) {
+    const partyIds = form.party === "both" ? parties.map((party) => party.id) : [];
     return {
       proceeding_id: proceedingId,
-      party_id: form.party,
+      ...(partyIds.length ? { party_ids: partyIds } : { party_id: form.party }),
       kind: form.kind === "interview" ? "interview" : "intake",
       title: form.title.trim(),
       language: form.language,
@@ -226,6 +227,10 @@
       reports: "Reports",
       completedReports: "Completed reports",
       requests: "Requests",
+      reportTemplates: "Report Templates",
+      questionCategories: "Question categories",
+      questionSelection: "Questions in this report",
+      bothSpouses: "Both spouses",
       newRequest: "New request",
       noRequests: "No report requests yet.",
       chooseRequest: "Select a request",
@@ -534,6 +539,10 @@
       reports: "التقارير",
       completedReports: "التقارير المكتملة",
       requests: "الطلبات",
+      reportTemplates: "قوالب التقارير",
+      questionCategories: "فئات الأسئلة",
+      questionSelection: "أسئلة هذا التقرير",
+      bothSpouses: "كلا الزوجين",
       newRequest: "طلب جديد",
       noRequests: "لا توجد طلبات تقارير بعد.",
       chooseRequest: "اختر طلبًا",
@@ -989,6 +998,9 @@
     const taxonomy = hasTaxonomy(questions);
     const [view, setView] = R.useState("category");
     const groups = view === "topic" && taxonomy ? topicGroupView(questions) : questionGroups(questions);
+    const categoryGroups = questionGroups(questions);
+    const [activeCategory, setActiveCategory] = R.useState(() => categoryGroups[0]?.category || "");
+    const activeQuestions = categoryGroups.find((group) => group.category === activeCategory)?.questions || [];
     // The in-person interview path is offered only by servers that no longer notify
     // the applicant when an interview starts (shipped with the question taxonomy).
     const interviewReady = taxonomy;
@@ -1006,9 +1018,9 @@
       try {
         const created = await api(`/api/cases/${encodeURIComponent(record.id)}/requests/`, {
           method: "POST",
-          body: JSON.stringify(requestPayload(form, proceeding.id)),
+          body: JSON.stringify(requestPayload(form, proceeding.id, record.parties)),
         });
-        onSaved(created.id);
+        onSaved(created.items ? created.items.map((item) => item.id) : created.id);
       } catch (error) {
         setFailure(base.serverMessage(error, t));
       } finally {
@@ -1034,6 +1046,7 @@
               ...record.parties
                 .filter((p) => p.can_receive || (form.kind === "interview" && interviewReady))
                 .map((p) => ({ value: p.id, label: p.name })),
+              ...(record.parties.length > 1 ? [{ value: "both", label: t("bothSpouses") }] : []),
             ],
           }),
         ),
@@ -1082,69 +1095,32 @@
             )
           : null,
       ),
-      h(
-        P.FormSection,
-        { title: t("questions"), description: t("selectedCount", { n: form.selected.length }) },
-        h(TemplateTools, {
-          api,
-          lang,
-          templates,
-          questions,
-          selected: form.selected,
-          onUse: (codes) => update({ selected: codes }),
-          onChanged: onTemplatesChanged || (() => {}),
-        }),
-        taxonomy
-          ? h(P.RadioGroup, {
-              label: t("questionView"),
-              layout: "row",
-              value: view,
-              onChange: setView,
-              options: [
-                { value: "category", label: t("byCategory") },
-                { value: "topic", label: t("byTopicGroup") },
-              ],
-            })
-          : null,
-        ...groups.map((group) =>
-          h(
-            P.Fieldset,
-            { key: group.id || group.category, legend: groupTitle(group, lang) },
-            ...group.questions.map((q) =>
-              h(P.Checkbox, {
-                key: q.code,
-                label: `${q.code} — ${wording(q, lang)}`,
-                description: q.foundational
-                  ? t("foundational")
-                  : lang === "ar" && !String(q.wording_ar || "").trim()
-                    ? t("arabicPending")
-                    : undefined,
-                checked: q.foundational || form.selected.includes(q.code),
-                disabled: pending || q.foundational,
-                onChange: (e) =>
-                  update({
-                    selected: e.target.checked
-                      ? [...form.selected, q.code]
-                      : form.selected.filter((code) => code !== q.code),
-                  }),
-              }),
-            ),
-          ),
-        ),
-        form.kind === "interview"
-          ? null
-          : h(
-          P.Field,
-          { label: t("instructions") },
-          h(P.Textarea, {
-            rows: 4,
-            value: form.instructions,
-            maxLength: 10000,
-            disabled: pending,
-            onChange: (e) => update({ instructions: e.target.value }),
+      h(P.SplitView, {
+        label: t("reportTemplates"),
+        firstLabel: t("questionCategories"),
+        first: h(P.Panel, { title: t("questionCategories") }, h(P.NavList, {
+          label: t("questionCategories"), value: activeCategory, onSelect: setActiveCategory,
+          items: categoryGroups.map((group) => ({ id: group.category, label: groupTitle(group, lang), count: group.questions.length })),
+        })),
+        second: h(P.FormSection, { title: t("questionSelection"), description: t("selectedCount", { n: form.selected.length }) },
+          h(TemplateTools, {
+            api, lang, templates, questions, selected: form.selected,
+            onUse: (codes) => update({ selected: codes }), onChanged: onTemplatesChanged || (() => {}),
           }),
+          h(P.Fieldset, { legend: groupTitle(categoryGroups.find((group) => group.category === activeCategory) || {}, lang) },
+            ...activeQuestions.map((q) => h(P.Checkbox, {
+              key: q.code, label: `${q.code} — ${wording(q, lang)}`,
+              description: q.foundational ? t("foundational") : lang === "ar" && !String(q.wording_ar || "").trim() ? t("arabicPending") : undefined,
+              checked: q.foundational || form.selected.includes(q.code), disabled: pending || q.foundational,
+              onChange: (e) => update({ selected: e.target.checked ? [...form.selected, q.code] : form.selected.filter((code) => code !== q.code) }),
+            })),
+          ),
+          form.kind === "interview" ? null : h(P.Field, { label: t("instructions") }, h(P.Textarea, {
+            rows: 4, value: form.instructions, maxLength: 10000, disabled: pending,
+            onChange: (e) => update({ instructions: e.target.value }),
+          })),
         ),
-      ),
+      }),
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,
       problem === "chooseLanguage" ? h(P.Notice, { tone: "danger" }, t(problem)) : null,
       h(
@@ -1358,95 +1334,44 @@
   }
 
   function RequestsPanel({ api, lang, user, caseId, reports }) {
-    const R = window.React,
-      P = window.Plenix,
-      h = R.createElement,
-      t = translator(lang);
-    const [state, retry] = base.useLoad(
-      () =>
-        Promise.all([
-          api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
-          api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
-          api("/api/report-questions/"),
-          api("/api/cases/"),
-          api("/api/templates/"),
-        ]).then(([record, requests, questions, cases, templates]) => ({
-          record,
-          templates: templates.items || [],
-          // Professional Assessments have their own section; never list them with ordinary reports.
-          requests: requests.items.filter((row) => !["medical", "psychological"].includes(row.kind)),
-          questions: questions.items,
-          caseRow: cases.items.find((row) => row.id === caseId),
-        })),
-      [caseId],
-    );
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [state, retry] = base.useLoad(() => Promise.all([
+      api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
+      api(`/api/cases/${encodeURIComponent(caseId)}/requests/`), api("/api/report-questions/"),
+      api("/api/cases/"), api("/api/templates/"),
+    ]).then(([record, requests, questions, cases, templates]) => ({
+      record, templates: templates.items || [],
+      requests: requests.items.filter((row) => !["medical", "psychological"].includes(row.kind)),
+      questions: questions.items, caseRow: cases.items.find((row) => row.id === caseId),
+    })), [caseId]);
     const [selected, select] = R.useState(null);
-    const [composing, setComposing] = R.useState(false);
+    const [editing, setEditing] = R.useState(true);
     const [notice, setNotice] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const { record, requests, questions, caseRow } = state.data;
+    const { record, requests, questions, caseRow, templates } = state.data;
     const proceeding = openProceeding(record);
     const canWrite = writerFor(user, caseRow, record) && Boolean(proceeding);
     const chosen = requests.find((row) => row.id === selected);
-    const list = h(
-      P.Stack,
-      { gap: "sm" },
-      !canWrite ? h(P.Notice, { tone: "info" }, t(proceeding ? "writerOnly" : "noOpenProceeding")) : null,
-      ...requests.map((row) =>
-        h(P.Card, { icon: "doc-text",
-          key: row.id,
-          title: row.title,
-          meta: [t(row.kind), base.isolate(row.subject_name), t(row.state)].filter(Boolean).join(" · "),
-          selected: row.id === selected,
-          onOpen: () => {
-            setComposing(false);
-            setNotice(null);
-            select(row.id);
-          },
-        }),
-      ),
-      !requests.length ? h(P.EmptyState, { title: t("noRequests") }) : null,
-    );
-    const requestDialog = composing ? h(P.Dialog, { open: true, title: t("newRequest"), size: "xl", onClose: () => setComposing(false) },
-      h(RequestComposer, {
-        api, lang, record, questions, templates: state.data.templates, onTemplatesChanged: retry, reports: reports || [],
-        onCancel: () => setComposing(false),
-        onSaved: (id) => { setComposing(false); setNotice("draftSaved"); select(id); retry(); },
-      }),
-    ) : null;
-    const detail = chosen
-        ? h(RequestDetail, {
-            key: chosen.id,
-            api,
-            lang,
-            request: chosen,
-            canWrite,
-            onSent: (key) => {
-              setNotice(key || "sentNotice");
-              retry();
-            },
-          })
-        : null;
-    return h(R.Fragment, null,
-      requestDialog,
-      h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
-      h(P.Toolbar, { label: t("requests") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => { setComposing(true); setNotice(null); } }, t("newRequest")) : null),
+    const drafts = h(P.Stack, { gap: "sm" }, ...requests.map((row) => h(P.Card, {
+      icon: "doc-text", key: row.id, title: row.title,
+      meta: [t(row.kind), base.isolate(row.subject_name), t(row.state)].filter(Boolean).join(" · "),
+      selected: row.id === selected, onOpen: () => { setEditing(false); setNotice(null); select(row.id); },
+    })), !requests.length ? h(P.EmptyState, { title: t("noRequests") }) : null);
+    const editor = h(RequestComposer, {
+      api, lang, record, questions, templates, reports: reports || [], onTemplatesChanged: retry,
+      onCancel: () => setEditing(false),
+      onSaved: (result) => { const id = Array.isArray(result) ? result[0] : result; setEditing(false); setNotice("draftSaved"); select(id); retry(); },
+    });
+    return h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
+      h(P.Toolbar, { label: t("reportTemplates") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => { setEditing(true); setNotice(null); } }, t("newRequest")) : null),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-      h(P.SplitView, {
-        label: t("requests"),
-        firstLabel: t("requests"),
-        first: list,
-        second: h(
-          P.ReadingPane,
-          {
-            label: composing ? t("newRequest") : chosen?.title || t("chooseRequest"),
-            empty: h(P.EmptyState, { title: t("chooseRequest") }),
-          },
-          detail,
+      editing ? editor : h(P.SplitView, {
+        label: t("reportTemplates"), firstLabel: t("requests"), first: drafts,
+        second: h(P.ReadingPane, { label: chosen?.title || t("chooseRequest"), empty: h(P.EmptyState, { title: t("chooseRequest") }) },
+          chosen ? h(RequestDetail, { key: chosen.id, api, lang, request: chosen, canWrite, onSent: (key) => { setNotice(key || "sentNotice"); retry(); } }) : null,
         ),
       }),
-      ),
     );
   }
 
@@ -1463,7 +1388,7 @@
       variant: "contained", label: t("reports"), value: tab, onChange: setTab,
       items: [
         { value: "reports", label: t("completedReports"), content: completedReports },
-        { value: "requests", label: t("requests"), content: requests },
+        { value: "requests", label: t("reportTemplates"), content: requests },
       ],
     });
   }
