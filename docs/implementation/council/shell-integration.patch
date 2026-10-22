@@ -1,5 +1,5 @@
 diff --git a/static/ctm/app.js b/static/ctm/app.js
-index 05009e1..0bb7b25 100644
+index 05009e1..ff23cbe 100644
 --- a/static/ctm/app.js
 +++ b/static/ctm/app.js
 @@ -11,6 +11,8 @@
@@ -267,7 +267,7 @@ index 05009e1..0bb7b25 100644
          )
        : h(
            P.NavPane,
-@@ -1342,6 +1428,78 @@
+@@ -1342,8 +1428,88 @@
            lang,
            onCase: (id) => go("case", id),
          });
@@ -345,8 +345,18 @@ index 05009e1..0bb7b25 100644
 +        });
        if (page === "reports")
          return h(ReportReader, { key: selection, rows: data.items, t, lang });
++      if (["documents", "evidence"].includes(page) && council && councilModule?.CaseFilesWorkspace)
++        return h(councilModule.CaseFilesWorkspace, {
++          key: `${selection}-${page}`,
++          api,
++          lang,
++          caseId: selection,
++          section: page,
++        });
        if (["documents", "evidence"].includes(page))
-@@ -1425,6 +1583,15 @@
+         return h(CaseFiles, {
+           key: `${selection}-${page}`,
+@@ -1425,6 +1591,15 @@
                  onSent: () => reload((n) => n + 1),
                })
              : null,
@@ -362,7 +372,7 @@ index 05009e1..0bb7b25 100644
          );
        if (page === "case")
          return h(
-@@ -1456,6 +1623,51 @@
+@@ -1456,6 +1631,51 @@
              }),
            ),
          );
@@ -414,7 +424,7 @@ index 05009e1..0bb7b25 100644
        if (page === "session")
          return h(
            P.Stack,
-@@ -1538,11 +1750,26 @@
+@@ -1538,11 +1758,26 @@
                : h(P.EmptyState, { title: t("noCurrent") }),
          );
        }
@@ -442,16 +452,17 @@ index 05009e1..0bb7b25 100644
              data.items.filter((row) =>
                ["archived", "past"].includes(page)
 diff --git a/tribunal/templates/tribunal/shell.html b/tribunal/templates/tribunal/shell.html
-index b872676..40f070c 100644
+index b872676..e494340 100644
 --- a/tribunal/templates/tribunal/shell.html
 +++ b/tribunal/templates/tribunal/shell.html
-@@ -10,6 +10,9 @@
+@@ -10,6 +10,10 @@
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react.production.min.js"></script>
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react-dom.production.min.js"></script>
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.js"></script>
 +  <script defer src="{% static 'ctm/council.js' %}"></script>
 +  <script defer src="{% static 'ctm/council-case.js' %}"></script>
 +  <script defer src="{% static 'ctm/council-decree.js' %}"></script>
++  <script defer src="{% static 'ctm/council-media.js' %}"></script>
    <script defer src="{% static 'ctm/app.js' %}"></script>
  </head>
  <body>

@@ -8,9 +8,10 @@ Branch `work/claude-council`, draft PR #6, issue #3. UI only: no backend, migrat
 |---|---|
 | `static/ctm/council.js` | `window.CTMCouncil`: shared helpers (translator, `useLoad`, server messages, dates in Los Angeles time), council Home, completeness review, Tribunal Sessions (create, agenda, assignment, present, attendance slot, hearing outcome, testimony, close), Search. |
 | `static/ctm/council-case.js` | Reports → Requests (intake and in-person interview), Decision & Voting, Case Audit, call records, Professional Assessments, Spouses, case Hearings. |
+| `static/ctm/council-media.js` | Whole-report audio recorder with local recovery, completed report reader (Report / Recording / Transcripts tabs), evidence and document viewers. See [recording-and-viewers.md](recording-and-viewers.md). |
 | `static/ctm/council-decree.js` | Decree (signed PDF, safety check, signature record, issue, release/withdraw) and Appeals. |
 | `static/ctm/app.js`, `tribunal/templates/tribunal/shell.html` | Shell hook (separate commits): load the three modules before `app.js`; route council pages; enable locked-navigation items only when the module is loaded; `api()` errors carry `status`/server JSON; `FormData` bodies keep the browser's multipart type. |
-| `tests/frontend/council*.test.cjs` | `node --test tests/frontend/` (83 tests). Catalog test reads `decisions.py` and `prototype-decision-types.json`. |
+| `tests/frontend/council*.test.cjs` | `node --test tests/frontend/` (93 tests). Catalog test reads `decisions.py` and `prototype-decision-types.json`. |
 | `scripts/council_fixture.cjs` | Synthetic browser fixture: `node scripts/council_fixture.cjs [port] [role] [--contract=pr7] [--decree-read]`. Not a real-API, database or provider-login test. |
 
 ## Behavior by area
@@ -37,7 +38,7 @@ Branch `work/claude-council`, draft PR #6, issue #3. UI only: no backend, migrat
 
 ## Evidence
 
-- `node --test tests/frontend/`: 83 passed.
+- `node --test tests/frontend/`: 93 passed.
 - Built-in Chromium with the real Plenix 0.58.0 CDN and real modules against the synthetic fixture, in both `main` and `--contract=pr7` modes. Every slice was checked as secretary and as member (and on the assigned/unassigned split). Checks covered: validation blocking with no request sent, exact request payloads, server error text shown, EN/AR at 1280 and 390 px, `dir=rtl`, zero `[style]` attributes, no horizontal overflow, and no console errors apart from the expected 405 decision probe on `main`.
 - Python/PostgreSQL: no Python/uv/Docker on this machine; GitHub Actions on PR #6 has passed on each push checked.
 
