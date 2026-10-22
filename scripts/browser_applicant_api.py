@@ -219,7 +219,11 @@ try:
             other=browser.new_context()
             other.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies[name],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
             for suffix in ("","history/","files/","payments/"):
-                assert other.request.get(f"{BASE}/api/applications/{app_id}/{suffix}").status==403
+                denied=other.request.get(f"{BASE}/api/applications/{app_id}/{suffix}")
+                if suffix=='history/' and os.environ.get('CTM_APPLICANT_HISTORY_DENIAL_CONTRACT')=='hidden404':
+                    missing=other.request.get(f"{BASE}/api/applications/{uuid.uuid4()}/history/")
+                    assert denied.status==missing.status==404 and denied.json()==missing.json()
+                else:assert denied.status==403
             other.close()
         checks.append("Real API denies outsider and council draft/detail/history access")
         uploaded=[]

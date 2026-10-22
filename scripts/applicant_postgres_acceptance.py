@@ -60,7 +60,7 @@ def run(browser,base,settings,fixture_db,session_cookie,admin_cookie,output,runt
         page.get_by_role('button',name='Refresh documents',exact=True).click()
         expect(page.get_by_role('link',name='Download original',exact=True)).to_have_count(len(files))
         page.get_by_role('button',name='Refresh application status',exact=True).click()
-        expect(page.get_by_text('Application fee: $250.00 · Authorized fee waiver',exact=True)).to_be_visible()
+        expect(page.get_by_role('region',name='Payment status and history',exact=True).get_by_text('Application fee: $250.00 · Authorized fee waiver',exact=True)).to_be_visible()
         expect(page.get_by_role('link',name='Download original',exact=True)).to_have_count(len(files))
         expect(page.get_by_text('No unresolved checkout is recorded.',exact=True)).to_be_visible()
         page.get_by_role('button',name='Review answers',exact=True).click()

@@ -1,0 +1,55 @@
+{
+  "backend_sha": "9b7abce1079370add53ccbfb47a42631e158fff2",
+  "completed_groups": 5,
+  "checks": [
+    "Real start/list/detail bound questionnaire opens draft through patched shell",
+    "Real optimistic save persists answers/repeated child records; missing files keep server filing false",
+    "Real current-document listing supplies required slots and missing originals cannot enable filing",
+    "Real CSRF-protected language preference persists and editor retains answers in RTL",
+    "Real concurrent save rejects stale editor write and explicit reload preserves immutable prior answer history"
+  ],
+  "page_errors": [],
+  "runtime_database": {
+    "mode": "postgresql_runtime",
+    "current_user": "ctm_app",
+    "session_user": "ctm_app",
+    "superuser": false,
+    "bypass_rls": false,
+    "inherit": false,
+    "domain_tables": 63,
+    "forced_rls_tables": 63,
+    "owner_memberships": 0
+  },
+  "failure": {
+    "type": "AssertionError",
+    "detail": "POST /api/applications/{id}/submit/ returned500: new row violates row-level security policy for table tribunal_party; tribunal/services/applications.py:445 party.save().",
+    "sanitized": true
+  },
+  "scope": "Interrupted isolated acceptance; completed groups are not a full-suite pass",
+  "review_candidate": {
+    "backend": "9b7abce1079370add53ccbfb47a42631e158fff2",
+    "integrated_frontend": "83e537dccf9739a2ec88fca3d34d39f6e6372aff",
+    "applicant_head": "36b44e14feb30f08c4bf1b49dc484199f0f876ba",
+    "module_sha256": {
+      "applicant-appeals.js": "d6dd769865e35bfdc67cc6898be4c8dacf88f9972a383ae798d8d07eab9af81f",
+      "applicant-appointments.js": "ac2e01bb9b4b54594d6c5d286efe327b92e255a71a3e98e8c22b9dfc4d1cf115",
+      "applicant-assessments.js": "308787c8c19a03cd95057cc247c9366c104bd6b5ca233869a45aae58c51ef3f5",
+      "applicant-decrees.js": "09dd090ca9652d5cfcabab35681e2be8aee213382ad9cd9f2a6d15ae5fea4990",
+      "applicant-files.js": "9ae4675d3797b4a3fed3e99edf0c14dcaacbf8bad0605fa9b8b52c959e878295",
+      "applicant-filing.js": "7b349543c31bffbe1e24e411079a6316d668bfb2656d415819c3709f02254003",
+      "applicant-history.js": "8348800acc3d4812177485ebc71ea02d2c9f46c9861ad9d2df910f6b6bcfac8b",
+      "applicant-lifecycle.js": "ae0bd441f0a31160b381f496aa8e1308c35f6782150201a088a5e13a82e67a91",
+      "applicant-messages.js": "f113a732aa9cbc0d424b120bae3d8279885d5f09c4a038789eeea91d1edc1ba4",
+      "applicant-notifications.js": "a7b46a37ecaa7a2cdce15c9cf2e0c0c8df3ce18fcfd6f884c749b629cd6f583f",
+      "applicant-payments.js": "e13b3faf33a087d09ccb8421f912926a8bd13ca0d34bfdee7cf2307ed976de7d",
+      "applicant-recovery.js": "6ec9f596dad3a0629f33e51606b6bb27af4108518b5ead41e2bd9164cb9233b6",
+      "applicant-requests.js": "058e52257ffe1a5708e6f66b95778d622ca79ac5a59177ba685f82f8cd6fc746",
+      "applicant-responses.js": "9914768654725d2777b06a4aeebb8ab55efc204bb16fb610baac29410f56573c",
+      "applicant-supplements.js": "540d5a1a5cfacf01963a3047e540bbddc371fb444bb54ec8ab62c896ac734380",
+      "applicant.js": "92ebd16c4c8f44c5e9d4cf37598bf2d027be45fcb19cf0466c3fdc8638fa0be7"
+    },
+    "hook_applied": false,
+    "history_denial_contract": "hidden404",
+    "published_integration": false
+  }
+}

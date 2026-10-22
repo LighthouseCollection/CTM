@@ -1,5 +1,9 @@
 # Remaining applicant work
 
+## Fresh recovered PostgreSQL run
+
+Infrastructure recovery verified; new owned containers both removed. Current candidate reaches submission but returns500 on tribunal_party RLS update at backend applications.py:445. Backend correction is the next dependency; full PG acceptance remains incomplete. [Report](postgres-recovered-report.md) | [Evidence](postgres-recovered-focused-result.json). Historical recovery/stall entries below retain prior state.
+
 ## Standalone fixture CDN alignment
 
 Twelve applicant fixture scripts now pin0.60.1 and each has a successful run. Initial supplement disabled-review timeout and unchanged rerun are both recorded. Shared CI pin failure remains governance-owned. [Report](plenix0601-fixtures-report.md) | [JSON](plenix0601-fixtures-result.json).
