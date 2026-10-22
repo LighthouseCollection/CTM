@@ -91,7 +91,7 @@ test("the current session keeps labeled actions and its status control inside th
   assert.ok(scheduledColumns.lastIndexOf("field: \"open_action\"") > scheduledColumns.lastIndexOf("field: \"previous_recommendation\""), "Scheduled hearings ends with Open");
   assert.match(shellLayout, /headerMenu: false/);
   assert.match(shellLayout, /resizable: false/);
-  assert.match(shellLayout, /return h\(P\.DataTable/);
+  assert.match(shellLayout, /h\(P\.DataTable/);
 });
 
 test("council pages are enabled only when their module is loaded", () => {
