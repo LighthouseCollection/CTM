@@ -1798,6 +1798,7 @@ ${ar}` : en;
             members,
             readAvailable,
             showVoting: false,
+            showApproval: false,
             onChange: updateDecision,
           })
         : h(P.EmptyState, { title: t("noDecision") }),
