@@ -12,14 +12,18 @@ test("council modules load in order before app.js with the pinned Plenix CDN", (
   assert.doesNotMatch(shell, /cdn\/(?!0\.60\.1)\d+\.\d+\.\d+/);
 });
 
-test("council navigation exposes current, upcoming, and archived tribunal sessions", () => {
-  assert.match(app, /\["home", "sessions", "sessionsUpcoming", "sessionsArchived", "cases", "search", "archived", "statistics"\]/);
+test("council navigation groups sessions and cases into their requested destinations", () => {
+  assert.match(app, /\["home", "sessions", "sessionsUpcoming", "sessionsArchived", "myCases", "cases", "search", "archived", "statistics"\]/);
   assert.match(app, /sessions: "Tribunal Sessions - Current"/);
   assert.match(app, /sessionsUpcoming: "Tribunal Sessions - Upcoming"/);
   assert.match(app, /sessionsArchived: "Tribunal Sessions - Archived"/);
   assert.match(app, /mode: page === "sessions" \? "current" : page === "sessionsUpcoming" \? "upcoming" : "archived"/);
   assert.match(app, /heading: t\("tribunalSessions"\)/);
   assert.match(app, /items: sessionNavigationItems/);
+  assert.match(app, /heading: t\("cases"\)/);
+  for (const key of ["myCases", "allCases", "archivedCases"])
+    assert.match(app, new RegExp(`t\\("${key}"\\)`), key);
+  assert.match(app, /statistics: "Reports only"/);
 });
 
 test("session lifecycle changes refresh their parent destination list", () => {
@@ -41,6 +45,11 @@ test("the current session uses the default EntityHeader with real session facts 
     assert.match(council, new RegExp(`t\\("${key}"\\)`), key);
   assert.match(council, /t\("casesToAssign"\)/);
   assert.match(council, /t\("scheduledCasesForHearing"\)/);
+  const sessionFacts = council.slice(council.indexOf("const sessionFacts"), council.indexOf("const sessionHeaderActions"));
+  assert.doesNotMatch(sessionFacts, /location/);
+  assert.match(council, /api\(`\/api\/sessions\/\$\{sessionId\}\/adjourn\//);
+  assert.match(council, /hearingAdjourned/);
+  assert.match(council, /resumeHearing/);
   assert.match(council, /h\(P\.SplitView/);
 });
 
