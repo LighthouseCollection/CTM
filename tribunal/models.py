@@ -32,6 +32,42 @@ class Immutable(Root):
         abstract = True
 
 
+class Tribunal(Root):
+    code = models.CharField(max_length=80, unique=True)
+    name_en = models.CharField(max_length=250)
+    name_ar = models.CharField(max_length=250, blank=True, null=True)
+    timezone = models.CharField(max_length=80, default="America/Los_Angeles")
+
+    class Meta:
+        db_table = "tribunals"
+        constraints = [models.CheckConstraint(condition=Q(timezone="America/Los_Angeles"), name="tribunal_la_timezone")]
+
+
+class StaffMembership(Root):
+    account = models.ForeignKey("Account", on_delete=models.PROTECT, related_name="staff_memberships")
+    tribunal = models.ForeignKey(Tribunal, on_delete=models.PROTECT)
+    appointed_by = models.ForeignKey("Account", on_delete=models.PROTECT, related_name="staff_appointments")
+    active_from = models.DateTimeField(default=timezone.now)
+    active_until = models.DateTimeField(null=True)
+
+    class Meta:
+        db_table = "staff_memberships"
+
+
+class StaffRole(Root):
+    membership = models.ForeignKey(StaffMembership, on_delete=models.PROTECT, related_name="roles")
+    role = models.CharField(max_length=12)
+    granted_by = models.ForeignKey("Account", on_delete=models.PROTECT, related_name="staff_role_grants")
+    revoked_at = models.DateTimeField(null=True)
+
+    class Meta:
+        db_table = "staff_roles"
+        constraints = [
+            models.CheckConstraint(condition=Q(role__in=["admin", "secretary", "president", "member"]), name="staff_role_valid"),
+            models.UniqueConstraint(fields=["membership", "role"], condition=Q(revoked_at__isnull=True), name="staff_role_current"),
+        ]
+
+
 class Person(Root):
     canonical = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.PROTECT

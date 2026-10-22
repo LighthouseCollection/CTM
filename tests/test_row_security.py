@@ -66,6 +66,9 @@ def runtime():
             "ctm_assessment_release_metadata(uuid)",
             "ctm_reference_readable(text,jsonb)",
             "ctm_reference_writable(text,jsonb)",
+            "ctm_staff_readable()",
+            "ctm_staff_writable(text,jsonb)",
+            "ctm_staff_mutable(text,jsonb)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -664,7 +667,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0020_reference_privacy")])
+        MigrationExecutor(connection).migrate([("tribunal", "0021_tribunal_staffmembership_staffrole")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -834,7 +837,7 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 42
+        assert report["checks"]["forced_rls_table_count"] == 45
         assert "tribunal_reportrequest" in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
@@ -1275,3 +1278,99 @@ def test_reference_writes_reject_forged_actor_secret_payloads_and_retained_histo
         assert SettingRevision.objects.filter(pk=setting.pk).update(value={}) == 0
         assert SettingRevision.objects.filter(pk=setting.pk).delete()[0] == 0
         assert SettingRevision.objects.get(pk=setting.pk).value == {"display": "Test contact"}
+
+
+def test_f15_dual_assignment_and_revocation_under_real_runtime_role(runtime, ready_application, people, settings):
+    from tribunal.models import CaseAssignment, StaffRole, StaffMembership
+    from tribunal.services.staff_roles import create_tribunal, grant_assignment_presidency, revoke_assignment_authority
+    from tribunal.services.council import assign_case
+    from django.core.exceptions import PermissionDenied
+    app = ready_application
+    submit_application(app.owner, app.pk, "f15-rls", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    actor = people["admin"]
+    with runtime(actor):
+        tribunal = create_tribunal(actor, "RLS", "Runtime test institution")
+    settings.CTM_TRIBUNAL_ID = str(tribunal.pk)
+    with runtime(actor):
+        role = grant_assignment_presidency(actor, actor.pk, tribunal.pk)
+        record = assign_case(actor, app.case_id, people["member"].pk, actor.pk)
+        assert record.president_id == record.actor_id == actor.pk
+        assert StaffRole.objects.get(pk=role.pk).granted_by_id == actor.pk
+        assert StaffMembership.objects.get(pk=role.membership_id).appointed_by_id == actor.pk
+        revoke_assignment_authority(actor, role.pk)
+    with pytest.raises(PermissionDenied), runtime(actor):
+        assign_case(actor, app.case_id, people["member"].pk, actor.pk)
+    with runtime(people["member"]):
+        assert CaseAssignment.objects.get(pk=record.pk).president_id == actor.pk
+
+
+def test_f15_raw_grants_cannot_forge_authority_or_rewrite_history(runtime, people, settings):
+    from tribunal.models import Tribunal, StaffRole, StaffMembership
+    from tribunal.services.staff_roles import create_tribunal, grant_assignment_presidency, revoke_assignment_authority
+    from tribunal.db.context import database_actor
+    from django.db import DatabaseError
+    from django.utils import timezone
+    actor = people["admin"]
+    tribunal = create_tribunal(actor, "RAW", "Raw test institution")
+    settings.CTM_TRIBUNAL_ID = str(tribunal.pk)
+    role = grant_assignment_presidency(actor, actor.pk, tribunal.pk)
+    for user in [None, people["applicant"]]:
+        with runtime(user):
+            assert not Tribunal.objects.exists() and not StaffMembership.objects.exists() and not StaffRole.objects.exists()
+    with pytest.raises(DatabaseError), runtime(people["member"]), database_actor(people["member"]):
+        StaffRole.objects.create(membership_id=role.membership_id, role="member", granted_by=people["member"])
+    with pytest.raises(DatabaseError), runtime(actor), database_actor(actor):
+        StaffMembership.objects.create(account=people["member"], tribunal=tribunal, appointed_by=people["secretary"])
+    with pytest.raises(DatabaseError), runtime(actor), database_actor(actor):
+        StaffMembership.objects.create(account=people["applicant"], tribunal=tribunal, appointed_by=actor)
+    with pytest.raises(DatabaseError), runtime(actor), database_actor(actor):
+        StaffRole.objects.filter(pk=role.pk).update(granted_by=people["secretary"])
+    with runtime(actor):
+        revoke_assignment_authority(actor, role.pk)
+    with pytest.raises(DatabaseError), runtime(actor), database_actor(actor):
+        StaffRole.objects.filter(pk=role.pk).update(revoked_at=None)
+    with pytest.raises(DatabaseError), runtime(actor), database_actor(actor):
+        StaffMembership.objects.filter(pk=role.membership_id).update(account=people["member"])
+    with runtime(actor):
+        assert StaffRole.objects.filter(pk=role.pk).delete()[0] == 0
+        assert StaffMembership.objects.filter(pk=role.membership_id).exists()
+
+
+def test_f15_raw_assignment_rejects_revoked_cross_tribunal_or_ungranted_president(runtime, ready_application, people, settings):
+    from tribunal.models import CaseAssignment
+    from tribunal.services.staff_roles import create_tribunal, grant_assignment_presidency, revoke_assignment_authority
+    from tribunal.db.context import database_actor
+    from django.db import DatabaseError
+    app = ready_application
+    submit_application(app.owner, app.pk, "f15-raw-assignment", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    actor = people["admin"]
+    tribunal = create_tribunal(actor, "ONE", "Test institution one")
+    other = create_tribunal(actor, "TWO", "Test institution two")
+    settings.CTM_TRIBUNAL_ID = str(tribunal.pk)
+    with pytest.raises(DatabaseError), runtime(actor), database_actor(actor):
+        CaseAssignment.objects.create(case=app.case, member=people["member"], president=actor, actor=actor)
+    role = grant_assignment_presidency(actor, actor.pk, tribunal.pk)
+    settings.CTM_TRIBUNAL_ID = str(other.pk)
+    with pytest.raises(DatabaseError), runtime(actor), database_actor(actor):
+        CaseAssignment.objects.create(case=app.case, member=people["member"], president=actor, actor=actor)
+    settings.CTM_TRIBUNAL_ID = str(tribunal.pk)
+    revoke_assignment_authority(actor, role.pk)
+    with pytest.raises(DatabaseError), runtime(actor), database_actor(actor):
+        CaseAssignment.objects.create(case=app.case, member=people["member"], president=actor, actor=actor)
+
+
+def test_f15_primary_president_records_same_person_under_explicit_runtime_assignment_role(runtime, ready_application, people, settings):
+    from tribunal.services.staff_roles import create_tribunal, grant_assignment_authority
+    from tribunal.services.council import assign_case
+    app = ready_application
+    submit_application(app.owner, app.pk, "f15-reverse-roles", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    institution = create_tribunal(people["admin"], "REVERSE", "Reverse role test")
+    settings.CTM_TRIBUNAL_ID = str(institution.pk)
+    with runtime(people["admin"]):
+        grant_assignment_authority(people["admin"], people["president"].pk, institution.pk, "admin")
+    with runtime(people["president"]):
+        record = assign_case(people["president"], app.case_id, people["member"].pk, people["president"].pk)
+        assert record.actor_id == record.president_id == people["president"].pk

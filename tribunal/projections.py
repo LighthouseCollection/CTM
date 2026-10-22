@@ -99,12 +99,21 @@ def appeal_data(app, actor):
 
 
 def case_capabilities(case, actor):
+    from tribunal.services.staff_roles import assignment_recorder
+
     council = actor.role != "applicant"
     write = council and (actor.role in {"admin", "secretary"} or case.assigned_member_id == actor.pk)
     hearable = case.status == "open" or case.applications.filter(kind="appeal", status="submitted").exists()
-    return {"assigned_member_id": str(case.assigned_member_id) if case.assigned_member_id else None,
+    result = {"assigned_member_id": str(case.assigned_member_id) if case.assigned_member_id else None,
             "can_place_part2": bool(write and hearable),
-            "can_assign": bool(actor.role in {"admin", "secretary"} and case.status == "open")}
+            "can_assign": bool(council and assignment_recorder(actor) and case.status == "open")}
+    if council:
+        result["assignment_history"] = [{"id": str(row.pk), "member_id": str(row.member_id),
+            "member": name(row.member), "president_id": str(row.president_id),
+            "president": name(row.president), "actor_id": str(row.actor_id),
+            "actor": name(row.actor), "timestamp": row.created_at.isoformat()}
+            for row in m.CaseAssignment.objects.filter(case=case).select_related("member", "president", "actor").order_by("created_at", "id")]
+    return result
 
 
 def session_capabilities(session, actor):

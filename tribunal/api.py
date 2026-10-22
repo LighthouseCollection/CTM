@@ -498,18 +498,58 @@ def assign(request, case_id):
 
 @endpoint()
 def members(request):
+    from tribunal.services.staff_roles import assignment_president, assignment_recorder
+
     staff(request.user)
     return JsonResponse(
         {
             "items": [
                 encoded(x, name=f"{x.first_name} {x.last_name}".strip(), role=x.role,
-                        president=x.role == "president", active=x.is_active)
+                        president=x.role == "president", active=x.is_active,
+                        can_authorize_assignment=assignment_president(x),
+                        can_record_assignment=assignment_recorder(x))
                 for x in m.Account.objects.filter(is_active=True).exclude(
                     role="applicant"
                 )
             ]
         }
     )
+
+
+@endpoint(("GET", "POST"))
+def tribunals(request):
+    from tribunal.services.staff_roles import create_tribunal, existing_admin
+
+    existing_admin(request.user)
+    if request.method == "GET":
+        return JsonResponse({"items": [encoded(row, code=row.code, name_en=row.name_en,
+            name_ar=row.name_ar, timezone=row.timezone) for row in m.Tribunal.objects.order_by("code")]})
+    data = body(request)
+    row = create_tribunal(request.user, data.get("code"), data.get("name_en"), data.get("name_ar"))
+    return JsonResponse(encoded(row, code=row.code, name_en=row.name_en, name_ar=row.name_ar, timezone=row.timezone), status=201)
+
+
+@endpoint(("GET", "POST"))
+def assignment_authorities(request):
+    from tribunal.services.staff_roles import existing_admin, grant_assignment_authority, current_tribunal_id
+
+    existing_admin(request.user)
+    if request.method == "GET":
+        rows = m.StaffRole.objects.filter(role__in=["president", "admin", "secretary"], membership__tribunal_id=current_tribunal_id()).select_related("membership")
+        return JsonResponse({"items": [encoded(row, role=row.role, account_id=str(row.membership.account_id),
+            tribunal_id=str(row.membership.tribunal_id), membership_id=str(row.membership_id),
+            granted_by_id=str(row.granted_by_id), revoked_at=row.revoked_at.isoformat() if row.revoked_at else None) for row in rows.order_by("created_at", "id")]})
+    data = body(request)
+    row = grant_assignment_authority(request.user, data["account_id"], data["tribunal_id"], data.get("role", "president"))
+    return JsonResponse(encoded(row, role=row.role, membership_id=str(row.membership_id), granted_by_id=str(row.granted_by_id)), status=201)
+
+
+@endpoint(("POST",))
+def revoke_assignment_authority(request, role_id):
+    from tribunal.services.staff_roles import revoke_assignment_authority as command
+
+    row = command(request.user, role_id)
+    return JsonResponse(encoded(row, revoked_at=row.revoked_at.isoformat()))
 
 
 @endpoint(("POST",))

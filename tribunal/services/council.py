@@ -32,12 +32,23 @@ from tribunal.db.context import database_settings, database_actor
 
 @transaction.atomic
 def assign_case(actor, case_id, member_id, president_id):
-    administrator(actor)
+    with database_actor(actor):
+        return _assign_case(actor, case_id, member_id, president_id)
+
+
+def _assign_case(actor, case_id, member_id, president_id):
+    from .staff_roles import assignment_president, assignment_recorder
+
+    active(actor)
+    if not assignment_recorder(actor):
+        raise PermissionDenied("Administrative assignment authority is required.")
     case = Case.objects.select_for_update(of=("self",)).get(pk=case_id)
     if case.status != "open":
         raise ValidationError("Closed case cannot be reassigned.")
     member = Account.objects.get(pk=member_id, is_active=True)
-    president = Account.objects.get(pk=president_id, role="president", is_active=True)
+    president = Account.objects.get(pk=president_id, is_active=True)
+    if not assignment_president(president):
+        raise PermissionDenied("An active president must authorize the assignment.")
     staff(member)
     previous = case.assigned_member
     case.assigned_member = member

@@ -84,6 +84,18 @@
     "handler": "members"
   },
   {
+    "route": "api/council/tribunals/",
+    "handler": "tribunals"
+  },
+  {
+    "route": "api/council/assignment-authorities/",
+    "handler": "assignment_authorities"
+  },
+  {
+    "route": "api/council/assignment-authorities/<uuid:role_id>/revoke/",
+    "handler": "revoke_assignment_authority"
+  },
+  {
     "route": "api/council/enroll/",
     "handler": "enroll"
   },

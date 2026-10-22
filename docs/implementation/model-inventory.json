@@ -1,8 +1,164 @@
 {
   "status": "partial implementation; not a contract replacement",
   "contract_table_count": 151,
-  "implemented_domain_model_count": 60,
+  "implemented_domain_model_count": 63,
   "models": [
+    {
+      "model": "tribunal.Tribunal",
+      "table": "tribunals",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "UUIDField",
+          "nullable": false,
+          "primary_key": true
+        },
+        {
+          "name": "created_at",
+          "column": "created_at",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "name_en",
+          "column": "name_en",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "name_ar",
+          "column": "name_ar",
+          "type": "CharField",
+          "nullable": true,
+          "primary_key": false
+        },
+        {
+          "name": "timezone",
+          "column": "timezone",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        }
+      ]
+    },
+    {
+      "model": "tribunal.StaffMembership",
+      "table": "staff_memberships",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "UUIDField",
+          "nullable": false,
+          "primary_key": true
+        },
+        {
+          "name": "created_at",
+          "column": "created_at",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "account",
+          "column": "account_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.Account"
+        },
+        {
+          "name": "tribunal",
+          "column": "tribunal_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.Tribunal"
+        },
+        {
+          "name": "appointed_by",
+          "column": "appointed_by_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.Account"
+        },
+        {
+          "name": "active_from",
+          "column": "active_from",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "active_until",
+          "column": "active_until",
+          "type": "DateTimeField",
+          "nullable": true,
+          "primary_key": false
+        }
+      ]
+    },
+    {
+      "model": "tribunal.StaffRole",
+      "table": "staff_roles",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "UUIDField",
+          "nullable": false,
+          "primary_key": true
+        },
+        {
+          "name": "created_at",
+          "column": "created_at",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "membership",
+          "column": "membership_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.StaffMembership"
+        },
+        {
+          "name": "role",
+          "column": "role",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "granted_by",
+          "column": "granted_by_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.Account"
+        },
+        {
+          "name": "revoked_at",
+          "column": "revoked_at",
+          "type": "DateTimeField",
+          "nullable": true,
+          "primary_key": false
+        }
+      ]
+    },
     {
       "model": "tribunal.Person",
       "table": "tribunal_person",

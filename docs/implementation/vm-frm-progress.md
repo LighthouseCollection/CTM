@@ -239,10 +239,9 @@ closed F08 is made by the earlier test counts.
 
 ## Remaining owner-decision reconciliation
 
-- F15 same-person president+admin assignment needs effective multiple-role
-  representation; current Account.role is singular. Do not fabricate a second
-  person or infer presidential authority for every administrator. Approved
-  staff_memberships/staff_roles reconciliation remains required.
+- F15 now has the assignment-specific adapter and approved membership/role
+  structures described below. Broader role/lifecycle/authentication reconciliation
+  must not be inferred from that narrow assignment capability.
 - F12 linked never-filing spouse filing against a closed case still needs the
   closed-case intake and council acceptance/reopening transaction. Current code
   refuses the closed match; it must not be presented as implemented.
@@ -298,5 +297,49 @@ closed F08 is made by the earlier test counts.
   reversal/reapplication verified through 0020. Tests include missing/suspended
   context, applicant/council/admin read separation, setting-author forgery,
   nested credential payload denial and retained reference history.
-- F15/F12, remaining 18 domain-table policy reviews, full151-table reconciliation,
+- F12, broader role reconciliation, remaining 18 domain-table policy reviews, full151-table reconciliation,
   independent browser reacceptance and institutional/provider gates remain open.
+
+## F15 same-person assignment authorizer and recorder
+
+- Migration 0021 adds the approved `tribunals`, `staff_memberships` and
+  `staff_roles` tables, preserving the existing Account implementation and stable
+  Microsoft-subject checks. Institution, appointer, grantor, activation, expiration
+  and revocation are retained; no historical person/role/appointer is invented or
+  backfilled. There are now **63 domain models / 151 approved target tables**.
+- Assignment checks are deliberately specific: an existing admin with an explicit
+  presidency can authorize and record the same assignment; an existing president
+  with explicit administrative assignment authority can do the same. Both actual
+  IDs remain in CaseAssignment even when equal. Legacy roles still work. These
+  extra role records do not grant system settings, role provisioning, decree
+  issuance, or new dual-role approval powers elsewhere.
+- `CTM_TRIBUNAL_ID` must explicitly identify the approved current institution.
+  Its normalized value enters transaction-local context from server settings,
+  never browser roles/headers. Missing/mismatched configuration, inactive/future/
+  expired membership, suspended accounts and revoked grants cannot supply extra
+  assignment authority. Legacy single-role behavior does not require a new grant.
+- Existing-admin-only `GET/POST /api/council/tribunals/` provisions reviewed
+  institution metadata `{code,name_en,name_ar?}`. It does not select the current
+  institution or change deployment configuration. No actual institution was
+  provisioned here.
+- Existing-admin-only `GET/POST /api/council/assignment-authorities/` retains grants;
+  POST takes `{account_id,tribunal_id,role}` with president/admin/secretary (default
+  president), only for an existing active council account. Provisioning is audited
+  and idempotent for the current membership/role. `POST .../{role_id}/revoke/`
+  retains the grant and actual revoker audit; grants are never reactivated or
+  rewritten. This is not general council role-management acceptance.
+- Council member rows now include `can_authorize_assignment` and
+  `can_record_assignment`. Assignment UI must use those flags instead of treating
+  the legacy `president` boolean as assignment authority. The legacy boolean is
+  retained for current decision/decree contracts; no inferred approval change.
+  Council case data includes chronological `assignment_history` with member,
+  president, actor IDs/names/time. Applicant projections omit this internal history.
+- All three new tables have forced RLS (**45 protected domain tables**) and guarded
+  provenance/retention. Raw runtime writes cannot forge a grantor/appointer, enroll
+  an applicant, rebind membership, reactivate a revoked role or assign using missing,
+  revoked or cross-tribunal authority. SQL rechecks assignment authority at write.
+- Full isolated PostgreSQL suite: **303 passed, 1 skipped**; no model drift;
+  inventories regenerated (**78 routes**); reversal/reapplication through 0021.
+  Browser integration, real institutional configuration/grants and general role
+  lifecycle acceptance remain with governance. No operational migrations,
+  credentials, deployment, merge or actual role grants were changed.
