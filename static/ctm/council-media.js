@@ -1881,6 +1881,7 @@
         )
       : h(P.EmptyState, { title: t("notInterview") });
     return h(P.Tabs, {
+      variant: "contained",
       label: report.title,
       value: tab,
       onChange: setTab,

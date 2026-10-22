@@ -25,9 +25,11 @@ test("council modules load in order before app.js with the pinned Plenix CDN", (
 
 test("case workspaces use the CDN contained tab variant", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const councilMedia = fs.readFileSync("static/ctm/council-media.js", "utf8");
   assert.match(app, /h\(P\.Tabs, \{ variant: "contained", label: t\("communications"\)/);
   assert.match(councilCase, /variant: "contained", label: t\("reports"\)/);
   assert.match(councilCase, /h\(P\.Tabs, \{ variant: "contained", label: t\("callLog"\)/);
+  assert.match(councilMedia, /h\(P\.Tabs, \{\s*variant: "contained",\s*label: report\.title/);
 });
 
 test("account menu receives localized AppHeader labels and density choices", () => {
