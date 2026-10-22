@@ -32,6 +32,15 @@
   color: inherit;
 }
 
+.ctm-spouse-profile-section__edit {
+  color: var(--plx-sys-color-primary, var(--plx-color-primary));
+}
+
+.ctm-spouse-profile-section .plx-property-list__label,
+.ctm-spouse-profile-section .plx-property-list__label-text {
+  color: var(--plx-ref-color-blue-650);
+}
+
 .ctm-spouse-profile-section__divider {
   flex: 1 1 auto;
   min-inline-size: 0;
