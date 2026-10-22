@@ -25,7 +25,7 @@ BEGIN
   RETURN OLD;
 END $$;
 
-DROP TRIGGER core_retained_delete ON public.tribunal_councilsession;
+DROP TRIGGER IF EXISTS core_retained_delete ON public.tribunal_councilsession;
 CREATE TRIGGER core_retained_delete BEFORE DELETE ON public.tribunal_councilsession
  FOR EACH ROW EXECUTE FUNCTION public.ctm_guard_draft_session_delete();
 CREATE POLICY draft_session_delete ON public.tribunal_councilsession FOR DELETE
@@ -45,3 +45,4 @@ DROP FUNCTION IF EXISTS public.ctm_draft_session_delete_allowed(uuid);
 class Migration(migrations.Migration):
     dependencies = [("tribunal", "0054_fictitious_demo_case")]
     operations = [migrations.RunSQL(FORWARD, REVERSE)]
+
