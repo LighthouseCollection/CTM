@@ -1,3 +1,7 @@
+Current validation: **902 PostgreSQL passed, 1 skipped**; no model drift; rollback/reapply through0050 included. Twenty-eight new member administration tests are included; SQLite member HTTP contract separately passed. No new runtime grants or tables. Council UI/integration/independent acceptance remains pending.
+
+Member administration: admin-only explicit current-tribunal enrollment and versioned council display-name edits are implemented in0050. Existing council/enroll already created accounts; the new create contract additionally retains membership/grant sources. No applicant conversion, provider verification or role/email changes through profile edits. See member-administration.md. Council/UI/QA acceptance and broader contact/portrait/self-profile work remain pending. UI unapplied metadata needs unique0051-or-later.
+
 Current validation: **874 PostgreSQL passed, 1 skipped**; no model drift; existing migration rollback/reapply through0049 included in full suite. Eleven new restricted-role print checks passed. Synthetic Arabic template produced a one-page PDF in Chromium; council UI/content/font acceptance remains pending. No new migration or grant.
 
 Priest priority continuation: blank council print view implemented using stored wording and browser Print/Save as PDF; direct server PDF and council UI integration remain unfinished. See priest-request-print.md and priest-settings-priority.md for completed/unfinished/exact dependencies. No invitation email or integrated OCR/transcription success is claimed.

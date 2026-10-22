@@ -28,6 +28,8 @@ urlpatterns = [
     path("api/cases/<uuid:case_id>/assignment/", api.assign),
     path("api/council/members/", api.members),
     path("api/system/accounts/", api.system_accounts),
+    path("api/system/members/", api.system_members),
+    path("api/system/members/<uuid:account_id>/", api.system_member),
     path("api/system/accounts/<uuid:account_id>/", api.system_account),
     path("api/system/accounts/<uuid:account_id>/status/", api.system_account_status),
     path("api/system/accounts/<uuid:account_id>/status-history/", api.system_account_history),

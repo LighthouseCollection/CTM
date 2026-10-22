@@ -557,6 +557,30 @@ def system_accounts(request):
         default_limit=100,serialize=lambda row:account_data(request.user,row,active_admin_count=active_admins)))
 
 
+@endpoint(("GET", "POST"))
+def system_members(request):
+    from tribunal.services.member_administration import create_member, member_data, member_queryset
+    from tribunal.services.staff_roles import existing_admin
+    existing_admin(request.user)
+    if request.method == 'GET':
+        from tribunal.pagination import page_records
+        return JsonResponse(page_records(member_queryset().order_by('-created_at', '-id'), request,
+            default_limit=100, serialize=lambda account: member_data(request.user, account)))
+    account, membership, grant = create_member(request.user, body(request))
+    return JsonResponse({**member_data(request.user, account),
+                         'membership_id': str(membership.pk), 'enrollment_role_id': str(grant.pk)}, status=201)
+
+
+@endpoint(("GET", "POST"))
+def system_member(request, account_id):
+    from tribunal.services.member_administration import edit_member, member_data, COUNCIL_ROLES
+    from tribunal.services.staff_roles import existing_admin
+    existing_admin(request.user)
+    account = (edit_member(request.user, account_id, body(request)) if request.method == 'POST'
+               else m.Account.objects.get(pk=account_id, role__in=COUNCIL_ROLES))
+    return JsonResponse(member_data(request.user, account))
+
+
 @endpoint()
 def system_account(request, account_id):
     from tribunal.services.account_administration import account_data

@@ -62,3 +62,11 @@ These are backend implementation gaps, not all credential blockers.
 This ledger does not claim that credentials are absent from the live server:
 their configuration and operational acceptance are outside this checkout.
 Nothing here authorizes backend to merge, deploy or run shared-server migrations.
+
+## Additional user account scope
+
+User explicitly added member creation/editing. The next delivered member slice
+provides admin-only explicit tribunal enrollment and versioned display-name
+edits; see member-administration.md. Broader contact/portrait, verified email,
+provider, role-change and user self-profile workflows remain unfinished. This
+addition does not claim the priest or remaining settings priorities completed.
