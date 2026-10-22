@@ -485,3 +485,18 @@ No new product code or database mutation was performed. Existing worker test res
 - Current source anchors refer to pinned branch files, not the localhost build.
 
 - `field-mapping-review.csv`: 48 detailed prototype field mappings with explicit unresolved application-code/JSON-path qualifiers. This is a reconciliation worksheet, not a completed equivalence claim.
+
+## Owner-supplied account/settings addendum
+
+The following qualifies PA13-PA15 and PA27-PA28. Documented fragments do not establish a consolidated or implemented workflow.
+
+| Area | Documented fragments | Unresolved deliverable |
+|---|---|---|
+| My Account | Provider sign-in, languages, profile/session/activity concepts | Complete editable-field authority, persistent portrait ownership/storage/access/lifecycle mapping and end-to-end acceptance |
+| Admin account management | Enrollment, Microsoft binding, invitation/status/role/audit concepts | Consolidated screen-by-screen management workflow respecting existing-admin-only council enrollment |
+| CTM Settings | Separate authorized destination | Complete settings inventory, read/edit authority, revision/retention rules and protected secret-reference handling |
+| Portrait/photo | Intended private profile-file concept | Unsupported field/mapping remains unresolved; no implemented storage relationship or acceptance may be inferred |
+
+The owner-supplied investigation made no code changes. This audit has not corrected the unsupported photo mapping. Do not reuse case evidence ownership or expose portraits without an explicit approved account/profile-file relationship. Provider-only authentication supersedes legacy password controls.
+
+These require workflow/schema reconciliation before implementation; track all seven delivery stages. No additional task is assigned to Claude by this addendum. GitHub evidence: https://github.com/LighthouseCollection/CTM/issues/14#issuecomment-6331913200
