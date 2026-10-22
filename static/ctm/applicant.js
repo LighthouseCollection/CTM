@@ -216,6 +216,7 @@
     const [filingBusy, setFilingBusy] = R.useState(false);
     const [filingLocked, setFilingLocked] = R.useState(false);
     const [uploadBusy, setUploadBusy] = R.useState(false);
+    const [supplementDirty,setSupplementDirty]=R.useState(false),[supplementBusy,setSupplementBusy]=R.useState(false);
     const [documentRevision, setDocumentRevision] = R.useState(0);
     const [documentsReady, setDocumentsReady] = R.useState(false);
     const [projectionPending, setProjectionPending] = R.useState(false);
@@ -253,6 +254,7 @@
       let active = true;
       setRecord(null); setSession(null); setFailure(null); setReview(false);
       setFilingBusy(false); setFilingLocked(false); setUploadBusy(false); setDocumentsReady(false);
+      setSupplementDirty(false);setSupplementBusy(false);
       setProjectionPending(false); setProjectionFailure(false);
       api(`/api/applications/${encodeURIComponent(applicationId)}/`).then(app => {
         if (!active) return;
@@ -267,23 +269,23 @@
       version: state?.version ?? record.version,
     }), [record, state?.version, documentRevision]);
     R.useEffect(() => {
-      if (!state?.dirty && !state?.saving && !uploadBusy) return;
+      if (!state?.dirty && !state?.saving && !uploadBusy && !supplementDirty && !supplementBusy) return;
       const warn = event => { event.preventDefault(); event.returnValue = ""; };
       window.addEventListener("beforeunload", warn);
       return () => window.removeEventListener("beforeunload", warn);
-    }, [state?.dirty, state?.saving, uploadBusy]);
+    }, [state?.dirty, state?.saving, uploadBusy,supplementDirty,supplementBusy]);
     const text = (value, props = {}) => h(P.Text, props, value);
     const button = (key, action, props = {}) => h(P.Button, {
-      onClick: action, disabled: state?.saving || filingBusy || uploadBusy || projectionPending, ...props,
+      onClick: action, disabled: state?.saving || filingBusy || uploadBusy || projectionPending || supplementBusy, ...props,
     }, t(key));
     const navigate = (action) => {
-      if (state?.saving || filingBusy || uploadBusy || projectionPending) return;
-      if (state?.dirty) setPending(() => action); else action();
+      if (state?.saving || filingBusy || uploadBusy || projectionPending || supplementBusy) return;
+      if (state?.dirty || supplementDirty) setPending(() => action); else action();
     };
     R.useEffect(() => {
       onNavigationGuard?.(navigate);
       return () => onNavigationGuard?.(null);
-    }, [onNavigationGuard, session, state?.dirty, state?.saving, filingBusy, uploadBusy, projectionPending]);
+    }, [onNavigationGuard, session, state?.dirty, state?.saving, filingBusy, uploadBusy, projectionPending,supplementDirty,supplementBusy]);
     const reloadAnswers = () => navigate(() => setReload(n => n + 1));
     const saveAnswers = async () => {
       const target = session;
@@ -382,7 +384,7 @@
         window.CTMApplicantFiles ? h(window.CTMApplicantFiles.ApplicationFiles, {
           key: "documents", applicationId, answerVersion:state.version, api, lang,
           savedApplication:record,
-          disabled: state.dirty || state.saving || filingBusy || filingLocked || projectionPending,
+          disabled: state.dirty || state.saving || filingBusy || filingLocked || projectionPending || supplementBusy,
           onBusyChange: setUploadBusy, onChanged: documentsChanged,
           onReadyChange: documentsReadinessChanged,
           onProjectionRefresh: refreshProjection,
@@ -396,7 +398,11 @@
         window.CTMApplicantPayments ? h(window.CTMApplicantPayments.PaymentHistory, {
           key:"payment-history",applicationId,api,lang,
           refreshKey:`${record.version}:${record.status}:${record.fee?.status}`,
-        }) : null);
+        }) : null,
+        record.kind==="appeal"&&record.status!=="draft"&&window.CTMApplicantSupplements
+          ? h(window.CTMApplicantSupplements.Supplements,{key:applicationId,applicationId,api,lang,
+            disabled:state.dirty||state.saving||uploadBusy||filingBusy||filingLocked||projectionPending,
+            onDirtyChange:setSupplementDirty,onBusyChange:setSupplementBusy}) : null);
     }
     return h(P.LocaleProvider, { locale: lang === "ar" ? "ar" : "en", dir: lang === "ar" ? "rtl" : "ltr" },
       h(P.Stack, { as: "section", gap: "lg", lang, dir: lang === "ar" ? "rtl" : "ltr" },

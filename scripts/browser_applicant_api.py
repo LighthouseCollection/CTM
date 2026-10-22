@@ -582,6 +582,10 @@ try:
         assert pending_appeal["status"]=="submitted" and not pending_appeal["can_edit"]
         assert context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["status"]=="closed"
         checks.append("Browser appeal evidence/declaration and actual authorized waiver submit to same closed case without reopening or mutating original proceeding")
+        page.get_by_role("button",name="Refresh application status",exact=True).click()
+        expect(page.get_by_text("Additional appeal information is unavailable.",exact=False)).to_be_visible()
+        assert page.get_by_role("button",name="Submit additional information",exact=True).count()==0
+        checks.append("Current backend missing own supplement capability/history cannot enable applicant append controls")
         def sibling_reopened_fixture():
             from tribunal.models import Case,Proceeding,Party,OpenCaseClaim
             Case.objects.filter(pk=current["case_id"]).update(status="open")

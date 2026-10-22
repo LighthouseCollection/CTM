@@ -118,6 +118,13 @@ files. Reconcile the patch if council/governance changes its contexts.
 
 ## Validation
 
+Prepared appeal supplements render separately from immutable submitted answers.
+The editor guards navigation and unload while local supplement text/evidence or an
+append is pending. The module requires explicit own capability/history, reviews
+escaped text and clean evidence, and locks uncertain attempts against blind retry.
+Backend read/capability integration remains pending; the current server cannot
+enable the append controls. Shared loading is supplied through the proposed patch.
+
 Behavior tests cover question-definition rejection, stable keys, partial draft save,
 preservation of unknown fields, optimistic versions, stale/error recovery and language
 switching without losing input. Real pinned-CDN browser checks cover accessible

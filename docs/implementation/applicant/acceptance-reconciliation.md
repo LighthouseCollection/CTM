@@ -42,7 +42,7 @@ and index suppression, private intermediate corrections, and obsolete queued-ale
 discard with EmailMessage.send mocked and never called. Live search service, live
 mail delivery and PostgreSQL RLS remain separate acceptance surfaces.
 
-All27 real API/browser scenario groups pass in the default mode. An explicitly
+All28 real API/browser scenario groups pass in the default mode. An explicitly
 selected baseline-only mode (`CTM_APPLICANT_ACCEPTANCE=baseline`) omits this privacy
 scenario and is not full returned-privacy acceptance. No shared backend or protected
 specification changes are made in the applicant stream.

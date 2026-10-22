@@ -200,3 +200,16 @@ own authoritative `can_supplement` and supplement history are projected. Own his
 must include attributed text, exact safe evidence versions and timestamps without
 other spouse/council content. An uncertain append needs authoritative refresh because
 the existing endpoint does not supply idempotent retry semantics.
+
+The prepared supplement UI proposes this extension to the own application read:
+
+```json
+{"id":"<application UUID>","kind":"appeal","status":"submitted","can_supplement":true,"supplements":[{"id":"<supplement UUID>","text":"Additional information","actor":"Applicant","timestamp":"2026-10-21T12:00:00Z","manifest":[{"id":"<file UUID>","name":"Evidence.pdf","scan_state":"clean","download_url":"/api/files/<file UUID>/"}]}]}
+```
+
+This is a proposed contract, not an existing backend response. Missing or malformed
+capability/history clears displayed history and disables append. Only clean own
+current files with exact authorized download paths can be selected. Review precedes
+POST; any uncertain response freezes that local attempt. Authoritative refresh and
+explicit clearing are required before starting another entry. The current real-API
+test verifies missing-contract controls stay disabled; append success is fixture-only.
