@@ -156,19 +156,6 @@
     return all.filter((q) => codes.has(q.code) && !String(q.wording_ar || "").trim()).map((q) => q.code);
   }
 
-  // Templates usable to pre-fill a request: active, with question codes (newer servers).
-  function usableTemplates(templates) {
-    return (templates || []).filter((tpl) => !tpl.retired && Array.isArray(tpl.questions) && tpl.questions.length);
-  }
-
-  // Selected codes from a template, excluding foundational questions (always included)
-  // and codes no longer published.
-  function templateSelection(template, questions) {
-    const published = new Set((questions || []).map((q) => q.code));
-    const foundational = new Set(foundationalCodes(questions));
-    return [...new Set((template?.questions || []).map((q) => q.code))].filter((code) => published.has(code) && !foundational.has(code));
-  }
-
   function requestProblem(form, questions) {
     if (!form.party) return "chooseSubject";
     if (form.kind && !["intake", "interview"].includes(form.kind)) return "chooseMethod";
@@ -885,108 +872,6 @@ ${ar}` : en;
 
   // ---------- Report requests ----------
 
-  function TemplateTools({ api, lang, templates, questions, selected, onUse, onChanged }) {
-    const R = window.React,
-      P = window.Plenix,
-      h = R.createElement,
-      t = translator(lang);
-    const usable = usableTemplates(templates);
-    const [choice, setChoice] = R.useState("");
-    const [title, setTitle] = R.useState("");
-    const [pending, setPending] = R.useState(false);
-    const [failure, setFailure] = R.useState(null);
-    const [notice, setNotice] = R.useState(null);
-    async function act(fn, key) {
-      setPending(true);
-      setFailure(null);
-      setNotice(null);
-      try {
-        await fn();
-        setNotice(key);
-        onChanged();
-        return true;
-      } catch (error) {
-        setFailure(base.serverMessage(error, t));
-        return false;
-      } finally {
-        setPending(false);
-      }
-    }
-    const save = () => {
-      if (!title.trim()) {
-        setFailure(t("templateTitleRequired"));
-        return;
-      }
-      act(() => api("/api/templates/", { method: "POST", body: JSON.stringify({ title: title.trim(), questions: selected }) }), "templateSaved").then((ok) => ok && setTitle(""));
-    };
-    const supportsQuestions = (templates || []).every((tpl) => Array.isArray(tpl.questions));
-    return h(
-      P.Panel,
-      { icon: "doc-text", title: t("templates"), description: t("templatesHelp"), collapsible: true, defaultExpanded: false },
-      h(
-        P.Stack,
-        { gap: "md" },
-        supportsQuestions && usable.length
-          ? h(
-              P.Inline,
-              { wrap: true, align: "end" },
-              h(
-                P.Field,
-                { label: t("startFromTemplate") },
-                h(P.Select, {
-                  value: choice,
-                  disabled: pending,
-                  onChange: (e) => setChoice(e.target.value),
-                  options: [
-                    { value: "", label: t("chooseTemplate") },
-                    ...usable.map((tpl) => ({ value: tpl.id, label: `${tpl.title}${tpl.shared ? " · " + t("sharedTemplate") : ""}` })),
-                  ],
-                }),
-              ),
-              h(
-                P.Button,
-                {
-                  disabled: pending || !choice,
-                  onClick: () => {
-                    onUse(templateSelection(usable.find((tpl) => tpl.id === choice), questions));
-                    setNotice("templateApplied");
-                  },
-                },
-                t("useTemplate"),
-              ),
-            )
-          : null,
-        h(
-          P.Inline,
-          { wrap: true, align: "end" },
-          h(P.Field, { label: t("templateTitle") }, h(P.Input, { value: title, maxLength: 200, disabled: pending, onChange: (e) => setTitle(e.target.value) })),
-          h(P.Button, { disabled: pending || !selected.length, onClick: save }, t("saveAsTemplate")),
-        ),
-        ...(templates || [])
-          .filter((tpl) => !tpl.retired && (tpl.can_publish || tpl.can_retire))
-          .map((tpl) =>
-            h(
-              P.Inline,
-              { key: tpl.id, justify: "between", wrap: true },
-              h(P.Text, null, `${tpl.title}${tpl.shared ? " · " + t("sharedTemplate") : " · " + t("personalTemplate")}`),
-              h(
-                P.Inline,
-                { gap: "xs" },
-                tpl.can_publish
-                  ? h(P.Button, { size: "xs", disabled: pending, onClick: () => act(() => api(`/api/templates/${encodeURIComponent(tpl.id)}/publish/`, { method: "POST", body: "{}" }), "templatePublished") }, t("publishTemplate"))
-                  : null,
-                tpl.can_retire
-                  ? h(P.Button, { size: "xs", variant: "danger-secondary", disabled: pending, onClick: () => act(() => api(`/api/templates/${encodeURIComponent(tpl.id)}/retire/`, { method: "POST", body: "{}" }), "templateRetired") }, t("retireTemplate"))
-                  : null,
-              ),
-            ),
-          ),
-        notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-      ),
-    );
-  }
-
   function ReportPartySelector({ P, h, t, parties, kind, interviewReady, value, disabled, error, onChange }) {
     const eligible = (parties || []).filter((party) => party.can_receive || (kind === "interview" && interviewReady));
     const selected = value === "both" ? eligible.map((party) => party.id) : value ? [value] : [];
@@ -1022,7 +907,7 @@ ${ar}` : en;
     );
   }
 
-  function RequestComposer({ api, lang, record, questions, reports, templates, onTemplatesChanged, onSaved, onCancel }) {
+  function RequestComposer({ api, lang, record, questions, reports, onSaved, onCancel }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1140,10 +1025,6 @@ ${ar}` : en;
           items: categoryGroups.map((group) => ({ id: group.category, label: groupTitle(group, lang), count: group.questions.length })),
         })),
         second: h(P.FormSection, { title: t("questionSelection"), description: t("selectedCount", { n: form.selected.length }) },
-          h(TemplateTools, {
-            api, lang, templates, questions, selected: form.selected,
-            onUse: (codes) => update({ selected: codes }), onChanged: onTemplatesChanged || (() => {}),
-          }),
           h(P.Fieldset, { legend: groupTitle(categoryGroups.find((group) => group.category === activeCategory) || {}, lang) },
             ...activeQuestions.map((q) => h(P.Checkbox, {
               key: q.code, label: wording(q, lang),
@@ -1152,10 +1033,6 @@ ${ar}` : en;
               onChange: (e) => update({ selected: e.target.checked ? [...form.selected, q.code] : form.selected.filter((code) => code !== q.code) }),
             })),
           ),
-          form.kind === "interview" ? null : h(P.Field, { label: t("instructions") }, h(P.Textarea, {
-            rows: 4, value: form.instructions, maxLength: 10000, disabled: pending,
-            onChange: (e) => update({ instructions: e.target.value }),
-          })),
         ),
       }),
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,
@@ -1377,9 +1254,9 @@ ${ar}` : en;
     const [state, retry] = base.useLoad(() => Promise.all([
       api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
       api(`/api/cases/${encodeURIComponent(caseId)}/requests/`), api("/api/report-questions/"),
-      api("/api/cases/"), api("/api/templates/"),
-    ]).then(([record, requests, questions, cases, templates]) => ({
-      record, templates: templates.items || [],
+      api("/api/cases/"),
+    ]).then(([record, requests, questions, cases]) => ({
+      record,
       requests: requests.items.filter((row) => !["medical", "psychological"].includes(row.kind)),
       questions: questions.items, caseRow: cases.items.find((row) => row.id === caseId),
     })), [caseId]);
@@ -1388,7 +1265,7 @@ ${ar}` : en;
     const [notice, setNotice] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const { record, questions, caseRow, templates } = state.data;
+    const { record, questions, caseRow } = state.data;
     const requests = state.data.requests.filter((row) => interviewOnly ? row.kind === "interview" : row.kind !== "interview");
     const proceeding = openProceeding(record);
     const canWrite = writerFor(user, caseRow, record) && Boolean(proceeding);
@@ -1399,7 +1276,7 @@ ${ar}` : en;
       selected: row.id === selected, onOpen: () => { setEditing(false); setNotice(null); select(row.id); },
     })), !requests.length ? h(P.EmptyState, { title: t(interviewOnly ? "noInterviewReports" : "noRequests") }) : null);
     const editor = h(RequestComposer, {
-      api, lang, record, questions, templates, reports: reports || [], onTemplatesChanged: retry,
+      api, lang, record, questions, reports: reports || [],
       onCancel: () => setEditing(false),
       onSaved: (result) => { const id = Array.isArray(result) ? result[0] : result; setEditing(false); setNotice("draftSaved"); select(id); retry(); onCreated?.(id); },
     });
@@ -3018,7 +2895,6 @@ ${ar}` : en;
     foundationalCodes,
     missingArabic,
     requestProblem,
-    usableTemplates,
     templateSelection,
     requestPayload,
     openProceeding,
