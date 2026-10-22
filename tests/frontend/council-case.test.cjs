@@ -338,6 +338,19 @@ test("case summary counts ordinary pending/draft requests and the latest decisio
   assert.equal(C.summaryFacts(record, [], null).decision, null);
 });
 
+test("case summary leaves case-section navigation to the secondary pane", () => {
+  const source = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const start = source.indexOf("function CaseSummary(");
+  const end = source.indexOf("  Object.assign(window.CTMCouncil", start);
+  const summary = source.slice(start, end);
+  assert.doesNotMatch(summary, /const link = \(page, label\)/);
+  assert.doesNotMatch(summary, /link\("petition", "petitionTitle"\)/);
+  assert.doesNotMatch(summary, /link\("reports", "reports"\)/);
+  assert.doesNotMatch(summary, /link\("hearings", "hearingsTitle"\)/);
+  assert.doesNotMatch(summary, /link\("decision", "decisionVoting"\)/);
+  assert.doesNotMatch(summary, /link\("communications", "communicationsLink"\)/);
+});
+
 test("exported council pages are wrapped in an error boundary", () => {
   for (const name of ["CaseSummary", "DecisionWorkspace", "ReportsWorkspace", "SessionWorkspace", "ReviewWorkspace"])
     assert.match(C[name].displayName || "", /^Guarded\(/, name);

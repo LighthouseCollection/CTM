@@ -2683,7 +2683,7 @@
       second: h(P.ReadingPane, { label: t("casesTitle") },
         rows.some((row) => row.id === selected) ? h(P.Stack, null,
           h(P.Button, { onClick: () => onOpen(selected) }, t("openCase")),
-          h(window.CTMCouncil.CaseSummary, { key: selected, api, lang, user, caseId: selected, onNavigate: () => onOpen(selected) }),
+          h(window.CTMCouncil.CaseSummary, { key: selected, api, lang, user, caseId: selected }),
         ) : h(P.EmptyState, { title: t("casesTitle") }),
       ),
     });

@@ -1687,7 +1687,6 @@
           lang,
           user,
           caseId: selection,
-          onNavigate: (id) => go(id, selection),
         });
       if (page === "timeline" && council && councilModule?.CaseTimeline)
         return h(councilModule.CaseTimeline, { key: selection, api, lang, caseId: selection });

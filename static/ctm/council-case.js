@@ -2798,7 +2798,7 @@
     };
   }
 
-  function CaseSummary({ api, lang, user, caseId, onNavigate }) {
+  function CaseSummary({ api, lang, user, caseId }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -2853,7 +2853,6 @@
         setAssignmentPending(false);
       }
     };
-    const link = (page, label) => h(P.Button, { key: page, size: "sm", onClick: () => onNavigate(page) }, t(label));
     return h(
       P.Stack,
       { gap: "lg" },
@@ -2902,15 +2901,6 @@
               : t("noDecision"),
           ),
         ),
-      ),
-      h(
-        P.Inline,
-        { wrap: true },
-        link("petition", "petitionTitle"),
-        link("reports", "reports"),
-        link("hearings", "hearingsTitle"),
-        link("decision", "decisionVoting"),
-        link("communications", "communicationsLink"),
       ),
       assignment
         ? h(
