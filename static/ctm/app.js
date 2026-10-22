@@ -1,4 +1,4 @@
-/* CTM uses documented Plenix 0.58.0 CDN exports. No component assets are bundled. */
+/* CTM uses documented Plenix 0.61.0 CDN exports. No component assets are bundled. */
 (() => {
   "use strict";
   const root = document.getElementById("ctm-root");
@@ -1531,12 +1531,25 @@
           }),
         );
     const accountIdentity = { name: user.name, email: user.email || "", src: user.avatar_url || null };
+    const accountStrings = lang === "ar"
+      ? {
+          trigger: "الحساب والإعدادات لـ {name}", menu: "قائمة الحساب", myAccount: "حسابي",
+          settings: "إعدادات Plenix", appSettings: "إعدادات {app}", app: "CTM",
+          density: "كثافة العرض", compact: "مضغوط", standard: "قياسي", comfortable: "مريح", signOut: "تسجيل الخروج",
+        }
+      : {
+          trigger: "Account and settings for {name}", menu: "Account menu", myAccount: "My account",
+          settings: "Plenix settings", appSettings: "{app} settings", app: "CTM",
+          density: "Display density", compact: "Compact", standard: "Standard", comfortable: "Comfortable", signOut: "Sign out",
+        };
     const account = h(P.SessionProvider, { session: { account: accountIdentity, notifications: [], pinnedApps: [] } },
       h(P.AppHeader.Account, {
         name: accountIdentity.name, email: accountIdentity.email, src: accountIdentity.src,
         current: page === "profile" ? "account" : page === "settings" ? "app-settings" : undefined,
         myAccount: { onSelect: () => go("profile") },
         appSettings: { app: "CTM", onSelect: () => go("settings") },
+        density: true,
+        strings: accountStrings,
         signOut: { onSelect: () => postForm("/accounts/logout/") },
       }),
     );

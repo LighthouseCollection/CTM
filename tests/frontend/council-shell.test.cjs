@@ -6,10 +6,20 @@ const shell = fs.readFileSync("tribunal/templates/tribunal/shell.html", "utf8");
 const app = fs.readFileSync("static/ctm/app.js", "utf8");
 
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
-  const order = ["cdn/0.60.1/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
+  const order = ["cdn/0.61.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
   for (const index of order) assert.ok(index > 0);
   assert.deepEqual([...order].sort((a, b) => a - b), order);
-  assert.doesNotMatch(shell, /cdn\/(?!0\.60\.1)\d+\.\d+\.\d+/);
+  assert.doesNotMatch(shell, /cdn\/(?!0\.61\.0)\d+\.\d+\.\d+/);
+});
+
+test("account menu receives localized AppHeader labels and density choices", () => {
+  for (const key of ["menu", "myAccount", "settings", "appSettings", "app", "density", "compact", "standard", "comfortable", "signOut"])
+    assert.match(app, new RegExp(`${key}:`), key);
+  assert.match(app, /menu: "Account menu"/);
+  assert.match(app, /menu: "قائمة الحساب"/);
+  assert.match(app, /trigger: "Account and settings for \{name\}"/);
+  assert.match(app, /density: true/);
+  assert.match(app, /strings: accountStrings/);
 });
 
 test("council navigation groups sessions and cases into their requested destinations", () => {
