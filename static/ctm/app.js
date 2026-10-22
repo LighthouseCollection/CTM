@@ -1323,7 +1323,7 @@
       go(origin.page, origin.selection || null);
     };
     const navItems = council
-      ? ["home", "sessions", "sessionsUpcoming", "sessionsArchived", "search", "myCases", "cases", "archived", "statistics"]
+      ? ["home", "sessions", "sessionsUpcoming", "sessionsArchived", "myCases", "cases", "archived", "statistics"]
       : ["home", "applications", "appointments", "past"];
     const unavailable = new Set(
       [
@@ -1431,7 +1431,6 @@
       { id: "sessionsArchived", icon: navigationIcon("sessionsArchived"), label: t("sessionArchived") },
     ];
     const casesNavigationItems = [
-      { id: "search", icon: navigationIcon("search"), label: t("search") },
       { id: "myCases", icon: h(P.Icon, { name: "folder-shared", "aria-hidden": true }), label: t("myCases") },
       { id: "cases", icon: h(P.Icon, { name: "folder", "aria-hidden": true }), label: t("allCases") },
       { id: "archived", icon: navigationIcon("archived"), label: t("archivedCases") },

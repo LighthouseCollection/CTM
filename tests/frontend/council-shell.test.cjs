@@ -181,7 +181,7 @@ test("account menu receives localized AppHeader labels and density choices", () 
 });
 
 test("council navigation groups sessions and cases into their requested destinations", () => {
-  assert.match(app, /\["home", "sessions", "sessionsUpcoming", "sessionsArchived", "search", "myCases", "cases", "archived", "statistics"\]/);
+  assert.match(app, /\["home", "sessions", "sessionsUpcoming", "sessionsArchived", "myCases", "cases", "archived", "statistics"\]/);
   assert.match(app, /sessions: "Tribunal Sessions - Current"/);
   assert.match(app, /sessionsUpcoming: "Tribunal Sessions - Upcoming"/);
   assert.match(app, /sessionsArchived: "Tribunal Sessions - Archived"/);
@@ -205,7 +205,7 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.match(app, /heading: t\("tribunalSessions"\),\s*icon: navigationIcon\("sessionsGroup"\)/);
   assert.match(app, /const appealsReturnIcon = \(\) =>/);
   assert.match(app, /id === "appeals"\s*\? appealsReturnIcon\(\)/);
-  assert.match(app, /const casesNavigationItems = \[\s*\{ id: "search", icon: navigationIcon\("search"\), label: t\("search"\) \}/);
+  assert.doesNotMatch(app, /const casesNavigationItems = \[\s*\{ id: "search"/);
 });
 
 test("session lifecycle changes refresh their parent destination list", () => {
