@@ -228,6 +228,9 @@
       notInterview: "Recordings are used for interviews conducted by the case manager.",
       beforeUnload: "A recording is in progress.",
       reportsList: "Completed reports",
+      completedBy: "Report completed by",
+      completedDate: "Completed date",
+      intakeBy: "Report intake by (Council member)",
       noReports: "No completed reports are available.",
       chooseReport: "Select a report",
       reportFor: "Report for",
@@ -432,6 +435,9 @@
       notInterview: "تُستخدم التسجيلات للمقابلات التي يجريها مسؤول القضية.",
       beforeUnload: "يوجد تسجيل قيد التنفيذ.",
       reportsList: "التقارير المكتملة",
+      completedBy: "أكمل التقرير",
+      completedDate: "تاريخ الإكمال",
+      intakeBy: "مستلم التقرير (عضو المجلس)",
       noReports: "لا توجد تقارير مكتملة.",
       chooseReport: "اختر تقريرًا",
       reportFor: "التقرير بخصوص",
@@ -1915,7 +1921,11 @@
       firstLabel: t("reportsList"),
       first: h(window.CTMShell.Table, {
         label: t("reportsList"), rows, selected, onSelect: select, empty: t("noReports"),
-        columns: [{ title: t("reportsList"), field: "title", kind: "name" }, { title: t("version"), field: "version", type: "number" }],
+        columns: [
+          { title: t("completedBy"), field: "completed_by", type: "person", render: row => row.completed_by || row.author || "—" },
+          { title: t("completedDate"), field: "date", type: "date" },
+          { title: t("intakeBy"), field: "intake_by", type: "person", render: row => row.intake_by || "—" },
+        ],
       }),
       second: h(
         P.ReadingPane,

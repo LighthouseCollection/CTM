@@ -108,6 +108,8 @@ def test_case_listing_exposes_party_names_for_session_placement_choices(client, 
     login(client, people["secretary"])
     row = next(row for row in client.get("/api/cases/").json()["items"] if row["id"] == str(filed.case_id))
     assert row["party_names"] == ["John Smith", "Mary Smith"]
+    assert "applicant_gender" in row and "respondent_gender" in row
+    assert row["respondent_gender"] is None
     assert {"applicant_name", "respondent_name", "reason", "closed_at"} <= row.keys()
 
 
@@ -257,6 +259,9 @@ def test_manager_interview_does_not_notify_applicant_or_accept_applicant_complet
     data = client.get(f"/api/cases/{app.case_id}/requests/").json()["items"][0]
     assert data["subject_party_id"] == str(app.party_id) and data["subject_name"] == "John Smith"
     assert data["language"] == "en" and data["author"] == "admin Test"
+    completed = client.get(f"/api/cases/{app.case_id}/reports/").json()["items"][0]
+    assert completed["completed_by"] == "admin Test"
+    assert completed["intake_by"] == "admin Test"
     assert data["sent_at"] and data["created_at"] and data["parent_report_id"] is None
 
 

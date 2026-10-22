@@ -2175,7 +2175,7 @@
           P.Stack,
           { gap: "sm" },
           h(P.DataGrid, {
-            density: "compact", cells: "pill", typeIcons: false, wrapHeaders: true,
+            density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
             label: t(`part${n}`), data: groups[n], index: "id", narrow: "table", mode: "fill", isStatic: true,
             empty: t(`part${n}Empty`),
             columns: [
@@ -2835,8 +2835,8 @@
     const rows = caseRows(cases, archived, query, includeClosed).map((row) => ({
       id: row.id,
       number: row.number,
-      applicant: row.applicant_name || "—",
-      respondent: row.respondent_name || "—",
+      applicant: { name: row.applicant_name || "—", gender: row.applicant_gender },
+      respondent: { name: row.respondent_name || "—", gender: row.respondent_gender },
       reason: row.reason || "—",
       manager: row.assigned_member || t("unassigned"),
       status: t(row.status === "closed" ? "closed" : "open"),
@@ -2869,7 +2869,7 @@
       ),
       rows.length
         ? h(P.DataGrid, {
-            density: "compact", cells: "pill", typeIcons: false, wrapHeaders: true,
+            density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
             label: title || t(archived ? "archivedTitle" : "casesTitle"), data: rows, index: "id", selected: selected ? [selected] : [],
             mode: "pages", pageSize: 25, headerMenu: true, rowMenuButton: false, narrow: "table",
             keyColumns: columns.map((column) => column.field), columns,

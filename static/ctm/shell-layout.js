@@ -9,14 +9,22 @@
       const isAction = column.kind === "actions" || /^(open_action|actions?)$/.test(column.field);
       const type = column.type || (/^(applicant|respondent|manager|.*_name)$/.test(column.field) ? "person"
         : /^(.*_count|count|total|position|married_years)$/.test(column.field) ? "number" : "text");
+      const personRender = (record, value) => {
+        const person = value && typeof value === "object" ? value : null;
+        const rawGender = person?.gender || record[column.field + "_gender"];
+        const gender = rawGender === "M" || rawGender === "male" ? "male" : rawGender === "F" || rawGender === "female" ? "female" : undefined;
+        return h(P.DataPill, { size: "md", person: true, gender }, person?.name || value || "—");
+      };
       return {
         ...column, type,
+        ...(type === "person" && !render ? { pill: false, render: (record) => personRender(record, record[column.field]) } : {}),
         ...(isAction ? { kind: "center", maxWidth: column.maxWidth || "--plx-ref-size-240px", headerSort: false, groupable: false } : {}),
         ...(/^(status|state)$/.test(column.field) ? { maxWidth: column.maxWidth || "--plx-ref-size-240px" } : {}),
         ...(/^(code|number|case_number|case_code)$/.test(column.field) ? { kind: "data" } : {}),
         ...(render ? { pill: false, render: (record) => {
           const value = render(record);
           if (value === null || value === undefined || value === "" || typeof value === "object") return value;
+          if (type === "person") return personRender(record, value);
           return h(P.DataPill, {
             size: "md", person: type === "person",
             data: column.kind === "data" || type === "number" || type === "date",
@@ -29,7 +37,7 @@
     });
     const common = {
       label, data: rows, columns: gridColumns, index: "id", className,
-      density: "compact", cells: "pill", typeIcons: false, wrapHeaders: true,
+      density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
       narrow: "table", empty,
     };
     return h(P.DataGrid, {

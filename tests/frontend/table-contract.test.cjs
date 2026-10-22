@@ -13,7 +13,7 @@ test("all tables use resizable native grids and retain zero values", () => {
   assert.equal(result.type,"DataGrid");
   assert.equal(result.props.columns[0].resizable,true);
   assert.equal(result.props.headerMenu,true);
-  assert.equal(result.props.wrapHeaders,true);
+  assert.equal(result.props.wrapHeaders,false);
   assert.equal(result.props.density,"compact");
   assert.equal(result.props.cells,"pill");
   assert.equal(result.props.data,rows);
@@ -45,4 +45,11 @@ test("action columns stay bounded without disabling their resize handles", () =>
   assert.equal(column.maxWidth,"--plx-ref-size-240px");
   assert.equal(column.minWidth,"7rem");
   assert.equal(column.render({}).type,"Button");
+});
+
+test("person cells use recorded gender with a neutral unknown fallback", () => {
+  const result=mount({label:"People",rows:[],columns:[{field:"applicant",type:"person"}]});
+  const column=result.props.columns[0];
+  assert.equal(column.render({applicant:"Emma",applicant_gender:"F"}).props.gender,"female");
+  assert.equal(column.render({applicant:"Alex"}).props.gender,undefined);
 });

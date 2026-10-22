@@ -464,7 +464,14 @@ def _case_list_data(case):
     grounds = (revision.answers.get("grounds") or revision.answers.get("reason") or []) if revision else []
     if isinstance(grounds, str):
         grounds = [grounds]
+    def party_gender(party):
+        if not party:
+            return None
+        person_id = party.person_id or m.Account.objects.filter(pk=party.account_id).values_list("person_id", flat=True).first()
+        return m.Person.objects.filter(pk=person_id).values_list("gender", flat=True).first() or None
     return {
+        "applicant_gender": party_gender(applicant),
+        "respondent_gender": party_gender(respondent),
         "applicant_name": applicant.name if applicant else None,
         "respondent_name": respondent.name if respondent else None,
         "reason": "; ".join(str(value) for value in grounds if value) or None,
@@ -1494,7 +1501,9 @@ def reports(request, case_id):
                 observations=revision.observations
                 if revision and request.user.is_staff
                 else None,
-                **({"author_id": str(report.author_id) if report.author_id else None,
+                **({"completed_by": (f"{report.author.first_name} {report.author.last_name}".strip() if report.author else report.request.external_name or None),
+                    "intake_by": (f"{report.author.first_name} {report.author.last_name}".strip() if report.author and report.author.role in {"admin", "secretary", "president", "member"} else None),
+                    "author_id": str(report.author_id) if report.author_id else None,
                     "author": f"{report.author.first_name} {report.author.last_name}".strip() if report.author else None,
                     "submitted_at": report.created_at.isoformat(), "method": report.method,
                     "can_revise": bool(report.author_id == request.user.pk and report.author
