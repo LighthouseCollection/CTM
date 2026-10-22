@@ -14,8 +14,9 @@ HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="v
 <script src="CDNplenix.js"></script><script src="/applicant-requests.js"></script><script src="/applicant-responses.js"></script><script src="/applicant-filing.js"></script><script src="/applicant-recovery.js"></script><script src="/applicant-lifecycle.js"></script><script src="/applicant-files.js"></script><script src="/applicant.js"></script></head><body><div id="root"></div><script>
 const R=React,P=Plenix,h=R.createElement;
 const api=async(url,options={})=>{const r=await fetch(url,options);if(!r.ok)throw {status:r.status};return r.json();};
-function Harness(){const [lang,setLang]=R.useState('en'),[view,setView]=R.useState({name:'Requests',key:0});const guard=R.useRef(null);
+function Harness(){const [lang,setLang]=R.useState('en'),[view,setView]=R.useState({name:'Requests',key:0});const [,rerender]=R.useReducer(n=>n+1,0);const guard=R.useRef(null);
 const register=R.useCallback(fn=>{guard.current=fn;},[]);const go=name=>{const move=()=>setView(v=>({name,key:v.key+1}));if(guard.current)guard.current(move);else move();};
+R.useEffect(()=>{window.rerenderLifecycle=()=>rerender();return()=>delete window.rerenderLifecycle;},[]);
 R.useEffect(()=>{document.documentElement.dir=lang==='ar'?'rtl':'ltr';document.documentElement.lang=lang;},[lang]);
 return h(P.ThemeProvider,null,h(P.LocaleProvider,{locale:lang},h(P.PageContent,null,h(P.Stack,null,
 h(P.Inline,{wrap:true},h(P.Button,{onClick:()=>setLang(lang==='en'?'ar':'en')},lang==='en'?'العربية':'English'),...['Requests','Checkout','Lifecycle','Editor'].map(name=>h(P.Button,{key:name,onClick:()=>go(name)},name))),
@@ -121,6 +122,9 @@ try:
         page.evaluate('(app)=>window.currentApplication=app',application)
         page.get_by_role('button',name='Lifecycle',exact=True).click()
         page.get_by_role('button',name='Delete unsubmitted draft',exact=True).click()
+        expect(page.get_by_role('button',name='Confirm action',exact=True)).to_be_enabled()
+        page.evaluate("window.currentApplication={...window.currentApplication};window.rerenderLifecycle()")
+        expect(page.get_by_role('button',name='Confirm action',exact=True)).to_be_enabled()
         assert len(posts)==1
         page.get_by_role('button',name='Cancel',exact=True).click();assert len(posts)==1
         page.get_by_role('button',name='Delete unsubmitted draft',exact=True).click()
@@ -128,7 +132,7 @@ try:
         expect(page.get_by_text('The server acknowledged your action.',exact=False)).to_be_visible()
         assert len(posts)==2 and posts[-1]['url'].endswith('/delete-draft/') and posts[-1]['body']=={'expected_version':2}
         expect(page.get_by_role('button',name='Confirm action',exact=True)).to_be_disabled()
-        checks.append('Draft deletion requires explicit server capability and separate confirmation; cancel sends nothing and acknowledgement locks repeats')
+        checks.append('Equivalent authoritative projection refresh preserves explicit draft-deletion confirmation; cancel sends nothing and acknowledgement locks repeats')
         application.update(status='returned',can_delete_draft=True,can_withdraw=True)
         page.evaluate('(app)=>window.currentApplication=app',application);page.get_by_role('button',name='Lifecycle',exact=True).click()
         assert page.get_by_role('button',name='Delete unsubmitted draft',exact=True).count()==0
@@ -137,10 +141,15 @@ try:
         page.get_by_role('button',name='العربية',exact=True).click()
         assert page.locator('[style]').count()==0
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+        expect(page.get_by_role('button',name='تأكيد الإجراء',exact=True)).to_have_count(0)
+        expect(page.get_by_role('button',name='سحب طلبي',exact=True)).to_be_enabled()
         page.get_by_role('button',name='English',exact=True).click()
+        expect(page.get_by_role('button',name='Confirm action',exact=True)).to_have_count(0)
+        page.get_by_role('button',name='Withdraw my filing',exact=True).click()
+        expect(page.get_by_role('button',name='Confirm action',exact=True)).to_be_enabled()
         page.get_by_role('button',name='Confirm action',exact=True).click()
         assert posts[-1]['url'].endswith('/withdraw/') and len(posts)==3
-        checks.append('Returned filings never show draft deletion; withdrawal has separate retained-fee/case-effect wording and Arabic mobile confirmation')
+        checks.append('Returned filings never show draft deletion; language changes cancel confirmation and withdrawal requires a fresh retained-fee/case-effect review')
         application.pop('can_withdraw');application.pop('can_delete_draft')
         page.evaluate('(app)=>window.currentApplication=app',application);page.get_by_role('button',name='Lifecycle',exact=True).click()
         assert page.get_by_role('button',name='Withdraw my filing',exact=True).count()==0

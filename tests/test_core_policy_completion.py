@@ -22,6 +22,11 @@ def granted_roles():
             cursor.execute(f'GRANT {role} TO CURRENT_USER')
     editor=connection.schema_editor(atomic=False)
     import_module('tribunal.migrations.0038_runtime_grants').grant_runtime(apps,editor)
+    import_module('tribunal.migrations.0043_request_author_projection').grant_runtime(apps,editor)
+    import_module('tribunal.migrations.0044_document_category_labels').grant_runtime(apps,editor)
+    import_module('tribunal.migrations.0046_withdrawal_case_scope').grant_runtime(apps,editor)
+    import_module('tribunal.migrations.0047_external_status_receipt').grant_runtime(apps,editor)
+    import_module('tribunal.migrations.0048_message_sender_projection').grant_runtime(apps,editor)
     @contextmanager
     def enter(role,actor=None,*,session=False):
         with transaction.atomic():
@@ -305,3 +310,78 @@ def test_audit_privacy_precedes_visible_offset(granted_roles,ready_application,p
         else:
             pytest.fail('Continuation did not terminate')
     assert actual==expected
+
+
+def test_linked_first_petition_without_optional_spouse_dob(granted_roles, ready_application, people):
+    from tribunal.services.identity import link_party
+    from tribunal.services.applications import start_application, save_answers, waive_fee
+    from tribunal.models import Attachment, FileVersion, FileTechnicalEvent, Submission
+    first = ready_application
+    submit_application(first.owner, first.pk, 'linked-first', {'accepted': True, 'name': 'John Smith'})
+    first.refresh_from_db()
+    frozen = (first.party_id, first.proceeding_id, first.case_id)
+    second = Account.objects.create_user(email='linked-second@example.test', first_name='Jane',
+        last_name='Smith', role='applicant', email_verified=True)
+    with granted_roles('ctm_app', people['admin'], session=True):
+        party = link_party(people['admin'], first.case, second)
+    with granted_roles('ctm_app', second, session=True):
+        app = start_application(second, first.case_id)
+        answers = {
+            'first_name': 'Jane', 'last_name': 'Smith', 'birth_date': '1987-04-02', 'gender': 'F',
+            'marriage_date': '2010-05-01', 'grounds': ['infidelity'], 'statement': 'Statement'}
+        save_answers(second, app.pk, answers, 0)
+    for category in ['MC', 'CMC', 'CDD', 'PHOTO']:
+        attachment = Attachment.objects.create(application=app, owner=second, category=category)
+        file = FileVersion.objects.create(attachment=attachment, number=1, object_key=f'test/{attachment.pk}',
+            original_name='file.pdf', display_name='file.pdf', mime_type='image/jpeg' if category=='PHOTO' else 'application/pdf',
+            byte_count=5, sha256='b'*64, actor=second)
+        FileTechnicalEvent.objects.create(file=file, task='scan', result='clean')
+    waive_fee(people['admin'], app.pk)
+    with granted_roles('ctm_app', second, session=True):
+        submit_application(second, app.pk, 'linked-second', {'accepted': True, 'name': 'Jane Smith'})
+    app.refresh_from_db()
+    first.refresh_from_db()
+    assert app.party_id == party.pk
+    assert app.case_id == first.case_id and app.proceeding_id == first.proceeding_id
+    assert (first.party_id, first.proceeding_id, first.case_id) == frozen
+    assert Submission.objects.filter(application=app).count() == 1
+    assert Submission.objects.filter(application=first).count() == 1
+    assert Party.objects.filter(case=first.case).count() == 2
+
+
+@pytest.mark.parametrize('missing', ['none', 'party', 'claim', 'wrong_person', 'closed_case', 'closed_proceeding', 'foreign_case', 'unpaid'])
+def test_linked_filing_requires_complete_own_binding(granted_roles, ready_application, missing):
+    from tribunal.models import Application, FeeObligation
+    from tribunal.db.context import database_settings
+    actor = ready_application.owner
+    case = Case.objects.create(number='20261022-91', status='open')
+    proceeding = Proceeding.objects.create(case=case, kind='original', status='open')
+    person = actor.person
+    if missing == 'wrong_person':
+        person = Person.objects.create(first_name='Other', last_name='Person')
+    if missing != 'party':
+        Party.objects.create(case=case, account=actor, person=person, slot='A', name='Linked')
+    if missing != 'claim':
+        OpenCaseClaim.objects.create(case=case, person=actor.person)
+    Application.objects.filter(pk=ready_application.pk).update(case=case)
+    # Remove optional DOB so the legacy exact-marriage branch cannot authorize this.
+    from tribunal.models import AnswerRevision
+    revision = AnswerRevision.objects.get(application=ready_application, number=ready_application.current_version)
+    revision.answers.pop('spouse_birth_date', None)
+    from tribunal.services.applications import save_answers
+    save_answers(actor, ready_application.pk, revision.answers, ready_application.current_version)
+    if missing == 'closed_case':
+        Case.objects.filter(pk=case.pk).update(status='closed')
+    if missing == 'closed_proceeding':
+        Proceeding.objects.filter(pk=proceeding.pk).update(status='closed')
+    if missing == 'unpaid':
+        FeeObligation.objects.filter(application=ready_application).update(status='unpaid')
+    target = Case.objects.create(number='20261022-92', status='open').pk if missing == 'foreign_case' else case.pk
+    from contextlib import nullcontext
+    with nullcontext() if missing == 'none' else pytest.raises(DatabaseError, match='row-level security'):
+        with granted_roles('ctm_app', actor, session=True):
+            with database_settings({'ctm.core_operation': 'filing', 'ctm.core_target': str(ready_application.pk)}):
+                if missing in {'party', 'foreign_case'}:
+                    Party.objects.create(case_id=target, account=actor, person=actor.person, slot='A', name='Own')
+                else:
+                    assert Party.objects.filter(case=case, account=actor).update(case_id=target, name='Own') == 1

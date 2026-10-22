@@ -1,3 +1,101 @@
+Current validation: **844 PostgreSQL passed, 1 skipped**; rollback/reapply through0048. Eleven focused message tests and SQLite recipient-authorization contract passed. Known same-case other party403, absent/unrelated422, own-thread send preserved; no new migration/grant/row access.
+
+Applicantd43a46a contract normalization: known other same-case party403 vs absent/unrelated422, using already-authorized case-party IDs before private row lookup. No policy/migration/grant expansion; priorb79c8c0 equal422 guidance is historical/superseded. See message-sender-projection.md.
+
+Validation for this test/documentation checkpoint: **10 focused PostgreSQL message tests passed**. Production code is unchanged from4dabc4f (full842passed/1skip); no new full-suite or integration-acceptance claim.
+
+Message denial contract checkpoint: actualctm_app hidden recipient and nonexistent recipient both422 with identical validation body; no Message/Recipient/Notification/Outbox/Audit or retained-read-receipt mutation. No production behavior/migration change. Governance1e72a47 passed51-message visibility; later fixed403 oracle requires the documented hidden/absent422 contract. Exact broader applicant/QA acceptance remains open.
+
+Current validation: **842 PostgreSQL passed, 1 skipped**; no model drift; rollback/reapply through0048. Eight new physical-role message regressions plus one cross-adapter endpoint contract; SQLite contract separately passed. Exact-successor applicant/QA acceptance remains pending.
+
+Private-message pagination correction:0048 removes the hidden sender Account join and adds a bounded message-authorized name-only projection.51intended messages no longer disappear; existing message/recipient/Party/Account policies stay unchanged. See message-sender-projection.md. Exact-successor applicant/QA reruns remain pending; unique UI metadata successor proposal0049after0048.
+
+Current validation: **833 PostgreSQL passed, 1 skipped**, migration rollback/reapply through0047 and no model drift. Nineteen new physical-role status/receipt checks plus one cross-adapter endpoint lifecycle; SQLite lifecycle separately passed. Council UI/integration acceptance remains required.
+
+C05 capability status/receipt: new read-only Bearer-only status endpoint exposes only lifecycle/expiry and an unexpired original report ID/time receipt.0047 adds app-only digest-bound projection; no existing mutation/row-visibility change. See external-status-receipt.md. UI metadata unique successor proposal0048after0047.
+
+Governance scoped withdrawal acceptance:73357864789e22bb504002b089f2934e11f86e37 withf0e97fa/0046 verifies firstwithdraw keeps case/otherfiling open, finalwithdraw closes case, fee/history/notification isolation and linkedsubmit201. Focused7pass/outer66partial; later message-pagination fixture stops broader run, so no full applicant/QA acceptance inferred.
+
+Current validation: **813 PostgreSQL passed, 1 skipped**, migration rollback/reapply through0046;16 new physical-role browser-entry regressions and Chromium fragment-transport smoke passed. No model/route/migration/grant changes in this continuation.
+
+External browser entry: explicit HTML navigation redirects generically to council-owned static page, preserving fragment transport and all Bearer JSON/error contracts. No asset copy or migration; see external-browser-entry.md. Combined static/UI acceptance remains required.
+
+Current validation: **797 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0046. Nine new restricted-role withdrawal regressions;17focused withdrawal/appeal checks passed.
+
+Withdrawal500 correction:0046 uses an authorized global participation decision without revealing other Party rows, then bounded authorized closed-case cleanup of hidden claims/unfinished requests. See withdrawal-case-scope.md. Exact-successor applicant and QA reruns remain pending; UI metadata successor proposal now0047after0046.
+
+Current validation: **788 PostgreSQL passed, 1 skipped**, including migration rollback/reapply through0045. Fifteen new physical-role council link projection regressions. No model/route/migration/grant changes in this continuation.
+
+Council C05 link projection: council-only priest name, expiry, current lifecycle state and writer-bound management flags; no capability/email/testimony disclosure or migration. See external-link-projection.md.
+
+Governance scoped verification: exact ace31522c0050b7e2d3bbe2ab0ac202f164a3de6 includes e49f355/0042–0045; linked second-applicant submit201/same-case/own-answer/private-history checks and focused7/7 passed. Full applicant acceptance remains open at a later withdrawal assertion, currently under applicant diagnosis.
+
+Current validation: **773 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0045. Nine new linked-filing regressions.
+
+Linked first-petition RLS correction: 0045 adds the existing own-party/open-claim binding path when optional spouse DOB is absent. Exact restricted-role reproduction and negative binding checks; see linked-first-filing.md. Governance integration, migration and applicant/QA acceptance remain pending. UI metadata successor proposal is now 0046 after 0045.
+
+## Filing document-category display label consumer
+
+Implemented valid latest configured bilingual labels in owner filing-file listings,
+with narrow app-only0044 projection, full-shape legacy validation and built-in
+fallback. Business requirements/RO contexts/scan/private originals remain unchanged;
+no label read in submission/worker validation. Thirteen restrictedctm_app tests;
+full PostgreSQL764 passed/1skip, roundtrip0044.99routes/63models/63forced tables.
+See document-label-consumer.md. UI metadata successor proposal now0045after0044;
+no UI branch/server mutation/merge/deploy. Exact pushed SHA recorded issue #2.
+
+## Applicant request author-name RLS projection correction
+
+Reproduced admin-authored sent request404 with hidden Account and visible request
+rows. Added bounded request-ID-based current-name lookup in0043, app-only execute,
+repeated own/council request authorization and no Account policy widening. Twelve
+restrictedctm_app tests; full PostgreSQL751 passed/1skip, roundtrip through0043.
+C05 prior0042/privacy/medical guards preserved. See request-author-projection.md;
+governance integrates0042→0043 and reconciles UI metadata separately (proposed0044).
+Applicant34outer partial/focused7pass remains scoped until exact-successor rerun.
+No server mutation/merge/deploy by backend; publication SHA recorded issue #2.
+
+## C05 council request attachment privacy correction
+
+Reproduced restrictedctm_app subject GET200 for clean priest original. Fixed new
+external_priest/interview owner/visibility plus service and0042 SQL read/write
+scope, protecting retained legacy rows and derived text without rewriting evidence.
+No-referrer now covers failed external-link responses. Twenty-one focused regressions;
+full PostgreSQL739 passed/1skip, rollback/reapply through0042.99routes/63models/
+63forced tables unchanged. See council-request-file-privacy.md; governance owns
+0042 rollout and separate UI competing0040 reconciliation. C05 remaining capability/
+paper/invitation contracts and settings-label consumer are not claimed complete.
+Exact publication SHA recorded issue #2; no merge/deploy by backend.
+
+## Council appointment / assignment-role history projection
+
+Completed admin/secretary paginated memberships and role-history for existing
+council accounts, including inactive/ended/future/scoped records. Actual appointing/
+grant/revocation evidence retained; legacy unknown provenance stays unknown. No
+role/permission/provider/schema mutation. Twelve restrictedctm_app regressions;
+full PostgreSQL718 passed/1skip. Adapter99routes/63models/63forced tables, leaf0041.
+See member-history-projection.md and issue #2 for remaining work/publication SHA.
+No merge/server deployment by backend.
+
+## Tribunal Sessions server continuation
+
+Completed session list offset/limit/next_offset and validated state/date filters;
+default100/item fields/capabilities preserved, former100-row truncation removed.
+Sixteen restrictedctm_app regressions, full PostgreSQL706 passed/1skip. No new
+model/route/policy/grant/migration. See session-list-continuation.md; session timing,
+location, presiding member/minutes remain a separate approved contract decision.
+Exact publication ledger is on issue #2. No merge/server deployment by backend.
+
+## Own active-session inventory and revocation
+
+Implemented GET /api/account/sessions/ and POST own handle/revoke with actual
+session validation, opaque actor-bound handles, ownership-before-pagination,
+selected/current revocation and atomic retained actor audit. Eleven focused tests;
+full PostgreSQL690 passed,1 skipped. No migration/grant/provider/RLS change.
+Adapter97routes/63domain models/63forced tables. See own-session-administration.md
+for UI contract, scanning cost and unfinished normalized/provider/admin workflows.
+No merge/deploy; exact pushed SHA and acceptance ledger recorded on issue #2.
+
 ## Private draft read / integrated returned-filing checkpoint
 
 Applicant89072dd reports seven focused physical-login PostgreSQL groups pass on

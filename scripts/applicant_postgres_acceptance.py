@@ -88,7 +88,13 @@ def run(browser,base,settings,fixture_db,session_cookie,admin_cookie,output,runt
         assert [r['answers']['first_name'] for r in history]==['Maya','Maya corrected']
         assert fixture_db(lambda:list(m.Submission.objects.filter(application_id=app_id).values('id','revision_id','manifest','attestation','actor_id')))==first
         checks.append('Runtime-role returned corrections save as a new own revision while original formal revision/manifest/attestation/actor remain exact')
+        # PostgreSQL projection refresh can finish before the document component's
+        # version-bound readiness refresh. Reviewing earlier is intentionally
+        # invalidated when that later refresh completes, so wait for every
+        # required original before entering the final review state.
+        expect(page.get_by_role('link',name='Download original',exact=True)).to_have_count(len(files))
         page.get_by_role('button',name='Review answers',exact=True).click()
+        expect(page.get_by_role('button',name='Resubmit corrections',exact=True)).to_be_enabled()
         with page.expect_response(lambda r:r.url==f'{base}/api/applications/{app_id}/submit/' and r.request.method=='POST') as resubmitted:
             page.get_by_role('button',name='Resubmit corrections',exact=True).click()
         assert resubmitted.value.status==201,resubmitted.value.text()

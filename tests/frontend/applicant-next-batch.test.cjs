@@ -50,6 +50,9 @@ test('checkout resume requires same pending candidate/version, explicit permissi
 test('lifecycle capabilities never infer withdrawal/delete from status or allow returned draft deletion',async()=>{
  const L=context.window.CTMApplicantLifecycle;
  const app={id,version:2,kind:'petition',status:'draft',can_delete_draft:true};
+ assert.equal(L.actionScope(app),L.actionScope({...app}));
+ assert.notEqual(L.actionScope(app),L.actionScope({...app,version:3}));
+ assert.notEqual(L.actionScope(app),L.actionScope({...app,can_delete_draft:false}));
  assert.equal(L.available(app,'delete'),true);assert.equal(L.available({...app,status:'returned'},'delete'),false);
  assert.equal(L.available({...app,can_delete_draft:undefined},'delete'),false);
  assert.equal(L.available({...app,status:'submitted',can_withdraw:true},'withdraw'),true);

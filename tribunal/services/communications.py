@@ -45,6 +45,27 @@ def send_message(
         raise ValidationError("Choose supported communication and timing values.")
     if actor.role == "applicant" and (email_timing != "immediate" or channel != "portal"):
         raise PermissionDenied("Applicant messages use the immediate private portal thread.")
+    if actor.role == "applicant":
+        # The case projection already discloses these minimum party identities.
+        # Reject a known other thread before RLS hides its Party row on lookup.
+        import json
+        import uuid
+        from django.db import connection
+        from tribunal.db.context import database_actor
+        try:
+            requested = {str(uuid.UUID(str(value))) for value in party_ids}
+        except (ValueError, TypeError, AttributeError):
+            raise ValidationError("Recipients must be registered parties of this case.")
+        if connection.vendor == 'postgresql':
+            with database_actor(actor), connection.cursor() as cursor:
+                cursor.execute('SELECT public.ctm_applicant_parties(%s)', [case.pk])
+                known = cursor.fetchone()[0]
+            known = json.loads(known) if isinstance(known, str) else known
+            foreign = {row['id'] for row in known if not row['is_self']}
+        else:
+            foreign = {str(pk) for pk in Party.objects.filter(case=case).exclude(account=actor).values_list('pk', flat=True)}
+        if requested & foreign:
+            raise PermissionDenied("Applicants can only use their own private communication thread.")
     parties = list(
         Party.objects.filter(case=case, pk__in=party_ids).select_related("account")
     )
