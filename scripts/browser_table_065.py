@@ -32,7 +32,7 @@ with sync_playwright() as p:
     first.press('Enter')
     assert page.evaluate('window.opened')=='one'
     metrics=page.locator('.plx-data-pill').evaluate_all('(els)=>els.map(e=>({height:e.getBoundingClientRect().height,text:e.textContent}))')
-    row_heights=page.locator('[role="row"]').evaluate_all('(els)=>els.map(e=>e.getBoundingClientRect().height)')
+    row_heights=page.locator('[role="row"]').filter(has=page.locator('[role="gridcell"]')).evaluate_all('(els)=>els.map(e=>e.getBoundingClientRect().height)')
     assert row_heights and all(abs(height-36)<=1 for height in row_heights),row_heights
     assert metrics and all(abs(x['height']-24)<1 for x in metrics),metrics
     assert page.get_by_text('0',exact=True).count()>=2

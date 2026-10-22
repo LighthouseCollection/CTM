@@ -7,10 +7,13 @@ function mount(props) {
   vm.runInNewContext(fs.readFileSync("static/ctm/shell-layout.js", "utf8"), {window});
   return window.CTMShell.Table(props);
 }
-test("reference tables use native compact pill tables and retain zero values", () => {
+test("all tables use resizable native grids and retain zero values", () => {
   const rows=[{id:"one",total:0}];
   const result=mount({label:"Totals",rows,columns:[{title:"Total",field:"total",type:"number"}]});
-  assert.equal(result.type,"Table");
+  assert.equal(result.type,"DataGrid");
+  assert.equal(result.props.columns[0].resizable,true);
+  assert.equal(result.props.headerMenu,true);
+  assert.equal(result.props.wrapHeaders,true);
   assert.equal(result.props.density,"compact");
   assert.equal(result.props.cells,"pill");
   assert.equal(result.props.data,rows);
@@ -25,11 +28,21 @@ test("workspaces retain native keyboard row opening and selection", () => {
   assert.equal(result.props.density,"compact");
   assert.equal(result.props.typeIcons,false);
 });
-test("custom cells are not double wrapped and column widths belong to the CDN", () => {
+test("custom cells retain documented column sizing and are not double wrapped", () => {
   const render=()=>"action";
   const result=mount({label:"Actions",rows:[],columns:[{field:"action",render,minWidth:"12rem"}]});
   assert.equal(result.props.columns[0].render({}).type,"DataPill");
   assert.equal(result.props.columns[0].render({}).props.size,"md");
   assert.equal(result.props.columns[0].pill,false);
-  assert.equal(result.props.columns[0].minWidth,undefined);
+  assert.equal(result.props.columns[0].minWidth,"12rem");
+});
+
+test("action columns stay bounded without disabling their resize handles", () => {
+  const result=mount({label:"Actions",rows:[],columns:[{field:"open_action",minWidth:"7rem",render:()=>({type:"Button"})}]});
+  const column=result.props.columns[0];
+  assert.equal(column.resizable,true);
+  assert.equal(column.headerSort,false);
+  assert.equal(column.maxWidth,"--plx-ref-size-240px");
+  assert.equal(column.minWidth,"7rem");
+  assert.equal(column.render({}).type,"Button");
 });

@@ -241,8 +241,8 @@ test("the current session keeps labeled actions and its status control inside th
   assert.ok(assignmentColumns.lastIndexOf("field: \"open_action\"") > assignmentColumns.lastIndexOf("field: \"assigned_member_name\""), "Cases to assign ends with Open");
   const scheduledColumns = agendaTable.slice(agendaTable.indexOf("        : ["), agendaTable.indexOf("      return h(P.Panel"));
   assert.ok(scheduledColumns.lastIndexOf("field: \"open_action\"") > scheduledColumns.lastIndexOf("field: \"previous_recommendation\""), "Scheduled hearings ends with Open");
-  assert.match(shellLayout, /headerMenu: !isStatic/);
-  assert.match(shellLayout, /resizable: !isStatic/);
+  assert.match(shellLayout, /headerMenu: true/);
+  assert.match(shellLayout, /resizable: column.resizable !== false/);
   assert.match(shellLayout, /h\(P\.DataGrid/);
 });
 

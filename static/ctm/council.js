@@ -2175,7 +2175,7 @@
           P.Stack,
           { gap: "sm" },
           h(P.DataGrid, {
-            density: "compact", cells: "pill", typeIcons: false,
+            density: "compact", cells: "pill", typeIcons: false, wrapHeaders: true,
             label: t(`part${n}`), data: groups[n], index: "id", narrow: "table", mode: "fill", isStatic: true,
             empty: t(`part${n}Empty`),
             columns: [
@@ -2849,7 +2849,7 @@
           { title: t("caseRespondent"), field: "respondent", type: "person", kind: "name", sorter: "string" },
           { title: t("caseAssignee"), field: "manager", type: "person", kind: "name", sorter: "string" },
           { title: t("caseClosedDate"), field: "closedAt", type: "date", sorter: "string" },
-          { title: t("statusLabel"), field: "status", sorter: "string" },
+          { title: t("statusLabel"), field: "status", maxWidth: "--plx-ref-size-240px", sorter: "string" },
         ]
       : [
           { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
@@ -2857,7 +2857,7 @@
           { title: t("caseRespondent"), field: "respondent", type: "person", kind: "name", sorter: "string" },
           { title: t("caseReason"), field: "reason", sorter: "string" },
           ...(view === "active" ? [{ title: t("caseAssignee"), field: "manager", type: "person", kind: "name", sorter: "string" }] : []),
-          { title: t("statusLabel"), field: "status", sorter: "string" },
+          { title: t("statusLabel"), field: "status", maxWidth: "--plx-ref-size-240px", sorter: "string" },
         ];
     const table = h(
       R.Fragment,
@@ -2869,9 +2869,9 @@
       ),
       rows.length
         ? h(P.DataGrid, {
-            density: "compact", cells: "pill", typeIcons: false,
+            density: "compact", cells: "pill", typeIcons: false, wrapHeaders: true,
             label: title || t(archived ? "archivedTitle" : "casesTitle"), data: rows, index: "id", selected: selected ? [selected] : [],
-            mode: "pages", pageSize: 25, headerMenu: false, rowMenuButton: false, narrow: "table",
+            mode: "pages", pageSize: 25, headerMenu: true, rowMenuButton: false, narrow: "table",
             keyColumns: columns.map((column) => column.field), columns,
             strings: { perPage: t("tablePerPage"), range: t("tableRange"), count: t("tableCount"), pages: t("tablePages"), empty: t("noMatchingCases"), failed: t("loadFailed"), retry: t("retry") },
             onRowClick: (row) => select(row.id),

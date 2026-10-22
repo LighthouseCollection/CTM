@@ -2,14 +2,17 @@
 (() => {
   const R = window.React, P = window.Plenix, h = R.createElement;
   function Table({ label, rows, columns, selected, onSelect, empty, className, isStatic = true }) {
-    // Reference facts use Table; record workspaces use the native interactive grid.
-    // CDN 0.65 owns sizing, typography, truncation and scrolling for both.
-    const gridColumns = (columns || []).map(({ width, minWidth, maxWidth, ...column }) => {
+    // Every CTM collection keeps native grid controls, including read-only records.
+    // Read-only data must not disable column resizing, sorting or header menus.
+    const gridColumns = (columns || []).map((column) => {
       const render = column.render;
+      const isAction = column.kind === "actions" || /^(open_action|actions?)$/.test(column.field);
       const type = column.type || (/^(applicant|respondent|manager|.*_name)$/.test(column.field) ? "person"
         : /^(.*_count|count|total|position|married_years)$/.test(column.field) ? "number" : "text");
       return {
         ...column, type,
+        ...(isAction ? { kind: "center", maxWidth: column.maxWidth || "--plx-ref-size-240px", headerSort: false, groupable: false } : {}),
+        ...(/^(status|state)$/.test(column.field) ? { maxWidth: column.maxWidth || "--plx-ref-size-240px" } : {}),
         ...(/^(code|number|case_number|case_code)$/.test(column.field) ? { kind: "data" } : {}),
         ...(render ? { pill: false, render: (record) => {
           const value = render(record);
@@ -20,19 +23,18 @@
             ...(type === "date" ? { icon: "calendar" } : {}),
           }, value);
         } } : {}),
-        headerSort: !isStatic && column.headerSort !== false,
-        resizable: !isStatic,
+        headerSort: !isAction && column.headerSort !== false,
+        resizable: column.resizable !== false,
       };
     });
     const common = {
       label, data: rows, columns: gridColumns, index: "id", className,
-      density: "compact", cells: "pill", typeIcons: false,
+      density: "compact", cells: "pill", typeIcons: false, wrapHeaders: true,
       narrow: "table", empty,
     };
-    if (!onSelect && isStatic) return h(P.Table, common);
     return h(P.DataGrid, {
       ...common, mode: "fill",
-      headerMenu: !isStatic, rowMenuButton: false,
+      headerMenu: true, rowMenuButton: false,
       selected: selected ? [selected] : [],
       onRowClick: onSelect ? (row) => onSelect(row.id) : undefined,
     });
