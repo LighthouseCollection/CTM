@@ -23,7 +23,7 @@ ROSTER = [
     ("Fr. Mauritius", "Mikhail", "frmauritiusmikhail@lacopts.org", "secretary"),
     ("Fr. Youhana", "Ibrahim", "fryouhanaibrahim@lacopts.org", "member"),
     ("Fr. Antony", "Attallah", "frantonyattallah@lacopts.org", "member"),
-    ("Fr. Boules", "Mikhail", "frboulesmikhail@lacopts.org", "member"),
+    ("Fr. Boules", "Mikhail", "frpaul@lacopts.org", "member"),
     ("Fr. Youhanna", "Youssef", "fryouhannayoussef@lacopts.org", "member"),
     ("Fr. David", "Elias", "frdavidelias@lacopts.org", "member"),
     ("Fr. Jonah", "Labib", "frjonahlabib@lacopts.org", "member"),
