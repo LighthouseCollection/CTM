@@ -39,7 +39,7 @@
     const [,render]=R.useReducer(n=>n+1,0),[selected,select]=R.useState(null);
     const session=R.useMemo(()=>createActionSession(application,api,render),[application.id,application.version,
       application.status,application.can_delete_draft,application.can_withdraw,api]),state=session.state;
-    R.useEffect(()=>{select(null);},[application]);
+    R.useEffect(()=>{select(null);},[application,lang]);
     R.useEffect(()=>{onBusyChange?.(state.busy);return()=>onBusyChange?.(false);},[state.busy,onBusyChange]);
     R.useEffect(()=>{onLockChange?.(state.locked);return()=>onLockChange?.(false);},[state.locked,onLockChange]);
     if(!available(application,"delete")&&!available(application,"withdraw"))return null;
