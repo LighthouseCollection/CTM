@@ -3076,7 +3076,7 @@
       h(
         P.Panel,
         { icon: "document", title: t("caseSummary") },
-        h(P.PropertyList, { columns: 3 },
+        h(P.PropertyList, { className: "ctm-case-summary-fields" },
         h(P.PropertyList.Item, { label: t("caseNumber") }, h(P.Text, { variant: "data" }, record.number)),
         h(P.PropertyList.Item, { label: t("filingDate") }, summaryDate(summary.filing_date, lang)),
         h(P.PropertyList.Item, { label: bt("statusLabel") }, h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed"))),

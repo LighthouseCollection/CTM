@@ -115,6 +115,24 @@
   width: auto !important;
 }
 
+
+/* Case summary reads in two balanced columns and returns to one on narrow panes. */
+.ctm-case-summary-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--plx-sys-space-inline-2xl);
+  row-gap: var(--plx-sys-space-stack-lg);
+}
+
+.ctm-case-summary-fields .plx-property-list__item {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--plx-sys-space-stack-2xs);
+  align-items: start;
+}
+
+@media (max-width: 48rem) {
+  .ctm-case-summary-fields { grid-template-columns: 1fr; }
+}
 /* Card edit forms keep related fields readable without relying on a CDN layout primitive. */
 .ctm-case-edit-grid {
   display: grid;

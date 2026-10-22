@@ -156,6 +156,9 @@ test("case summary shows case details and recorded key-date milestones", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   const api = fs.readFileSync("tribunal/api.py", "utf8");
   assert.match(councilCase, /caseSummary: "Case Summary"/);
+  assert.match(councilCase, /h\(P\.PropertyList, \{ className: "ctm-case-summary-fields" \}/);
+  const councilCss = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  assert.match(councilCss, /\.ctm-case-summary-fields \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(councilCase, /reasonForDivorce: "Reason for Divorce"/);
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
   assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
