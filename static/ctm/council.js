@@ -2269,8 +2269,8 @@
       // name and gender in the same declared value so the CDN DataPill receives both.
       const rows = groups[n].map((row) => ({
         ...row,
-        applicant: { name: row.applicant_name, gender: row.applicant_gender },
-        respondent: { name: row.respondent_name, gender: row.respondent_gender },
+        applicant: { name: row.applicant_name, gender: row.applicant_gender === "M" ? "male" : row.applicant_gender === "F" ? "female" : undefined },
+        respondent: { name: row.respondent_name, gender: row.respondent_gender === "M" ? "male" : row.respondent_gender === "F" ? "female" : undefined },
       }));
       const title = first ? t("casesToAssign") : t("scheduledCasesForHearing");
       const columns = first
@@ -2835,8 +2835,8 @@
     const rows = caseRows(cases, archived, query, includeClosed).map((row) => ({
       id: row.id,
       number: row.number,
-      applicant: { name: row.applicant_name || "—", gender: row.applicant_gender },
-      respondent: { name: row.respondent_name || "—", gender: row.respondent_gender },
+      applicant: { name: row.applicant_name || "—", gender: row.applicant_gender === "M" ? "male" : row.applicant_gender === "F" ? "female" : undefined },
+      respondent: { name: row.respondent_name || "—", gender: row.respondent_gender === "M" ? "male" : row.respondent_gender === "F" ? "female" : undefined },
       reason: row.reason || "—",
       manager: row.assigned_member || t("unassigned"),
       status: t(row.status === "closed" ? "closed" : "open"),

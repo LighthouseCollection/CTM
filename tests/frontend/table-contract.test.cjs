@@ -53,3 +53,8 @@ test("person cells use recorded gender with a neutral unknown fallback", () => {
   assert.equal(column.render({applicant:"Emma",applicant_gender:"F"}).props.gender,"female");
   assert.equal(column.render({applicant:"Alex"}).props.gender,undefined);
 });
+
+test("person cells with missing names show a neutral placeholder without rendering an object",()=>{
+  const result=mount({label:"People",rows:[],columns:[{field:"applicant",type:"person"}]});
+  assert.deepEqual(Array.from(result.props.columns[0].render({applicant:{gender:"M",name:""}}).children),["—"]);
+});

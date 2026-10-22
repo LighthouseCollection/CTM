@@ -13,7 +13,7 @@
         const person = value && typeof value === "object" ? value : null;
         const rawGender = person?.gender || record[column.field + "_gender"];
         const gender = rawGender === "M" || rawGender === "male" ? "male" : rawGender === "F" || rawGender === "female" ? "female" : undefined;
-        return h(P.DataPill, { size: "md", person: true, gender }, person?.name || value || "—");
+        return h(P.DataPill, { size: "md", person: true, gender }, person ? person.name || "—" : value || "—");
       };
       return {
         ...column, type,
