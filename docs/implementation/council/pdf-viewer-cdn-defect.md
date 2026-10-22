@@ -1,6 +1,6 @@
 # Defect report: Plenix 0.58.0 DocumentViewer cannot load PDF.js from the CDN
 
-Status: **open, upstream (Plenix design system)**. CTM has made no workaround. Embedded PDF viewing in CTM is **not complete**. Council PDFs keep opening through the authorized browser-view fallback (`/api/files/{id}/?view=1`).
+Status: **resolved upstream in Plenix 0.60.1** (verified 2026-10-22). PDF.js 4.10.38 `pdf.js` and `pdf.worker.js` are published at `cdn/0.60.1/vendor/pdfjs/` with LICENSE and README in the bundle manifest. `vendorUrl()` resolves through `vendorBase()`. DocumentViewer adds `onError({reason})` and per-reason strings. CTM integration: council C-04 (#3, PR #6). The original 0.58.0 report follows unchanged.
 
 Investigated 2026-10-22 on branch `work/claude-council` (draft PR #6). This was a diagnosis only: no CDN files were changed and no PDF.js was added to CTM.
 

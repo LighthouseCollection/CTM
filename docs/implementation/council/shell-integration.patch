@@ -452,13 +452,25 @@ index 05009e1..ff23cbe 100644
              data.items.filter((row) =>
                ["archived", "past"].includes(page)
 diff --git a/tribunal/templates/tribunal/shell.html b/tribunal/templates/tribunal/shell.html
-index b872676..b1e26a3 100644
+index b872676..8bac9af 100644
 --- a/tribunal/templates/tribunal/shell.html
 +++ b/tribunal/templates/tribunal/shell.html
-@@ -10,6 +10,11 @@
-   <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react.production.min.js"></script>
-   <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react-dom.production.min.js"></script>
-   <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.js"></script>
+@@ -4,12 +4,17 @@
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>CTM</title>
+-  <script src="https://design-system.lighthouseway.org/cdn/0.58.0/theme-boot.js"></script>
+-  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.58.0/fonts.css">
+-  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.css">
+-  <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react.production.min.js"></script>
+-  <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react-dom.production.min.js"></script>
+-  <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.js"></script>
++  <script src="https://design-system.lighthouseway.org/cdn/0.60.1/theme-boot.js"></script>
++  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.60.1/fonts.css">
++  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.60.1/plenix.css">
++  <script defer src="https://design-system.lighthouseway.org/cdn/0.60.1/vendor/react.production.min.js"></script>
++  <script defer src="https://design-system.lighthouseway.org/cdn/0.60.1/vendor/react-dom.production.min.js"></script>
++  <script defer src="https://design-system.lighthouseway.org/cdn/0.60.1/plenix.js"></script>
 +  <script defer src="{% static 'ctm/shell-layout.js' %}"></script>
 +  <script defer src="{% static 'ctm/council.js' %}"></script>
 +  <script defer src="{% static 'ctm/council-case.js' %}"></script>
