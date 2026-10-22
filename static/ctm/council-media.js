@@ -2050,7 +2050,6 @@
     const [failure, setFailure] = R.useState(null);
     const [selected, select] = R.useState(null);
     const [viewerIndex, setViewerIndex] = R.useState(null);
-    const [demoViewerIndex, setDemoViewerIndex] = R.useState(null);
     const [reload, setReload] = R.useState(0);
     R.useEffect(() => {
       let live = true;
@@ -2084,58 +2083,34 @@
       }
     }
     const visible = sectionFiles(rows, section);
-    const chosen = visible.find((row) => row.id === selected);
+    const demoRows = section === "evidence"
+      ? [
+          { id: "demo-evidence-01", name: "demo-evidence-01.png", version: "—", demoSrc: "/static/ctm/demo-evidence/demo-evidence-01.png", demoType: "image" },
+          { id: "demo-evidence-02", name: "demo-evidence-02.png", version: "—", demoSrc: "/static/ctm/demo-evidence/demo-evidence-02.png", demoType: "image" },
+          { id: "demo-evidence-03", name: "demo-evidence-03.png", version: "—", demoSrc: "/static/ctm/demo-evidence/demo-evidence-03.png", demoType: "image" },
+          { id: "demo-evidence-04", name: "demo-evidence-04.png", version: "—", demoSrc: "/static/ctm/demo-evidence/demo-evidence-04.png", demoType: "image" },
+        ]
+      : [
+          { id: "demo-document-pdf", name: "PDF Test.pdf", version: "—", demoSrc: "/static/ctm/demo-documents/PDF-Test.pdf", demoType: "document" },
+          { id: "demo-document-word", name: "MSWORD TEST.docx", version: "—", demoSrc: "/static/ctm/demo-documents/MSWORD-TEST.docx", demoType: "document" },
+        ];
+    const tableRows = [...demoRows, ...visible];
+    const chosen = tableRows.find((row) => row.id === selected);
     const images = visible.filter((row) => viewerKind(row) === "image" && fileUrls(row).inline);
     const viewerItems = images.map((row) => ({ src: fileUrls(row).inline, alt: row.name, title: row.name, meta: [row.category, formatBytes(row.byte_count, lang)] }));
-    // These are static, demo-only visual records. They intentionally do not enter
-    // the protected attachment/audit workflow used for real evidence.
-    const demoEvidence = [
-      "/static/ctm/demo-evidence/demo-evidence-01.png",
-      "/static/ctm/demo-evidence/demo-evidence-02.png",
-      "/static/ctm/demo-evidence/demo-evidence-03.png",
-      "/static/ctm/demo-evidence/demo-evidence-04.png",
-    ];
-    const demoViewerItems = demoEvidence.map((src, index) => ({
-      src,
-      alt: t("demoEvidenceImage", { number: index + 1 }),
-      title: t("demoEvidenceImage", { number: index + 1 }),
-    }));
-    const demoDocuments = [
-      { name: "PDF Test.pdf", type: "PDF", src: "/static/ctm/demo-documents/PDF-Test.pdf" },
-      { name: "MSWORD TEST.docx", type: "Word document", src: "/static/ctm/demo-documents/MSWORD-TEST.docx" },
-    ];
+    const demoPreview = chosen?.demoSrc
+      ? h(P.Stack, { gap: "md" },
+          chosen.demoType === "image" ? h("img", { className: "ctm-demo-file-preview", src: chosen.demoSrc, alt: chosen.name }) : h(P.Text, null, chosen.name),
+          h(P.Inline, null,
+            h(P.Button, { href: chosen.demoSrc, target: "_blank", rel: "noreferrer" }, t("openDocument")),
+            h("a", { className: "plx-button plx-button--secondary", href: chosen.demoSrc, download: chosen.name }, t("downloadDocument")),
+          ),
+        )
+      : null;
     return h(
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t(section === "documents" ? "documentsTitle" : "evidenceTitle")),
-      section === "evidence"
-        ? h(P.Panel, { icon: "image-a-2", title: t("demoEvidenceTitle") }, h(P.Stack, { gap: "sm" },
-          h(P.Text, null, t("demoEvidenceHint")),
-          h("div", { className: "ctm-demo-evidence-gallery" }, ...demoEvidence.map((src, index) =>
-            h("button", {
-              key: src,
-              type: "button",
-              className: "ctm-demo-evidence-gallery__item",
-              onClick: () => setDemoViewerIndex(index),
-              "aria-label": t("demoEvidenceImage", { number: index + 1 }),
-            }, h("img", { src, alt: t("demoEvidenceImage", { number: index + 1 }) })),
-          )),
-        ))
-        : null,
-      section === "documents"
-        ? h(P.Panel, { icon: "doc-text", title: t("demoDocumentsTitle") }, h(P.Stack, { gap: "sm" },
-          h(P.Text, null, t("demoDocumentsHint")),
-          h("div", { className: "ctm-demo-document-list" }, ...demoDocuments.map((document) =>
-            h("article", { key: document.src, className: "ctm-demo-document-list__item" },
-              h("div", null, h("strong", null, document.name), h("div", { className: "ctm-demo-document-list__type" }, document.type)),
-              h(P.Inline, { wrap: true },
-                h(P.Button, { size: "sm", href: document.src, target: "_blank", rel: "noreferrer" }, t("openDocument")),
-                h("a", { className: "plx-button plx-button--secondary plx-button--sm", href: document.src, download: document.name }, t("downloadDocument")),
-              ),
-            ),
-          )),
-        ))
-        : null,
       h(P.SplitView, {
         label: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
         firstLabel: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
@@ -2145,51 +2120,22 @@
           h(P.Checkbox, { label: t("olderVersions"), checked: history, onChange: (e) => setHistory(e.target.checked) }),
           h(window.CTMShell.Table, {
             label: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
-            rows: visible, selected, onSelect: select, empty: t("noFiles"),
-            columns: [{ title: t(section === "documents" ? "documentsTitle" : "evidenceTitle"), field: "name", kind: "name" }, { title: t("version"), field: "version", type: "number" }],
+            rows: tableRows, selected, onSelect: select, empty: t("noFiles"),
+            columns: [{ title: t(section === "documents" ? "documentsTitle" : "evidenceTitle"), field: "name", kind: "name" }, { title: t("version"), field: "version" }],
           }),
           pending ? base.loadingView(P, h, t) : null,
-          !pending && !visible.length && !failure ? h(P.EmptyState, { title: t("noFiles") }) : null,
           failure ? base.loadFailure(P, h, t, () => setReload((n) => n + 1), failure) : null,
           next !== null ? h(P.Button, { size: "sm", disabled: pending, onClick: more }, t("more")) : null,
         ),
         second: h(
           P.ReadingPane,
           { label: chosen ? chosen.name : t("chooseFile"), empty: h(P.EmptyState, { title: t("chooseFile") }) },
-          chosen
-            ? h(FilePreview, {
-                key: chosen.id,
-                file: chosen,
-                lang,
-                images,
-                onFullScreen: () => setViewerIndex(Math.max(0, images.findIndex((row) => row.id === chosen.id))),
-              })
-            : null,
+          chosen ? (demoPreview || h(FilePreview, { key: chosen.id, file: chosen, lang, images, onFullScreen: () => setViewerIndex(Math.max(0, images.findIndex((row) => row.id === chosen.id))) })) : null,
         ),
       }),
-      viewerIndex !== null
-        ? h(P.MediaViewer, {
-            open: true,
-            items: viewerItems,
-            index: viewerIndex,
-            onIndexChange: setViewerIndex,
-            onClose: () => setViewerIndex(null),
-            label: t("viewerLabel"),
-            strings: { label: t("viewerLabel"), close: t("closePreview"), previous: t("previous"), next: t("next"), counter: t("counter") },
-          })
-        : null,
-      demoViewerIndex !== null
-        ? h(P.MediaViewer, {
-            open: true,
-            items: demoViewerItems,
-            index: demoViewerIndex,
-            onIndexChange: setDemoViewerIndex,
-            onClose: () => setDemoViewerIndex(null),
-            label: t("demoEvidenceTitle"),
-            strings: { label: t("demoEvidenceTitle"), close: t("closePreview"), previous: t("previous"), next: t("next"), counter: t("counter") },
-          })
-        : null,
+      viewerIndex !== null ? h(P.MediaViewer, { open: true, items: viewerItems, index: viewerIndex, onIndexChange: setViewerIndex, onClose: () => setViewerIndex(null), label: t("viewerLabel"), strings: { label: t("viewerLabel"), close: t("closePreview"), previous: t("previous"), next: t("next"), counter: t("counter") } }) : null,
     );
+
   }
 
   Object.assign(window.CTMCouncil, {

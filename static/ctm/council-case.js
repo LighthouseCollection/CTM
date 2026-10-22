@@ -484,6 +484,8 @@ ${ar}` : en;
       noHearings: "This case has not been placed on a council session agenda.",
       currentHearing: "Current Hearing: {date}",
       pastHearings: "Past hearings",
+      caseLabel: "Case",
+      actions: "Actions",
       rescheduleHearing: "Reschedule this hearing",
       councilAttendance: "Council attendance",
       councilAttendanceHelp: "Confirm the members who attended this particular hearing.",
@@ -830,6 +832,8 @@ ${ar}` : en;
       noHearings: "لم تُدرج هذه القضية في جدول أعمال أي جلسة مجلس.",
       currentHearing: "الجلسة الحالية: {date}",
       pastHearings: "الجلسات السابقة",
+      caseLabel: "القضية",
+      actions: "الإجراءات",
       rescheduleHearing: "إعادة جدولة هذه الجلسة",
       councilAttendance: "حضور المجلس",
       councilAttendanceHelp: "أكد الأعضاء الذين حضروا هذه الجلسة تحديدًا.",
@@ -2762,14 +2766,21 @@ ${ar}` : en;
           ),
         )),
         h("div", { className: "plx-entity-header__aside" }, h(P.Stack, { gap: "xs", align: "end" },
-          h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "calendar", disabled: !current.session.can_reschedule, onClick: () => onSession(current.session.id) }, t("rescheduleHearing")),
+          h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "calendar", onClick: () => onSession(current.session.id) }, t("rescheduleHearing")),
           h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "settings-users", onClick: () => setAttendanceOpen(true) }, t("councilAttendance")),
         )),
       )) : null;
     const currentContent = current ? h(P.Stack, { gap: "lg" },
       outcome,
     ) : h(P.EmptyState, { title: t("noHearings") });
-    const pastContent = past.length ? h(P.Stack, { gap: "md" }, ...past.map((row) => h(P.Panel, { key: row.item.id, icon: "calendar", title: title(row), description: `${bt("councilSession")} ${row.session.date}` }, h(P.Inline, { justify: "end" }, h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open")))))) : h(P.EmptyState, { title: t("noHearings") });
+    const pastContent = past.length ? h("div", { className: "ctm-past-hearings-table", role: "table", "aria-label": t("pastHearings") },
+      h("div", { className: "ctm-past-hearings-table__header", role: "row" }, h("div", { role: "columnheader" }, t("caseLabel")), h("div", { role: "columnheader" }, bt("councilSession")), h("div", { role: "columnheader" }, t("actions"))),
+      ...past.map((row) => h("div", { key: row.item.id, className: "ctm-past-hearings-table__row", role: "row" },
+        h("div", { role: "cell" }, title(row)),
+        h("div", { role: "cell" }, row.session.date),
+        h("div", { role: "cell" }, h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open"))),
+      )),
+    ) : h(P.EmptyState, { title: t("noHearings") });
     return h(P.Stack, { gap: "lg" }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
       items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] }), attendanceDialog);
   }

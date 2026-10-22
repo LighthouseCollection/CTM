@@ -554,3 +554,12 @@
   .ctm-hearing-attendance-table__row > div,
   .ctm-hearing-attendance-table__row > label { padding: .5rem; }
 }
+
+
+.ctm-demo-file-preview { max-inline-size: 100%; max-block-size: 36rem; object-fit: contain; }
+
+.ctm-past-hearings-table { display: grid; grid-template-columns: minmax(14rem, 1fr) minmax(10rem, .5fr) minmax(6rem, auto); border: 1px solid var(--plx-color-border, #d7dce3); border-radius: var(--plx-radius-md, 8px); overflow: hidden; }
+.ctm-past-hearings-table__header, .ctm-past-hearings-table__row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; }
+.ctm-past-hearings-table__header > div, .ctm-past-hearings-table__row > div { display: flex; align-items: center; min-block-size: 3rem; padding: var(--plx-space-sm, .75rem); border-inline-end: 1px solid var(--plx-color-border, #d7dce3); border-block-end: 1px solid var(--plx-color-border, #d7dce3); }
+.ctm-past-hearings-table__header > div { min-block-size: auto; font-weight: 700; text-transform: uppercase; letter-spacing: .035em; font-size: .8125rem; background: var(--plx-color-surface-subtle, #f5f7fa); }
+.ctm-past-hearings-table__row:last-child > div { border-block-end: 0; }
