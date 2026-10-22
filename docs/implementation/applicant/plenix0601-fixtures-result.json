@@ -1,0 +1,272 @@
+{
+  "base_commit": "e741cfe85fa1c9aa8d7cc2bf30aef515bfe9fc90",
+  "plenix_version": "0.60.1",
+  "scripts": {
+    "scripts/browser_applicant.py": "29ebdb5efe144634a2586dbd6b0c7c1d57a4e5771f0025da61b7b08a5044ed29",
+    "scripts/browser_applicant_appeals.py": "fd017b6c0a72b9a272deab4acadbb40515850273835586441f65194868468379",
+    "scripts/browser_applicant_appointments.py": "e2a63a364bfdf1f28a23b05cf1f75fe787efa1eab871681825737570d57900f6",
+    "scripts/browser_applicant_assessments.py": "4074ef97057e1da820d99d1d4fce1ece54d6090e86ab06d31565175663827832",
+    "scripts/browser_applicant_decrees.py": "a749b1cb6e7f47700956e4c1f7d5ff23b6fc6d04f04310d92eda82c7e3994594",
+    "scripts/browser_applicant_history_notifications.py": "94e8e4ae03b0a978c8127bc2ddc08f3a4a6c14af5ab9075d47ef9056712b66d5",
+    "scripts/browser_applicant_messages.py": "2de7bd64c48116c1a23f004f58dd83b553439a5db9f5ce8ed6d97956d6866ddb",
+    "scripts/browser_applicant_next_batch.py": "43a2f23914ca54404d03d408d349347bf1f363a7896cbc7c34fd1918676db0ad",
+    "scripts/browser_applicant_payments.py": "b788ce2320fe661c6a33880fbcdfc8ef9ef06259b5b84a62a6f3e70bf0e84845",
+    "scripts/browser_applicant_repeat_sections.py": "0d9b6e8ec3f13460350932a848afa86001b0a3b0706de8b097dacc4961f0d35e",
+    "scripts/browser_applicant_requests.py": "bb71c2fea07007e639d0d25ac08a6c898b551ec5060b4573a851c6c8362dd85b",
+    "scripts/browser_applicant_supplements.py": "7f613dc8454ac7d33233587853ffec79a58b053ca8b9b36113d16ea262332041"
+  },
+  "runs": [
+    {
+      "log": "cdn0601-browser_applicant.log",
+      "status": "passed",
+      "result": {
+        "checks": [
+          "Partial draft save preserves unknown data and stable option values",
+          "Review shows local answers as escaped text",
+          "EN/AR switching preserves unsaved answers and uses RTL",
+          "Failed save and cancelled reload/navigation retain local changes",
+          "1280/390px EN/AR: no runtime inline style or horizontal overflow",
+          "Explicit discard reloads acknowledged saved answers",
+          "Missing Arabic question wording blocks editing",
+          "Declaration/signature/fee controls retain consent in EN/AR at desktop/mobile without styles/overflow",
+          "Waived filing requires review/signature; uncertain retry freezes payload and idempotency key",
+          "Returned correction instructions and resubmission reuse fee/signature without checkout",
+          "Untrusted checkout URL is rejected without navigation or invented payment success",
+          "Uncertain replacement blocks filing until refreshed safe documents and explicit review/signature",
+          "Boolean unanswered/false values and conditional hidden answers survive save and Arabic switch",
+          "Acknowledged answer save automatically refreshes newly required document contexts",
+          "Acknowledged save reloads server filing capabilities before actions become available",
+          "Repeated records add/correct/review/remove in RTL while retaining stable IDs and opaque original data",
+          "Submitted records avoid new-filing prompts and case reference remains bidi-isolated in Arabic",
+          "Identity hold explains blocked filing in EN/AR while draft corrections remain saveable",
+          "In-flight upload installs unload prevention even with clean answers and releases it after acknowledgement"
+        ],
+        "passed": 19,
+        "page_errors": [],
+        "typography_observation": {
+          "arabic_heading_fonts": [
+            {
+              "familyName": "Segoe UI Semibold",
+              "postScriptName": "SegoeUI-Semibold",
+              "isCustomFont": false,
+              "glyphCount": 4
+            }
+          ]
+        },
+        "scope": "Synthetic API contract fixtures with real Plenix CDN 0.60.1; not backend/provider E2E"
+      }
+    },
+    {
+      "log": "cdn0601-browser_applicant_appeals.log",
+      "status": "passed",
+      "result": {
+        "passed": 6,
+        "checks": [
+          "Eligibility failure preserves case view and localized Arabic mobile UI without styles or overflow",
+          "Valid same-case appeal acknowledgement opens the bound editor without client case mutations",
+          "Late appeal start acknowledgement cannot navigate after leaving the case",
+          "Linked first-petition eligibility failure preserves localized case view and exact petition routing without reopening",
+          "Literal linked capability controls first-petition entry and valid same-case acknowledgement opens editor",
+          "Late first-petition acknowledgement cannot navigate after leaving case"
+        ],
+        "page_errors": [],
+        "scope": "Synthetic API fixtures; real pinned CDN"
+      }
+    },
+    {
+      "log": "cdn0601-browser_applicant_appointments.log",
+      "status": "passed",
+      "result": {
+        "passed": 5,
+        "checks": [
+          "Escaped private instructions, exact offset times and version-bound confirmation; server refresh shows current response",
+          "Stale invitation locks response until refreshed new version; old response and explanation do not migrate",
+          "Uncertain acknowledgement blocks both actions until authoritative refresh",
+          "Cancelled invitation exposes no actions; Arabic mobile RTL has no inline styles or horizontal overflow",
+          "Malformed/duplicate and unavailable reads fail closed; only a valid empty list reports no invitations"
+        ],
+        "page_errors": [],
+        "scope": "Proposed private read contract fixtures; real pinned CDN; not backend appointment integration acceptance"
+      }
+    },
+    {
+      "log": "cdn0601-browser_applicant_assessments.log",
+      "status": "passed",
+      "result": {
+        "passed": 5,
+        "checks": [
+          "Exact declaration text is escaped; explicit consent uncertainty locks retry and own read recovers retained scope without another POST",
+          "Evidence-only local response and unload guard survive successful authoritative refresh",
+          "Already-open discard confirmation cannot leave during delayed upload; selection remains after upload refresh",
+          "Private workspace, retained consent and local evidence render in Arabic mobile without runtime styles or overflow",
+          "Denied refresh clears private original links while preserving local response guard; no automatic response or consent resend"
+        ],
+        "page_errors": [],
+        "scope": "Interruption/refresh fixtures; real request integration is checked separately"
+      }
+    },
+    {
+      "log": "cdn0601-browser_applicant_decrees.log",
+      "status": "passed",
+      "result": {
+        "passed": 4,
+        "checks": [
+          "Only explicit released rows render exact signed-file links; references are escaped",
+          "Arabic mobile release metadata preserves timestamp direction without inline styles or overflow",
+          "Authoritative refresh removes withdrawn release links without inferring access from case state",
+          "Denied or missing-contract refresh clears stale links; all requests remain GET"
+        ],
+        "page_errors": [],
+        "scope": "Proposed own release-list fixtures only; server revocation and actual signed PDFs remain separate acceptance"
+      }
+    },
+    {
+      "log": "cdn0601-browser_applicant_next_batch.log",
+      "status": "passed",
+      "result": {
+        "passed": 11,
+        "checks": [
+          "Bound intake response reviews escaped answers, guards navigation/unload and locks uncertain attempt without observations or retry",
+          "Arabic response review keeps local payload and fits mobile without inline styles",
+          "Actual payment history shape with pending candidate blocks fresh checkout and replacement signature when resume contract is absent",
+          "Provider expiry removes mounted resume without clearing the unresolved hold or creating a payment attempt",
+          "Long retained expiry re-arms beyond browser timer maximum and still clears resume at expiry",
+          "Proposed resume displays original declaration/signer and reopens only existing safe checkout; processing state removes resume without a POST",
+          "Draft deletion requires explicit server capability and separate confirmation; cancel sends nothing and acknowledgement locks repeats",
+          "Returned filings never show draft deletion; withdrawal has separate retained-fee/case-effect wording and Arabic mobile confirmation",
+          "Missing lifecycle capabilities expose no destructive controls",
+          "Combined editor blocks filing/navigation during delayed lifecycle action and keeps filing locked after acknowledgement until authoritative refresh",
+          "Local typing survives a delayed background projection read while save and filing stay blocked until it settles"
+        ],
+        "page_errors": [],
+        "scope": "Prepared response/recovery/lifecycle capability fixtures; no real provider or signed release acceptance"
+      }
+    },
+    {
+      "log": "cdn0601-browser_applicant_payments.log",
+      "status": "passed",
+      "result": {
+        "passed": 4,
+        "checks": [
+          "Processing history is read-only and does not offer payment/reconciliation writes or claim filing success",
+          "Reconciliation and cumulative refund facts display without inventing a refund request or adding cumulative totals",
+          "Arabic mobile histories preserve timestamp direction without inline styles or horizontal overflow",
+          "Denied/malformed history removes stale financial facts; all requests remain GET"
+        ],
+        "page_errors": [],
+        "scope": "Synthetic read-contract fixtures; no provider payment/antivirus acceptance"
+      }
+    },
+    {
+      "log": "cdn0601-browser_applicant_requests.log",
+      "status": "passed",
+      "result": {
+        "passed": 4,
+        "checks": [
+          "Own bound questions and instructions display escaped with no unsupported response editor",
+          "Bound bilingual questions switch to Arabic with mobile RTL and no inline styles or overflow",
+          "Assessment request distinguishes report from signed scoped release without fabricating consent or signature",
+          "Denied or invalid staff-only projection removes old content; authoritative empty list and GET-only transport"
+        ],
+        "page_errors": [],
+        "scope": "Own read presentation fixtures; no response submission, approved release wording or medical disclosure acceptance"
+      }
+    },
+    {
+      "log": "cdn0601-browser_applicant_supplements.log",
+      "status": "failed",
+      "stage": "supplement review after receipt recovery",
+      "error": "Review supplement remained disabled; Locator.click timeout30000ms",
+      "unchanged_rerun": "passed9 groups",
+      "cause": "unverified"
+    },
+    {
+      "log": "cdn0601-history.log",
+      "status": "passed",
+      "result": {
+        "passed": 8,
+        "checks": [
+          "Own history exposes attributed saved versions and UUID-based repeat/order changes without editing originals or executing saved markup",
+          "Changed-field indicators open retained values in the documented modal; absent/null/false/zero and current-label provenance remain distinct",
+          "History refresh/language switching preserves dirty editor input and ENAR mobile layout without inline styles or overflow",
+          "Denied/malformed history clears private snapshots while local draft/navigation guard remains intact",
+          "Notification inbox loads bounded pages, displays generic case update metadata, opens normal case route and never renders private payload internals",
+          "False acknowledgement never marks a notice read; committed lost acknowledgement recovers only from explicit authoritative refresh without retry",
+          "Delayed acknowledgement blocks navigation/competing controls and unload; unread count is withheld until refreshed rather than decremented speculatively",
+          "Notification ENAR layout remains clean; denied/malformed refresh removes private list/count/case actions and never resends acknowledgement"
+        ],
+        "page_errors": [],
+        "scope": "Synthetic own history/notification fixtures; pinned real Plenix0.60.1"
+      }
+    },
+    {
+      "log": "cdn0601-messages.log",
+      "status": "passed",
+      "result": {
+        "passed": 8,
+        "checks": [
+          "Bound own receipt history loads 50-row pages explicitly with no automatic read or send mutation",
+          "Explicit own-copy acknowledgement sends empty body and displays portal read time separately from email delivery",
+          "Uncertain read action never repeats automatically; explicit authoritative refresh permits a new intended-copy acknowledgement",
+          "Dirty message guards navigation/unload; lost acknowledgement recovers matching own key after explicit continuation without another send",
+          "Uncommitted uncertainty permits only explicit original replay with unchanged key/text/recipient/routing",
+          "Pending discard and route navigation are blocked through a delayed message write, with unload protection and exact acknowledgement",
+          "EN/AR message draft persists with escaped history and mobile RTL without inline styles or overflow",
+          "Denied or malformed refresh clears private history and capabilities while local message intent/guards survive; no automatic retry"
+        ],
+        "page_errors": [],
+        "scope": "Synthetic message API interruption fixtures, real Plenix0.60.1"
+      }
+    },
+    {
+      "log": "cdn0601-repeat.log",
+      "status": "passed",
+      "result": {
+        "source_commit": "e741cfe85fa1c9aa8d7cc2bf30aef515bfe9fc90",
+        "module_sha256": "92ebd16c4c8f44c5e9d4cf37598bf2d027be45fcb19cf0466c3fdc8638fa0be7",
+        "passed": 9,
+        "checks": [
+          "Row-local conditions affect only the matching repeat row and restore exact hidden source values without creating an approved question",
+          "Failed save retains all five locally edited repeat families; Arabic390px/language switch preserves values without styles or overflow and performs no automatic retry",
+          "children: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+          "restraining_orders: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+          "prior_applications: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+          "prior_marriages: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+          "counseling_priests: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+          "Arabic review/remove/save/reload across all five families retains surviving UUIDs and exact unmapped source values; no object coercion",
+          "Missing nested Arabic label blocks form editing without inventing wording or mutating saved snapshots"
+        ],
+        "page_errors": [],
+        "scope": "Five-family synthetic UI fixtures with pinned Plenix0.60.1; not approved content, document evidence or backend validation acceptance",
+        "families": [
+          "children",
+          "restraining_orders",
+          "prior_applications",
+          "prior_marriages",
+          "counseling_priests"
+        ]
+      }
+    },
+    {
+      "log": "cdn0601-supplements-rerun.log",
+      "status": "passed",
+      "result": {
+        "passed": 9,
+        "checks": [
+          "Unsafe evidence refresh preserves local intent/text, blocks review and requires explicit removal before reselection",
+          "Supplement draft preserves immutable appeal answers, excludes pending evidence and participates in editor navigation guard",
+          "EN/AR draft/review is escaped and mobile-safe; uncertain append freezes exact text/evidence without retry",
+          "Authoritative refresh shows received history; only explicit new-entry action clears frozen local payload",
+          "Missing receipt cannot create a fresh supplement; explicit retry reuses exact frozen key/version/text/files and acknowledges once",
+          "In-flight append blocks parent navigation and installs unload protection; acknowledgement is distinguished from read history",
+          "Disposition or missing capability disables append and malformed refresh clears history without deleting local appeal data",
+          "Closed-case first-filing reconsideration uses the same explicit supplement capability without requiring appeal kind",
+          "Denied own refresh clears private receipt/evidence views while retaining local dirty/navigation intent and sends no retry"
+        ],
+        "page_errors": [],
+        "scope": "Actual-shaped own supplement interruption fixtures; synthetic API only"
+      }
+    }
+  ],
+  "scope": "Synthetic API fixtures against real pinned CDN; not approved content/backend/PostgreSQL/live service acceptance"
+}

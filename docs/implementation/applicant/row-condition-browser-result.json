@@ -1,0 +1,25 @@
+{
+  "source_commit": "fcce7c1dad899e090fba17809ac904ed65833a97",
+  "module_sha256": "92ebd16c4c8f44c5e9d4cf37598bf2d027be45fcb19cf0466c3fdc8638fa0be7",
+  "passed": 9,
+  "checks": [
+    "Row-local conditions affect only the matching repeat row and restore exact hidden source values without creating an approved question",
+    "Failed save retains all five locally edited repeat families; Arabic390px/language switch preserves values without styles or overflow and performs no automatic retry",
+    "children: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+    "restraining_orders: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+    "prior_applications: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+    "prior_marriages: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+    "counseling_priests: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+    "Arabic review/remove/save/reload across all five families retains surviving UUIDs and exact unmapped source values; no object coercion",
+    "Missing nested Arabic label blocks form editing without inventing wording or mutating saved snapshots"
+  ],
+  "page_errors": [],
+  "scope": "Five-family synthetic UI fixtures with pinned Plenix0.58.0; not approved content, document evidence or backend validation acceptance",
+  "families": [
+    "children",
+    "restraining_orders",
+    "prior_applications",
+    "prior_marriages",
+    "counseling_priests"
+  ]
+}

@@ -35,7 +35,7 @@
       codes.add(field.code);
       if(field.type==="list" && field.item_fields!==undefined) {
         if(!Array.isArray(field.item_fields)||!field.item_fields.length||field.choices||
-          field.item_fields.some(child=>!child||child.code==="id"||child.item_fields!==undefined||child.when)||
+          field.item_fields.some(child=>!child||child.code==="id"||child.item_fields!==undefined)||
           definitionProblem({...app,questionnaire:{...q,definition:{fields:field.item_fields}}}))return "definitionUnavailable";
         continue;
       }
@@ -48,6 +48,15 @@
               !option.value || values.has(option.value)) return "definitionUnavailable";
           values.add(option.value);
         }
+      }
+    }
+    const byCode = new Map(fields.map(field => [field.code, field]));
+    for (const field of fields) {
+      const seen = new Set();
+      let current = field;
+      while (current?.when) {
+        if (seen.has(current.code)) return "definitionUnavailable";
+        seen.add(current.code); current = byCode.get(current.when.field);
       }
     }
     return null;
@@ -317,7 +326,7 @@
             h(P.Stack,null,
               !rows.length?text(t("noRecords")):null,
               ...rows.map((row,index)=>h(P.Panel,{ icon: "doc-text",key:row.id||index,title:`${fieldLabel} ${index+1}`},
-                h(P.Stack,null,...field.item_fields.map(child=>renderField(child,row,
+                h(P.Stack,null,...field.item_fields.filter(child=>isVisible(child,row)).map(child=>renderField(child,row,
                   (code,next)=>change(field.code,updateRecord(rows,index,code,next)))),
                   state.editable&&!review?h(P.Button,{disabled:controlsDisabled,
                     onClick:()=>change(field.code,rows.filter((_,i)=>i!==index))},t("removeRecord")):null))),

@@ -1,5 +1,25 @@
 # Remaining applicant work
 
+## Standalone fixture CDN alignment
+
+Twelve applicant fixture scripts now pin0.60.1 and each has a successful run. Initial supplement disabled-review timeout and unchanged rerun are both recorded. Shared CI pin failure remains governance-owned. [Report](plenix0601-fixtures-report.md) | [JSON](plenix0601-fixtures-result.json).
+
+## Plenix 0.60.1 integration successor
+
+Exact unmodifiedbd6e5c8 passes76 applicant SQLite API/browser groups, no browser errors; targeted mobile overflow/runtime-style assertions pass. Earlier0.58.0 results remain historical. Latest applicant/backend integration and other acceptance dependencies remain open. [Report](integration-bd6e5c8-report.md) | [JSON](integration-bd6e5c8-result.json).
+
+## Latest backend compatibility
+
+Backenddb82099 with captured applicant modules passes76 SQLite API/browser groups without page errors. This explicit local candidate is separate from the unmodified governance baseline and does not establish PostgreSQL acceptance. [Report](backend-db82099-report.md) | [JSON](backend-db82099-api-result.json).
+
+## Exact governance successor verification
+
+Unmodified integration8572195 passes76 SQLite API/browser groups, no page errors. First migration launch failed; fresh unchanged rerun passed. Latest applicant1d20bfa and backenddb82099 still await integration. PostgreSQL now has a confirmed coordinated Docker VM recovery dependency. [Report](integration-8572195-report.md) | [JSON](integration-8572195-result.json).
+
+## Current backend validation alignment
+
+At ff85717:17 direct probes,30 archived backend SQLite recursive tests,76 applicant SQLite API/browser groups,96 frontend tests and nine row/repeat browser fixture groups pass. F02/F04 and English MC/CMC technical gaps are addressed; approved content, normalized schema and PostgreSQL/integration acceptance remain. [Successor report](backend-validation-report.md) | [Resolution JSON](field-mapping/backend-resolution.json). Earlier status snapshots below are historical.
+
 ## PostgreSQL runtime acceptance attempt
 
 Verified direct ctm_app login and63forced domain tables, but full acceptance remains incomplete: strict403/404 mismatch, partial focused journey, later account-query stall and owned-container cleanup failure. No PostgreSQL full-suite pass is claimed. [Exact outcomes and cleanup dependency](postgres-acceptance-report.md).

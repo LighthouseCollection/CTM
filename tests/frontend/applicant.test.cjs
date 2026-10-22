@@ -187,3 +187,28 @@ test('repeat schema rejects missing translations, nested records and malformed s
   app.answers.orders=['invalid record'];
   assert.equal(A.answerProblem(app),'answersUnavailable');
 });
+
+
+test('repeat conditions bind to the same row and preserve hidden source values',()=>{
+ const app=fixture();
+ app.questionnaire.definition.fields.push({code:'priors',type:'list',label_en:'Priors',label_ar:'سوابق',item_fields:[
+  {code:'other',type:'boolean',label_en:'Other',label_ar:'أخرى'},
+  {code:'details',type:'text',label_en:'Details',label_ar:'تفاصيل',when:{field:'other',equals:true}}]});
+ app.answers.priors=[{id:'retained-id',other:true,details:'Original hidden value',opaque:{keep:true}}];
+ assert.equal(A.definitionProblem(app),null);
+ const schema=app.questionnaire.definition.fields.at(-1).item_fields;
+ assert.equal(A.isVisible(schema[1],app.answers.priors[0]),true);
+ const hidden=A.updateRecord(app.answers.priors,0,'other',false);
+ assert.equal(A.isVisible(schema[1],hidden[0]),false);
+ assert.equal(hidden[0].details,'Original hidden value');assert.equal(hidden[0].opaque.keep,true);
+ schema[1].when.field='first_name';assert.equal(A.definitionProblem(app),'definitionUnavailable');
+});
+
+test('configured condition cycles fail closed in top-level and repeat definitions',()=>{
+ const app=fixture();
+ const fields=[{code:'a',type:'boolean',label_en:'A',label_ar:'أ',when:{field:'b',equals:true}},
+  {code:'b',type:'boolean',label_en:'B',label_ar:'ب',when:{field:'a',equals:true}}];
+ app.questionnaire.definition.fields=fields;assert.equal(A.definitionProblem(app),'definitionUnavailable');
+ app.questionnaire.definition.fields=[{code:'priors',type:'list',label_en:'Priors',label_ar:'سوابق',item_fields:fields}];
+ assert.equal(A.definitionProblem(app),'definitionUnavailable');
+});
