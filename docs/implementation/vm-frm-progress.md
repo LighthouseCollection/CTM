@@ -1,5 +1,26 @@
 # VM-FRM backend progress
 
+## Next twenty council revision/historical recovery batches
+
+All20 implemented: typed/optimistic/replay-safe note edits and latest-only edit
+capabilities; bounded findings with authorized proceeding citations, compare-save
+and exact recovery; typed/optimistic/replay-safe decisions and authoritative list
+capabilities; vote keys retaining choice/member/actual recorder under concurrency;
+private bounded historical workspace recovery, edited/publication versions and
+retained PostgreSQL provenance. Database constraints retain unique note/finding
+versions and vote replay identities. Legacy callers can omit the new optional edit
+versions; they cannot claim stale-write protection. Report versions remain required.
+
+Full isolated PostgreSQL: **528 passed, 1 skipped**; no model drift; migration
+rollback/reapply through0034. Five concurrent resource-write/replay scenarios and
+independent runtime-role note/finding/vote/workspace checks pass. Inventory remains
+**63 domain models,89 routes,56 forced-RLS tables**: no new domain models, seven
+core policy reviews still open. Schema/identity, independent browser, institution
+and live provider acceptance remain. Numbered delivery/contracts/compatibility:
+[council-revision-continuation.md](council-revision-continuation.md).
+Protected build-spec unchanged; no operational migrations, credentials, deployment
+or merge.
+
 ## Next twenty report authoring/configuration batches
 
 All20 implemented: D19 required edited-version report saves, explicit409 conflicts,

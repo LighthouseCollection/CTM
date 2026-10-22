@@ -348,6 +348,10 @@
     "handler": "historical_stage"
   },
   {
+    "route": "api/historical/<uuid:workspace_id>/",
+    "handler": "historical_detail"
+  },
+  {
     "route": "api/historical/<uuid:workspace_id>/publish/",
     "handler": "historical_publish"
   }

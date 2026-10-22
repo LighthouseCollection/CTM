@@ -90,5 +90,6 @@ urlpatterns = [
     path("api/reports/<uuid:report_id>/revisions/", api.report_revision),
     path("api/proceedings/<uuid:proceeding_id>/findings/", api.finding),
     path("api/historical/", api.historical_stage),
+    path("api/historical/<uuid:workspace_id>/", api.historical_detail),
     path("api/historical/<uuid:workspace_id>/publish/", api.historical_publish),
 ]

@@ -9,6 +9,40 @@ class VersionConflict(ValidationError):
         super().__init__("The saved version changed. Reload before saving.")
 
 
+UNBOUND_VERSION = object()
+
+
+def json_equivalent(left, right):
+    """JSONB equality: numeric scale is immaterial, booleans are distinct."""
+    if type(left) is bool or type(right) is bool:
+        return type(left) is type(right) and left == right
+    if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+        from decimal import Decimal
+        return Decimal(str(left)) == Decimal(str(right))
+    if type(left) is not type(right):
+        return False
+    if isinstance(left, dict):
+        return left.keys() == right.keys() and all(json_equivalent(left[key], right[key]) for key in left)
+    if isinstance(left, list):
+        return len(left) == len(right) and all(json_equivalent(a, b) for a, b in zip(left, right))
+    return left == right
+
+
+def revision_replay(latest, actor, expected_version, **values):
+    """Called under the resource's stable lock, after current authorization."""
+    if expected_version is UNBOUND_VERSION:
+        return False
+    if type(expected_version) is not int or expected_version < 0:
+        raise ValidationError("expected_version must be a non-negative integer.")
+    current = latest.number if latest else 0
+    if latest and current == expected_version + 1 and latest.actor_id == actor.pk:
+        if all(json_equivalent(getattr(latest, key), value) for key, value in values.items()):
+            return True
+    if expected_version != current:
+        raise VersionConflict(current)
+    return False
+
+
 def validate_json_value(value, *, maximum=500_000):
     """Accept bounded JSON data, including direct service callers outside HTTP."""
     def visit(node, depth=0):

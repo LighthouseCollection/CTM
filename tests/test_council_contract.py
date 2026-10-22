@@ -299,7 +299,8 @@ def test_d17_note_authorship_editability_and_finding_revisions(client, hearing, 
     notes_url = f"/api/proceedings/{filed.proceeding_id}/notes/"
     rows = client.get(notes_url).json()["items"]
     assert [row["version"] for row in rows] == [1, 2]
-    assert all(row["author_id"] == str(people["member"].pk) and row["can_edit"] and row["timestamp"] for row in rows)
+    assert all(row["author_id"] == str(people["member"].pk) and row["timestamp"] for row in rows)
+    assert [row["can_edit"] for row in rows] == [False, True]
     login(client, people["admin"])
     assert not any(row["can_edit"] for row in client.get(notes_url).json()["items"])
     findings_url = f"/api/proceedings/{filed.proceeding_id}/findings/"
