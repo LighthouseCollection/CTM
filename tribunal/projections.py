@@ -151,12 +151,14 @@ def released_decrees(case, actor):
 
 
 def session_capabilities(session, actor):
-    administrative = actor.role in {"admin", "secretary"} and session.state == "planned"
+    administrative = actor.role in {"admin", "secretary"} and session.state in {"draft", "planned"}
     can_reschedule = bool(administrative and not m.Hearing.objects.filter(agenda__session=session).exists()
                           and not m.AgendaTransferEvent.objects.filter(to_session=session).exists()
                           and not m.AgendaItem.objects.filter(carried_from__session=session).exists())
-    return {"can_manage": administrative, "can_close": administrative,
-            "can_reschedule": can_reschedule, "can_record_attendance": administrative}
+    return {"can_manage": administrative, "can_close": bool(administrative and session.state == "planned"),
+            "can_activate": bool(administrative and session.state == "draft"),
+            "can_reschedule": can_reschedule,
+            "can_record_attendance": bool(administrative and session.state == "planned")}
 
 
 def session_data(session, actor):
@@ -190,7 +192,7 @@ def agenda_item_data(item, actor, attendance):
     case = item.case
     application = (
         case.applications.filter(kind="petition", submitted_at__isnull=False)
-        .select_related("party", "owner")
+        .select_related("party", "owner__person")
         .order_by("-submitted_at", "-id")
         .first()
     )
@@ -204,10 +206,18 @@ def agenda_item_data(item, actor, attendance):
         case.parties.filter(account_id=application.owner_id).order_by("slot").first() if application else None
     )
     applicant_name = (applicant_party.name if applicant_party else "") or (name(application.owner) if application else "")
-    parties = case.parties.select_related("person").order_by("slot")
+    parties = case.parties.select_related("person", "account__person").order_by("slot")
     respondent = parties.exclude(pk=applicant_party.pk).first() if applicant_party else None
-    applicant_gender = applicant_party.person.gender if applicant_party and applicant_party.person_id else None
-    respondent_gender = respondent.person.gender if respondent and respondent.person_id else None
+    applicant_gender = (
+        applicant_party.person.gender
+        if applicant_party and applicant_party.person_id
+        else application.owner.person.gender if application and application.owner.person_id else None
+    )
+    respondent_gender = (
+        respondent.person.gender
+        if respondent and respondent.person_id
+        else respondent.account.person.gender if respondent and respondent.account_id and respondent.account.person_id else None
+    )
     married_years = None
     if case.marriage_date:
         married_years = item.session.date.year - case.marriage_date.year - (

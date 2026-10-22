@@ -93,7 +93,7 @@ def test_session_workspace_projects_saved_header_and_assignment_facts(client, fi
     row = data["items"][0]
     assert row["applicant_name"] == "John Smith"
     assert row["respondent_name"] == "Mary Smith"
-    assert row["applicant_gender"] in {"M", "F", None}
+    assert row["applicant_gender"] == "M"
     assert row["respondent_gender"] is None
     assert row["reason"] == "infidelity"
     assert row["married_years"] == 19
@@ -107,6 +107,18 @@ def test_case_listing_exposes_party_names_for_session_placement_choices(client, 
     login(client, people["secretary"])
     row = next(row for row in client.get("/api/cases/").json()["items"] if row["id"] == str(filed.case_id))
     assert row["party_names"] == ["John Smith", "Mary Smith"]
+
+
+def test_session_agenda_keeps_gender_pills_when_a_party_uses_its_linked_account_person(client, filed, people):
+    party = Party.objects.get(case=filed.case, account=filed.owner)
+    party.person = None
+    party.save(update_fields=["person"])
+    session = create_session(people["admin"], date(2030, 1, 2))
+    place_agenda(people["admin"], session.pk, filed.case_id, part=1)
+    login(client, people["secretary"])
+
+    row = client.get(f"/api/sessions/{session.pk}/agenda/").json()["items"][0]
+    assert row["applicant_gender"] == filed.owner.person.gender == "M"
 
 
 def test_session_workspace_exposes_the_last_recorded_hearing_recommendation(client, hearing, filed, people):
@@ -133,6 +145,8 @@ def test_session_create_api_persists_workspace_metadata(client, people):
         content_type="application/json",
     )
     assert response.status_code == 201
+    assert response.json()["state"] == "draft"
+    assert response.json()["can_activate"] is True
     assert response.json() == {
         **response.json(),
         "reference": "CS20300102",

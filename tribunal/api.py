@@ -674,6 +674,7 @@ def sessions(request):
         starts_at=starts_at,
         presiding_member=presiding_member,
         location=data.get("location", ""),
+        state="draft",
     )
     return JsonResponse(encoded(session, **session_data(session, request.user)), status=201)
 
@@ -712,6 +713,15 @@ def close_session(request, session_id):
     from tribunal.services.council import close_session as command
 
     return JsonResponse(encoded(command(request.user, session_id)))
+
+
+@endpoint(("POST",))
+def activate_session(request, session_id):
+    from tribunal.projections import session_data
+    from tribunal.services.council import activate_session as command
+
+    session = command(request.user, session_id)
+    return JsonResponse(encoded(session, **session_data(session, request.user)))
 
 
 @endpoint(("POST",))

@@ -172,7 +172,7 @@ def validate_finding_sources(actor, proceeding, sources):
 
 
 @transaction.atomic
-def create_session(actor, session_date, *, starts_at=None, presiding_member=None, location=""):
+def create_session(actor, session_date, *, starts_at=None, presiding_member=None, location="", state="planned"):
     administrator(actor)
     if starts_at is not None:
         if not timezone.is_aware(starts_at):
@@ -184,13 +184,31 @@ def create_session(actor, session_date, *, starts_at=None, presiding_member=None
     location = str(location or "").strip()
     if len(location) > 300:
         raise ValidationError("Session location is too long.")
+    if state not in {"draft", "planned"}:
+        raise ValidationError("A new session must be draft or in session.")
     session = CouncilSession.objects.create(
         date=session_date,
         starts_at=starts_at,
         presiding_member=presiding_member,
         location=location,
+        state=state,
     )
     audit(actor, "session_created", session)
+    return session
+
+
+@transaction.atomic
+def activate_session(actor, session_id):
+    """Make a prepared draft session the official in-session record."""
+    administrator(actor)
+    session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    if session.state == "planned":
+        return session
+    if session.state != "draft":
+        raise ValidationError("Only a draft tribunal session can be activated.")
+    session.state = "planned"
+    session.save(update_fields=["state"])
+    audit(actor, "session_activated", session)
     return session
 
 
@@ -253,7 +271,7 @@ def place_agenda(actor, session_id, case_id, part=2):
         administrator(actor)
     else:
         writer(actor, case)
-    if session.state != "planned":
+    if session.state not in {"draft", "planned"}:
         raise ValidationError("Invalid session/agenda part.")
     if (
         case.status == "closed"

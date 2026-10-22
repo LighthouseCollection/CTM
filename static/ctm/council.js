@@ -6,6 +6,7 @@
 
   const ADMIN_ROLES = new Set(["admin", "secretary"]);
   const DATE = /^\d{4}-\d{2}-\d{2}$/;
+  const OPEN_SESSION_STATES = new Set(["draft", "planned"]);
 
   // ---------- Pure logic (unit tested in tests/frontend/council.test.cjs) ----------
 
@@ -57,10 +58,10 @@
     return `${p.year}-${p.month}-${p.day}`;
   }
 
-  // Upcoming = planned sessions from today (Los Angeles), soonest first. Everything
-  // else (closed, or planned in the past and not yet closed) is listed after.
+  // Upcoming = open sessions from today (Los Angeles), soonest first. Everything
+  // else (closed, or open sessions in the past and not yet closed) is listed after.
   function splitSessions(rows, today) {
-    const upcoming = (rows || []).filter((s) => s.state === "planned" && s.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+    const upcoming = (rows || []).filter((s) => OPEN_SESSION_STATES.has(s.state) && s.date >= today).sort((a, b) => a.date.localeCompare(b.date));
     const ids = new Set(upcoming.map((s) => s.id));
     const past = (rows || []).filter((s) => !ids.has(s.id)).sort((a, b) => b.date.localeCompare(a.date));
     return { upcoming, past };
@@ -76,10 +77,10 @@
       current: records
         // Adjourned closes the session, but it stays here through Los Angeles
         // midnight so council can still open its record and finish notes.
-        .filter((session) => (session.state === "planned" && session.date <= today) || adjournedToday(session))
+        .filter((session) => (OPEN_SESSION_STATES.has(session.state) && session.date <= today) || adjournedToday(session))
         .sort((a, b) => b.date.localeCompare(a.date)),
       upcoming: records
-        .filter((session) => session.state === "planned" && session.date > today)
+        .filter((session) => OPEN_SESSION_STATES.has(session.state) && session.date > today)
         .sort((a, b) => a.date.localeCompare(b.date)),
       archived: records
         .filter((session) => session.state === "closed" && !adjournedToday(session))
@@ -365,6 +366,7 @@
       sessionStatusDraft: "Draft",
       sessionStatusInSession: "In session",
       sessionStatusAdjourned: "Adjourned",
+      sessionActivated: "The tribunal session is now in session.",
       adjournSessionTitle: "Adjourn this tribunal session?",
       adjournedSessionMessage: "This closes the session. It remains in Current view until midnight Los Angeles time.",
       adjournSessionAction: "Adjourn session",
@@ -637,6 +639,7 @@
       sessionStatusDraft: "مسودة",
       sessionStatusInSession: "قيد الجلسة",
       sessionStatusAdjourned: "مؤجلة",
+      sessionActivated: "جلسة المجلس الآن قيد الانعقاد.",
       adjournSessionTitle: "هل تريد تأجيل جلسة المجلس هذه؟",
       adjournedSessionMessage: "سيؤدي هذا إلى إغلاق الجلسة. ستظل في العرض «الحالي» حتى منتصف الليل في لوس أنجلوس.",
       adjournSessionAction: "تأجيل الجلسة",
@@ -1914,6 +1917,7 @@
     const data = state.data;
     const session = data.session;
     const planned = session.state === "planned";
+    const editable = session.state === "draft" || planned;
     const manage = canManage(user);
     const caseById = Object.fromEntries((data.cases || []).map((row) => [row.id, row]));
     const groups = groupAgenda(data.items);
@@ -1936,8 +1940,8 @@
     // control in the aside. EntityHeader only accepts icon-only entity actions,
     // so this uses its documented structural classes and tokenized anatomy.
     const sessionHeaderActions = (current ? [
-      planned && manage ? { icon: "folder-open", label: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) } : null,
-      planned ? { icon: "calendar", label: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) } : null,
+      editable && manage ? { icon: "folder-open", label: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) } : null,
+      editable ? { icon: "calendar", label: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) } : null,
       { icon: "settings-users", label: t("attendance"), disabled: pending, onClick: () => setDialog({ kind: "attendance" }) },
     ] : []).filter(Boolean);
     const sessionStatus = session.state === "closed" ? "adjourned" : session.state === "draft" ? "draft" : "in-session";
@@ -1997,7 +2001,7 @@
       );
 
     const addControl = (part, candidates) =>
-      planned && (part === 1 ? manage : true)
+      editable && (part === 1 ? manage : true)
         ? h(
             P.Inline,
             { wrap: true, align: "end" },
@@ -2176,11 +2180,11 @@
             h(
               P.Stack,
               { gap: "sm" },
-              h(P.Stack, { gap: "xs" },
+              h(P.Stack, { gap: "xs", align: "end" },
                 ...sessionHeaderActions.map((action) => h(
                   P.Inline,
                   { key: action.label, justify: "end" },
-                  h(P.Button, { size: "sm", icon: action.icon, variant: action.primary ? "primary" : "secondary", disabled: action.disabled, onClick: action.onClick }, action.label),
+                  h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: action.icon, variant: action.primary ? "primary" : "secondary", disabled: action.disabled, onClick: action.onClick }, action.label),
                 )),
               ),
               current ? h(P.SegmentedControl, {
@@ -2192,13 +2196,17 @@
                   { value: "in-session", label: t("sessionStatusInSession"), icon: "calendar" },
                   { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "stop" },
                 ],
-                onChange: (value) => value === "adjourned" && planned && manage && setDialog({ kind: "adjourn" }),
+                onChange: (value) => {
+                  if (value === "in-session" && session.state === "draft" && session.can_activate)
+                    run(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/activate/`, { method: "POST", body: "{}" }), "sessionActivated", onChanged);
+                  if (value === "adjourned" && planned && manage) setDialog({ kind: "adjourn" });
+                },
               }) : null,
             ),
           ) : null,
         ),
       ),
-      !planned ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
+      !editable ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
       current ? agendaTable(1) : h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
