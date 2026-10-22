@@ -406,6 +406,12 @@ test("CTM Settings users directory supports active, previous, and account-manage
   assert.match(workspaces, /\/api\/system\/accounts\/\$\{encodeURIComponent\(archiveTarget\.id\)\}\/status\//);
   assert.match(workspaces, /Manage access/);
 });
+test("Tribunal Config provides saved administration sections including mobile settings", () => {
+  const workspaces = fs.readFileSync("static/ctm/ui-workspaces.js", "utf8");
+  for (const title of ["Diocese Settings", "Document Templates", "Decision Outcomes", "Case Workflow Stages", "Canonical Reasons", "Mobile Settings"])
+    assert.match(workspaces, new RegExp(title));
+  assert.match(workspaces, /api\("\/api\/system\/settings\//);
+});
 test("CTM Settings opens the complete administration workspace for administrators", () => {
   assert.match(app, /if \(page === "settings" && window\.CTMUI\?\.canAdminister\(user\)\)\s*return h\(window\.CTMUI\.Administration/);
 });

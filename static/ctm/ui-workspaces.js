@@ -266,6 +266,50 @@
       )) : null,
       h(P.ConfirmDialog, { open: Boolean(archiveTarget), title: archiveTarget?.active ? "Archive staff user" : "Restore staff user", message: archiveTarget?.active ? `Archive ${archiveTarget.first_name} ${archiveTarget.last_name}? Their account access will be disabled.` : `Restore ${archiveTarget?.first_name || "this user"}? Their account access will be enabled.`, confirmLabel: archiveTarget?.active ? "Archive" : "Restore", cancelLabel: "Cancel", onConfirm: changeStatus, onCancel: () => !saving && setArchiveTarget(null) }, failure ? h(P.Notice, { tone: "danger" }, failure) : null)
     );
+  }  function ConfigurationWorkspace({ api, rows, lang, onNavigationGuard }) {
+    const R = window.React, P = window.Plenix, h = R.createElement;
+    const byKey = Object.fromEntries(rows.map((row) => [row.key, row]));
+    const [tab, setTab] = R.useState("diocese"), [saving, setSaving] = R.useState(false), [notice, setNotice] = R.useState(null), [failure, setFailure] = R.useState(null);
+    const defaultDiocese = { diocese_name: "Diocese of Los Angeles", system_email: "tribunal@lacopts.org", case_id_prefix: "CTM", default_session_day: "Tuesday", session_location: "", presiding_bishop: "", tribunal_secretary: "" };
+    const [diocese, setDiocese] = R.useState(byKey.diocese_settings?.value || defaultDiocese);
+    const [mobile, setMobile] = R.useState(byKey.mobile_settings?.value || { system_available_mobile: true });
+    const [drafts, setDrafts] = R.useState({}), [versions, setVersions] = R.useState({});
+    R.useEffect(() => { if (byKey.diocese_settings?.value) setDiocese(byKey.diocese_settings.value); if (byKey.mobile_settings?.value) setMobile(byKey.mobile_settings.value); }, [rows.length]);
+    const valueFor = (key, fallback) => drafts[key] === undefined ? JSON.stringify(byKey[key]?.value || fallback, null, 2) : drafts[key];
+    async function save(key, value) {
+      setSaving(true); setFailure(null); setNotice(null);
+      try {
+        await api("/api/system/settings/", { method: "POST", body: JSON.stringify({ key, value, expected_version: byKey[key]?.version || 0, schema_version: 1 }) });
+        setNotice(`${key.replaceAll("_", " ")} saved.`);
+      } catch (error) { setFailure(window.CTMCouncil.serverMessage(error)); }
+      finally { setSaving(false); }
+    }
+    function jsonCard(key, title, help, fallback) {
+      const value = valueFor(key, fallback);
+      return h(P.Panel, { title, icon: "settings" }, h(P.Stack, { gap: "md" },
+        h(P.Text, { variant: "secondary" }, help),
+        h(P.Field, { label: title }, h(P.Textarea, { value, rows: 14, disabled: saving, onChange: (event) => setDrafts({ ...drafts, [key]: event.target.value }) })),
+        h(P.FormActions, { sticky: false }, h(P.Button, { variant: "primary", disabled: saving, loading: saving, onClick: () => { try { save(key, JSON.parse(value)); } catch { setFailure("Use valid JSON before saving."); } } }, "Save changes"))
+      ));
+    }
+    const dioceseCard = h(P.Panel, { title: "Diocese Settings", icon: "church" }, h(P.Form, { label: "Diocese settings", onSubmit: (event) => { event.preventDefault(); save("diocese_settings", diocese); } }, h(P.Stack, { gap: "md" },
+      h(P.Inline, { wrap: true }, ...[["diocese_name", "Diocese name"], ["system_email", "System email"], ["case_id_prefix", "Case ID prefix"], ["session_location", "Session location"], ["presiding_bishop", "Presiding bishop"], ["tribunal_secretary", "Tribunal secretary"]].map(([key, label]) => h(P.Field, { key, label, required: key !== "case_id_prefix" }, h(P.Input, { type: key === "system_email" ? "email" : "text", value: diocese[key], disabled: saving, onChange: (event) => setDiocese({ ...diocese, [key]: event.target.value }) }))),
+        h(P.Field, { label: "Default session day", required: true }, h(P.Select, { value: diocese.default_session_day, disabled: saving, onChange: (event) => setDiocese({ ...diocese, default_session_day: event.target.value }), options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((value) => ({ value, label: value })) }))),
+      h(P.FormActions, { sticky: false }, h(P.Button, { type: "submit", variant: "primary", disabled: saving, loading: saving }, "Save changes"))
+    )));
+    const mobileCard = h(P.Panel, { title: "Mobile Settings", icon: "mobile" }, h(P.Form, { label: "Mobile settings", onSubmit: (event) => { event.preventDefault(); save("mobile_settings", mobile); } }, h(P.Stack, { gap: "md" },
+      h(P.Checkbox, { label: "System available on mobile", checked: mobile.system_available_mobile, disabled: saving, onChange: (event) => setMobile({ system_available_mobile: event.target.checked }) }),
+      h(P.Text, { variant: "secondary" }, "Desktop access remains available. This setting controls whether the CTM interface is offered on mobile devices."),
+      h(P.FormActions, { sticky: false }, h(P.Button, { type: "submit", variant: "primary", disabled: saving, loading: saving }, "Save changes"))
+    )));
+    const tabs = [
+      { value: "diocese", label: "Diocese Settings", content: dioceseCard },
+      { value: "templates", label: "Document Templates", content: jsonCard("document_templates", "Document Templates", "Create and maintain the reusable tribunal document templates.", { templates: [] }) },
+      { value: "outcomes", label: "Decision Outcomes", content: jsonCard("decision_outcomes", "Decision Outcomes", "Configure the available decision outcomes and their rationale requirement.", { outcomes: [] }) },
+      { value: "stages", label: "Case Workflow Stages", content: jsonCard("workflow_stages", "Case Workflow Stages", "Configure workflow labels, colors, and active stages.", { stages: [] }) },
+      { value: "reasons", label: "Canonical Reasons", content: jsonCard("canonical_reasons", "Canonical Reasons", "Configure canonical reasons, colors, and availability.", { reasons: [] }) },
+    ];
+    return h(P.Stack, { gap: "md" }, notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, notice) : null, failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null, h(P.Tabs, { variant: "contained", label: "Tribunal configuration", value: tab, onChange: setTab, items: tabs }), tab === "diocese" ? null : null, mobileCard);
   }  function Administration({ api, user, lang, onNavigationGuard, onCase }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), base = window.CTMCouncil;
     const [section, setSection] = R.useState("members"), [filters, setFilters] = R.useState({}), [notice, setNotice] = R.useState(false);
@@ -299,7 +343,7 @@
     const memberContent = h(R.Fragment, null,
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(false) }, t("added")) : null,
       h(MemberDirectory, { api, user, lang, rows, pending: state.pending, retry, onNavigationGuard: registerGuard, onAdded: () => { setNotice(true); retry(); } })
-    );    const configurationContent = table((row) => h(ConfigurationValue, { value: row.value, lang }));
+    );    const configurationContent = state.pending ? base.loadingView(P, h, t) : state.error ? base.loadFailure(P, h, t, retry, state.error) : h(ConfigurationWorkspace, { api, rows, lang, onNavigationGuard: registerGuard });
     const auditContent = h(R.Fragment, null,
       h(AuditFilters, { rows, filters, onChange: setFilters, lang, includeActor: false }),
       table((row) => h(Properties, { lang, entries: [["action", row.action], ["source", row.source], ["date", base.formatWhen(row.timestamp, lang)]] }))
