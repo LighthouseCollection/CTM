@@ -334,16 +334,21 @@ def close_session(actor, session_id):
 
 @transaction.atomic
 def set_session_adjourned(actor, session_id, adjourned):
-    """Record the current session's operational pause without closing it."""
+    """Adjournment closes a session while preserving a same-day Current view marker."""
     staff(actor)
     if actor.role not in {"admin", "secretary"}:
         raise PermissionDenied("Only the tribunal administrator or secretary can adjourn a session.")
     session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    if not adjourned:
+        raise ValidationError("An adjourned session remains closed; open its record to take notes.")
     if session.state != "planned":
-        raise ValidationError("Only a planned session can be adjourned or resumed.")
-    session.adjourned_at = timezone.now() if adjourned else None
+        raise ValidationError("Only an in-session tribunal session can be adjourned.")
+    # Keep all normal close-side effects (agenda completion, carryovers, and
+    # queued communication release) in the established command.
+    session = close_session(actor, session_id)
+    session.adjourned_at = timezone.now()
     session.save(update_fields=["adjourned_at"])
-    audit(actor, "session_adjourned" if adjourned else "session_resumed", session)
+    audit(actor, "session_adjourned", session)
     return session
 
 

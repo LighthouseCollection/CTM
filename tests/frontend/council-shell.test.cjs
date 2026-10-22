@@ -39,11 +39,11 @@ test("council navigation groups sessions and cases into their requested destinat
 test("session lifecycle changes refresh their parent destination list", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /function SessionWorkspace\(\{[^}]*onChanged/);
-  assert.match(council, /"sessionClosed",\s*onChanged/);
+  assert.match(council, /"hearingAdjournedNotice",\s*onChanged/);
   assert.match(council, /onChanged: retry/);
 });
 
-test("the current session uses the default EntityHeader with real session facts and actions", () => {
+test("the current session uses the default EntityHeader, compact named actions, and modal record views", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /mode === "current"/);
   assert.match(council, /h\(P\.EntityHeader/);
@@ -57,10 +57,17 @@ test("the current session uses the default EntityHeader with real session facts 
   assert.match(council, /t\("scheduledCasesForHearing"\)/);
   const sessionFacts = council.slice(council.indexOf("const sessionFacts"), council.indexOf("const sessionHeaderActions"));
   assert.doesNotMatch(sessionFacts, /location/);
-  assert.match(council, /api\(`\/api\/sessions\/\$\{sessionId\}\/adjourn\//);
-  assert.match(council, /hearingAdjourned/);
-  assert.match(council, /resumeHearing/);
-  assert.match(council, /h\(P\.SplitView/);
+  assert.match(council, /h\(P\.SegmentedControl/);
+  assert.match(council, /sessionStatusDraft/);
+  assert.match(council, /sessionStatusInSession/);
+  assert.match(council, /sessionStatusAdjourned/);
+  assert.match(council, /adjournedSessionMessage/);
+  assert.match(council, /kind: "attendance"/);
+  assert.match(council, /dialog\?\.kind === "attendance"/);
+  assert.match(council, /kind: "agenda"/);
+  assert.match(council, /title: t\("openCase"\)/);
+  const agendaTable = council.slice(council.indexOf("const agendaTable"), council.indexOf("return h(", council.indexOf("const agendaTable")));
+  assert.doesNotMatch(agendaTable, /P\.SplitView/);
 });
 
 test("council pages are enabled only when their module is loaded", () => {

@@ -68,15 +68,21 @@
 
   function sessionBuckets(rows, today) {
     const records = rows || [];
+    const adjournedToday = (session) =>
+      session.state === "closed" &&
+      Boolean(session.adjourned_at) &&
+      todayInLosAngeles(new Date(session.adjourned_at)) === today;
     return {
       current: records
-        .filter((session) => session.state === "planned" && session.date <= today)
+        // Adjourned closes the session, but it stays here through Los Angeles
+        // midnight so council can still open its record and finish notes.
+        .filter((session) => (session.state === "planned" && session.date <= today) || adjournedToday(session))
         .sort((a, b) => b.date.localeCompare(a.date)),
       upcoming: records
         .filter((session) => session.state === "planned" && session.date > today)
         .sort((a, b) => a.date.localeCompare(b.date)),
       archived: records
-        .filter((session) => session.state === "closed")
+        .filter((session) => session.state === "closed" && !adjournedToday(session))
         .sort((a, b) => b.date.localeCompare(a.date)),
     };
   }
@@ -351,11 +357,18 @@
       resumeHearing: "Resume Hearing",
       hearingAdjournedNotice: "The hearing has been adjourned.",
       hearingResumedNotice: "The hearing has resumed.",
+      sessionStatusDraft: "Draft",
+      sessionStatusInSession: "In session",
+      sessionStatusAdjourned: "Adjourned",
+      adjournSessionTitle: "Adjourn this tribunal session?",
+      adjournedSessionMessage: "This closes the session. It remains in Current until midnight Los Angeles time so council members can reopen the record to take notes.",
+      adjournSessionAction: "Adjourn session",
       addAssignmentCase: "Add a Case to Be Assigned",
       addHearingCase: "Add a Case to Hearings",
       attendance: "Council Attendance",
       scheduledCasesForHearing: "Scheduled Cases for Hearing",
       respondent: "Respondent",
+      yearsMarried: "Years married",
       reason: "Reason",
       married: "Married",
       submitted: "Submitted",
@@ -613,11 +626,18 @@
       resumeHearing: "استئناف الجلسة",
       hearingAdjournedNotice: "تم تأجيل الجلسة.",
       hearingResumedNotice: "تم استئناف الجلسة.",
+      sessionStatusDraft: "مسودة",
+      sessionStatusInSession: "قيد الجلسة",
+      sessionStatusAdjourned: "مؤجلة",
+      adjournSessionTitle: "هل تريد تأجيل جلسة المجلس هذه؟",
+      adjournedSessionMessage: "سيؤدي هذا إلى إغلاق الجلسة. ستظل في «الحالية» حتى منتصف الليل في لوس أنجلوس ليتمكن أعضاء المجلس من فتح السجل وإضافة ملاحظات.",
+      adjournSessionAction: "تأجيل الجلسة",
       addAssignmentCase: "إضافة قضية للتعيين",
       addHearingCase: "إضافة قضية لجلسات النظر",
       attendance: "حضور أعضاء المجلس",
       scheduledCasesForHearing: "القضايا المجدولة للنظر",
       respondent: "الطرف الآخر",
+      yearsMarried: "سنوات الزواج",
       reason: "السبب",
       married: "مدة الزواج",
       submitted: "تاريخ التقديم",
@@ -1877,9 +1897,6 @@
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
-    const [selectedPart1, setSelectedPart1] = R.useState(null);
-    const [selectedPart2, setSelectedPart2] = R.useState(null);
-    const [attendanceVisible, setAttendanceVisible] = R.useState(!current);
 
     if (state.pending && !state.data) return loadingView(P, h, t);
     if (state.error) return loadFailure(P, h, t, retry, state.error);
@@ -1904,27 +1921,10 @@
       { label: t("casesToAssign"), value: String(pendingAssignments), data: true },
       { label: t("scheduledCasesForHearing"), value: String(scheduledHearings), data: true },
     ];
-    const sessionHeaderActions = [
-      current && planned && manage
-        ? { icon: "folder-open", label: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) }
-        : null,
-      current && planned
-        ? { icon: "calendar", label: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) }
-        : null,
-      current
-        ? { icon: "settings-users", label: t("attendance"), disabled: pending, onClick: () => setAttendanceVisible((visible) => !visible) }
-        : null,
-      current && planned && manage
-        ? { icon: session.adjourned_at ? "play" : "pause", label: t(session.adjourned_at ? "resumeHearing" : "hearingAdjourned"), disabled: pending,
-            onClick: () => run(() => api(`/api/sessions/${sessionId}/adjourn/`, { method: "POST", body: JSON.stringify({ adjourned: !session.adjourned_at }) }), session.adjourned_at ? "hearingResumedNotice" : "hearingAdjournedNotice") }
-        : null,
-      session.can_reschedule === true
-        ? { icon: "calendar", label: t("rescheduleAction"), disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }
-        : null,
-      (typeof session.can_close === "boolean" ? session.can_close : manage && planned)
-        ? { icon: "archive", label: t("closeSession"), disabled: pending, tone: "danger", onClick: () => setDialog({ kind: "close" }) }
-        : null,
-    ].filter(Boolean);
+    // EntityHeader actions are intentionally icon-only in the CDN. The session
+    // commands below are named compact buttons, as requested for this workflow.
+    const sessionHeaderActions = [];
+    const sessionStatus = session.state === "closed" ? "adjourned" : session.state === "draft" ? "draft" : "in-session";
 
     async function run(action, success, extra) {
       setPending(true);
@@ -1972,13 +1972,6 @@
       run(
         () => api(`/api/agenda/${encodeURIComponent(dialog.row.id)}/hear/`, { method: "POST", body: "{}" }),
         (result) => (result && result.state === "presenter_absent" ? "absentNotice" : "heardNotice"),
-      );
-
-    const close = () =>
-      run(
-        () => api(`/api/sessions/${encodeURIComponent(sessionId)}/close/`, { method: "POST", body: "{}" }),
-        "sessionClosed",
-        onChanged,
       );
 
     const addControl = (part, candidates) =>
@@ -2086,21 +2079,19 @@
       },
     };
 
-    const selectedAgenda = (rows, selected) => rows.find((row) => row.id === selected);
     const personPill = (value, kind) => value
       ? h(P.Badge, { icon: "user", tone: kind === "applicant" ? "active" : kind === "respondent" ? "negative" : "neutral" }, value)
       : t(kind === "clergy" ? "unassigned" : "notRecorded");
-    const splitPart = (n) => {
+    const agendaTable = (n) => {
       const first = n === 1;
       const rows = groups[n];
-      const selected = first ? selectedPart1 : selectedPart2;
-      const select = first ? setSelectedPart1 : setSelectedPart2;
-      const chosen = selectedAgenda(rows, selected);
       const title = first ? t("casesToAssign") : t("scheduledCasesForHearing");
       const columns = first
         ? [
             { title: t("applicant"), field: "applicant_name", kind: "name", render: (row) => personPill(row.applicant_name, "applicant") },
             { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent") },
+            { title: t("reason"), field: "reason" },
+            { title: t("yearsMarried"), field: "married_years", render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
           ]
         : [
             { title: "#", field: "position", kind: "name" },
@@ -2108,33 +2099,9 @@
             { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent") },
             { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
           ];
+      columns.push({ title: t("open"), field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => setDialog({ kind: "agenda", row }) }, t("open")) });
       return h(P.Panel, { key: n, title: first ? t("casesToAssign") : t("scheduledCasesForHearing") },
-        h(P.SplitView, {
-          label: title,
-          firstLabel: title,
-          first: h(window.CTMShell.Table, {
-            label: title,
-            rows,
-            columns,
-            selected,
-            onSelect: select,
-            empty: t(`part${n}Empty`),
-          }),
-          second: h(P.ReadingPane, { label: chosen?.case_number || title },
-            chosen
-              ? h(AgendaItemCard, {
-                  compact: true,
-                  row: chosen,
-                  session,
-                  caseRow: caseById[chosen.case_id],
-                  user,
-                  lang,
-                  canAssign: recorder,
-                  ...agendaCallbacks,
-                })
-              : h(P.EmptyState, { title }),
-          ),
-        }),
+        h(window.CTMShell.Table, { label: title, rows, columns, empty: t(`part${n}Empty`) }),
       );
     };
 
@@ -2144,27 +2111,41 @@
       !current && onBack ? h(P.Inline, null, h(P.Button, { variant: "ghost", onClick: onBack }, t("backSessions"))) : null,
       h(P.EntityHeader, {
         headingLevel: 1,
-        title: t("tribunalSession"),
+        title: sessionLabel(session.date, t),
         subtitle: formatSessionStart(session.starts_at, lang) || t("timeNotRecorded"),
         media: { icon: "calendar", hue: "blue" },
         facts: sessionFacts,
         actions: sessionHeaderActions,
       }),
+      current
+        ? h(
+            P.Stack,
+            { gap: "sm" },
+            h(
+              P.Inline,
+              { wrap: true },
+              h(P.Button, { size: "sm", icon: "folder-open", disabled: pending || !planned || !manage, onClick: () => setDialog({ kind: "place", part: 1 }) }, t("addAssignmentCase")),
+              h(P.Button, { size: "sm", icon: "calendar", disabled: pending || !planned, onClick: () => setDialog({ kind: "place", part: 2 }) }, t("addHearingCase")),
+              h(P.Button, { size: "sm", icon: "settings-users", disabled: pending, onClick: () => setDialog({ kind: "attendance" }) }, t("attendance")),
+            ),
+            h(P.SegmentedControl, {
+              label: t("tribunalSession"),
+              size: "sm",
+              value: sessionStatus,
+              options: [
+                { value: "draft", label: t("sessionStatusDraft"), icon: "edit" },
+                { value: "in-session", label: t("sessionStatusInSession"), icon: "calendar" },
+                { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "pause" },
+              ],
+              onChange: (value) => value === "adjourned" && planned && manage && setDialog({ kind: "adjourn" }),
+            }),
+          )
+        : null,
       !planned ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
-      renderAttendance && attendanceVisible
-        ? renderAttendance({
-            session,
-            members: data.members,
-            attendance: data.attendance,
-            key: `${sessionId}-${data.loadedAt}`,
-            // Presenter capability depends on attendance, so reload the agenda after each save.
-            onSaved: retry,
-          })
-        : null,
-      current ? splitPart(1) : h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
-      current ? splitPart(2) : part(1),
+      current ? agendaTable(1) : h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
+      current ? agendaTable(2) : part(1),
       current ? null : part(2),
       data.items.length && !data.items.some((row) => "hearing_id" in row) ? h(P.Notice, { tone: "info" }, t("outcomeDependency")) : null,
       dialog?.kind === "outcome"
@@ -2198,6 +2179,48 @@
             },
           })
         : null,
+      dialog?.kind === "attendance" && renderAttendance
+        ? h(
+            P.Dialog,
+            { open: true, size: "lg", title: t("attendance"), onClose: () => !pending && setDialog(null) },
+            renderAttendance({
+              session,
+              members: data.members,
+              attendance: data.attendance,
+              key: `${sessionId}-${data.loadedAt}`,
+              onSaved: retry,
+            }),
+          )
+        : null,
+      dialog?.kind === "agenda"
+        ? h(
+            P.Dialog,
+            { open: true, size: "lg", title: t("openCase"), onClose: () => setDialog(null) },
+            h(AgendaItemCard, {
+              row: dialog.row,
+              session,
+              caseRow: caseById[dialog.row.case_id],
+              user,
+              lang,
+              canAssign: recorder,
+              ...agendaCallbacks,
+            }),
+          )
+        : null,
+      h(P.ConfirmDialog, {
+        open: dialog?.kind === "adjourn",
+        title: t("adjournSessionTitle"),
+        message: t("adjournedSessionMessage"),
+        confirmLabel: t("adjournSessionAction"),
+        cancelLabel: t("cancel"),
+        destructive: true,
+        onConfirm: () => run(
+          () => api(`/api/sessions/${encodeURIComponent(sessionId)}/adjourn/`, { method: "POST", body: JSON.stringify({ adjourned: true }) }),
+          "hearingAdjournedNotice",
+          onChanged,
+        ),
+        onCancel: () => !pending && setDialog(null),
+      }),
       dialog?.kind === "place"
         ? h(
             P.Dialog,
@@ -2336,19 +2359,6 @@
           onCancel: () => !pending && setDialog(null),
         },
         failure && dialog?.kind === "present" ? h(P.Notice, { tone: "danger" }, failure) : null,
-      ),
-      h(
-        P.ConfirmDialog,
-        {
-          open: dialog?.kind === "close",
-          title: t("closeTitle"),
-          message: t("closeMessage"),
-          confirmLabel: t("closeSession"),
-          cancelLabel: t("cancel"),
-          onConfirm: close,
-          onCancel: () => !pending && setDialog(null),
-        },
-        failure && dialog?.kind === "close" ? h(P.Notice, { tone: "danger" }, failure) : null,
       ),
     );
   }
