@@ -7,7 +7,7 @@ from tribunal.models import Account, AgendaItem, AgendaTransferEvent, Notificati
 from tribunal.services.applications import submit_application, review_application, save_answers
 from tribunal.services.council import (
     assign_case, create_session, place_agenda, record_attendance, hear_case,
-    save_hearing_outcome, close_session, transfer_agenda_item,
+    save_hearing_outcome, close_session, transfer_agenda_item, update_session,
 )
 from tribunal.services.decisions import record_decision, cast_vote, approve_decision
 from tribunal.services.reports import create_request, send_request, complete_request
@@ -538,3 +538,15 @@ def test_active_session_agenda_requires_an_audited_override_to_move(filed, peopl
     transfer = AgendaTransferEvent.objects.get(destination_item=destination)
     assert transfer.case_id == app.case_id
     assert transfer.reason == "The council ran out of time."
+
+
+def test_session_metadata_can_be_edited_before_a_hearing(filed, people):
+    session = create_session(people["admin"], date(2030, 2, 2), location="Original location")
+    updated = update_session(
+        people["secretary"], session.pk, date(2030, 2, 9),
+        starts_at=datetime(2030, 2, 9, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
+        presiding_member=people["president"], location="St. Mark Coptic Orthodox Church",
+    )
+    assert updated.date == date(2030, 2, 9)
+    assert updated.presiding_member_id == people["president"].pk
+    assert updated.location == "St. Mark Coptic Orthodox Church"

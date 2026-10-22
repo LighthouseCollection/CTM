@@ -198,6 +198,34 @@ def create_session(actor, session_date, *, starts_at=None, presiding_member=None
 
 
 @transaction.atomic
+def update_session(actor, session_id, session_date, *, starts_at=None, presiding_member=None, location=""):
+    administrator(actor)
+    session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    if session.state not in {"draft", "planned"}:
+        raise ValidationError("Closed sessions cannot be edited.")
+    if CouncilSession.objects.exclude(pk=session.pk).filter(date=session_date).exists():
+        raise ValidationError("A council session already exists on that date.")
+    if starts_at is None or not timezone.is_aware(starts_at):
+        raise ValidationError("Session start time must include a UTC offset.")
+    if starts_at.astimezone(ZoneInfo("America/Los_Angeles")).date() != session_date:
+        raise ValidationError("Session start time must fall on the session date in Los Angeles.")
+    if presiding_member is None or not presiding_member.is_active or presiding_member.role == "applicant":
+        raise ValidationError("Presiding member must be an active council account.")
+    location = str(location or "").strip()
+    if not location or len(location) > 300:
+        raise ValidationError("Session location is required and must be at most 300 characters.")
+    if session.date != session_date and Hearing.objects.filter(agenda__session=session).exists():
+        raise ValidationError("A session with a held hearing keeps its original date.")
+    session.date = session_date
+    session.starts_at = starts_at
+    session.presiding_member = presiding_member
+    session.location = location
+    session.save(update_fields=["date", "starts_at", "presiding_member", "location"])
+    audit(actor, "session_updated", session)
+    return session
+
+
+@transaction.atomic
 def activate_session(actor, session_id):
     """Make a prepared draft session the official in-session record."""
     administrator(actor)

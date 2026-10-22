@@ -969,6 +969,21 @@ def sessions(request):
     return JsonResponse(encoded(session, **session_data(session, request.user)), status=201)
 
 
+@endpoint(("PATCH",))
+def update_session(request, session_id):
+    from tribunal.projections import session_data
+    from tribunal.services.council import update_session as command
+
+    data = body(request)
+    session = command(
+        request.user, session_id, date.fromisoformat(data["date"]),
+        starts_at=datetime.fromisoformat(data["starts_at"]),
+        presiding_member=m.Account.objects.get(pk=data["presiding_member_id"]),
+        location=data.get("location", ""),
+    )
+    return JsonResponse(encoded(session, **session_data(session, request.user)))
+
+
 @endpoint(("GET", "POST"))
 def agenda(request, session_id):
     from tribunal.projections import agenda_item_data, session_data

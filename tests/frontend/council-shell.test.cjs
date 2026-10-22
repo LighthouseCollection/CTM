@@ -258,3 +258,15 @@ test("new council sessions preselect Metropolitan Serapion as presiding", () => 
   assert.match(council, /row\.name === "H\.E\. Metropolitan Serapion"/);
   assert.match(council, /if \(!presiding && defaultPresiding\?\.id\) setPresiding\(defaultPresiding\.id\)/);
 });
+
+
+test("upcoming sessions use a full table and load the selected session into the form", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const source = council.slice(council.indexOf("function SessionList"), council.indexOf("function AgendaItemCard"));
+  assert.doesNotMatch(source, /P\.SplitView/);
+  assert.match(source, /function editSession\(row\)/);
+  assert.match(source, /onSelect: \(id\) => editSession\(rows\.find/);
+  assert.match(source, /method: editing \? "PATCH" : "POST"/);
+  assert.match(source, /presiding_member_name/);
+  assert.match(source, /locationNotRecorded/);
+});

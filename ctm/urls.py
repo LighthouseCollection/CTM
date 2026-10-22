@@ -34,6 +34,7 @@ urlpatterns = [
     path("api/council/assignment-authorities/<uuid:role_id>/revoke/", api.revoke_assignment_authority),
     path("api/council/enroll/", api.enroll),
     path("api/sessions/", api.sessions),
+    path("api/sessions/<uuid:session_id>/", api.update_session),
     path("api/sessions/<uuid:session_id>/agenda/", api.agenda),
     path("api/sessions/<uuid:session_id>/attendance/", api.attendance),
     path("api/sessions/<uuid:session_id>/close/", api.close_session),

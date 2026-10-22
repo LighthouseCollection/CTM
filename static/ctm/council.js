@@ -88,12 +88,12 @@
     };
   }
 
-  function sessionDateProblem(value, existing) {
+  function sessionDateProblem(value, existing, ignoreId = null) {
     if (!DATE.test(value || "")) return "dateRequired";
     const parsed = new Date(`${value}T00:00:00Z`);
     if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value)
       return "dateRequired";
-    if ((existing || []).some((row) => row.date === value)) return "dateTaken";
+    if ((existing || []).some((row) => row.id !== ignoreId && row.date === value)) return "dateTaken";
     return null;
   }
 
@@ -400,6 +400,9 @@
       locationRequired: "Enter the session location.",
       dateTaken: "A council session already exists on that date.",
       sessionCreated: "The council session was created.",
+      sessionUpdated: "The council session was updated.",
+      editSession: "Edit council session",
+      saveSession: "Save changes",
       planned: "Planned",
       closed: "Closed",
       reference: "Reference",
@@ -682,6 +685,9 @@
       locationRequired: "أدخل موقع الجلسة.",
       dateTaken: "توجد جلسة مجلس بالفعل في هذا التاريخ.",
       sessionCreated: "تم إنشاء جلسة المجلس.",
+      sessionUpdated: "تم تحديث جلسة المجلس.",
+      editSession: "تعديل جلسة المجلس",
+      saveSession: "حفظ التغييرات",
       planned: "مجدولة",
       closed: "مغلقة",
       reference: "المرجع",
@@ -1282,9 +1288,31 @@
     const titleKey = mode === "upcoming" ? "sessionsUpcoming" : mode === "archived" ? "sessionsArchived" : "sessions";
     const emptyKey = mode === "upcoming" ? "noUpcomingSessions" : mode === "archived" ? "noArchivedSessions" : "noSessions";
 
+    const selectedSession = loaded.find((row) => row.id === selected) || null;
+    const editing = Boolean(selectedSession);
+    function editSession(row) {
+      select(row.id);
+      setDate(row.date || "");
+      setTime(row.starts_at ? row.starts_at.slice(11, 16) : "");
+      setPresiding(row.presiding_member_id || defaultPresiding?.id || "");
+      setLocation(row.location || "");
+      setProblem(null);
+      setFailure(null);
+      setCreated(false);
+    }
+    function resetSessionForm() {
+      select(null);
+      setDate("");
+      setTime("");
+      setPresiding(defaultPresiding?.id || "");
+      setLocation("");
+      setProblem(null);
+      setFailure(null);
+    }
+
     async function create(event) {
       event.preventDefault();
-      const issue = sessionDateProblem(date, loaded);
+      const issue = sessionDateProblem(date, loaded, selectedSession?.id);
       const validation = issue || (!time ? "timeRequired" : !presiding ? "presidingRequired" : !location.trim() ? "locationRequired" : null);
       setProblem(validation);
       setCreated(false);
@@ -1292,15 +1320,12 @@
       setPending(true);
       setFailure(null);
       try {
-        await api("/api/sessions/", {
-          method: "POST",
+        await api(editing ? `/api/sessions/${encodeURIComponent(selectedSession.id)}/` : "/api/sessions/", {
+          method: editing ? "PATCH" : "POST",
           body: JSON.stringify({ date, starts_at: laIso(date, time), presiding_member_id: presiding, location: location.trim() }),
         });
-        setDate("");
-        setTime("");
-        setPresiding("");
-        setLocation("");
-        setCreated(true);
+        resetSessionForm();
+        setCreated(editing ? "sessionUpdated" : "sessionCreated");
         retry();
       } catch (error) {
         setFailure(error && error.status === 409 ? t("dateTaken") : serverMessage(error, t));
@@ -1325,7 +1350,7 @@
       mode === "upcoming" && canManage(user)
         ? h(
             P.Panel,
-            { icon: "calendar", title: t("newSession") },
+            { icon: "calendar", title: t(editing ? "editSession" : "newSession") },
             h(
               P.Form,
               { onSubmit: create, label: t("newSession"), noValidate: true },
@@ -1354,27 +1379,26 @@
                 h(P.Input, { value: location, maxLength: 300, disabled: pending,
                   onChange: (event) => { setLocation(event.target.value); setProblem(null); } })),
               failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-              created ? h(P.Notice, { tone: "success" }, t("sessionCreated")) : null,
+              created ? h(P.Notice, { tone: "success" }, t(created)) : null,
               h(
                 P.FormActions,
                 { sticky: false },
-                h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("createSession")),
+                editing ? h(P.Button, { type: "button", variant: "secondary", disabled: pending, onClick: resetSessionForm }, t("cancel")) : null,
+                h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t(editing ? "saveSession" : "createSession")),
               ),
             ),
           )
         : null,
-      h(P.SplitView, {
-              label: t(titleKey), firstLabel: t(titleKey),
-              first: h(window.CTMShell.Table, {
-                label: t(titleKey), rows, selected, onSelect: select, empty: t(emptyKey),
-                columns: [{ title: t("sessionDate"), field: "date", kind: "name" }, { title: t("statusLabel"), field: "state", render: (row) => t(row.state) }],
-              }),
-              second: h(P.ReadingPane, { label: t(titleKey) },
-                rows.some((row) => row.id === selected) ? h(SessionWorkspace, { key: selected, api, lang, user, sessionId: selected, compact: true,
-                  onCase, onBack: () => select(null), onSession: select, onChanged: retry, renderAttendance })
-                  : h(P.EmptyState, { title: t(titleKey) }),
-              ),
-            }),
+      h(window.CTMShell.Table, {
+        label: t(titleKey), rows, selected, onSelect: (id) => editSession(rows.find((row) => row.id === id)), empty: t(emptyKey),
+        columns: [
+          { title: t("sessionDate"), field: "date", kind: "name", minWidth: "8rem" },
+          { title: t("sessionTime"), field: "starts_at", minWidth: "11rem", render: (row) => formatSessionStart(row.starts_at, lang) || t("timeNotRecorded") },
+          { title: t("presiding"), field: "presiding_member_name", minWidth: "14rem", render: (row) => row.presiding_member_name || t("presidingNotRecorded") },
+          { title: t("location"), field: "location", minWidth: "16rem", render: (row) => row.location || t("locationNotRecorded") },
+          { title: t("statusLabel"), field: "state", minWidth: "8rem", render: (row) => t(row.state) },
+        ],
+      }),
     );
   }
 
