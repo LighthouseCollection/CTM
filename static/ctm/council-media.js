@@ -1948,6 +1948,8 @@
       t = translator(lang);
     const [reason, setReason] = R.useState(null);
     const override = window.CTM_PDF_VIEWER || null; // optional { moduleUrl, workerUrl } when served separately
+    // Phones start at 50% so a typical page fits its frame (documented initialZoom steps: 50…200).
+    const narrow = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 600px)").matches;
     return h(
       P.Stack,
       { gap: "sm" },
@@ -1956,6 +1958,7 @@
         kind: "pdf",
         src: inline,
         label: file.name,
+        initialZoom: narrow ? 50 : 100,
         strings: pdfStrings(t),
         onError: (e) => setReason((e && e.reason) || "engine"),
         ...(override && override.moduleUrl ? { pdfModuleUrl: override.moduleUrl, pdfWorkerUrl: override.workerUrl } : {}),

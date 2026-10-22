@@ -78,3 +78,11 @@ test("no persistent browser storage or cache APIs in council code", () => {
     assert.doesNotMatch(src, /localStorage|sessionStorage|caches\.open|CacheStorage/, f);
   }
 });
+
+test("phones open PDFs at 50% (documented initialZoom); wider screens at 100% (real-backend finding)", () => {
+  const narrow = preview("en", { matchMedia: () => ({ matches: true }) });
+  assert.equal(byName(narrow.tree, "DocumentViewer")[0].props.initialZoom, 50);
+  const wide = preview("en", { matchMedia: () => ({ matches: false }) });
+  assert.equal(byName(wide.tree, "DocumentViewer")[0].props.initialZoom, 100);
+  assert.equal(byName(preview().tree, "DocumentViewer")[0].props.initialZoom, 100, "no matchMedia: default size");
+});
