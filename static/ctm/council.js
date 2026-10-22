@@ -208,6 +208,7 @@
       assigned: "Assigned case manager",
       unassigned: "Not yet assigned",
       recordAssignment: "Record assignment",
+      recordReassignment: "Record reassignment",
       assignTitle: "Record case manager assignment",
       assignHelp:
         "The President authorizes the assignment; you record it. The previous and new case managers and each applicant are notified privately.",
@@ -316,6 +317,7 @@
       assigned: "مسؤول القضية",
       unassigned: "لم يُعيَّن بعد",
       recordAssignment: "تسجيل التعيين",
+      recordReassignment: "تسجيل إعادة التعيين",
       assignTitle: "تسجيل تعيين مسؤول القضية",
       assignHelp:
         "يعتمد الرئيس التعيين وتقوم أنت بتسجيله. ويتم إخطار مسؤول القضية السابق والجديد وكل مقدم طلب بشكل خاص.",
@@ -743,7 +745,7 @@
     const actions = [];
     if (planned && row.state === "scheduled" && row.part === 1 && canManage(user))
       actions.push(
-        h(P.Button, { key: "assign", size: "xs", onClick: () => onAssign(row) }, t("recordAssignment")),
+        h(P.Button, { key: "assign", size: "xs", onClick: () => onAssign(row) }, t(assignedName ? "recordReassignment" : "recordAssignment")),
       );
     if (planned && row.state === "scheduled" && row.part === 2 && mine)
       actions.push(
@@ -774,7 +776,9 @@
     );
   }
 
-  function SessionWorkspace({ api, lang, user, sessionId, attendance, onCase, onBack }) {
+  // renderAttendance({ session, members, attendance, key }) lets the shell keep its
+  // existing attendance component while this module supplies fresh data after each action.
+  function SessionWorkspace({ api, lang, user, sessionId, renderAttendance, onCase, onBack }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -786,7 +790,10 @@
           api("/api/cases/"),
           api("/api/council/members/"),
           api("/api/sessions/"),
-        ]).then(([agenda, cases, members, sessions]) => ({
+          api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`),
+        ]).then(([agenda, cases, members, sessions, attendance]) => ({
+          loadedAt: Date.now(),
+          attendance: attendance.items,
           session: agenda.session,
           items: agenda.items,
           cases: cases.items,
@@ -949,7 +956,14 @@
       !planned ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
-      attendance || null,
+      renderAttendance
+        ? renderAttendance({
+            session,
+            members: data.members,
+            attendance: data.attendance,
+            key: `${sessionId}-${data.loadedAt}`,
+          })
+        : null,
       h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
       part(1),
       part(2),
