@@ -1,0 +1,114 @@
+{
+  "scope": "Read-only isolated review database with test-authenticated admin; actual Django API, no provider acceptance",
+  "page_errors": [],
+  "screens": [
+    {
+      "screen": "Tribunal Sessions",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Tribunal Sessions\nNew council session\nSession date *\nCreate session\nUpcoming sessions\nCouncil Session 2026-10-28\nPlanned \u00b7 \u2068CS20261028\u2069"
+    },
+    {
+      "screen": "Cases",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Cases\nFind a case by number or case manager\nCase number\nAssigned case manager\nStatus\n20261020-06\nFr. Jonah Labib\nOpen\n20261020-05\nFr. David Elias\nOpen\n20261020-04\nFr. Youhanna Youssef\nOpen\n20261020-03\nNot yet assigned\nOpen\n20261020-02\nNot yet assigned\nOpen\n20261020-01\nNot yet assigned\nOpen\n1\u20136 of 6\n"
+    },
+    {
+      "screen": "Archived",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Archived\nFind a case by number or case manager\nCase number\nAssigned case manager\nStatus\n20261020-08\nFr. Antony Attallah\nClosed\n20261020-07\nFr. Youhana Ibrahim\nClosed\n1\u20132 of 2\nRows per page\n25\n50\n100\n\u2039\n1\n\u203a"
+    },
+    {
+      "screen": "Statistics and Reports",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Statistics and Reports\nOperational counts for council planning. These are not rates: tribunal cases have no population denominator, so no divorce or approval rate is implied.\nCases\nOpen cases\n6\nOpen cases awaiting a case manager\n3\nClosed cases\n2\nOpen cases by case manager\nFr. David Elias\n1\nFr. Jonah"
+    },
+    {
+      "screen": "Q Search",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Search\nSearch documents\nSearches the text of open and closed case documents you are permitted to see. Latest versions by default.\nSearch\nInclude earlier file versions"
+    },
+    {
+      "screen": "Timeline",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Timeline\nKey case events, oldest first. Every recorded action is listed in Case Audit.\nNo key events are recorded yet.\nCase manager history\nOct 21, 2026, 5:34 PM \u2014 \u2068Fr. Youhanna Youssef\u2069 \u00b7 authorized by \u2068H.E. Metropolitan Serapion\u2069 \u00b7 recorded by \u2068Fr. Mauritius Mikhail\u2069"
+    },
+    {
+      "screen": "Spouses",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Spouses\nWilliam Hayes\nCTM reference\n20261020-04-WH19840314M\nPortal account\nRegistered\nAmelia Hayes\nCTM reference\n20261020-04-AH19930314F\nPortal account\nRegistered\nAdd the other spouse"
+    },
+    {
+      "screen": "Petition",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Petition\nEach spouse's formal submission is shown as submitted. Council notes below are separate and never change it.\nWilliam Hayes\n\nAccepted \u00b7 Oct 21, 2026, 5:34 PM\n\nApproved question wording is not yet available here, so answer codes are shown exactly as stored.\nFirst name\nWilliam\nLast name\nHayes\nDate of birth\n1984-03-14\nGender\nM\nMarriage date\n2014-06-15\ngrounds\ndesertion\nPetition statement\nI request council consideration following our separati"
+    },
+    {
+      "screen": "Reports",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Completed reports\nRequests\nMarriage circumstances interview\n2026-10-21\nSelect a report"
+    },
+    {
+      "screen": "Hearings",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Hearings\nAgenda appearances of this case in recent council sessions.\nThis case has not been placed on a council session agenda."
+    },
+    {
+      "screen": "Evidence",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Evidence\nInclude older versions\nNo technically cleared files are available in this section.\nSelect a file"
+    },
+    {
+      "screen": "Documents",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Documents\nInclude older versions\n20261020-04-MC-20261021-1741.pdf\nMC \u00b7 Version 3\n20261020-04-CDD-20261021-1741.pdf\nCDD \u00b7 Version 2\n20261020-04-CMC-20261021-1741.pdf\nCMC \u00b7 Version 2\n20261020-04-MC-20261021-1741.pdf\nMC \u00b7 Version 2\n20261020-04-CDD-20261021-1741.pdf\nCDD \u00b7 Version 2\n20261020-04-CMC-20261021-1741.pdf\nCMC \u00b7 Version 2\n20261020-04-PHOTO-20261021-1734.png\nPHOTO \u00b7 Version 1\n20261020-04-PHOTO-20261021-1734.png\nPHOTO \u00b7 Version 1\nSelect a file"
+    },
+    {
+      "screen": "Professional Assessments",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Professional Assessments\nMedical and psychological reports are kept separate from ordinary documents. Their contents are shown only when the person's signed release covers the council, and they are never sent to external AI processing.\nThe institution's signed-release wording has not been approved yet, so applicants cannot sign releases and report contents stay hidden.\nAssessment requests\nNew assessment request\nNo assessment requests yet.\nSubmitt"
+    },
+    {
+      "screen": "Decision & Voting",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Decision & Voting\nNo decision has been recorded in this view yet.\nRecord decision version\nDecision type *\nChoose the decision type.\nDissolution Granted \u2014 Permission to Remarry (Applicant)\nDissolution Granted \u2014 Permission to Remarry (Respondent)\nDissolution Granted \u2014 Permission to Remarry (Both Parties)\nDissolution Granted \u2014 Conditional Permission to Remarry\nDeclaration of Nullity \u2014 Permission to Remarry Granted\nDeclaration of Nullity \u2014 Conditiona"
+    },
+    {
+      "screen": "Decree",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Decree\nNo decision has been recorded yet."
+    },
+    {
+      "screen": "Appeals",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Appeals\nAppeals, and later petitions filed against the closed case by a spouse who had not filed before. Each has its own council result.\nNo appeals have been filed for this case.\nSelect an appeal"
+    },
+    {
+      "screen": "Communications",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Communications\nFr. Youhanna Youssef\n\nOct 21, 2026, 5:34 PM\n\nYour documents have been received for review.\n\nNew message\nRecipients\nWilliam Hayes\nAmelia Hayes\nSend\nSend Immediately\nSend after council session\nSend\nCall records\n\nManual records of phone calls. CTM does not place or record calls.\n\nNo calls have been recorded.\nRecord a call\nPerson called *\nSelect who was called.\nWilliam Hayes\nAmelia Hayes\nWhen the call took place *\nOutcome *\nNotes (opti"
+    },
+    {
+      "screen": "Case Audit",
+      "rendered": true,
+      "load_error": false,
+      "text_excerpt": "Case Audit\nSearch audit events\n1 events\ndemo_scenario_loaded\nFr. Raphael Maher \u00b7 Oct 21, 2026, 5:34 PM"
+    }
+  ]
+}

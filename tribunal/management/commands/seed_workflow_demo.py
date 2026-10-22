@@ -326,7 +326,7 @@ class Command(BaseCommand):
                     idempotency_key=f"{DATASET}:{app.pk}",
                     actor=owner,
                     manifest=[
-                        {"file_id": str(f.pk), "sha256": f.sha256} for f in files
+                        {"id": str(f.pk), "sha256": f.sha256} for f in files
                     ],
                     attestation={
                         "dataset": DATASET,

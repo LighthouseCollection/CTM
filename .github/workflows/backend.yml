@@ -23,6 +23,11 @@ jobs:
         with:
           version: '0.8.22'
       - run: uv sync --frozen --python 3.12
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate combined applicant and council frontend
+        run: node --test tests/frontend/*.test.cjs
       - run: uv run python manage.py makemigrations --check --dry-run --settings=ctm.settings_postgres_test
       - run: uv run pytest --ds=ctm.settings_postgres_test -q
       - run: uv run python docs/architecture/build-spec/validate_spec.py

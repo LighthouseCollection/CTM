@@ -39,6 +39,15 @@ def test_workflow_demo_is_repeatable_private_and_delivery_free(
     assert all(not a.has_usable_password() for a in Account.objects.all())
     assert not Account.objects.exclude(microsoft_subject="").exists()
     assert not Outbox.objects.exists()
+    # Returned review still exposes the exact formally submitted original to council.
+    from tribunal.models import Application
+    from tribunal.services.files import authorized_file
+
+    returned = Application.objects.filter(status="returned").first()
+    original = FileVersion.objects.filter(attachment__application=returned).first()
+    reviewer = Account.objects.get(email="frraphaelmaher@lacopts.org")
+    assert original is not None
+    assert authorized_file(reviewer, original.pk).pk == original.pk
     from tribunal.models import ReportRequest
 
     assert all(request.questions[0]["en"] for request in ReportRequest.objects.all())

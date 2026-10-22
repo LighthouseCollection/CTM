@@ -1,0 +1,28 @@
+{
+  "postgres": {
+    "passed": 490,
+    "skipped": 2,
+    "model_drift": false,
+    "scope": "Dedicated disposable PostgreSQL16; full combined pytest suite including restricted role and concurrency tests"
+  },
+  "frontend": {
+    "passed": 180
+  },
+  "seed_sqlite": {
+    "passed": 3,
+    "fix": "Synthetic original manifests now use id; returned formal original remains readable by council"
+  },
+  "browser_actual_api": {
+    "passed": 66,
+    "scope": "SQLite/synthetic sessions; controlled providers and scan policy; no live-service acceptance"
+  },
+  "preview": {
+    "url": "http://localhost:18844/",
+    "root": "D:\\Documents\\Projects\\Projects_Applications\\CTM-Integration",
+    "data": "Copied isolated review DB/media; original preserved",
+    "authentication": "Provider-only Microsoft configuration retained; smoke test used test-session authentication"
+  },
+  "image_build": "in progress at report creation",
+  "main_merged": false,
+  "production_deployed": false
+}
