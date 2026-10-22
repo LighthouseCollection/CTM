@@ -506,3 +506,7 @@ test("case hearings use full-width current and past tabs with an in-progress hea
   assert.match(councilCase, /recommendationOnly: "Recommendation \(no final decision yet\)"/);
   assert.doesNotMatch(councilCase.slice(councilCase.indexOf("function CaseHearings"), councilCase.indexOf("// ---------- Petition")), /CTMShell\.Workspace/);
 });
+
+test("All Active Cases uses the requested Material folder icon", () => {
+  assert.match(app, /id: "cases", icon: h\(P\.Icon, \{ name: "folder", "aria-hidden": true \}\), label: t\("allCases"\)/);
+});
