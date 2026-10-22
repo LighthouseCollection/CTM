@@ -1442,13 +1442,13 @@
         label: t(titleKey), rows, selected, onSelect: select, empty: t(emptyKey), isStatic: true,
         columns: [
           { title: t("sessionDate"), field: "date", kind: "name", minWidth: "8rem" },
-          { title: t("sessionTime"), field: "starts_at", minWidth: "8rem", render: (row) => formatTime(row.starts_at, lang) || t("timeNotRecorded") },
+          { title: t("sessionTime"), field: "starts_at", minWidth: "8rem", pill: false, render: (row) => formatTime(row.starts_at, lang) || t("timeNotRecorded") },
           ...(mode === "archived" ? [
-            { title: t("adjournEndTime"), field: "adjourned_at", minWidth: "8rem", render: (row) => formatTime(row.adjourned_at, lang) || t("timeNotRecorded") },
-            { title: t("assignedCases"), field: "assigned_case_count", minWidth: "8rem", render: (row) => String(row.assigned_case_count ?? 0) },
-            { title: t("caseHearings"), field: "hearing_case_count", minWidth: "8rem", render: (row) => String(row.hearing_case_count ?? 0) },
+            { title: t("adjournEndTime"), field: "adjourned_at", minWidth: "8rem", pill: false, render: (row) => formatTime(row.adjourned_at, lang) || t("timeNotRecorded") },
+            { title: t("assignedCases"), field: "assigned_case_count", minWidth: "8rem", pill: false, render: (row) => String(row.assigned_case_count ?? 0) },
+            { title: t("caseHearings"), field: "hearing_case_count", minWidth: "8rem", pill: false, render: (row) => String(row.hearing_case_count ?? 0) },
           ] : []),
-          { title: t("statusLabel"), field: "state", minWidth: "8rem", render: (row) => t(sessionStatusKey(row.state)) },
+          { title: t("statusLabel"), field: "state", minWidth: "8rem", pill: false, render: (row) => t(sessionStatusKey(row.state)) },
         ],
       }),
       mode === "archived" && selectedSession
@@ -1463,10 +1463,10 @@
                   { title: t("caseNumber"), field: "case_number", kind: "name", minWidth: "8rem" },
                   { title: t("applicant"), field: "applicant_name", minWidth: "10rem" },
                   { title: t("respondent"), field: "respondent_name", minWidth: "10rem" },
-                  { title: t("reason"), field: "reason", minWidth: "9rem", render: (row) => row.reason || t("notRecorded") },
-                  { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", render: (row) => row.assigned_member_name || t("unassigned") },
-                  { title: t("statusLabel"), field: "state", minWidth: "9rem", render: (row) => t(row.state) },
-                  { title: t("actions"), field: "case_id", minWidth: "6rem", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
+                  { title: t("reason"), field: "reason", minWidth: "9rem", pill: false, render: (row) => row.reason || t("notRecorded") },
+                  { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
+                  { title: t("statusLabel"), field: "state", minWidth: "9rem", pill: false, render: (row) => t(row.state) },
+                  { title: t("actions"), field: "case_id", minWidth: "6rem", pill: false, render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
                 ],
               }),
             ) : null,
@@ -1477,10 +1477,10 @@
                   { title: t("caseNumber"), field: "case_number", kind: "name", minWidth: "8rem" },
                   { title: t("applicant"), field: "applicant_name", minWidth: "10rem" },
                   { title: t("respondent"), field: "respondent_name", minWidth: "10rem" },
-                  { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", render: (row) => row.assigned_member_name || t("unassigned") },
-                  { title: t("statusLabel"), field: "state", minWidth: "9rem", render: (row) => t(row.state) },
-                  { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", render: (row) => row.previous_recommendation || t("notRecorded") },
-                  { title: t("actions"), field: "case_id", minWidth: "6rem", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
+                  { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
+                  { title: t("statusLabel"), field: "state", minWidth: "9rem", pill: false, render: (row) => t(row.state) },
+                  { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, render: (row) => row.previous_recommendation || t("notRecorded") },
+                  { title: t("actions"), field: "case_id", minWidth: "6rem", pill: false, render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
                 ],
               }),
             ) : null,
@@ -2174,13 +2174,14 @@
         h(
           P.Stack,
           { gap: "sm" },
-          h(P.DataTable, {
+          h(P.DataGrid, {
+            density: "compact", cells: "pill", typeIcons: false,
             label: t(`part${n}`), data: groups[n], index: "id", narrow: "table", mode: "fill", isStatic: true,
             empty: t(`part${n}Empty`),
             columns: [
               { title: t("caseNumber"), field: "case_number", kind: "name" },
-              { title: t("statusLabel"), field: "state", render: (row) => t(row.state === "assigned" ? "assigned_state" : row.state) },
-              { title: t("agenda"), field: "id", render: (row) => h(AgendaItemCard, {
+              { title: t("statusLabel"), field: "state", pill: false, render: (row) => t(row.state === "assigned" ? "assigned_state" : row.state) },
+              { title: t("agenda"), field: "id", pill: false, render: (row) => h(AgendaItemCard, {
               compact: true,
               key: row.id,
               row,
@@ -2259,8 +2260,8 @@
       if (!value) return t(kind === "clergy" ? "unassigned" : "notRecorded");
       const normalizedGender = gender === "M" ? "male" : gender === "F" ? "female" : undefined;
       return normalizedGender
-        ? h(P.DataPill, { gender: normalizedGender }, value)
-        : h(P.DataPill, { person: true }, value);
+        ? h(P.DataPill, { size: "md", gender: normalizedGender }, value)
+        : h(P.DataPill, { size: "md", person: true }, value);
     };
     const agendaTable = (n) => {
       const first = n === 1;
@@ -2274,22 +2275,22 @@
       const title = first ? t("casesToAssign") : t("scheduledCasesForHearing");
       const columns = first
         ? [
-            { title: t("applicant"), field: "applicant", kind: "name", minWidth: "10.5rem", render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
-            { title: t("respondent"), field: "respondent", minWidth: "10.5rem", render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
+            { title: t("applicant"), field: "applicant", kind: "name", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
+            { title: t("respondent"), field: "respondent", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("reason"), field: "reason", minWidth: "6.5rem" },
-            { title: t("yearsMarried"), field: "married_years", minWidth: "7.5rem", render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
-            { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: t("actions"), field: "open_action", minWidth: "7rem", render: (row) => h(P.Inline, { gap: "xs" },
+            { title: t("yearsMarried"), field: "married_years", minWidth: "7.5rem", pill: false, render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
+            { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
+            { title: t("actions"), field: "open_action", minWidth: "7rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ]
         : [
             { title: "#", field: "position", kind: "name", width: "3rem" },
-            { title: t("applicant"), field: "applicant", minWidth: "10.5rem", render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
-            { title: t("respondent"), field: "respondent", minWidth: "10.5rem", render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
-            { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "11rem", render: (row) => row.previous_recommendation || t("notRecorded") },
-            { title: t("actions"), field: "open_action", minWidth: "7rem", render: (row) => h(P.Inline, { gap: "xs" },
+            { title: t("applicant"), field: "applicant", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
+            { title: t("respondent"), field: "respondent", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
+            { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
+            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "11rem", pill: false, render: (row) => row.previous_recommendation || t("notRecorded") },
+            { title: t("actions"), field: "open_action", minWidth: "7rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ];
@@ -2844,18 +2845,18 @@
     const columns = archived
       ? [
           { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
-          { title: t("caseApplicant"), field: "applicant", kind: "name", sorter: "string" },
-          { title: t("caseRespondent"), field: "respondent", kind: "name", sorter: "string" },
-          { title: t("caseAssignee"), field: "manager", kind: "name", sorter: "string" },
-          { title: t("caseClosedDate"), field: "closedAt", sorter: "string" },
+          { title: t("caseApplicant"), field: "applicant", type: "person", kind: "name", sorter: "string" },
+          { title: t("caseRespondent"), field: "respondent", type: "person", kind: "name", sorter: "string" },
+          { title: t("caseAssignee"), field: "manager", type: "person", kind: "name", sorter: "string" },
+          { title: t("caseClosedDate"), field: "closedAt", type: "date", sorter: "string" },
           { title: t("statusLabel"), field: "status", sorter: "string" },
         ]
       : [
           { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
-          { title: t("caseApplicant"), field: "applicant", kind: "name", sorter: "string" },
-          { title: t("caseRespondent"), field: "respondent", kind: "name", sorter: "string" },
+          { title: t("caseApplicant"), field: "applicant", type: "person", kind: "name", sorter: "string" },
+          { title: t("caseRespondent"), field: "respondent", type: "person", kind: "name", sorter: "string" },
           { title: t("caseReason"), field: "reason", sorter: "string" },
-          ...(view === "active" ? [{ title: t("caseAssignee"), field: "manager", kind: "name", sorter: "string" }] : []),
+          ...(view === "active" ? [{ title: t("caseAssignee"), field: "manager", type: "person", kind: "name", sorter: "string" }] : []),
           { title: t("statusLabel"), field: "status", sorter: "string" },
         ];
     const table = h(
@@ -2867,9 +2868,10 @@
         !archived ? h(P.Checkbox, { label: t("showClosedCases"), checked: includeClosed, onChange: (event) => setIncludeClosed(event.target.checked) }) : null,
       ),
       rows.length
-        ? h(P.DataTable, {
+        ? h(P.DataGrid, {
+            density: "compact", cells: "pill", typeIcons: false,
             label: title || t(archived ? "archivedTitle" : "casesTitle"), data: rows, index: "id", selected: selected ? [selected] : [],
-            mode: "fill", pageSize: 25, headerMenu: false, rowMenuButton: false, narrow: "table",
+            mode: "pages", pageSize: 25, headerMenu: false, rowMenuButton: false, narrow: "table",
             keyColumns: columns.map((column) => column.field), columns,
             strings: { perPage: t("tablePerPage"), range: t("tableRange"), count: t("tableCount"), pages: t("tablePages"), empty: t("noMatchingCases"), failed: t("loadFailed"), retry: t("retry") },
             onRowClick: (row) => select(row.id),

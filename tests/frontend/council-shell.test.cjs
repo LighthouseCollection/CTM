@@ -8,8 +8,9 @@ const shellLayout = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
 
 test("static table headers retain their full label on hover", () => {
   const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
-  assert.match(css, /\.plx-table__title > \.plx-table__type-icon/);
-  assert.match(css, /\.plx-table--static \.plx-table__grid-col:hover[\s\S]*--plx-comp-data-grid-context-hover-reserve: 0/);
+  assert.doesNotMatch(css, /\.plx-table__title > \.plx-table__type-icon/);
+  assert.doesNotMatch(css, /--plx-comp-data-grid-context-hover-reserve/);
+  assert.match(shellLayout, /typeIcons: false/);
 });
 
 test("session layout assets use a current cache version", () => {
@@ -115,7 +116,7 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(council, /\/plan\//);
   assert.match(council, /session\.state === "draft" && session\.can_activate/);
   assert.match(council, /\/activate\//);
-  assert.match(council, /P\.DataPill, \{ gender: normalizedGender \}/);
+  assert.match(council, /P\.DataPill, \{ size: "md", gender: normalizedGender \}/);
   assert.match(council, /name: "calendar", size: "lg"/);
   assert.match(council, /sessionHeaderActions\.map/);
   assert.match(council, /h\(P\.Button, \{ className: "ctm-session-header-action", size: "sm", icon: action\.icon/);
@@ -148,9 +149,9 @@ test("the current session keeps labeled actions and its status control inside th
   assert.ok(assignmentColumns.lastIndexOf("field: \"open_action\"") > assignmentColumns.lastIndexOf("field: \"assigned_member_name\""), "Cases to assign ends with Open");
   const scheduledColumns = agendaTable.slice(agendaTable.indexOf("        : ["), agendaTable.indexOf("      return h(P.Panel"));
   assert.ok(scheduledColumns.lastIndexOf("field: \"open_action\"") > scheduledColumns.lastIndexOf("field: \"previous_recommendation\""), "Scheduled hearings ends with Open");
-  assert.match(shellLayout, /headerMenu: false/);
-  assert.match(shellLayout, /resizable: false/);
-  assert.match(shellLayout, /h\(P\.DataTable/);
+  assert.match(shellLayout, /headerMenu: !isStatic/);
+  assert.match(shellLayout, /resizable: !isStatic/);
+  assert.match(shellLayout, /h\(P\.DataGrid/);
 });
 
 test("council pages are enabled only when their module is loaded", () => {
@@ -316,8 +317,8 @@ test("agenda tables reserve enough space for complete header labels", () => {
   assert.match(council, /assignedTo"\), field: "assigned_member_name", minWidth: "12rem"/);
   assert.doesNotMatch(css, /ctm-session-agenda-grid[\s\S]*min-block-size/);
   assert.match(council, /className: "ctm-session-agenda-grid"[\s\S]*isStatic: true/);
-  assert.match(council, /h\(P\.DataPill, \{ gender: normalizedGender \}, value\)/);
-  assert.match(council, /h\(P\.DataPill, \{ person: true \}, value\)/);
+  assert.match(council, /h\(P\.DataPill, \{ size: "md", gender: normalizedGender \}, value\)/);
+  assert.match(council, /h\(P\.DataPill, \{ size: "md", person: true \}, value\)/);
   assert.doesNotMatch(council, /DataPill, \{ gender: normalizedGender, fill: true \}/);
 });
 
@@ -340,7 +341,7 @@ test("upcoming sessions use a full table and load the selected session into the 
   assert.match(source, /const \[formOpen, setFormOpen\] = R\.useState\(false\)/);
   assert.match(source, /onClick: startCreate/);
   assert.match(source, /mode === "upcoming" && canManage\(user\) && formOpen/);
-  assert.match(source, /title: t\("sessionTime"\), field: "starts_at", minWidth: "8rem", render: \(row\) => formatTime\(row\.starts_at, lang\)/);
+  assert.match(source, /title: t\("sessionTime"\), field: "starts_at", minWidth: "8rem", pill: false, render: \(row\) => formatTime\(row\.starts_at, lang\)/);
   assert.doesNotMatch(source.slice(source.indexOf("columns: ["), source.indexOf("]),\n      }),")), /presiding_member_name/);
   assert.doesNotMatch(source.slice(source.indexOf("columns: ["), source.indexOf("]),\n      }),")), /locationNotRecorded/);
 });
