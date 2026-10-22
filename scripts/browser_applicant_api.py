@@ -512,7 +512,8 @@ try:
                 candidate_id,candidate_revision,candidate_actor=fixture_db(finance_candidate_fixture)
                 candidate_context=browser.new_context()
                 try:
-                    candidate_context.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":session_cookie(candidate_actor),"url":BASE}])
+                    candidate_cookie=fixture_db(lambda actor=candidate_actor:session_cookie(actor))
+                    candidate_context.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":candidate_cookie,"url":BASE}])
                     ready_candidate=candidate_context.request.get(f"{BASE}/api/applications/{candidate_id}/").json()
                     assert ready_candidate["can_checkout"] and not ready_candidate["can_resume_checkout"]
                     candidate_intent=fixture_db(lambda state=payment_state:finance_state_fixture(candidate_id,candidate_revision,state))
