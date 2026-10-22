@@ -913,11 +913,35 @@ try:
         files=request_files.json()["items"];consent_original=next(file for file in files if file["purpose"]=="consent")
         report_original=next(file for file in files if file["purpose"]=="report")
         assert all(file["scan_state"]=="clean" and file["download_url"]==f"/api/files/{file['id']}/" for file in files)
-        assert staff.request.get(f"{BASE}/api/files/{report_original['id']}/").status==403
+        def request_original_snapshot():
+            from tribunal.models import FileVersion
+            from tribunal.services.files import private_path
+            row=FileVersion.objects.select_related("attachment").get(pk=report_original["id"])
+            return {"attachment_id":str(row.attachment_id),"owner_id":str(row.attachment.owner_id),
+                "visibility":row.attachment.visibility,"report_request_id":str(row.attachment.report_request_id),
+                "bytes":private_path(row.object_key).read_bytes()}
+        original_snapshot=fixture_db(request_original_snapshot)
+        staff_denied=staff.request.get(f"{BASE}/api/files/{report_original['id']}/")
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            staff_missing=staff.request.get(f"{BASE}/api/files/{uuid.uuid4()}/")
+            assert staff_denied.status==staff_missing.status==404,(staff_denied.status,staff_missing.status)
+            assert staff_denied.json()==staff_missing.json(),(staff_denied.text(),staff_missing.text())
+        else:assert staff_denied.status==403,staff_denied.text()
         alien=browser.new_context();alien.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["outsider"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
-        assert alien.request.get(f"{BASE}/api/requests/{assessment_request['id']}/files/").status==403
-        assert alien.request.get(f"{BASE}/api/files/{report_original['id']}/").status==403
+        alien_listing=alien.request.get(f"{BASE}/api/requests/{assessment_request['id']}/files/")
+        alien_file=alien.request.get(f"{BASE}/api/files/{report_original['id']}/")
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            missing_listing=alien.request.get(f"{BASE}/api/requests/{uuid.uuid4()}/files/")
+            missing_file=alien.request.get(f"{BASE}/api/files/{uuid.uuid4()}/")
+            assert alien_listing.status==missing_listing.status==404,(alien_listing.status,missing_listing.status)
+            assert alien_listing.json()==missing_listing.json(),(alien_listing.text(),missing_listing.text())
+            assert alien_file.status==missing_file.status==404,(alien_file.status,missing_file.status)
+            assert alien_file.json()==missing_file.json(),(alien_file.text(),missing_file.text())
+        else:
+            assert alien_listing.status==403,alien_listing.text()
+            assert alien_file.status==403,alien_file.text()
         alien.close()
+        assert fixture_db(request_original_snapshot)==original_snapshot
         checks.append("Actual request multipart uploads derive subject/case/proceeding, preserve consent/report purpose and deny other subjects and unconsented council bytes")
         fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=report_original["id"],task="scan",result="pending"))
         page.get_by_role("button",name="Refresh request and files",exact=True).click()
