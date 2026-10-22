@@ -11,6 +11,8 @@
     P = window.Plenix,
     h = R.createElement;
   const config = JSON.parse(document.getElementById("ctm-config").textContent);
+  // Separately loaded council workspace module (static/ctm/council.js), if present.
+  const councilModule = window.CTMCouncil || null;
   const words = {
     en: {
       event_report_requested: "A report has been requested.",
@@ -377,7 +379,16 @@
       error.status = 401;
       throw error;
     }
-    if (!response.ok) throw new Error("request_failed");
+    if (!response.ok) {
+      const error = new Error("request_failed");
+      error.status = response.status;
+      try {
+        error.data = await response.json();
+      } catch {
+        error.data = null;
+      }
+      throw error;
+    }
     return response.json();
   }
   function MessageComposer({ record, sessions, council, t, onSent }) {
@@ -1032,7 +1043,7 @@
           messages: messages.items,
           sessions: sessions.items,
         }));
-      else if (page === "session" && selection)
+      else if (page === "session" && selection && !(councilModule && user.portal === "council"))
         request = Promise.all([
           api(`/api/sessions/${selection}/agenda/`),
           api("/api/council/members/"),
@@ -1042,6 +1053,12 @@
           members: members.items,
           attendance: attendance.items,
         }));
+      else if (
+        councilModule &&
+        user.portal === "council" &&
+        ["review", "sessions", "session"].includes(page)
+      )
+        request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
       else if (page === "applications") request = api("/api/applications/");
       else if (["home", "cases", "archived", "past"].includes(page)) {
@@ -1456,6 +1473,40 @@
             }),
           ),
         );
+      if (councilModule && council && page === "review")
+        return h(councilModule.ReviewWorkspace, {
+          api,
+          lang,
+          user,
+          onCase: (id) => go("documents", id),
+          onBack: () => go("home"),
+        });
+      if (councilModule && council && page === "sessions")
+        return h(councilModule.SessionList, {
+          api,
+          lang,
+          user,
+          onOpen: (id) => go("session", id),
+        });
+      if (councilModule && council && page === "session")
+        return h(councilModule.SessionWorkspace, {
+          key: selection,
+          api,
+          lang,
+          user,
+          sessionId: selection,
+          onCase: (id) => go("case", id),
+          onBack: () => go("sessions"),
+          renderAttendance: ({ session, members, attendance, key }) =>
+            h(SessionAttendance, {
+              key,
+              sessionId: selection,
+              session,
+              members,
+              initial: attendance,
+              t,
+            }),
+        });
       if (page === "session")
         return h(
           P.Stack,
@@ -1543,6 +1594,14 @@
           P.Stack,
           null,
           heading(t(page)),
+          councilModule && council && page === "home"
+            ? h(councilModule.ReviewQueuePanel, {
+                api,
+                lang,
+                user,
+                onOpen: () => go("review"),
+              })
+            : null,
           caseList(
             data.items.filter((row) =>
               ["archived", "past"].includes(page)
