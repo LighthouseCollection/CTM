@@ -80,6 +80,7 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         assert result.value.status==422 and result.value.request.post_data_json=={"expected_version":1}
         expect(page.get_by_role("button",name="Confirm action",exact=True)).to_be_disabled()
         assert detail(ctx,app_id)["status"]=="draft"
+        transition={}
         try:
             with page.expect_response(lambda r:r.url==f"{base}/api/applications/{app_id}/" and r.request.method=="GET") as refreshed:
                 page.get_by_role("button",name="Refresh application",exact=True).click()
@@ -88,30 +89,50 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
             refreshed_body=refreshed_row.json()
             assert refreshed_body["id"]==app_id and refreshed_body["status"]=="draft" and refreshed_body["version"]==2
             assert refreshed_body["can_delete_draft"] is True
+            transition["authoritative_refresh"]={"status":refreshed_row.status,"application_status":refreshed_body["status"],
+                "version":refreshed_body["version"],"can_delete_draft":refreshed_body["can_delete_draft"]}
             expect(page.get_by_role("button",name="Delete unsubmitted draft",exact=True)).to_be_enabled()
             checks.append("Browser cancel sends no deletion; a concurrent saved revision rejects stale confirmation and requires authoritative refresh")
             page.get_by_role("button",name="Delete unsubmitted draft",exact=True).click()
             expect(page.get_by_role("button",name="Confirm action",exact=True)).to_be_visible()
-            with page.expect_response(lambda r:r.url==base+"/api/account/settings/" and r.request.method=="POST") as language:
+            transition["initial_english_dialog"]=True
+            with page.expect_response(lambda r:r.url==base+"/api/account/settings/" and r.request.method=="POST") as arabic_language:
                 page.get_by_role("button",name="العربية",exact=True).click()
-            assert language.value.status==200,language.value.text()
+            assert arabic_language.value.status==200,arabic_language.value.text()
+            transition["arabic_language_status"]=arabic_language.value.status
             page.set_viewport_size({"width":390,"height":1000})
             expect(page.get_by_role("button",name="تأكيد الإجراء",exact=True)).to_be_visible()
+            transition["arabic_dialog"]=True
+            assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
+            with page.expect_response(lambda r:r.url==base+"/api/account/settings/" and r.request.method=="POST") as english_language:
+                page.get_by_role("button",name="English",exact=True).click()
+            assert english_language.value.status==200,english_language.value.text()
+            transition["english_language_status"]=english_language.value.status
+            expect(page.get_by_role("button",name="Confirm action",exact=True)).to_be_visible()
+            transition["restored_english_dialog"]=True
+            with page.expect_response(lambda r:r.url==f"{base}/api/applications/{app_id}/delete-draft/") as result:
+                page.get_by_role("button",name="Confirm action",exact=True).click()
+            assert result.value.status==200 and result.value.request.post_data_json=={"expected_version":2}
+            transition["delete"]={"status":result.value.status,"payload":result.value.request.post_data_json}
+            with page.expect_response(lambda r:r.url==f"{base}/api/applications/{app_id}/" and r.request.method=="GET") as deleted_refresh:
+                page.get_by_role("button",name="Refresh application",exact=True).click()
+            deleted_body=deleted_refresh.value.json()
+            assert deleted_refresh.value.status==200 and deleted_body["id"]==app_id and deleted_body["status"]=="deleted"
+            assert deleted_body["can_delete_draft"] is False
+            expect(page.get_by_text("Application status: Deleted",exact=True)).to_be_visible()
+            transition["deleted_refresh"]={"status":deleted_refresh.value.status,"application_status":deleted_body["status"],
+                "can_delete_draft":deleted_body["can_delete_draft"],"ui_status_visible":True}
+            expect(page.get_by_role("button",name="Delete unsubmitted draft",exact=True)).to_have_count(0)
+            artifact=Path(output);artifact.mkdir(parents=True,exist_ok=True)
+            (artifact/"draft-delete-confirmation-state.json").write_text(json.dumps(transition,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
         except Exception:
             artifact=Path(output);artifact.mkdir(parents=True,exist_ok=True)
-            diagnostic={"application_id":app_id,"server_detail":detail(ctx,app_id),"url":page.url,
+            diagnostic={"application_id":app_id,"transitions":transition,"server_detail":detail(ctx,app_id),"url":page.url,
                 "buttons":page.get_by_role("button").all_text_contents(),"body":page.locator("body").inner_text(),
                 "viewport":page.viewport_size}
             (artifact/"draft-delete-confirmation-failure.json").write_text(json.dumps(diagnostic,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
             page.screenshot(path=str(artifact/"draft-delete-confirmation-failure.png"),full_page=True,caret="initial")
             raise
-        assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
-        page.get_by_role("button",name="English",exact=True).click()
-        with page.expect_response(lambda r:r.url==f"{base}/api/applications/{app_id}/delete-draft/") as result:
-            page.get_by_role("button",name="Confirm action",exact=True).click()
-        assert result.value.status==200 and result.value.request.post_data_json=={"expected_version":2}
-        page.get_by_role("button",name="Refresh application",exact=True).click()
-        expect(page.get_by_role("button",name="Delete unsubmitted draft",exact=True)).to_have_count(0)
         assert detail(ctx,app_id)["status"]=="deleted"
         assert fixture_db(lambda:m.AnswerRevision.objects.filter(application_id=app_id).count())==0
         assert fixture_db(lambda:m.FileVersion.objects.filter(pk=original_file).count())==0
