@@ -58,6 +58,7 @@ dependencies. No answer flattening or guessed replacement wording is introduced.
 | Endpoint | Frontend request | Required backend guarantee |
 | --- | --- | --- |
 | POST `/api/applications/` | `{kind:"petition"}` | Reuse active draft; canonical eligibility/claims; published approved questionnaire |
+| POST `/api/applications/` | `{kind:"appeal",case_id}` | Own linked case; closed proceeding including reopened-sibling exception; reuse own pending appeal; bound appeal questionnaire; no reopening on start/submit |
 | POST `/api/applications/{id}/` | `{answers,expected_version}` | Existing optimistic check, immutable answer revision and attribution |
 | POST `/api/applications/{id}/checkout/` | `{attestation:{accepted:true,name},expected_version}` | Add expected-version enforcement under lock; freeze declaration/revision/manifest and reuse provider candidate |
 | POST `/api/applications/{id}/submit/` | `{idempotency_key,expected_version,attestation}` | Add expected-version enforcement; genuine fee/waiver; exact attestation and manifest; idempotent finalization |
@@ -183,3 +184,19 @@ cumulative total, never added together as separate refunds. Other events use
 Refresh is explicit and also follows answer-version/application-status/fee changes.
 The pending-candidate attestation/resume contract remains a separate dependency;
 this read projection does not supply a checkout URL or original attestation.
+
+## Appeal entry and supplement dependencies
+
+The appeal starter consumes the actual application acknowledgement, requiring
+matching `case_id`, `kind:"appeal"` and a valid application UUID before navigation.
+The shared shell proposal preserves both closed-case and reopened-sibling contexts
+through the authorized proceeding list; eligibility remains server-owned. A stale
+start acknowledgement cannot navigate after the case view has been left.
+
+The existing bound editor handles new-information draft answers, required originals,
+declaration/fee and submission. Submitted appeal answers are immutable. Supplements
+will use existing POST `/api/appeals/{id}/additions/` with `{text,file_ids}` only after
+own authoritative `can_supplement` and supplement history are projected. Own history
+must include attributed text, exact safe evidence versions and timestamps without
+other spouse/council content. An uncertain append needs authoritative refresh because
+the existing endpoint does not supply idempotent retry semantics.

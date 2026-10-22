@@ -1,6 +1,6 @@
 # Applicant acceptance reconciliation
 
-Checked 2026-10-21 Pacific against backend `c16976cb5d7719ec623fe638d5a0c8a5107756a9`.
+Checked 2026-10-21 Pacific against backend `5cb1428c79b6d6ea48d8792add0430535adbb41e`.
 References: GitHub #9, original Fxx/AS-Fxx acceptance review and later direct-owner
 clarifications on main. External review findings are hypotheses until verified.
 All checks below use isolated synthetic records; no live provider/antivirus claim.
@@ -42,7 +42,7 @@ and index suppression, private intermediate corrections, and obsolete queued-ale
 discard with EmailMessage.send mocked and never called. Live search service, live
 mail delivery and PostgreSQL RLS remain separate acceptance surfaces.
 
-All24 real API/browser scenario groups pass in the default mode. An explicitly
+All27 real API/browser scenario groups pass in the default mode. An explicitly
 selected baseline-only mode (`CTM_APPLICANT_ACCEPTANCE=baseline`) omits this privacy
 scenario and is not full returned-privacy acceptance. No shared backend or protected
 specification changes are made in the applicant stream.

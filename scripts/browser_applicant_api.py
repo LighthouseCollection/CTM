@@ -84,6 +84,10 @@ fields.append({"code":"restraining_orders","type":"list","label_en":"Restraining
 QuestionnaireVersion.objects.create(purpose="petition",number=1,published=True,
     definition={"fields":fields,"required_document_categories":["CMC"]},
     declaration_en="Synthetic test declaration only",declaration_ar="إقرار تجريبي للاختبار فقط")
+QuestionnaireVersion.objects.create(purpose="appeal",number=1,published=True,
+    definition={"fields":[{"code":"new_information","type":"textarea","required":True,
+        "label_en":"New information for consideration","label_ar":"معلومات جديدة للنظر فيها"}]},
+    declaration_en="Synthetic appeal declaration only",declaration_ar="إقرار استئناف تجريبي للاختبار فقط")
 
 def session_cookie(account):
     client=Client()
@@ -535,8 +539,74 @@ try:
         stranger.request.get(BASE+"/api/session/")
         stranger_csrf=next(cookie["value"] for cookie in stranger.cookies() if cookie["name"]=="csrftoken")
         assert stranger.request.post(f"{BASE}/api/appointments/{invitation_id}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf}).status==403
-        stranger.close();staff.close()
+        stranger.close()
         checks.append("Actual cancellation removes browser response actions; cancelled and outsider responses are denied by server")
+        def closed_case_fixture():
+            from tribunal.models import Case,Proceeding,OpenCaseClaim
+            Case.objects.filter(pk=current["case_id"]).update(status="closed")
+            Proceeding.objects.filter(case_id=current["case_id"],status="open").update(status="closed")
+            OpenCaseClaim.objects.filter(case_id=current["case_id"]).delete()
+        fixture_db(closed_case_fixture)  # Explicit closed-case setup, not decree/closure acceptance.
+        page.get_by_role("navigation").get_by_role("button",name="Past cases",exact=True).click()
+        page.get_by_text(current["case_number"],exact=True).click()
+        expect(page.get_by_role("button",name="Start or resume appeal",exact=True)).to_be_visible()
+        page.get_by_role("button",name="Start or resume appeal",exact=True).click()
+        expect(page.get_by_label("New information for consideration",exact=False)).to_be_visible()
+        appeal=next(row for row in context.request.get(BASE+"/api/applications/").json()["items"] if row["kind"]=="appeal")
+        appeal_id=appeal["id"]
+        assert appeal["case_id"]==current["case_id"] and appeal["status"]=="draft"
+        reused=context.request.post(BASE+"/api/applications/",data={"kind":"appeal","case_id":current["case_id"]},headers={"X-CSRFToken":csrf})
+        assert reused.status==201 and reused.json()["id"]==appeal_id
+        assert context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["status"]=="closed"
+        page.get_by_label("New information for consideration",exact=False).fill("New supporting information for the closed case")
+        page.get_by_role("button",name="Save draft",exact=True).click()
+        expect(page.get_by_text("Your answers have been saved.",exact=True)).to_be_visible()
+        assert context.request.get(f"{BASE}/api/applications/{appeal_id}/").json()["answers"]["new_information"].startswith("New supporting")
+        checks.append("Applicant closed-case appeal entry opens published appeal form, reuses draft and saves new information without reopening case")
+        appeal_requirements=context.request.get(f"{BASE}/api/applications/{appeal_id}/files/").json()["requirements"]
+        petition_copy=next(row for row in appeal_requirements if row["category"]=="PET")
+        appeal_slot=page.get_by_role("region",name=petition_copy["label_en"],exact=True)
+        appeal_slot.locator('input[type="file"]').set_input_files({"name":"appeal.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.7 synthetic-appeal-evidence"})
+        appeal_slot.get_by_role("button",name="Upload original",exact=True).click()
+        expect(appeal_slot.get_by_role("link",name="Download original",exact=True)).to_be_visible()
+        waived=staff.request.post(f"{BASE}/api/applications/{appeal_id}/waiver/",data={},headers={"X-CSRFToken":staff_csrf})
+        assert waived.status==201,waived.text()
+        page.get_by_role("button",name="Refresh application status",exact=True).click()
+        page.get_by_role("button",name="Review answers",exact=True).click()
+        page.get_by_label("I have read and accept this declaration.",exact=True).check()
+        page.get_by_label("Your full name",exact=False).fill("Synthetic Applicant")
+        with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{appeal_id}/submit/") as appeal_submitted:
+            page.get_by_role("button",name="Submit application",exact=True).click()
+        assert appeal_submitted.value.status==201,appeal_submitted.value.text()
+        pending_appeal=context.request.get(f"{BASE}/api/applications/{appeal_id}/").json()
+        assert pending_appeal["status"]=="submitted" and not pending_appeal["can_edit"]
+        assert context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["status"]=="closed"
+        checks.append("Browser appeal evidence/declaration and actual authorized waiver submit to same closed case without reopening or mutating original proceeding")
+        def sibling_reopened_fixture():
+            from tribunal.models import Case,Proceeding,Party,OpenCaseClaim
+            Case.objects.filter(pk=current["case_id"]).update(status="open")
+            Application.objects.filter(pk=appeal_id).update(status="accepted")
+            proceeding=Proceeding.objects.filter(case_id=current["case_id"]).order_by("-sequence").first()
+            Proceeding.objects.create(case_id=current["case_id"],kind="appeal",status="open",sequence=proceeding.sequence+1)
+            Party.objects.update_or_create(case_id=current["case_id"],slot="B",defaults={
+                "person_id":outsider.person_id,"account":outsider,"name":"Synthetic linked spouse"})
+            for actor in (owner,outsider):
+                OpenCaseClaim.objects.update_or_create(person_id=actor.person_id,defaults={"case_id":current["case_id"]})
+        fixture_db(sibling_reopened_fixture)  # State fixture only; not council acceptance or identity-linking proof.
+        sibling=browser.new_context(viewport={"width":1280,"height":1000})
+        sibling.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["outsider"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
+        assert sibling.request.get(BASE+"/api/applications/").json()["items"]==[]
+        sibling_page=sibling.new_page();sibling_page.on("pageerror",lambda error:errors.append(str(error)))
+        sibling_page.goto(BASE,wait_until="networkidle")
+        sibling_page.get_by_text(current["case_number"],exact=True).click()
+        expect(sibling_page.get_by_role("button",name="Start or resume appeal",exact=True)).to_be_visible()
+        sibling_page.get_by_role("button",name="Start or resume appeal",exact=True).click()
+        expect(sibling_page.get_by_label("New information for consideration",exact=False)).to_be_visible()
+        sibling_appeal=sibling.request.get(BASE+"/api/applications/").json()["items"][0]
+        assert sibling_appeal["kind"]=="appeal" and sibling_appeal["case_id"]==current["case_id"] and sibling_appeal["id"]!=appeal_id
+        sibling.close()
+        checks.append("Previously non-filing linked spouse can start own appeal from reopened-sibling case context without exposing the first spouse's appeal")
+        staff.close()
         assert page.locator("[style]").count()==0
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         assert not errors,errors

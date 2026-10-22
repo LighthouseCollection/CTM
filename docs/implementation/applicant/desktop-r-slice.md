@@ -22,6 +22,14 @@ before the user starts. Text, textarea, date, choice, list-of-choices and boolea
 fields render from approved server definitions. Boolean unanswered and false are
 distinct; contextual hidden answers remain preserved.
 
+`applicant-appeals.js` supplies `StartAppeal` for authorized case context. It sends
+only kind/case identity to existing application creation, validates a same-case appeal
+acknowledgement and opens the bound editor. No case status change is issued. Closed
+proceedings remain an entry context when a sibling appeal has reopened the case;
+the server resolves eligibility/reuse. Concurrent starts are suppressed and late
+acknowledgements cannot navigate after unmount. Remaining applicant features and
+dependencies are tracked in [remaining work](remaining-work.md).
+
 Saved drafts retain incomplete answers and unknown keys. Explicit save sends the
 complete answer object and `expected_version`; only server acknowledgement updates
 the version and saved indicator. Failed/stale saves keep local input and offer
