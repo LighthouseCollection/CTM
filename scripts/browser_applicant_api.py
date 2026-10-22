@@ -313,7 +313,12 @@ try:
         assert latest.attachment_id==original.attachment_id and latest.number==original.number+1
         assert private_path(original.object_key).read_bytes()==original_bytes
         assert private_path(latest.object_key).read_bytes()==replacement
-        assert context.request.get(f"{BASE}/api/files/{file_id}/").status==403
+        superseded_original=context.request.get(f"{BASE}/api/files/{file_id}/")
+        if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
+            absent_original=context.request.get(f"{BASE}/api/files/{uuid.uuid4()}/")
+            assert superseded_original.status==absent_original.status==404,(superseded_original.status,absent_original.status)
+            assert superseded_original.json()==absent_original.json(),(superseded_original.text(),absent_original.text())
+        else:assert superseded_original.status==403,superseded_original.text()
         checks.append("Browser original correction retains original bytes/version and exposes only the current same-context original")
         # Synthetic technical events exercise projection/download gates, not a live scanner.
         fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=replacement_id,task="scan",result="pending"))
