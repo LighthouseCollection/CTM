@@ -155,11 +155,13 @@ def message_receipts(actor, message):
 
 
 @transaction.atomic
-def log_call(actor, case_id, party_id, occurred_at, outcome, notes=""):
+def log_call(actor, case_id, party_id, occurred_at, outcome, notes="", direction="sent"):
     from tribunal.models import CallRecord
 
     case = case_for(actor, case_id, write=True)
     party = Party.objects.get(pk=party_id, case=case)
+    if direction not in {"sent", "received"}:
+        raise ValidationError("Call direction must be sent or received.")
     if (not isinstance(outcome, str) or not outcome.strip() or len(outcome) > 150
             or not isinstance(notes, str) or len(notes) > 100000 or not timezone.is_aware(occurred_at)):
         raise ValidationError(
@@ -170,6 +172,7 @@ def log_call(actor, case_id, party_id, occurred_at, outcome, notes=""):
         party=party,
         actor=actor,
         occurred_at=occurred_at,
+        direction=direction,
         outcome=outcome,
         notes=notes,
     )

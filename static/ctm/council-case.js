@@ -2063,121 +2063,51 @@
   }
 
   function CallLog({ api, lang, user, caseId }) {
-    const R = window.React,
-      P = window.Plenix,
-      h = R.createElement,
-      t = translator(lang);
-    const [state, retry] = base.useLoad(
-      () =>
-        Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)), api(`/api/cases/${encodeURIComponent(caseId)}/calls/`)]).then(
-          ([record, calls]) => ({ record, calls: calls.items }),
-        ),
-      [caseId],
-    );
-    const [form, setForm] = R.useState({ party: "", occurred: "", outcome: "", notes: "" });
-    const [problem, setProblem] = R.useState(null);
-    const [pending, setPending] = R.useState(false);
-    const [failure, setFailure] = R.useState(null);
-    const [notice, setNotice] = R.useState(null);
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [state, retry] = base.useLoad(() => Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)), api(`/api/cases/${encodeURIComponent(caseId)}/calls/`)]).then(([record, calls]) => ({ record, calls: calls.items })), [caseId]);
+    const [selected, select] = R.useState(null), [tab, setTab] = R.useState("received"), [composing, setComposing] = R.useState(false);
+    const [form, setForm] = R.useState({ party: "", occurred: "", direction: "sent", outcome: "", notes: "" });
+    const [problem, setProblem] = R.useState(null), [pending, setPending] = R.useState(false), [failure, setFailure] = R.useState(null), [notice, setNotice] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, calls } = state.data;
     const canWrite = writerFor(user, null, record) && record.status === "open";
     const partyName = (id) => record.parties.find((p) => p.id === id)?.name || "";
-    const update = (patch) => {
-      setForm((old) => ({ ...old, ...patch }));
-      setProblem(null);
-    };
+    const rows = calls.filter((call) => (call.direction || "sent") === tab).map((call) => ({ ...call, id: call.id, person: partyName(call.party_id), occurred: base.formatWhen(call.occurred_at, lang) }));
+    const update = (patch) => { setForm((old) => ({ ...old, ...patch })); setProblem(null); };
     async function save(event) {
-      event.preventDefault();
-      const issue = callProblem(form);
-      setProblem(issue);
-      if (issue) return;
-      setPending(true);
-      setFailure(null);
+      event.preventDefault(); const issue = callProblem(form); setProblem(issue); if (issue) return;
+      setPending(true); setFailure(null);
       try {
-        await api(`/api/cases/${encodeURIComponent(caseId)}/calls/`, {
-          method: "POST",
-          body: JSON.stringify({
-            party_id: form.party,
-            // Browser-local wall time converted to an absolute instant with offset.
-            occurred_at: new Date(form.occurred).toISOString(),
-            outcome: form.outcome.trim(),
-            notes: form.notes.trim(),
-          }),
-        });
-        setForm({ party: "", occurred: "", outcome: "", notes: "" });
-        setNotice("callRecorded");
-        retry();
-      } catch (error) {
-        setFailure(base.serverMessage(error, t));
-      } finally {
-        setPending(false);
-      }
+        await api(`/api/cases/${encodeURIComponent(caseId)}/calls/`, { method: "POST", body: JSON.stringify({ party_id: form.party, occurred_at: new Date(form.occurred).toISOString(), direction: form.direction, outcome: form.outcome.trim(), notes: form.notes.trim() }) });
+        setForm({ party: "", occurred: "", direction: "sent", outcome: "", notes: "" }); setComposing(false); setNotice("callRecorded"); retry();
+      } catch (error) { setFailure(base.serverMessage(error, t)); } finally { setPending(false); }
     }
     const err = (key) => (problem === key ? t(key) : undefined);
-    return h(
-      P.Panel,
-      { icon: "doc-text", title: t("callLog"), description: t("callLogHelp") },
-      h(
-        P.Stack,
-        { gap: "md" },
+    const callDialog = composing ? h(P.Dialog, { open: true, title: t("recordCall"), size: "lg", onClose: () => !pending && setComposing(false) },
+      h(P.Form, { onSubmit: save, label: t("recordCall"), noValidate: true },
+        h(P.FormSection, { title: t("recordCall") },
+          h(P.Field, { label: t("callParty"), required: true, error: err("chooseCallParty") }, h(P.Select, { value: form.party, disabled: pending, onChange: (e) => update({ party: e.target.value }), options: [{ value: "", label: t("chooseCallParty") }, ...record.parties.map((p) => ({ value: p.id, label: p.name }))] })),
+          h(P.RadioGroup, { label: "Direction", layout: "row", value: form.direction, onChange: (direction) => update({ direction }), options: [{ value: "received", label: "Received" }, { value: "sent", label: "Sent" }] }),
+          h(P.Field, { label: t("callTime"), required: true, error: err("callTimeRequired") || err("callTimeFuture") }, h(P.Input, { type: "datetime-local", width: "md", value: form.occurred, disabled: pending, onChange: (e) => update({ occurred: e.target.value }) })),
+          h(P.Field, { label: t("callOutcome"), required: true, error: err("callOutcomeRequired") }, h(P.Input, { value: form.outcome, maxLength: 500, disabled: pending, onChange: (e) => update({ outcome: e.target.value }) })),
+          h(P.Field, { label: t("callNotes") }, h(P.Textarea, { rows: 4, value: form.notes, maxLength: 10000, disabled: pending, onChange: (e) => update({ notes: e.target.value }) })),
+        ),
+        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+        h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setComposing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("recordCall"))),
+      ),
+    ) : null;
+    return h(R.Fragment, null, callDialog,
+      h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
+        h(P.Toolbar, { label: t("callLog") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => setComposing(true) }, "New Call") : null),
         notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-        calls.length
-          ? h(
-              P.Stack,
-              { gap: "sm" },
-              ...calls.map((call) =>
-                h(
-                  P.Card,
-                  { icon: "message", key: call.id, title: `${base.isolate(partyName(call.party_id))} · ${base.formatWhen(call.occurred_at, lang)}`, meta: `${t("recordedAt")}: ${base.formatWhen(call.recorded_at, lang)}` },
-                  h(P.Text, { as: "p", variant: "strong" }, call.outcome),
-                  call.notes ? h(P.Text, { as: "p" }, call.notes) : null,
-                ),
-              ),
-            )
-          : h(P.EmptyState, { title: t("noCalls") }),
-        canWrite
-          ? h(
-              P.Form,
-              { onSubmit: save, label: t("recordCall"), noValidate: true },
-              h(
-                P.FormSection,
-                { title: t("recordCall") },
-                h(
-                  P.Field,
-                  { label: t("callParty"), required: true, error: err("chooseCallParty") },
-                  h(P.Select, {
-                    value: form.party,
-                    disabled: pending,
-                    onChange: (e) => update({ party: e.target.value }),
-                    options: [{ value: "", label: t("chooseCallParty") }, ...record.parties.map((p) => ({ value: p.id, label: p.name }))],
-                  }),
-                ),
-                h(
-                  P.Field,
-                  { label: t("callTime"), required: true, error: err("callTimeRequired") || err("callTimeFuture") },
-                  h(P.Input, { type: "datetime-local", width: "md", value: form.occurred, disabled: pending, onChange: (e) => update({ occurred: e.target.value }) }),
-                ),
-                h(
-                  P.Field,
-                  { label: t("callOutcome"), required: true, error: err("callOutcomeRequired") },
-                  h(P.Input, { value: form.outcome, maxLength: 500, disabled: pending, onChange: (e) => update({ outcome: e.target.value }) }),
-                ),
-                h(
-                  P.Field,
-                  { label: t("callNotes") },
-                  h(P.Textarea, { rows: 3, value: form.notes, maxLength: 10000, disabled: pending, onChange: (e) => update({ notes: e.target.value }) }),
-                ),
-              ),
-              failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-              h(P.FormActions, { sticky: false }, h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("recordCall"))),
-            )
-          : null,
+        h(P.Tabs, { label: t("callLog"), value: tab, onChange: (value) => { setTab(value); select(null); }, items: [{ value: "received", label: "Received" }, { value: "sent", label: "Sent" }] }),
+        h(window.CTMShell.Workspace, { label: t("callLog"), rows, selected, onSelect: select, empty: t("noCalls"), showDetailWhenEmpty: true, columns: [{ title: t("callParty"), field: "person", kind: "name" }, { title: t("callOutcome"), field: "outcome" }, { title: t("callTime"), field: "occurred" }] },
+          (call) => call ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, call.person), h(P.Text, { variant: "secondary" }, call.occurred), h(P.Text, { as: "p", variant: "strong" }, call.outcome), call.notes ? h(P.Text, { as: "p" }, call.notes) : null) : h(P.EmptyState, { title: t("noCalls") }),
+        ),
       ),
     );
   }
-
   // ---------- Professional Assessments ----------
   // Separate from ordinary reports. Contents stay hidden unless the subject's signed,
   // scoped release covers council; the server enforces this on every read.

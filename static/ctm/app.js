@@ -20,7 +20,7 @@
     parties: "settings-users", marriage: "settings-users", separation: "move", petition: "doc-text",
     reports: "document", hearings: "list-lines", evidence: "image-a-2", documents: "folder",
     medical: "lock", appeals: "progress",
-    communications: "mail", notes: "message", audit: "list-lines",
+    communications: "mail", calls: "phone", notes: "message", audit: "list-lines",
   };
   const decisionBalanceIcon = () =>
     h("svg", { className: "ctm-decision-nav-icon", width: "1em", height: "1em", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
@@ -192,6 +192,7 @@
       paneResize: "Resize {name}",
       paneBack: "Back to {name}",
       communications: "Email",
+      calls: "Calls",
       caseCollaboration: "Email & Notes",
       assessment: "Case Review",
       decision: "Decision",
@@ -517,7 +518,7 @@
     }
     return response.json();
   }
-  function MessageComposer({ record, sessions, council, t, onSent }) {
+  function MessageComposer({ record, sessions, council, t, onSent, onClose }) {
     const [body, setBody] = R.useState(""),
       [recipients, setRecipients] = R.useState([]);
     const [timing, setTiming] = R.useState("immediate"),
@@ -551,8 +552,8 @@
       }
     }
     return h(
-      P.Panel,
-      { icon: "doc-text", title: t("newMessage") },
+      P.Dialog,
+      { open: true, title: t("newMessage"), size: "lg", onClose: () => !pending && onClose?.() },
       h(
         P.Stack,
         { as: "form", onSubmit: submit },
@@ -1096,54 +1097,14 @@
       }),
     );
   }
-  function CommunicationsWorkspace({ data, t, lang, council, councilModule, api, user, selection, reload }) {
-    const [selected, select] = R.useState(null);
-    const detail = h(
-          P.Stack,
-          { gap: "lg" },
-          heading(t("communications")),
-          ...data.messages.filter((row) => row.id === selected).map((row) =>
-            h(
-              P.Panel,
-              { icon: "doc-text",
-                key: row.id,
-                title: row.sender,
-                description: new Intl.DateTimeFormat(
-                  lang === "ar" ? "ar-EG" : "en-US",
-                  { dateStyle: "medium", timeStyle: "short" },
-                ).format(new Date(row.timestamp)),
-              },
-              text(row.body),
-            ),
-          ),
-          !data.messages.length
-            ? h(P.EmptyState, { title: t("noMessages") })
-            : null,
-          data.record.can_message
-            ? h(MessageComposer, {
-                key: selection,
-                record: data.record,
-                sessions: data.sessions,
-                council,
-                t,
-                onSent: () => reload((n) => n + 1),
-              })
-            : null,
-          council && councilModule?.CallLog
-            ? h(councilModule.CallLog, {
-                key: `calls-${selection}`,
-                api,
-                lang,
-                user,
-                caseId: selection,
-              })
-            : null,
-        );
-    return h(window.CTMShell.Workspace, {
-      label: t("communications"), rows: data.messages, selected, onSelect: select,
-      empty: t("noMessages"), showDetailWhenEmpty: true,
-      columns: [{ title: t("communications"), field: "sender", kind: "name" }, { title: t("message"), field: "body", kind: "wrap" }, { title: t("recordedAt"), field: "timestamp" }],
-    }, detail);
+  function CommunicationsWorkspace({ data, t, lang, council, api, user, selection, reload }) {
+    const [selected, select] = R.useState(null), [tab, setTab] = R.useState("received"), [composing, setComposing] = R.useState(false);
+    const isSent = (row) => String(row.sender_id) === String(user.id);
+    const rows = data.messages.filter((row) => tab === "sent" ? isSent(row) : !isSent(row));
+    const chosen = rows.find((row) => row.id === selected) || null;
+    const detail = chosen ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, chosen.sender), h(P.Text, { variant: "secondary" }, new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(chosen.timestamp))), text(chosen.body)) : h(P.EmptyState, { title: t("noMessages") });
+    return h(R.Fragment, null, composing ? h(MessageComposer, { key: `compose-${selection}`, record: data.record, sessions: data.sessions, council, t, onSent: () => { setComposing(false); reload((n) => n + 1); }, onClose: () => setComposing(false) }) : null,
+      h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" }, h(P.Toolbar, { label: t("communications") }, data.record.can_message ? h(P.Button, { variant: "primary", icon: "add", onClick: () => setComposing(true) }, t("newMessage")) : null), h(P.Tabs, { label: t("communications"), value: tab, onChange: (value) => { setTab(value); select(null); }, items: [{ value: "received", label: "Received" }, { value: "sent", label: "Sent" }] }), h(window.CTMShell.Workspace, { label: t("communications"), rows, selected, onSelect: select, empty: t("noMessages"), showDetailWhenEmpty: true, columns: [{ title: "From", field: "sender", kind: "name" }, { title: t("message"), field: "body", kind: "wrap" }, { title: t("recordedAt"), field: "timestamp" }] }, detail)));
   }
   function CaseNavigationState({ caseId }) {
     const layout = P.useAppLayout();
@@ -1403,6 +1364,7 @@
       [
         "case",
         "communications",
+        "calls",
         "documents",
         "evidence",
         "reports",
@@ -1443,11 +1405,11 @@
       {
         heading: t("caseCollaboration"),
         icon: navigationIcon("communications"),
-        items: ["communications", "notes"].map((id) => ({
+        items: ["communications", "calls", "notes"].map((id) => ({
           id,
           icon: navigationIcon(id),
           label: t(id),
-          disabled: !(id === "communications" || (id === "notes" && councilModule?.CaseNotesWorkspace && council)),
+          disabled: !(id === "communications" || (id === "calls" && councilModule?.CallLog && council) || (id === "notes" && councilModule?.CaseNotesWorkspace && council)),
         })),
       },
     ];
@@ -1744,6 +1706,8 @@
         return h(councilModule.PetitionWorkspace, { key: selection, api, lang, user, caseId: selection });
       if (page === "parties" && council && councilModule?.CaseParties)
         return h(councilModule.CaseParties, { key: selection, api, lang, user, caseId: selection });
+      if (page === "calls" && council && councilModule?.CallLog)
+        return h(councilModule.CallLog, { key: selection, api, lang, user, caseId: selection });
       if (page === "notes" && council && councilModule?.CaseNotesWorkspace)
         return h(councilModule.CaseNotesWorkspace, { key: selection, api, lang, user, caseId: selection });
       if (page === "marriage" && council && councilModule?.CaseMarriage)
@@ -2075,7 +2039,7 @@
     }
     return h(
       P.AppShell,
-          { header, sideNav: nav, page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", strings: { skip: t("skip") } },
+          { header, sideNav: nav, page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", strings: { skip: t("skip") } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       h("div", { className: "plx-page-panes" }, caseNav,
         h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },

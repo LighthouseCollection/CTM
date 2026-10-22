@@ -1178,6 +1178,7 @@ def messages(request, case_id):
                         x,
                         body=x.body,
                         sender=f"{x.sender.first_name} {x.sender.last_name}".strip(),
+                        sender_id=str(x.sender_id),
                         channel=x.channel,
                         timestamp=x.created_at.isoformat(),
                         file_links=x.file_links,
@@ -1959,6 +1960,7 @@ def calls(request, case_id):
                         x,
                         party_id=str(x.party_id),
                         occurred_at=x.occurred_at.isoformat(),
+                        direction=x.direction,
                         recorded_at=x.created_at.isoformat(),
                         outcome=x.outcome,
                         notes=x.notes,
@@ -1982,6 +1984,7 @@ def calls(request, case_id):
                 datetime.fromisoformat(data["occurred_at"]),
                 data["outcome"],
                 data.get("notes", ""),
+                data.get("direction", "sent"),
             )
         ),
         status=201,

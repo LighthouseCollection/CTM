@@ -448,6 +448,7 @@ class CallRecord(Immutable):
     party = models.ForeignKey(Party, on_delete=models.PROTECT)
     actor = models.ForeignKey(Account, on_delete=models.PROTECT)
     occurred_at = models.DateTimeField()
+    direction = models.CharField(max_length=10, default="sent")
     outcome = models.CharField(max_length=150)
     notes = models.TextField(blank=True)
 
