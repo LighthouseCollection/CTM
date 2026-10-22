@@ -1096,13 +1096,14 @@ try:
         from applicant_supplement_acceptance import run as run_supplement_acceptance
         checks.extend(run_supplement_acceptance(page,context,staff,BASE,csrf,staff_csrf,appeal_id,uploaded[1][0],fixture_db,ARTIFACT_ROOT,cookies["outsider"],settings.SESSION_COOKIE_NAME))
         def sibling_reopened_fixture():
-            from tribunal.models import Case,Proceeding,Party,OpenCaseClaim
+            from tribunal.models import Case,Proceeding,OpenCaseClaim
+            from tribunal.services.identity import link_party
             Case.objects.filter(pk=current["case_id"]).update(status="open")
             Application.objects.filter(pk=appeal_id).update(status="accepted")
             proceeding=Proceeding.objects.filter(case_id=current["case_id"]).order_by("-sequence").first()
             Proceeding.objects.create(case_id=current["case_id"],kind="appeal",status="open",sequence=proceeding.sequence+1)
-            Party.objects.update_or_create(case_id=current["case_id"],slot="B",defaults={
-                "person_id":outsider.person_id,"account":outsider,"name":"Synthetic linked spouse"})
+            linked=link_party(admin,Case.objects.get(pk=current["case_id"]),outsider)
+            assert linked.person_id==outsider.person_id and linked.account_id==outsider.pk
             for actor in (owner,outsider):
                 OpenCaseClaim.objects.update_or_create(person_id=actor.person_id,defaults={"case_id":current["case_id"]})
         fixture_db(sibling_reopened_fixture)  # State fixture only; not council acceptance or identity-linking proof.
@@ -1257,7 +1258,7 @@ try:
                 assert recovered.status==201 and recovered.json()["id"]==report_id
             checks.append("Actual closure preserves never-sent draft privacy and sent closed reads; exact intake/assessment receipt replays still recover after closure")
         from applicant_filing_acceptance import run as run_filing_acceptance
-        checks.extend(run_filing_acceptance(browser,BASE,settings,fixture_db,session_cookie,staff,staff_csrf,errors,ARTIFACT_ROOT))
+        checks.extend(run_filing_acceptance(browser,BASE,settings,fixture_db,session_cookie,staff,staff_csrf,errors,ARTIFACT_ROOT,admin.pk))
         from applicant_message_acceptance import run as run_message_acceptance
         checks.extend(run_message_acceptance(browser,page,context,staff,BASE,csrf,staff_csrf,current["case_id"],current["case_number"],party_id,cookies["outsider"],settings,fixture_db,ARTIFACT_ROOT,admin.pk))
         from applicant_history_notice_acceptance import notification_checks
