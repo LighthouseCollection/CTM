@@ -135,6 +135,7 @@ test("Decision & Voting uses stacked decision and council-vote containers", () =
   const decisionWorkspace = councilCase.slice(councilCase.indexOf("function DecisionWorkspace"), councilCase.indexOf("// ---------- Case audit"));
   assert.match(councilCase, /function CouncilVoteRecord\(/);
   assert.match(decisionWorkspace, /ctm-decision-voting-workspace/);
+  assert.doesNotMatch(decisionWorkspace, /noDecision/);
   assert.doesNotMatch(decisionWorkspace, /window\.CTMShell\.Workspace/);
   assert.match(councilCase, /ctm-council-vote-table/);
   assert.match(councilCase, /recordVotesContinue/);

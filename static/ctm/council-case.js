@@ -276,7 +276,6 @@ ${ar}` : en;
       arabicPending: "Approved Arabic wording pending",
       answerReadOnly: "Responses appear under Completed reports once submitted.",
       decisionVoting: "Decision & Voting",
-      noDecision: "No decision has been recorded in this view yet.",
       readUnavailable:
         "Saved decision versions, votes and approvals cannot be displayed here yet. A version recorded on this page can be voted on and approved while the page stays open.",
       votedOn: "What is being voted on",
@@ -606,7 +605,6 @@ ${ar}` : en;
       arabicPending: "الصياغة العربية المعتمدة قيد الانتظار",
       answerReadOnly: "تظهر الردود ضمن التقارير المكتملة بعد تقديمها.",
       decisionVoting: "القرار والتصويت",
-      noDecision: "لم يُسجَّل قرار في هذه الصفحة بعد.",
       readUnavailable:
         "لا يمكن عرض إصدارات القرار المحفوظة والأصوات والاعتمادات هنا بعد. يمكن التصويت على الإصدار المسجَّل في هذه الصفحة واعتماده ما دامت الصفحة مفتوحة.",
       votedOn: "موضوع التصويت",
@@ -1823,7 +1821,7 @@ ${ar}` : en;
             showApproval: false,
             onChange: updateDecision,
           })
-        : h(P.EmptyState, { title: t("noDecision") }),
+        : null,
       earlier.length
         ? h(
             P.Panel,
