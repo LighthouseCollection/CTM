@@ -2106,6 +2106,7 @@
       setPending(true);
       setFailure(null);
       select(null);
+      setResult(null);
       try {
         const [data, caseList] = await Promise.all([
           runSearch(api, query.trim(), history),
@@ -2147,7 +2148,8 @@
             firstLabel: t("searchResults"),
             first: h(window.CTMShell.Table, {
               label: t("searchResults"), rows: rows.map((row) => ({ ...row, id: row.file_id })),
-              selected, onSelect: select, empty: t("searchNone"),
+              selected, onSelect: select,
+              empty: t(pending ? "loading" : failure ? "loadFailed" : result === null ? "searchHelp" : "searchNone"),
               columns: [{ title: t("searchResults"), field: "name", kind: "name" }],
             }),
             second: h(

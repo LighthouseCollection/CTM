@@ -36,3 +36,11 @@ The synthetic fixture served every static file as JavaScript, so the SVG logo fa
 Fresh regression evidence: browser_case_responsive.py passes English/Arabic at 390 and 1253px, including Back/reselect and no page overflow. browser_session_responsive.py passes English/Arabic at 390, 768 and 1253px, including logo decoding, localized collapse/reopen, semantic direction and content bounds. Both product regressions failed before correction. Independent navigation, all 14 split workspaces, attendance/agenda and all 189 frontend unit tests still pass.
 
 Remaining: responsive/RTL interactions for other case section contents and dialogs, long-text content stress, Arabic institutional-content review and actual-backend acceptance. The register remains an unfinished full-screen audit; these matrix checks cover the session shell and case navigation only. No report guard, expected_version, schema or provider changes.
+
+## Case-section and Search follow-up
+
+Read-only synthetic matrix now covers all ten case split sections in English/Arabic at 390/1253px (40 combinations): Communications, Reports, Hearings, Evidence, Documents, Professional Assessments, Decision & Voting, Appeals, Decree and Case Audit. Each exposes table/detail regions within viewport bounds without page overflow or browser errors. Reports/evidence/documents/audit selection is exercised. This does not accept every dialog, long-text state or backend action.
+
+Confirmed Search defect: the initial view, pending request and failed request all presented no matching documents. SearchWorkspace now uses existing translated help/loading/load-failure/no-match messages for the corresponding states and clears stale results on a new search. No API/payload changes. A held-response browser regression failed before correction, then passed initial/loading/result/empty/error transitions and keyboard Enter selection in English/Arabic at 390/1253px. The actual index/advanced-filter contract remains outside this synthetic test.
+
+The 45-screen JSON register now records these specific verification levels while retaining unfinished acceptance status and existing documented gaps. Unit evidence remains 189 frontend tests passing; independent desktop navigation and original split-view regressions pass. Both UI fixes and test coverage are on PR #19; no merge or deployment.
