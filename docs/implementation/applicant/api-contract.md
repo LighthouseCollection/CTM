@@ -341,3 +341,43 @@ signature issuance or operational delivery acceptance. See the consolidated ten-
 
 Released-decree reads and exact-byte withdrawal remain verified with synthetic
 stored DEC bytes. Real signing/issuance and PostgreSQL acceptance remain separate.
+
+## Actual applicant private messages (db6dfa3)
+
+The separate `applicant-messages.js` workspace binds exact case UUID and exactly one
+`parties[].is_self:true` party. New sends require explicit `can_message:true`; private
+history can remain readable when writes are unavailable. GET case and message pages
+are re-read on refresh. Missing/malformed/denied reads clear old history and capability,
+while local text/review/replay intent and dirty navigation/unload guards remain.
+
+GET `/api/cases/{id}/messages/?offset=0` returns at most50 `items` plus `next_offset`.
+Rows require UUID ID, supplied escaped sender/body, supported channel, offset timestamp,
+UUID file IDs, sender-only nullable `idempotency_key`, and exactly the current own
+`receipts:[{party_id,read_at}]`. Continuation must advance by50 only for a full page;
+repeated IDs or malformed rows fail closed. UI loads subsequent pages explicitly;
+recovery may require loading the later page containing the retained own message.
+Message file references do not create download links: use the separately authorized
+document workspace, with its original safety/access checks.
+
+POST `/api/cases/{id}/messages/` sends
+`{body,party_ids:[own_party],channel:"portal",email_timing:"immediate",session_id:null,
+file_ids:[],idempotency_key}` after explicit review. Text, routing and key freeze before
+the first attempt. Uncertain acknowledgement blocks edits/new sends; explicit refresh
+can reconcile exact own key/body/channel/receipt. Explicit retry reuses the original
+payload with current own-thread authority. No automatic resend or fresh key is created.
+New entry requires acknowledgement/recovery, refresh and an explicit start action.
+Backend exact replay returns the same message; changed key reuse fails. Browser/API
+checks verify no extra message, notification or outbox journal row from replay.
+
+POST `/api/messages/{id}/read/` sends `{}` only after the applicant chooses
+“Mark my copy as read”. Returned message ID and timestamp must be valid; first time
+is retained on replay. No read mutation occurs merely by rendering or paging. A lost
+read acknowledgement locks that local action until explicit refresh; only the intended
+recipient can mark its copy, never council sender authority or a linked spouse.
+Portal acknowledgement does not prove email dispatch or delivery.
+
+Thread dirty intent guards shared navigation/unload. Delayed sends/read actions block
+navigation and competing controls; a pending discard cannot unmount an active write.
+EN/AR uses supplied original content, documented Plenix0.58.0 components and bidi-isolated
+server timestamps. Shared source is unchanged; the shell proposal mounts this module
+only for applicant communications and retains council's separate interface.

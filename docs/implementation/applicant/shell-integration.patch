@@ -1,6 +1,6 @@
 --- a/tribunal/templates/tribunal/shell.html
 +++ b/tribunal/templates/tribunal/shell.html
-@@ -10,6 +10,19 @@
+@@ -10,6 +10,20 @@
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react.production.min.js"></script>
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react-dom.production.min.js"></script>
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.js"></script>
@@ -9,6 +9,7 @@
 +  <script defer src="{% static 'ctm/applicant-appointments.js' %}"></script>
 +  <script defer src="{% static 'ctm/applicant-payments.js' %}"></script>
 +  <script defer src="{% static 'ctm/applicant-appeals.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-messages.js' %}"></script>
 +  <script defer src="{% static 'ctm/applicant-assessments.js' %}"></script>
 +  <script defer src="{% static 'ctm/applicant-responses.js' %}"></script>
 +  <script defer src="{% static 'ctm/applicant-recovery.js' %}"></script>
@@ -147,7 +148,7 @@
      const unavailable = new Set(["search", "statistics"]);
      const caseContext =
        ["case", "communications", "documents", "evidence", "reports"].includes(
-@@ -1329,11 +1347,23 @@
+@@ -1329,11 +1347,25 @@
            null,
            text(`${t("payment")}: ${t(row.fee?.status || "unknown")}`),
            h(P.Notice, null, t("fee")),
@@ -160,6 +161,8 @@
      function content() {
        if (failure) return errorView();
        if (!data) return text(t("loading"));
++      if (page === "communications" && !council && selection && window.CTMApplicantMessages)
++        return h(window.CTMApplicantMessages.Thread, { key: selection, caseId: selection, api, lang, onNavigationGuard: registerApplicantGuard });
 +      if (page === "appointments" && !council && window.CTMApplicantAppointments)
 +        return h(window.CTMApplicantAppointments.Appointments, { api, lang });
 +      if (page === "application" && !council && selection && window.CTMApplicant)
@@ -171,7 +174,7 @@
        if (page === "notifications")
          return h(NotificationInbox, {
            key: revision,
-@@ -1437,6 +1467,13 @@
+@@ -1437,6 +1469,13 @@
            ),
            heading(data.number),
            text(`${t("status")}: ${t(data.status)}`),
@@ -185,7 +188,7 @@
            h(
              P.Panel,
              { title: t("parties") },
-@@ -1513,6 +1550,9 @@
+@@ -1513,6 +1552,9 @@
            P.Stack,
            null,
            heading(t(page)),
@@ -195,7 +198,7 @@
            ...data.items.map(applicationCard),
          );
        if (page === "home" && !council) {
-@@ -1556,7 +1596,10 @@
+@@ -1556,7 +1598,10 @@
      return h(
        P.AppShell,
        { header, sideNav: nav, page: "workspace", strings: { skip: t("skip") } },

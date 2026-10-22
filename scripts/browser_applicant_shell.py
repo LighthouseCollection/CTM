@@ -24,7 +24,7 @@ subprocess.run(["git", "apply", "--directory=.tmp/applicant-integration",
                 "docs/implementation/applicant/shell-integration.patch"], cwd=ROOT, check=True)
 shell = (COPY / "tribunal/templates/tribunal/shell.html").read_text(encoding="utf-8")
 shell = shell.replace("{% load static %}", "")
-for name in ("app.js", "applicant.js", "applicant-filing.js", "applicant-files.js", "applicant-appointments.js", "applicant-payments.js", "applicant-appeals.js", "applicant-supplements.js", "applicant-decrees.js", "applicant-requests.js", "applicant-responses.js", "applicant-assessments.js", "applicant-recovery.js", "applicant-lifecycle.js"):
+for name in ("app.js", "applicant.js", "applicant-filing.js", "applicant-files.js", "applicant-appointments.js", "applicant-payments.js", "applicant-appeals.js", "applicant-supplements.js", "applicant-decrees.js", "applicant-requests.js", "applicant-responses.js", "applicant-assessments.js", "applicant-messages.js", "applicant-recovery.js", "applicant-lifecycle.js"):
     shell = shell.replace("{% static 'ctm/" + name + "' %}", "/" + name)
 shell = shell.replace('{{ boot|json_script:"ctm-config" }}',
                       '<script id="ctm-config" type="application/json">{"providers":[]}</script>')
@@ -34,7 +34,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/app.js":
             content = (COPY / "static/ctm/app.js").read_bytes()
-        elif self.path in {"/applicant.js", "/applicant-filing.js", "/applicant-files.js", "/applicant-appointments.js", "/applicant-payments.js", "/applicant-appeals.js", "/applicant-supplements.js", "/applicant-decrees.js", "/applicant-requests.js", "/applicant-responses.js", "/applicant-assessments.js", "/applicant-recovery.js", "/applicant-lifecycle.js"}:
+        elif self.path in {"/applicant.js", "/applicant-filing.js", "/applicant-files.js", "/applicant-appointments.js", "/applicant-payments.js", "/applicant-appeals.js", "/applicant-supplements.js", "/applicant-decrees.js", "/applicant-requests.js", "/applicant-responses.js", "/applicant-assessments.js", "/applicant-messages.js", "/applicant-recovery.js", "/applicant-lifecycle.js"}:
             content = (ROOT / ("static/ctm" + self.path)).read_bytes()
         else:
             content = shell.encode()

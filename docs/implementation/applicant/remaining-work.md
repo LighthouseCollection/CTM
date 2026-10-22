@@ -1,5 +1,21 @@
 # Remaining applicant work
 
+## Current private message integration (2026-10-21)
+
+Applicant-only messaging now integrates backend db6dfa3: exact own thread binding,
+50-row private history continuation, reviewed sending with stable replay keys,
+receipt recovery and explicit own portal-copy read acknowledgements. Portal read
+evidence is displayed separately from email delivery. Shared shell changes remain
+a governance integration patch; no council/shared source is edited directly.
+
+Current checks: 83 frontend tests, 66 real API/browser groups, eight message
+interruption/EN–AR fixture groups and nine shell groups pass. These use isolated
+SQLite/synthetic sessions and scanner test policy; controlled provider output is
+still a fixture. Earlier per-feature counts below retain their recorded snapshots.
+PostgreSQL, live email/payment/provider/antivirus and institutional content/issuance
+acceptance remain separate. [Report](message-integration-report.md) and
+[Download JSON](message-integration-result.json).
+
 ## Current supplement integration (2026-10-21)
 
 Backend a0bd138 now supplies own supplement history/capability, version checks and
@@ -55,7 +71,7 @@ outside this acceptance. [Report](filing-recovery-batch-report.md) and
 [Download JSON](filing-recovery-batch-result.json).
 
 Current applicant head includes initial/returned filing, contextual originals,
-payment history, private appointments and appeal entry. This queue does not claim
+payment history, private appointments, appeal entry and private messages/read receipts. This queue does not claim
 the full applicant portal is complete. Backend/shared shell changes stay with their
 owners; applicant PR #5 remains draft.
 
