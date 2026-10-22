@@ -14,7 +14,7 @@
   // Separately loaded council workspace module (static/ctm/council.js), if present.
   const councilModule = window.CTMCouncil || null;
   const navigationIcons = {
-    home: "home", sessions: "calendar-month", sessionsUpcoming: "calendar", sessionsArchived: "calendar-lock", cases: "work", search: "search",
+    home: "home", sessions: "today", sessionsGroup: "calendar-month", sessionsUpcoming: "calendar", sessionsArchived: "calendar-lock", cases: "work", search: "search",
     archived: "archive", statistics: "chart", applications: "doc-text",
     appointments: "schedule", past: "archive", case: "document", timeline: "progress",
     parties: "settings-users", marriage: "wedding", separation: "move", petition: "doc-text",
@@ -1441,7 +1441,7 @@
     const mainRailItems = council
       ? [
           primaryNavigationItems[0],
-          { id: "sessions", icon: navigationIcon("sessions"), label: t("tribunalSessions"), active: sessionNavigationItems.some((item) => item.id === page) },
+          { id: "sessions", icon: navigationIcon("sessionsGroup"), label: t("tribunalSessions"), active: sessionNavigationItems.some((item) => item.id === page) },
           { id: "cases", icon: navigationIcon("cases"), label: t("cases"), active: casesNavigationItems.some((item) => item.id === page) },
           ...primaryNavigationItems.slice(1),
         ]
@@ -1528,7 +1528,7 @@
             onSelect: (id) => go(id),
             groups: [{
               heading: t("tribunalSessions"),
-              icon: navigationIcon("sessions"),
+              icon: navigationIcon("sessionsGroup"),
               items: sessionNavigationItems,
             }],
           }) : null,

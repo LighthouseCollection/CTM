@@ -197,9 +197,12 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.match(app, /\["home", "myCases", "cases", "archived", "past"\]\.includes\(page\)/);
   assert.match(app, /view: page === "myCases" \? "mine" : page === "archived" \? "archived" : "active"/);
   assert.match(app, /id === "search"\s*\? h\(P\.Icon, \{ name: "document-search"/);
-  assert.match(app, /sessions: "calendar-month"/);
+  assert.match(app, /sessions: "today"/);
+  assert.match(app, /sessionsGroup: "calendar-month"/);
   assert.match(app, /cases: "work"/);
   assert.match(app, /sessionsArchived: "calendar-lock"/);
+  assert.match(app, /\{ id: "sessions", icon: navigationIcon\("sessions"\), label: t\("sessionCurrent"\) \}/);
+  assert.match(app, /heading: t\("tribunalSessions"\),\s*icon: navigationIcon\("sessionsGroup"\)/);
   assert.match(app, /const appealsReturnIcon = \(\) =>/);
   assert.match(app, /id === "appeals"\s*\? appealsReturnIcon\(\)/);
   assert.match(app, /const casesNavigationItems = \[\s*\{ id: "search", icon: navigationIcon\("search"\), label: t\("search"\) \}/);
