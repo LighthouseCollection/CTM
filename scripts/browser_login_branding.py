@@ -18,7 +18,7 @@ with sync_playwright() as p:
         page.goto(os.environ.get("CTM_REVIEW_URL","http://127.0.0.1:18860/"))
         page.get_by_role("heading",name="Coptic Orthodox Church - Diocese of Los Angeles",exact=True).wait_for()
         page.get_by_text("Office of the Ecclesiastical Council for Family Affairs",exact=True).wait_for()
-        card=page.locator(".plx-panel").filter(has=page.get_by_role("heading",name="Sign in to CTM",exact=True))
+        card=page.locator(".plx-panel").filter(has=page.get_by_role("heading",name="Sign in",exact=True))
         assert card.count()==1
         for image in [card.get_by_role("img",name="CTM",exact=True),page.get_by_role("img",name="Diocese of Los Angeles seal",exact=True)]:
             assert image.evaluate("async e=>{await e.decode();return e.naturalWidth>0}")
@@ -27,11 +27,15 @@ with sync_playwright() as p:
         assert not errors,errors
         page.wait_for_function("Array.from(document.images).every(e=>getComputedStyle(e).opacity===\"1\")")
         page.screenshot(path=f".tmp/login-branding-{width}.png",full_page=True)
-        page.get_by_role("button",name="العربية",exact=True).click()
-        page.get_by_role("heading",name="تسجيل الدخول",exact=True).wait_for()
-        assert page.locator("html").get_attribute("dir")=="rtl"
-        assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
-        page.get_by_role("button",name="English",exact=True).click()
+        assert page.get_by_role("button",name="العربية",exact=True).count()==0
+        assert page.get_by_text("Council members use their authorized Microsoft account.",exact=True).count()==0
+        assert page.get_by_text("Access your application or council workspace securely.",exact=True).count()==0
+        box=card.bounding_box()
+        main=page.get_by_role("main").bounding_box()
+        assert abs(box["x"]+box["width"]/2-width/2)<2
+        assert abs(box["y"]+box["height"]/2-(main["y"]+main["height"]/2))<3, "Login card must be vertically centered in main content"
+        logo=card.get_by_role("img",name="CTM",exact=True).bounding_box()
+        assert abs(logo["x"]+logo["width"]/2-width/2)<2
         requests=[]
         def handoff(route):
             requests.append(route.request.method)

@@ -53,7 +53,7 @@
       event_payment_finance_review: "A payment needs finance review.",
       event_paid_filing_review: "A paid filing needs review before it can be finalized.",
       tribunal: "Church Tribunal",
-      signIn: "Sign in to CTM",
+      signIn: "Sign in",
       welcome: "Access your application or council workspace securely.",
       microsoft: "Continue with Microsoft",
       google: "Continue with Google",
@@ -1241,16 +1241,6 @@
         setSaving(false);
       }
     };
-    const language = h(
-      P.Button,
-      {
-        variant: "ghost",
-        disabled: saving,
-        onClick: () =>
-          savePreference("ui_language", lang === "en" ? "ar" : "en"),
-      },
-      t("language"),
-    );
     const errorView = () =>
       h(P.EmptyState, {
         tone: "error",
@@ -1267,13 +1257,9 @@
         { vertical: true },
         failure ? errorView() : text(t("loading")),
       );
-    if (user === null)
-      return h(
-        P.AppShell,
-        { page: "form", strings: { skip: t("skip") } },
-        h(P.PageContent, null,
-          h(P.Center, { maxWidth: "lg" },
-            h(P.Stack, { gap: "lg", inset: "lg" },
+    if (user === null) {
+      const loginHeader = h(P.Center, { maxWidth: "lg" },
+        h(P.Stack, { inset: "lg" },
               h("header", null,
                 h(P.Inline, { justify: "center", align: "center", wrap: true, gap: "lg" },
                   h(P.Image, {
@@ -1287,38 +1273,35 @@
                     text("Office of the Ecclesiastical Council for Family Affairs", { variant: "secondary" }),
                   ),
                 ),
-              ),
-              h(P.Center, { maxWidth: "sm" },
-                h(P.Panel, null,
-                  h(P.Stack, { gap: "lg", inset: "lg" },
-                    h(P.Inline, { justify: "between", align: "center" },
-                      h(P.Image, {
-                        src: "/static/ctm/tribunal-logo-cropped.svg", alt: "CTM",
-                        width: 1104, height: 1050, className: "plx-u-w-72px plx-u-bg-transparent",
-                        fit: "contain", placeholder: "none", priority: true,
-                      }),
-                      language,
-                    ),
-                    h(P.Stack, { gap: "sm" },
-                      text(t("signIn"), { as: "h2", variant: "display" }),
-                      text(t("welcome"), { variant: "secondary" }),
-                    ),
-                    h(P.Stack, { gap: "sm" },
-                      ...config.providers.map((name) => h(P.Button, {
-                        key: name, variant: name === "microsoft" ? "primary" : "secondary",
-                        onClick: () => postForm(`/accounts/${name}/login/`),
-                      }, t(name))),
-                    ),
-                    config.providers.length
-                      ? text(t("councilLogin"), { variant: "secondary" })
-                      : h(P.Notice, { tone: "warning" }, t("noProviders")),
-                  ),
+              )
+        ),
+      );
+      return h(P.AppShell, { page: "form", header: loginHeader, strings: { skip: t("skip") } },
+        h(P.PageContent, { className: "plx-u-justify-center" },
+          h(P.Center, { maxWidth: "sm" },
+            h(P.Panel, null,
+              h(P.Stack, { gap: "lg", inset: "lg" },
+                h(P.Center, { intrinsic: true, text: true },
+                  h(P.Image, {
+                    src: "/static/ctm/tribunal-logo-cropped.svg", alt: "CTM",
+                    width: 1104, height: 1050, className: "plx-u-w-72px plx-u-bg-transparent",
+                    fit: "contain", placeholder: "none", priority: true,
+                  }),
                 ),
+                text(t("signIn"), { as: "h2", variant: "display", className: "plx-u-text-center" }),
+                h(P.Stack, { gap: "sm" },
+                  ...config.providers.map((name) => h(P.Button, {
+                    key: name, variant: name === "microsoft" ? "primary" : "secondary",
+                    onClick: () => postForm(`/accounts/${name}/login/`),
+                  }, t(name))),
+                ),
+                !config.providers.length ? h(P.Notice, { tone: "warning" }, t("noProviders")) : null,
               ),
             ),
           ),
         ),
       );
+    }
     const council = user.portal === "council";
     const navItems = council
       ? ["home", "sessions", "cases", "search", "archived", "statistics"]
