@@ -105,6 +105,15 @@ test("report template draft action is named as a report", () => {
   assert.match(councilCase, /t\("saveReport"\)/);
 });
 
+test("Arabic report questions use an RTL reading surface", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  assert.match(councilCase, /dir: form\.language === "ar" \? "rtl" : undefined/);
+  assert.match(councilCase, /ctm-report-question-language--rtl/);
+  assert.match(css, /\.ctm-report-question-language--rtl \{/);
+  assert.match(css, /direction: rtl/);
+});
+
 test("report template wording follows the selected request language", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(councilCase, /if \(lang === "ar"\) return ar \|\| en/);

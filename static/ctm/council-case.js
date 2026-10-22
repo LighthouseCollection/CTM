@@ -1020,19 +1020,25 @@ ${ar}` : en;
       h(P.SplitView, {
         label: t("reportTemplates"),
         firstLabel: t("questionCategories"),
-        first: h(P.Panel, { title: t("questionCategories") }, h(P.NavList, {
+        first: h(P.Panel, { title: t("questionCategories") }, h("div", {
+          className: `ctm-report-question-language${form.language === "ar" ? " ctm-report-question-language--rtl" : ""}`,
+          dir: form.language === "ar" ? "rtl" : undefined,
+        }, h(P.NavList, {
           label: t("questionCategories"), value: activeCategory, onSelect: setActiveCategory,
           items: categoryGroups.map((group) => ({ id: group.category, label: groupTitle(group, form.language), count: group.questions.length })),
-        })),
+        }))),
         second: h(P.FormSection, { title: t("questionSelection"), description: t("selectedCount", { n: form.selected.length }) },
-          h(P.Fieldset, { legend: groupTitle(categoryGroups.find((group) => group.category === activeCategory) || {}, form.language) },
+          h("div", {
+            className: `ctm-report-question-language${form.language === "ar" ? " ctm-report-question-language--rtl" : ""}`,
+            dir: form.language === "ar" ? "rtl" : undefined,
+          }, h(P.Fieldset, { legend: groupTitle(categoryGroups.find((group) => group.category === activeCategory) || {}, form.language) },
             ...activeQuestions.map((q) => h(P.Checkbox, {
               key: q.code, label: wording(q, form.language),
               description: q.foundational ? t("foundational") : form.language === "ar" && !String(q.wording_ar || "").trim() ? t("arabicPending") : undefined,
               checked: q.foundational || form.selected.includes(q.code), disabled: pending || q.foundational,
               onChange: (e) => update({ selected: e.target.checked ? [...form.selected, q.code] : form.selected.filter((code) => code !== q.code) }),
             })),
-          ),
+          )),
         ),
       }),
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,

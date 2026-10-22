@@ -222,3 +222,16 @@
 @media (max-width: 42rem) {
   .ctm-report-party-cards { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Arabic report questions are an RTL reading surface, independent of the portal shell language. */
+.ctm-report-question-language--rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.ctm-report-question-language--rtl .plx-check,
+.ctm-report-question-language--rtl .plx-check__text,
+.ctm-report-question-language--rtl .plx-fieldset__legend {
+  direction: rtl;
+  text-align: right;
+}
