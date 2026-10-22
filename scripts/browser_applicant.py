@@ -21,7 +21,7 @@ HARNESS = """<!doctype html><html lang="en" data-plx-density-policy="compact"><h
 <link rel="stylesheet" href="BASEplenix.css">
 <script src="BASEvendor/react.production.min.js"></script>
 <script src="BASEvendor/react-dom.production.min.js"></script><script src="BASEplenix.js"></script>
-<script src="/applicant-filing.js"></script><script src="/applicant.js"></script></head><body><div id="root"></div><script>
+<script src="/applicant-files.js"></script><script src="/applicant-filing.js"></script><script src="/applicant.js"></script></head><body><div id="root"></div><script>
 const R = React, P = Plenix, h = R.createElement;
 const api = async (url, options) => {
   const response = await fetch(url, options);
@@ -43,7 +43,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(h(Harness));
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        content = (ROOT / ("static/ctm" + self.path)).read_bytes() if self.path in {"/applicant.js", "/applicant-filing.js"} else HARNESS.encode()
+        content = (ROOT / ("static/ctm" + self.path)).read_bytes() if self.path in {"/applicant.js", "/applicant-filing.js", "/applicant-files.js"} else HARNESS.encode()
         self.send_response(200)
         self.send_header("Content-Type", "text/javascript" if self.path.endswith(".js") else "text/html; charset=utf-8")
         self.end_headers()
@@ -82,9 +82,12 @@ try:
         fail_save = False
         fail_submit = False
         action_requests = []
+        documents = {"can_upload":False,"items":[],"requirements":[]}
 
         def route_api(route):
-            if route.request.url.endswith("/submit/"):
+            if route.request.url.endswith("/files/"):
+                route.fulfill(json=documents)
+            elif route.request.url.endswith("/submit/"):
                 action_requests.append(route.request.post_data_json)
                 if fail_submit:
                     route.abort("failed")
@@ -102,7 +105,14 @@ try:
                 app.update(answers=payload["answers"], version=app["version"] + 1)
                 route.fulfill(status=201, json={"version": app["version"]})
 
+        def uncertain_upload(route):
+            # Simulate a received replacement whose response is lost. The server
+            # listing, not a browser assumption, supplies the subsequent state.
+            documents["items"][0]["scan_state"] = "pending"
+            route.abort("failed")
+
         page.route("**/api/applications/synthetic-draft/**", route_api)
+        page.route("**/api/files/", uncertain_upload)
         page.goto(f"http://127.0.0.1:{server.server_port}/", wait_until="networkidle")
         expect(page.get_by_label("First name", exact=False)).to_have_value("Original")
         page.get_by_label("First name", exact=False).fill("")
@@ -174,13 +184,14 @@ try:
         expect(page.get_by_text("Submission was not confirmed.", exact=False)).to_be_visible()
         expect(page.get_by_label("Your full name", exact=False)).to_be_disabled()
         expect(page.get_by_role("button", name="Continue editing", exact=True)).to_be_disabled()
+        expect(page.get_by_role("button", name="Refresh documents", exact=True)).to_be_disabled()
         fail_submit = False
         page.get_by_role("button", name="Submit application", exact=True).click()
         expect(page.get_by_text("The server acknowledged your submission.", exact=False)).to_be_visible()
         assert action_requests[-1] == action_requests[-2]
         checks.append("Waived filing requires review/signature; uncertain retry freezes payload and idempotency key")
         app = fixture()
-        app.update(status="returned", can_resubmit=True, return_instructions="Synthetic correction: clarify your statement.",
+        app.update(status="returned", can_edit=False, can_resubmit=True, return_instructions="Synthetic correction: clarify your statement.",
                    fee={"amount_minor":25000,"currency":"USD","status":"paid"})
         page.reload(wait_until="networkidle")
         expect(page.get_by_text(app["return_instructions"], exact=True)).to_be_visible()
@@ -203,6 +214,36 @@ try:
         assert page.url.startswith("http://127.0.0.1:")
         assert page.get_by_text("The server acknowledged your submission.", exact=False).count() == 0
         checks.append("Untrusted checkout URL is rejected without navigation or invented payment success")
+        app = fixture()
+        app.update(can_submit=True, fee={"amount_minor":25000,"currency":"USD","status":"waived"})
+        app["questionnaire"].update(declaration_en="Approved synthetic declaration", declaration_ar="إقرار تجريبي معتمد")
+        documents = {"can_upload":True,"requirements":[{"category":"RO","context":"order-a",
+                     "label_en":"Order copy","label_ar":"نسخة الأمر","required":True}],
+                     "items":[{"id":"11111111-1111-4111-8111-111111111111","attachment_id":"attachment-a",
+                     "category":"RO","context":"order-a","name":"Synthetic order.pdf","scan_state":"clean",
+                     "download_url":"/api/files/11111111-1111-4111-8111-111111111111/"}]}
+        page.reload(wait_until="networkidle")
+        page.get_by_role("button", name="Review answers", exact=True).click()
+        page.get_by_label("I have read and accept this declaration.", exact=True).check()
+        page.get_by_label("Your full name", exact=False).fill("Synthetic Applicant")
+        expect(page.get_by_role("button", name="Submit application", exact=True)).to_be_enabled()
+        page.locator('input[type="file"]').set_input_files({"name":"synthetic.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.7 replacement"})
+        page.get_by_role("button", name="Upload corrected original", exact=True).click()
+        expect(page.get_by_text("The upload was not confirmed.", exact=False)).to_be_visible()
+        expect(page.get_by_role("button", name="Submit application", exact=True)).to_be_disabled()
+        page.get_by_role("button", name="Refresh documents", exact=True).click()
+        expect(page.get_by_text("Synthetic order.pdf · Safety checks pending", exact=True)).to_be_visible()
+        assert page.get_by_role("link", name="Download original", exact=True).count() == 0
+        page.get_by_role("button", name="Review answers", exact=True).click()
+        expect(page.get_by_role("button", name="Submit application", exact=True)).to_be_disabled()
+        documents["items"][0]["scan_state"] = "clean"
+        page.get_by_role("button", name="Refresh documents", exact=True).click()
+        expect(page.get_by_text("Synthetic order.pdf · Safety checks passed", exact=True)).to_be_visible()
+        page.get_by_role("button", name="Review answers", exact=True).click()
+        page.get_by_label("I have read and accept this declaration.", exact=True).check()
+        page.get_by_label("Your full name", exact=False).fill("Synthetic Applicant")
+        expect(page.get_by_role("button", name="Submit application", exact=True)).to_be_enabled()
+        checks.append("Uncertain replacement blocks filing until refreshed safe documents and explicit review/signature")
         assert not errors, errors
         browser.close()
 finally:

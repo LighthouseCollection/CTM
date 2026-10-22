@@ -7,6 +7,8 @@ import json
 import shutil
 import subprocess
 import threading
+from email.parser import BytesParser
+from email.policy import default
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
@@ -22,7 +24,7 @@ subprocess.run(["git", "apply", "--directory=.tmp/applicant-integration",
                 "docs/implementation/applicant/shell-integration.patch"], cwd=ROOT, check=True)
 shell = (COPY / "tribunal/templates/tribunal/shell.html").read_text(encoding="utf-8")
 shell = shell.replace("{% load static %}", "")
-for name in ("app.js", "applicant.js", "applicant-filing.js"):
+for name in ("app.js", "applicant.js", "applicant-filing.js", "applicant-files.js"):
     shell = shell.replace("{% static 'ctm/" + name + "' %}", "/" + name)
 shell = shell.replace('{{ boot|json_script:"ctm-config" }}',
                       '<script id="ctm-config" type="application/json">{"providers":[]}</script>')
@@ -32,7 +34,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/app.js":
             content = (COPY / "static/ctm/app.js").read_bytes()
-        elif self.path in {"/applicant.js", "/applicant-filing.js"}:
+        elif self.path in {"/applicant.js", "/applicant-filing.js", "/applicant-files.js"}:
             content = (ROOT / ("static/ctm" + self.path)).read_bytes()
         else:
             content = shell.encode()
@@ -63,6 +65,9 @@ try:
         page.on("pageerror", lambda error: errors.append(str(error)))
         save_status = 201
         preference_status = 200
+        documents = {"can_upload":True,"items":[],"requirements":[{
+            "category":"RO","context":"order-a","label_en":"Order copy","label_ar":"نسخة الأمر","required":True}]}
+        uploads = []
 
         def api(route):
             path = route.request.url.split("/api/", 1)[1]
@@ -72,6 +77,22 @@ try:
                 route.fulfill(json={"items": []})
             elif path == "applications/":
                 route.fulfill(json={"items": [app]})
+            elif path == "applications/synthetic/files/":
+                route.fulfill(json=documents)
+            elif path == "files/":
+                content_type = route.request.headers["content-type"]
+                assert content_type.startswith("multipart/form-data; boundary=")
+                message = BytesParser(policy=default).parsebytes(
+                    f"Content-Type: {content_type}\r\nMIME-Version: 1.0\r\n\r\n".encode() + route.request.post_data_buffer)
+                parts = {part.get_param("name", header="content-disposition"):part for part in message.iter_parts()}
+                values = {key:part.get_content() for key,part in parts.items() if key != "file"}
+                uploads.append(values)
+                assert values["application_id"] == "synthetic"
+                assert values["context"] == "order-a" and values["category"] == "RO"
+                assert parts["file"].get_filename() == "synthetic.pdf"
+                documents["items"] = [{"id":"11111111-1111-4111-8111-111111111111", "attachment_id":"attachment-a",
+                                       "category":"RO","context":"order-a","name":"Synthetic original.pdf","scan_state":"pending"}]
+                route.fulfill(status=201, json={"id":"11111111-1111-4111-8111-111111111111","scan_state":"pending"})
             elif path == "account/settings/":
                 if preference_status != 200:
                     route.fulfill(status=preference_status, json={"error": "synthetic preference failure"})
@@ -129,6 +150,26 @@ try:
             assert page.locator("[style]").count() == 0
             page.reload(wait_until="networkidle")
         checks.append("Actual patched shell api preserves 403/404 and editor locks further writes")
+        page.get_by_role("button", name="Open application", exact=True).click()
+        expect(page.locator('input[type="file"]')).to_be_attached()
+        upload = page.get_by_role("button", name="Upload original", exact=True)
+        page.locator('input[type="file"]').set_input_files({"name":"synthetic.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.7 synthetic-only"})
+        upload.click()
+        expect(page.get_by_text("Synthetic original.pdf · Safety checks pending", exact=True)).to_be_visible()
+        assert page.get_by_role("link", name="Download original", exact=True).count() == 0
+        page.locator('input[type="file"]').set_input_files({"name":"synthetic.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.7 corrected synthetic-only"})
+        page.get_by_role("button", name="Upload corrected original", exact=True).click()
+        expect(page.get_by_text("Synthetic original.pdf · Safety checks pending", exact=True)).to_be_visible()
+        assert uploads[-1]["attachment_id"] == "attachment-a"
+        assert "attachment_id" not in uploads[0]
+        checks.append("Actual shell multipart transport preserves application/order/replacement; pending scan has no download")
+        page.get_by_role("button", name="العربية", exact=True).click()
+        expect(page.get_by_text("Synthetic original.pdf · فحوص السلامة قيد الانتظار", exact=True)).to_be_visible()
+        for width in (1280,390):
+            page.set_viewport_size({"width":width,"height":1000})
+            assert page.locator("[style]").count() == 0
+            assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        checks.append("Context upload controls render in Arabic RTL without runtime styles/overflow")
         assert not errors, errors
         browser.close()
 finally:

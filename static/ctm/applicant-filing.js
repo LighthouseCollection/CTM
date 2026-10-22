@@ -115,7 +115,7 @@
     const actions = availability(application), state = session.state;
     R.useEffect(() => { onBusyChange?.(state.busy); return () => onBusyChange?.(false); }, [state.busy, onBusyChange]);
     R.useEffect(() => { onLockChange?.(state.attempted); return () => onLockChange?.(false); }, [state.attempted, onLockChange]);
-    R.useEffect(() => { setAccepted(false); setName(""); }, [application.version]);
+    R.useEffect(() => { if (!reviewed) { setAccepted(false); setName(""); } }, [application, reviewed]);
     const blocked = dirty || !reviewed || state.busy || state.locked || state.submitted;
     const attestation = { accepted, name };
     const button = (key, action, extra = false) => h(P.Button, {

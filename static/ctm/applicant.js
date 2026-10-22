@@ -145,11 +145,20 @@
     const [pending, setPending] = R.useState(null);
     const [filingBusy, setFilingBusy] = R.useState(false);
     const [filingLocked, setFilingLocked] = R.useState(false);
+    const [uploadBusy, setUploadBusy] = R.useState(false);
+    const [documentRevision, setDocumentRevision] = R.useState(0);
+    const [documentsReady, setDocumentsReady] = R.useState(false);
+    const documentsReadinessChanged = R.useCallback(ready => {
+      setDocumentsReady(ready); setReview(false);
+    }, []);
+    const documentsChanged = R.useCallback(() => {
+      setReview(false); setDocumentRevision(n => n + 1);
+    }, []);
     const [, refresh] = R.useReducer(n => n + 1, 0);
     R.useEffect(() => {
       let active = true;
       setRecord(null); setSession(null); setFailure(null); setReview(false);
-      setFilingBusy(false); setFilingLocked(false);
+      setFilingBusy(false); setFilingLocked(false); setUploadBusy(false); setDocumentsReady(false);
       api(`/api/applications/${encodeURIComponent(applicationId)}/`).then(app => {
         if (!active) return;
         setRecord(app); setSession(createDraftSession(app, api, () => { if (active) refresh(); }));
@@ -161,7 +170,7 @@
     const state = session?.state;
     const filingRecord = R.useMemo(() => record && ({ ...record,
       version: state?.version ?? record.version,
-    }), [record, state?.version]);
+    }), [record, state?.version, documentRevision]);
     R.useEffect(() => {
       if (!state?.dirty) return;
       const warn = event => { event.preventDefault(); event.returnValue = ""; };
@@ -170,16 +179,16 @@
     }, [state?.dirty]);
     const text = (value, props = {}) => h(P.Text, props, value);
     const button = (key, action, props = {}) => h(P.Button, {
-      onClick: action, disabled: state?.saving || filingBusy, ...props,
+      onClick: action, disabled: state?.saving || filingBusy || uploadBusy, ...props,
     }, t(key));
     const navigate = (action) => {
-      if (state?.saving || filingBusy) return;
+      if (state?.saving || filingBusy || uploadBusy) return;
       if (state?.dirty) setPending(() => action); else action();
     };
     R.useEffect(() => {
       onNavigationGuard?.(navigate);
       return () => onNavigationGuard?.(null);
-    }, [onNavigationGuard, session, state?.dirty, state?.saving, filingBusy]);
+    }, [onNavigationGuard, session, state?.dirty, state?.saving, filingBusy, uploadBusy]);
     const reloadAnswers = () => navigate(() => setReload(n => n + 1));
     let body;
     if (failure) body = h(P.Notice, { tone: "danger", actions: button("retry", reloadAnswers) }, t(failure));
@@ -201,13 +210,13 @@
           description: field.required ? t("required") : undefined,
         }, text(display));
         const shared = {
-          value: value ?? "", disabled: state.saving || filingBusy || filingLocked,
+          value: value ?? "", disabled: state.saving || filingBusy || filingLocked || uploadBusy,
           onChange: event => session.change(field.code, event.target.value),
         };
         if (field.type === "list") return h(P.Fieldset, { key: field.code,
           legend: fieldLabel + (field.required ? ` (${t("required")})` : "") },
           ...options.map(option => h(P.Checkbox, {
-            key: option.value, label: option.label, disabled: state.saving || filingBusy || filingLocked,
+            key: option.value, label: option.label, disabled: state.saving || filingBusy || filingLocked || uploadBusy,
             checked: Array.isArray(value) && value.includes(option.value),
             onChange: event => session.change(field.code, event.target.checked
               ? [...(Array.isArray(value) ? value : []), option.value]
@@ -230,13 +239,20 @@
         ...fields.filter(field => isVisible(field, state.answers)).map(renderField),
         h(P.Inline, { wrap: true },
           state.editable ? button(state.saving ? "saving" : "save", () => session.save(),
-            { disabled: state.saving || filingBusy || filingLocked || !state.dirty }) : null,
+            { disabled: state.saving || filingBusy || filingLocked || uploadBusy || !state.dirty }) : null,
           state.editable ? button(review ? "edit" : "review", () => setReview(!review),
-            { variant: "secondary", disabled:state.saving || filingBusy || filingLocked }) : null,
+            { variant: "secondary", disabled:state.saving || filingBusy || filingLocked || uploadBusy })
+            : button("review", () => setReview(true), {variant:"secondary", disabled:review || filingBusy || filingLocked || uploadBusy}),
         ),
+        window.CTMApplicantFiles ? h(window.CTMApplicantFiles.ApplicationFiles, {
+          key: "documents", applicationId, api, lang,
+          disabled: state.dirty || state.saving || filingBusy || filingLocked,
+          onBusyChange: setUploadBusy, onChanged: documentsChanged,
+          onReadyChange: documentsReadinessChanged,
+        }) : null,
         window.CTMApplicantFiling ? h(window.CTMApplicantFiling.FilingActions, {
           key: "filing", application: filingRecord, api, lang,
-          dirty: state.dirty || state.saving, reviewed: review,
+          dirty: state.dirty || state.saving || uploadBusy || !documentsReady, reviewed: review,
           onBusyChange: setFilingBusy, onLockChange: setFilingLocked,
           onRefresh: reloadAnswers,
         }) : null);
