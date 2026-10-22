@@ -1,5 +1,9 @@
 # Applicant acceptance reconciliation
 
+## Current field mapping and integrated verification
+
+90 semantic field targets, five repeat families, ten contextual requirements and24 AF decisions mapped at integration104e4fd. Fresh unmodified integrated archive:74 actual API/browser groups pass;92 frontend tests pass. Reference seed remains six unpublished fields without EN/AR labels; approved content and authoritative nested validation remain dependencies, not completed features. [Mapping and exact blockers](field-mapping/README.md) | [Download JSON](field-mapping/result.json). Earlier integration gaps/counts below are historical.
+
 ## Current history and notification integration (2026-10-21)
 
 Twenty local applicant batches add own saved-history comparison in a Plenix modal and private paginated notifications with explicit read acknowledgements. No user-facing export exists. Current question labels are distinguished from unavailable historical wording.

@@ -36,7 +36,7 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
     def open_editor(ctx):
         page=ctx.new_page();page.on("pageerror",lambda error:errors.append(str(error)))
         page.goto(base,wait_until="networkidle")
-        page.get_by_role("navigation").get_by_role("button",name="My application",exact=True).click()
+        page.get_by_role("button",name="My application",exact=True).click()
         page.get_by_role("button",name="Open application",exact=True).click()
         expect(page.get_by_role("heading",name="Application actions",exact=True)).to_be_visible()
         return page
