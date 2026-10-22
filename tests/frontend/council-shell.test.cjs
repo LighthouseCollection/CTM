@@ -121,9 +121,13 @@ test("case back navigation retains the workspace that opened the case", () => {
   assert.match(app, /page: "session", selection, labelKey: "backTribunalSession"/);
 });
 
-test("case navigation gives notes and marriage their own workspaces", () => {
+test("case navigation groups notes and communications outside Case Overview", () => {
   assert.match(app, /notes: "Notes"/);
-  assert.match(app, /items: \["case", "timeline", "parties", "marriage", "separation", "notes"\]/);
+  assert.match(app, /caseCollaboration: "Notes & Communications"/);
+  assert.match(app, /items: \["case", "timeline", "parties", "marriage", "separation"\]/);
+  assert.match(app, /const collaborationGroups = \[/);
+  assert.match(app, /items: \["notes", "communications"\]/);
+  assert.match(app, /groups: collaborationGroups/);
   assert.match(app, /page === "notes" && council && councilModule\?\.CaseNotesWorkspace/);
   assert.match(app, /page === "marriage" && council && councilModule\?\.CaseMarriage/);
 });

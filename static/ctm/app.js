@@ -163,6 +163,7 @@
       paneResize: "Resize {name}",
       paneBack: "Back to {name}",
       communications: "Communications",
+      caseCollaboration: "Notes & Communications",
       assessment: "Case Review",
       decision: "Decision",
       timeline: "Timeline",
@@ -368,6 +369,7 @@
       paneResize: "تغيير حجم {name}",
       paneBack: "العودة إلى {name}",
       communications: "المراسلات",
+      caseCollaboration: "الملاحظات والمراسلات",
       assessment: "دراسة القضية",
       decision: "القرار",
       timeline: "التسلسل الزمني",
@@ -1391,7 +1393,7 @@
       {
         heading: t("overview"),
         icon: navigationIcon("case"),
-        items: ["case", "timeline", "parties", "marriage", "separation", "notes"].map(
+        items: ["case", "timeline", "parties", "marriage", "separation"].map(
           (id) => ({
             id,
             icon: navigationIcon(id),
@@ -1400,11 +1402,22 @@
               id === "case" ||
               (id === "parties" && councilModule?.CaseParties && council) ||
               (id === "timeline" && councilModule?.CaseTimeline && council) ||
-              (id === "marriage" && councilModule?.CaseMarriage && council) ||
-              (id === "notes" && councilModule?.CaseNotesWorkspace && council)
+              (id === "marriage" && councilModule?.CaseMarriage && council)
             ),
           }),
         ),
+      },
+    ];
+    const collaborationGroups = [
+      {
+        heading: t("caseCollaboration"),
+        icon: navigationIcon("communications"),
+        items: ["notes", "communications"].map((id) => ({
+          id,
+          icon: navigationIcon(id),
+          label: t(id),
+          disabled: !(id === "communications" || (id === "notes" && councilModule?.CaseNotesWorkspace && council)),
+        })),
       },
     ];
     const reviewGroups = [
@@ -1471,7 +1484,7 @@
       : mainNavigationItems;
     const caseNavigationItems = [
       ...caseGroups.flatMap((group) => group.items),
-      { id: "communications", label: t("communications"), icon: navigationIcon("communications") },
+      ...collaborationGroups.flatMap((group) => group.items),
       ...(council ? reviewGroups.flatMap((group) => group.items) : []),
       ...(council && councilModule?.CaseAudit ? [{ id: "audit", label: t("audit"), icon: navigationIcon("audit") }] : []),
     ];
@@ -1512,10 +1525,10 @@
             groups: caseGroups,
           }),
           h(P.NavList, {
-            label: t("communications"),
+            label: t("caseCollaboration"),
             value: page,
             onSelect: selectCaseSection,
-            items: [{ id: "communications", label: t("communications"), icon: navigationIcon("communications") }],
+            groups: collaborationGroups,
           }),
           council
             ? h(P.NavList, {
