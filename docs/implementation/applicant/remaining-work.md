@@ -1,5 +1,9 @@
 # Remaining applicant work
 
+## Latest backend compatibility
+
+Backenddb82099 with captured applicant modules passes76 SQLite API/browser groups without page errors. This explicit local candidate is separate from the unmodified governance baseline and does not establish PostgreSQL acceptance. [Report](backend-db82099-report.md) | [JSON](backend-db82099-api-result.json).
+
 ## Exact governance successor verification
 
 Unmodified integration8572195 passes76 SQLite API/browser groups, no page errors. First migration launch failed; fresh unchanged rerun passed. Latest applicant1d20bfa and backenddb82099 still await integration. PostgreSQL now has a confirmed coordinated Docker VM recovery dependency. [Report](integration-8572195-report.md) | [JSON](integration-8572195-result.json).
