@@ -1696,8 +1696,10 @@
           key: selection,
           api,
           lang,
+          user,
           caseId: selection,
           onSession: (id) => go("session", id),
+          onDecision: () => go("decision", selection),
         });
       if (page === "home" && council && councilModule?.CouncilHome)
         return h(councilModule.CouncilHome, {

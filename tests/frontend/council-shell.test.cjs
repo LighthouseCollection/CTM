@@ -485,3 +485,18 @@ test("session agenda person pills preserve normalized gender styling", () => {
   assert.match(source, /gender === "M" \|\| gender === "male"/);
   assert.match(source, /gender === "F" \|\| gender === "female"/);
 });
+
+test("case hearings use full-width current and past tabs with an in-progress hearing header", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(councilCase, /function CaseHearings\(\{ api, lang, user, caseId, onSession, onDecision \}\)/);
+  assert.match(councilCase, /variant: "contained", label: t\("hearingsTitle"\)/);
+  assert.match(councilCase, /currentHearing: "Current Hearing: \{date\}"/);
+  assert.match(councilCase, /pastHearings: "Past hearings"/);
+  assert.match(councilCase, /data-plx-media-hue": "green"/);
+  assert.match(councilCase, /rescheduleHearing: "Reschedule this hearing"/);
+  assert.match(councilCase, /councilAttendance: "Council attendance"/);
+  assert.match(councilCase, /outcome: "Outcome"/);
+  assert.match(councilCase, /decisionMade: "Decision Made — Go to Decision tab"/);
+  assert.match(councilCase, /recommendationOnly: "Recommendation \(no final decision yet\)"/);
+  assert.doesNotMatch(councilCase.slice(councilCase.indexOf("function CaseHearings"), councilCase.indexOf("// ---------- Petition")), /CTMShell\.Workspace/);
+});

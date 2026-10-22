@@ -467,6 +467,18 @@ ${ar}` : en;
       hearingsTitle: "Hearings",
       hearingsScope: "Agenda appearances of this case in recent council sessions.",
       noHearings: "This case has not been placed on a council session agenda.",
+      currentHearing: "Current Hearing: {date}",
+      pastHearings: "Past hearings",
+      rescheduleHearing: "Reschedule this hearing",
+      councilAttendance: "Council attendance",
+      councilAttendanceHelp: "Confirm the members who attended this particular hearing.",
+      outcome: "Outcome",
+      decisionMade: "Decision Made — Go to Decision tab",
+      recommendationOnly: "Recommendation (no final decision yet)",
+      decisionOutcomeHelp: "Go to the Decision tab to document the final outcome.",
+      recommendationRequired: "Enter a recommendation before saving.",
+      saveRecommendation: "Save Recommendation",
+      recommendationSaved: "Recommendation saved.",
       assessments: "Professional Assessments",
       assessmentPrivacy: "Medical and psychological reports are kept separate from ordinary documents. Their contents are shown only when the person's signed release covers the council, and they are never sent to external AI processing.",
       releaseTextPending: "The institution's signed-release wording has not been approved yet, so applicants cannot sign releases and report contents stay hidden.",
@@ -783,6 +795,18 @@ ${ar}` : en;
       hearingsTitle: "الجلسات",
       hearingsScope: "ظهور هذه القضية في جداول أعمال جلسات المجلس الأخيرة.",
       noHearings: "لم تُدرج هذه القضية في جدول أعمال أي جلسة مجلس.",
+      currentHearing: "الجلسة الحالية: {date}",
+      pastHearings: "الجلسات السابقة",
+      rescheduleHearing: "إعادة جدولة هذه الجلسة",
+      councilAttendance: "حضور المجلس",
+      councilAttendanceHelp: "أكد الأعضاء الذين حضروا هذه الجلسة تحديدًا.",
+      outcome: "النتيجة",
+      decisionMade: "تم اتخاذ القرار — انتقل إلى علامة القرار",
+      recommendationOnly: "توصية (لا يوجد قرار نهائي بعد)",
+      decisionOutcomeHelp: "انتقل إلى علامة القرار لتوثيق النتيجة النهائية.",
+      recommendationRequired: "أدخل توصية قبل الحفظ.",
+      saveRecommendation: "حفظ التوصية",
+      recommendationSaved: "تم حفظ التوصية.",
       assessments: "التقييمات المهنية",
       assessmentPrivacy: "تُحفظ التقارير الطبية والنفسية منفصلة عن المستندات العادية. ولا تُعرض محتوياتها إلا إذا شمل الإذن الموقَّع من صاحبها المجلس، ولا تُرسل أبدًا إلى معالجة خارجية بالذكاء الاصطناعي.",
       releaseTextPending: "لم تُعتمد بعد صياغة الإذن الموقَّع من الجهة، لذلك لا يمكن لمقدمي الطلبات توقيع الإذن وتبقى محتويات التقارير مخفية.",
@@ -2449,46 +2473,92 @@ ${ar}` : en;
     );
   }
 
-  function CaseHearings({ api, lang, caseId, onSession }) {
+  function CaseHearings({ api, lang, user, caseId, onSession, onDecision }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
-      t = translator(lang);
+      t = translator(lang),
+      bt = base.translator(lang);
+    const [tab, setTab] = R.useState("current");
+    const [attendanceOpen, setAttendanceOpen] = R.useState(false);
+    const [outcomeKind, setOutcomeKind] = R.useState("recommendation");
+    const [recommendation, setRecommendation] = R.useState("");
+    const [saving, setSaving] = R.useState(false);
+    const [notice, setNotice] = R.useState(null);
+    const [failure, setFailure] = R.useState(null);
     const [state, retry] = base.useLoad(
       () =>
         api("/api/sessions/").then(async (sessions) => {
-          const recent = (sessions.items || []).slice(0, 24);
-          const agendas = await Promise.all(
-            recent.map((session) =>
-              api(`/api/sessions/${encodeURIComponent(session.id)}/agenda/`).then((data) => ({ session, items: data.items })),
-            ),
-          );
+          const recent = (sessions.items || []).slice(0, 100);
+          const agendas = await Promise.all(recent.map((session) =>
+            api(`/api/sessions/${encodeURIComponent(session.id)}/agenda/`).then((data) => ({ session, items: data.items }))));
           const rows = [];
           for (const { session, items } of agendas)
-            for (const item of items || []) if (item.case_id === caseId) rows.push({ session, item });
+            for (const item of items || []) if (item.case_id === caseId && item.part === 2) rows.push({ session, item });
           return rows.sort((a, b) => b.session.date.localeCompare(a.session.date));
         }),
       [caseId],
     );
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const bt = base.translator(lang);
-    return h(
-      P.Stack,
-      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
-      h(P.Text, { as: "h1", variant: "title" }, t("hearingsTitle")),
-      h(P.Text, { variant: "secondary" }, t("hearingsScope")),
-      h(window.CTMShell.Workspace, {
-        label: t("hearingsTitle"), rows: state.data.map(({ session, item }) => ({ id: item.id, session, item, date: session.date })),
-        empty: t("noHearings"),
-        columns: [{ title: t("hearingsTitle"), field: "date", kind: "name" }],
-      }, ({ session, item }) => h(P.Stack, null,
-        h(P.Text, { as: "h2", variant: "title" },
-          item.part === 2 && item.party_names?.length ? base.hearingTitle(item.party_names, session.date, bt) : base.sessionLabel(session.date, bt)),
-        h(P.Text, null, `${bt(item.part === 1 ? "part1" : "part2")} · ${bt(item.state === "assigned" ? "assigned_state" : item.state)}`),
-        h(P.Button, { onClick: () => onSession(session.id) }, base.sessionLabel(session.date, bt)),
+    const rows = state.data || [];
+    const current = rows.find(({ session, item }) => session.state !== "closed" && item.state !== "heard") || rows[0] || null;
+    const past = rows.filter((row) => row !== current);
+    const title = (row) => {
+      const names = row.item.party_names || [];
+      return names.length >= 2 ? `${base.isolate(names[0])} vs. ${base.isolate(names[1])}` : base.hearingTitle(names, row.session.date, bt);
+    };
+    const hearingId = current?.item?.hearing_id;
+    const saveRecommendation = async () => {
+      if (!String(recommendation).trim()) { setFailure(t("recommendationRequired")); return; }
+      if (!hearingId) { setFailure(bt("outcomeDependency")); return; }
+      setSaving(true); setFailure(null);
+      try {
+        await api(`/api/hearings/${encodeURIComponent(hearingId)}/outcome/`, { method: "POST", body: JSON.stringify({ internal_text: "", recommendations: recommendation.trim() }) });
+        setNotice(t("recommendationSaved"));
+      } catch (error) { setFailure(base.serverMessage(error, bt)); }
+      finally { setSaving(false); }
+    };
+    const attendance = current && attendanceOpen
+      ? h(HearingAttendance, { api, lang, user, sessionId: current.session.id, hearingId, onClose: () => setAttendanceOpen(false) })
+      : null;
+    const outcome = current ? h(P.Panel, { icon: "document", title: t("outcome") },
+      h(P.RadioGroup, { label: t("outcome"), layout: "row", value: outcomeKind, onChange: setOutcomeKind,
+        options: [{ value: "decision", label: t("decisionMade") }, { value: "recommendation", label: t("recommendationOnly") }] }),
+      outcomeKind === "decision"
+        ? h(P.Inline, { justify: "between" }, h(P.Text, { variant: "secondary" }, t("decisionOutcomeHelp")), h(P.Button, { icon: "open", onClick: onDecision }, t("decisionVoting")))
+        : h(P.Stack, { gap: "md" }, h(P.Textarea, { rows: 6, autoGrow: true, value: recommendation, disabled: saving || !hearingId, onChange: (event) => setRecommendation(event.target.value) }), h(P.Inline, { justify: "end" }, h(P.Button, { variant: "primary", loading: saving, disabled: saving || !hearingId, onClick: saveRecommendation }, t("saveRecommendation")))),
+      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, notice) : null,
+      failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
+    ) : h(P.EmptyState, { title: t("noHearings") });
+    const currentContent = current ? h(P.Stack, { gap: "lg" },
+      h("header", { className: "plx-entity-header ctm-hearing-header" }, h("div", { className: "plx-entity-header__layout" },
+        h("div", { className: "plx-entity-header__main" }, h("div", { className: "plx-entity-header__lead" },
+          h("div", { className: "plx-entity-header__heading" },
+            h("span", { className: "plx-entity-header__media" }, h("span", { className: "plx-entity-header__tile", "data-plx-media-hue": "green", "aria-hidden": true }, h(P.Icon, { name: "calendar", size: "lg" }))),
+            h("div", { className: "plx-entity-header__text" }, h("h1", { className: "plx-entity-header__title" }, title(current)), h("p", { className: "plx-entity-header__subtitle" }, `${bt("councilSession")} ${current.session.date}`)),
+          ),
+        )),
+        h("div", { className: "plx-entity-header__aside" }, h(P.Stack, { gap: "xs", align: "end" },
+          h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "calendar", disabled: !current.session.can_reschedule, onClick: () => onSession(current.session.id) }, t("rescheduleHearing")),
+          h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "settings-users", onClick: () => setAttendanceOpen((open) => !open) }, t("councilAttendance")),
+        )),
       )),
-    );
+      attendance,
+      outcome,
+    ) : h(P.EmptyState, { title: t("noHearings") });
+    const pastContent = past.length ? h(P.Stack, { gap: "md" }, ...past.map((row) => h(P.Panel, { key: row.item.id, icon: "calendar", title: title(row), description: `${bt("councilSession")} ${row.session.date}` }, h(P.Inline, { justify: "end" }, h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open")))))) : h(P.EmptyState, { title: t("noHearings") });
+    return h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
+      items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] });
+  }
+
+  function HearingAttendance({ api, lang, user, sessionId, hearingId, onClose }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
+    const [state, retry] = base.useLoad(() => hearingId ? api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/?hearing_id=${encodeURIComponent(hearingId)}`) : Promise.resolve({ items: [] }), [sessionId, hearingId]);
+    const [saving, setSaving] = R.useState(false), [failure, setFailure] = R.useState(null);
+    const record = async (memberId, present) => { setSaving(true); setFailure(null); try { await api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }); retry(); } catch (error) { setFailure(base.serverMessage(error, bt)); } finally { setSaving(false); } };
+    return h(P.Panel, { icon: "settings-users", title: t("councilAttendance"), description: t("councilAttendanceHelp"), actions: h(P.Button, { size: "sm", onClick: onClose }, t("cancel")) },
+      state.pending ? base.loadingView(P, h, t) : state.error ? base.loadFailure(P, h, t, retry, state.error) : h(P.Stack, { gap: "sm" }, ...(state.data.items || []).map((row) => h(P.RadioGroup, { key: row.member_id, label: row.member_name, layout: "row", value: row.present ? "present" : "absent", onChange: (value) => record(row.member_id, value === "present"), options: [{ value: "present", label: bt("presentLabel"), disabled: saving || !hearingId || user?.role === "member" }, { value: "absent", label: bt("absentLabel"), disabled: saving || !hearingId || user?.role === "member" }] })), failure ? h(P.Notice, { tone: "danger" }, failure) : null));
   }
 
   // ---------- Petition and council notes ----------

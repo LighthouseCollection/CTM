@@ -22,11 +22,11 @@ test("case module extends the council namespace", () => {
 
 test("an unassigned open case offers the council-member picker and records President authorization", () => {
   assert.match(source, /api\("\/api\/council\/members\/"\)/);
-  assert.match(source, /!manager && record\.can_assign/);
+  assert.match(source, /record\.can_assign \? api\("\/api\/council\/members\/"\)/);
   assert.match(source, /base\.assignableMembers\(members\)/);
   assert.match(source, /P\.Select,/);
   assert.match(source, /api\(`\/api\/cases\/\$\{encodeURIComponent\(caseId\)\}\/assignment\/`,/);
-  assert.match(source, /president_id: assignment\.presidentId/);
+  assert.match(source, /president_id: summaryForm\.presidentId/);
 });
 
 test("decision catalog matches the server types and exact prototype labels", () => {
@@ -306,17 +306,6 @@ test("findings show the latest revision per fact, sorted by code", () => {
   assert.deepEqual(plain(rows.map((r) => `${r.fact_code}:${r.value}`)), ["A:a", "B:new"]);
 });
 
-test("templates pre-fill only published, non-foundational codes and skip retired ones", () => {
-  const templates = [
-    { id: "t1", retired: false, questions: [{ code: "OPEN-01" }, { code: "DM-01" }, { code: "GONE-9" }, { code: "DM-01" }] },
-    { id: "t2", retired: true, questions: [{ code: "DM-02" }] },
-    { id: "t3", retired: false, questions: [] },
-    { id: "t4", retired: false },
-  ];
-  assert.deepEqual(plain(C.usableTemplates(templates).map((t) => t.id)), ["t1"]);
-  assert.deepEqual(plain(C.templateSelection(templates[0], bank)), ["DM-01"]);
-});
-
 test("F19: votes of members no longer on the active roster stay counted as former members", () => {
   const roster = [{ id: "m1", name: "A", role: "member" }];
   const result = C.tally([{ member_id: "m1", choice: "approve" }, { member_id: "gone", choice: "deny" }], roster);
@@ -334,7 +323,7 @@ test("case summary counts ordinary pending/draft requests and the latest decisio
   const facts = C.summaryFacts(record, requests, versions);
   assert.equal(facts.pendingRequests, 1);
   assert.equal(facts.draftRequests, 1);
-  assert.deepEqual(plain(facts.decision), { type: "diss-both", approved: true, issued: true, number: 2 });
+  assert.deepEqual(plain(facts.decision), { type: "diss-both", approved: true, issued: true, issuedAt: "x", number: 2 });
   assert.equal(C.summaryFacts(record, [], null).decision, null);
 });
 

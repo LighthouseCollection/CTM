@@ -315,3 +315,11 @@
 .ctm-decree-template .plx-panel {
   background: var(--plx-color-surface-subtle, #f8fafc);
 }
+
+
+/* Current hearings are visually marked as in progress in the shared entity header. */
+.ctm-hearing-header .plx-entity-header__tile[data-plx-media-hue="green"] {
+  background: linear-gradient(135deg,
+    var(--plx-color-positive-surface, #e6f6eb),
+    var(--plx-color-positive-surface-strong, #c6ebd1));
+}
