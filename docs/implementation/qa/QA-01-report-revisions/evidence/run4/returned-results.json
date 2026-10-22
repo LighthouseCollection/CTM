@@ -1,0 +1,264 @@
+{
+  "summary": {
+    "pass": 32,
+    "fail": 0
+  },
+  "checks": [
+    {
+      "scenario": "RC",
+      "check": "hannah: precondition spouse_birth_date present=False",
+      "role": "applicant (spouse DOB absent)",
+      "expected": "matches setup",
+      "actual": "has_spouse_dob=False",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: save draft",
+      "role": "applicant (spouse DOB absent)",
+      "expected": "201",
+      "actual": "status=201",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: initial submission",
+      "role": "applicant (spouse DOB absent)",
+      "expected": "201",
+      "actual": "status=201 body={'id': '2ba9943a-95f6-4309-aa15-70b574e41c76'}",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: identical submission replay returns the same receipt",
+      "role": "applicant (spouse DOB absent)",
+      "expected": "same JSON, no second submission",
+      "actual": "status=201 same=True submissions=1",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: council member cannot return a filing",
+      "role": "member",
+      "expected": "403/404",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: admin returns the filing with instructions",
+      "role": "admin",
+      "expected": "201",
+      "actual": "status=201 status_now=returned",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: returned correction saved",
+      "role": "applicant (spouse DOB absent)",
+      "expected": "201",
+      "actual": "status=201 body={'id': 'b53c5bec-3803-43ec-b2f2-4385745bc964', 'version': 3}",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: another applicant cannot edit this returned filing",
+      "role": "other applicant",
+      "expected": "403/404",
+      "actual": "status=404",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: another applicant cannot read this filing",
+      "role": "other applicant",
+      "expected": "403/404",
+      "actual": "status=404",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: corrected resubmission accepted without new signature or fee",
+      "role": "applicant (spouse DOB absent)",
+      "expected": "201",
+      "actual": "status=201 body={'id': '0c9ef301-1dbb-4bc5-aa36-77f41bbb7d15'}",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: resubmission replay returns the same receipt",
+      "role": "applicant (spouse DOB absent)",
+      "expected": "same JSON",
+      "actual": "status=201 same=True",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: application is submitted with exactly two formal submissions",
+      "role": "applicant (spouse DOB absent)",
+      "expected": "submitted, 2",
+      "actual": "status=submitted submissions=2",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: first formal submission (answers, manifest, attestation, actor) unchanged",
+      "role": "database (owner read)",
+      "expected": "identical",
+      "actual": "identical=True",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: second submission holds the corrected answers",
+      "role": "database (owner read)",
+      "expected": "first_name corrected",
+      "actual": "first_name='Hannah (corrected)'",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: party reference and case identity preserved",
+      "role": "database (owner read)",
+      "expected": "unchanged",
+      "actual": "reference_same=True case=('2011-06-18', None, None, 'open')",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "hannah: applicant reads own resubmitted filing",
+      "role": "applicant (spouse DOB absent)",
+      "expected": "200",
+      "actual": "status=200",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: precondition spouse_birth_date present=True",
+      "role": "applicant (spouse DOB known)",
+      "expected": "matches setup",
+      "actual": "has_spouse_dob=True",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: save draft",
+      "role": "applicant (spouse DOB known)",
+      "expected": "201",
+      "actual": "status=201",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: initial submission",
+      "role": "applicant (spouse DOB known)",
+      "expected": "201",
+      "actual": "status=201 body={'id': 'e796c71c-9459-42f5-b769-437fa3a0f197'}",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: identical submission replay returns the same receipt",
+      "role": "applicant (spouse DOB known)",
+      "expected": "same JSON, no second submission",
+      "actual": "status=201 same=True submissions=1",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: council member cannot return a filing",
+      "role": "member",
+      "expected": "403/404",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: admin returns the filing with instructions",
+      "role": "admin",
+      "expected": "201",
+      "actual": "status=201 status_now=returned",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: returned correction saved",
+      "role": "applicant (spouse DOB known)",
+      "expected": "201",
+      "actual": "status=201 body={'id': '21923606-2a60-4d93-8c94-3f3aa5eb03f6', 'version': 3}",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: another applicant cannot edit this returned filing",
+      "role": "other applicant",
+      "expected": "403/404",
+      "actual": "status=404",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: another applicant cannot read this filing",
+      "role": "other applicant",
+      "expected": "403/404",
+      "actual": "status=404",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: corrected resubmission accepted without new signature or fee",
+      "role": "applicant (spouse DOB known)",
+      "expected": "201",
+      "actual": "status=201 body={'id': 'bd228cf7-189c-4703-b4a1-8c9737e1939f'}",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: resubmission replay returns the same receipt",
+      "role": "applicant (spouse DOB known)",
+      "expected": "same JSON",
+      "actual": "status=201 same=True",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: application is submitted with exactly two formal submissions",
+      "role": "applicant (spouse DOB known)",
+      "expected": "submitted, 2",
+      "actual": "status=submitted submissions=2",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: first formal submission (answers, manifest, attestation, actor) unchanged",
+      "role": "database (owner read)",
+      "expected": "identical",
+      "actual": "identical=True",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: second submission holds the corrected answers",
+      "role": "database (owner read)",
+      "expected": "first_name corrected",
+      "actual": "first_name='Olivia (corrected)'",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: party reference and case identity preserved",
+      "role": "database (owner read)",
+      "expected": "unchanged",
+      "actual": "reference_same=True case=('2011-06-18', '1983-09-05', '1984-07-23', 'open')",
+      "result": "PASS"
+    },
+    {
+      "scenario": "RC",
+      "check": "olivia: applicant reads own resubmitted filing",
+      "role": "applicant (spouse DOB known)",
+      "expected": "200",
+      "actual": "status=200",
+      "result": "PASS"
+    }
+  ]
+}

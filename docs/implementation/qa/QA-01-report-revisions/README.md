@@ -2,11 +2,49 @@
 
 Work order: [#15](https://github.com/LighthouseCollection/CTM/issues/15). Independent QA stream (Claude). This directory holds QA tests, sanitized evidence and documentation only. No product code is changed by this stream.
 
-**Result: FAIL** (run 2, latest heads). 9 scenarios pass and 3 fail. The backend's revision contract now holds under a real non-owner PostgreSQL role, including concurrency. But at the latest heads the council editor cannot save any revision, because it does not send the `expected_version` the backend now requires. In-app navigation also silently drops unsaved narrative.
+**Result: PASS** (run 4, the exact governance post-fix candidate `b3de51e203c814f1260ba5046e1d35e67d486657`). All 12 QA-01 scenarios pass, and so does the returned-correction check (RC) from governance's run-4 handoff.
+- Run 2 found two failures: the council editor sent no `expected_version`, and in-app navigation dropped unsaved narrative. Both are fixed in the integrated council code and verified in runs 3 and 4.
+- The backend's returned-correction fix (`48b80c4`, migration 0041) is verified over HTTP as `ctm_app`.
+- A negative control on the pre-fix build reproduces the original 500.
 
-## Runs and exact SHAs
+| | Run 3 | Run 4 (result of record) |
+|---|---|---|
+| Exact combined #16 commit (no assembly) | `0b10a61220f29feeefd89f4779138c2f78d85b04` | `b3de51e203c814f1260ba5046e1d35e67d486657` |
+| Contains | backend `9b7abce`, council `be9f738` (S10/C-02 `6937d54`, `87f094f`), Plenix 0.60.1 | backend `48b80c4` (0040/0041), council `be9f738`, UI `f5677e8`, Plenix 0.60.1 |
+| Runtime grants | migration `0038_runtime_grants` only | same |
+| Frontend unit tests | 231/231 | 236/236 |
+| HTTP/DB | 66 pass / 1 fail (S3 observation) | 66 pass / 1 fail (S3 observation) |
+| Browser | 35/35 | 35/35 |
+| Returned correction (RC) | pre-fix control: 29/32; HTTP 500 without spouse DOB | 32/32 |
+| Evidence | `evidence/run3/` | `evidence/run4/` |
 
-Upstream moved while run 1 was in progress, so there are two clearly separate runs. Run 2 is the result of record.
+**Runs 3–4 setup changes**
+- Each run is the exact, unmodified #16 commit, so nothing is assembled or overlaid.
+- Grants come only from migration 0038. The harness adds none (`QA01_GRANTS=migration`), and the migration's own check that `ctm_app` has no privileged attributes passed.
+- Fixture case managers are assigned through `assign_case`, so assignment history exists as in normal operation.
+- Each stage uses a fresh database name and never runs `DROP DATABASE`. On this machine's Docker VM, `DROP DATABASE` left PostgreSQL backends in an uninterruptible D state (no wait event). Containers `ctm-qa01-pg4` and `ctm-qa01-pg5` (label `ctm.owner=qa01`) are stuck and await governance's coordinated engine recovery.
+
+**Returned correction (RC)**
+- `harness/returned_setup.py` is setup only, run as the owner. It creates two fictional fee-waived drafts the same way as `tests/conftest.py`: one without the optional `spouse_birth_date`, one with it. The petition questionnaire is published through `services.configuration.publish_questionnaire`.
+- `harness/returned_scenarios.py` drives the journey over HTTP as `ctm_app`:
+  1. save → submit → identical replay;
+  2. a council member's return attempt is denied (403);
+  3. the admin returns the filing with instructions;
+  4. the applicant saves the correction; another applicant can't read or edit it (404);
+  5. the applicant resubmits with no attestation or fee → identical replay.
+- It then checks, as the owner:
+  - two formal submissions exist;
+  - the first submission's answers, manifest, attestation and actor are unchanged;
+  - the second holds the corrected answers;
+  - the party reference and case identity are preserved.
+
+**Observations (unchanged, not filed):**
+- The server stores a new version for an unchanged body sent with the current `expected_version`; the UI never sends one.
+- From 0b10a61 on, the inline `style` attributes are Plenix DataGrid's own column widths and max height.
+
+## Earlier runs and exact SHAs
+
+Upstream moved while run 1 was in progress, so runs 1 and 2 are separate. Their results are preserved as recorded.
 
 | | Run 1 (pinned at start) | Run 2 (result of record) |
 |---|---|---|
@@ -20,7 +58,7 @@ Upstream moved while run 1 was in progress, so there are two clearly separate ru
 
 The applicant PR #5 is not part of this assembly. Later heads (after run 2 started) are not covered.
 
-## Assembly (local only, never pushed)
+## Assembly for runs 1–2 (local only, never pushed; runs 3–4 use the exact #16 commit)
 
 ```sh
 git clone https://github.com/LighthouseCollection/CTM.git CTM-QA
@@ -66,9 +104,19 @@ uv run --frozen --python 3.12 python <harness>/api_scenarios.py
 uv run --frozen --python 3.12 python <harness>/owner_control.py           # same denials as table owner
 ```
 
+Runs 3–4 (exact commit, migration grants, fresh database name per stage, no `DROP DATABASE`):
+
+```sh
+git worktree add --detach ../CTM-QA-run4 b3de51e203c814f1260ba5046e1d35e67d486657
+export ASSEMBLY=../CTM-QA-run4 QA01_RUN=run4 QA01_GRANTS=migration QA01_PG_PORT=55434 QA01_DB=ctm_r4_b1
+bash harness/reset.sh      # then serve.py + browser_scenarios.py
+export QA01_DB=ctm_r4_a2 && bash harness/reset.sh && python harness/returned_setup.py
+# serve.py, then returned_scenarios.py, api_scenarios.py, owner_control.py
+```
+
 The browser and API suites each expect fresh fixtures. Results go to `evidence/<run>/`. Cookies, CSRF values and passwords stay in `%TEMP%/ctmqa/secrets`.
 
-## Results (run 2 unless noted)
+## Run 2 results (historical; see runs 3–4 above)
 
 | # | Scenario | Run 2 | Run 1 | Notes |
 |---|---|---|---|---|
@@ -87,7 +135,7 @@ The browser and API suites each expect fresh fixtures. Results go to `evidence/<
 
 Per-check detail: `evidence/run*/api-results.json` and `browser-results.json`. Scenario rollup: `results.json`.
 
-### Confirmed defects at the latest heads
+### Run 2 defects (both fixed in council `be9f738`, verified in runs 3–4)
 
 1. **Council editor vs. backend write contract (council #3).** Backend `bb3e48b` requires `expected_version` on `POST /api/reports/{id}/revisions/` and returns `409 {error: version_conflict, current_version}`. Council `65fa389` `revisionPayload` sends only `{answers, observations}`, and its pre-save re-read cannot replace the field.
    - Every save from the UI fails with 422.
@@ -109,6 +157,8 @@ Per-check detail: `evidence/run*/api-results.json` and `browser-results.json`. S
 - **Authored by this stream (QA only):** everything under `harness/`, `evidence/`, `results.json`, and this README.
 
 ## Limitations
+
+- Runs 3–4: genuine Microsoft provider sign-in and the shared test server (`ctm.lighthouseway.org`) were not used; all authenticated checks use private test-issued sessions on loopback, as governance requires for synthetic harnesses.
 
 - Test-issued sessions only. No provider login.
 - Two separate runs. Heads that moved after run 2 started are not covered.
