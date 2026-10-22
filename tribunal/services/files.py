@@ -281,7 +281,7 @@ def upload(
     transaction.on_commit(lambda: write_private_original(path, data))
     FileTechnicalEvent.objects.create(file=file, task="scan", result=state)
     audit(actor, "file_uploaded", file, case, metadata={"category": category})
-    if app and app.submitted_at and actor.pk == app.owner_id:
+    if app and app.submitted_at and app.status != "returned" and actor.pk == app.owner_id:
         notify_manager(case, "file_uploaded", file, digest=True)
     return file
 
@@ -343,6 +343,10 @@ def authorized_file(actor, file_id):
         if not decree and attachment.versions.order_by("-number").first().pk != file.pk:
             raise PermissionDenied("Applicants see only the latest version.")
     else:
+        from .filing_privacy import file_visible
+
+        if not file_visible(file):
+            raise PermissionDenied("Returned corrections are private until resubmission.")
         if attachment.application and attachment.application.submitted_at is None:
             raise PermissionDenied("Applicant draft attachments are private.")
         if attachment.visibility == "medical":
@@ -388,7 +392,7 @@ def case_file_listing(actor, case_id, *, history=False, offset=0):
             Q(attachment__application__isnull=True)
             | Q(attachment__application__submitted_at__isnull=False)
         )
-    if not history:
+    if not history and actor.role == "applicant":
         later = FileVersion.objects.filter(
             attachment_id=OuterRef("attachment_id"), number__gt=OuterRef("number")
         )
@@ -400,10 +404,29 @@ def case_file_listing(actor, case_id, *, history=False, offset=0):
     )
     files = (
         files.annotate(latest_scan=Subquery(scan))
-        .filter(latest_scan="clean")
         .order_by("-created_at", "-id")
     )
-    rows = list(files[offset : offset + 51])
+    if actor.role == "applicant":
+        files = files.filter(latest_scan="clean")
+    if actor.role != "applicant":
+        from .filing_privacy import file_visible
+
+        # Filter before pagination and select the newest visible formal original.
+        # A pending replacement must not hide the last formally submitted file.
+        visible = []
+        seen = set()
+        for row in files:
+            if not file_visible(row, current=not history):
+                continue
+            if not history and row.attachment_id in seen:
+                continue
+            seen.add(row.attachment_id)
+            if row.latest_scan != "clean":
+                continue
+            visible.append(row)
+        rows = visible[offset : offset + 51]
+    else:
+        rows = list(files[offset : offset + 51])
     return {
         "items": [
             {

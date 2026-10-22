@@ -129,6 +129,26 @@ def dispatch_outbox(limit=50):
         events = claim_delivery(identifier)
         if not events:
             continue
+        visible = []
+        for item in events:
+            if connection.vendor == "postgresql":
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT public.ctm_correction_notice_visible(%s)", [item.key])
+                    permitted = cursor.fetchone()[0]
+            else:
+                from tribunal.services.filing_privacy import notice_visible
+
+                permitted = notice_visible(item.key)
+            if permitted:
+                visible.append(item)
+            else:
+                Outbox.objects.filter(pk=item.pk).update(
+                    discarded_at=timezone.now(), lease_until=None,
+                    last_error="Private correction; no message sent",
+                )
+        events = visible
+        if not events:
+            continue
         identifiers = [event.pk for event in events]
         try:
             deliver(events)

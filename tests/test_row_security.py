@@ -60,6 +60,7 @@ def runtime():
             "ctm_testimony_readable(text,jsonb)",
             "ctm_testimony_writable(text,jsonb)",
             "ctm_invitation_context(uuid)",
+            "ctm_returned_source_visible(text,jsonb)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -658,7 +659,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0016_session_transfer_history")])
+        MigrationExecutor(connection).migrate([("tribunal", "0017_returned_filing_privacy")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -1109,3 +1110,27 @@ def test_closed_council_session_cannot_be_reopened_by_raw_update(
     with pytest.raises(DatabaseError):
         with runtime(people["admin"]):
             CouncilSession.objects.filter(pk=session.pk).update(state="planned")
+
+
+def test_f08_raw_sources_exclude_returned_corrections(runtime, ready_application, people, settings):
+    from tests.test_returned_privacy import correction
+    settings.CTM_SCAN_REQUIRED = False
+    app, formal, draft, old, new = correction(ready_application, people)
+    derivative = DocumentText.objects.create(file=new, text="Private pending correction", language="en")
+    for role in ["member", "secretary", "admin"]:
+        with runtime(people[role]):
+            assert AnswerRevision.objects.filter(pk=formal.revision_id).exists()
+            assert not AnswerRevision.objects.filter(pk=draft.pk).exists()
+            assert FileVersion.objects.filter(pk=old.pk).exists()
+            assert not FileVersion.objects.filter(pk=new.pk).exists()
+            assert not FileTechnicalEvent.objects.filter(file_id=new.pk).exists()
+            assert not DocumentText.objects.filter(pk=derivative.pk).exists()
+            assert not AuditEvent.objects.filter(source_id__in=[draft.pk, new.pk]).exists()
+    with runtime(app.owner):
+        assert AnswerRevision.objects.filter(pk=draft.pk).exists()
+        assert FileVersion.objects.filter(pk=new.pk).exists()
+    submit_application(app.owner, app.pk, "f08-rls-resubmit", expected_version=app.current_version)
+    with runtime(people["member"]):
+        assert AnswerRevision.objects.filter(pk=draft.pk).exists()
+        assert FileVersion.objects.filter(pk=new.pk).exists()
+        assert DocumentText.objects.filter(pk=derivative.pk).exists()

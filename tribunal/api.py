@@ -86,6 +86,9 @@ def filing_version(data):
 
 def application_data(app, actor):
     revision = app.revisions.filter(number=app.current_version).first()
+    if actor.pk != app.owner_id and app.status == "returned":
+        formal = app.submissions.select_related("revision").order_by("-created_at", "-id").first()
+        revision = formal.revision if formal else None
     fee = getattr(app, "fee", None)
     result = encoded(
         app,
@@ -93,7 +96,7 @@ def application_data(app, actor):
         status=app.status,
         case_id=str(app.case_id) if app.case_id else None,
         case_number=app.case.number if app.case else None,
-        version=app.current_version,
+        version=revision.number if revision else 0,
         answers=revision.answers if revision else {},
         fee={
             "amount_minor": fee.amount_minor,
@@ -270,6 +273,7 @@ def application(request, app_id):
 @endpoint()
 def answer_history(request, app_id):
     app = application_for(request.user, app_id)
+    from tribunal.services.filing_privacy import revision_visible
     return JsonResponse(
         {
             "items": [
@@ -280,7 +284,8 @@ def answer_history(request, app_id):
                     actor=f"{x.actor.first_name} {x.actor.last_name}".strip(),
                     timestamp=x.created_at.isoformat(),
                 )
-                for x in app.revisions.select_related("actor").order_by("number")
+                for x in app.revisions.select_related("actor", "application").order_by("number")
+                if app.owner_id == request.user.pk or revision_visible(x)
             ]
         }
     )
@@ -700,7 +705,10 @@ def messages(request, case_id):
 
 @endpoint(("GET", "POST"))
 def notifications(request):
+    from tribunal.services.filing_privacy import notice_visible
     qs = m.Notification.objects.filter(recipient=request.user)
+    hidden = [pk for pk, key in qs.values_list("pk", "key") if not notice_visible(key)]
+    qs = qs.exclude(pk__in=hidden)
     if request.method == "POST":
         updated = qs.filter(pk=body(request)["id"], read_at__isnull=True).update(
             read_at=timezone.now()
@@ -1100,6 +1108,7 @@ def appeal_result(request, app_id):
 def case_audit(request, case_id):
     staff(request.user)
     case = case_for(request.user, case_id)
+    from tribunal.services.filing_privacy import audit_visible
     return JsonResponse(
         {
             "items": [
@@ -1113,7 +1122,7 @@ def case_audit(request, case_id):
                 )
                 for x in m.AuditEvent.objects.filter(case=case).order_by("-created_at")[
                     :250
-                ]
+                ] if audit_visible(x)
             ]
         }
     )
@@ -1121,6 +1130,7 @@ def case_audit(request, case_id):
 
 @endpoint()
 def system_audit(request):
+    from tribunal.services.filing_privacy import audit_visible
     administrator(request.user)
     return JsonResponse(
         {
@@ -1131,7 +1141,7 @@ def system_audit(request):
                     source=x.source,
                     timestamp=x.created_at.isoformat(),
                 )
-                for x in m.AuditEvent.objects.order_by("-created_at")[:250]
+                for x in m.AuditEvent.objects.order_by("-created_at")[:250] if audit_visible(x)
             ]
         }
     )

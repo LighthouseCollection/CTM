@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError, PermissionDenied, ObjectDoes
 from tribunal.models import FileVersion, DocumentText
 from tribunal.policy import staff
 from .files import authorized_file
+from .filing_privacy import file_visible
 
 
 def search(actor, query, include_history=False, case_id=None):
@@ -40,7 +41,10 @@ def search(actor, query, include_history=False, case_id=None):
             continue
         if (
             not include_history
-            and file.attachment.versions.order_by("-number").first().pk != file.pk
+            and (not file_visible(file, current=True) or any(
+                file_visible(later, current=True)
+                for later in file.attachment.versions.filter(number__gt=file.number)
+            ))
         ):
             continue
         if file.pk in seen:
@@ -69,7 +73,7 @@ def index_text(derivative):
     file = derivative.file
     # Applicant drafts are not published into council search.
     app = file.attachment.application
-    if app and not app.submitted_at:
+    if app and (not app.submitted_at or not file_visible(file)):
         return None
     headers = {"Authorization": "Bearer " + key}
     response = requests.post(

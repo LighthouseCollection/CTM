@@ -136,7 +136,7 @@ def save_answers(actor, app_id, answers, expected_version):
         app.last_activity = timezone.now()
     app.save(update_fields=["current_version", "last_activity"])
     audit(actor, "answers_saved", revision, app.case)
-    if app.submitted_at and actor.pk == app.owner_id:
+    if app.submitted_at and app.status != "returned" and actor.pk == app.owner_id:
         notify_manager(app.case, "answer_changed", revision, digest=True)
     return revision
 

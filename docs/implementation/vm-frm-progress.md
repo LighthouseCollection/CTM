@@ -176,3 +176,28 @@ AS-F08 requires last-formal-only council reads/bytes/history/search and no early
 correction alerts while returned. The applicant stream reproduced the current
 gap against finance head. This is the next backend priority; no claim of having
 closed F08 is made by the earlier test counts.
+
+## F08 / AS-F08 returned-correction privacy
+
+- Council application detail/version and answer history now use formal submissions
+  while returned. The applicant retains the current private edit state. Returned
+  edit windows are derived from immutable completeness-review/submission history;
+  unsubmitted intermediate corrections remain private after a later resubmission.
+- Council file lists/history, ordinary download, HEAD, Range, inline preview and
+  source-authorized search reject pending correction originals. Default lists
+  retain the latest formal manifest rather than switching to the private replacement.
+  Pending corrections are not sent to the search index. Prior formal bytes remain
+  available, subject to their current technical safety gate.
+- Migration 0017 applies the same restriction to non-owner PostgreSQL reads of
+  answers, attachment roots, file versions/technical events/derivatives, audit
+  sources and retained correction notifications. Existing source ACLs and medical/
+  exact decree-release rules still apply. No historical content is rewritten.
+- Returned saves/uploads no longer queue manager alerts. Retained pre-fix jobs
+  are rechecked before delivery; private jobs are discarded without delivered_at.
+  Resubmission retains original signature, fee and case and exposes only the
+  actual formal revision/manifest. No new recipient-routing policy is inferred.
+- Full isolated PostgreSQL suite: **270 passed, 1 skipped**, including F08 HTTP
+  surfaces, multiple edits/returns, cached search, legacy outbox suppression,
+  raw non-owner queries, and migration rollback/reapplication through 0017.
+  Applicant-stream browser reacceptance is still required; these backend checks
+  do not claim the independently reported browser acceptance has passed.
