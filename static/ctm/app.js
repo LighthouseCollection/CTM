@@ -1502,6 +1502,14 @@
         });
       if (page === "reports")
         return h(ReportReader, { key: selection, rows: data.items, t, lang });
+      if (["documents", "evidence"].includes(page) && council && councilModule?.CaseFilesWorkspace)
+        return h(councilModule.CaseFilesWorkspace, {
+          key: `${selection}-${page}`,
+          api,
+          lang,
+          caseId: selection,
+          section: page,
+        });
       if (["documents", "evidence"].includes(page))
         return h(CaseFiles, {
           key: `${selection}-${page}`,
