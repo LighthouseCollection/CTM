@@ -240,7 +240,7 @@ GET `/api/cases/{id}/requests/` exists at backend f0e21b4. Applicant reads are
 subject-account filtered and exclude draft, interview and external-priest requests.
 The panel consumes `items` with UUID `id`, `title`, `kind`, `state`, `instructions`,
 `language` (`en`,`ar`,`both`), offset-aware `sent_at` and bound `questions` snapshots
-(`code`,`version`,`en`,`ar`). Only sent/completed/cancelled intake/medical/psychological
+(`code`,`version`,`en`,`ar`). Only sent/completed/cancelled/previously-sent closed intake/medical/psychological
 rows are rendered; malformed projections clear prior content. Request language
 controls which supplied wording appears. No translation is generated or substituted.
 Instructions are shown as escaped plain text; council author/subject identifiers,
@@ -261,3 +261,57 @@ artifacts. No consent inferred from report upload, no council signing on behalf 
 the subject and no institutional declaration wording invented. Follow-up requests
 stay linked new requests, not edits to previous reports. Real signed-scope byte,
 OCR/search and disclosure enforcement remain backend acceptance.
+
+
+## Prepared intake response and lifecycle actions
+
+An intake response editor becomes available only for explicit `can_respond:true`,
+positive `response_version`, state `sent` and supported bound questions. It sends
+only question-code answers and `expected_version` to the existing complete endpoint;
+no internal observations. Review precedes submission. Acknowledgement is a new
+report UUID, not a request UUID or proof of current request status. Every attempt
+locks against automatic retry; uncertain local answers remain visible and guarded.
+Navigation/unload protection applies until acknowledgement or explicit discard.
+Shared-shell navigation registration is supplied through the proposed patch.
+The current server supplies neither capability nor concurrency version/enforcement,
+so this prepared editor remains unavailable against the actual backend.
+
+Prepared lifecycle controls require `can_delete_draft:true` on a draft or
+`can_withdraw:true` on a submitted/returned/accepted petition or appeal. They send
+`expected_version` to existing delete-draft/withdraw routes after distinct explicit
+confirmation. No reason/approval/refund demand is introduced; no other-party notice
+or guaranteed case closure is promised. The server owns participating-party and
+joint-case rules. Missing capabilities show no controls. Acknowledged/uncertain
+attempts stay locked until authoritative application refresh; all competing filing,
+file/answer/supplement controls remain disabled, including delayed action responses.
+The backend must project capabilities and enforce the requested version before
+these controls can be enabled in real integration.
+
+## Actual checkout guard and proposed resume snapshot
+
+The filing panel reads own payment history before enabling draft filing controls.
+Pending, processing, paid-but-unfinalized, needs_review, unknown or malformed history
+blocks a new checkout/signature. Read failure also blocks it. This prevents a fresh
+signature from pretending to replace the retained pending candidate's attestation.
+Returned correction resubmission does not enter the draft checkout recovery gate.
+
+Proposed own application extension: `can_resume_checkout:true`, and
+`pending_checkout:{id,version,checkout_url,attestation:{accepted:true,name},
+declaration_en,declaration_ar}`. Candidate UUID and answer version must match the
+single pending row in own payment history and current application version. Unknown
+history or any processing/paid/reconciliation state disables resume. Only the exact
+HTTPS checkout.stripe.com host is accepted. Resume displays original declaration
+and signer and navigates to the existing URL; it never POSTs, re-signs, creates a
+candidate or interprets return query parameters as payment success. Backend must
+supply the original immutable snapshot and currently authorized URL. Missing data
+keeps the hold visible, with refresh/contact guidance.
+
+## Request closure privacy regression
+
+`close_case` changes both draft and sent requests to `closed`, while applicant GET
+requests excludes only state `draft` at f0e21b4. Real diagnostic proves formerly
+unsent staff draft content is returned with null `sent_at`. Previously sent closed
+requests are valid read-only rows; never-sent content is not. The UI rejects null
+sent timestamps, but API/RLS must exclude never-sent requests independently.
+Default API acceptance now fails on this regression. Baseline-only override is
+explicit and does not count as closure/privacy acceptance.

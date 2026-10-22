@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "backend_sha": "f0e21b4e0b5c76f1e99a4135c3701ea3e39a74d3",
+  "full_acceptance": "blocked",
+  "blocking_finding": "Unsent staff request becomes applicant-readable after case closure",
+  "tasks": [
+    {
+      "task": "Request submission and signed professional release",
+      "state": "partial",
+      "implemented": "Prepared bound intake response editor with review/version/uncertain/navigation guards; closed sent requests readable",
+      "remaining": "Own response capability/version enforcement and approved release-definition/signed-scope/file contracts"
+    },
+    {
+      "task": "Supplements and decree integration",
+      "state": "partial",
+      "verified": "Owner supplement POST preserves answers; staff denied. Explicit decree release/withdraw controls exact synthetic stored PDF access on full/range/preview/HEAD",
+      "remaining": "Own supplement history/capability and own active decree release list; actual signing/issuance"
+    },
+    {
+      "task": "Checkout recovery",
+      "state": "partial",
+      "implemented": "Actual own payment history blocks fresh checkout/signature for unresolved candidates; prepared original-snapshot resume",
+      "remaining": "Authoritative pending candidate/original attestation/declaration and safe existing resume URL"
+    },
+    {
+      "task": "Deletion and withdrawal controls",
+      "state": "partial",
+      "implemented": "Distinct confirmations, explicit capability gate, version payload and single-attempt persistent parent write lock",
+      "remaining": "Own capabilities and version enforcement; joint participation/closure acceptance"
+    },
+    {
+      "task": "Approved bilingual forms",
+      "state": "partial",
+      "implemented": "Bound candidate technical checker with JSON pointers; reference source inventory",
+      "remaining": "Approved full questionnaire/declaration/repeat translations and backend nested validation; reference has59 English and0 Arabic wording entries"
+    }
+  ],
+  "validation": {
+    "frontend_tests_passed": 59,
+    "batch_browser_groups_passed": 9,
+    "shell_browser_groups_passed": 9,
+    "base_browser_groups_passed": 19,
+    "request_browser_groups_passed": 4,
+    "real_api_preceding_groups_passed": 34,
+    "default_closure_privacy_gate": "failed"
+  },
+  "scope": "Isolated SQLite/synthetic accounts and PDFs; prepared contract fixtures; no live provider, signed release or deployment acceptance"
+}

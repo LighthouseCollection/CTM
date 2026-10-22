@@ -1,6 +1,6 @@
 --- a/tribunal/templates/tribunal/shell.html
 +++ b/tribunal/templates/tribunal/shell.html
-@@ -10,6 +10,15 @@
+@@ -10,6 +10,18 @@
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react.production.min.js"></script>
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react-dom.production.min.js"></script>
    <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.js"></script>
@@ -9,6 +9,9 @@
 +  <script defer src="{% static 'ctm/applicant-appointments.js' %}"></script>
 +  <script defer src="{% static 'ctm/applicant-payments.js' %}"></script>
 +  <script defer src="{% static 'ctm/applicant-appeals.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-responses.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-recovery.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-lifecycle.js' %}"></script>
 +  <script defer src="{% static 'ctm/applicant-requests.js' %}"></script>
 +  <script defer src="{% static 'ctm/applicant-decrees.js' %}"></script>
 +  <script defer src="{% static 'ctm/applicant-supplements.js' %}"></script>
@@ -177,7 +180,7 @@
 +          !council && window.CTMApplicantDecrees
 +            ? h(window.CTMApplicantDecrees.ReleasedDecrees, {key:selection,caseId:selection,api,lang}) : null,
 +          !council && window.CTMApplicantRequests
-+            ? h(window.CTMApplicantRequests.Requests, {key:selection,caseId:selection,api,lang}) : null,
++            ? h(window.CTMApplicantRequests.Requests, {key:selection,caseId:selection,api,lang,onNavigationGuard:registerApplicantGuard}) : null,
            h(
              P.Panel,
              { title: t("parties") },

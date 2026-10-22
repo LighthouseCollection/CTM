@@ -112,13 +112,14 @@
     const t = key => words[lang === "ar" ? "ar" : "en"][key];
     const [, refresh] = R.useReducer(n => n + 1, 0);
     const [accepted, setAccepted] = R.useState(false), [name, setName] = R.useState("");
+    const [recoveryBlocked,setRecoveryBlocked]=R.useState(!!window.CTMApplicantRecovery);
     const session = R.useMemo(() => createFilingSession(application, api,
       () => window.crypto.randomUUID(), refresh), [application, api]);
     const actions = availability(application), state = session.state;
     R.useEffect(() => { onBusyChange?.(state.busy); return () => onBusyChange?.(false); }, [state.busy, onBusyChange]);
     R.useEffect(() => { onLockChange?.(state.attempted); return () => onLockChange?.(false); }, [state.attempted, onLockChange]);
     R.useEffect(() => { if (!reviewed) { setAccepted(false); setName(""); } }, [application, reviewed]);
-    const blocked = dirty || !reviewed || state.busy || state.locked || state.submitted;
+    const blocked = dirty || !reviewed || state.busy || state.locked || state.submitted || (application.status==="draft"&&recoveryBlocked);
     const attestation = { accepted, name };
     const button = (key, action, extra = false) => h(P.Button, {
       disabled: blocked || extra, onClick: action,
@@ -127,6 +128,8 @@
     const amount = Number.isInteger(fee?.amount_minor) && fee.amount_minor >= 0 && fee.currency === "USD"
       ? new Intl.NumberFormat(lang === "ar" ? "ar" : "en", {style:"currency", currency:"USD"}).format(fee.amount_minor / 100) : null;
     return h(P.Panel, { title: t("title") }, h(P.Stack, null,
+      application.status==="draft"&&window.CTMApplicantRecovery?h(window.CTMApplicantRecovery.Recovery,{
+        application,api,lang,disabled:dirty||state.busy||state.attempted,onBlockChange:setRecoveryBlocked,onCheckout}):null,
       h(P.Text, null, `${t("fee")}: ${amount || "—"} · ${t(["due","paid","waived","historical_exempt"].includes(fee?.status) ? fee.status : "unknown")}`),
       h(P.Text, {variant:"secondary"}, t("notRefundable")),
       application.status === "returned" ? h(P.Notice, null, t("returnNotice")) : null,
@@ -139,7 +142,7 @@
       ["draft","returned"].includes(application.status) && (dirty || !reviewed) ? h(P.Notice, null, t("saveFirst")) : null,
       ["draft","returned"].includes(application.status) && !actions.checkout && !actions.submit && !actions.resubmit
         ? h(P.Notice, null, t("unavailable")) : null,
-      application.status === "draft" && actions.declaration && (actions.checkout || actions.submit)
+      application.status === "draft" && !recoveryBlocked && actions.declaration && (actions.checkout || actions.submit)
         ? h(P.Stack, null,
           h(P.Panel, {title:t("declaration")}, h(P.Text, null, application.questionnaire[lang === "ar" ? "declaration_ar" : "declaration_en"])),
           h(P.Checkbox, {label:t("accept"), checked:accepted, disabled:blocked || state.attempted, onChange:e => setAccepted(e.target.checked)}),

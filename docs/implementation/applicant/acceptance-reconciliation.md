@@ -42,7 +42,7 @@ and index suppression, private intermediate corrections, and obsolete queued-ale
 discard with EmailMessage.send mocked and never called. Live search service, live
 mail delivery and PostgreSQL RLS remain separate acceptance surfaces.
 
-All31 real API/browser scenario groups pass in the default mode. An explicitly
+The earlier 31-group run passed. The expanded default run reaches 34 passing scenario groups, then FAILS the new request-closure privacy gate. An explicitly
 selected baseline-only mode (`CTM_APPLICANT_ACCEPTANCE=baseline`) omits this privacy
 scenario and is not full returned-privacy acceptance. No shared backend or protected
 specification changes are made in the applicant stream.
@@ -59,7 +59,7 @@ separate acceptance surfaces.
 
 
 Latest complete API/browser rerun: backend
-`f0e21b4e0b5c76f1e99a4135c3701ea3e39a74d3`, 31 scenario groups passed.
+`f0e21b4e0b5c76f1e99a4135c3701ea3e39a74d3`, 34 preceding scenario groups passed; closure privacy gate failed.
 The added check verifies the missing own decree release-list projection cannot
 expose certificate links. Supplement/decree successful read/write flows remain
 proposed-contract fixtures; no real decree issuance/release/revocation acceptance.
@@ -72,3 +72,11 @@ external requests pass. A linked spouse receives no other applicant requests.
 Request setup is an explicit synthetic sent-snapshot fixture, not published
 institution wording, notification/send or professional consent acceptance.
 Own response submission and signed professional release remain pending contracts.
+
+
+Current P1: actual close_case changes never-sent staff drafts to closed; applicant
+request list filters only draft and returns these unsent rows. Frontend null-sent
+stamp rejection is not API authorization. Default acceptance now asserts exclusion
+and fails. Preserve this failed result until a backend fix is independently verified.
+Prepared response/lifecycle controls remain disabled without own server capabilities;
+original-attestation checkout resume remains disabled without its immutable snapshot.

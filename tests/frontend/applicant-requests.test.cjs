@@ -21,3 +21,7 @@ test('question wording follows bound request language without inventing translat
  assert.equal(Q.questionText(question,row,'ar'),'English wording');
  row.language='ar';assert.equal(Q.validProjection({items:[row]}),false);
 });
+test('closed requests remain readable without enabling response',()=>{
+ const d=data();d.items[0].state='closed';assert.equal(Q.validProjection(d),true);
+ d.items[0].sent_at=null;assert.equal(Q.validProjection(d),false);
+});

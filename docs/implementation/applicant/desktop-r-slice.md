@@ -148,7 +148,24 @@ Fixture checks cover presentation only; server byte-route revocation remains pen
 proposed shell integration. It shows sent request instructions and bound question
 wording, switches bilingual snapshots with locale, and clears stale content on
 failed/malformed refresh. Staff drafts, interviews and external requests are rejected
-by the client contract as well as filtered by the server. This read slice has no
-response editor, upload or consent checkbox: own action capabilities and approved
-signed-release/scope contracts remain pending. Intake responses and professional
+by the client contract as well as filtered by the server. The actual backend cannot enable the prepared intake response editor; own action
+capabilities/concurrency and approved signed-release/scope contracts remain pending.
+No professional upload or consent checkbox is exposed without those contracts. Intake responses and professional
 report/release submission are therefore not complete.
+
+
+## Five-task batch
+
+Prepared response/recovery/lifecycle modules load through the shared patch. Intake
+responses are capability/version gated, reviewed and guarded against silent loss or
+blind retries. Lifecycle confirmations distinguish draft removal from own withdrawal;
+competing writes are locked through uncertain acknowledgement until status refresh.
+Actual payment history blocks fresh checkout/signature while candidates are unresolved;
+resume uses only a matching original server snapshot and existing safe URL.
+
+Supplement owner writes and decree byte-route release/withdrawal are verified through
+actual isolated APIs. Their own read projections still require backend integration.
+Professional signed release and approved bilingual content remain institutional/backend
+dependencies. The technical candidate checker and reference inventory make wording
+coverage reviewable; they do not approve or publish content. Default acceptance is
+blocked by reproduced unsent staff-request disclosure after closure (GitHub #2).

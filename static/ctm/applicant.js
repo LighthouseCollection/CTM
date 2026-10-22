@@ -213,6 +213,7 @@
     const [reload, setReload] = R.useState(0);
     const [review, setReview] = R.useState(false);
     const [pending, setPending] = R.useState(null);
+    const [actionBusy,setActionBusy]=R.useState(false),[actionLocked,setActionLocked]=R.useState(false);
     const [filingBusy, setFilingBusy] = R.useState(false);
     const [filingLocked, setFilingLocked] = R.useState(false);
     const [uploadBusy, setUploadBusy] = R.useState(false);
@@ -253,7 +254,7 @@
     R.useEffect(() => {
       let active = true;
       setRecord(null); setSession(null); setFailure(null); setReview(false);
-      setFilingBusy(false); setFilingLocked(false); setUploadBusy(false); setDocumentsReady(false);
+      setActionBusy(false);setActionLocked(false);setFilingBusy(false); setFilingLocked(false); setUploadBusy(false); setDocumentsReady(false);
       setSupplementDirty(false);setSupplementBusy(false);
       setProjectionPending(false); setProjectionFailure(false);
       api(`/api/applications/${encodeURIComponent(applicationId)}/`).then(app => {
@@ -269,23 +270,23 @@
       version: state?.version ?? record.version,
     }), [record, state?.version, documentRevision]);
     R.useEffect(() => {
-      if (!state?.dirty && !state?.saving && !uploadBusy && !supplementDirty && !supplementBusy) return;
+      if (!state?.dirty && !state?.saving && !actionBusy && !uploadBusy && !supplementDirty && !supplementBusy) return;
       const warn = event => { event.preventDefault(); event.returnValue = ""; };
       window.addEventListener("beforeunload", warn);
       return () => window.removeEventListener("beforeunload", warn);
-    }, [state?.dirty, state?.saving, uploadBusy,supplementDirty,supplementBusy]);
+    }, [state?.dirty, state?.saving, actionBusy, uploadBusy,supplementDirty,supplementBusy]);
     const text = (value, props = {}) => h(P.Text, props, value);
     const button = (key, action, props = {}) => h(P.Button, {
-      onClick: action, disabled: state?.saving || filingBusy || uploadBusy || projectionPending || supplementBusy, ...props,
+      onClick: action, disabled: state?.saving || filingBusy || actionBusy || uploadBusy || projectionPending || supplementBusy, ...props,
     }, t(key));
     const navigate = (action) => {
-      if (state?.saving || filingBusy || uploadBusy || projectionPending || supplementBusy) return;
+      if (state?.saving || filingBusy || actionBusy || uploadBusy || projectionPending || supplementBusy) return;
       if (state?.dirty || supplementDirty) setPending(() => action); else action();
     };
     R.useEffect(() => {
       onNavigationGuard?.(navigate);
       return () => onNavigationGuard?.(null);
-    }, [onNavigationGuard, session, state?.dirty, state?.saving, filingBusy, uploadBusy, projectionPending,supplementDirty,supplementBusy]);
+    }, [onNavigationGuard, session, state?.dirty, state?.saving, filingBusy, actionBusy, uploadBusy, projectionPending,supplementDirty,supplementBusy]);
     const reloadAnswers = () => navigate(() => setReload(n => n + 1));
     const saveAnswers = async () => {
       const target = session;
@@ -308,7 +309,8 @@
       const renderField = (field, answers=state.answers, change=session.change) => {
         const value = answers[field.code];
         const fieldLabel = label(field, lang);
-        const controlsDisabled=state.saving||filingBusy||filingLocked||uploadBusy||projectionPending;
+        // Read-only capability refresh must not interrupt local typing; writes remain gated below.
+        const controlsDisabled=state.saving||filingBusy||actionBusy||filingLocked||actionLocked||uploadBusy;
         if(field.item_fields) {
           const rows=Array.isArray(value)?value:[];
           return h(P.Panel,{key:field.code,title:fieldLabel,description:field.required?t("required"):undefined},
@@ -333,7 +335,7 @@
           description: field.required ? t("required") : undefined,
         }, text(display));
         const shared = {
-          value: value ?? "", disabled: state.saving || filingBusy || filingLocked || uploadBusy || projectionPending,
+          value: value ?? "", disabled: state.saving || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy,
           onChange: event => change(field.code, event.target.value),
         };
         if (field.type === "boolean") return h(P.RadioGroup, {key:field.code,
@@ -346,7 +348,7 @@
         if (field.type === "list") return h(P.Fieldset, { key: field.code,
           legend: fieldLabel + (field.required ? ` (${t("required")})` : "") },
           ...options.map(option => h(P.Checkbox, {
-            key: option.value, label: option.label, disabled: state.saving || filingBusy || filingLocked || uploadBusy || projectionPending,
+            key: option.value, label: option.label, disabled: state.saving || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy,
             checked: Array.isArray(value) && value.includes(option.value),
             onChange: event => change(field.code, event.target.checked
               ? [...(Array.isArray(value) ? value : []), option.value]
@@ -376,32 +378,36 @@
         ...fields.filter(field => isVisible(field, state.answers)).map(field=>renderField(field)),
         h(P.Inline, { wrap: true },
           state.editable ? button(state.saving || projectionPending ? "saving" : record.status === "draft" ? "save" : "saveCorrections", saveAnswers,
-            { disabled: state.saving || filingBusy || filingLocked || uploadBusy || projectionPending || !state.dirty }) : null,
+            { disabled: state.saving || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy || projectionPending || !state.dirty }) : null,
           state.editable ? button(review ? "edit" : "review", () => setReview(!review),
-            { variant: "secondary", disabled:state.saving || filingBusy || filingLocked || uploadBusy || projectionPending })
-            : button("review", () => setReview(true), {variant:"secondary", disabled:review || filingBusy || filingLocked || uploadBusy || projectionPending}),
+            { variant: "secondary", disabled:state.saving || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy || projectionPending })
+            : button("review", () => setReview(true), {variant:"secondary", disabled:review || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy || projectionPending}),
         ),
         window.CTMApplicantFiles ? h(window.CTMApplicantFiles.ApplicationFiles, {
           key: "documents", applicationId, answerVersion:state.version, api, lang,
           savedApplication:record,
-          disabled: state.dirty || state.saving || filingBusy || filingLocked || projectionPending || supplementBusy,
+          disabled: state.dirty || state.saving || filingBusy || actionBusy || filingLocked || actionLocked || projectionPending || supplementBusy,
           onBusyChange: setUploadBusy, onChanged: documentsChanged,
           onReadyChange: documentsReadinessChanged,
           onProjectionRefresh: refreshProjection,
         }) : null,
         window.CTMApplicantFiling ? h(window.CTMApplicantFiling.FilingActions, {
           key: "filing", application: filingRecord, api, lang,
-          dirty: state.dirty || state.saving || uploadBusy || !documentsReady || projectionPending || projectionFailure || record.version !== state.version, reviewed: review,
+          dirty: state.dirty || state.saving || actionBusy || actionLocked || uploadBusy || !documentsReady || projectionPending || projectionFailure || record.version !== state.version, reviewed: review,
           onBusyChange: setFilingBusy, onLockChange: setFilingLocked,
           onRefresh: reloadAnswers,
         }) : null,
+        window.CTMApplicantLifecycle?h(window.CTMApplicantLifecycle.Actions,{
+          application:filingRecord,api,lang,onBusyChange:setActionBusy,onLockChange:setActionLocked,onRefresh:reloadAnswers,
+          disabled:state.dirty||state.saving||filingBusy||uploadBusy||supplementBusy||supplementDirty||projectionPending||filingLocked,
+        }):null,
         window.CTMApplicantPayments ? h(window.CTMApplicantPayments.PaymentHistory, {
           key:"payment-history",applicationId,api,lang,
           refreshKey:`${record.version}:${record.status}:${record.fee?.status}`,
         }) : null,
         record.kind==="appeal"&&record.status!=="draft"&&window.CTMApplicantSupplements
           ? h(window.CTMApplicantSupplements.Supplements,{key:applicationId,applicationId,api,lang,
-            disabled:state.dirty||state.saving||uploadBusy||filingBusy||filingLocked||projectionPending,
+            disabled:state.dirty||state.saving||uploadBusy||filingBusy||actionBusy||filingLocked||actionLocked||projectionPending,
             onDirtyChange:setSupplementDirty,onBusyChange:setSupplementBusy}) : null);
     }
     return h(P.LocaleProvider, { locale: lang === "ar" ? "ar" : "en", dir: lang === "ar" ? "rtl" : "ltr" },

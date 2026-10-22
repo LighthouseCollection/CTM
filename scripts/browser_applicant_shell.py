@@ -24,7 +24,7 @@ subprocess.run(["git", "apply", "--directory=.tmp/applicant-integration",
                 "docs/implementation/applicant/shell-integration.patch"], cwd=ROOT, check=True)
 shell = (COPY / "tribunal/templates/tribunal/shell.html").read_text(encoding="utf-8")
 shell = shell.replace("{% load static %}", "")
-for name in ("app.js", "applicant.js", "applicant-filing.js", "applicant-files.js", "applicant-appointments.js", "applicant-payments.js", "applicant-appeals.js", "applicant-supplements.js", "applicant-decrees.js", "applicant-requests.js"):
+for name in ("app.js", "applicant.js", "applicant-filing.js", "applicant-files.js", "applicant-appointments.js", "applicant-payments.js", "applicant-appeals.js", "applicant-supplements.js", "applicant-decrees.js", "applicant-requests.js", "applicant-responses.js", "applicant-recovery.js", "applicant-lifecycle.js"):
     shell = shell.replace("{% static 'ctm/" + name + "' %}", "/" + name)
 shell = shell.replace('{{ boot|json_script:"ctm-config" }}',
                       '<script id="ctm-config" type="application/json">{"providers":[]}</script>')
@@ -34,7 +34,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/app.js":
             content = (COPY / "static/ctm/app.js").read_bytes()
-        elif self.path in {"/applicant.js", "/applicant-filing.js", "/applicant-files.js", "/applicant-appointments.js", "/applicant-payments.js", "/applicant-appeals.js", "/applicant-supplements.js", "/applicant-decrees.js", "/applicant-requests.js"}:
+        elif self.path in {"/applicant.js", "/applicant-filing.js", "/applicant-files.js", "/applicant-appointments.js", "/applicant-payments.js", "/applicant-appeals.js", "/applicant-supplements.js", "/applicant-decrees.js", "/applicant-requests.js", "/applicant-responses.js", "/applicant-recovery.js", "/applicant-lifecycle.js"}:
             content = (ROOT / ("static/ctm" + self.path)).read_bytes()
         else:
             content = shell.encode()
@@ -125,6 +125,7 @@ try:
         page.get_by_role("button", name="Open application", exact=True).click()
         expect(page.get_by_label("Synthetic name")).to_have_value("Saved")
         page.get_by_label("Synthetic name").fill("Keep me")
+        expect(page.get_by_text("You have unsaved changes.",exact=True)).to_be_visible()
         page.get_by_role("button", name="العربية", exact=True).click()
         expect(page.get_by_label("اسم تجريبي")).to_have_value("Keep me")
         page.get_by_role("button", name="English", exact=True).click()

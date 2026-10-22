@@ -317,6 +317,20 @@ try:
         assert fixture_db(lambda:CheckoutIntent.objects.filter(application_id=app_id).count())==0
         fixture_db(lambda:Application.objects.filter(pk=app_id).update(duplicate_hold=False))
         checks.append("Synthetic identity hold permits browser draft save but checkout preparation/submit reject; unconfigured provider endpoint cannot charge; no person matching simulated")
+        def pending_checkout_fixture():
+            from tribunal.services.payments import prepare_checkout
+            return str(prepare_checkout(owner,app_id,{"accepted":True,"name":"Original synthetic checkout signer"},
+                expected_version=ready_version).pk)
+        ready_version=context.request.get(f"{BASE}/api/applications/{app_id}/").json()["version"]
+        pending_intent=fixture_db(pending_checkout_fixture)  # Local candidate only, no provider session or payment.
+        page.get_by_role("button",name="Refresh application status",exact=True).click()
+        expect(page.get_by_text("An existing payment attempt must be resolved",exact=False)).to_be_visible()
+        page.get_by_role("button",name="Review answers",exact=True).click()
+        expect(page.get_by_role("button",name="Continue to secure payment",exact=True)).to_be_disabled()
+        assert page.get_by_label("Your full name",exact=True).count()==0
+        assert page.get_by_role("button",name="Resume existing secure checkout",exact=True).count()==0
+        checks.append("Actual pending checkout history blocks new checkout/signature; missing original-attestation resume contract cannot enable a resume link")
+        fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=pending_intent).update(state="expired"))
         staff=browser.new_context()
         staff.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["admin"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
         staff.request.get(BASE+"/api/session/")
@@ -611,6 +625,12 @@ try:
         expect(page.get_by_text("Additional appeal information is unavailable.",exact=False)).to_be_visible()
         assert page.get_by_role("button",name="Submit additional information",exact=True).count()==0
         checks.append("Current backend missing own supplement capability/history cannot enable applicant append controls")
+        before_supplement=context.request.get(f"{BASE}/api/applications/{appeal_id}/").json()["answers"]
+        addition=context.request.post(f"{BASE}/api/appeals/{appeal_id}/additions/",data={"text":"Own synthetic supplement","file_ids":[]},headers={"X-CSRFToken":csrf})
+        assert addition.status==201,addition.text()
+        assert context.request.get(f"{BASE}/api/applications/{appeal_id}/").json()["answers"]==before_supplement
+        assert staff.request.post(f"{BASE}/api/appeals/{appeal_id}/additions/",data={"text":"Not the owner"},headers={"X-CSRFToken":staff_csrf}).status==403
+        checks.append("Actual owner supplement POST preserves original submitted answers and rejects staff authorship; own read/history integration remains pending")
         def sibling_reopened_fixture():
             from tribunal.models import Case,Proceeding,Party,OpenCaseClaim
             Case.objects.filter(pk=current["case_id"]).update(status="open")
@@ -639,6 +659,50 @@ try:
         assert sibling_appeal["kind"]=="appeal" and sibling_appeal["case_id"]==current["case_id"] and sibling_appeal["id"]!=appeal_id
         sibling.close()
         checks.append("Previously non-filing linked spouse can start own appeal from reopened-sibling case context without exposing the first spouse's appeal")
+        signed_file=next(row["id"] for row in context.request.get(f"{BASE}/api/applications/{app_id}/files/").json()["items"] if row["category"]=="CMC" and row["scan_state"]=="clean")
+        signed_bytes=context.request.get(f"{BASE}/api/files/{signed_file}/").body()
+        def decree_access_fixture():
+            from django.utils import timezone
+            from tribunal.models import DecisionRevision,Decree,Proceeding
+            proceeding=Proceeding.objects.filter(case_id=current["case_id"],kind="initial").first()
+            decision=DecisionRevision.objects.create(proceeding=proceeding,number=1,type="nullity",grounds="Synthetic access test only",actor=admin,
+                entitlements={party_id:"certificate"})
+            return str(Decree.objects.create(decision=decision,reference="DCR-SYNTHETIC-ACCESS",language="en",
+                signed_file_id=signed_file,signer=president,issued_at=timezone.now()).pk)
+        decree_id=fixture_db(decree_access_fixture)  # Synthetic PDF stands in for stored signed bytes; no issuance/signature acceptance.
+        assert context.request.get(f"{BASE}/api/files/{signed_file}/").status==403
+        release=staff.request.post(f"{BASE}/api/decrees/{decree_id}/release/",data={"party_id":party_id,"action":"release"},headers={"X-CSRFToken":staff_csrf})
+        assert release.status==201,release.text()
+        released=context.request.get(f"{BASE}/api/files/{signed_file}/")
+        assert released.status==200 and released.body()==signed_bytes and "no-store" in released.headers.get("cache-control","")
+        assert context.request.get(f"{BASE}/api/files/{signed_file}/",headers={"Range":"bytes=0-3"}).status==206
+        assert context.request.get(f"{BASE}/api/files/{signed_file}/?view=1").status==200
+        revoked=staff.request.post(f"{BASE}/api/decrees/{decree_id}/release/",data={"party_id":party_id,"action":"withdraw"},headers={"X-CSRFToken":staff_csrf})
+        assert revoked.status==201,revoked.text()
+        for suffix,headers in [("",{}),("",{"Range":"bytes=0-3"}),("?view=1",{})]:
+            assert context.request.get(f"{BASE}/api/files/{signed_file}/{suffix}",headers=headers).status==403
+        head=http.client.HTTPConnection("127.0.0.1",server.server_port)
+        try:
+            head.request("HEAD",f"/api/files/{signed_file}/",headers={"Cookie":f"{settings.SESSION_COOKIE_NAME}={cookies['owner']}"})
+            assert head.getresponse().status==403
+        finally:head.close()
+        checks.append("Real explicit decree release grants exact stored synthetic PDF; withdrawal revokes retained full/range/preview/HEAD URLs with no-store delivery")
+        # Default acceptance includes closure privacy. Explicit 0 is a baseline-only run.
+        if os.environ.get("CTM_APPLICANT_REQUEST_CLOSURE_AUDIT","1")=="1":
+            def close_requests_fixture():
+                from tribunal.models import Case
+                from tribunal.services.decisions import close_case
+                close_case(admin,Case.objects.get(pk=current["case_id"]),"synthetic_request_closure_audit",notify_parties=False)
+            fixture_db(close_requests_fixture)
+            closed_requests=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"]
+            closure_report={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],
+                "scope":"Isolated synthetic request closure privacy diagnostic",
+                "preceding_scenario_groups_passed":len(checks),
+                "unsent_staff_draft_excluded":not any(row["title"]=="Private staff draft" for row in closed_requests),
+                "sent_request_retained":any(row["title"]=="Own sent intake" and row["state"]=="closed" for row in closed_requests)}
+            (ROOT/"request-closure-privacy-result.json").write_text(json.dumps(closure_report,indent=2),encoding="utf-8")
+            print(json.dumps(closure_report,indent=2))
+            assert closure_report["unsent_staff_draft_excluded"],"Backend request closure exposes unsent staff draft; see request-closure-privacy-result.json"
         staff.close()
         assert page.locator("[style]").count()==0
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
