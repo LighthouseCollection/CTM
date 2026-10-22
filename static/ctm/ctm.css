@@ -4,17 +4,22 @@
 }
 
 
-.ctm-spouse-identity {
-  inline-size: 100%;
+.ctm-spouse-header {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--plx-sys-space-inline-md);
 }
 
-.ctm-spouse-identity__facts {
-  flex: 1 1 auto;
-  min-inline-size: 0;
-}
-
-.ctm-spouse-identity__fact {
+.ctm-spouse-header__fact {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--plx-sys-space-stack-2xs);
   min-inline-size: 8rem;
+}
+
+.ctm-spouse-header__name {
+  min-inline-size: 10rem;
 }
 
 .ctm-spouse-profile-section__heading {

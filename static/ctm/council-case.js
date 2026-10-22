@@ -2380,25 +2380,22 @@
     });
   }
 
-  function spouseIdentity(P, h, t, party) {
+  function spouseHeaderTitle(P, h, t, party) {
     const fact = (label, value, data) => h(
-      P.Stack,
-      { gap: "2xs", className: "ctm-spouse-identity__fact" },
-      h(P.Text, { variant: "caption" }, label),
-      data ? h(P.Text, { variant: "data" }, value) : value,
+      "span",
+      { className: "ctm-spouse-header__fact" },
+      h(P.Text, { as: "span", variant: "caption" }, label),
+      data ? h(P.Text, { as: "span", variant: "data" }, value) : value,
     );
     return h(
-      P.Inline,
-      { gap: "md", align: "center", className: "ctm-spouse-identity" },
-      h(
-        P.Inline,
-        { gap: "lg", align: "start", className: "ctm-spouse-identity__facts" },
-        party.reference ? fact(t("ctmId"), party.reference, true) : null,
-        fact(
-          t("portalAccount"),
-          h(P.Badge, { tone: party.can_receive ? "success" : "waiting" }, t(party.can_receive ? "registered" : "notRegistered")),
-          false,
-        ),
+      "span",
+      { className: "ctm-spouse-header" },
+      h(P.Text, { as: "span", variant: "strong", className: "ctm-spouse-header__name" }, party.name),
+      party.reference ? fact(t("ctmId"), party.reference, true) : null,
+      fact(
+        t("portalAccount"),
+        h(P.Badge, { tone: party.can_receive ? "success" : "waiting" }, t(party.can_receive ? "registered" : "notRegistered")),
+        false,
       ),
     );
   }
@@ -2457,7 +2454,7 @@
           {
             icon: spousePhoto(P, h, party),
             key: party.id,
-            title: party.name,
+            title: spouseHeaderTitle(P, h, t, party),
             collapsible: true,
             defaultExpanded: true,
             strings: { collapse: t("collapse"), expand: t("expand") },
@@ -2465,7 +2462,6 @@
           h(
             P.Stack,
             { gap: "lg" },
-            spouseIdentity(P, h, t, party),
             h(
               P.Stack,
               { gap: "section", className: "ctm-spouse-profile-sections" },
