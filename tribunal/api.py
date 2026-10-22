@@ -811,14 +811,16 @@ def messages(request, case_id):
         offset = int(request.GET.get("offset", 0))
         if not 0 <= offset <= 2**63-52:
             raise ValidationError("Message offset is outside the supported range.")
-        rows = list(messages_for(request.user, case_id).select_related("sender").order_by("created_at", "id")[offset:offset+51])
+        rows = list(messages_for(request.user, case_id).order_by("created_at", "id")[offset:offset+51])
+        from tribunal.services.message_projection import message_sender_names
+        sender_names = message_sender_names(rows[:50])
         return JsonResponse(
             {
                 "items": [
                     encoded(
                         x,
                         body=x.body,
-                        sender=f"{x.sender.first_name} {x.sender.last_name}".strip(),
+                        sender=sender_names.get(str(x.pk)),
                         channel=x.channel,
                         timestamp=x.created_at.isoformat(),
                         file_links=x.file_links,

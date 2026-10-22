@@ -1,3 +1,7 @@
+Current validation: **842 PostgreSQL passed, 1 skipped**; no model drift; rollback/reapply through0048. Eight new physical-role message regressions plus one cross-adapter endpoint contract; SQLite contract separately passed. Exact-successor applicant/QA acceptance remains pending.
+
+Private-message pagination correction:0048 removes the hidden sender Account join and adds a bounded message-authorized name-only projection.51intended messages no longer disappear; existing message/recipient/Party/Account policies stay unchanged. See message-sender-projection.md. Exact-successor applicant/QA reruns remain pending; unique UI metadata successor proposal0049after0048.
+
 Current validation: **833 PostgreSQL passed, 1 skipped**, migration rollback/reapply through0047 and no model drift. Nineteen new physical-role status/receipt checks plus one cross-adapter endpoint lifecycle; SQLite lifecycle separately passed. Council UI/integration acceptance remains required.
 
 C05 capability status/receipt: new read-only Bearer-only status endpoint exposes only lifecycle/expiry and an unexpired original report ID/time receipt.0047 adds app-only digest-bound projection; no existing mutation/row-visibility change. See external-status-receipt.md. UI metadata unique successor proposal0048after0047.
