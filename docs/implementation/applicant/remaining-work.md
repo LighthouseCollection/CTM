@@ -1,5 +1,9 @@
 # Remaining applicant work
 
+## Returned-correction fix verified
+
+Exact combinedb3de51e passes7focused PostgreSQL browser groups under physical restrictedctm_app login, including formerly failing optional-spouse-DOB-absent resubmission. Broader suite later hits separate draft-detail403/404 status mismatch. [Report](postgres-bound-return-fix-report.md) | [Focused JSON](postgres-bound-return-fix-focused-result.json). Earlier failure reports remain historical.
+
 ## Fresh recovered PostgreSQL run
 
 Infrastructure recovery verified; new owned containers both removed. Current candidate reaches submission but returns500 on tribunal_party RLS update at backend applications.py:445. Backend correction is the next dependency; full PG acceptance remains incomplete. [Report](postgres-recovered-report.md) | [Evidence](postgres-recovered-focused-result.json). Historical recovery/stall entries below retain prior state.
