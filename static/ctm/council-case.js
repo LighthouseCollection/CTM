@@ -305,6 +305,9 @@
         "Only the assigned case manager, or the administrator or secretary, enters the decision type and grounds.",
       actionFailed: "The action could not be completed. Nothing was changed.",
       back: "Back",
+      timelineTitle: "Timeline",
+      timelineHelp: "Key case events, oldest first. Every recorded action is listed in Case Audit.",
+      noTimeline: "No key events are recorded yet.",
       petitionTitle: "Petition",
       petitionReadOnly: "Each spouse's formal submission is shown as submitted. Council notes below are separate and never change it.",
       petition: "Petition",
@@ -499,6 +502,9 @@
       writerDecision: "يُدخل نوع القرار وأسبابه مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط.",
       actionFailed: "تعذر إتمام الإجراء. لم يتم تغيير أي شيء.",
       back: "رجوع",
+      timelineTitle: "التسلسل الزمني",
+      timelineHelp: "الأحداث الرئيسية للقضية من الأقدم إلى الأحدث. وتُعرض جميع الإجراءات المسجلة في سجل تدقيق القضية.",
+      noTimeline: "لم تُسجَّل أحداث رئيسية بعد.",
       petitionTitle: "الطلب",
       petitionReadOnly: "يُعرض ما قدّمه كل من الزوجين كما قُدِّم. وملاحظات المجلس أدناه منفصلة ولا تغيّره أبدًا.",
       petition: "الطلب",
@@ -2244,6 +2250,61 @@
     );
   }
 
+  // Case timeline: milestone events from the case audit, oldest first. Routine edits
+  // (answer saves, uploads, notes, votes) stay in Case Audit.
+  const MILESTONES = new Set([
+    "application_submitted",
+    "completeness_accept",
+    "completeness_reject",
+    "case_assigned",
+    "agenda_placed",
+    "case_heard",
+    "hearing_deferred_presenter_absent",
+    "testimony_scheduled",
+    "report_request_sent",
+    "report_submitted",
+    "decision_recorded",
+    "president_approved",
+    "decree_issued",
+    "decree_access_release",
+    "decree_access_withdraw",
+    "petition_denied",
+    "filing_withdrawn",
+    "petitions_withdrawn",
+    "appeal_accept",
+    "appeal_decline",
+  ]);
+
+  function timelineRows(items, lang) {
+    return (items || [])
+      .filter((row) => MILESTONES.has(row.action))
+      .sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)))
+      .map((row) => ({ id: row.id, timestamp: row.timestamp, label: auditLabel(row.action, lang) }));
+  }
+
+  function CaseTimeline({ api, lang, caseId }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/audit/`), [caseId]);
+    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const rows = timelineRows(state.data.items, lang);
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("timelineTitle")),
+      h(P.Text, { variant: "secondary" }, t("timelineHelp")),
+      rows.length
+        ? h(P.List, {
+            variant: "bullets",
+            items: rows.map((row) => ({ children: `${base.formatWhen(row.timestamp, lang)} — ${row.label}` })),
+          })
+        : h(P.EmptyState, { title: t("noTimeline") }),
+    );
+  }
+
   Object.assign(window.CTMCouncil, {
     caseWords: words,
     caseTranslator: translator,
@@ -2285,5 +2346,7 @@
     casePetitions,
     latestNotes,
     PetitionWorkspace,
+    timelineRows,
+    CaseTimeline,
   });
 })();

@@ -256,3 +256,16 @@ test("petition page shows this case's petitions and the latest note revisions", 
   ]);
   assert.deepEqual(plain(notes.map((n) => n.text)), ["second", "new"]);
 });
+
+test("timeline keeps milestones only, oldest first, with readable labels", () => {
+  const rows = C.timelineRows(
+    [
+      { id: "3", action: "decree_issued", timestamp: "2026-10-23T00:00:00Z" },
+      { id: "1", action: "application_submitted", timestamp: "2026-10-20T00:00:00Z" },
+      { id: "2", action: "answers_saved", timestamp: "2026-10-21T00:00:00Z" },
+      { id: "4", action: "vote_recorded", timestamp: "2026-10-22T00:00:00Z" },
+    ],
+    "en",
+  );
+  assert.deepEqual(plain(rows.map((r) => r.label)), ["Application submitted", "Decree issued"]);
+});
