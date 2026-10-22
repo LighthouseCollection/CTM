@@ -1,0 +1,19 @@
+{
+  "candidate_sha": "a2844f73fc9a28906cef51b63149f0a40c95e68c",
+  "container": "ctm-applicant-test-23361dbcb7e7",
+  "owner_label_prefix": "23361dbcb7e7",
+  "runtime_role": "ctm_app",
+  "statement_timeout": "15s",
+  "lock_timeout": "5s",
+  "observed_query": "SELECT tribunal_account ... WHERE id = <synthetic UUID> LIMIT 21",
+  "observed_duration_seconds": 51,
+  "blocking_pids": [],
+  "wait_event_type": null,
+  "wait_event": null,
+  "cleanup": {
+    "state": "blocked",
+    "command": "docker stop -t 5 <owned container>",
+    "error": "tried to kill container, but did not receive an exit event"
+  },
+  "scope": "Sanitized local Docker/PostgreSQL infrastructure evidence; no case data or credentials"
+}

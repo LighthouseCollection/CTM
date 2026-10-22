@@ -46,7 +46,7 @@ def history_checks(browser,page,context,base,app_id,cookies,settings,output):
         try:
             other.add_cookies([{'name':settings.SESSION_COOKIE_NAME,'value':cookies[name],'url':base}])
             denied=other.request.get(f"{base}/api/applications/{app_id}/history/")
-            if os.environ.get('CTM_APPLICANT_HISTORY_DENIAL_CONTRACT')=='hidden404':
+            if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
                 missing=other.request.get(f"{base}/api/applications/{uuid.uuid4()}/history/")
                 assert denied.status==missing.status==404 and denied.json()==missing.json()
             else:assert denied.status==403

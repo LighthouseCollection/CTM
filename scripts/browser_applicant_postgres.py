@@ -51,7 +51,7 @@ try:
         connection.execute("ALTER ROLE ctm_app SET statement_timeout='15s'")
         connection.execute("ALTER ROLE ctm_app SET lock_timeout='5s'")
         connection.execute('CREATE ROLE ctm_worker NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS NOINHERIT')
-    env={**os.environ,'CTM_TEST_BACKEND_SHA':BACKEND,'CTM_APPLICANT_HISTORY_DENIAL_CONTRACT':'hidden404','CTM_APPLICANT_LINKED_ENTRY':'true','CTM_APPLICANT_POSTGRES_OWNER_URL':owner,'CTM_APPLICANT_POSTGRES_APP_URL':app}
+    env={**os.environ,'CTM_TEST_BACKEND_SHA':BACKEND,'CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT':'hidden404','CTM_APPLICANT_LINKED_ENTRY':'true','CTM_APPLICANT_POSTGRES_OWNER_URL':owner,'CTM_APPLICANT_POSTGRES_APP_URL':app}
     process=subprocess.Popen([sys.executable,str(ROOT/'scripts/browser_applicant_api.py'),'--run',str(target)],cwd=target,env=env,
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name=='nt' else 0,start_new_session=os.name!='nt')
     try:code=process.wait(timeout=180)
@@ -63,14 +63,14 @@ try:
     if result_file.exists():
         data=json.loads(result_file.read_text(encoding='utf-8'))
         if code!=0:data['failure']={'type':data.get('failure',{}).get('type','Failure'),'detail':'See sanitized acceptance report; raw DEBUG response omitted.'}
-        data['review_candidate']={'backend':BACKEND,'integrated_frontend':FRONTEND,'applicant_head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'module_sha256':assets,'hook_applied':False,'history_denial_contract':'hidden404','published_integration':INTEGRATED}
+        data['review_candidate']={'backend':BACKEND,'integrated_frontend':FRONTEND,'applicant_head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'module_sha256':assets,'hook_applied':False,'private_resource_denial_contract':'hidden404','published_integration':INTEGRATED}
         destination=ROOT/'docs/implementation/applicant'/(PREFIX+'-result.json' if code==0 else PREFIX+'-interrupted.json')
         destination.write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
     focused=target/'postgres-focused-result.json'
     if focused.exists():
         data=json.loads(focused.read_text(encoding='utf-8'))
         if data.get('failure'):data['failure']={'type':data['failure'].get('type','Failure'),'detail':'See sanitized acceptance report; raw DEBUG response omitted.'}
-        data['review_candidate']={'backend':BACKEND,'integrated_frontend':FRONTEND,'module_sha256':assets,'hook_applied':False,'history_denial_contract':'hidden404','published_integration':INTEGRATED}
+        data['review_candidate']={'backend':BACKEND,'integrated_frontend':FRONTEND,'module_sha256':assets,'hook_applied':False,'private_resource_denial_contract':'hidden404','published_integration':INTEGRATED}
         (ROOT/'docs/implementation/applicant'/(PREFIX+'-focused-result.json')).write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
     if code:raise SystemExit(code)
 finally:

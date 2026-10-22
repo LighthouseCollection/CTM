@@ -1,0 +1,98 @@
+{
+  "backend_sha": "a2844f73fc9a28906cef51b63149f0a40c95e68c",
+  "completed_groups": 7,
+  "checks": [
+    "Actual ctm_app session/bootstrap permits own draft start and browser answer save while all domain tables force RLS",
+    "Runtime-role outsider/council draft and history denial returns no source payload; foreign write preserves exact own answers (403/404 observations retained)",
+    "Runtime-role own required-original uploads/downloads work with controlled scan policy; foreign original bytes remain denied",
+    "Runtime-role authorized waiver and browser declaration/submission commit one attributed formal receipt; exact replay returns it without another submission",
+    "Runtime-role returned corrections save as a new own revision while original formal revision/manifest/attestation/actor remain exact",
+    "Runtime-role resubmission retains fee waiver and original signature, records corrected submission and does not request another attestation",
+    "Runtime-role own notification acknowledgement commits once; exact repeat and foreign acknowledgement cannot change it"
+  ],
+  "failure": null,
+  "runtime_database": {
+    "mode": "postgresql_runtime",
+    "current_user": "ctm_app",
+    "session_user": "ctm_app",
+    "superuser": false,
+    "bypass_rls": false,
+    "inherit": false,
+    "domain_tables": 63,
+    "forced_rls_tables": 63,
+    "owner_memberships": 0
+  },
+  "denial_observations": [
+    {
+      "scope": "outsider private draft",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "outsider private draft history",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "council private draft",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "council private draft history",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "foreign answer write",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "foreign original download",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "foreign original download",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "foreign original download",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    },
+    {
+      "scope": "foreign original download",
+      "status": 404,
+      "error": "resource_or_input_invalid"
+    }
+  ],
+  "scope": "Focused PostgreSQL applicant journey; synthetic authentication/content/scan policy/waiver, not full strict suite or institutional/live acceptance",
+  "review_candidate": {
+    "backend": "a2844f73fc9a28906cef51b63149f0a40c95e68c",
+    "integrated_frontend": "a2844f73fc9a28906cef51b63149f0a40c95e68c",
+    "module_sha256": {
+      "applicant-appeals.js": "ce13026f63eef0f429368d2b1b1a7121580004d868acd5fc1cf3f0136740db51",
+      "applicant-appointments.js": "db5b691a719945e0bbc6d76f8225c368b133c4d9cd21ecf080d7dc4fd1a5ee93",
+      "applicant-assessments.js": "1d0d5dbb78b8e780e8ca35e9f423bfd4732c0d8a9a1abd2175bbc1e314fda9b4",
+      "applicant-decrees.js": "330e0c072d4878ec072a4b5c460d00524a118c12774a0059e2cd9a7f16987372",
+      "applicant-files.js": "ff0515b45adbacc48c04370402c75db2fc2febb6507116b1bb5c47f7a4a34ba2",
+      "applicant-filing.js": "7627cfb578c77b0a7477a360d102cc6de4df1cfbfbccaae6243487e2603c49b3",
+      "applicant-history.js": "5bfedda83a8412b5241bf70fcac806af170cc6624f8c4c5cdf5f20eeefeb7b0a",
+      "applicant-lifecycle.js": "09b60d3e8075c768bd1e11453c5e932ca62bb0ac40b05ff58631e3dada834deb",
+      "applicant-messages.js": "c72758ed6521f9e2bdf39c57d9f2cc05d9326158b36fb8fedc62ceaa24d68e72",
+      "applicant-notifications.js": "8980a8f99f7ea230447a66a8b01554c98ee36877713daf934a5bea75cb64ad8e",
+      "applicant-payments.js": "b61dcb866ed49b32a4f3fa19d3f9beedb356423e880ba4f4550e339bb16e82fc",
+      "applicant-recovery.js": "d84e12a032b35f93ba04d0252d5185e0ea790f1f14a72a18864a4ca364310410",
+      "applicant-requests.js": "b892aac3d62b3c5420fa71e1f566ed45dc702faabcaefc452d2a87747d122e00",
+      "applicant-responses.js": "09a07e36d4f4bdf6e6812bff44c80ccba747d0d77b87447639ce49952b457b8f",
+      "applicant-supplements.js": "77dcd806109fb799f222279b93dd6c335e3e625ca58f91f901af312d748222aa",
+      "applicant.js": "4bec78b436f887f64343804c61cbde98108294ca70943f90e5e38455478bbddc"
+    },
+    "hook_applied": false,
+    "private_resource_denial_contract": "hidden404",
+    "published_integration": true
+  }
+}
