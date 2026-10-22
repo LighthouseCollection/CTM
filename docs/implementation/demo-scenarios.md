@@ -64,3 +64,7 @@ Tests cover explicit opt-in, repeatability, real PDF structure, no outbox delive
 unusable passwords, no automatically linked Microsoft identities, report snapshot
 keys and refusal to mix with non-demo cases. Positive seed execution is SQLite-only;
 PostgreSQL test runs deliberately skip that fixture test.
+
+## Presentation update
+
+At the user's request, current display text now reads like live case content: report titles, statements, notes, communications and correction instructions omit DEMO labels. Newly generated document previews use ordinary titles with an unsigned-preview footer. Existing PDF originals remain preserved; updated ordinary-file previews are new versions. Existing sample decree/signature provenance is not promoted to a real signed certificate. Internal synthetic metadata, the isolated database and no-delivery policy remain intact. This is a presentation change, not public deployment or approval of institutional declarations.

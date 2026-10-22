@@ -45,7 +45,8 @@ def test_workflow_demo_is_repeatable_private_and_delivery_free(
     assert not OpenCaseClaim.objects.filter(case__status="closed").exists()
     for source in FileVersion.objects.filter(mime_type="application/pdf"):
         data = (tmp_path / source.object_key).read_bytes()
-        assert data.startswith(b"%PDF-") and b"xref" in data and b"DEMO" in data
+        assert data.startswith(b"%PDF-") and b"xref" in data
+        assert b"CTM document preview" in data and b"DEMO" not in data
 
 
 @pytest.mark.django_db

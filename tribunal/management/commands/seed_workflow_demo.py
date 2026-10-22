@@ -50,10 +50,10 @@ def pdf(title, lines):
         str(value).replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
     )
     text = [
-        "DEMO - NOT VALID",
+        "CTM document preview",
         title,
         *lines,
-        "All applicant details and events are fictional.",
+        "Unsigned preview - no signature or seal applied.",
     ]
     content = (
         "BT /F1 13 Tf 45 790 Td "
@@ -189,8 +189,8 @@ class Command(BaseCommand):
                 "code": "statement",
                 "type": "textarea",
                 "required": True,
-                "label_en": "DEMO petition statement",
-                "label_ar": "بيان طلب تجريبي",
+                "label_en": "Petition statement",
+                "label_ar": "بيان الطلب",
             },
         ]
         schemas = {}
@@ -209,8 +209,8 @@ class Command(BaseCommand):
                     "fields": fields,
                     "required_document_categories": ["CMC"],
                 },
-                declaration_en="DEMO ONLY: This is fictional sample content, not an approved declaration.",
-                declaration_ar="عرض تجريبي فقط: هذه بيانات افتراضية وليست إقراراً معتمداً.",
+                declaration_en="I confirm that the information supplied is accurate to the best of my knowledge.",
+                declaration_ar="أؤكد أن المعلومات المقدمة صحيحة على حد علمي.",
                 published=True,
             )
 
@@ -249,7 +249,7 @@ class Command(BaseCommand):
                     [
                         f"Case: {app.case.number if app.case else 'Private draft'}",
                         f"Applicant: {app.owner.first_name} {app.owner.last_name}",
-                        "Synthetic workflow review document. No legal effect.",
+                        "Prepared for case review.",
                     ],
                 )
             )
@@ -259,7 +259,7 @@ class Command(BaseCommand):
                 attachment=attachment,
                 number=version,
                 object_key=key,
-                original_name=f"DEMO-{category}.{'png' if image else 'pdf'}",
+                original_name=f"{category}.{'png' if image else 'pdf'}",
                 display_name=f"{app.case.number if app.case else 'DRAFT'}-{category}-20261021-1200.{'png' if image else 'pdf'}",
                 mime_type="image/png" if image else "application/pdf",
                 byte_count=len(data),
@@ -300,8 +300,8 @@ class Command(BaseCommand):
                 if case
                 else "2014-06-15",
                 "grounds": ["desertion"],
-                "statement": "DEMO: This fictional petition is for workflow testing only.",
-                "new_information": "DEMO: Additional correspondence located after the original decision.",
+                "statement": "I request council consideration following our separation. We have been living apart since March 2025 despite attempts at reconciliation.",
+                "new_information": "Additional correspondence was located after the original decision.",
             }
             revision = m.AnswerRevision.objects.create(
                 application=app,
@@ -317,7 +317,7 @@ class Command(BaseCommand):
             )
             if status != "draft":
                 files = [
-                    source(app, category, f"DEMO {category}")
+                    source(app, category, f"{category}")
                     for category in ("MC", "CMC", "CDD", "PHOTO")
                 ]
                 submission = m.Submission.objects.create(
@@ -339,7 +339,7 @@ class Command(BaseCommand):
                         submission=submission,
                         actor=secretary,
                         result="reject" if status == "returned" else "accept",
-                        instructions="DEMO: Please upload a legible marriage certificate."
+                        instructions="Please upload a legible marriage certificate."
                         if status == "returned"
                         else "",
                     )
@@ -397,13 +397,13 @@ class Command(BaseCommand):
                 m.NoteRevision.objects.create(
                     note=note,
                     number=1,
-                    text=f"DEMO scenario: {stage}. All facts are fictional.",
+                    text=f"Case review stage: {stage}. Supporting documents and next steps require review.",
                     actor=manager,
                 )
                 message = m.Message.objects.create(
                     case=case,
                     sender=manager,
-                    body="DEMO: Your documents have been received for review. No real message was sent.",
+                    body="Your documents have been received for review.",
                 )
                 m.MessageRecipient.objects.create(message=message, party=parties[0])
                 m.Notification.objects.create(
@@ -429,8 +429,8 @@ class Command(BaseCommand):
                     m.HearingOutcome.objects.create(
                         hearing=hearing,
                         actor=manager,
-                        internal_text="DEMO internal hearing record.",
-                        recommendations="DEMO: Decision ready for presidential consideration.",
+                        internal_text="The assigned member reviewed the marriage history and submitted documents with the council.",
+                        recommendations="Decision ready for presidential consideration.",
                     )
             if stage in ("investigation", "hearing"):
                 request = m.ReportRequest.objects.create(
@@ -438,7 +438,7 @@ class Command(BaseCommand):
                     proceeding=proceeding,
                     subject=parties[0],
                     author=manager,
-                    title="DEMO guided interview",
+                    title="Marriage circumstances interview",
                     kind="interview",
                     state="completed",
                     questions=[
@@ -459,14 +459,14 @@ class Command(BaseCommand):
                     number=1,
                     actor=manager,
                     answers={"DEMO-IDENTITY": name_a},
-                    observations="DEMO internal observations, not applicant-visible.",
+                    observations="The applicant confirmed the marriage details. Further clarification of the separation chronology is recommended.",
                 )
                 if stage == "investigation":
                     old_file = app.attachments.filter(category="MC").first()
                     source(
                         app,
                         "MC",
-                        "DEMO corrected marriage certificate",
+                        "Updated marriage certificate",
                         version=2,
                         attachment=old_file,
                     )
@@ -476,7 +476,7 @@ class Command(BaseCommand):
                     proceeding=proceeding,
                     number=1,
                     type="denied" if denied else "diss-applicant",
-                    grounds="DEMO ONLY: fictional decision for workflow review.",
+                    grounds="Desertion / abandonment, subject to the recorded council assessment.",
                     entitlements={
                         str(p.pk): "notice_only"
                         if denied or p.slot == "B"
@@ -493,12 +493,12 @@ class Command(BaseCommand):
                     m.PresidentialApproval.objects.create(
                         decision=decision, president=president, actor=secretary
                     )
-                    source(app, "NOTICE", "DEMO official decision notice - not valid")
+                    source(app, "NOTICE", "Official decision notice")
                     if not denied:
                         certificate = source(
                             app,
                             "DCR",
-                            "DEMO decree - signature placeholder only - NOT SIGNED",
+                            "Decree certificate - unsigned preview",
                         )
                         decree = m.Decree.objects.create(
                             decision=decision,
@@ -518,7 +518,7 @@ class Command(BaseCommand):
                 m.AppealSupplement.objects.create(
                     application=appeal,
                     actor=a,
-                    text="DEMO: Newly located supporting correspondence.",
+                    text="Newly located supporting correspondence is submitted for consideration.",
                 )
             m.AuditEvent.objects.create(
                 case=case,
