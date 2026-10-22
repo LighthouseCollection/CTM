@@ -275,6 +275,7 @@
       discardRevisionTitle: "Discard unsaved changes?",
       discardRevisionMessage: "The text you typed in this revision will be removed. Nothing has been saved.",
       keepEditing: "Keep editing",
+      priestTestimony: "Written testimony",
       recordingsTitle: "Submitted recordings",
       noRecordings: "No recording has been submitted for this report.",
       recordingItem: "Recording {n}",
@@ -479,6 +480,7 @@
       discardRevisionTitle: "هل تريد تجاهل التغييرات غير المحفوظة؟",
       discardRevisionMessage: "سيُحذف النص الذي كتبته في هذا التعديل. لم يُحفظ أي شيء.",
       keepEditing: "متابعة التعديل",
+      priestTestimony: "الشهادة المكتوبة",
       recordingsTitle: "التسجيلات المقدَّمة",
       noRecordings: "لم يُقدَّم أي تسجيل لهذا التقرير.",
       recordingItem: "التسجيل {n}",
@@ -1855,7 +1857,7 @@
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,
       ...answerEntries(report, shown.answers).map(([code, answer]) => {
         const question = (report.questions || []).find((q) => q.code === code);
-        const label = question ? `${code} — ${base.isolate((lang === "ar" && question.ar) || question.en || code)}` : code === "files" ? t("response") : code;
+        const label = question ? `${code} — ${base.isolate((lang === "ar" && question.ar) || question.en || code)}` : code === "files" ? t("response") : code === "testimony" ? t("priestTestimony") : code;
         return h(P.Panel, { icon: "document", key: code, title: label }, h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
       }),
       shown.observations ? h(P.Panel, { icon: "document", title: t("observations") }, h(P.Text, { as: "p", dir: "auto" }, shown.observations)) : null,
