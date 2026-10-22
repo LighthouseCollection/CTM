@@ -132,6 +132,10 @@
     "handler": "download"
   },
   {
+    "route": "api/files/<uuid:file_id>/status/",
+    "handler": "file_status"
+  },
+  {
     "route": "api/report-questions/",
     "handler": "report_questions"
   },
@@ -206,6 +210,14 @@
   {
     "route": "api/templates/",
     "handler": "templates"
+  },
+  {
+    "route": "api/templates/<uuid:template_id>/publish/",
+    "handler": "template_publish"
+  },
+  {
+    "route": "api/templates/<uuid:template_id>/retire/",
+    "handler": "template_retire"
   },
   {
     "route": "api/account/settings/",

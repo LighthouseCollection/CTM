@@ -61,6 +61,9 @@ def runtime():
             "ctm_testimony_writable(text,jsonb)",
             "ctm_invitation_context(uuid)",
             "ctm_returned_source_visible(text,jsonb)",
+            "ctm_library_readable(text,jsonb)",
+            "ctm_library_writable(text,jsonb)",
+            "ctm_assessment_release_metadata(uuid)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -659,7 +662,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0017_returned_filing_privacy")])
+        MigrationExecutor(connection).migrate([("tribunal", "0018_council_library_privacy")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -829,7 +832,7 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 37
+        assert report["checks"]["forced_rls_table_count"] == 39
         assert "tribunal_reportrequest" in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
@@ -1134,3 +1137,60 @@ def test_f08_raw_sources_exclude_returned_corrections(runtime, ready_application
         assert AnswerRevision.objects.filter(pk=draft.pk).exists()
         assert FileVersion.objects.filter(pk=new.pk).exists()
         assert DocumentText.objects.filter(pk=derivative.pk).exists()
+
+
+def test_template_library_raw_role_privacy_and_retained_versions(runtime, people):
+    from tribunal.models import ReportTemplate, TemplateVersion, ReportQuestion
+    from tribunal.services.configuration import create_template, publish_personal_template, retire_template
+    from django.db import DatabaseError
+    question = ReportQuestion.objects.create(code="raw-library", version=1, category="test", wording_en="Question")
+    with runtime(people["member"]):
+        personal = create_template(people["member"], "Private template", [question.code])
+        assert TemplateVersion.objects.filter(template=personal).exists()
+    with runtime(people["president"]):
+        assert not ReportTemplate.objects.filter(pk=personal.pk).exists()
+        assert not TemplateVersion.objects.filter(template_id=personal.pk).exists()
+    with pytest.raises(DatabaseError), runtime(people["member"]):
+        ReportTemplate.objects.create(title="Forged shared template", shared=True)
+    with runtime(people["secretary"]):
+        shared = publish_personal_template(people["secretary"], personal.pk)
+    with runtime(people["president"]):
+        assert ReportTemplate.objects.filter(pk=shared.pk).exists()
+        assert TemplateVersion.objects.filter(template_id=shared.pk).exists()
+    with runtime(people["member"]):
+        assert TemplateVersion.objects.filter(template=personal).update(questions=[]) == 0
+        assert TemplateVersion.objects.get(template=personal).questions[0]["code"] == question.code
+    with pytest.raises(DatabaseError), runtime(people["member"]):
+        ReportTemplate.objects.filter(pk=personal.pk).update(owner=people["president"])
+    with runtime(people["member"]):
+        retire_template(people["member"], personal.pk)
+        assert TemplateVersion.objects.filter(template=personal).exists()
+    with pytest.raises(DatabaseError), runtime(people["member"]):
+        ReportTemplate.objects.filter(pk=personal.pk).update(retired=False)
+    with runtime(people["applicant"]):
+        assert not ReportTemplate.objects.exists() and not TemplateVersion.objects.exists()
+
+
+def test_assessment_metadata_does_not_grant_raw_medical_scope(runtime, ready_application, people):
+    from tribunal.services.reports import create_request
+    app = ready_application
+    submit_application(app.owner, app.pk, "assessment-status", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    request = create_request(people["admin"], app.proceeding_id, app.party_id, "medical", "Assessment", [])
+    file = app.attachments.first().versions.first()
+    release = MedicalRelease.objects.create(request=request, subject=app.owner, signature=file,
+        declaration=QuestionnaireVersion.objects.get(purpose="medical_release", published=True),
+        scope={"council": False, "private_note": "Private consent"})
+    with runtime(people["member"]):
+        assert not MedicalRelease.objects.filter(pk=release.pk).exists()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT public.ctm_assessment_release_metadata(%s)", [str(request.pk)])
+            import json
+            value = cursor.fetchone()[0]
+            result = json.loads(value) if isinstance(value, str) else value
+            assert result == {"release_status": "out_of_scope", "release_scope": {"council": False}}
+    for actor in [app.owner, None]:
+        with runtime(actor), connection.cursor() as cursor:
+            cursor.execute("SELECT public.ctm_assessment_release_metadata(%s)", [str(request.pk)])
+            value = cursor.fetchone()[0]
+            assert value in [{}, "{}"]

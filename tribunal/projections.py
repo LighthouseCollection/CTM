@@ -4,6 +4,31 @@ from tribunal import models as m
 from functools import lru_cache
 from pathlib import Path
 import json
+from django.db import connection
+
+
+def release_metadata(request, actor):
+    if actor.role == "applicant" or request.kind not in {"medical", "psychological"}:
+        return {}
+    if connection.vendor == "postgresql":
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT public.ctm_assessment_release_metadata(%s)", [str(request.pk)])
+            value = cursor.fetchone()[0]
+        return json.loads(value) if isinstance(value, str) else value
+    releases = list(m.MedicalRelease.objects.filter(request=request, subject_id=request.subject.account_id))
+    council = any(release.scope.get("council") is True for release in releases)
+    return {"release_status": "signed" if council else "out_of_scope" if releases else "none",
+            "release_scope": {"council": council} if releases else None}
+
+
+def template_data(template, actor):
+    version = template.templateversion_set.order_by("-number").first()
+    return {"id": str(template.pk), "title": template.title, "shared": template.shared,
+            "retired": template.retired, "owner_id": str(template.owner_id) if template.owner_id else None,
+            "version": version.number if version else None,
+            "questions": [{"code": row["code"], "version": row["version"]} for row in version.questions] if version else [],
+            "can_publish": bool(actor.role in {"admin", "secretary"} and not template.shared and not template.retired),
+            "can_retire": bool(not template.retired and (actor.role in {"admin", "secretary"} if template.shared else template.owner_id == actor.pk))}
 
 
 @lru_cache(maxsize=1)
@@ -34,7 +59,7 @@ def staff_application_data(app, actor):
             manifest.append({"file_id": file_id, "category": entry.get("category"),
                              "name": entry.get("name"), "scan_state": scan.result if scan else "pending"})
     reviews = m.CompletenessReview.objects.filter(submission__application=app).select_related("actor").order_by("created_at", "id")
-    return {
+    result = {
         "applicant_name": app.party.name if app.party_id else name(app.owner),
         "submitted_at": app.submitted_at.isoformat() if app.submitted_at else None,
         "submitted_version": latest.revision.number if latest else None,
@@ -46,6 +71,30 @@ def staff_application_data(app, actor):
         "can_review": bool(actor.role in {"admin", "secretary"} and app.kind == "petition"
                            and app.status == "submitted" and app.proceeding
                            and app.proceeding.status == "open" and app.case.status == "open"),
+    }
+    if app.kind == "appeal":
+        result.update(appeal_data(app, actor))
+    return result
+
+
+def appeal_data(app, actor):
+    supplements = m.AppealSupplement.objects.filter(application=app).select_related("actor").order_by("created_at", "id")
+    disposition = m.AppealDisposition.objects.filter(application=app).select_related("actor").first()
+    hearings = m.Hearing.objects.filter(agenda__case_id=app.case_id,
+        presenter_id=app.case.assigned_member_id, state="held").select_related("agenda__session").order_by("-agenda__session__date", "-id")
+    eligible = [{"id": str(row.pk), "session_date": row.agenda.session.date.isoformat()} for row in hearings]
+    return {
+        "supplements": [{"id": str(row.pk), "text": row.text, "manifest": row.manifest,
+                         "actor": name(row.actor), "actor_id": str(row.actor_id),
+                         "timestamp": row.created_at.isoformat()} for row in supplements],
+        "disposition": {"id": str(disposition.pk), "result": disposition.result,
+                        "explanation": disposition.explanation, "actor": name(disposition.actor),
+                        "actor_id": str(disposition.actor_id), "timestamp": disposition.created_at.isoformat(),
+                        "hearing_id": str(disposition.hearing_id),
+                        "reopened_proceeding_id": str(disposition.reopened_proceeding_id) if disposition.reopened_proceeding_id else None} if disposition else None,
+        "eligible_hearings": eligible,
+        "can_record_result": bool(app.status == "submitted" and not disposition and eligible
+            and actor.role != "applicant" and (actor.role in {"admin", "secretary"} or app.case.assigned_member_id == actor.pk)),
     }
 
 
@@ -118,6 +167,17 @@ def hearing_data(hearing, actor):
 
 
 def decision_data(decision, actor):
+    decree = m.Decree.objects.filter(decision=decision).select_related("signer").first()
+    decree_data = None
+    if decree:
+        releases = m.DecreeRelease.objects.filter(decree=decree).select_related("actor").order_by("created_at", "id")
+        decree_data = {"id": str(decree.pk), "reference": decree.reference,
+                       "language": decree.language, "issued_at": decree.issued_at.isoformat() if decree.issued_at else None,
+                       "signer": name(decree.signer), "signer_id": str(decree.signer_id),
+                       "signed_file_id": str(decree.signed_file_id),
+                       "releases": [{"party_id": str(row.party_id), "action": row.action,
+                                     "actor": name(row.actor), "actor_id": str(row.actor_id),
+                                     "timestamp": row.created_at.isoformat()} for row in releases]}
     votes = []
     effective = {}
     for row in m.Vote.objects.filter(decision=decision).select_related("actor").order_by("created_at", "id"):
@@ -135,5 +195,5 @@ def decision_data(decision, actor):
             "conditions": decision.conditions, "actor": name(decision.actor),
             "timestamp": decision.created_at.isoformat(), "votes": list(effective.values()),
             "vote_history": votes, "approval": approvals[-1] if approvals else None,
-            "approval_history": approvals, "current": current,
+            "approval_history": approvals, "current": current, "decree": decree_data,
             "can_vote": writable, "can_approve": writable and actor.role in {"president", "admin", "secretary"}}

@@ -783,6 +783,18 @@ def download(request, file_id):
 
 
 @endpoint()
+def file_status(request, file_id):
+    from tribunal.services.files import authorized_file
+
+    staff(request.user)
+    file = authorized_file(request.user, file_id, require_safe=False)
+    scan = file.technical_events.filter(task="scan").order_by("-created_at", "-id").first()
+    state = scan.result if scan and scan.result in {"clean", "pending", "rejected"} else "pending"
+    return JsonResponse({"id": str(file.pk), "scan_state": state,
+                         "can_download": state == "clean"})
+
+
+@endpoint()
 def report_questions(request):
     from tribunal.projections import question_taxonomy
 
@@ -811,6 +823,7 @@ def report_questions(request):
 
 @endpoint(("GET", "POST"))
 def report_requests(request, case_id):
+    from tribunal.projections import release_metadata
     case = case_for(request.user, case_id)
     if request.method == "GET":
         qs = m.ReportRequest.objects.filter(case=case)
@@ -837,6 +850,7 @@ def report_requests(request, case_id):
                         sent_at=x.sent_at.isoformat() if x.sent_at else None,
                         parent_report_id=str(x.parent_report_id) if x.parent_report_id else None,
                         author=f"{x.author.first_name} {x.author.last_name}".strip(),
+                        **release_metadata(x, request.user),
                     )
                     for x in qs.order_by("-created_at")
                 ]
@@ -963,10 +977,16 @@ def notes(request, proceeding_id):
         return JsonResponse(
             {
                 "items": [
-                    encoded(x, note_id=str(x.note_id), version=x.number, text=x.text)
+                    encoded(x, note_id=str(x.note_id), version=x.number, text=x.text,
+                            author_id=str(x.note.author_id),
+                            author=f"{x.note.author.first_name} {x.note.author.last_name}".strip(),
+                            timestamp=x.created_at.isoformat(),
+                            can_edit=bool(x.note.author_id == request.user.pk
+                                and proceeding.status == "open" and proceeding.case.status == "open"
+                                and (request.user.role in {"admin", "secretary"} or proceeding.case.assigned_member_id == request.user.pk)))
                     for x in m.NoteRevision.objects.filter(
                         note__proceeding=proceeding
-                    ).order_by("created_at")
+                    ).select_related("note__author").order_by("created_at", "id")
                 ]
             }
         )
@@ -1219,6 +1239,7 @@ def settings_endpoint(request):
 
 @endpoint(("GET", "POST"))
 def templates(request):
+    from tribunal.projections import template_data
     staff(request.user)
     if request.method == "GET":
         from django.db.models import Q
@@ -1226,7 +1247,7 @@ def templates(request):
         return JsonResponse(
             {
                 "items": [
-                    encoded(t, title=t.title, shared=t.shared, retired=t.retired)
+                    template_data(t, request.user)
                     for t in m.ReportTemplate.objects.filter(
                         Q(shared=True) | Q(owner=request.user)
                     ).order_by("title")
@@ -1247,6 +1268,22 @@ def templates(request):
         ),
         status=201,
     )
+
+
+@endpoint(("POST",))
+def template_publish(request, template_id):
+    from tribunal.services.configuration import publish_personal_template
+    from tribunal.projections import template_data
+
+    return JsonResponse(template_data(publish_personal_template(request.user, template_id), request.user), status=201)
+
+
+@endpoint(("POST",))
+def template_retire(request, template_id):
+    from tribunal.services.configuration import retire_template
+    from tribunal.projections import template_data
+
+    return JsonResponse(template_data(retire_template(request.user, template_id), request.user))
 
 
 @endpoint(("GET", "POST"))
@@ -1579,10 +1616,18 @@ def report_revision(request, report_id):
     )
 
 
-@endpoint(("POST",))
+@endpoint(("GET", "POST"))
 def finding(request, proceeding_id):
     from tribunal.services.council import save_finding
 
+    staff(request.user)
+    proceeding = m.Proceeding.objects.get(pk=proceeding_id)
+    if request.method == "GET":
+        return JsonResponse({"items": [encoded(row, fact_code=row.fact_code,
+            version=row.number, value=row.value, sources=row.sources,
+            actor_id=str(row.actor_id), actor=f"{row.actor.first_name} {row.actor.last_name}".strip(),
+            timestamp=row.created_at.isoformat()) for row in m.FindingRevision.objects.filter(
+                proceeding=proceeding).select_related("actor").order_by("fact_code", "number", "id")]})
     data = body(request)
     return JsonResponse(
         encoded(

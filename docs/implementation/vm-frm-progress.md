@@ -201,3 +201,52 @@ closed F08 is made by the earlier test counts.
   raw non-owner queries, and migration rollback/reapplication through 0017.
   Applicant-stream browser reacceptance is still required; these backend checks
   do not claim the independently reported browser acceptance has passed.
+
+## Council D12–D18 read contracts and retained library
+
+- D12: decision history includes `decree` (or null), reference/language/issuance,
+  signer identity, signed-file ID and chronological release/withdrawal events.
+  This stays council-only and works after closure and reload.
+- D13: council `GET /api/files/{id}/status/` reports latest scan state and
+  `can_download`. It preserves draft/returned/medical source authorization and
+  supplies no file bytes or storage keys. A non-clean result never enables download.
+- D15: staff appeal detail/list includes supplements with manifests and actors,
+  disposition with hearing/reopened-proceeding IDs, eligible hearing IDs/dates,
+  and `can_record_result`. It removes the need to scan the latest 24 agendas.
+- D16: assessment request metadata adds `release_status` (none/signed/out_of_scope)
+  and `release_scope` containing only the council boolean. A narrow PostgreSQL
+  helper lets council read this consent status without access to out-of-scope
+  release rows, private consent text, signatures or report content.
+- D17: note revisions include original author ID/name, timestamp and current
+  author/write-eligibility `can_edit`. Existing findings route now supports GET
+  with retained fact revisions, values, source references and actual actors.
+- D18: template list includes owner, retained version and question code/version
+  references. Admin/secretary `POST /api/templates/{id}/publish/` creates a shared
+  copy of the retained personal version; it never transfers the source owner.
+  `POST /api/templates/{id}/retire/` is personal-owner-only or administrative for
+  shared templates, audited and irreversible. Publishing/retiring serialize on
+  the source; retained template versions are never deleted or rewritten.
+- Migration 0018 adds forced RLS/provenance guards for the two library tables;
+  **39 domain tables** now have forced RLS. Runtime-role tests cover private
+  template isolation, denied shared creation/ownership takeover/history rewrite,
+  consent metadata without content access, and migration reversal/reapplication.
+- F32 owner-decision regression checks verify shared closure releases all claims
+  for that case and preserves unrelated cases. A conflicting open claim blocks
+  appeal acceptance atomically, retaining the pending appeal and original closure.
+- Full isolated PostgreSQL suite: **280 passed, 1 skipped**; no model drift;
+  inventories: **60 domain models / 151 approved contract tables, 75 routes**.
+  GitHub PostgreSQL CI passed on privacy head `859e42b`; this slice follows push.
+
+## Remaining owner-decision reconciliation
+
+- F15 same-person president+admin assignment needs effective multiple-role
+  representation; current Account.role is singular. Do not fabricate a second
+  person or infer presidential authority for every administrator. Approved
+  staff_memberships/staff_roles reconciliation remains required.
+- F12 linked never-filing spouse filing against a closed case still needs the
+  closed-case intake and council acceptance/reopening transaction. Current code
+  refuses the closed match; it must not be presented as implemented.
+- F30 secretary joint-withdrawal authority and manual priest bearer-link delivery
+  remain unapproved; neither permission is inferred. D14 approved bilingual decree
+  templates/rendering and the medical release declaration remain institutional
+  content dependencies. Public/provider/end-to-end acceptance remains incomplete.

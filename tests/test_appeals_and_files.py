@@ -182,3 +182,46 @@ def test_signature_and_current_approval_required_for_decree(ready_application, p
             app.attachments.first().versions.first().pk,
             people["president"].pk,
         )
+
+
+def test_f32_shared_closure_releases_all_case_claims_and_keeps_unrelated_case(ready_application, people):
+    from tribunal.services.decisions import record_decision, approve_decision
+    app = initial(ready_application)
+    spouse = Account.objects.create_user(email="shared-spouse@example.test", email_verified=True)
+    Party.objects.create(case=app.case, account=spouse, person=spouse.person, slot="B", participating=True)
+    OpenCaseClaim.objects.create(person=spouse.person, case=app.case)
+    outsider = Account.objects.create_user(email="unrelated-claim@example.test", email_verified=True)
+    unrelated = Case.objects.create(number="F32-UNRELATED")
+    OpenCaseClaim.objects.create(person=outsider.person, case=unrelated)
+    decision = record_decision(people["admin"], app.proceeding_id, "denied", "Recorded grounds", {})
+    approve_decision(people["president"], decision.pk)
+    assert not OpenCaseClaim.objects.filter(case=app.case).exists()
+    assert OpenCaseClaim.objects.get(person=outsider.person).case_id == unrelated.pk
+    unrelated.refresh_from_db()
+    assert unrelated.status == "open"
+
+
+def test_f32_reopening_conflict_retains_pending_appeal_and_unrelated_case(ready_application, people):
+    from tribunal.models import AppealDisposition
+    app = initial(ready_application)
+    assign_case(people["admin"], app.case_id, people["member"].pk, people["president"].pk)
+    withdraw_application(app.owner, app.pk)
+    appeal = start_application(app.owner, app.case_id, "appeal")
+    save_answers(app.owner, appeal.pk, {"statement": "Appeal", "new_information": "New evidence"}, 0)
+    waive_fee(people["admin"], appeal.pk)
+    submit_application(app.owner, appeal.pk, "f32-pending", {"accepted": True, "name": "John Smith"})
+    unrelated = Case.objects.create(number="F32-OPEN-CONFLICT")
+    OpenCaseClaim.objects.create(person=app.owner.person, case=unrelated)
+    session = create_session(people["admin"], timezone.localdate())
+    item = place_agenda(people["admin"], session.pk, app.case_id)
+    from tribunal.services.council import record_attendance
+    record_attendance(people["admin"], session.pk, people["member"].pk, True)
+    hearing = hear_case(people["member"], item.pk)
+    with pytest.raises(ValidationError, match="another open case"):
+        decide_appeal(people["member"], appeal.pk, hearing.pk, "accept")
+    appeal.refresh_from_db()
+    app.case.refresh_from_db()
+    unrelated.refresh_from_db()
+    assert appeal.status == "submitted" and not AppealDisposition.objects.filter(application=appeal).exists()
+    assert app.case.status == "closed" and unrelated.status == "open"
+    assert OpenCaseClaim.objects.get(person=app.owner.person).case_id == unrelated.pk

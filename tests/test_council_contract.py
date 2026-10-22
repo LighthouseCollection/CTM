@@ -181,3 +181,152 @@ def test_part_one_assignment_is_not_a_case_hearing(filed, people):
     record_attendance(people["admin"], session.pk, people["member"].pk, True)
     with pytest.raises(ValidationError):
         hear_case(people["member"], item.pk)
+
+
+def test_d12_decision_projection_retains_issued_decree_and_release_history(client, filed, people):
+    from tribunal.models import Attachment, FileVersion, FileTechnicalEvent
+    from tribunal.services.decisions import attest_signature, issue_decree, release_decree
+    decision = record_decision(people["admin"], filed.proceeding_id, "diss-applicant", "Grounds", {str(filed.party_id): "certificate"})
+    approve_decision(people["president"], decision.pk)
+    login(client, people["secretary"])
+    url = f"/api/proceedings/{filed.proceeding_id}/decision/"
+    assert client.get(url).json()["items"][0]["decree"] is None
+    attachment = Attachment.objects.create(case=filed.case, proceeding=filed.proceeding, category="DEC", visibility="council")
+    file = FileVersion.objects.create(attachment=attachment, number=1, object_key="test/signed.pdf",
+        original_name="signed.pdf", display_name="signed.pdf", mime_type="application/pdf",
+        byte_count=5, sha256="d" * 64, actor=people["admin"])
+    FileTechnicalEvent.objects.create(file=file, task="scan", result="clean")
+    attest_signature(people["president"], file.pk, people["president"].pk, "signed_scan", {"confirmed_signed": True})
+    decree = issue_decree(people["admin"], decision.pk, file.pk, people["president"].pk)
+    release_decree(people["secretary"], decree.pk, filed.party_id)
+    release_decree(people["secretary"], decree.pk, filed.party_id, "withdraw")
+    result = client.get(url).json()["items"][0]["decree"]
+    assert result["id"] == str(decree.pk) and result["reference"] == decree.reference
+    assert result["signed_file_id"] == str(file.pk) and result["issued_at"]
+    assert result["signer_id"] == str(people["president"].pk)
+    assert [row["action"] for row in result["releases"]] == ["release", "withdraw"]
+    login(client, filed.owner)
+    assert client.get(url).status_code == 403
+
+
+def test_d13_scan_status_requires_source_access_without_releasing_bytes(client, filed, people):
+    from tribunal.models import FileTechnicalEvent
+    from tribunal.services.applications import save_answers
+    from tribunal.services.files import upload
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    file = filed.attachments.get(category="MC").versions.first()
+    url = f"/api/files/{file.pk}/status/"
+    login(client, people["secretary"])
+    for state in ["pending", "rejected", "clean"]:
+        FileTechnicalEvent.objects.create(file=file, task="scan", result=state)
+        assert client.get(url).json() == {"id": str(file.pk), "scan_state": state, "can_download": state == "clean"}
+    review_application(people["admin"], filed.pk, "reject", "Replace certificate")
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        from django.conf import settings
+        monkeypatch.setattr(settings, "CTM_SCAN_REQUIRED", False)
+        pending = upload(filed.owner, SimpleUploadedFile("pending.pdf", b"%PDF-private"), "MC",
+                         app_id=filed.pk, attachment_id=file.attachment_id)
+    assert client.get(f"/api/files/{pending.pk}/status/").status_code in {403, 404}
+    login(client, filed.owner)
+    assert client.get(url).status_code == 403
+
+
+def test_d15_appeal_supplements_disposition_and_eligible_hearings(client, hearing, filed, people):
+    from tribunal.services.applications import start_application, save_answers, waive_fee
+    from tribunal.services.decisions import withdraw_application, add_appeal_information, decide_appeal
+    withdraw_application(filed.owner, filed.pk)
+    appeal = start_application(filed.owner, filed.case_id, "appeal")
+    save_answers(filed.owner, appeal.pk, {"statement": "Appeal", "new_information": "Evidence"}, 0)
+    waive_fee(people["admin"], appeal.pk)
+    submit_application(filed.owner, appeal.pk, "d15-appeal", {"accepted": True, "name": "John Smith"})
+    supplement = add_appeal_information(filed.owner, appeal.pk, "Additional facts")
+    session = create_session(people["admin"], date(2030, 1, 9))
+    item = place_agenda(people["member"], session.pk, filed.case_id)
+    record_attendance(people["admin"], session.pk, people["member"].pk, True)
+    appeal_hearing = hear_case(people["member"], item.pk)
+    url = f"/api/applications/{appeal.pk}/"
+    login(client, people["member"])
+    data = client.get(url).json()
+    assert data["supplements"][0]["id"] == str(supplement.pk)
+    assert data["supplements"][0]["text"] == "Additional facts"
+    assert data["disposition"] is None and data["can_record_result"]
+    assert {"id": str(appeal_hearing.pk), "session_date": "2030-01-09"} in data["eligible_hearings"]
+    login(client, people["president"])
+    assert not client.get(url).json()["can_record_result"]
+    result = decide_appeal(people["member"], appeal.pk, appeal_hearing.pk, "accept", "Accepted grounds")
+    login(client, people["member"])
+    data = client.get(url).json()
+    assert not data["can_record_result"]
+    assert data["disposition"]["reopened_proceeding_id"] == str(result.reopened_proceeding_id)
+    assert data["disposition"]["hearing_id"] == str(appeal_hearing.pk)
+    login(client, filed.owner)
+    data = client.get(url).json()
+    assert "eligible_hearings" not in data and "supplements" not in data
+
+
+def test_d16_assessment_release_metadata_omits_private_contents(client, filed, people):
+    from tribunal.models import MedicalRelease, QuestionnaireVersion
+    request = create_request(people["admin"], filed.proceeding_id, filed.party_id, "medical", "Assessment", [])
+    url = f"/api/cases/{filed.case_id}/requests/"
+    login(client, people["member"])
+    row = client.get(url).json()["items"][0]
+    assert row["release_status"] == "none" and row["release_scope"] is None
+    file = filed.attachments.first().versions.first()
+    MedicalRelease.objects.create(request=request, subject=filed.owner,
+        declaration=QuestionnaireVersion.objects.get(purpose="medical_release", published=True),
+        signature=file, scope={"council": False, "private_note": "PRIVATE CONSENT TEXT"})
+    row = client.get(url).json()["items"][0]
+    assert row["release_status"] == "out_of_scope"
+    assert row["release_scope"] == {"council": False}
+    MedicalRelease.objects.create(request=request, subject=filed.owner,
+        declaration=QuestionnaireVersion.objects.get(purpose="medical_release", published=True),
+        signature=file, scope={"council": True, "private_note": "PRIVATE CONSENT TEXT"})
+    row = client.get(url).json()["items"][0]
+    assert row["release_status"] == "signed" and row["release_scope"] == {"council": True}
+    assert "PRIVATE CONSENT TEXT" not in str(row) and "signature" not in row
+
+
+def test_d17_note_authorship_editability_and_finding_revisions(client, hearing, filed, people):
+    from tribunal.services.council import save_note, save_finding
+    note = save_note(people["member"], filed.proceeding_id, "First observation")
+    save_note(people["member"], filed.proceeding_id, "Updated observation", note.pk)
+    save_finding(people["member"], filed.proceeding_id, "fact-a", {"value": "first"}, [{"note_id": str(note.pk)}])
+    save_finding(people["member"], filed.proceeding_id, "fact-a", {"value": "second"})
+    login(client, people["member"])
+    notes_url = f"/api/proceedings/{filed.proceeding_id}/notes/"
+    rows = client.get(notes_url).json()["items"]
+    assert [row["version"] for row in rows] == [1, 2]
+    assert all(row["author_id"] == str(people["member"].pk) and row["can_edit"] and row["timestamp"] for row in rows)
+    login(client, people["admin"])
+    assert not any(row["can_edit"] for row in client.get(notes_url).json()["items"])
+    findings_url = f"/api/proceedings/{filed.proceeding_id}/findings/"
+    rows = client.get(findings_url).json()["items"]
+    assert [row["version"] for row in rows] == [1, 2]
+    assert rows[0]["sources"] == [{"note_id": str(note.pk)}]
+    login(client, filed.owner)
+    assert client.get(notes_url).status_code == 403
+    assert client.get(findings_url).status_code == 403
+
+
+def test_d18_template_projection_publication_and_retirement(client, people):
+    from tribunal.services.configuration import create_template
+    question = ReportQuestion.objects.create(code="D18", version=1, category="test", wording_en="Question", wording_ar="سؤال")
+    personal = create_template(people["member"], "Personal", [question.code])
+    login(client, people["member"])
+    row = client.get("/api/templates/").json()["items"][0]
+    assert row["questions"] == [{"code": "D18", "version": 1}]
+    assert row["owner_id"] == str(people["member"].pk) and row["can_retire"] and not row["can_publish"]
+    assert client.post(f"/api/templates/{personal.pk}/publish/").status_code == 403
+    login(client, people["president"])
+    assert client.get("/api/templates/").json()["items"] == []
+    assert client.post(f"/api/templates/{personal.pk}/retire/").status_code == 403
+    login(client, people["secretary"])
+    result = client.post(f"/api/templates/{personal.pk}/publish/")
+    assert result.status_code == 201
+    shared = result.json()
+    assert shared["shared"] and shared["owner_id"] is None and shared["questions"] == row["questions"]
+    login(client, people["member"])
+    assert client.post(f"/api/templates/{shared['id']}/retire/").status_code == 403
+    assert client.post(f"/api/templates/{personal.pk}/retire/").json()["retired"]
+    login(client, people["admin"])
+    assert client.post(f"/api/templates/{shared['id']}/retire/").json()["retired"]

@@ -90,10 +90,13 @@ def create_template(actor, title, questions, shared=False):
 @transaction.atomic
 def publish_personal_template(actor, template_id):
     administrator(actor)
+    lock_key(f"template:{template_id}")
     source = ReportTemplate.objects.get(pk=template_id, shared=False, retired=False)
     version = (
         TemplateVersion.objects.filter(template=source).order_by("-number").first()
     )
+    if version is None:
+        raise ValidationError("A retained template version is required before publication.")
     target = ReportTemplate.objects.create(title=source.title, shared=True)
     TemplateVersion.objects.create(
         template=target, number=1, questions=version.questions, actor=actor
@@ -105,6 +108,22 @@ def publish_personal_template(actor, template_id):
         metadata={"source_template": str(source.pk)},
     )
     return target
+
+
+@transaction.atomic
+def retire_template(actor, template_id):
+    staff(actor)
+    lock_key(f"template:{template_id}")
+    template = ReportTemplate.objects.select_for_update(of=("self",)).get(pk=template_id)
+    if template.shared:
+        administrator(actor)
+    elif template.owner_id != actor.pk:
+        raise PermissionDenied("Only the owner may retire a personal template.")
+    if not template.retired:
+        template.retired = True
+        template.save(update_fields=["retired"])
+        audit(actor, "template_retired", template)
+    return template
 
 
 @transaction.atomic

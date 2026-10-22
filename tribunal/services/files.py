@@ -320,13 +320,13 @@ def application_file_listing(actor, app_id):
             "requirements": document_requirements(app, revision.answers if revision else {})}
 
 
-def authorized_file(actor, file_id):
+def authorized_file(actor, file_id, *, require_safe=True):
     active(actor)
     file = FileVersion.objects.select_related(
         "attachment__application", "attachment__case"
     ).get(pk=file_id)
     attachment = file.attachment
-    if not safe_file(file):
+    if require_safe and not safe_file(file):
         raise PermissionDenied("File has not passed technical validation.")
     if actor.role == "applicant":
         decree = Decree.objects.filter(signed_file=file).first()
