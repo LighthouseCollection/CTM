@@ -47,7 +47,12 @@ sys.path.insert(0,str(ROOT))
 os.environ["DJANGO_SETTINGS_MODULE"]="ctm.settings_test"
 from django.conf import settings
 
-settings.DATABASES["default"]["NAME"]=str(ROOT/"isolated.sqlite3")
+POSTGRES_OWNER=os.environ.get("CTM_APPLICANT_POSTGRES_OWNER_URL")
+if POSTGRES_OWNER:
+    import dj_database_url
+    settings.DATABASES={"default":dj_database_url.parse(POSTGRES_OWNER)}
+else:
+    settings.DATABASES["default"]["NAME"]=str(ROOT/"isolated.sqlite3")
 settings.MEDIA_ROOT=ROOT/"test-media"
 settings.DEBUG=True
 settings.ALLOWED_HOSTS=["127.0.0.1","localhost","testserver"]
@@ -109,7 +114,28 @@ from django.core.wsgi import get_wsgi_application
 from wsgiref.simple_server import make_server,WSGIRequestHandler
 class Quiet(WSGIRequestHandler):
     def log_message(self,*args):pass
-server=make_server("127.0.0.1",0,StaticFilesHandler(get_wsgi_application()),handler_class=Quiet)
+runtime_database={"mode":"sqlite"}
+application=StaticFilesHandler(get_wsgi_application())
+def runtime_application(environ,start_response):
+    if POSTGRES_OWNER:
+        import dj_database_url
+        from django.db import connections
+        connection=connections["default"]
+        if connection.settings_dict["USER"]!="ctm_app":
+            connection.close()
+            # Change only this HTTP thread's wrapper, never the fixture/setup connection.
+            connection.settings_dict={**connection.settings_dict,**dj_database_url.parse(os.environ["CTM_APPLICANT_POSTGRES_APP_URL"])}
+        if runtime_database["mode"]!="postgresql_runtime":
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT current_user,session_user,rolsuper,rolbypassrls,rolinherit FROM pg_roles WHERE rolname=current_user")
+                user,session,superuser,bypass,inherit=cursor.fetchone()
+                assert user==session=="ctm_app" and not any([superuser,bypass,inherit])
+                tables=[model._meta.db_table for model in isolated_models.__dict__.values() if isinstance(model,type) and hasattr(model,"_meta") and model._meta.app_label=="tribunal" and not model._meta.abstract]
+                cursor.execute("SELECT count(*),count(*) FILTER(WHERE relrowsecurity AND relforcerowsecurity),count(*) FILTER(WHERE pg_has_role(current_user,relowner,'MEMBER')) FROM pg_class WHERE relname=ANY(%s)",[tables])
+                total,forced,owned=cursor.fetchone();assert total==forced and owned==0
+            runtime_database.update(mode="postgresql_runtime",current_user=user,session_user=session,superuser=superuser,bypass_rls=bypass,inherit=inherit,domain_tables=total,forced_rls_tables=forced,owner_memberships=owned)
+    return application(environ,start_response)
+server=make_server("127.0.0.1",0,runtime_application,handler_class=Quiet)
 threading.Thread(target=server.serve_forever,daemon=True).start()
 BASE=f"http://127.0.0.1:{server.server_port}"
 from playwright.sync_api import sync_playwright,expect
@@ -184,6 +210,9 @@ try:
         history=context.request.get(f"{BASE}/api/applications/{app_id}/history/").json()["items"]
         assert len(history)==2 and history[0]["answers"]["last_name"]=="Applicant"
         checks.append("Real concurrent save rejects stale editor write and explicit reload preserves immutable prior answer history")
+        if POSTGRES_OWNER:
+            from applicant_postgres_acceptance import run as run_postgres_focus
+            run_postgres_focus(browser,BASE,settings,fixture_db,session_cookie,cookies["admin"],ROOT,runtime_database,errors)
         from applicant_history_notice_acceptance import history_checks
         checks.extend(history_checks(browser,page,context,BASE,app_id,cookies,settings,ROOT))
         for name in ("outsider","admin"):
@@ -949,9 +978,13 @@ try:
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         assert not errors,errors
         browser.close()
+except Exception as failure:
+    partial={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"completed_groups":len(checks),"checks":checks,"page_errors":errors,"runtime_database":runtime_database,"failure":{"type":type(failure).__name__,"message":str(failure)[:5000]},"scope":"Interrupted isolated acceptance; completed groups are not a full-suite pass"}
+    (ROOT/"partial-result.json").write_text(json.dumps(partial,indent=2),encoding="utf-8")
+    raise
 finally:
     server.shutdown()
 result={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"passed":len(checks),"checks":checks,
-        "page_errors":errors,"scope":"Real Django APIs, isolated SQLite/synthetic sessions; authorized fixture waiver; scanner bypass test policy; no live provider payment/antivirus acceptance"}
+        "page_errors":errors,"runtime_database":runtime_database,"scope":"Real Django APIs, isolated "+("PostgreSQL runtime role" if POSTGRES_OWNER else "SQLite")+"/synthetic sessions; authorized fixture waiver; scanner bypass test policy; no live provider payment/antivirus acceptance"}
 (ROOT/"result.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
 print(json.dumps(result,indent=2))

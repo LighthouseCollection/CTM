@@ -1,5 +1,9 @@
 # Remaining applicant work
 
+## PostgreSQL runtime acceptance attempt
+
+Verified direct ctm_app login and63forced domain tables, but full acceptance remains incomplete: strict403/404 mismatch, partial focused journey, later account-query stall and owned-container cleanup failure. No PostgreSQL full-suite pass is claimed. [Exact outcomes and cleanup dependency](postgres-acceptance-report.md).
+
 ## Five repeat-family UI verification
 
 Eight fresh pinned-CDN browser groups verify all five mapped repeat families: exact new values, original/opaque preservation, add/edit/remove/review/reload, failed-save retention and Arabic390px. Synthetic technical fields are not institution-approved content or backend validation acceptance. [Report](repeat-sections-report.md) | [Download JSON](repeat-sections-result.json). Named dependencies remain in the field-mapping report; owner requests posted to issues2 and12.

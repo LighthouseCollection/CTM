@@ -80,6 +80,9 @@
     "Actual own read status/count refresh and Arabic390px notification UI remain separate from message read or email-delivery evidence"
   ],
   "page_errors": [],
+  "runtime_database": {
+    "mode": "sqlite"
+  },
   "scope": "Real Django APIs, isolated SQLite/synthetic sessions; authorized fixture waiver; scanner bypass test policy; no live provider payment/antivirus acceptance",
   "review_candidate": {
     "base": "104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc",
