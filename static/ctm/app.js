@@ -81,6 +81,8 @@
       noFiles: "No technically cleared files are available in this section.",
       noReports: "No completed reports are available.",
       attendance: "Council attendance",
+      collapseAttendance: "Collapse {title}",
+      expandAttendance: "Expand {title}",
       present: "Present",
       absent: "Absent",
       notRecorded: "Not recorded",
@@ -147,6 +149,10 @@
       unassigned: "Not yet assigned",
       summary: "Summary",
       overview: "Case Overview",
+      paneExpand: "Expand {name}",
+      paneCollapse: "Collapse {name}",
+      paneResize: "Resize {name}",
+      paneBack: "Back to {name}",
       communications: "Communications",
       assessment: "Case Review",
       decision: "Decision",
@@ -233,6 +239,8 @@
       event_payment_finance_review: "توجد دفعة تحتاج إلى مراجعة مالية.",
       event_paid_filing_review: "يوجد طلب مدفوع يحتاج إلى مراجعة قبل إتمامه.",
       attendance: "حضور أعضاء المجلس",
+      collapseAttendance: "طي {title}",
+      expandAttendance: "توسيع {title}",
       present: "حاضر",
       absent: "غائب",
       notRecorded: "لم يُسجّل",
@@ -325,6 +333,10 @@
       unassigned: "لم يُعيّن بعد",
       summary: "الملخص",
       overview: "نظرة عامة على القضية",
+      paneExpand: "توسيع {name}",
+      paneCollapse: "طي {name}",
+      paneResize: "تغيير حجم {name}",
+      paneBack: "العودة إلى {name}",
       communications: "المراسلات",
       assessment: "دراسة القضية",
       decision: "القرار",
@@ -594,7 +606,10 @@
     ];
     return h(
       P.Panel,
-      { icon: "doc-text", title: t("attendance") },
+      {
+        icon: "user", title: t("attendance"), collapsible: true,
+        strings: { collapse: t("collapseAttendance"), expand: t("expandAttendance") },
+      },
       h(
         P.Stack,
         null,
@@ -611,11 +626,6 @@
                 label: member.name,
                 value,
                 options: [
-                  {
-                    value: "notRecorded",
-                    label: t("notRecorded"),
-                    disabled: true,
-                  },
                   { value: "present", label: t("present"), disabled: pending },
                   { value: "absent", label: t("absent"), disabled: pending },
                 ],
@@ -1088,6 +1098,8 @@
       [revision, reload] = R.useState(0);
     const [saving, setSaving] = R.useState(false);
     const [preferenceFailure, setPreferenceFailure] = R.useState(null);
+    const [caseDetailOpen, setCaseDetailOpen] = R.useState(true);
+    R.useEffect(() => setCaseDetailOpen(true), [page, selection]);
     const applicantGuard = R.useRef(null);
     const registerApplicantGuard = R.useCallback((guard) => {
       applicantGuard.current = guard;
@@ -1393,6 +1405,10 @@
         onClick: () => onSelect(item.id),
       })),
     );
+    const selectCaseSection = (id) => {
+      setCaseDetailOpen(true);
+      go(id, selection);
+    };
     const caseNav = caseContext
       ? h(
           P.SecondaryPane,
@@ -1400,7 +1416,9 @@
             key: selection,
             title: t("overview"), label: t("overview"), icon: navigationIcon("case"),
             collapsible: true, resizable: true, defaultCollapsed: false, width: "md",
-            rail: navigationRail(caseNavigationItems, (id) => go(id, selection)),
+            detailOpen: caseDetailOpen, onBack: () => setCaseDetailOpen(false),
+            strings: { expand: t("paneExpand"), collapse: t("paneCollapse"), resize: t("paneResize"), back: t("paneBack") },
+            rail: navigationRail(caseNavigationItems, selectCaseSection),
           },
           h(
               P.Button,
@@ -1413,20 +1431,20 @@
           h(P.NavList, {
             label: t("overview"),
             value: page,
-            onSelect: (id) => go(id, selection),
+            onSelect: selectCaseSection,
             groups: caseGroups,
           }),
           h(P.NavList, {
             label: t("communications"),
             value: page,
-            onSelect: (id) => go(id, selection),
+            onSelect: selectCaseSection,
             items: [{ id: "communications", label: t("communications"), icon: navigationIcon("communications") }],
           }),
           council
             ? h(P.NavList, {
                 label: t("assessment"),
                 value: page,
-                onSelect: (id) => go(id, selection),
+                onSelect: selectCaseSection,
                 groups: reviewGroups,
               })
             : null,
@@ -1434,7 +1452,7 @@
             ? h(P.NavList, {
                 label: t("audit"),
                 value: page,
-                onSelect: (id) => go(id, selection),
+                onSelect: selectCaseSection,
                 items: [{ id: "audit", label: t("audit"), icon: navigationIcon("audit") }],
               })
             : null,
