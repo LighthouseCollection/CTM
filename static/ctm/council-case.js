@@ -2792,9 +2792,8 @@
     };
     return h(P.Stack, { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("marriageTitle")),
-      h(P.Panel, { icon: "settings-users", title: t("churchMarriage") },
+      h(P.Panel, { icon: "settings-users", title: t("churchMarriage"), actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, "Edit") : null },
         h(P.Stack, { gap: "md" },
-          canWrite && !editing ? h(P.Inline, { justify: "end" }, h(P.Button, { size: "sm", onClick: startEditing }, "Edit")) : null,
           editing ? h(P.Form, { onSubmit: save, label: t("churchMarriage"), noValidate: true },
             h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
             failure ? h(P.Notice, { tone: "danger" }, failure) : null,
@@ -2829,8 +2828,7 @@
       } catch (error) { setFailure(base.serverMessage(error, t)); }
       finally { setPending(false); }
     };
-    return h(P.Panel, { title, icon }, h(P.Stack, { gap: "md" },
-      canWrite && !editing ? h(P.Inline, { justify: "end" }, h(P.Button, { size: "sm", onClick: startEditing }, "Edit")) : null,
+    return h(P.Panel, { title, icon, actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, "Edit") : null }, h(P.Stack, { gap: "md" },
       editing ? h(P.Form, { onSubmit: save, label: title, noValidate: true },
         h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
         failure ? h(P.Notice, { tone: "danger" }, failure) : null,

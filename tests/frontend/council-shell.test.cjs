@@ -166,6 +166,8 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /status: record\.status === "open" \? t\("active"\) : bt\("closed"\)/);
   assert.match(councilCase, /actions: canEditSummary && !summaryEditing/);
   assert.match(councilCase, /fact_code: "case_card\.summary"/);
+  assert.match(councilCase, /title: t\("churchMarriage"\), actions: canWrite && !editing/);
+  assert.match(councilCase, /title, icon, actions: canWrite && !editing/);
   assert.match(councilCase, /\["applicant", t\("applicant"\)\], \["respondent", t\("respondent"\)\]/);
   assert.match(api, /def _summary_child\(value\):/);
   assert.match(councilCase, /latestAudit\("case_heard"\)/);
