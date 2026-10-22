@@ -112,3 +112,16 @@ test("heard hearings are collected from agendas for this case only", () => {
   ];
   assert.deepEqual(plain(C.heardHearings(agendas, "c1").map((h) => h.id)), ["h3", "h1"]);
 });
+
+test("F12: later petitions on the closed case join appeals and use their own result endpoint", () => {
+  const rows = [
+    { id: "a", kind: "appeal", case_id: "c1", submitted_at: "2026-10-01" },
+    { id: "l", kind: "petition", origin: "closed_case_intake", case_id: "c1", submitted_at: "2026-10-05" },
+    { id: "p", kind: "petition", case_id: "c1", submitted_at: "2026-09-01" },
+  ];
+  assert.deepEqual(plain(C.caseAppeals(rows, "c1").map((r) => r.id)), ["l", "a"]);
+  assert.equal(C.resultUrl(rows[1]), "/api/applications/l/closed-case-result/");
+  assert.equal(C.resultUrl(rows[0]), "/api/appeals/a/result/");
+  assert.equal(C.isLaterFiling(rows[2]), false);
+  assert.deepEqual(plain(C.awaitingReview([{ kind: "petition", status: "submitted", origin: "closed_case_intake" }, { id: "x", kind: "petition", status: "submitted" }]).map((r) => r.id)), ["x"]);
+});

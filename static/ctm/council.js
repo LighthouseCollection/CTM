@@ -15,7 +15,8 @@
 
   function awaitingReview(items) {
     return (items || []).filter(
-      (row) => row && row.kind === "petition" && row.status === "submitted",
+      // Closed-case first filings go to council consideration, not completeness review (F12).
+      (row) => row && row.kind === "petition" && row.status === "submitted" && row.origin !== "closed_case_intake",
     );
   }
 
@@ -362,6 +363,7 @@
       state_returned: "Returned for correction",
       state_withdrawn: "Withdrawn",
       homeTitle: "Home",
+      considerationCount: "{n} appeals or later petitions await council consideration (place them on a session agenda from the case).",
       upcomingSession: "Upcoming council session",
       noUpcoming: "No council session is scheduled.",
       needsAttention: "Needs attention",
@@ -574,6 +576,7 @@
       state_returned: "أُعيد للتصحيح",
       state_withdrawn: "مسحوب",
       homeTitle: "الرئيسية",
+      considerationCount: "{n} من الاستئنافات أو الطلبات اللاحقة في انتظار نظر المجلس (أدرجها في جدول أعمال جلسة من القضية).",
       upcomingSession: "جلسة المجلس القادمة",
       noUpcoming: "لا توجد جلسة مجلس مجدولة.",
       needsAttention: "يحتاج إلى متابعة",
@@ -1992,6 +1995,14 @@
 
   // Council Home: upcoming session, own cases and what needs attention.
   // Larger analytics belong to Statistics and Reports, not here.
+  // Pending appeals and closed-case later petitions (F12); older servers ignore the
+  // state filter, so the same rule is applied here.
+  function considerationQueue(items) {
+    return (items || []).filter(
+      (row) => row && row.status === "submitted" && (row.kind === "appeal" || (row.kind === "petition" && row.origin === "closed_case_intake")),
+    );
+  }
+
   function myCases(cases, user) {
     return (cases || []).filter((row) => row.status === "open" && row.assigned_member && row.assigned_member === user?.name);
   }
@@ -2003,16 +2014,22 @@
       t = translator(lang);
     const [state, retry] = useLoad(
       () =>
-        Promise.all([api("/api/dashboard/"), api("/api/cases/"), api("/api/notifications/")]).then(([dashboard, cases, notes]) => ({
+        Promise.all([
+          api("/api/dashboard/"),
+          api("/api/cases/"),
+          api("/api/notifications/"),
+          canManage(user) ? api("/api/applications/?state=council_consideration") : Promise.resolve({ items: [] }),
+        ]).then(([dashboard, cases, notes, consideration]) => ({
           dashboard,
           cases: cases.items,
           unread: notes.unread_count || 0,
+          consideration: considerationQueue(consideration.items).length,
         })),
       [user?.id],
     );
     if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
     if (state.error) return loadFailure(P, h, t, retry, state.error);
-    const { dashboard, cases, unread } = state.data;
+    const { dashboard, cases, unread, consideration } = state.data;
     const upcoming = dashboard.upcoming_sessions || [];
     const mine = myCases(cases, user);
     return h(
@@ -2054,7 +2071,10 @@
                 h(P.Button, { size: "xs", onClick: onReview }, t("reviewOpen")),
               )
             : null,
-          !unread && !(dashboard.review_queue > 0) ? h(P.EmptyState, { title: t("nothingNeedsAttention") }) : null,
+          consideration
+            ? h(P.Text, null, t("considerationCount", { n: consideration }))
+            : null,
+          !unread && !(dashboard.review_queue > 0) && !consideration ? h(P.EmptyState, { title: t("nothingNeedsAttention") }) : null,
         ),
       ),
       h(
@@ -2237,6 +2257,7 @@
     runSearch,
     SearchWorkspace,
     myCases,
+    considerationQueue,
     CouncilHome,
     caseRows,
     CasesTable,

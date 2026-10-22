@@ -44,6 +44,11 @@ const state = {
       answers: { statement: "Synthetic appeal statement.", new_information: "Synthetic new information." },
       fee: { amount_minor: 25000, currency: "usd", status: "paid" },
     },
+    {
+      id: "a-6", kind: "petition", origin: "closed_case_intake", status: "submitted", case_id: "c-5", case_number: "20260901-01", version: 1,
+      answers: { new_information: "Synthetic new information from the spouse who had not filed." },
+      fee: { amount_minor: 25000, currency: "usd", status: "paid" },
+    },
   ],
   reviews: [],
   cases: [
@@ -119,7 +124,7 @@ function applicationRow(a) {
     ],
     reviews: state.reviews.filter((r) => r.app === a.id),
     can_review: admin() && a.status === "submitted",
-    ...(a.kind === "appeal" ? appealExtras(a) : {}),
+    ...(a.kind === "appeal" || a.origin === "closed_case_intake" ? appealExtras(a) : {}),
   };
 }
 
@@ -178,7 +183,9 @@ function api(req, res, url, body) {
   if (p === "/api/notifications/") return json(res, 200, { items: [], next_offset: null, unread_count: 0 });
   if (p === "/api/applications/") {
     let rows = state.applications;
-    if (pr7 && url.searchParams.get("state") === "awaiting_review") rows = rows.filter((a) => a.kind === "petition" && a.status === "submitted");
+    if (!pr7) rows = rows.filter((a) => a.origin !== "closed_case_intake");
+    if (pr7 && url.searchParams.get("state") === "awaiting_review") rows = rows.filter((a) => a.kind === "petition" && a.status === "submitted" && a.origin !== "closed_case_intake");
+    if (pr7 && url.searchParams.get("state") === "council_consideration") rows = rows.filter((a) => a.status === "submitted" && (a.kind === "appeal" || a.origin === "closed_case_intake"));
     return json(res, 200, { items: rows.map(applicationRow) });
   }
   if ((m = p.match(/^\/api\/applications\/([^/]+)\/review\/$/))) {
@@ -335,8 +342,10 @@ function api(req, res, url, body) {
       returned_count: 1,
     });
   }
-  if ((m = p.match(/^\/api\/appeals\/([^/]+)\/result\/$/))) {
-    const app = state.applications.find((a) => a.id === m[1]);
+  if ((m = p.match(/^\/api\/(?:appeals\/([^/]+)\/result|applications\/([^/]+)\/closed-case-result)\/$/))) {
+    const app = state.applications.find((a) => a.id === (m[1] || m[2]));
+    if (m[2] && app.origin !== "closed_case_intake") return json(res, 422, { error: "validation", messages: ["This is not a closed-case first filing."] });
+    if (m[1] && app.kind !== "appeal") return json(res, 422, { error: "validation", messages: ["No pending appeal or invalid result."] });
     const c = state.cases.find((x) => x.id === app.case_id);
     if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
     if (app.status !== "submitted" || !["accept", "decline"].includes(body.result))

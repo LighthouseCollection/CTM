@@ -140,6 +140,15 @@
       withdrawDone: "Access was withdrawn.",
       noticeOnly: "Official decision notice only",
       cancel: "Cancel",
+      appealsScope: "Appeals, and later petitions filed against the closed case by a spouse who had not filed before. Each has its own council result.",
+      laterFiling: "Later petition (new information)",
+      acceptLater: "Accept petition",
+      declineLater: "Decline petition",
+      laterFilingStatement: "Petition and new information",
+      acceptLaterTitle: "Accept this later petition?",
+      acceptLaterMessage: "The original case reopens under the same case number for reconsideration, unless it is already reopened, and this spouse's filing becomes active. Earlier proceedings stay read-only.",
+      declineLaterTitle: "Decline this later petition?",
+      declineLaterMessage: "The case stays closed. The filing spouse receives the official notice privately; the other spouse is not notified.",
       scanRejected: "The automatic safety check rejected this file. Store a different signed PDF.",
       supplementsTitle: "Additional information from the appellant",
       supplementsHelp: "Added after submission. Each addition is kept as submitted.",
@@ -247,6 +256,15 @@
       withdrawDone: "تم سحب الإتاحة.",
       noticeOnly: "إخطار رسمي بالقرار فقط",
       cancel: "إلغاء",
+      appealsScope: "الاستئنافات، والطلبات اللاحقة المقدَّمة على القضية المغلقة من زوج لم يسبق له التقديم. ولكل منها نتيجة مستقلة من المجلس.",
+      laterFiling: "طلب لاحق (معلومات جديدة)",
+      acceptLater: "قبول الطلب",
+      declineLater: "رفض الطلب",
+      laterFilingStatement: "الطلب والمعلومات الجديدة",
+      acceptLaterTitle: "هل تريد قبول هذا الطلب اللاحق؟",
+      acceptLaterMessage: "يُعاد فتح القضية الأصلية بالرقم نفسه لإعادة النظر ما لم تكن قد أُعيد فتحها، ويصبح طلب هذا الزوج ساريًا. وتبقى الإجراءات السابقة للقراءة فقط.",
+      declineLaterTitle: "هل تريد رفض هذا الطلب اللاحق؟",
+      declineLaterMessage: "تبقى القضية مغلقة. ويتلقى الزوج مقدم الطلب الإخطار الرسمي بشكل خاص، ولا يُخطَر الزوج الآخر.",
       scanRejected: "رفض فحص الأمان التلقائي هذا الملف. احفظ ملف PDF موقَّعًا آخر.",
       supplementsTitle: "معلومات إضافية من مقدم الاستئناف",
       supplementsHelp: "أُضيفت بعد التقديم. وتُحفظ كل إضافة كما قُدِّمت.",
@@ -704,9 +722,21 @@
 
   // ---------- Appeals ----------
 
+  // Council consideration items for this case: appeals and, since F12, a first
+  // petition filed against the closed case by a spouse who had not filed before.
+  function isLaterFiling(row) {
+    return Boolean(row && row.kind === "petition" && row.origin === "closed_case_intake");
+  }
+
+  function resultUrl(row) {
+    return isLaterFiling(row)
+      ? `/api/applications/${encodeURIComponent(row.id)}/closed-case-result/`
+      : `/api/appeals/${encodeURIComponent(row.id)}/result/`;
+  }
+
   function caseAppeals(items, caseId) {
     return (items || [])
-      .filter((row) => row && row.kind === "appeal" && row.case_id === caseId)
+      .filter((row) => row && (row.kind === "appeal" || isLaterFiling(row)) && row.case_id === caseId)
       .sort((a, b) => String(b.submitted_at || "").localeCompare(String(a.submitted_at || "")));
   }
 
@@ -752,7 +782,7 @@
       setPending(true);
       setFailure(null);
       try {
-        await api(`/api/appeals/${encodeURIComponent(row.id)}/result/`, {
+        await api(resultUrl(row), {
           method: "POST",
           body: JSON.stringify({ hearing_id: form.hearing, result: form.result, explanation: form.explanation.trim() }),
         });
@@ -782,7 +812,7 @@
       ),
       h(
         P.Panel,
-        { title: t("appealStatement") },
+        { title: t(isLaterFiling(row) ? "laterFilingStatement" : "appealStatement") },
         answers.length
           ? h(
               P.PropertyList,
@@ -862,8 +892,8 @@
                           setProblem(null);
                         },
                         options: [
-                          { value: "accept", label: t("acceptAppeal"), disabled: pending },
-                          { value: "decline", label: t("declineAppeal"), disabled: pending },
+                          { value: "accept", label: t(isLaterFiling(row) ? "acceptLater" : "acceptAppeal"), disabled: pending },
+                          { value: "decline", label: t(isLaterFiling(row) ? "declineLater" : "declineAppeal"), disabled: pending },
                         ],
                       }),
                       problem === "chooseResult" ? h(P.Notice, { tone: "danger" }, t("chooseResult")) : null,
@@ -882,9 +912,9 @@
         P.ConfirmDialog,
         {
           open: confirm,
-          title: t(form.result === "accept" ? "acceptAppealTitle" : "declineAppealTitle"),
-          message: t(form.result === "accept" ? "acceptAppealMessage" : "declineAppealMessage"),
-          confirmLabel: t(form.result === "accept" ? "acceptAppeal" : "declineAppeal"),
+          title: t(form.result === "accept" ? (isLaterFiling(row) ? "acceptLaterTitle" : "acceptAppealTitle") : isLaterFiling(row) ? "declineLaterTitle" : "declineAppealTitle"),
+          message: t(form.result === "accept" ? (isLaterFiling(row) ? "acceptLaterMessage" : "acceptAppealMessage") : isLaterFiling(row) ? "declineLaterMessage" : "declineAppealMessage"),
+          confirmLabel: t(form.result === "accept" ? (isLaterFiling(row) ? "acceptLater" : "acceptAppeal") : isLaterFiling(row) ? "declineLater" : "declineAppeal"),
           cancelLabel: t("cancel"),
           onConfirm: save,
           onCancel: () => !pending && setConfirm(false),
@@ -925,6 +955,7 @@
       P.Stack,
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("appeals")),
+      h(P.Text, { variant: "secondary" }, t("appealsScope")),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       h(P.SplitView, {
         label: t("appeals"),
@@ -936,7 +967,7 @@
               ...appeals.map((row) =>
                 h(P.Card, {
                   key: row.id,
-                  title: row.applicant_name || t("appeal"),
+                  title: `${row.applicant_name || t("appeal")} · ${t(isLaterFiling(row) ? "laterFiling" : "appeal")}`,
                   meta: [t("appeal_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "),
                   selected: row.id === selected,
                   onOpen: () => {
@@ -984,6 +1015,8 @@
     latestProceeding,
     DecreeWorkspace,
     caseAppeals,
+    isLaterFiling,
+    resultUrl,
     appealResultProblem,
     heardHearings,
     AppealsWorkspace,

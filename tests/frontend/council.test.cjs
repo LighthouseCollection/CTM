@@ -345,3 +345,13 @@ test("F15: assignment authorizers and recorders follow server flags; one person 
   assert.equal(C.agendaActions(part1, { state: "planned", can_manage: false }, { id: "p", role: "president" }, null, { canRecordAssignment: true }).assign, true);
   assert.equal(C.agendaActions(part1, { state: "planned", can_manage: true }, admin, null, { canRecordAssignment: false }).assign, false);
 });
+
+test("F12: council consideration queue is pending appeals plus closed-case later petitions", () => {
+  const rows = [
+    { id: "a", kind: "appeal", status: "submitted" },
+    { id: "b", kind: "appeal", status: "accepted" },
+    { id: "c", kind: "petition", status: "submitted", origin: "closed_case_intake" },
+    { id: "d", kind: "petition", status: "submitted" },
+  ];
+  assert.deepEqual([...C.considerationQueue(rows)].map((r) => r.id), ["a", "c"]);
+});
