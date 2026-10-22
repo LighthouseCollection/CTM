@@ -149,6 +149,11 @@
   cursor: default;
 }
 
+/* Card-local editing actions remain on the card surface. */
+#ctm-root .plx-panel .plx-form-actions {
+  background: transparent;
+}
+
 /* The CDN inserts a generic text-type icon before every column header. It is
    not semantic in council tables, so retain the text label and hide the icon. */
 .plx-data-grid__title > .plx-data-grid__type-icon,

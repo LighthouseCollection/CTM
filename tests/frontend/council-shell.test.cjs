@@ -314,6 +314,7 @@ test("new session form defaults the Bellflower location and uses a responsive tw
   assert.match(council, /className: "ctm-session-form-grid"/);
   assert.match(css, /\.ctm-session-form-grid[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.ctm-session-form \.plx-form-actions[\s\S]*background: transparent/);
+  assert.match(css, /#ctm-root \.plx-panel \.plx-form-actions[\s\S]*background: transparent/);
 });
 
 
