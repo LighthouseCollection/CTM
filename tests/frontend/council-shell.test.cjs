@@ -98,6 +98,17 @@ test("council pages are enabled only when their module is loaded", () => {
   assert.match(app, /councilModule\?\.StatisticsWorkspace \? \[\] : \["statistics"\]/);
 });
 
+test("spouse cards use the submitted council profile projection and remain collapsible", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(councilCase, /ctmId: "CTM ID#"/);
+  assert.match(councilCase, /function spouseProfileSection/);
+  assert.match(councilCase, /t\("personalDetails"\)/);
+  assert.match(councilCase, /t\("churchAffiliation"\)/);
+  assert.match(councilCase, /party\.photo_url/);
+  assert.match(councilCase, /collapsible: true/);
+  assert.match(councilCase, /profile\?\.contact/);
+});
+
 test("api() keeps CSRF on every request and lets FormData set its own type", () => {
   const start = app.indexOf("async function api(");
   const body = app.slice(start, app.indexOf("function MessageComposer", start));

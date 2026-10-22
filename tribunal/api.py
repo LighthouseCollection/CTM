@@ -466,14 +466,119 @@ def cases(request):
     ))
 
 
+def _profile_value(answers, *keys):
+    """Return the submitted scalar value for the first populated answer key."""
+    for key in keys:
+        value = answers.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+        if isinstance(value, (int, float)):
+            return str(value)
+    return None
+
+
+def _profile_address(answers, prefix=""):
+    value = answers.get(f"{prefix}address")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    if isinstance(value, dict):
+        parts = [
+            value.get("street"), value.get("city"), value.get("region") or value.get("state"),
+            value.get("postal") or value.get("postal_code") or value.get("zip"), value.get("country"),
+        ]
+        return ", ".join(str(part).strip() for part in parts if str(part or "").strip()) or None
+    return None
+
+
+def _submitted_party_profile(answers, prefix=""):
+    """Project only the approved spouse-card fields from one immutable filing revision."""
+    key = lambda *names: _profile_value(answers, *(f"{prefix}{name}" for name in names))
+    return {
+        "personal": {
+            "other_names": key("other_names", "aliases"),
+            "place_of_birth": key("birth_country", "place_of_birth"),
+            "nationality": key("nationality"),
+            "awareness_of_application": key("aware_of_application", "awareness_of_application"),
+        },
+        "contact": {
+            "address": _profile_address(answers, prefix),
+            "mobile": key("mobile", "mobile_number"),
+            "email": key("email", "email_address"),
+            "immigration_status": key("immigration_status"),
+            "residing_with": key("residing_with"),
+        },
+        "career": {
+            "education": key("education"),
+            "graduation_year": key("graduation_year", "year_of_graduation"),
+            "occupation": key("occupation"),
+        },
+        "church_affiliation": {
+            "denomination": key("denomination"),
+            "bishop": key("bishop", "name_of_bishop"),
+            "diocese": key("diocese"),
+            "parish": key("parish", "parish_name"),
+            "confessor": key("confessor", "father_of_confession"),
+        },
+    }
+
+
+def _application_photo_url(application, category):
+    if not application:
+        return None
+    attachment = application.attachments.filter(category=category).order_by("-created_at", "-id").first()
+    if not attachment:
+        return None
+    photo = attachment.versions.filter(scan_state="clean").order_by("-number").first()
+    return f"/api/files/{photo.pk}/?view=1" if photo else None
+
+
+def _council_party_profiles(case, parties):
+    """Keep case-detail cards tied to the immutable submitted application answers."""
+    applications = list(
+        m.Application.objects.filter(
+            case=case, kind="petition", submitted_at__isnull=False
+        ).prefetch_related("revisions", "attachments__versions").order_by("created_at", "id")
+    )
+    by_party_id = {app.party_id: app for app in applications if app.party_id}
+
+    def answers_for(application):
+        if not application:
+            return {}
+        revision = next(
+            (row for row in application.revisions.all() if row.number == application.current_version),
+            None,
+        )
+        return revision.answers if revision else {}
+
+    result = {}
+    for party in parties:
+        direct = by_party_id.get(party.pk)
+        source = direct or next((app for app in applications if app.party_id != party.pk), None)
+        if direct:
+            answers, prefix, photo_category = answers_for(direct), "", "PHOTO"
+        else:
+            answers, prefix, photo_category = answers_for(source), "spouse_", "SPOUSE_PHOTO"
+        result[party.pk] = {
+            "profile": _submitted_party_profile(answers, prefix),
+            "photo_url": _application_photo_url(direct or source, photo_category),
+        }
+    return result
+
+
 @endpoint()
 def case_detail(request, case_id):
     from tribunal.projections import case_capabilities
     case = case_for(request.user, case_id)
-    parties = case.parties.all()
-    party_data = [encoded(p, name=p.name, is_self=p.account_id == request.user.pk,
-        can_receive=p.account_id is not None, reference=p.reference if p.account_id == request.user.pk or request.user.is_staff else None)
-        for p in parties]
+    parties = list(case.parties.all().order_by("slot", "id"))
+    council_profiles = _council_party_profiles(case, parties) if request.user.role != "applicant" else {}
+    party_data = [encoded(
+        p,
+        name=p.name,
+        is_self=p.account_id == request.user.pk,
+        can_receive=p.account_id is not None,
+        reference=p.reference if p.account_id == request.user.pk or request.user.role != "applicant" else None,
+        **council_profiles.get(p.pk, {}),
+    ) for p in parties]
     from django.db import connection
     if request.user.role == "applicant" and connection.vendor == "postgresql":
         with connection.cursor() as cursor:

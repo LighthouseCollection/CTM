@@ -1,4 +1,5 @@
 import pytest
+from tribunal.models import Attachment, FileTechnicalEvent, FileVersion, Party
 from tribunal.services.applications import submit_application
 from tribunal.services.council import assign_case
 
@@ -32,3 +33,86 @@ def test_case_projection_flags_support_private_message_composition(
     assigned = client.get(url).json()
     assert assigned["can_message"] is True
     assert assigned["parties"][0]["is_self"] is False
+
+
+def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
+    client, ready_application, people
+):
+    app = ready_application
+    revision = app.revisions.get(number=app.current_version)
+    revision.answers = {
+        **revision.answers,
+        "other_names": "Johnny",
+        "birth_country": "Egypt",
+        "nationality": "Egyptian",
+        "aware_of_application": "Yes",
+        "address": {
+            "street": "1842 Maple Dr",
+            "city": "Bellflower",
+            "region": "California",
+            "postal": "90706",
+            "country": "United States",
+        },
+        "mobile": "(562) 555-1042",
+        "email": "john.smith@example.test",
+        "immigration_status": "Citizen",
+        "residing_with": "Alone",
+        "education": "Bachelor of Business Administration",
+        "graduation_year": "2007",
+        "occupation": "Registered Nurse",
+        "denomination": "Coptic Orthodox",
+        "bishop": "H.E. Metropolitan Serapion",
+        "diocese": "Los Angeles, Southern California and Hawaii",
+        "parish": "St. Mary Coptic Orthodox Church, Bellflower",
+        "confessor": "Fr. Abraam Mikhail",
+        "spouse_name": "Jessica O'Brien",
+        "spouse_aliases": "Jess",
+        "spouse_birth_country": "Egypt",
+        "spouse_nationality": "Egyptian",
+        "spouse_aware_of_application": "Unknown",
+        "spouse_address": "88 Park Ave, Anaheim, California, 92801, United States",
+        "spouse_mobile": "(714) 555-0142",
+        "spouse_email": "jessica.obrien@example.test",
+        "spouse_immigration_status": "Citizen",
+        "spouse_residing_with": "Family",
+        "spouse_education": "B.A. Education",
+        "spouse_graduation_year": "2011",
+        "spouse_occupation": "Teacher",
+        "spouse_denomination": "Coptic Orthodox",
+        "spouse_bishop": "H.E. Metropolitan Serapion",
+        "spouse_diocese": "Los Angeles, Southern California and Hawaii",
+        "spouse_parish": "St. George Coptic Orthodox Church, Bellflower",
+        "spouse_confessor": "Fr. Antony Attallah",
+    }
+    revision.__class__.objects.filter(pk=revision.pk).update(answers=revision.answers)
+    submit_application(app.owner, app.pk, "case-profile", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    spouse = Party.objects.create(case=app.case, slot="B", name="Jessica O'Brien")
+    photo_attachment = Attachment.objects.create(
+        application=app, owner=app.owner, category="PHOTO"
+    )
+    photo = FileVersion.objects.create(
+        attachment=photo_attachment,
+        number=1,
+        object_key=f"test/{photo_attachment.pk}/photo.png",
+        original_name="photo.png",
+        display_name="photo.png",
+        mime_type="image/png",
+        byte_count=5,
+        sha256="b" * 64,
+        actor=app.owner,
+        scan_state="clean",
+    )
+    FileTechnicalEvent.objects.create(file=photo, task="scan", result="clean")
+    login = lambda actor: client.force_login(actor, backend="allauth.account.auth_backends.AuthenticationBackend")
+    login(people["secretary"])
+
+    parties = client.get(f"/api/cases/{app.case_id}/").json()["parties"]
+    applicant = next(row for row in parties if row["id"] == str(app.party_id))
+    respondent = next(row for row in parties if row["id"] == str(spouse.pk))
+    assert applicant["profile"]["contact"]["address"] == "1842 Maple Dr, Bellflower, California, 90706, United States"
+    assert applicant["profile"]["church_affiliation"]["confessor"] == "Fr. Abraam Mikhail"
+    assert applicant["photo_url"] == f"/api/files/{photo.pk}/?view=1"
+    assert respondent["profile"]["personal"]["other_names"] == "Jess"
+    assert respondent["profile"]["career"]["occupation"] == "Teacher"
+    assert respondent["profile"]["church_affiliation"]["parish"] == "St. George Coptic Orthodox Church, Bellflower"

@@ -384,10 +384,31 @@
       noteSaved: "The note was saved.",
       noteRequired: "Write the note before saving.",
       partiesTitle: "Spouses",
-      ctmReference: "CTM reference",
+      ctmId: "CTM ID#",
       portalAccount: "Portal account",
       registered: "Registered",
       notRegistered: "Not registered",
+      personalDetails: "Personal Details",
+      contact: "Contact",
+      career: "Career",
+      churchAffiliation: "Church Affiliation",
+      otherNamesKnownBy: "Other Names Known By",
+      placeOfBirth: "Place of Birth",
+      nationality: "Nationality",
+      awarenessOfApplication: "Awareness of Application",
+      address: "Address",
+      mobileNumber: "Mobile Number",
+      emailAddress: "Email Address",
+      immigrationStatus: "Immigration Status",
+      residingWith: "Residing With",
+      education: "Education",
+      yearOfGraduation: "Year of Graduation",
+      occupation: "Occupation",
+      denomination: "Denomination",
+      nameOfBishop: "Name of Bishop",
+      diocese: "Diocese",
+      parishName: "Parish Name",
+      fatherOfConfession: "Father of Confession",
       noParties: "No spouses are recorded.",
       addParty: "Add the other spouse",
       addPartyHelp: "Record the other spouse by name and email. They are linked automatically after registering with a matching verified email. No account is created for them and no invitation acceptance is needed.",
@@ -626,10 +647,31 @@
       noteSaved: "تم حفظ الملاحظة.",
       noteRequired: "اكتب الملاحظة قبل الحفظ.",
       partiesTitle: "الزوجان",
-      ctmReference: "مرجع النظام",
+      ctmId: "معرّف CTM#",
       portalAccount: "حساب البوابة",
       registered: "مسجَّل",
       notRegistered: "غير مسجَّل",
+      personalDetails: "البيانات الشخصية",
+      contact: "التواصل",
+      career: "العمل والتعليم",
+      churchAffiliation: "الانتماء الكنسي",
+      otherNamesKnownBy: "أسماء أخرى معروفة بها",
+      placeOfBirth: "مكان الميلاد",
+      nationality: "الجنسية",
+      awarenessOfApplication: "العلم بالطلب",
+      address: "العنوان",
+      mobileNumber: "رقم الجوال",
+      emailAddress: "البريد الإلكتروني",
+      immigrationStatus: "حالة الهجرة",
+      residingWith: "الإقامة مع",
+      education: "التعليم",
+      yearOfGraduation: "سنة التخرج",
+      occupation: "المهنة",
+      denomination: "الطائفة",
+      nameOfBishop: "اسم الأسقف",
+      diocese: "الإيبارشية",
+      parishName: "اسم الكنيسة",
+      fatherOfConfession: "أب الاعتراف",
       noParties: "لا يوجد زوجان مسجلان.",
       addParty: "إضافة الزوج الآخر",
       addPartyHelp: "سجّل الزوج الآخر بالاسم والبريد الإلكتروني. ويُربط تلقائيًا بعد تسجيله ببريد إلكتروني مطابق ومُتحقَّق منه. لا يُنشأ له حساب ولا يلزم قبول دعوة.",
@@ -2287,6 +2329,32 @@
     return null;
   }
 
+  function spouseProfileSection(P, h, t, title, icon, values) {
+    const fields = values.filter(([, value]) => value);
+    if (!fields.length) return null;
+    return h(
+      P.Stack,
+      { gap: "sm", key: title },
+      h(
+        P.Inline,
+        { gap: "xs", align: "center" },
+        h(P.Icon, { name: icon, label: title }),
+        h(P.Text, { as: "h2", variant: "heading" }, title),
+      ),
+      h(
+        P.PropertyList,
+        { layout: "stacked" },
+        ...fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value)),
+      ),
+    );
+  }
+
+  function spousePhoto(P, h, party) {
+    return party.photo_url
+      ? h(P.Image, { src: party.photo_url, alt: party.name, width: 96, height: 96, fit: "cover" })
+      : h(P.Icon, { name: "user", size: "lg", label: party.name });
+  }
+
   function CaseParties({ api, lang, user, caseId }) {
     const R = window.React,
       P = window.Plenix,
@@ -2338,16 +2406,57 @@
       ...record.parties.map((party) =>
         h(
           P.Panel,
-          { icon: "doc-text", key: party.id, title: party.name },
+          {
+            icon: "user",
+            key: party.id,
+            title: party.name,
+            collapsible: true,
+            defaultExpanded: true,
+            strings: { collapse: t("collapse"), expand: t("expand") },
+          },
           h(
-            P.PropertyList,
-            null,
-            party.reference ? h(P.PropertyList.Item, { label: t("ctmReference"), data: true }, party.reference) : null,
+            P.Stack,
+            { gap: "lg" },
             h(
-              P.PropertyList.Item,
-              { label: t("portalAccount") },
-              h(P.Badge, { tone: party.can_receive ? "success" : "waiting" }, t(party.can_receive ? "registered" : "notRegistered")),
+              P.Inline,
+              { gap: "md", align: "start" },
+              spousePhoto(P, h, party),
+              h(
+                P.PropertyList,
+                null,
+                party.reference ? h(P.PropertyList.Item, { label: t("ctmId"), data: true }, party.reference) : null,
+                h(
+                  P.PropertyList.Item,
+                  { label: t("portalAccount") },
+                  h(P.Badge, { tone: party.can_receive ? "success" : "waiting" }, t(party.can_receive ? "registered" : "notRegistered")),
+                ),
+              ),
             ),
+            spouseProfileSection(P, h, t, t("personalDetails"), "user", [
+              ["otherNamesKnownBy", party.profile?.personal?.other_names],
+              ["placeOfBirth", party.profile?.personal?.place_of_birth],
+              ["nationality", party.profile?.personal?.nationality],
+              ["awarenessOfApplication", party.profile?.personal?.awareness_of_application],
+            ]),
+            spouseProfileSection(P, h, t, t("contact"), "message", [
+              ["address", party.profile?.contact?.address],
+              ["mobileNumber", party.profile?.contact?.mobile],
+              ["emailAddress", party.profile?.contact?.email],
+              ["immigrationStatus", party.profile?.contact?.immigration_status],
+              ["residingWith", party.profile?.contact?.residing_with],
+            ]),
+            spouseProfileSection(P, h, t, t("career"), "document", [
+              ["education", party.profile?.career?.education],
+              ["yearOfGraduation", party.profile?.career?.graduation_year],
+              ["occupation", party.profile?.career?.occupation],
+            ]),
+            spouseProfileSection(P, h, t, t("churchAffiliation"), "settings-users", [
+              ["denomination", party.profile?.church_affiliation?.denomination],
+              ["nameOfBishop", party.profile?.church_affiliation?.bishop],
+              ["diocese", party.profile?.church_affiliation?.diocese],
+              ["parishName", party.profile?.church_affiliation?.parish],
+              ["fatherOfConfession", party.profile?.church_affiliation?.confessor],
+            ]),
           ),
         ),
       ),
