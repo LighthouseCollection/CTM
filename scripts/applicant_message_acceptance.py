@@ -103,11 +103,26 @@ def run(browser,page,context,staff,base,csrf,staff_csrf,case_id,case_number,part
             assert foreign_read.status==absent_read.status==404,(foreign_read.status,absent_read.status)
             assert foreign_read.json()==absent_read.json(),(foreign_read.text(),absent_read.text())
         else:assert foreign_read.status==403,foreign_read.text()
-        before_forged=fixture_db(lambda:(m.Message.objects.filter(case_id=case_id).count(),m.Notification.objects.count()))
-        forged=stranger.request.post(f"{base}/api/cases/{case_id}/messages/",data={"body":"Foreign thread","party_ids":[party_id],"idempotency_key":str(uuid.uuid4())},headers={"X-CSRFToken":other_csrf})
-        assert forged.status==403,forged.text()
-        assert fixture_db(recipient_snapshot)==retained_receipt
-        assert fixture_db(lambda:(m.Message.objects.filter(case_id=case_id).count(),m.Notification.objects.count()))==before_forged
+        counts=lambda:(m.Message.objects.filter(case_id=case_id).count(),m.Notification.objects.count())
+        before_forged=fixture_db(counts)
+        send_url=f"{base}/api/cases/{case_id}/messages/"
+        forged_payload={"body":"Foreign thread","party_ids":[party_id],"idempotency_key":str(uuid.uuid4())}
+        forged=stranger.request.post(send_url,data=forged_payload,headers={"X-CSRFToken":other_csrf})
+        absent=stranger.request.post(send_url,data={**forged_payload,"party_ids":[str(uuid.uuid4())]},headers={"X-CSRFToken":other_csrf})
+        after_forged=fixture_db(counts)
+        forged_trace={"case_id":str(case_id),"foreign_party_id":str(party_id),"before":before_forged,"after":after_forged,
+            "foreign_response":response_snapshot(forged),"absent_response":response_snapshot(absent),
+            "receipt_before":retained_receipt,"receipt_after":fixture_db(recipient_snapshot)}
+        try:
+            assert after_forged==before_forged,(before_forged,after_forged)
+            assert forged_trace["receipt_after"]==retained_receipt
+            assert forged.status==403,forged.text()
+            assert forged.json().get("error")=="forbidden",forged.text()
+            assert absent.status==422,absent.text()
+            assert absent.json().get("error")=="validation",absent.text()
+        except Exception:
+            (Path(output)/"message-forged-recipient-failure.json").write_text(json.dumps(forged_trace,indent=2,ensure_ascii=False,default=str)+"\n",encoding="utf-8")
+            raise
     finally:stranger.close()
     checks.append("Actual linked spouse sees no other-thread message or receipt, cannot acknowledge it, and cannot send into the other party's thread")
     body="Own private message <script>literal text</script>"
