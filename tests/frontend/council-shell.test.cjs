@@ -71,7 +71,7 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(council, /value: "adjourned", label: t\("sessionStatusAdjourned"\), icon: "stop"/);
   assert.match(council, /session\.state === "draft" && session\.can_activate/);
   assert.match(council, /\/activate\//);
-  assert.match(council, /P\.DataPill, \{ gender: normalizedGender, fill: true \}/);
+  assert.match(council, /P\.DataPill, \{ gender: normalizedGender \}/);
   assert.match(council, /name: "calendar", size: "lg"/);
   assert.match(council, /sessionHeaderActions\.map/);
   assert.match(council, /h\(P\.Button, \{ className: "ctm-session-header-action", size: "sm", icon: action\.icon/);
@@ -263,9 +263,14 @@ test("agenda tables reserve enough space for complete header labels", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
   assert.match(council, /yearsMarried"\), field: "married_years", minWidth: "7\.5rem"/);
-  assert.match(council, /assignedTo"\), field: "assigned_member_name", minWidth: "9rem"/);
+  assert.match(council, /applicant"\), field: "applicant", kind: "name", minWidth: "10\.5rem"/);
+  assert.match(council, /respondent"\), field: "respondent", minWidth: "10\.5rem"/);
+  assert.match(council, /assignedTo"\), field: "assigned_member_name", minWidth: "12rem"/);
   assert.doesNotMatch(css, /ctm-session-agenda-grid[\s\S]*min-block-size/);
   assert.match(council, /className: "ctm-session-agenda-grid"[\s\S]*isStatic: true/);
+  assert.match(council, /h\(P\.DataPill, \{ gender: normalizedGender \}, value\)/);
+  assert.match(council, /h\(P\.DataPill, \{ person: true \}, value\)/);
+  assert.doesNotMatch(council, /DataPill, \{ gender: normalizedGender, fill: true \}/);
 });
 
 
