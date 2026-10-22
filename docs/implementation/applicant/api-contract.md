@@ -61,7 +61,11 @@ as proof. Submit acknowledgement `{id}` is described as server acknowledgement;
 the application must be reloaded to obtain its authoritative current state.
 Network uncertainty preserves the original signature/version/payload for retry.
 
-## Own current files projection requested
+## Own current files projection
+
+Implemented by backend PR #7 at `6e89c22` and exercised through actual HTTP/browser
+controls in `browser_applicant_api.py`. Listing uses latest technical scan event;
+same-context replacement checks context and visibility server-side as well.
 
 GET `/api/applications/{id}/files/`:
 
@@ -115,3 +119,32 @@ Use same-origin credentials, CSRF and no-store. Attach HTTP `status` on all fail
 responses. JSON requests retain Content-Type application/json; FormData must omit it
 so the browser supplies the real multipart boundary. No production mock endpoint or
 fixture login is introduced by these modules. Browser fixtures are test-only scripts.
+
+## Private appointment read projection proposed
+
+Existing write: POST `/api/appointments/{id}/response/` with
+`{version,response:"confirm"|"reject",explanation:""}`. The applicant module sends
+the exact displayed invitation version; explanation is optional for rejection and
+empty for confirmation. An acknowledgement locks local actions until refresh.
+Stale, unauthorized or uncertain responses also require authoritative refresh;
+there is no automatic retry because the existing response write is not idempotent.
+
+Requested GET `/api/appointments/` returns only this account's private invitations:
+
+```json
+{"items":[{"id":"appointment-uuid","case_number":"T-2026-0001",
+"starts_at":"2026-12-01T10:00:00-08:00","ends_at":"2026-12-01T10:30:00-08:00",
+"instructions":"Server invitation instructions","version":2,"state":"invited",
+"response":null,"can_respond":true}]}
+```
+
+`response` is null, confirm or reject for the current invitation version only.
+Rescheduling must create a fresh invitation version and invalidate previous response
+eligibility. `can_respond` is authoritative and false for cancelled/completed or
+otherwise ineligible invitations. The frontend additionally requires state invited.
+Timestamps must include UTC offsets; the frontend displays both supplied times
+without guessing an end/duration/timezone. No session/agenda/member/other-party
+fields are requested. Missing/invalid projection fails closed and never falls back
+to council agenda. No self-rescheduling is provided. Backend read/lifecycle contract
+is requested on issue #2 and remains unimplemented at `6e89c22`; fixture tests are
+explicitly separate from real backend acceptance.

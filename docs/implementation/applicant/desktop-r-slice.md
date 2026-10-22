@@ -63,6 +63,17 @@ is independent of answer-edit permission; read-only answers can be reviewed.
 No payment completion is inferred from checkout or browser navigation. No local
 passwords, invented declaration, waiver request or fabricated external processing.
 
+`applicant-appointments.js` exports `CTMApplicantAppointments.Appointments({api,lang})`.
+It displays private invitation instructions, supplied offset start/end times and
+current-version response. Confirm/Reject sends the exact invitation version;
+rejection explanation is optional. Successful acknowledgement, stale version,
+permission failure and network uncertainty lock actions until an explicit refresh.
+Cancellation/ineligibility removes response controls. No council schedule fallback
+or self-rescheduling exists. Its proposed owner-only read route remains a backend
+dependency; tests use an explicit contract fixture. The shared shell patch proposes
+applicant-only My appointments navigation and module loading, without modifying
+shared source files in this branch.
+
 ## Proposed shell patch
 
 `shell-integration.patch` is for governance to review/apply serially, not an applied

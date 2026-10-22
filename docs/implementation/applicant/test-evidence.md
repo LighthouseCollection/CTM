@@ -6,10 +6,11 @@ deployment or production-readiness acceptance is represented by these checks.
 
 | Check | Result | Scope |
 | --- | --- | --- |
-| `node --test tests/frontend/*.test.cjs` | 28 passed | Bound definitions, repeat stable IDs/opaque fields, incomplete save, optimistic versions, errors/permission lock, boolean false/unanswered, conditional retention, start/reuse, filing eligibility, immutable signature/idempotency retry, private download paths, context replacement, size gates, malformed current-file projection |
+| `node --test tests/frontend/*.test.cjs` | 32 passed | Bound definitions, repeat stable IDs/opaque fields, incomplete save, optimistic versions, errors/permission lock, boolean false/unanswered, conditional retention, start/reuse, filing eligibility, immutable signature/idempotency retry, private download paths, context replacement, size gates, malformed current-file projection, invitation version/capability and response locks |
 | `uv run --group browser python scripts/browser_applicant.py` | 16 scenario groups passed; no page errors | Real Plenix 0.58.0 CDN, synthetic API; escaped review, save, language/RTL, unsaved guards, declaration/fee/signature layout, waived filing, read-only returned resubmission, unsafe checkout, uncertain upload/readiness, boolean conditional save, automatic checklist/capability refresh, repeat add/correct/review/remove in RTL |
-| `uv run --group browser python scripts/browser_applicant_shell.py` | 8 scenario groups passed; no page errors | Proposed shell patch applied only to temporary copies; actual helper, sidebar/back, preference success/failure, 403/404 lock, multipart boundary/context/replacement, pending-scan links, Arabic layout, start/reuse/eligibility error |
-| `uv run --group browser python scripts/browser_applicant_api.py` | 10 scenario groups passed; no page errors | Real Django APIs against backend `07c35ededfcae1c58a4700eb239b7b50be92bc2c`, isolated SQLite/synthetic accounts; start/form/repeat save/preferences, stale history, draft/file privacy, required multipart uploads, authorized fixture waiver, idempotent submit, returned resubmit, actual status refresh, missing-file-list blocker |
+| `uv run --group browser python scripts/browser_applicant_shell.py` | 9 scenario groups passed; no page errors | Proposed shell patch applied only to temporary copies; actual helper, sidebar/back, preference success/failure, 403/404 lock, multipart boundary/context/replacement, pending-scan links, Arabic layout, start/reuse/eligibility error, applicant appointment navigation |
+| `uv run --group browser python scripts/browser_applicant_api.py` | 11 scenario groups passed; no page errors | Real Django APIs against backend `6e89c22715d6b769b4398bcd14c8fa2901091e07`, isolated SQLite/synthetic accounts; start/form/repeat save/preferences, stale history, draft/file privacy, browser required uploads and downloads, clean current-file listing/capability refresh, authorized fixture waiver, browser declaration/signature/submit and real key replay, browser returned resubmit, actual status refresh |
+| `uv run --group browser python scripts/browser_applicant_appointments.py` | 5 scenario groups passed; no page errors | Proposed read-contract fixtures only; private escaped instructions, exact offset times, Confirm/Reject/version, stale/uncertain lock, rescheduled version reset, cancelled controls, Arabic mobile layout, malformed/empty/unavailable listing |
 | `uv run pytest tests/test_workflows.py tests/test_input_validation.py tests/test_row_security.py tests/test_shell.py -q` | 15 passed; 37 skipped | SQLite local regression; PostgreSQL-only checks skipped, not passed |
 | `git apply --check docs/implementation/applicant/shell-integration.patch` | Passed | Clean base shared shell; governance must recheck when integrating |
 | `git diff --check` | Passed | Whitespace validation |
@@ -19,6 +20,8 @@ Browser screenshots and raw result JSON are generated under ignored
 screenshots were inspected. Controls use documented Plenix components and locale
 direction. No temporary Arabic CSS or unapproved typography tokens were invented.
 Institutional Arabic typography acceptance remains separate from these layout checks.
+The diagnostic platform-font check observes Segoe UI Semibold for the Arabic heading
+on this Windows test machine. It is recorded without claiming approved font acceptance.
 Both desktop/mobile EN/AR runs assert no runtime `[style]` or horizontal overflow.
 
 Independent code review identified that the existing shell API helper discards
@@ -51,19 +54,21 @@ an authorized administrator waiver, first submission/key replay, a completeness
 return and resubmission without a new signature/fee. This uses the isolated
 `settings_test` scanner bypass policy, not a live antivirus success claim. These
 backend filing actions are exercised through real HTTP requests; the browser filing
-control remains blocked because its own file-list endpoint currently returns 404.
+controls now exercise actual file upload/list/download, review, declaration consent,
+signature, waived submit and returned resubmit through the visible browser UI.
 Status refresh displays the real submitted state and allocated synthetic case number.
 No live provider payment, antivirus, production database or deployment acceptance is claimed.
 
 ## Open dependencies
 
-- VM-FRM: bound questionnaire projection, authoritative `can_edit`, own draft-file
-  listing, returned instructions/action eligibility, submission/checklist projection.
+- VM-FRM: owner-only appointment read/lifecycle contract, nested repeat validation,
+  pending-checkout resume projection. Own current-file listing/capabilities and returned
+  instructions now pass the isolated real-API integration runner at `6e89c22`.
 - Governance/content: approved published bilingual applicant form definition,
   declarations and repeat-field contracts; apply shared shell hooks serially.
-- Later acceptance: connect implemented frontend upload/scan/declaration/payment/
-  submission/returned controls to agreed real projections; prove real-API applicant
-  isolation, PostgreSQL lifecycle/races, provider payment and required-file safety.
+- Later acceptance: actual appointment integration; PostgreSQL lifecycle/races,
+  provider payment and live antivirus acceptance. Real-API applicant draft/file
+  isolation and waived filing/correction controls are covered in the isolated runner.
 
 The full applicant workflow is not complete. PR #5 remains draft until these
 dependencies and subsequent slices are implemented and reviewed.

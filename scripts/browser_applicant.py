@@ -71,6 +71,7 @@ def fixture():
 server = HTTPServer(("127.0.0.1", 0), Handler)
 threading.Thread(target=server.serve_forever, daemon=True).start()
 checks = []
+typography = {}
 try:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -195,6 +196,13 @@ try:
                 assert page.locator("[style]").count() == 0
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
                 page.screenshot(path=str(OUT/f"filing-{lang}-{width}.png"),full_page=True,caret="initial")
+                if lang=="ar" and width==390:
+                    inspector=page.context.new_cdp_session(page)
+                    inspector.send("DOM.enable");inspector.send("CSS.enable")
+                    document=inspector.send("DOM.getDocument")
+                    node=inspector.send("DOM.querySelector",{"nodeId":document["root"]["nodeId"],"selector":"section h1"})
+                    typography["arabic_heading_fonts"]=inspector.send("CSS.getPlatformFontsForNode",{"nodeId":node["nodeId"]})["fonts"]
+                    inspector.detach()
         page.get_by_role("button", name="English", exact=True).click()
         checks.append("Declaration/signature/fee controls retain consent in EN/AR at desktop/mobile without styles/overflow")
         fail_submit = True
@@ -343,6 +351,7 @@ finally:
     server.shutdown()
 
 result = {"checks": checks, "passed": len(checks), "page_errors": errors,
+          "typography_observation":typography,
           "scope": "Synthetic API contract fixtures with real Plenix CDN 0.58.0; not backend/provider E2E"}
 (OUT / "result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 print(json.dumps(result, indent=2))

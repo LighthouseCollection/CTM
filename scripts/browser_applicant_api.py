@@ -113,7 +113,7 @@ try:
         page.get_by_label("Gender",exact=False).select_option("F")
         page.get_by_label("Marriage date",exact=False).fill("2010-01-01")
         page.get_by_label("Abuse",exact=True).check()
-        page.get_by_label("Statement",exact=False).fill("Synthetic applicant statement")
+        page.get_by_role("textbox",name="Statement",exact=False).fill("Synthetic applicant statement")
         page.get_by_role("button",name="Add another entry",exact=True).click()
         page.get_by_label("Child gender",exact=True).select_option("unknown")
         page.get_by_label("Child lives with",exact=True).select_option("unknown")
@@ -125,9 +125,13 @@ try:
         assert len(data["answers"]["children"][0]["id"])==36
         assert data["can_edit"] and not data["can_submit"] and not data["can_checkout"]
         checks.append("Real optimistic save persists answers/repeated child records; missing files keep server filing false")
-        expect(page.get_by_text("Document access is no longer available.",exact=True)).to_be_visible()
+        expect(page.get_by_text("Application documents",exact=True)).to_be_visible()
+        listing=context.request.get(f"{BASE}/api/applications/{app_id}/files/")
+        assert listing.status==200,listing.text()
+        assert listing.json()["can_upload"] and not listing.json()["items"]
+        assert {r["category"] for r in listing.json()["requirements"] if r["required"]}=={"MC","CMC","CDD","PHOTO"}
         assert page.get_by_role("button",name="Submit application",exact=True).count()==0
-        checks.append("Missing real draft-file endpoint remains visibly unavailable and cannot enable filing")
+        checks.append("Real current-document listing supplies required slots and missing originals cannot enable filing")
         page.get_by_role("button",name="العربية",exact=True).click()
         expect(page.get_by_label("الاسم الأول",exact=False)).to_have_value("Synthetic")
         assert page.locator("html").get_attribute("dir")=="rtl"
@@ -152,23 +156,34 @@ try:
         for name in ("outsider","admin"):
             other=browser.new_context()
             other.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies[name],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
-            for suffix in ("","history/"):
+            for suffix in ("","history/","files/"):
                 assert other.request.get(f"{BASE}/api/applications/{app_id}/{suffix}").status==403
             other.close()
         checks.append("Real API denies outsider and council draft/detail/history access")
         uploaded=[]
+        requirements=context.request.get(f"{BASE}/api/applications/{app_id}/files/").json()["requirements"]
         for category in ("MC","CMC","CDD","PHOTO"):
             # The isolated settings_test scanner bypass is explicit test policy;
             # this verifies API/storage gates, not a live antivirus engine.
             content=(b"\x89PNG\r\n\x1a\nsynthetic-image-only" if category=="PHOTO" else b"%PDF-1.7 synthetic-document-only")
-            response=context.request.post(BASE+"/api/files/",headers={"X-CSRFToken":csrf},multipart={
-                "application_id":app_id,"category":category,"context":"","visibility":"own",
-                "file":{"name":"synthetic.png" if category=="PHOTO" else "synthetic.pdf",
-                        "mimeType":"image/png" if category=="PHOTO" else "application/pdf","buffer":content}})
+            requirement=next(r for r in requirements if r["category"]==category)
+            slot=page.get_by_role("region",name=requirement["label_en"],exact=True)
+            slot.locator('input[type="file"]').set_input_files({
+                "name":"synthetic.png" if category=="PHOTO" else "synthetic.pdf",
+                "mimeType":"image/png" if category=="PHOTO" else "application/pdf","buffer":content})
+            with page.expect_response(lambda response:response.url==BASE+"/api/files/" and response.request.method=="POST") as received:
+                slot.get_by_role("button",name="Upload original",exact=True).click()
+            response=received.value
             assert response.status==201,response.text()
             uploaded.append((response.json()["id"],content))
+            expect(slot.get_by_role("link",name="Download original",exact=True)).to_be_visible()
         ready=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
         assert ready["can_checkout"] and not ready["can_submit"]
+        page.get_by_role("button",name="Refresh documents",exact=True).click()
+        expect(page.get_by_text("Safety checks passed",exact=False)).to_have_count(4)
+        expect(page.get_by_role("button",name="Continue to secure payment",exact=True)).to_be_visible()
+        assert page.get_by_role("link",name="Download original",exact=True).count()==4
+        checks.append("Real document refresh renders four clean current originals and updates checkout capability")
         file_id,content=uploaded[0]
         own_file=context.request.get(f"{BASE}/api/files/{file_id}/")
         assert own_file.status==200 and own_file.body()==content
@@ -185,23 +200,34 @@ try:
         assert waiver.status==201,waiver.text()
         ready=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
         assert ready["fee"]["status"]=="waived" and ready["can_submit"] and not ready["can_checkout"]
-        payload={"expected_version":ready["version"],"idempotency_key":"synthetic-first-"+uuid.uuid4().hex,
-                 "attestation":{"accepted":True,"name":"Synthetic Applicant"}}
-        submitted=context.request.post(f"{BASE}/api/applications/{app_id}/submit/",data=payload,headers={"X-CSRFToken":csrf})
+        page.get_by_role("button",name="Refresh application status",exact=True).click()
+        page.get_by_role("button",name="Review answers",exact=True).click()
+        page.get_by_label("I have read and accept this declaration.",exact=True).check()
+        page.get_by_label("Your full name",exact=False).fill("Synthetic Applicant")
+        with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{app_id}/submit/" and response.request.method=="POST") as received:
+            page.get_by_role("button",name="Submit application",exact=True).click()
+        submitted=received.value
+        payload=submitted.request.post_data_json
+        assert payload["expected_version"]==ready["version"] and payload["attestation"]=={"accepted":True,"name":"Synthetic Applicant"}
         replay=context.request.post(f"{BASE}/api/applications/{app_id}/submit/",data=payload,headers={"X-CSRFToken":csrf})
         assert submitted.status==201,submitted.text()
         assert replay.status==201 and replay.json()["id"]==submitted.json()["id"]
         current=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
         assert current["status"]=="submitted" and current["case_number"]
-        checks.append("Real authorized waiver and version-bound submission finalize once without provider payment")
+        checks.append("Browser review/declaration/signature and real authorized waiver finalize once; actual request key replay is idempotent")
         returned=staff.request.post(f"{BASE}/api/applications/{app_id}/review/",data={"result":"reject","instructions":"Synthetic correction instruction"},
             headers={"X-CSRFToken":staff_csrf})
         assert returned.status==201,returned.text()
         current=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
         assert current["can_resubmit"] and not current["can_checkout"] and current["return_instructions"]=="Synthetic correction instruction"
-        response=context.request.post(f"{BASE}/api/applications/{app_id}/submit/",data={
-            "expected_version":current["version"],"idempotency_key":"synthetic-resubmit-"+uuid.uuid4().hex},headers={"X-CSRFToken":csrf})
+        page.get_by_role("button",name="Refresh application status",exact=True).click()
+        expect(page.get_by_text("Synthetic correction instruction",exact=True)).to_be_visible()
+        page.get_by_role("button",name="Review answers",exact=True).click()
+        with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{app_id}/submit/" and response.request.method=="POST") as received:
+            page.get_by_role("button",name="Resubmit corrections",exact=True).click()
+        response=received.value
         assert response.status==201,response.text()
+        assert "attestation" not in response.request.post_data_json
         assert context.request.get(f"{BASE}/api/applications/{app_id}/").json()["fee"]["status"]=="waived"
         staff.close()
         checks.append("Real return instructions and resubmission reuse original fee/signature without new attestation")

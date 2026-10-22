@@ -24,7 +24,7 @@ subprocess.run(["git", "apply", "--directory=.tmp/applicant-integration",
                 "docs/implementation/applicant/shell-integration.patch"], cwd=ROOT, check=True)
 shell = (COPY / "tribunal/templates/tribunal/shell.html").read_text(encoding="utf-8")
 shell = shell.replace("{% load static %}", "")
-for name in ("app.js", "applicant.js", "applicant-filing.js", "applicant-files.js"):
+for name in ("app.js", "applicant.js", "applicant-filing.js", "applicant-files.js", "applicant-appointments.js"):
     shell = shell.replace("{% static 'ctm/" + name + "' %}", "/" + name)
 shell = shell.replace('{{ boot|json_script:"ctm-config" }}',
                       '<script id="ctm-config" type="application/json">{"providers":[]}</script>')
@@ -34,7 +34,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/app.js":
             content = (COPY / "static/ctm/app.js").read_bytes()
-        elif self.path in {"/applicant.js", "/applicant-filing.js", "/applicant-files.js"}:
+        elif self.path in {"/applicant.js", "/applicant-filing.js", "/applicant-files.js", "/applicant-appointments.js"}:
             content = (ROOT / ("static/ctm" + self.path)).read_bytes()
         else:
             content = shell.encode()
@@ -77,6 +77,8 @@ try:
                 route.fulfill(json=user)
             elif path == "cases/":
                 route.fulfill(json={"items": []})
+            elif path == "appointments/":
+                route.fulfill(json={"items":[]})
             elif path == "applications/":
                 if route.request.method == "POST":
                     start_requests.append(route.request.post_data_json)
@@ -187,6 +189,9 @@ try:
         expect(page.get_by_label("Synthetic name")).to_have_value("Saved")
         assert start_requests == [{"kind":"petition"},{"kind":"petition"}]
         checks.append("Start/resume delegates eligibility and existing-draft reuse to server; error preserves existing list")
+        page.get_by_role("navigation").get_by_role("button",name="My appointments",exact=True).click()
+        expect(page.get_by_text("You have no appointment invitations.",exact=True)).to_be_visible()
+        checks.append("Applicant-only appointments navigation mounts private invitation module through proposed shell patch")
         assert not errors, errors
         browser.close()
 finally:
