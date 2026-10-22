@@ -1061,7 +1061,7 @@
       else if (
         councilModule &&
         user.portal === "council" &&
-        ["review", "sessions", "session", "decision", "decree"].includes(page)
+        ["review", "sessions", "session", "decision", "decree", "appeals"].includes(page)
       )
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
@@ -1202,6 +1202,7 @@
         "reports",
         "decision",
         "decree",
+        "appeals",
       ].includes(page) && selection;
     const caseGroups = [
       {
@@ -1238,7 +1239,8 @@
           label: t(id === "decision" ? "decisionVoting" : id),
           disabled: !(
             (id === "decision" && councilModule?.DecisionWorkspace) ||
-            (id === "decree" && councilModule?.DecreeWorkspace)
+            (id === "decree" && councilModule?.DecreeWorkspace) ||
+            (id === "appeals" && councilModule?.AppealsWorkspace)
           ),
         })),
       },
@@ -1383,6 +1385,14 @@
           reports: data.items,
           renderReports: () =>
             h(ReportReader, { key: selection, rows: data.items, t, lang }),
+        });
+      if (page === "appeals" && council && councilModule?.AppealsWorkspace)
+        return h(councilModule.AppealsWorkspace, {
+          key: selection,
+          api,
+          lang,
+          user,
+          caseId: selection,
         });
       if (page === "decree" && council && councilModule?.DecreeWorkspace)
         return h(councilModule.DecreeWorkspace, {

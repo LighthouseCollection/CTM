@@ -39,6 +39,11 @@ const state = {
       answers: {}, fee: { amount_minor: 25000, currency: "usd", status: "waived" },
     },
     { id: "a-3", kind: "petition", status: "accepted", case_id: "c-3", case_number: "20261019-01", version: 1, answers: {}, fee: null },
+    {
+      id: "a-5", kind: "appeal", status: "submitted", case_id: "c-5", case_number: "20260901-01", version: 1,
+      answers: { statement: "Synthetic appeal statement.", new_information: "Synthetic new information." },
+      fee: { amount_minor: 25000, currency: "usd", status: "paid" },
+    },
   ],
   reviews: [],
   cases: [
@@ -46,11 +51,15 @@ const state = {
     { id: "c-2", number: "20261020-02", status: "open", assigned: null },
     { id: "c-3", number: "20261019-01", status: "open", assigned: null },
     { id: "c-4", number: "20261001-01", status: "open", assigned: "u-mem" },
+    { id: "c-5", number: "20260901-01", status: "closed", assigned: "u-mem" },
   ],
-  sessions: [{ id: "s-1", date: "2026-11-05", reference: "CS20261105", state: "planned" }],
-  agenda: [],
+  sessions: [
+    { id: "s-1", date: "2026-11-05", reference: "CS20261105", state: "planned" },
+    { id: "s-0", date: "2026-10-08", reference: "CS20261008", state: "closed" },
+  ],
+  agenda: [{ id: "i-s-0c-5", session: "s-0", case_id: "c-5", part: 2, state: "heard", position: 1 }],
   attendance: [],
-  hearings: [],
+  hearings: [{ id: "h-appeal", agenda: "i-s-0c-5", case_id: "c-5", state: "held", presenter_id: "u-mem" }],
   outcomes: [],
   testimony: [],
   posts: [],
@@ -209,6 +218,17 @@ function api(req, res, url, body) {
     state.decrees.push(decree);
     c.status = "closed";
     return json(res, 201, { id: decree.id });
+  }
+  if ((m = p.match(/^\/api\/appeals\/([^/]+)\/result\/$/))) {
+    const app = state.applications.find((a) => a.id === m[1]);
+    const c = state.cases.find((x) => x.id === app.case_id);
+    if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    if (app.status !== "submitted" || !["accept", "decline"].includes(body.result))
+      return json(res, 422, { error: "validation", messages: ["No pending appeal or invalid result."] });
+    if (!state.hearings.some((h) => h.id === body.hearing_id && h.case_id === c.id)) return json(res, 404, { error: "resource_or_input_invalid" });
+    app.status = body.result === "accept" ? "accepted" : "declined";
+    if (body.result === "accept") c.status = "open";
+    return json(res, 201, { id: "disp-" + app.id });
   }
   if ((m = p.match(/^\/api\/decrees\/([^/]+)\/release\/$/))) {
     if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });

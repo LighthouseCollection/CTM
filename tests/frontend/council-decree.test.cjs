@@ -82,7 +82,33 @@ test("decree words cover both languages and every used key", () => {
   const en = Object.keys(C.decreeWords.en).sort();
   assert.deepEqual(Object.keys(C.decreeWords.ar).sort(), en);
   const known = new Set([...en, ...Object.keys(C.caseWords.en), ...Object.keys(C.words.en)]);
-  for (const [, key] of source.matchAll(/\bt\("([A-Za-z0-9_]+)"/g)) assert.ok(known.has(key), key);
+  for (const [, key] of source.matchAll(/\bt\("([A-Za-z0-9_]+)"[),]/g)) assert.ok(known.has(key), key);
+  for (const status of ["draft", "submitted", "accepted", "declined", "withdrawn"]) assert.ok(known.has("appeal_" + status), status);
   assert.doesNotMatch(source, /style\s*:/);
   assert.doesNotMatch(source, /#[0-9a-fA-F]{3,8}\b/);
+});
+
+test("appeals list only this case's appeals, newest first", () => {
+  const rows = [
+    { id: "a", kind: "appeal", case_id: "c1", submitted_at: "2026-10-01" },
+    { id: "b", kind: "petition", case_id: "c1", submitted_at: "2026-10-05" },
+    { id: "c", kind: "appeal", case_id: "c2", submitted_at: "2026-10-03" },
+    { id: "d", kind: "appeal", case_id: "c1", submitted_at: "2026-10-09" },
+  ];
+  assert.deepEqual(plain(C.caseAppeals(rows, "c1").map((r) => r.id)), ["d", "a"]);
+});
+
+test("appeal result needs a heard case hearing and an explicit Accept or Decline", () => {
+  assert.equal(C.appealResultProblem({ hearing: "h", result: "accept" }), null);
+  assert.equal(C.appealResultProblem({ hearing: "h", result: "decline" }), null);
+  assert.equal(C.appealResultProblem({ hearing: "", result: "accept" }), "chooseHearing");
+  assert.equal(C.appealResultProblem({ hearing: "h", result: "" }), "chooseResult");
+});
+
+test("heard hearings are collected from agendas for this case only", () => {
+  const agendas = [
+    { session: { date: "2026-11-05" }, items: [{ id: "i1", case_id: "c1", hearing_id: "h1" }, { id: "i2", case_id: "c2", hearing_id: "h2" }] },
+    { session: { date: "2026-12-03" }, items: [{ id: "i3", case_id: "c1", hearing_id: "h3" }, { id: "i4", case_id: "c1", hearing_id: null }] },
+  ];
+  assert.deepEqual(plain(C.heardHearings(agendas, "c1").map((h) => h.id)), ["h3", "h1"]);
 });

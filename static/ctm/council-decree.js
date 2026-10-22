@@ -140,6 +140,37 @@
       withdrawDone: "Access was withdrawn.",
       noticeOnly: "Official decision notice only",
       cancel: "Cancel",
+      appeals: "Appeals",
+      appeal: "Appeal",
+      noAppeals: "No appeals have been filed for this case.",
+      chooseAppeal: "Select an appeal",
+      appellant: "Appellant",
+      appeal_draft: "Draft",
+      appeal_submitted: "Pending",
+      appeal_accepted: "Accepted",
+      appeal_declined: "Declined",
+      appeal_withdrawn: "Withdrawn",
+      appealStatement: "Appeal statement and new information",
+      supplementsPending: "Additional information added by the appellant after submission is not yet shown here.",
+      recordAppealResult: "Record council result",
+      appealResultHelp: "Record the result the council reached at the case hearing. Each appeal has its own result.",
+      hearingsUnavailable: "Case hearings cannot be listed from this server yet, so a result cannot be recorded here.",
+      noHeardHearing: "This appeal has not been heard yet. Place the case on a council session agenda and present it first.",
+      caseHearing: "Case hearing",
+      chooseHearing: "Select the case hearing.",
+      appealResult: "Result",
+      acceptAppeal: "Accept appeal",
+      declineAppeal: "Decline appeal",
+      chooseResult: "Choose Accept or Decline.",
+      appealExplanation: "Additional explanation to the appellant (optional)",
+      appealExplanationHelp: "Added to the official notice. Do not include council deliberations.",
+      appealWriterOnly: "Only the assigned case manager, or the administrator or secretary, records the appeal result.",
+      acceptAppealTitle: "Accept this appeal?",
+      acceptAppealMessage: "The original case reopens under the same case number as a new appeal proceeding, unless it is already reopened. Both applicants are notified privately. Earlier proceedings stay read-only.",
+      declineAppealTitle: "Decline this appeal?",
+      declineAppealMessage: "The appellant receives the official decline notice privately. If no other appeal has reopened the case, it stays closed. The existing decree and access are unchanged.",
+      appealAccepted: "The appeal was accepted.",
+      appealDeclined: "The appeal was declined and the official notice was sent.",
     },
     ar: {
       decree: "الشهادة",
@@ -210,6 +241,37 @@
       withdrawDone: "تم سحب الإتاحة.",
       noticeOnly: "إخطار رسمي بالقرار فقط",
       cancel: "إلغاء",
+      appeals: "الاستئنافات",
+      appeal: "استئناف",
+      noAppeals: "لم يُقدَّم أي استئناف في هذه القضية.",
+      chooseAppeal: "اختر استئنافًا",
+      appellant: "مقدم الاستئناف",
+      appeal_draft: "مسودة",
+      appeal_submitted: "قيد النظر",
+      appeal_accepted: "مقبول",
+      appeal_declined: "مرفوض",
+      appeal_withdrawn: "مسحوب",
+      appealStatement: "بيان الاستئناف والمعلومات الجديدة",
+      supplementsPending: "المعلومات الإضافية التي أضافها مقدم الاستئناف بعد التقديم لا تظهر هنا بعد.",
+      recordAppealResult: "تسجيل نتيجة المجلس",
+      appealResultHelp: "سجّل النتيجة التي انتهى إليها المجلس في جلسة نظر القضية. لكل استئناف نتيجته المستقلة.",
+      hearingsUnavailable: "لا يمكن عرض جلسات نظر القضية من هذا الخادم بعد، لذلك لا يمكن تسجيل النتيجة هنا.",
+      noHeardHearing: "لم يُنظر هذا الاستئناف بعد. أدرج القضية في جدول أعمال جلسة المجلس واعرضها أولًا.",
+      caseHearing: "جلسة نظر القضية",
+      chooseHearing: "اختر جلسة نظر القضية.",
+      appealResult: "النتيجة",
+      acceptAppeal: "قبول الاستئناف",
+      declineAppeal: "رفض الاستئناف",
+      chooseResult: "اختر القبول أو الرفض.",
+      appealExplanation: "توضيح إضافي لمقدم الاستئناف (اختياري)",
+      appealExplanationHelp: "يُضاف إلى الإخطار الرسمي. لا تُدرج مداولات المجلس.",
+      appealWriterOnly: "يسجّل نتيجة الاستئناف مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط.",
+      acceptAppealTitle: "هل تريد قبول هذا الاستئناف؟",
+      acceptAppealMessage: "يُعاد فتح القضية الأصلية بالرقم نفسه كإجراء استئناف جديد ما لم تكن قد أُعيد فتحها. ويُخطَر مقدما الطلب كلٌّ على حدة. وتبقى الإجراءات السابقة للقراءة فقط.",
+      declineAppealTitle: "هل تريد رفض هذا الاستئناف؟",
+      declineAppealMessage: "يتلقى مقدم الاستئناف الإخطار الرسمي بالرفض بشكل خاص. وإن لم يُعِد استئناف آخر فتح القضية فإنها تبقى مغلقة. ولا تتغير الشهادة القائمة ولا إتاحتها.",
+      appealAccepted: "تم قبول الاستئناف.",
+      appealDeclined: "تم رفض الاستئناف وإرسال الإخطار الرسمي.",
     },
   };
 
@@ -614,6 +676,236 @@
     );
   }
 
+  // ---------- Appeals ----------
+
+  function caseAppeals(items, caseId) {
+    return (items || [])
+      .filter((row) => row && row.kind === "appeal" && row.case_id === caseId)
+      .sort((a, b) => String(b.submitted_at || "").localeCompare(String(a.submitted_at || "")));
+  }
+
+  function appealResultProblem(form) {
+    if (!form.hearing) return "chooseHearing";
+    if (!["accept", "decline"].includes(form.result)) return "chooseResult";
+    return null;
+  }
+
+  // Heard hearings of this case, from session agendas that expose hearing ids.
+  function heardHearings(agendas, caseId) {
+    const rows = [];
+    for (const { session, items } of agendas || []) {
+      for (const item of items || []) {
+        if (item.case_id === caseId && item.hearing_id)
+          rows.push({ id: item.hearing_id, date: session.date, agenda_id: item.id });
+      }
+    }
+    return rows.sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  function AppealDetail({ api, lang, user, row, record, hearings, hearingsKnown, onRecorded }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [form, setForm] = R.useState({ hearing: hearings[0]?.id || "", result: "", explanation: "" });
+    const [problem, setProblem] = R.useState(null);
+    const [confirm, setConfirm] = R.useState(false);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const writer =
+      base.canManage(user) ||
+      (record.assigned_member_id !== undefined ? record.assigned_member_id === user.id : false);
+    const pendingAppeal = row.status === "submitted";
+    const answers = Object.entries(row.answers || {});
+    async function save() {
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/appeals/${encodeURIComponent(row.id)}/result/`, {
+          method: "POST",
+          body: JSON.stringify({ hearing_id: form.hearing, result: form.result, explanation: form.explanation.trim() }),
+        });
+        setConfirm(false);
+        onRecorded(form.result === "accept" ? "appealAccepted" : "appealDeclined");
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    const begin = () => {
+      const issue = appealResultProblem(form);
+      setProblem(issue);
+      if (!issue) setConfirm(true);
+    };
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(
+        P.PropertyList,
+        null,
+        row.applicant_name ? h(P.PropertyList.Item, { label: t("appellant") }, row.applicant_name) : null,
+        h(P.PropertyList.Item, { label: t("statusLabel") }, h(P.Badge, { tone: pendingAppeal ? "active" : row.status === "accepted" ? "success" : "neutral" }, t("appeal_" + row.status))),
+        row.submitted_at ? h(P.PropertyList.Item, { label: t("submittedAt"), data: true }, base.formatWhen(row.submitted_at, lang)) : null,
+        h(P.PropertyList.Item, { label: t("fee") }, row.fee ? t(row.fee.status) : t("unknown")),
+      ),
+      h(
+        P.Panel,
+        { title: t("appealStatement") },
+        answers.length
+          ? h(
+              P.PropertyList,
+              { layout: "stacked" },
+              ...answers.map(([code, value]) =>
+                h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, base.translator(lang))),
+              ),
+            )
+          : h(P.EmptyState, { title: t("noAnswers") }),
+      ),
+      h(P.Notice, { tone: "info" }, t("supplementsPending")),
+      pendingAppeal
+        ? writer
+          ? h(
+              P.Panel,
+              { title: t("recordAppealResult"), description: t("appealResultHelp") },
+              !hearingsKnown
+                ? h(P.Notice, { tone: "info" }, t("hearingsUnavailable"))
+                : !hearings.length
+                  ? h(P.Notice, { tone: "warning" }, t("noHeardHearing"))
+                  : h(
+                      P.Stack,
+                      { gap: "md" },
+                      h(
+                        P.Field,
+                        { label: t("caseHearing"), required: true, error: problem === "chooseHearing" ? t("chooseHearing") : undefined },
+                        h(P.Select, {
+                          value: form.hearing,
+                          disabled: pending,
+                          onChange: (e) => setForm({ ...form, hearing: e.target.value }),
+                          options: [
+                            { value: "", label: t("chooseHearing") },
+                            ...hearings.map((x) => ({ value: x.id, label: base.sessionLabel(x.date, base.translator(lang)) })),
+                          ],
+                        }),
+                      ),
+                      h(P.RadioGroup, {
+                        label: t("appealResult"),
+                        layout: "row",
+                        value: form.result,
+                        onChange: (value) => {
+                          setForm({ ...form, result: value });
+                          setProblem(null);
+                        },
+                        options: [
+                          { value: "accept", label: t("acceptAppeal"), disabled: pending },
+                          { value: "decline", label: t("declineAppeal"), disabled: pending },
+                        ],
+                      }),
+                      problem === "chooseResult" ? h(P.Notice, { tone: "danger" }, t("chooseResult")) : null,
+                      h(
+                        P.Field,
+                        { label: t("appealExplanation"), description: t("appealExplanationHelp") },
+                        h(P.Textarea, { rows: 3, value: form.explanation, maxLength: 10000, disabled: pending, onChange: (e) => setForm({ ...form, explanation: e.target.value }) }),
+                      ),
+                      failure && !confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
+                      h(P.Inline, null, h(P.Button, { variant: "primary", disabled: pending, onClick: begin }, t("recordAppealResult"))),
+                    ),
+            )
+          : h(P.Notice, { tone: "info" }, t("appealWriterOnly"))
+        : null,
+      h(
+        P.ConfirmDialog,
+        {
+          open: confirm,
+          title: t(form.result === "accept" ? "acceptAppealTitle" : "declineAppealTitle"),
+          message: t(form.result === "accept" ? "acceptAppealMessage" : "declineAppealMessage"),
+          confirmLabel: t(form.result === "accept" ? "acceptAppeal" : "declineAppeal"),
+          cancelLabel: t("cancel"),
+          onConfirm: save,
+          onCancel: () => !pending && setConfirm(false),
+        },
+        failure && confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
+      ),
+    );
+  }
+
+  function AppealsWorkspace({ api, lang, user, caseId }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = base.useLoad(
+      () =>
+        Promise.all([api("/api/applications/"), api(`/api/cases/${encodeURIComponent(caseId)}/`), api("/api/sessions/")]).then(
+          async ([apps, record, sessions]) => {
+            const recent = (sessions.items || []).slice(0, 24);
+            const agendas = await Promise.all(
+              recent.map((session) =>
+                api(`/api/sessions/${encodeURIComponent(session.id)}/agenda/`).then((data) => ({ session, items: data.items })),
+              ),
+            );
+            const hearingsKnown = agendas.some((a) => (a.items || []).some((item) => "hearing_id" in item));
+            return { appeals: caseAppeals(apps.items, caseId), record, hearings: heardHearings(agendas, caseId), hearingsKnown };
+          },
+        ),
+      [caseId],
+    );
+    const [selected, select] = R.useState(null);
+    const [notice, setNotice] = R.useState(null);
+    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const { appeals, record, hearings, hearingsKnown } = state.data;
+    const chosen = appeals.find((row) => row.id === selected);
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("appeals")),
+      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+      h(P.SplitView, {
+        label: t("appeals"),
+        firstLabel: t("appeals"),
+        first: appeals.length
+          ? h(
+              P.Stack,
+              { gap: "sm" },
+              ...appeals.map((row) =>
+                h(P.Card, {
+                  key: row.id,
+                  title: row.applicant_name || t("appeal"),
+                  meta: [t("appeal_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "),
+                  selected: row.id === selected,
+                  onOpen: () => {
+                    setNotice(null);
+                    select(row.id);
+                  },
+                }),
+              ),
+            )
+          : h(P.EmptyState, { title: t("noAppeals") }),
+        second: h(
+          P.ReadingPane,
+          { label: chosen ? chosen.applicant_name || t("appeal") : t("chooseAppeal"), empty: h(P.EmptyState, { title: t("chooseAppeal") }) },
+          chosen
+            ? h(AppealDetail, {
+                key: chosen.id,
+                api,
+                lang,
+                user,
+                row: chosen,
+                record,
+                hearings,
+                hearingsKnown,
+                onRecorded: (key) => {
+                  setNotice(key);
+                  retry();
+                },
+              })
+            : null,
+        ),
+      }),
+    );
+  }
+
   Object.assign(window.CTMCouncil, {
     decreeWords: words,
     decreeTranslator: translator,
@@ -626,5 +918,9 @@
     attestationProblem,
     latestProceeding,
     DecreeWorkspace,
+    caseAppeals,
+    appealResultProblem,
+    heardHearings,
+    AppealsWorkspace,
   });
 })();
