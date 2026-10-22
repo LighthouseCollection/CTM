@@ -58,6 +58,12 @@ test("report template questions hide internal question-bank codes", () => {
   assert.match(councilCase, /key: q\.code, label: wording\(q, lang\)/);
 });
 
+test("report template draft action is named as a report", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(councilCase, /saveReport: "Save as a Report"/);
+  assert.match(councilCase, /t\("saveReport"\)/);
+});
+
 test("report template wording follows the selected request language", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(councilCase, /if \(lang === "ar"\) return ar \|\| en/);

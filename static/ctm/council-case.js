@@ -271,6 +271,7 @@ ${ar}` : en;
       selectedCount: "{n} selected in addition to the foundational questions",
       instructions: "Instructions to the applicant (optional)",
       saveDraft: "Save draft request",
+      saveReport: "Save as a Report",
       draftSaved: "The draft request was saved. Review the questions before continuing.",
       frozenNotice:
         "These are the exact questions saved with this request. Sending or starting it freezes their wording and order.",
@@ -583,6 +584,7 @@ ${ar}` : en;
       selectedCount: "تم تحديد {n} بالإضافة إلى الأسئلة الأساسية",
       instructions: "تعليمات لمقدم الطلب (اختياري)",
       saveDraft: "حفظ مسودة الطلب",
+      saveReport: "حفظ كتقرير",
       draftSaved: "تم حفظ مسودة الطلب. راجع الأسئلة قبل المتابعة.",
       frozenNotice: "هذه هي الأسئلة المحفوظة بالضبط مع هذا الطلب. يؤدي إرساله أو بدؤه إلى تثبيت صياغتها وترتيبها.",
       send: "إرسال إلى مقدم الطلب",
@@ -1131,7 +1133,7 @@ ${ar}` : en;
         P.FormActions,
         { sticky: false },
         h(P.Button, { disabled: pending, onClick: onCancel }, t("cancel")),
-        h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveDraft")),
+        h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveReport")),
       ),
     );
   }
