@@ -66,6 +66,7 @@ def runtime():
             "ctm_library_writable(text,jsonb)",
             "ctm_assessment_release_metadata(uuid)",
             "ctm_request_author_names(uuid[])",
+            "ctm_document_category_labels()",
             "ctm_reference_readable(text,jsonb)",
             "ctm_reference_writable(text,jsonb)",
             "ctm_staff_readable()",
@@ -784,7 +785,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0043_request_author_projection")])
+        MigrationExecutor(connection).migrate([("tribunal", "0045_linked_first_filing")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
