@@ -251,6 +251,18 @@ class Command(BaseCommand):
                 "marriage_diocese": "Diocese of Los Angeles",
             }
 
+        def repair_synthetic_photo_originals():
+            """Restore missing image originals in the opted-in local demo media tree."""
+            files = m.FileVersion.objects.filter(
+                attachment__case__origin="synthetic",
+                attachment__category__in={"PHOTO", "SPOUSE_PHOTO"},
+                mime_type="image/png",
+            )
+            for file in files:
+                target = Path(settings.MEDIA_ROOT) / file.object_key
+                if not target.exists():
+                    write_private_original(target, placeholder_png())
+
         if m.AuditEvent.objects.filter(
             action="demo_dataset_created", metadata__dataset=DATASET
         ).exists():
@@ -268,8 +280,9 @@ class Command(BaseCommand):
                         # This direct fixture repair is reachable only after the isolated
                         # synthetic-dataset guard above has already passed.
                         m.AnswerRevision.objects.filter(pk=revision.pk).update(answers=answers)
+            repair_synthetic_photo_originals()
             ensure_session_agenda(current_session, archived_session)
-            self.stdout.write("Dataset already exists; synthetic session scenarios and profile fixtures refreshed.")
+            self.stdout.write("Dataset already exists; synthetic session scenarios, profile fixtures, and photo originals refreshed.")
             return
         fields = [
             {

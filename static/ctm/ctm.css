@@ -2,3 +2,17 @@
   inline-size: 14rem;
   justify-content: flex-start;
 }
+
+
+.ctm-spouse-identity {
+  inline-size: 100%;
+}
+
+.ctm-spouse-identity__facts {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.ctm-spouse-identity__fact {
+  min-inline-size: 8rem;
+}

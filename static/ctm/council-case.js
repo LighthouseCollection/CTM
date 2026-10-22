@@ -2370,9 +2370,39 @@
   }
 
   function spousePhoto(P, h, party) {
-    return party.photo_url
-      ? h(P.Image, { src: party.photo_url, alt: party.name, width: 96, height: 96, fit: "cover" })
-      : h(P.Icon, { name: "user", size: "lg", label: party.name });
+    // Avatar preserves the intended photograph and falls back to initials when a
+    // submitted file is unavailable; it never renders an error message in the card.
+    return h(P.Avatar, {
+      src: party.photo_url || undefined,
+      name: party.name,
+      size: "xl",
+      label: party.name,
+      className: "ctm-spouse-photo",
+    });
+  }
+
+  function spouseIdentity(P, h, t, party) {
+    const fact = (label, value, data) => h(
+      P.Stack,
+      { gap: "2xs", className: "ctm-spouse-identity__fact" },
+      h(P.Text, { variant: "caption" }, label),
+      data ? h(P.Text, { variant: "data" }, value) : value,
+    );
+    return h(
+      P.Inline,
+      { gap: "md", align: "center", className: "ctm-spouse-identity" },
+      spousePhoto(P, h, party),
+      h(
+        P.Inline,
+        { gap: "lg", align: "start", className: "ctm-spouse-identity__facts" },
+        party.reference ? fact(t("ctmId"), party.reference, true) : null,
+        fact(
+          t("portalAccount"),
+          h(P.Badge, { tone: party.can_receive ? "success" : "waiting" }, t(party.can_receive ? "registered" : "notRegistered")),
+          false,
+        ),
+      ),
+    );
   }
 
   function CaseParties({ api, lang, user, caseId }) {
@@ -2437,21 +2467,7 @@
           h(
             P.Stack,
             { gap: "lg" },
-            h(
-              P.Inline,
-              { gap: "md", align: "start" },
-              spousePhoto(P, h, party),
-              h(
-                P.PropertyList,
-                null,
-                party.reference ? h(P.PropertyList.Item, { label: t("ctmId"), data: true }, party.reference) : null,
-                h(
-                  P.PropertyList.Item,
-                  { label: t("portalAccount") },
-                  h(P.Badge, { tone: party.can_receive ? "success" : "waiting" }, t(party.can_receive ? "registered" : "notRegistered")),
-                ),
-              ),
-            ),
+            spouseIdentity(P, h, t, party),
             spouseProfileSection(P, h, t, t("personalDetails"), "user", [
               ["otherNamesKnownBy", party.profile?.personal?.other_names],
               ["placeOfBirth", party.profile?.personal?.place_of_birth],
