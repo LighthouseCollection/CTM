@@ -6,8 +6,9 @@ import os
 import struct
 import uuid
 import zlib
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -121,11 +122,6 @@ class Command(BaseCommand):
             )
         if m.Case.objects.exclude(origin="synthetic").exists():
             raise CommandError("Refusing to mix workflow fixtures with non-demo cases.")
-        if m.AuditEvent.objects.filter(
-            action="demo_dataset_created", metadata__dataset=DATASET
-        ).exists():
-            self.stdout.write("Dataset already exists; no records or history changed.")
-            return
         roster = []
         for first, last, email, role in ROSTER:
             account = m.Account.objects.filter(email__iexact=email).first()
@@ -142,13 +138,77 @@ class Command(BaseCommand):
         admin = roster[-1]
         members = roster[2:8]
         now = timezone.now()
-        session, _ = m.CouncilSession.objects.get_or_create(
-            date=timezone.localdate() + timedelta(days=7)
-        )
-        for member in roster[:-1]:
-            m.Attendance.objects.create(
-                session=session, member=member, actor=admin, present=True
+        today = timezone.localdate()
+
+        def session_at(day, *, state, hour, location):
+            starts_at = timezone.make_aware(
+                datetime.combine(day, time(hour=hour)), ZoneInfo("America/Los_Angeles")
             )
+            session, _ = m.CouncilSession.objects.get_or_create(date=day)
+            session.state = state
+            session.starts_at = starts_at
+            session.presiding_member = president
+            session.location = location
+            session.closed_at = now if state == "closed" else None
+            session.save(update_fields=["state", "starts_at", "presiding_member", "location", "closed_at"])
+            for member in roster[:-1]:
+                if not m.Attendance.objects.filter(session=session, member=member).exists():
+                    m.Attendance.objects.create(
+                        session=session,
+                        member=member,
+                        actor=admin,
+                        present=member != members[-1],
+                    )
+            return session
+
+        def ensure_session_agenda(current_session, archived_session):
+            entries = (
+                (current_session, "20261020-03", 1, 1, "scheduled"),
+                (current_session, "20261020-04", 2, 1, "scheduled"),
+                (archived_session, "20261020-07", 2, 1, "presented"),
+            )
+            for session, number, part, position, state in entries:
+                case = m.Case.objects.filter(number=number, origin="synthetic").first()
+                if not case:
+                    continue
+                agenda, _ = m.AgendaItem.objects.get_or_create(
+                    session=session,
+                    case=case,
+                    defaults={"part": part, "position": position, "state": state},
+                )
+                if (agenda.part, agenda.position, agenda.state) != (part, position, state):
+                    agenda.part, agenda.position, agenda.state = part, position, state
+                    agenda.save(update_fields=["part", "position", "state"])
+
+        current_session = session_at(
+            today,
+            state="planned",
+            hour=10,
+            location="St. George Coptic Orthodox Church, Bellflower, California",
+        )
+        existing_upcoming = (
+            m.CouncilSession.objects.filter(state="planned", date__gt=today)
+            .order_by("date")
+            .first()
+        )
+        session = session_at(
+            existing_upcoming.date if existing_upcoming else today + timedelta(days=7),
+            state="planned",
+            hour=10,
+            location="St. Mark Coptic Orthodox Church, Los Angeles, California",
+        )
+        archived_session = session_at(
+            today - timedelta(days=14),
+            state="closed",
+            hour=10,
+            location="St. Mary Coptic Orthodox Church, Los Angeles, California",
+        )
+        if m.AuditEvent.objects.filter(
+            action="demo_dataset_created", metadata__dataset=DATASET
+        ).exists():
+            ensure_session_agenda(current_session, archived_session)
+            self.stdout.write("Dataset already exists; synthetic session scenarios refreshed.")
+            return
         fields = [
             {
                 "code": "first_name",
@@ -545,6 +605,7 @@ class Command(BaseCommand):
         m.CaseNumberCounter.objects.get_or_create(
             date=date(2026, 10, 20), defaults={"last_value": 8}
         )
+        ensure_session_agenda(current_session, archived_session)
         m.AuditEvent.objects.create(
             actor=admin,
             action="demo_dataset_created",

@@ -1,8 +1,11 @@
+from datetime import timedelta
+
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db import connection
-from tribunal.models import Account, Case, FileVersion, OpenCaseClaim, Outbox
+from django.utils import timezone
+from tribunal.models import Account, AgendaItem, Case, CouncilSession, FileVersion, OpenCaseClaim, Outbox
 
 
 @pytest.mark.django_db
@@ -52,6 +55,14 @@ def test_workflow_demo_is_repeatable_private_and_delivery_free(
 
     assert all(request.questions[0]["en"] for request in ReportRequest.objects.all())
     assert not OpenCaseClaim.objects.filter(case__status="closed").exists()
+    today = timezone.localdate()
+    current = CouncilSession.objects.get(date=today, state="planned")
+    upcoming = CouncilSession.objects.get(date=today + timedelta(days=7), state="planned")
+    archived = CouncilSession.objects.get(date=today - timedelta(days=14), state="closed")
+    for session in (current, upcoming, archived):
+        assert session.starts_at and session.presiding_member and session.location
+    assert AgendaItem.objects.filter(session=current).exists()
+    assert AgendaItem.objects.filter(session=upcoming).exists()
     for source in FileVersion.objects.filter(mime_type="application/pdf"):
         data = (tmp_path / source.object_key).read_bytes()
         assert data.startswith(b"%PDF-") and b"xref" in data
