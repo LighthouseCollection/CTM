@@ -1,5 +1,9 @@
 # Remaining applicant work
 
+## Standalone fixture CDN alignment
+
+Twelve applicant fixture scripts now pin0.60.1 and each has a successful run. Initial supplement disabled-review timeout and unchanged rerun are both recorded. Shared CI pin failure remains governance-owned. [Report](plenix0601-fixtures-report.md) | [JSON](plenix0601-fixtures-result.json).
+
 ## Plenix 0.60.1 integration successor
 
 Exact unmodifiedbd6e5c8 passes76 applicant SQLite API/browser groups, no browser errors; targeted mobile overflow/runtime-style assertions pass. Earlier0.58.0 results remain historical. Latest applicant/backend integration and other acceptance dependencies remain open. [Report](integration-bd6e5c8-report.md) | [JSON](integration-bd6e5c8-result.json).

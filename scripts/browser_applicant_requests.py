@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler,HTTPServer
 from playwright.sync_api import sync_playwright,expect
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'.tmp/applicant-requests';OUT.mkdir(parents=True,exist_ok=True)
-CDN='https://design-system.lighthouseway.org/cdn/0.58.0/'
+CDN='https://design-system.lighthouseway.org/cdn/0.60.1/'
 HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script src="CDNtheme-boot.js"></script><link rel="stylesheet" href="CDNfonts.css"><link rel="stylesheet" href="CDNplenix.css">
 <script src="CDNvendor/react.production.min.js"></script><script src="CDNvendor/react-dom.production.min.js"></script>

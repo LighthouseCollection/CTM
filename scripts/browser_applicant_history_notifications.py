@@ -4,7 +4,7 @@ from pathlib import Path
 from http.server import BaseHTTPRequestHandler,HTTPServer
 from playwright.sync_api import sync_playwright,expect
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'.tmp/applicant-history-notifications';OUT.mkdir(parents=True,exist_ok=True)
-ID='11111111-1111-4111-8111-111111111111';CHILD='22222222-2222-4222-8222-222222222222';OTHER='33333333-3333-4333-8333-333333333333';CDN='https://design-system.lighthouseway.org/cdn/0.58.0/'
+ID='11111111-1111-4111-8111-111111111111';CHILD='22222222-2222-4222-8222-222222222222';OTHER='33333333-3333-4333-8333-333333333333';CDN='https://design-system.lighthouseway.org/cdn/0.60.1/'
 HTML="""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="CDNtheme-boot.js"></script><link rel="stylesheet" href="CDNfonts.css"><link rel="stylesheet" href="CDNplenix.css"><script src="CDNvendor/react.production.min.js"></script><script src="CDNvendor/react-dom.production.min.js"></script><script src="CDNplenix.js"></script><script src="/applicant-history.js"></script><script src="/applicant-notifications.js"></script><script src="/applicant.js"></script></head><body><div id="root"></div><script>
 const R=React,P=Plenix,h=R.createElement,api=async(url,options={})=>{const r=await fetch(url,options);if(!r.ok)throw {status:r.status};return r.json();};
 function Harness(){const[lang,setLang]=R.useState('en'),[view,setView]=R.useState('History'),guard=R.useRef(null),register=R.useCallback(fn=>guard.current=fn,[]);
@@ -102,5 +102,5 @@ try:
   checks.append('Notification ENAR layout remains clean; denied/malformed refresh removes private list/count/case actions and never resends acknowledgement')
   assert not errors,errors;browser.close()
 finally:server.shutdown()
-result={'passed':len(checks),'checks':checks,'page_errors':errors,'scope':'Synthetic own history/notification fixtures; pinned real Plenix0.58.0'}
+result={'passed':len(checks),'checks':checks,'page_errors':errors,'scope':'Synthetic own history/notification fixtures; pinned real Plenix0.60.1'}
 (OUT/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8');print(json.dumps(result,indent=2))
