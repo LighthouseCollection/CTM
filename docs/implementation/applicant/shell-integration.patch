@@ -1,0 +1,212 @@
+--- a/tribunal/templates/tribunal/shell.html
++++ b/tribunal/templates/tribunal/shell.html
+@@ -10,6 +10,20 @@
+   <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react.production.min.js"></script>
+   <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react-dom.production.min.js"></script>
+   <script defer src="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.js"></script>
++  <script defer src="{% static 'ctm/applicant-files.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-filing.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-appointments.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-payments.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-appeals.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-messages.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-assessments.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-responses.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-recovery.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-lifecycle.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-requests.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-decrees.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant-supplements.js' %}"></script>
++  <script defer src="{% static 'ctm/applicant.js' %}"></script>
+   <script defer src="{% static 'ctm/app.js' %}"></script>
+ </head>
+ <body>
+--- a/static/ctm/app.js
++++ b/static/ctm/app.js
+@@ -50,6 +50,7 @@
+       loading: "Loading…",
+       retry: "Try again",
+       error: "Unable to load this information",
++      preferenceFailed: "Your language preference could not be saved. Please try again.",
+       expired: "Please sign in again to continue.",
+       empty: "Nothing to show",
+       noCases: "No cases are available.",
+@@ -60,6 +61,7 @@
+       absent: "Absent",
+       notRecorded: "Not recorded",
+       notifications: "Notifications",
++      appointments: "My appointments",
+       noNotifications: "You have no notifications.",
+       markRead: "Mark as read",
+       unread: "Unread",
+@@ -198,6 +200,7 @@
+       absent: "غائب",
+       notRecorded: "لم يُسجّل",
+       notifications: "الإشعارات",
++      appointments: "مواعيدي",
+       noNotifications: "لا توجد إشعارات.",
+       markRead: "تحديد كمقروء",
+       unread: "غير مقروء",
+@@ -259,6 +262,7 @@
+       loading: "جارٍ التحميل…",
+       retry: "إعادة المحاولة",
+       error: "تعذر تحميل هذه المعلومات",
++      preferenceFailed: "تعذر حفظ تفضيل اللغة. يرجى المحاولة مجددًا.",
+       expired: "يرجى تسجيل الدخول مرة أخرى للمتابعة.",
+       empty: "لا توجد بيانات للعرض",
+       noCases: "لا توجد قضايا متاحة.",
+@@ -367,7 +371,7 @@
+       credentials: "same-origin",
+       headers: {
+         Accept: "application/json",
+-        "Content-Type": "application/json",
++        ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+         "X-CSRFToken": csrf(),
+       },
+       cache: "no-store",
+@@ -377,7 +381,11 @@
+       error.status = 401;
+       throw error;
+     }
+-    if (!response.ok) throw new Error("request_failed");
++    if (!response.ok) {
++      const error = new Error("request_failed");
++      error.status = response.status;
++      throw error;
++    }
+     return response.json();
+   }
+   function MessageComposer({ record, sessions, council, t, onSent }) {
+@@ -975,6 +983,11 @@
+     const [failure, setFailure] = R.useState(false),
+       [revision, reload] = R.useState(0);
+     const [saving, setSaving] = R.useState(false);
++    const [preferenceFailure, setPreferenceFailure] = R.useState(null);
++    const applicantGuard = R.useRef(null);
++    const registerApplicantGuard = R.useCallback((guard) => {
++      applicantGuard.current = guard;
++    }, []);
+     const t = (key) => words[lang][key] || words[lang].unknown;
+     R.useEffect(() => {
+       document.documentElement.lang = lang;
+@@ -1013,7 +1026,8 @@
+           active = false;
+         };
+       let request;
+-      if (page === "notifications") request = api("/api/notifications/");
++      if (page === "appointments") request = Promise.resolve({});
++      else if (page === "notifications") request = api("/api/notifications/");
+       else if (page === "reports" && selection)
+         request = api(`/api/cases/${selection}/reports/`);
+       else if (["documents", "evidence"].includes(page) && selection)
+@@ -1074,12 +1088,16 @@
+         active = false;
+       };
+     }, [user?.id, user?.portal, page, selection, revision]);
+-    const go = (id, selected = null) => {
++    const go = (id, selected = null, guarded = false) => {
+       if (id === page && selected === selection) return;
+-      setData(null);
+-      setFailure(false);
+-      setPage(id);
+-      setSelection(selected);
++      const move = () => {
++        setData(null);
++        setFailure(false);
++        setPage(id);
++        setSelection(selected);
++      };
++      if (!guarded && applicantGuard.current) applicantGuard.current(move);
++      else move();
+     };
+     const savePreference = async (field, value) => {
+       if (!user) {
+@@ -1087,6 +1105,7 @@
+         return;
+       }
+       setSaving(true);
++      setPreferenceFailure(null);
+       try {
+         const updated = await api("/api/account/settings/", {
+           method: "POST",
+@@ -1095,8 +1114,7 @@
+         setUser((previous) => ({ ...previous, ...updated }));
+         if (field === "ui_language") setLang(value);
+       } catch (error) {
+-        if (error.status === 401) setUser(null);
+-        else setFailure(true);
++        setPreferenceFailure(error.status === 401 ? "expired" : "preferenceFailed");
+       } finally {
+         setSaving(false);
+       }
+@@ -1169,7 +1187,7 @@
+     const council = user.portal === "council";
+     const navItems = council
+       ? ["home", "sessions", "cases", "search", "archived", "statistics"]
+-      : ["home", "applications", "past"];
++      : ["home", "applications", "appointments", "past"];
+     const unavailable = new Set(["search", "statistics"]);
+     const caseContext =
+       ["case", "communications", "documents", "evidence", "reports"].includes(
+@@ -1329,11 +1347,25 @@
+           null,
+           text(`${t("payment")}: ${t(row.fee?.status || "unknown")}`),
+           h(P.Notice, null, t("fee")),
++          user.portal === "applicant" && window.CTMApplicant
++            ? h(P.Button, { onClick: () => go("application", row.id) },
++                lang === "ar" ? "فتح الطلب" : "Open application")
++            : null,
+         ),
+       );
+     function content() {
+       if (failure) return errorView();
+       if (!data) return text(t("loading"));
++      if (page === "communications" && !council && selection && window.CTMApplicantMessages)
++        return h(window.CTMApplicantMessages.Thread, { key: selection, caseId: selection, api, lang, onNavigationGuard: registerApplicantGuard });
++      if (page === "appointments" && !council && window.CTMApplicantAppointments)
++        return h(window.CTMApplicantAppointments.Appointments, { api, lang });
++      if (page === "application" && !council && selection && window.CTMApplicant)
++        return h(window.CTMApplicant.ApplicationEditor, {
++          key: selection, applicationId: selection, api, lang,
++          onBack: () => go("applications", null, true),
++          onNavigationGuard: registerApplicantGuard,
++        });
+       if (page === "notifications")
+         return h(NotificationInbox, {
+           key: revision,
+@@ -1437,6 +1469,13 @@
+           ),
+           heading(data.number),
+           text(`${t("status")}: ${t(data.status)}`),
++          !council && window.CTMApplicantAppeals?.hasAppealContext(data)
++            ? h(window.CTMApplicantAppeals.StartAppeal, {caseId:selection,api,lang,
++                onOpen:(id)=>go("application",id)}) : null,
++          !council && window.CTMApplicantDecrees
++            ? h(window.CTMApplicantDecrees.ReleasedDecrees, {key:selection,caseId:selection,api,lang}) : null,
++          !council && window.CTMApplicantRequests
++            ? h(window.CTMApplicantRequests.Requests, {key:selection,caseId:selection,api,lang,onNavigationGuard:registerApplicantGuard}) : null,
+           h(
+             P.Panel,
+             { title: t("parties") },
+@@ -1513,6 +1552,9 @@
+           P.Stack,
+           null,
+           heading(t(page)),
++          !council && window.CTMApplicant ? h(window.CTMApplicant.StartApplication, {
++            api, lang, onOpen: (id) => go("application", id),
++          }) : null,
+           ...data.items.map(applicationCard),
+         );
+       if (page === "home" && !council) {
+@@ -1556,7 +1598,10 @@
+     return h(
+       P.AppShell,
+       { header, sideNav: nav, page: "workspace", strings: { skip: t("skip") } },
+-      h(P.PageContent, null, content()),
++      h(P.PageContent, null, h(P.Stack, null,
++        preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
++        content(),
++      )),
+     );
+   }
+   window.ReactDOM.createRoot(root).render(h(P.ThemeProvider, null, h(App)));

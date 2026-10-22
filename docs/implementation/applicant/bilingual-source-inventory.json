@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "scope": "Reference question seed inventory, not bound applicant form completeness",
+  "source": "docs/architecture/build-spec/accepted-question-seed.json",
+  "question_count": 59,
+  "english_wording_count": 59,
+  "arabic_wording_count": 0,
+  "institutional_approval_for_applicant_use": "not_verified",
+  "published_applicant_forms_verified": false,
+  "findings": [
+    {
+      "path": "/questions/0/wording_ar",
+      "code": "OPEN-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/1/wording_ar",
+      "code": "BASIS-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/2/wording_ar",
+      "code": "BKG-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/3/wording_ar",
+      "code": "BKG-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/4/wording_ar",
+      "code": "DEC-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/5/wording_ar",
+      "code": "DEC-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/6/wording_ar",
+      "code": "DEC-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/7/wording_ar",
+      "code": "DEC-04",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/8/wording_ar",
+      "code": "PRS-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/9/wording_ar",
+      "code": "PRS-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/10/wording_ar",
+      "code": "PRS-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/11/wording_ar",
+      "code": "PRS-04",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/12/wording_ar",
+      "code": "DBT-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/13/wording_ar",
+      "code": "DBT-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/14/wording_ar",
+      "code": "DBT-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/15/wording_ar",
+      "code": "CON-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/16/wording_ar",
+      "code": "CON-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/17/wording_ar",
+      "code": "CON-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/18/wording_ar",
+      "code": "CON-04",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/19/wording_ar",
+      "code": "CON-05",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/20/wording_ar",
+      "code": "WED-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/21/wording_ar",
+      "code": "WED-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/22/wording_ar",
+      "code": "WED-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/23/wording_ar",
+      "code": "INT-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/24/wording_ar",
+      "code": "INT-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/25/wording_ar",
+      "code": "TIM-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/26/wording_ar",
+      "code": "TIM-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/27/wording_ar",
+      "code": "INF-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/28/wording_ar",
+      "code": "INF-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/29/wording_ar",
+      "code": "INF-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/30/wording_ar",
+      "code": "INF-04",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/31/wording_ar",
+      "code": "ABU-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/32/wording_ar",
+      "code": "ABU-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/33/wording_ar",
+      "code": "ABU-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/34/wording_ar",
+      "code": "ABU-04",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/35/wording_ar",
+      "code": "ADD-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/36/wording_ar",
+      "code": "ADD-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/37/wording_ar",
+      "code": "ADD-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/38/wording_ar",
+      "code": "ADD-04",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/39/wording_ar",
+      "code": "FTH-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/40/wording_ar",
+      "code": "FTH-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/41/wording_ar",
+      "code": "FTH-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/42/wording_ar",
+      "code": "FTH-04",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/43/wording_ar",
+      "code": "MON-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/44/wording_ar",
+      "code": "SEP-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/45/wording_ar",
+      "code": "ABD-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/46/wording_ar",
+      "code": "ABD-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/47/wording_ar",
+      "code": "ABD-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/48/wording_ar",
+      "code": "REC-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/49/wording_ar",
+      "code": "MED-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/50/wording_ar",
+      "code": "MED-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/51/wording_ar",
+      "code": "MED-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/52/wording_ar",
+      "code": "CHD-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/53/wording_ar",
+      "code": "INT-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/54/wording_ar",
+      "code": "MON-01",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/55/wording_ar",
+      "code": "CHD-02",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/56/wording_ar",
+      "code": "CHD-03",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/57/wording_ar",
+      "code": "CHD-04",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    },
+    {
+      "path": "/questions/58/wording_ar",
+      "code": "CHD-05",
+      "finding": "No Arabic wording in this reference snapshot; obtain approved bound wording before bilingual publication."
+    }
+  ]
+}

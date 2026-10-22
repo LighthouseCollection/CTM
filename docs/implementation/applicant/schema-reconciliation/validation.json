@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-21",
+  "backend_sha": "d724ba56b8bd5cf501d55fbbca416470108f963a",
+  "applicant_source_sha": "72ee829eb1eabc436c19a084f81235b6a029528c",
+  "frontend_tests_passed": 75,
+  "new_reconciliation_js_tests_passed": 7,
+  "selected_ref_drift_regression_passed": 1,
+  "contract_field_locations_verified": 839,
+  "backend_candidate_locations_verified": 226,
+  "csv_field_rows_verified": 839,
+  "catalog_partition_verified": 151,
+  "finding_batches": 10,
+  "source_hashes_verified": true,
+  "deterministic_rebuild_verified": true,
+  "independent_review": "provenance finding reproduced and fixed; no remaining concrete findings",
+  "runtime_suite_rerun": false,
+  "runtime_behavior_changed": false,
+  "schema_or_backend_changed": false
+}

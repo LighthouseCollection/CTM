@@ -1,0 +1,458 @@
+[
+  {
+    "id": "AS01",
+    "batch": "identity",
+    "priority": "P1",
+    "classification": "reconciliation_required",
+    "title": "Separate identity, marriage and ownership records",
+    "evidence": "Current Person/Account/Case/Party adapters consolidate identity, marriage matching and issued references. The contract requires separate versioned identity, applicant, marriage and reference relations; person ownership on applications is not a direct adapter column. This is not a finding that current own API privacy is broken.",
+    "contract_targets": [
+      {
+        "table": "applications",
+        "column": "owner_person_id"
+      },
+      {
+        "table": "person_identity_versions",
+        "column": "person_id"
+      },
+      {
+        "table": "marriages",
+        "column": "id"
+      },
+      {
+        "table": "applicant_references",
+        "column": "issued_components"
+      }
+    ],
+    "implementation_targets": [
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class Person\\(Root\\):",
+        "target": "Person"
+      },
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class Account\\(",
+        "target": "Account"
+      }
+    ],
+    "next_action": "Backend/governance: map stable person/account/applicant ownership, canonical aliases and immutable reference history before accepting full schema parity. Review allauth/session tables separately."
+  },
+  {
+    "id": "AS02",
+    "batch": "forms",
+    "priority": "P1",
+    "classification": "content_and_schema_dependency",
+    "title": "Published questionnaire and declaration provenance",
+    "evidence": "QuestionnaireVersion combines questionnaire definition and bilingual declaration text. Separate questionnaire/declaration version identities, digests and publication provenance are not direct mapped columns. The reference seed inventory is not a complete approved bilingual applicant form.",
+    "contract_targets": [
+      {
+        "table": "questionnaire_versions",
+        "column": "digest"
+      },
+      {
+        "table": "declaration_versions",
+        "column": "text_ar"
+      },
+      {
+        "table": "ground_definitions",
+        "column": "label_ar"
+      }
+    ],
+    "implementation_targets": [
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class QuestionnaireVersion\\(",
+        "target": "QuestionnaireVersion"
+      },
+      {
+        "owner": "applicant",
+        "file": "scripts/audit_applicant_forms.cjs",
+        "pattern": "^function audit\\(",
+        "target": "Technical content audit"
+      }
+    ],
+    "next_action": "Institution supplies approved bilingual definitions; backend maps immutable declaration identity/digest/publication. Run technical form audit on exact bound production candidates; never synthesize approval from test wording."
+  },
+  {
+    "id": "AS03",
+    "batch": "drafts",
+    "priority": "P1",
+    "classification": "reconciliation_required",
+    "title": "Typed assertions and stable repeat-entry relations",
+    "evidence": "The adapter retains immutable AnswerRevision.answers JSON and client repeat UUIDs. Thirteen draft-related contract tables include typed person/marriage/separation assertions, repeat entries, answers and attributed changes. JSON presence does not prove field coverage, normalized relations or backend nested-repeat validation.",
+    "contract_targets": [
+      {
+        "table": "application_revisions",
+        "column": "digest"
+      },
+      {
+        "table": "application_person_assertions",
+        "column": "revision_id"
+      },
+      {
+        "table": "application_children",
+        "column": "entry_id"
+      },
+      {
+        "table": "application_restraining_orders",
+        "column": "entry_id"
+      },
+      {
+        "table": "application_answer_changes",
+        "column": "question_code"
+      }
+    ],
+    "implementation_targets": [
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class AnswerRevision\\(",
+        "target": "AnswerRevision"
+      },
+      {
+        "owner": "applicant",
+        "file": "static/ctm/applicant.js",
+        "pattern": "function createDraftSession",
+        "target": "Draft session"
+      }
+    ],
+    "next_action": "Backend owns typed schema/repeat validation and migration mapping. Reconcile every accepted question and repeat path to its assertion/entry relation, preserving source versions and unknown draft fields."
+  },
+  {
+    "id": "AS04",
+    "batch": "files",
+    "priority": "P1",
+    "classification": "reconciliation_required",
+    "title": "Context, manifest and derivative relations",
+    "evidence": "Attachment.context and Submission.manifest provide tested adapter behavior. Separate contextual links, relational submission manifest, derivative and access-event structures are not established by the mapped columns. Existing clean-byte and retained-link tests remain valid within their recorded scope.",
+    "contract_targets": [
+      {
+        "table": "files",
+        "column": "owner_party_id"
+      },
+      {
+        "table": "file_context_links",
+        "column": "repeat_entry_id"
+      },
+      {
+        "table": "submission_file_manifest",
+        "column": "file_version_id"
+      },
+      {
+        "table": "file_derivatives",
+        "column": "source_version_id"
+      },
+      {
+        "table": "file_access_events",
+        "column": "correlation_id"
+      }
+    ],
+    "implementation_targets": [
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class Attachment\\(",
+        "target": "Attachment"
+      },
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class Submission\\(",
+        "target": "Submission"
+      }
+    ],
+    "next_action": "Map exact source/version/context/repeat relations and derivative/access retention under backend ownership; preserve current scan gates and private bytes. Independently accept physical storage cleanup and live antivirus."
+  },
+  {
+    "id": "AS05",
+    "batch": "filing",
+    "priority": "P1",
+    "classification": "reconciliation_required",
+    "title": "Filing candidate and submission provenance",
+    "evidence": "CheckoutIntent is a candidate for filing_candidates while also serving as the payment-attempt adapter. Submission retains revision, manifest, attestation and idempotency key, but the contract candidate/declaration/signature/previous-submission links and standalone withdrawal events are not direct mapped columns.",
+    "contract_targets": [
+      {
+        "table": "filing_candidates",
+        "column": "idempotency_key"
+      },
+      {
+        "table": "application_submissions",
+        "column": "candidate_id"
+      },
+      {
+        "table": "application_submissions",
+        "column": "declaration_version_id"
+      },
+      {
+        "table": "application_submissions",
+        "column": "signature_file_version_id"
+      },
+      {
+        "table": "party_withdrawals",
+        "column": "on_behalf"
+      }
+    ],
+    "implementation_targets": [
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class CheckoutIntent\\(",
+        "target": "CheckoutIntent"
+      },
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class Submission\\(",
+        "target": "Submission"
+      },
+      {
+        "owner": "applicant",
+        "file": "static/ctm/applicant-lifecycle.js",
+        "pattern": "function createActionSession",
+        "target": "Own lifecycle actions"
+      }
+    ],
+    "next_action": "Backend/governance reconcile candidate and receipt identities, immutable signing evidence and withdrawal audit relations. Keep completed version checks and single-attempt UI; do not re-enable actions from status alone."
+  },
+  {
+    "id": "AS06",
+    "batch": "payments",
+    "priority": "P1",
+    "classification": "reconciliation_required",
+    "title": "Separate payment attempts, allocations and refunds",
+    "evidence": "FeeObligation, CheckoutIntent and PaymentEvent retain adapter financial history. Explicit obligation/candidate/attempt/submission allocation and independently attributed waiver/refund rows are not fully mapped. Current retained checkout recovery tests use controlled provider output, not a charge or callback acceptance.",
+    "contract_targets": [
+      {
+        "table": "payment_attempts",
+        "column": "obligation_id"
+      },
+      {
+        "table": "payment_attempts",
+        "column": "candidate_id"
+      },
+      {
+        "table": "payment_allocations",
+        "column": "submission_id"
+      },
+      {
+        "table": "fee_waivers",
+        "column": "reason"
+      },
+      {
+        "table": "refund_events",
+        "column": "provider_refund_id"
+      }
+    ],
+    "implementation_targets": [
+      {
+        "owner": "backend",
+        "file": "tribunal/services/payments.py",
+        "pattern": "^def own_pending_checkout\\(",
+        "target": "Retained checkout projection"
+      },
+      {
+        "owner": "backend",
+        "file": "tribunal/services/payments.py",
+        "pattern": "^def create_checkout\\(",
+        "target": "Checkout adapter"
+      },
+      {
+        "owner": "applicant",
+        "file": "static/ctm/applicant-recovery.js",
+        "pattern": "function resumeURL",
+        "target": "Resume validation"
+      }
+    ],
+    "next_action": "Resolve shared CheckoutIntent mapping before migration; reconcile allocation and verified refund provenance. Separately test provider login/payment callbacks and PostgreSQL races, keeping unresolved holds authoritative."
+  },
+  {
+    "id": "AS07",
+    "batch": "appointments",
+    "priority": "P2",
+    "classification": "reconciliation_required",
+    "title": "Invitation responses reference a version by number",
+    "evidence": "TestimonyAppointmentVersion is a named table candidate. AppointmentResponse stores appointment_id plus integer version, while the contract response references appointment_version_id and party_id. Actual invitation version/stale-response tests pass; exact relational FK/provenance parity remains unverified.",
+    "contract_targets": [
+      {
+        "table": "testimony_invitation_responses",
+        "column": "appointment_version_id"
+      },
+      {
+        "table": "testimony_invitation_responses",
+        "column": "party_id"
+      },
+      {
+        "table": "testimony_appointments",
+        "column": "created_by_id"
+      }
+    ],
+    "implementation_targets": [
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class AppointmentResponse\\(",
+        "target": "AppointmentResponse"
+      },
+      {
+        "owner": "applicant",
+        "file": "static/ctm/applicant-appointments.js",
+        "pattern": "function createResponseSession",
+        "target": "Invitation response session"
+      }
+    ],
+    "next_action": "Backend maps composite adapter version identity to immutable version-row FK and party provenance. Preserve narrow own response projection and independently accept PostgreSQL invitation policies/delivery."
+  },
+  {
+    "id": "AS08",
+    "batch": "requests",
+    "priority": "P1",
+    "classification": "reconciliation_required",
+    "title": "Clinical release and report schema remain consolidated",
+    "evidence": "ReportRequest.questions, ReportRevision.answers and MedicalRelease.scope implement tested bound own responses and strict disclosure scope. Separate sent-question, evaluation request, release attestation/scope/report/disclosure entities remain adapter/storage candidates. Exact institutional declaration approval is still external to schema or synthetic tests.",
+    "contract_targets": [
+      {
+        "table": "sent_intake_question_snapshots",
+        "column": "source_question_version_id"
+      },
+      {
+        "table": "evaluation_release_attestations",
+        "column": "exact_text"
+      },
+      {
+        "table": "evaluation_release_scopes",
+        "column": "attestation_id"
+      },
+      {
+        "table": "evaluation_reports",
+        "column": "authorization_state"
+      },
+      {
+        "table": "evaluation_disclosures",
+        "column": "release_scope_id"
+      }
+    ],
+    "implementation_targets": [
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class MedicalRelease\\(",
+        "target": "MedicalRelease"
+      },
+      {
+        "owner": "backend",
+        "file": "tribunal/services/request_contracts.py",
+        "pattern": "^def own_request_data\\(",
+        "target": "Own request contract"
+      },
+      {
+        "owner": "applicant",
+        "file": "static/ctm/applicant-assessments.js",
+        "pattern": "function createConsentSession",
+        "target": "Explicit consent session"
+      }
+    ],
+    "next_action": "Map retained declaration/version/file/person/purpose/recipient provenance to clinical contract entities; obtain institutional wording approval. Preserve exact consent matching, own privacy and current closure/replay safeguards."
+  },
+  {
+    "id": "AS09",
+    "batch": "appeals",
+    "priority": "P1",
+    "classification": "blocked_frontend_integration",
+    "title": "Own supplement history and capability are absent",
+    "evidence": "Actual owner-only supplement POST is verified, but current own application detail does not project supplements or can_supplement. Applicant Supplements requires both, so it intentionally remains unavailable against this backend. The append endpoint has no idempotency key; blind retry could duplicate an addition. Separate appeal root/claim/disposition links also need schema mapping.",
+    "contract_targets": [
+      {
+        "table": "appeal_supplements",
+        "column": "appeal_id"
+      },
+      {
+        "table": "appeal_supplements",
+        "column": "request_id"
+      },
+      {
+        "table": "appeal_applications",
+        "column": "challenged_decree_id"
+      },
+      {
+        "table": "pending_appeal_claims",
+        "column": "person_id"
+      }
+    ],
+    "implementation_targets": [
+      {
+        "owner": "backend",
+        "file": "tribunal/api.py",
+        "pattern": "^def application_data\\(",
+        "target": "Own application projection"
+      },
+      {
+        "owner": "backend",
+        "file": "tribunal/services/decisions.py",
+        "pattern": "^def add_appeal_information\\(",
+        "target": "Supplement append"
+      },
+      {
+        "owner": "applicant",
+        "file": "static/ctm/applicant-supplements.js",
+        "pattern": "function validProjection",
+        "target": "Required own supplement projection"
+      }
+    ],
+    "next_action": "Backend supplies private own attributed supplement history and authoritative can_supplement plus interruption/recovery semantics. Applicant then integrates actual read/append/recovery; do not infer permission from submitted status or automatically retry."
+  },
+  {
+    "id": "AS10",
+    "batch": "decrees",
+    "priority": "P1",
+    "classification": "reconciliation_required",
+    "title": "Certificate, entitlement and issuance identities",
+    "evidence": "Decree stores decision/reference/language/signed original/signer/issued time; DecreeRelease stores decree/party/action. Own release and withdrawal byte tests pass. The contract separates certificate, issuance event, entitlement and release identities; those are not established by one decree model or a successful download.",
+    "contract_targets": [
+      {
+        "table": "decrees",
+        "column": "template_version_id"
+      },
+      {
+        "table": "decree_certificates",
+        "column": "signature_metadata"
+      },
+      {
+        "table": "decree_issuance_events",
+        "column": "approval_id"
+      },
+      {
+        "table": "decree_entitlements",
+        "column": "entitlement"
+      },
+      {
+        "table": "decree_release_events",
+        "column": "certificate_id"
+      }
+    ],
+    "implementation_targets": [
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class Decree\\(",
+        "target": "Decree"
+      },
+      {
+        "owner": "backend",
+        "file": "tribunal/models.py",
+        "pattern": "^class DecreeRelease\\(",
+        "target": "DecreeRelease"
+      },
+      {
+        "owner": "applicant",
+        "file": "static/ctm/applicant-decrees.js",
+        "pattern": "function",
+        "target": "Own released decree module"
+      }
+    ],
+    "next_action": "Backend/governance map exact template/certificate/approval/entitlement/release identities and retain previous decree access. Separately accept genuine signature/issuance and delivery; keep current applicant exact-file withdrawal behavior."
+  }
+]

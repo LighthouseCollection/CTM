@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-21",
+  "backend_sha": "db6dfa3493daa70520669ed14fd9a7331a5d385b",
+  "applicant_base": "cafb36f",
+  "scope": "local applicant messaging; isolated SQLite/synthetic sessions",
+  "batches": [
+    {
+      "number": 1,
+      "task": "Own thread",
+      "result": "Exact case and one self-party binding, explicit send capability, private routing.",
+      "verification": "unit and real API"
+    },
+    {
+      "number": 2,
+      "task": "Paginated history",
+      "result": "Bounded50-row pages and explicit continuation; no repeated/private malformed projections.",
+      "verification": "unit, fixtures and real API"
+    },
+    {
+      "number": 3,
+      "task": "Reviewed send",
+      "result": "Escaped message review; own portal/immediate recipient only.",
+      "verification": "fixtures and real API"
+    },
+    {
+      "number": 4,
+      "task": "Frozen replay identity",
+      "result": "One stable key freezes text, recipient, channel, timing/session and empty attachment list.",
+      "verification": "unit and real API"
+    },
+    {
+      "number": 5,
+      "task": "Lost acknowledgement",
+      "result": "A real committed send with lost HTTP acknowledgement recovers from later own history page.",
+      "verification": "real API"
+    },
+    {
+      "number": 6,
+      "task": "Exact retry",
+      "result": "Explicit unchanged retry; exact backend replay creates no extra message/alert/job; changed reuse rejects.",
+      "verification": "unit, fixtures and real API"
+    },
+    {
+      "number": 7,
+      "task": "Read receipts",
+      "result": "Explicit own-copy acknowledgement, original timestamp retained; sender/other party denied.",
+      "verification": "unit, fixtures and real API"
+    },
+    {
+      "number": 8,
+      "task": "Interruption guards",
+      "result": "Dirty/unload/navigation protection; pending discard blocks during delayed send; denied refresh retains local intent.",
+      "verification": "browser fixtures and actual shell"
+    },
+    {
+      "number": 9,
+      "task": "EN/AR privacy",
+      "result": "Arabic390px, escaped content/no styles/overflow; all seeded private IDs excluded from spouse-visible pages.",
+      "verification": "fixtures and real API"
+    },
+    {
+      "number": 10,
+      "task": "Integration evidence",
+      "result": "Applicant-only shared shell proposal, independent review and consolidated result/queue.",
+      "verification": "source and checks"
+    }
+  ],
+  "checks": {
+    "frontend_tests": 83,
+    "real_api_browser_groups": 66,
+    "message_interruption_groups": 8,
+    "shell_groups": 9
+  },
+  "remaining": [
+    "Complete approved bilingual content and backend repeat validation",
+    "Owner-managed approved schema reconciliation/migrations",
+    "Serial governance integration",
+    "PostgreSQL/RLS/concurrency and live-service/issuance acceptance"
+  ],
+  "limits": [
+    "Portal acknowledgement is not email delivery evidence",
+    "No attachment composer or fabricated message-to-file byte grant",
+    "No council/shared source/backend/protected schema edits",
+    "No live payment/mail/antivirus/institutional wording acceptance"
+  ]
+}
