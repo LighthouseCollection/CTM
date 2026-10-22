@@ -610,3 +610,15 @@ def test_admin_only_account_cannot_be_a_council_voter(filed, people):
     recorded = cast_vote(people["admin"], decision.pk, "approve", people["member"].pk)
     assert recorded.member_id == people["member"].pk
     assert recorded.actor_id == people["admin"].pk
+
+
+def test_session_date_can_be_corrected_after_a_held_hearing(hearing, people):
+    session = hearing.agenda.session
+    updated = update_session(
+        people["secretary"], session.pk, date(2030, 1, 9),
+        starts_at=datetime(2030, 1, 9, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
+        presiding_member=people["president"], location="Corrected hearing location",
+    )
+    assert updated.date == date(2030, 1, 9)
+    hearing.refresh_from_db()
+    assert hearing.agenda.session_id == updated.pk

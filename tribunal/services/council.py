@@ -214,8 +214,6 @@ def update_session(actor, session_id, session_date, *, starts_at=None, presiding
     location = str(location or "").strip()
     if not location or len(location) > 300:
         raise ValidationError("Session location is required and must be at most 300 characters.")
-    if session.date != session_date and Hearing.objects.filter(agenda__session=session).exists():
-        raise ValidationError("A session with a held hearing keeps its original date.")
     session.date = session_date
     session.starts_at = starts_at
     session.presiding_member = presiding_member
