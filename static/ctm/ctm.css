@@ -99,6 +99,12 @@
   min-block-size: 2.5rem;
 }
 
+/* The CDN inserts a generic type marker before every column title. It is not
+   semantic in a case agenda, so retain the real title and hide only that marker. */
+.ctm-session-agenda-grid .plx-data-grid__title > span:first-child:not(:last-child) {
+  display: none;
+}
+
 @media (max-width: 820px) {
   .ctm-case-edit-grid { grid-template-columns: 1fr; }
 }
