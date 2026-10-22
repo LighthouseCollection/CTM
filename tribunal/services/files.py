@@ -33,6 +33,7 @@ def validate_category(category, mime):
     allowed = {
         "PHOTO": images,
         "SPOUSE_PHOTO": images,
+        "CASE_PHOTO": images,
         "MC": documents,
         "CMC": documents,
         "CDD": documents,

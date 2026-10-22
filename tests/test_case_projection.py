@@ -1,4 +1,5 @@
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from tribunal.models import Attachment, FileTechnicalEvent, FileVersion, Party
 from tribunal.services.applications import submit_application
 from tribunal.services.council import assign_case, save_finding
@@ -212,3 +213,28 @@ def test_council_case_detail_exposes_versioned_council_card_edits_only_to_counci
     assert council["council_edits"]["marriage"]["source"]["kind"] == "council_record"
     login(app.owner)
     assert "council_edits" not in client.get(f"/api/cases/{app.case_id}/").json()
+
+
+def test_council_case_detail_prefers_the_latest_council_photo_for_each_party(
+    client, ready_application, people
+):
+    app = ready_application
+    submit_application(
+        app.owner, app.pk, "council-photo", {"accepted": True, "name": "John Smith"}
+    )
+    app.refresh_from_db()
+    client.force_login(people["secretary"], backend="allauth.account.auth_backends.AuthenticationBackend")
+    uploaded = client.post(
+        "/api/files/",
+        {
+            "case_id": str(app.case_id),
+            "category": "CASE_PHOTO",
+            "context": str(app.party_id),
+            "visibility": "council",
+            "file": SimpleUploadedFile("council-photo.png", b"\x89PNG\r\n\x1a\nsynthetic", content_type="image/png"),
+        },
+    )
+    assert uploaded.status_code == 201, uploaded.content
+    detail = client.get(f"/api/cases/{app.case_id}/").json()
+    party = next(row for row in detail["parties"] if row["id"] == str(app.party_id))
+    assert party["photo_url"] == f"/api/files/{uploaded.json()['id']}/?view=1"

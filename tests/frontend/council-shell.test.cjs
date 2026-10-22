@@ -593,3 +593,12 @@ test("neutral table pill treatment does not override CDN gender categories", () 
   assert.match(css, /\.plx-data-grid \.plx-data-pill:not\(\[data-plx-category\]\),\s*\.plx-data-grid \.plx-data-pill\[data-plx-category="grey"\]/);
   assert.doesNotMatch(css, /\.plx-data-grid \.plx-data-pill\s*\{\s*background-color/);
 });
+
+test("council spouse cards offer authorized profile-photo uploads", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(councilCase, /function SpousePhotoUpload\(/);
+  assert.match(councilCase, /form\.append\("category", "CASE_PHOTO"\)/);
+  assert.match(councilCase, /form\.append\("context", party\.id\)/);
+  assert.match(councilCase, /form\.append\("case_id", record\.id\)/);
+  assert.match(councilCase, /h\(SpousePhotoUpload, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
+});

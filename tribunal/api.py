@@ -701,6 +701,21 @@ def _application_photo_url(application, category):
     return f"/api/files/{photo.pk}/?view=1" if photo else None
 
 
+def _council_party_photo_url(case, party):
+    """Return the latest approved council-only portrait for one case party."""
+    attachment = (
+        case.attachment_set.filter(
+            category="CASE_PHOTO", context=str(party.pk), visibility="council"
+        )
+        .order_by("-created_at", "-id")
+        .first()
+    )
+    if not attachment:
+        return None
+    photo = attachment.versions.filter(scan_state="clean").order_by("-number").first()
+    return f"/api/files/{photo.pk}/?view=1" if photo else None
+
+
 def _submitted_answers(application):
     if not application:
         return {}
@@ -731,7 +746,8 @@ def _council_party_profiles(case, parties):
         profile_application = direct or source
         result[party.pk] = {
             "profile": _submitted_party_profile(answers, prefix),
-            "photo_url": _application_photo_url(profile_application, photo_category),
+            "photo_url": _council_party_photo_url(case, party)
+            or _application_photo_url(profile_application, photo_category),
             "profile_source": _applicant_submission_source(profile_application),
         }
     return result
