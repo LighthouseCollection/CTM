@@ -23,17 +23,19 @@ def granted_roles():
     editor=connection.schema_editor(atomic=False)
     import_module('tribunal.migrations.0038_runtime_grants').grant_runtime(apps,editor)
     @contextmanager
-    def enter(role,actor=None):
+    def enter(role,actor=None,*,session=False):
         with transaction.atomic():
             with connection.cursor() as cursor:
-                cursor.execute(f'SET LOCAL ROLE {role}')
+                cursor.execute(f'SET SESSION AUTHORIZATION {role}' if session else f'SET LOCAL ROLE {role}')
+                if session:
+                    cursor.execute("SET LOCAL statement_timeout='5s'")
             try:
                 with database_actor(actor):
                     yield
             finally:
                 if not connection.needs_rollback:
                     with connection.cursor() as cursor:
-                        cursor.execute('RESET ROLE')
+                        cursor.execute('RESET SESSION AUTHORIZATION' if session else 'RESET ROLE')
     return enter
 
 
@@ -178,3 +180,128 @@ def test_new_case_cannot_rebind_eligible_filing_identity(granted_roles,ready_app
             with database_settings({'ctm.core_operation':'filing','ctm.core_target':str(ready_application.pk)}):
                 Case.objects.create(number='20261021-01',**identity)
     assert not Case.objects.exists()
+
+
+@pytest.mark.parametrize('actor_key',['applicant','member','admin'])
+def test_actual_session_user_http_identity_is_bounded(granted_roles,people,client,actor_key):
+    actor=people[actor_key]
+    client.force_login(actor)
+    with granted_roles('ctm_app',session=True):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT current_user,session_user,rolsuper,rolbypassrls,rolinherit FROM pg_roles WHERE rolname=current_user")
+            assert cursor.fetchone()==('ctm_app','ctm_app',False,False,False)
+            cursor.execute("SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relname LIKE 'tribunal_%' AND pg_has_role(current_user,relowner,'MEMBER')")
+            assert cursor.fetchone()==(0,)
+        for _ in range(3):
+            response=client.get('/api/session/')
+            assert response.status_code==200, response.content
+            assert response.json()['id']==str(actor.pk)
+
+
+def test_actual_session_user_draft_save_and_private_history(granted_roles,ready_application,people,client):
+    import json, uuid
+    app=ready_application
+    answers={**app.revisions.get(number=app.current_version).answers,'statement':'Saved with actual session identity'}
+    client.force_login(app.owner)
+    with granted_roles('ctm_app',session=True):
+        response=client.post(f'/api/applications/{app.pk}/',json.dumps({'answers':answers,'expected_version':app.current_version}),content_type='application/json')
+        assert response.status_code==201, response.content
+        history=client.get(f'/api/applications/{app.pk}/history/')
+        assert history.status_code==200, history.content
+        assert history.json()['items'][-1]['answers']['statement']==answers['statement']
+        assert client.get('/api/system/audit/').status_code==403
+    outsider=Account.objects.create_user(email='session-outsider@example.test',email_verified=True)
+    for actor in [outsider,people['member'],people['admin']]:
+        client.force_login(actor)
+        with granted_roles('ctm_app',session=True):
+            hidden=client.get(f'/api/applications/{app.pk}/history/')
+            absent=client.get(f'/api/applications/{uuid.uuid4()}/history/')
+            assert hidden.status_code==absent.status_code==404
+            assert hidden.content==absent.content
+
+
+def test_case_pagination_recovers_all_rows_with_stable_ties(granted_roles,people,client):
+    from django.utils import timezone
+    stamp=timezone.now()
+    Case.objects.bulk_create([Case(number=f'page-{i}',created_at=stamp) for i in range(103)])
+    expected=[str(row.pk) for row in Case.objects.order_by('-created_at','-id')]
+    client.force_login(people['admin'])
+    with granted_roles('ctm_app',session=True):
+        first=client.get('/api/cases/').json()
+        assert len(first['items'])==100 and first['next_offset']==100
+        last=client.get('/api/cases/?offset=100').json()
+        assert len(last['items'])==3 and last['next_offset'] is None
+        assert [x['id'] for x in first['items']+last['items']]==expected
+        assert client.get('/api/cases/?offset=103').json()['items']==[]
+
+
+def test_case_page_continuation_does_not_count_foreign_cases(granted_roles,ready_application,client):
+    app=ready_application
+    submit_application(app.owner,app.pk,'page-own-case',{'accepted':True,'name':'John Smith'})
+    app.refresh_from_db()
+    Case.objects.bulk_create([Case(number=f'foreign-page-{i}') for i in range(5)])
+    client.force_login(app.owner)
+    with granted_roles('ctm_app',session=True):
+        page=client.get('/api/cases/?limit=1').json()
+        assert [x['id'] for x in page['items']]==[str(app.case_id)]
+        assert page['next_offset'] is None
+
+
+@pytest.mark.parametrize('query',['offset=-1','offset=1.5','offset=abc','limit=0','limit=251','offset=0&offset=1','limit=1&limit=2','offset=9223372036854775808'])
+def test_pagination_rejects_invalid_parameters(granted_roles,people,client,query):
+    client.force_login(people['admin'])
+    with granted_roles('ctm_app',session=True):
+        for url in ['/api/cases/','/api/system/audit/']:
+            response=client.get(url+'?'+query)
+            assert response.status_code==422, response.content
+
+
+@pytest.mark.parametrize('endpoint',['case','system'])
+def test_audit_pagination_recovers_beyond_old_cap(granted_roles,people,client,endpoint):
+    from django.utils import timezone
+    from tribunal.models import AuditEvent
+    case=Case.objects.create(number='audit-pages')
+    stamp=timezone.now()
+    events=AuditEvent.objects.bulk_create([AuditEvent(case=case,actor=people['admin'],action='fixture_action',source='pagination.fixture',created_at=stamp) for _ in range(253)])
+    expected=[str(row.pk) for row in sorted(events,key=lambda row:row.pk,reverse=True)]
+    url=f'/api/cases/{case.pk}/audit/' if endpoint=='case' else '/api/system/audit/'
+    client.force_login(people['admin'])
+    with granted_roles('ctm_app',session=True):
+        first=client.get(url).json()
+        assert len(first['items'])==250 and first['next_offset']==250
+        last=client.get(url+'?offset=250').json()
+        assert len(last['items'])==3 and last['next_offset'] is None
+        assert [x['id'] for x in first['items']+last['items']]==expected
+
+
+@pytest.mark.parametrize('endpoint',['case','system'])
+def test_audit_privacy_precedes_visible_offset(granted_roles,ready_application,people,client,endpoint):
+    from django.utils import timezone
+    from tribunal.models import AuditEvent
+    from tribunal.services.applications import review_application,save_answers
+    from tribunal.services.filing_privacy import audit_visible
+    app=ready_application
+    submission=submit_application(app.owner,app.pk,'privacy-page',{'accepted':True,'name':'John Smith'})
+    review_application(people['admin'],app.pk,'reject','Please correct the statement')
+    app.refresh_from_db()
+    revision=save_answers(app.owner,app.pk,{**app.revisions.get(number=app.current_version).answers,'statement':'Private correction'},app.current_version)
+    AuditEvent.objects.bulk_create([AuditEvent(case=app.case,actor=app.owner,action='answers_saved',source='tribunal.answerrevision',source_id=revision.pk,created_at=timezone.now()+timezone.timedelta(minutes=1)) for _ in range(10)])
+    AuditEvent.objects.bulk_create([AuditEvent(case=app.case,actor=people['admin'],action='visible_fixture',source='pagination.fixture') for _ in range(3)])
+    qs=AuditEvent.objects.filter(case=app.case) if endpoint=='case' else AuditEvent.objects.all()
+    expected=[str(row.pk) for row in qs.order_by('-created_at','-id') if audit_visible(row)]
+    assert len(expected)>2
+    url=f'/api/cases/{app.case_id}/audit/' if endpoint=='case' else '/api/system/audit/'
+    client.force_login(people['admin'])
+    actual=[]
+    with granted_roles('ctm_app',session=True):
+        offset=0
+        for _ in range(len(expected)+1):
+            response=client.get(url+f'?limit=2&offset={offset}')
+            assert response.status_code==200,response.content
+            page=response.json()
+            actual.extend(row['id'] for row in page['items'])
+            offset=page['next_offset']
+            if offset is None:break
+        else:
+            pytest.fail('Continuation did not terminate')
+    assert actual==expected

@@ -5,7 +5,7 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **599 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+Validation: **617 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
 reapply through0039. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
@@ -28,7 +28,21 @@ category reconciliation, plus new-case identity snapshot binding in0039. Details
 compatibility and remaining content dependencies:
 [applicant-validation-checkpoint.md](applicant-validation-checkpoint.md).
 
+## Runtime identity and UI pagination continuation
+
+Bounded actual SQL session-identity HTTP regressions, hidden/absent404 contract,
+and authorized continuation for cases and case/system audit are implemented.
+[Runtime investigation, pagination and limitations](runtime-pagination-continuation.md).
+The applicant's external account-query stall was not reproduced by these tests and
+remains unresolved; no shared engine/container operation was performed.
+
 ## Unfinished
+
+UI's other requested backend contracts remain unfinished: approved own-profile/
+contact/portrait mutations, verified email/provider/session administration, member
+contact/appointment/history projections, formal-source factual discrepancy views,
+and per-family settings edit schemas. Pagination is addressed in this continuation;
+those separate contracts are not claimed complete or all blocked by credentials.
 
 Full approved-schema implementation is not complete. Required identity/version,
 account/institution history, typed family facts, source/citation and association
@@ -52,6 +66,8 @@ completes the requested reconciliation/documentation, not those future migration
 ## Awaiting acceptance
 
 - Governance reviews and serially integrates this PR's exact delivered SHA.
+- UI binds list continuation; applicant independently reruns the actual physical-login
+  browser journey and preserves its previous403/404 and stall findings.
 - Independent non-owner/integration/browser acceptance against that successor SHA;
   QA issue #15 preserves existing findings and follows council's unsaved-text fix.
 - Institution accepts schema equivalence, operational readiness and live-service

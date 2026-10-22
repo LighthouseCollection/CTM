@@ -450,26 +450,17 @@ def retry_payment(request, intent_id):
 
 @endpoint()
 def cases(request):
+    from tribunal.pagination import page_records
     qs = m.Case.objects.all()
     if request.user.role == "applicant":
         qs = qs.filter(parties__account=request.user).distinct()
-    return JsonResponse(
-        {
-            "items": [
-                encoded(
-                    c,
-                    number=c.number,
-                    status=c.status,
-                    assigned_member=f"{c.assigned_member.first_name} {c.assigned_member.last_name}".strip()
-                    if c.assigned_member
-                    else None,
-                )
-                for c in qs.select_related("assigned_member").order_by("-created_at")[
-                    :100
-                ]
-            ]
-        }
-    )
+    return JsonResponse(page_records(
+        qs.select_related("assigned_member").order_by("-created_at", "-id"), request,
+        default_limit=100,
+        serialize=lambda c: encoded(c, number=c.number, status=c.status,
+            assigned_member=f"{c.assigned_member.first_name} {c.assigned_member.last_name}".strip()
+            if c.assigned_member else None),
+    ))
 
 
 @endpoint()
@@ -1251,45 +1242,30 @@ def appeal_result(request, app_id):
 
 @endpoint()
 def case_audit(request, case_id):
+    from tribunal.pagination import page_records
+    from tribunal.services.filing_privacy import audit_visible
     staff(request.user)
     case = case_for(request.user, case_id)
-    from tribunal.services.filing_privacy import audit_visible
-    return JsonResponse(
-        {
-            "items": [
-                encoded(
-                    x,
-                    action=x.action,
-                    timestamp=x.created_at.isoformat(),
-                    source=x.source,
-                    source_id=str(x.source_id),
-                    actor=str(x.actor_id) if x.actor_id else None,
-                )
-                for x in m.AuditEvent.objects.filter(case=case).order_by("-created_at")[
-                    :250
-                ] if audit_visible(x)
-            ]
-        }
-    )
+    return JsonResponse(page_records(
+        m.AuditEvent.objects.filter(case=case).order_by("-created_at", "-id"), request,
+        default_limit=250, visible=audit_visible,
+        serialize=lambda x: encoded(x, action=x.action, timestamp=x.created_at.isoformat(),
+            source=x.source, source_id=str(x.source_id),
+            actor=str(x.actor_id) if x.actor_id else None),
+    ))
 
 
 @endpoint()
 def system_audit(request):
+    from tribunal.pagination import page_records
     from tribunal.services.filing_privacy import audit_visible
     administrator(request.user)
-    return JsonResponse(
-        {
-            "items": [
-                encoded(
-                    x,
-                    action=x.action,
-                    source=x.source,
-                    timestamp=x.created_at.isoformat(),
-                )
-                for x in m.AuditEvent.objects.order_by("-created_at")[:250] if audit_visible(x)
-            ]
-        }
-    )
+    return JsonResponse(page_records(
+        m.AuditEvent.objects.order_by("-created_at", "-id"), request,
+        default_limit=250, visible=audit_visible,
+        serialize=lambda x: encoded(x, action=x.action, source=x.source,
+                                    timestamp=x.created_at.isoformat()),
+    ))
 
 
 @csrf_exempt
