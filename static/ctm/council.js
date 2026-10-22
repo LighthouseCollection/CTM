@@ -1899,15 +1899,15 @@
           h(P.Text, { variant: "muted" }, sessionReference(session.date) || ""),
           h(P.Badge, { tone: planned ? "active" : "neutral" }, t(session.state)),
         ),
-        actions: h(P.Inline, { wrap: true },
+      }),
+      h(P.Inline, { wrap: true },
           session.can_reschedule === true
             ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }, t("rescheduleAction"))
             : null,
           (typeof session.can_close === "boolean" ? session.can_close : manage && planned)
             ? h(P.Button, { variant: "danger-secondary", disabled: pending, onClick: () => setDialog({ kind: "close" }) }, t("closeSession"))
             : null,
-        ),
-      }),
+      ),
       !planned ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,

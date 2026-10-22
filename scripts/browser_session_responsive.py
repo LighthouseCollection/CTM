@@ -26,6 +26,7 @@ with sync_playwright() as p:
             page.get_by_role("button", name="Tribunal Sessions" if language == "en" else "جلسات المجلس", exact=True).first.click()
             page.get_by_role("grid").first.get_by_role("row").nth(1).click()
             page.locator(".plx-record-page__header--lg").wait_for()
+            assert page.locator(".plx-record-page__title").bounding_box()["width"] > 150, "Session title must not collapse beside actions"
             title = "Council attendance" if language == "en" else "حضور أعضاء المجلس"
             page.get_by_role("heading", name=title, exact=True).wait_for()
             panel = page.locator(".plx-panel").filter(has=page.get_by_role("heading", name=title, exact=True))
@@ -38,6 +39,8 @@ with sync_playwright() as p:
             reader = page.locator(".plx-reading-pane").bounding_box()
             assert reader["width"] > 0 and reader["x"] >= 0 and reader["x"] + reader["width"] <= width + 1
             assert not errors, errors
+            if language == "en" and width == 1253:
+                page.screenshot(path=".tmp/session-record-header.png", full_page=True)
             checks.append({"language": language, "width": width})
             page.close()
     browser.close()

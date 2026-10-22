@@ -1,5 +1,5 @@
 {
-  "base_commit": "104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc",
+  "base_commit": "0b10a61220f29feeefd89f4779138c2f78d85b04",
   "ui_previous_checkpoint": "554dcf68bba63695bf8657c7579508e2a24379dc",
   "coverage": "All45 screen-map rows reconciled; runtime prototype42pages855controls47safe triggers7conditional/repeat interactions. Not full functional/institutional/provider acceptance.",
   "screens": [
@@ -28,7 +28,7 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e0bdd6ac3d64d4f1bdf915bc83e205bf5fa9279f387344a11ae3398b06ce4c01",
+          "sha256": "9f909563c509f451c2e70098746c427ba71c4d66a6cc6b886c3a0f396dbf93ac",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -83,7 +83,7 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e0bdd6ac3d64d4f1bdf915bc83e205bf5fa9279f387344a11ae3398b06ce4c01",
+          "sha256": "9f909563c509f451c2e70098746c427ba71c4d66a6cc6b886c3a0f396dbf93ac",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -139,7 +139,7 @@
       "source_references": [
         {
           "file": "static/ctm/applicant.js",
-          "sha256": "d77f6ce02dab4441275f02e37b20c3cbaa003142cc33436d97bc2a0498572b75",
+          "sha256": "4bec78b436f887f64343804c61cbde98108294ca70943f90e5e38455478bbddc",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -307,7 +307,7 @@
       "source_references": [
         {
           "file": "static/ctm/applicant.js",
-          "sha256": "d77f6ce02dab4441275f02e37b20c3cbaa003142cc33436d97bc2a0498572b75",
+          "sha256": "4bec78b436f887f64343804c61cbde98108294ca70943f90e5e38455478bbddc",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         },
@@ -716,7 +716,7 @@
       "source_references": [
         {
           "file": "static/ctm/applicant-appeals.js",
-          "sha256": "abe467b129afde085dfbac716475235bb1ed9624c7d56827a6d4b6fccfbf365c",
+          "sha256": "ce13026f63eef0f429368d2b1b1a7121580004d868acd5fc1cf3f0136740db51",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         },
@@ -785,7 +785,7 @@
         },
         {
           "file": "static/ctm/app.js",
-          "sha256": "e0bdd6ac3d64d4f1bdf915bc83e205bf5fa9279f387344a11ae3398b06ce4c01",
+          "sha256": "9f909563c509f451c2e70098746c427ba71c4d66a6cc6b886c3a0f396dbf93ac",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -848,7 +848,7 @@
         },
         {
           "file": "static/ctm/app.js",
-          "sha256": "e0bdd6ac3d64d4f1bdf915bc83e205bf5fa9279f387344a11ae3398b06ce4c01",
+          "sha256": "9f909563c509f451c2e70098746c427ba71c4d66a6cc6b886c3a0f396dbf93ac",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -904,7 +904,7 @@
       "source_references": [
         {
           "file": "static/ctm/council.js",
-          "sha256": "5c60684c47cefe8a5d3889eb9d6bae2cc0cb8a83d7467bcf9e57fda8c887c8d8",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -960,7 +960,7 @@
       "source_references": [
         {
           "file": "static/ctm/council.js",
-          "sha256": "5c60684c47cefe8a5d3889eb9d6bae2cc0cb8a83d7467bcf9e57fda8c887c8d8",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1016,7 +1016,7 @@
       "source_references": [
         {
           "file": "static/ctm/council.js",
-          "sha256": "5c60684c47cefe8a5d3889eb9d6bae2cc0cb8a83d7467bcf9e57fda8c887c8d8",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1071,7 +1071,7 @@
       "source_references": [
         {
           "file": "static/ctm/council.js",
-          "sha256": "5c60684c47cefe8a5d3889eb9d6bae2cc0cb8a83d7467bcf9e57fda8c887c8d8",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1132,13 +1132,13 @@
       "source_references": [
         {
           "file": "static/ctm/council.js",
-          "sha256": "5c60684c47cefe8a5d3889eb9d6bae2cc0cb8a83d7467bcf9e57fda8c887c8d8",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         },
         {
           "file": "static/ctm/app.js",
-          "sha256": "e0bdd6ac3d64d4f1bdf915bc83e205bf5fa9279f387344a11ae3398b06ce4c01",
+          "sha256": "9f909563c509f451c2e70098746c427ba71c4d66a6cc6b886c3a0f396dbf93ac",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1197,7 +1197,7 @@
       "source_references": [
         {
           "file": "static/ctm/council-case.js",
-          "sha256": "4046538d57b1de31adb10f0badaf005b5aa5780cd311a52f9925d0460dc84f57",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1252,7 +1252,7 @@
       "source_references": [
         {
           "file": "static/ctm/council-case.js",
-          "sha256": "4046538d57b1de31adb10f0badaf005b5aa5780cd311a52f9925d0460dc84f57",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1308,7 +1308,7 @@
       "source_references": [
         {
           "file": "static/ctm/council-case.js",
-          "sha256": "4046538d57b1de31adb10f0badaf005b5aa5780cd311a52f9925d0460dc84f57",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1363,7 +1363,7 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e0bdd6ac3d64d4f1bdf915bc83e205bf5fa9279f387344a11ae3398b06ce4c01",
+          "sha256": "9f909563c509f451c2e70098746c427ba71c4d66a6cc6b886c3a0f396dbf93ac",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1418,7 +1418,7 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e0bdd6ac3d64d4f1bdf915bc83e205bf5fa9279f387344a11ae3398b06ce4c01",
+          "sha256": "9f909563c509f451c2e70098746c427ba71c4d66a6cc6b886c3a0f396dbf93ac",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1476,7 +1476,7 @@
       "source_references": [
         {
           "file": "static/ctm/council-case.js",
-          "sha256": "4046538d57b1de31adb10f0badaf005b5aa5780cd311a52f9925d0460dc84f57",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1534,19 +1534,19 @@
       "source_references": [
         {
           "file": "static/ctm/council-case.js",
-          "sha256": "4046538d57b1de31adb10f0badaf005b5aa5780cd311a52f9925d0460dc84f57",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         },
         {
           "file": "static/ctm/council-media.js",
-          "sha256": "352a03e7a09b927c455ea026d135b8fd67255bf36dba3f75d2e5b81c1da397c2",
+          "sha256": "c5923375eb92943d8479eaf0a120531ccd84c9d408e06b18851fe4a98cbe4c09",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         },
         {
           "file": "static/ctm/app.js",
-          "sha256": "e0bdd6ac3d64d4f1bdf915bc83e205bf5fa9279f387344a11ae3398b06ce4c01",
+          "sha256": "9f909563c509f451c2e70098746c427ba71c4d66a6cc6b886c3a0f396dbf93ac",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1601,7 +1601,7 @@
       "source_references": [
         {
           "file": "static/ctm/council-media.js",
-          "sha256": "352a03e7a09b927c455ea026d135b8fd67255bf36dba3f75d2e5b81c1da397c2",
+          "sha256": "c5923375eb92943d8479eaf0a120531ccd84c9d408e06b18851fe4a98cbe4c09",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1659,13 +1659,13 @@
       "source_references": [
         {
           "file": "static/ctm/council-case.js",
-          "sha256": "4046538d57b1de31adb10f0badaf005b5aa5780cd311a52f9925d0460dc84f57",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         },
         {
           "file": "static/ctm/council.js",
-          "sha256": "5c60684c47cefe8a5d3889eb9d6bae2cc0cb8a83d7467bcf9e57fda8c887c8d8",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1723,7 +1723,7 @@
       "source_references": [
         {
           "file": "static/ctm/council-media.js",
-          "sha256": "352a03e7a09b927c455ea026d135b8fd67255bf36dba3f75d2e5b81c1da397c2",
+          "sha256": "c5923375eb92943d8479eaf0a120531ccd84c9d408e06b18851fe4a98cbe4c09",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1779,7 +1779,7 @@
       "source_references": [
         {
           "file": "static/ctm/council-case.js",
-          "sha256": "4046538d57b1de31adb10f0badaf005b5aa5780cd311a52f9925d0460dc84f57",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1835,7 +1835,7 @@
       "source_references": [
         {
           "file": "static/ctm/council-case.js",
-          "sha256": "4046538d57b1de31adb10f0badaf005b5aa5780cd311a52f9925d0460dc84f57",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1892,7 +1892,7 @@
       "source_references": [
         {
           "file": "static/ctm/council-decree.js",
-          "sha256": "72628d863787e0c6d6b6ed04348a510a4344a37f5deb869af3bc4b70c17ba095",
+          "sha256": "1289aca9c7b18ef3227f76b939efd315beb66b9652deaa880934780c3ff6eb1f",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1948,7 +1948,7 @@
       "source_references": [
         {
           "file": "static/ctm/council-decree.js",
-          "sha256": "72628d863787e0c6d6b6ed04348a510a4344a37f5deb869af3bc4b70c17ba095",
+          "sha256": "1289aca9c7b18ef3227f76b939efd315beb66b9652deaa880934780c3ff6eb1f",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -2004,13 +2004,13 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e0bdd6ac3d64d4f1bdf915bc83e205bf5fa9279f387344a11ae3398b06ce4c01",
+          "sha256": "9f909563c509f451c2e70098746c427ba71c4d66a6cc6b886c3a0f396dbf93ac",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         },
         {
           "file": "static/ctm/council-case.js",
-          "sha256": "4046538d57b1de31adb10f0badaf005b5aa5780cd311a52f9925d0460dc84f57",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -2066,7 +2066,7 @@
       "source_references": [
         {
           "file": "static/ctm/council-case.js",
-          "sha256": "4046538d57b1de31adb10f0badaf005b5aa5780cd311a52f9925d0460dc84f57",
+          "sha256": "d0c2e07bb7942ea5d82270b421762d89184f21d5babed239cbe974bce5b6a742",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         },
@@ -2127,7 +2127,7 @@
       "source_references": [
         {
           "file": "static/ctm/council.js",
-          "sha256": "5c60684c47cefe8a5d3889eb9d6bae2cc0cb8a83d7467bcf9e57fda8c887c8d8",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -2183,7 +2183,7 @@
       "source_references": [
         {
           "file": "static/ctm/council.js",
-          "sha256": "5c60684c47cefe8a5d3889eb9d6bae2cc0cb8a83d7467bcf9e57fda8c887c8d8",
+          "sha256": "c34a696d305e93c59de331df199a02237b4992123a8981def7d6a38229e7a40a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -2355,7 +2355,7 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e0bdd6ac3d64d4f1bdf915bc83e205bf5fa9279f387344a11ae3398b06ce4c01",
+          "sha256": "9f909563c509f451c2e70098746c427ba71c4d66a6cc6b886c3a0f396dbf93ac",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         },
@@ -2533,7 +2533,7 @@
       "source_references": [
         {
           "file": "static/ctm/historical-entry.js",
-          "sha256": "7fd9becdbd5e96ad9089571d58f259fd383e1f4c0c15e909557e20d4ae5ee6f3",
+          "sha256": "0fb6ae07a6b3ffd1c55dc00216c8b629508d949d0f4497cfb9799d05f8d3fb53",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -2616,7 +2616,7 @@
     }
   ],
   "validation": {
-    "frontend_tests": 194,
+    "frontend_tests": 236,
     "focused_django_tests": 14,
     "synthetic_admin_role_language_combinations": 10,
     "actual_sqlite_admin_roles": [
@@ -2624,6 +2624,14 @@
       "member",
       "applicant"
     ],
-    "scope": "Separate test scopes; counts must not be added into a total or a completion percentage. Actual SQLite historical/enrollment/config/audit acceptance is not PostgreSQL or provider acceptance."
+    "scope": "Separate test scopes; counts must not be added into a total or a completion percentage. Actual SQLite historical/enrollment/config/audit acceptance is not PostgreSQL or provider acceptance.",
+    "current_successor_checks": [
+      "236 frontend tests",
+      "actual Django SQLite admin/member/applicant: no API mocks",
+      "10 role/language administration browser cases",
+      "6 EN/AR session layouts with native record header",
+      "persistent case row highlight after blur",
+      "0.60.1 white bordered avatar, Card.icon, council-owned PDF rendering"
+    ]
   }
 }
