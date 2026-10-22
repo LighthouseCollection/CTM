@@ -6,6 +6,12 @@ const shell = fs.readFileSync("tribunal/templates/tribunal/shell.html", "utf8");
 const app = fs.readFileSync("static/ctm/app.js", "utf8");
 const shellLayout = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
 
+test("static table headers retain their full label on hover", () => {
+  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  assert.match(css, /\.plx-table__title > \.plx-table__type-icon/);
+  assert.match(css, /\.plx-table--static \.plx-table__grid-col:hover[\s\S]*--plx-comp-data-grid-context-hover-reserve: 0/);
+});
+
 test("session layout assets use a current cache version", () => {
   assert.match(shell, /ctm\/shell-layout\.js\x27 %\}\?v=grid-layout-20261022ao/);
   assert.match(shell, /ctm\/council\.js\x27 %\}\?v=[a-z0-9-]+/);

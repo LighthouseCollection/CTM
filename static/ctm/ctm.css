@@ -151,8 +151,15 @@
 
 /* The CDN inserts a generic text-type icon before every column header. It is
    not semantic in council tables, so retain the text label and hide the icon. */
-.plx-data-grid__title > .plx-data-grid__type-icon {
+.plx-data-grid__title > .plx-data-grid__type-icon,
+.plx-table__title > .plx-table__type-icon {
   display: none;
+}
+
+/* Static CTM tables have no header action to reveal. The CDN otherwise reserves
+   that space only during hover, which causes the label to appear truncated. */
+.plx-table--static .plx-table__grid-col:hover {
+  --plx-comp-data-grid-context-hover-reserve: 0;
 }
 
 @media (max-width: 820px) {
