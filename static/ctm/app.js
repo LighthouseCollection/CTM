@@ -19,7 +19,7 @@
     appointments: "schedule", past: "archive", case: "document", timeline: "progress",
     parties: "settings-users", marriage: "settings-users", separation: "move", petition: "doc-text",
     reports: "document", hearings: "list-lines", evidence: "image-a-2", documents: "folder",
-    medical: "lock", decision: "checklist", decree: "certificate", appeals: "progress",
+    medical: "lock", decision: "scale", decree: "certificate", appeals: "progress",
     communications: "message", notes: "message", audit: "list-lines",
   };
   const navigationIcon = (id) => h(P.Icon, { name: navigationIcons[id] });

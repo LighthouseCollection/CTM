@@ -186,6 +186,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(app, /const collaborationGroups = \[/);
   assert.match(app, /items: ["notes", "communications"]/);
   assert.match(app, /decree: "certificate"/);
+  assert.match(app, /decision: "scale"/);
   assert.match(app, /groups: collaborationGroups/);
   assert.match(app, /page === "notes" && council && councilModule\?\.CaseNotesWorkspace/);
   assert.match(app, /page === "marriage" && council && councilModule\?\.CaseMarriage/);
