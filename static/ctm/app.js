@@ -31,11 +31,7 @@
       h("path", { d: "M6 3h9l3 3v15H6zM15 3v4h4M9 11h6M9 15h3M15 16.5a2.5 2.5 0 1 0-2 0v2l2-1 2 1v-2a2.5 2.5 0 0 0-2 0z" }),
     );
   const caseSearchIcon = () =>
-    h("svg", { className: "ctm-case-search-nav-icon", width: "1em", height: "1em", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
-      h("path", { d: "M3.5 7.5h6l1.8 2H20a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 20 18.5H4A1.5 1.5 0 0 1 2.5 17v-8A1.5 1.5 0 0 1 4 7.5z" }),
-      h("circle", { cx: "14.5", cy: "14", r: "2.5" }),
-      h("path", { d: "m16.4 15.9 2.4 2.4" }),
-    );
+    h(P.Icon, { name: "folder_eye", "aria-hidden": true });
   const appealsReturnIcon = () =>
     h("svg", { className: "ctm-appeals-nav-icon", width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
       h("path", { d: "m9 7-5 5 5 5M5 12h8a6 6 0 0 1 6 6v1" }),
