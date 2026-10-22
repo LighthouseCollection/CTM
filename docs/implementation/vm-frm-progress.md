@@ -1,3 +1,12 @@
+## Tribunal Sessions server continuation
+
+Completed session list offset/limit/next_offset and validated state/date filters;
+default100/item fields/capabilities preserved, former100-row truncation removed.
+Sixteen restrictedctm_app regressions, full PostgreSQL706 passed/1skip. No new
+model/route/policy/grant/migration. See session-list-continuation.md; session timing,
+location, presiding member/minutes remain a separate approved contract decision.
+Exact publication ledger is on issue #2. No merge/server deployment by backend.
+
 ## Own active-session inventory and revocation
 
 Implemented GET /api/account/sessions/ and POST own handle/revoke with actual

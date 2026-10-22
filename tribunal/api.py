@@ -651,17 +651,40 @@ def sessions(request):
     from tribunal.projections import session_capabilities
     staff(request.user)
     if request.method == "GET":
-        return JsonResponse(
-            {
-                "items": [
-                    encoded(
-                        x, date=x.date.isoformat(), reference=x.reference, state=x.state,
-                        **session_capabilities(x, request.user)
-                    )
-                    for x in m.CouncilSession.objects.order_by("-date")[:100]
-                ]
-            }
-        )
+        from tribunal.pagination import page_records
+        qs = m.CouncilSession.objects.all()
+        filters = {}
+        for key in ("state", "date_from", "date_to"):
+            if key not in request.GET:
+                continue
+            raw = request.GET.get(key)
+            if len(request.GET.getlist(key)) != 1 or not raw:
+                raise ValidationError(f"Provide one nonempty {key} filter.")
+            if key == "state":
+                if raw not in {"planned", "closed"}:
+                    raise ValidationError("state must be planned or closed.")
+                qs = qs.filter(state=raw)
+            else:
+                try:
+                    parsed = date.fromisoformat(raw)
+                    if parsed.isoformat() != raw:
+                        raise ValueError
+                except ValueError:
+                    raise ValidationError(f"{key} must be a YYYY-MM-DD date.")
+                filters[key] = parsed
+        if filters.get("date_from", date.min) > filters.get("date_to", date.max):
+            raise ValidationError("date_from must not follow date_to.")
+        if "date_from" in filters:
+            qs = qs.filter(date__gte=filters["date_from"])
+        if "date_to" in filters:
+            qs = qs.filter(date__lte=filters["date_to"])
+        return JsonResponse(page_records(
+            qs.order_by("-date", "-id"), request, default_limit=100,
+            serialize=lambda x: encoded(
+                x, date=x.date.isoformat(), reference=x.reference, state=x.state,
+                **session_capabilities(x, request.user),
+            ),
+        ))
     from tribunal.services.council import create_session
 
     return JsonResponse(

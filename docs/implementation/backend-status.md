@@ -5,7 +5,7 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **690 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+Validation: **706 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
 reapply through0041. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
@@ -75,6 +75,15 @@ Microsoft callbackc06b869 is also pushed (679-test checkpoint); hosted checks pa
 Governance reports it preserved in deployeddccbd63; genuine callback confirmation
 remains separate. Independent QAc54333d reports13/13 and32/32 backendfix checks on
 b3de51e only, not the latest deployed head.
+
+## Tribunal Sessions list continuation
+
+GET /api/sessions/ now supports bounded offset/limit/next_offset, optional planned/
+closed state and inclusive date_from/date_to filters before pagination. Existing
+fields/capabilities and default100 are preserved; rows beyond the former cap are
+reachable. Council-only authority remains. No lifecycle semantics or unsupported
+session timing/location/presiding/minutes fields are invented.
+[Contract and remaining field decisions](session-list-continuation.md).
 
 ## Unfinished
 
