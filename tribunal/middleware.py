@@ -38,8 +38,16 @@ class DatabaseActorMiddleware:
     def __call__(self, request):
         from tribunal.db.context import database_actor
 
-        with database_actor(request.user):
-            return self.get_response(request)
+        from contextlib import ExitStack
+
+        with database_actor(request.user), ExitStack() as provider_scope:
+            # Activated only by the social adapter after provider/CTM validation.
+            # Keep allauth's later is_existing/login queries in the same scope.
+            request._ctm_provider_scope = provider_scope
+            try:
+                return self.get_response(request)
+            finally:
+                del request._ctm_provider_scope
 
 
 class PrivateResponseMiddleware:
