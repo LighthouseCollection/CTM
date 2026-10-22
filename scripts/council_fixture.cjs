@@ -41,7 +41,18 @@ const state = {
   agenda: [],
   attendance: [],
   posts: [],
+  requests: [],
+  decisions: [],
+  questions: [
+    { id: "q1", code: "OPEN-01", version: 1, category: "Foundational questions", wording_en: "Please state your full name and your spouse’s full name.", wording_ar: "", foundational: true, guidance: {} },
+    { id: "q2", code: "DM-01", version: 1, category: "Decision to marry", wording_en: "Synthetic question one?", wording_ar: "", foundational: false, guidance: {} },
+    { id: "q3", code: "DM-02", version: 1, category: "Decision to marry", wording_en: "Synthetic question two?", wording_ar: "", foundational: false, guidance: {} },
+  ],
 };
+const parties = (c) => [
+  { id: "pa-" + c.id, name: "Synthetic Applicant", is_self: false, can_receive: true, reference: null },
+  { id: "pb-" + c.id, name: "Synthetic Spouse", is_self: false, can_receive: true, reference: null },
+];
 const members = () => Object.values(people).map(({ id, name, role }) => ({ id, name, role }));
 const json = (res, status, body) => {
   res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
@@ -73,7 +84,7 @@ function api(req, res, url, body) {
   if (p === "/api/cases/") return json(res, 200, { items: state.cases });
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/$/))) {
     const c = state.cases.find((x) => x.id === m[1]);
-    return json(res, 200, { ...c, can_message: true, parties: [], proceedings: [{ id: "p-" + c.id, kind: "initial", status: "open", sequence: 1 }] });
+    return json(res, 200, { ...c, can_message: true, parties: parties(c), proceedings: [{ id: "p-" + c.id, kind: "initial", status: "open", sequence: 1 }] });
   }
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/files\/$/))) return json(res, 200, { items: [], next_offset: null });
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/assignment\/$/))) {
@@ -85,6 +96,49 @@ function api(req, res, url, body) {
     return json(res, 201, { id: "as-" + c.id });
   }
   if (p === "/api/council/members/") return json(res, 200, { items: members() });
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/))) return json(res, 200, { items: [] });
+  if (p === "/api/report-questions/") return json(res, 200, { items: state.questions });
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/requests\/$/))) {
+    const c = state.cases.find((x) => x.id === m[1]);
+    if (req.method === "POST") {
+      if (!admin() && c.assigned_member !== people[role].name)
+        return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+      if (!body.title || !body.party_id) return json(res, 404, { error: "resource_or_input_invalid" });
+      const codes = new Set(["OPEN-01", ...(body.questions || [])]);
+      const r = {
+        id: "rq-" + (state.requests.length + 1), case: c.id, title: body.title, kind: body.kind, state: "draft", instructions: body.instructions,
+        questions: state.questions.filter((q) => codes.has(q.code)).map((q) => ({ code: q.code, version: q.version, en: q.wording_en, ar: q.wording_ar })),
+      };
+      state.requests.unshift(r);
+      return json(res, 201, { id: r.id });
+    }
+    return json(res, 200, { items: state.requests.filter((r) => r.case === c.id) });
+  }
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/send\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    r.state = "sent";
+    return json(res, 200, { id: r.id, token: null });
+  }
+  if ((m = p.match(/^\/api\/proceedings\/([^/]+)\/decision\/$/))) {
+    if (req.method !== "POST") return json(res, 405, { error: "method_not_allowed" });
+    if (!String(body.grounds || "").trim())
+      return json(res, 422, { error: "validation", messages: ["Record the decision type and grounds/reason."] });
+    const d = { id: "dv-" + (state.decisions.length + 1), ...body };
+    state.decisions.push(d);
+    return json(res, 201, { id: d.id });
+  }
+  if ((m = p.match(/^\/api\/decisions\/([^/]+)\/vote\/$/))) {
+    if (body.member_id && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    if (state.decisions[state.decisions.length - 1].id !== m[1])
+      return json(res, 422, { error: "validation", messages: ["This decision has been revised; use the latest version."] });
+    return json(res, 201, { id: "vote-" + Date.now() });
+  }
+  if ((m = p.match(/^\/api\/decisions\/([^/]+)\/approve\/$/))) {
+    if (role !== "president" && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    if (role !== "president" && !members().some((x) => x.id === body.president_id && x.role === "president"))
+      return json(res, 404, { error: "resource_or_input_invalid" });
+    return json(res, 201, { id: "appr-" + m[1] });
+  }
   if (p === "/api/sessions/") {
     if (req.method === "POST") {
       if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
