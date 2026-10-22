@@ -385,6 +385,11 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(api, /gender=p\.person\.gender if p\.person_id else None/);
 });
 
+test("Case Audit is the final Case Review navigation item", () => {
+  assert.match(app, /"documents",\s*\n\s*"medical",\s*\n\s*"audit",/);
+  assert.doesNotMatch(app, /\[\{ id: "audit", label: t\("audit"\), icon: navigationIcon\("audit"\) \}\]/);
+});
+
 test("case navigation groups notes and communications outside Case Overview", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(app, /notes: "Notes"/);

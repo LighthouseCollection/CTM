@@ -1373,6 +1373,7 @@
           "evidence",
           "documents",
           "medical",
+          "audit",
         ].map((id) => ({
           id,
           icon: navigationIcon(id),
@@ -1381,7 +1382,8 @@
             ["documents", "evidence", "reports"].includes(id) ||
             (id === "petition" && councilModule?.PetitionWorkspace) ||
             (id === "medical" && councilModule?.AssessmentsWorkspace) ||
-            (id === "hearings" && councilModule?.CaseHearings)
+            (id === "hearings" && councilModule?.CaseHearings) ||
+            (id === "audit" && councilModule?.CaseAudit)
           ),
         })),
       },
@@ -1428,7 +1430,6 @@
       ...caseGroups.flatMap((group) => group.items),
       ...collaborationGroups.flatMap((group) => group.items),
       ...(council ? reviewGroups.flatMap((group) => group.items) : []),
-      ...(council && councilModule?.CaseAudit ? [{ id: "audit", label: t("audit"), icon: navigationIcon("audit") }] : []),
     ];
     const navigationRail = (items, onSelect) => h(R.Fragment, null,
       ...items.map((item) => h(P.ToolRail.Item, {
@@ -1478,14 +1479,6 @@
                 value: page,
                 onSelect: selectCaseSection,
                 groups: reviewGroups,
-              })
-            : null,
-          council && councilModule?.CaseAudit
-            ? h(P.NavList, {
-                label: t("audit"),
-                value: page,
-                onSelect: selectCaseSection,
-                items: [{ id: "audit", label: t("audit"), icon: navigationIcon("audit") }],
               })
             : null,
         )
