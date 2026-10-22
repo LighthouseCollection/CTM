@@ -96,33 +96,44 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
             page.get_by_role("button",name="Delete unsubmitted draft",exact=True).click()
             expect(page.get_by_role("button",name="Confirm action",exact=True)).to_be_visible()
             transition["initial_english_dialog"]=True
+            language_delete_requests=[]
+            page.on("request",lambda request:language_delete_requests.append(request.post_data_json)
+                if request.url==f"{base}/api/applications/{app_id}/delete-draft/" and request.method=="POST" else None)
             with page.expect_response(lambda r:r.url==base+"/api/account/settings/" and r.request.method=="POST") as arabic_language:
                 page.get_by_role("button",name="العربية",exact=True).click()
             assert arabic_language.value.status==200,arabic_language.value.text()
             transition["arabic_language_status"]=arabic_language.value.status
             page.set_viewport_size({"width":390,"height":1000})
+            expect(page.get_by_role("button",name="حذف المسودة غير المقدّمة",exact=True)).to_be_enabled()
+            expect(page.get_by_role("button",name="تأكيد الإجراء",exact=True)).to_have_count(0)
+            expect(page.get_by_role("button",name="إلغاء",exact=True)).to_have_count(0)
+            assert language_delete_requests==[]
+            assert detail(ctx,app_id)==refreshed_body
+            transition["language_change_cancelled_confirmation"]={"delete_requests":0,"application_unchanged":True}
+            page.get_by_role("button",name="حذف المسودة غير المقدّمة",exact=True).click()
             expect(page.get_by_role("button",name="تأكيد الإجراء",exact=True)).to_be_visible()
-            transition["arabic_dialog"]=True
+            transition["reopened_arabic_dialog"]=True
             assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
-            with page.expect_response(lambda r:r.url==base+"/api/account/settings/" and r.request.method=="POST") as english_language:
-                page.get_by_role("button",name="English",exact=True).click()
-            assert english_language.value.status==200,english_language.value.text()
-            transition["english_language_status"]=english_language.value.status
-            expect(page.get_by_role("button",name="Confirm action",exact=True)).to_be_visible()
-            transition["restored_english_dialog"]=True
             with page.expect_response(lambda r:r.url==f"{base}/api/applications/{app_id}/delete-draft/") as result:
-                page.get_by_role("button",name="Confirm action",exact=True).click()
+                page.get_by_role("button",name="تأكيد الإجراء",exact=True).click()
             assert result.value.status==200 and result.value.request.post_data_json=={"expected_version":2}
+            assert language_delete_requests==[{"expected_version":2}]
             transition["delete"]={"status":result.value.status,"payload":result.value.request.post_data_json}
             with page.expect_response(lambda r:r.url==f"{base}/api/applications/{app_id}/" and r.request.method=="GET") as deleted_refresh:
-                page.get_by_role("button",name="Refresh application",exact=True).click()
+                page.get_by_role("button",name="تحديث الطلب",exact=True).click()
             deleted_body=deleted_refresh.value.json()
             assert deleted_refresh.value.status==200 and deleted_body["id"]==app_id and deleted_body["status"]=="deleted"
             assert deleted_body["can_delete_draft"] is False
-            expect(page.get_by_text("Application status: Deleted",exact=True)).to_be_visible()
+            expect(page.get_by_text("حالة الطلب: محذوف",exact=True)).to_be_visible()
             transition["deleted_refresh"]={"status":deleted_refresh.value.status,"application_status":deleted_body["status"],
                 "can_delete_draft":deleted_body["can_delete_draft"],"ui_status_visible":True}
+            expect(page.get_by_role("button",name="حذف المسودة غير المقدّمة",exact=True)).to_have_count(0)
+            with page.expect_response(lambda r:r.url==base+"/api/account/settings/" and r.request.method=="POST") as english_language:
+                page.get_by_role("button",name="English",exact=True).click()
+            assert english_language.value.status==200,english_language.value.text()
+            expect(page.get_by_text("Application status: Deleted",exact=True)).to_be_visible()
             expect(page.get_by_role("button",name="Delete unsubmitted draft",exact=True)).to_have_count(0)
+            transition["english_deleted_status"]={"language_status":english_language.value.status,"ui_status_visible":True}
             artifact=Path(output);artifact.mkdir(parents=True,exist_ok=True)
             (artifact/"draft-delete-confirmation-state.json").write_text(json.dumps(transition,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
         except Exception:
