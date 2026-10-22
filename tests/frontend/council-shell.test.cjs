@@ -243,8 +243,12 @@ test("the current session keeps labeled actions and its status control inside th
   assert.doesNotMatch(council, /dialog\?\.kind === "agenda"/);
   const agendaTable = council.slice(council.indexOf("const agendaTable"), council.indexOf("return h(", council.indexOf("const agendaTable")));
   assert.doesNotMatch(agendaTable, /P\.SplitView/);
-  assert.match(council, /collapsible: true,[\s\S]*defaultExpanded: true/);
-  assert.match(council, /strings: \{ collapse: t\("collapse"\), expand: t\("expand"\) \}/);
+  const sessionWorkspace = council.slice(council.indexOf("function SessionWorkspace"), council.indexOf("function searchProblem"));
+  assert.match(sessionWorkspace, /const \[agendaTab, setAgendaTab\] = R\.useState\("scheduled"\)/);
+  assert.match(sessionWorkspace, /h\(P\.Tabs, \{ variant: "contained", label: t\("agenda"\), value: agendaTab, onChange: setAgendaTab,/);
+  assert.match(sessionWorkspace, /\{ value: "scheduled", label: t\("scheduledCasesForHearing"\), content: agendaTable\(2\) \}/);
+  assert.match(sessionWorkspace, /\{ value: "assign", label: t\("casesToAssign"\), content: agendaTable\(1\) \}/);
+  assert.doesNotMatch(agendaTable, /P\.Panel/);
   assert.match(agendaTable, /previousRecommendation/);
   assert.doesNotMatch(agendaTable, /field: "record"/);
   assert.match(agendaTable, /title: t\("actions"\), field: "open_action"/);

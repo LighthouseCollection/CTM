@@ -2056,6 +2056,7 @@
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     const [adjournEnd, setAdjournEnd] = R.useState("");
+    const [agendaTab, setAgendaTab] = R.useState("scheduled");
 
     if (state.pending && !state.data) return loadingView(P, h, t);
     if (state.error) return loadFailure(P, h, t, retry, state.error);
@@ -2300,15 +2301,7 @@
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ];
-      return h(P.Panel, {
-        key: n,
-        title: first ? t("casesToAssign") : t("scheduledCasesForHearing"),
-        collapsible: true,
-        defaultExpanded: true,
-        strings: { collapse: t("collapse"), expand: t("expand") },
-      },
-        h(window.CTMShell.Table, { className: "ctm-session-agenda-grid", label: title, rows, columns, empty: t(`part${n}Empty`), isStatic: true }),
-      );
+      return h(window.CTMShell.Table, { className: "ctm-session-agenda-grid", label: title, rows, columns, empty: t(`part${n}Empty`), isStatic: true });
     };
 
     return h(
@@ -2383,8 +2376,13 @@
       !editable ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
-      current ? agendaTable(1) : h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
-      current ? agendaTable(2) : part(1),
+      current ? h(P.Tabs, { variant: "contained", label: t("agenda"), value: agendaTab, onChange: setAgendaTab,
+        items: [
+          { value: "scheduled", label: t("scheduledCasesForHearing"), content: agendaTable(2) },
+          { value: "assign", label: t("casesToAssign"), content: agendaTable(1) },
+        ],
+      }) : h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
+      current ? null : part(1),
       current ? null : part(2),
       data.items.length && !data.items.some((row) => "hearing_id" in row) ? h(P.Notice, { tone: "info" }, t("outcomeDependency")) : null,
       dialog?.kind === "outcome"
