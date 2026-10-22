@@ -14,7 +14,7 @@
   // Separately loaded council workspace module (static/ctm/council.js), if present.
   const councilModule = window.CTMCouncil || null;
   const navigationIcons = {
-    home: "home", sessions: "today", sessionsUpcoming: "calendar", sessionsArchived: "calendar_lock", cases: "folder-open", search: "search",
+    home: "home", sessions: "calendar-month", sessionsUpcoming: "calendar", sessionsArchived: "calendar_lock", cases: "folder-open", search: "search",
     archived: "archive", statistics: "chart", applications: "doc-text",
     appointments: "schedule", past: "archive", case: "document", timeline: "progress",
     parties: "settings-users", marriage: "wedding", separation: "move", petition: "doc-text",
