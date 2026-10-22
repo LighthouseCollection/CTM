@@ -1,0 +1,544 @@
+{
+  "summary": {
+    "pass": 65,
+    "fail": 2
+  },
+  "checks": [
+    {
+      "scenario": "S1",
+      "check": "author sees literal can_revise true on own open report",
+      "role": "member (assigned author)",
+      "expected": "can_revise is True",
+      "actual": "status=200 can_revise=True",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S1",
+      "check": "row exposes author_id/author",
+      "role": "member (assigned author)",
+      "expected": "author_id=939e2cdb-d272-4c32-8534-1de2fb730665 author=Michael Thompson",
+      "actual": "author_id=939e2cdb-d272-4c32-8534-1de2fb730665 author=Michael Thompson",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S1",
+      "check": "row carries newest version answers/observations",
+      "role": "member (assigned author)",
+      "expected": "version=2, QA-HIST second narrative, observation v2",
+      "actual": "version=2 QA-HIST='Second history narrative (main).' obs='Second observation (main).'",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S1",
+      "check": "wilson reads row but can_revise is false",
+      "role": "member (unassigned)",
+      "expected": "200, can_revise False",
+      "actual": "status=200 can_revise=False",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S1",
+      "check": "miller reads row but can_revise is false",
+      "role": "secretary (non-author)",
+      "expected": "200, can_revise False",
+      "actual": "status=200 can_revise=False",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S1",
+      "check": "anderson reads row but can_revise is false",
+      "role": "admin (non-author)",
+      "expected": "200, can_revise False",
+      "actual": "status=200 can_revise=False",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S1",
+      "check": "wright reads row but can_revise is false",
+      "role": "president",
+      "expected": "200, can_revise False",
+      "actual": "status=200 can_revise=False",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S1",
+      "check": "assigned manager cannot revise secretary-authored report",
+      "role": "member (assigned, non-author)",
+      "expected": "can_revise False",
+      "actual": "can_revise=False",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S1",
+      "check": "secretary author can revise own report",
+      "role": "secretary (author)",
+      "expected": "can_revise True",
+      "actual": "can_revise=True",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S2",
+      "check": "author revision accepted over HTTP",
+      "role": "member (assigned author)",
+      "expected": "201",
+      "actual": "status=201",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S2",
+      "check": "exactly one new version appended",
+      "role": "member (assigned author)",
+      "expected": "2+1 versions",
+      "actual": "3 versions",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S2",
+      "check": "new version attributed to author",
+      "role": "member (assigned author)",
+      "expected": "939e2cdb-d272-4c32-8534-1de2fb730665",
+      "actual": "939e2cdb-d272-4c32-8534-1de2fb730665",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S2",
+      "check": "prior versions unchanged",
+      "role": "member (assigned author)",
+      "expected": "v1,v2 rows identical before/after",
+      "actual": "identical",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S2",
+      "check": "non-text answers preserved in new version when sent",
+      "role": "member (assigned author)",
+      "expected": "QA-PREF dict and QA-SCORE int unchanged",
+      "actual": "QA-PREF={'choice': 'no', 'noted_by': 'council'} QA-SCORE=3",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S2",
+      "check": "audit report_revised written atomically",
+      "role": "member (assigned author)",
+      "expected": "1+1",
+      "actual": "2",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S2",
+      "check": "reload shows new newest version",
+      "role": "member (assigned author)",
+      "expected": "version=3 with revised QA-SEP",
+      "actual": "version=3 QA-SEP='Revised separation narrative by author (QA-01 S2).'",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S2",
+      "check": "other council member reads full attributed history",
+      "role": "member (unassigned)",
+      "expected": "200 with versions 3,2,1 and actor names",
+      "actual": "status=200 versions=[3, 2, 1] actors=['Michael Thompson']",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S2",
+      "check": "contract: council editor request body (no expected_version) is accepted by this backend",
+      "role": "member (assigned author)",
+      "expected": "201 (backend and council agree on the write contract)",
+      "actual": "status=422 body={'error': 'validation', 'messages': ['expected_version must be a non-negative integer.']}",
+      "result": "FAIL"
+    },
+    {
+      "scenario": "S2",
+      "check": "OBSERVATION: server keeps prior versions when a partial answer object is posted",
+      "role": "member (assigned author)",
+      "expected": "prior versions intact; server does not merge, so the new version holds only the posted keys",
+      "actual": "status=422 new keys=None prior intact=True",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S2",
+      "check": "OBSERVATION: revision answers referencing an unknown file id",
+      "role": "member (assigned author)",
+      "expected": "rejected (file references validated like complete_request)",
+      "actual": "status=404",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S3",
+      "check": "server: identical payload does not append a version",
+      "role": "member (assigned author)",
+      "expected": "no new version (or explicit no-op)",
+      "actual": "status=201 versions 1->2",
+      "result": "FAIL"
+    },
+    {
+      "scenario": "S4",
+      "check": "forged POST by wilson denied",
+      "role": "member (unassigned)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403 error=forbidden",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S4",
+      "check": "forged POST by collins denied",
+      "role": "member (unassigned)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403 error=forbidden",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S4",
+      "check": "forged POST by miller denied",
+      "role": "secretary (non-author)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403 error=forbidden",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S4",
+      "check": "forged POST by anderson denied",
+      "role": "admin (non-author)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403 error=forbidden",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S4",
+      "check": "forged POST by wright denied",
+      "role": "president (non-author)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403 error=forbidden",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S4",
+      "check": "assigned manager forging secretary-authored report denied",
+      "role": "member (assigned, non-author)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S4",
+      "check": "read access does not imply write (secretary GET 200, POST 403 above)",
+      "role": "secretary (non-author)",
+      "expected": "200",
+      "actual": "status=200",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S4",
+      "check": "no version created by any forged request",
+      "role": "all non-authors",
+      "expected": "3 versions",
+      "actual": "3 versions",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S4",
+      "check": "unauthenticated POST rejected",
+      "role": "anonymous",
+      "expected": "401 or 403 (CSRF)",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S4",
+      "check": "author session without CSRF token rejected",
+      "role": "member (assigned author, cross-site)",
+      "expected": "403",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S5",
+      "check": "applicant-authored intake: can_revise false for manager",
+      "role": "member (assigned)",
+      "expected": "can_revise False",
+      "actual": "can_revise=False author=Emily Carter",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S5",
+      "check": "thompson cannot rewrite applicant-authored intake",
+      "role": "member (assigned)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S5",
+      "check": "miller cannot rewrite applicant-authored intake",
+      "role": "secretary",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S5",
+      "check": "anderson cannot rewrite applicant-authored intake",
+      "role": "admin",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S5",
+      "check": "applicant cannot call revision endpoint on own intake",
+      "role": "applicant (author)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S5",
+      "check": "applicant cannot call revision endpoint on council report",
+      "role": "applicant",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S5",
+      "check": "applicant cannot read council revision history",
+      "role": "applicant",
+      "expected": "403",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S5",
+      "check": "applicant list: only own intake, no capability/observations",
+      "role": "applicant",
+      "expected": "1 own item, no can_revise/observations",
+      "actual": "status=200 items=1 leaked_fields_or_rows=0",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S5",
+      "check": "intake history untouched",
+      "role": "all",
+      "expected": "1 versions",
+      "actual": "1",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S6",
+      "check": "closed case: author can_revise false",
+      "role": "member (author, closed case)",
+      "expected": "False",
+      "actual": "can_revise=False",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S6",
+      "check": "closed case: author write denied",
+      "role": "member (author, closed case)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=422 {'error': 'validation', 'messages': ['The original closed proceeding is read-only.']}",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S6",
+      "check": "closed case: admin write denied",
+      "role": "admin",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S6",
+      "check": "reopened case: original-proceeding report can_revise false",
+      "role": "member (author, assigned, reopened case)",
+      "expected": "False",
+      "actual": "can_revise=False",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S6",
+      "check": "reopened case: original-proceeding report write denied",
+      "role": "member (author, assigned, reopened case)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=422 {'error': 'validation', 'messages': ['The original closed proceeding is read-only.']}",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S6",
+      "check": "no versions added to closed/old-proceeding reports",
+      "role": "all",
+      "expected": "unchanged",
+      "actual": "d=1 b=1",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S7",
+      "check": "thompson: can_revise false after reassignment",
+      "role": "member (original author, no longer assigned)",
+      "expected": "False",
+      "actual": "can_revise=False",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S7",
+      "check": "thompson: revision denied after reassignment",
+      "role": "member (original author, no longer assigned)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S7",
+      "check": "collins: can_revise false after reassignment",
+      "role": "member (new manager, non-author)",
+      "expected": "False",
+      "actual": "can_revise=False",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S7",
+      "check": "collins: revision denied after reassignment",
+      "role": "member (new manager, non-author)",
+      "expected": "denied with no new version (contract: 403 forbidden / 422 read-only)",
+      "actual": "status=403",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S7",
+      "check": "new manager adds follow-up as separate linked report",
+      "role": "member (new manager)",
+      "expected": "new report, parent_report_id=original, own version 1, can_revise True",
+      "actual": "created=True follow_ups=1 version=1 can_revise=True",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S7",
+      "check": "original report untouched by follow-up",
+      "role": "all",
+      "expected": "1 version",
+      "actual": "1",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S8",
+      "check": "server: identical retry after unknown outcome is replay-safe",
+      "role": "member (assigned author)",
+      "expected": "second identical POST returns original receipt, no extra version",
+      "actual": "statuses=201,201 receipts=2,2 versions 1->2",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S8",
+      "check": "a different body replayed on the old base is not accepted as a retry",
+      "role": "member (assigned author)",
+      "expected": "409 conflict, no extra version",
+      "actual": "status=409 body={'error': 'version_conflict', 'current_version': 2} versions=2",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S9",
+      "check": "two sessions save from the same version in parallel: server rejects the stale writer",
+      "role": "member (author, 2 sessions)",
+      "expected": "one 201 and one 409 (stale expected_version), 1 new version",
+      "actual": "statuses=[201, 409] versions 1->2 newest QA-HIST='Session 1 change (QA-01 S9).' elapsed=0.05s",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S9",
+      "check": "both concurrent writes serialized without corrupting history",
+      "role": "member (author, 2 sessions)",
+      "expected": "distinct sequential version numbers",
+      "actual": "numbers=[1, 2]",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S9",
+      "check": "sequential POST with stale expected_version=1 rejected",
+      "role": "member (assigned author)",
+      "expected": "409",
+      "actual": "status=409",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S12",
+      "check": "HTTP/runtime role is non-owner, non-superuser, no BYPASSRLS",
+      "role": "database runtime",
+      "expected": "ctm_app False False",
+      "actual": "('ctm_app', False, False)",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S12",
+      "check": "no actor context: report revisions invisible",
+      "role": "database runtime, no actor",
+      "expected": "0 rows",
+      "actual": "0 rows",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S12",
+      "check": "raw INSERT as ctm_app, actor=unassigned member, report=a_main",
+      "role": "database runtime (unassigned member)",
+      "expected": "denied by RLS/trigger",
+      "actual": "visible_rows=3 denied: InsufficientPrivilege: new row violates row-level security policy for table \"tribunal_reportrevision\"",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S12",
+      "check": "raw INSERT as ctm_app, actor=applicant, report=a_main",
+      "role": "database runtime (applicant)",
+      "expected": "denied by RLS/trigger",
+      "actual": "visible_rows=0 denied: InsufficientPrivilege: new row violates row-level security policy for table \"tribunal_reportrevision\"",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S12",
+      "check": "raw INSERT as ctm_app, actor=author on closed case, report=d_main",
+      "role": "database runtime (author on closed case)",
+      "expected": "denied by RLS/trigger",
+      "actual": "visible_rows=1 denied: CheckViolation: Closed proceedings are read only",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S12",
+      "check": "raw INSERT as ctm_app, actor=author on reopened case's old proceeding, report=b_old",
+      "role": "database runtime (author on reopened case's old proceeding)",
+      "expected": "denied by RLS/trigger",
+      "actual": "visible_rows=1 denied: CheckViolation: Closed proceedings are read only",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S12",
+      "check": "author cannot UPDATE a retained revision in place (immutable history)",
+      "role": "database runtime (author)",
+      "expected": "denied or 0 rows changed",
+      "actual": "denied: CheckViolation: CTM historical records cannot be overwritten",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S12",
+      "check": "positive control: author raw INSERT on open own report is allowed by RLS",
+      "role": "database runtime (author)",
+      "expected": "INSERTED (rolled back)",
+      "actual": "INSERTED (rolled back)",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S12",
+      "check": "every appended version (v>1) has a report_revised audit event",
+      "role": "database (owner read)",
+      "expected": "5",
+      "actual": "5",
+      "result": "PASS"
+    },
+    {
+      "scenario": "S4",
+      "check": "denial status semantics under non-owner runtime role",
+      "role": "all denied writers",
+      "expected": "403 for non-author/applicant, 422 for closed proceeding",
+      "actual": "statuses seen=[403, 422] (0/16 denials returned 404 resource_or_input_invalid)",
+      "result": "PASS"
+    }
+  ]
+}
