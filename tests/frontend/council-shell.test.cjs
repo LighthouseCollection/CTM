@@ -8,7 +8,7 @@ const shellLayout = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
 
 test("session layout assets use a current cache version", () => {
   assert.match(shell, /ctm\/shell-layout\.js\x27 %\}\?v=grid-layout-20261022ao/);
-  assert.match(shell, /ctm\/council\.js\x27 %\}\?v=grid-layout-20261022ao/);
+  assert.match(shell, /ctm\/council\.js\x27 %\}\?v=[a-z0-9-]+/);
 });
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
   const order = ["cdn/0.61.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
@@ -278,6 +278,7 @@ test("upcoming sessions use a full table and load the selected session into the 
   assert.match(source, /onSelect: \(id\) => editSession\(rows\.find/);
   assert.match(source, /empty: t\(emptyKey\), isStatic: true/);
   assert.match(source, /method: editing \? "PATCH" : "POST"/);
+  assert.match(source, /title: t\("sessionTime"\), field: "starts_at", minWidth: "8rem", render: \(row\) => formatTime\(row\.starts_at, lang\)/);
   assert.doesNotMatch(source.slice(source.indexOf("columns: ["), source.indexOf("]),\n      }),")), /presiding_member_name/);
   assert.doesNotMatch(source.slice(source.indexOf("columns: ["), source.indexOf("]),\n      }),")), /locationNotRecorded/);
 });

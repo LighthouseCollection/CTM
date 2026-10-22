@@ -1397,7 +1397,7 @@
         label: t(titleKey), rows, selected, onSelect: (id) => editSession(rows.find((row) => row.id === id)), empty: t(emptyKey), isStatic: true,
         columns: [
           { title: t("sessionDate"), field: "date", kind: "name", minWidth: "8rem" },
-          { title: t("sessionTime"), field: "starts_at", minWidth: "11rem", render: (row) => formatSessionStart(row.starts_at, lang) || t("timeNotRecorded") },
+          { title: t("sessionTime"), field: "starts_at", minWidth: "8rem", render: (row) => formatTime(row.starts_at, lang) || t("timeNotRecorded") },
           { title: t("statusLabel"), field: "state", minWidth: "8rem", render: (row) => t(row.state) },
         ],
       }),
