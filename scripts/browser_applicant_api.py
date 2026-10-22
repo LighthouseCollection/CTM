@@ -1186,9 +1186,8 @@ try:
         signed_bytes=context.request.get(f"{BASE}/api/files/{signed_file}/").body()
         def decree_access_fixture():
             import hashlib
-            from django.utils import timezone
-            from tribunal.models import Decree,Proceeding,Attachment,FileVersion,FileTechnicalEvent,Case,Party
-            from tribunal.services.decisions import record_decision,close_case
+            from tribunal.models import Proceeding,Attachment,FileVersion,FileTechnicalEvent,Case,Party
+            from tribunal.services.decisions import record_decision,approve_decision,attest_signature,issue_decree
             from tribunal.services.files import write_private_original,private_path
             case=Case.objects.get(pk=current["case_id"])
             proceeding=Proceeding.objects.filter(case=case,status="open").order_by("-sequence").first()
@@ -1202,11 +1201,12 @@ try:
             entitlements={str(pk):("certificate" if str(pk)==party_id else "notice_only")
                 for pk in Party.objects.filter(case=case).values_list("pk",flat=True)}
             decision=record_decision(admin,proceeding.pk,"diss-applicant","Synthetic access test only",entitlements)
-            decree=Decree.objects.create(decision=decision,reference="DCR-SYNTHETIC-ACCESS",language="both",
-                signed_file=file,signer=president,issued_at=timezone.now())
-            close_case(admin,case,"synthetic_decree_access_fixture",notify_parties=False)
-            return str(decree.pk),str(file.pk)
-        decree_id,signed_file=fixture_db(decree_access_fixture)  # Synthetic stored signed bytes/closed state only, not issuance/signature acceptance.
+            approve_decision(admin,decision.pk,president.pk)
+            attest_signature(admin,file.pk,president.pk,"signed_scan",{"confirmed_signed":True,"fixture":"applicant access"})
+            decree=issue_decree(admin,decision.pk,file.pk,president.pk,"both")
+            return str(decree.pk),str(file.pk),decree.reference
+        # Authorized issuance over synthetic stored bytes/evidence; no live e-signature acceptance.
+        decree_id,signed_file,decree_reference=fixture_db(decree_access_fixture)
         missing_signed_file=str(uuid.uuid4())
         unreleased=context.request.get(f"{BASE}/api/files/{signed_file}/")
         if os.environ.get('CTM_APPLICANT_PRIVATE_RESOURCE_DENIAL_CONTRACT')=='hidden404':
@@ -1222,7 +1222,7 @@ try:
         assert released_row["signed_file"]["download_url"]==f"/api/files/{signed_file}/"
         page.get_by_role("button",name="Past cases",exact=True).click()
         page.get_by_text(current["case_number"],exact=True).click()
-        expect(page.get_by_text("DCR-SYNTHETIC-ACCESS",exact=True)).to_be_visible()
+        expect(page.get_by_text(decree_reference,exact=True)).to_be_visible()
         expect(page.get_by_text("English and Arabic",exact=True)).to_be_visible()
         certificate=page.get_by_role("link",name="View or download signed PDF",exact=True)
         expect(certificate).to_have_attribute("href",f"/api/files/{signed_file}/")
@@ -1276,11 +1276,7 @@ try:
         checks.append("Real explicit decree release grants exact stored synthetic PDF; withdrawal revokes retained full/range/preview/HEAD URLs with no-store delivery")
         # Default acceptance includes closure privacy. Explicit 0 is a baseline-only run.
         if os.environ.get("CTM_APPLICANT_REQUEST_CLOSURE_AUDIT","1")=="1":
-            def close_requests_fixture():
-                from tribunal.models import Case
-                from tribunal.services.decisions import close_case
-                close_case(admin,Case.objects.get(pk=current["case_id"]),"synthetic_request_closure_audit",notify_parties=False)
-            fixture_db(close_requests_fixture)
+            assert fixture_db(lambda:isolated_models.Case.objects.get(pk=current["case_id"]).status)=="closed"
             closed_requests=own_request_items("after-case-closure")
             closure_report={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],
                 "scope":"Isolated synthetic request closure privacy diagnostic",
