@@ -30,20 +30,17 @@ test("council modules load in order before app.js with the pinned Plenix CDN", (
 
 test("shell loads the full Material icon stylesheet for requested navigation symbols", () => {
   assert.match(shell, /cdn\/0\.67\.0\/icons-all\.css/);
-  assert.match(app, /name: "document-search"/);
-  assert.match(app, /name: "person-cancel"/);
+  assert.match(app, /name: "document_search"/);
+  assert.match(app, /name: "person_cancel"/);
 });
 
-test("Plenix icon names use the CDN dash convention", () => {
-  const iconNames = fs.readdirSync("static/ctm")
-    .filter((file) => file.endsWith(".js"))
-    .flatMap((file) => [...fs.readFileSync(`static/ctm/${file}`, "utf8").matchAll(/(?:\bicon|\bname)\s*:\s*"([^"]+)"/g)])
-    .map((match) => match[1]);
-  assert.ok(iconNames.length > 0);
-  assert.deepEqual(iconNames.filter((name) => name.includes("_")), []);
-  const navigationIcons = app.slice(app.indexOf("const navigationIcons"), app.indexOf("};", app.indexOf("const navigationIcons")));
-  const navigationNames = [...navigationIcons.matchAll(/:\s*"([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(navigationNames.filter((name) => name.includes("_")), []);
+test("navigation icons use the live CDN material filename convention", () => {
+  assert.match(app, /sessionsGroup: "calendar_month"/);
+  assert.match(app, /sessionsArchived: "calendar_lock"/);
+  assert.match(app, /name: "folder_shared"/);
+  assert.match(app, /name: "document_search"/);
+  assert.match(app, /name: "person_cancel"/);
+  assert.doesNotMatch(app, /calendar-month|calendar-lock|folder-shared|document-search|person-cancel/);
 });
 
 test("case workspaces use the CDN contained tab variant", () => {
@@ -196,11 +193,11 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.match(app, /cases: page === "myCases" \? data\.items\.filter\(\(row\) => row\.assigned_member_id === user\.id\) : data\.items/);
   assert.match(app, /\["home", "myCases", "cases", "archived", "past"\]\.includes\(page\)/);
   assert.match(app, /view: page === "myCases" \? "mine" : page === "archived" \? "archived" : "active"/);
-  assert.match(app, /id === "search"\s*\? h\(P\.Icon, \{ name: "document-search"/);
+  assert.match(app, /id === "search"\s*\? h\(P\.Icon, \{ name: "document_search"/);
   assert.match(app, /sessions: "today"/);
-  assert.match(app, /sessionsGroup: "calendar-month"/);
+  assert.match(app, /sessionsGroup: "calendar_month"/);
   assert.match(app, /cases: "work"/);
-  assert.match(app, /sessionsArchived: "calendar-lock"/);
+  assert.match(app, /sessionsArchived: "calendar_lock"/);
   assert.match(app, /\{ id: "sessions", icon: navigationIcon\("sessions"\), label: t\("sessionCurrent"\) \}/);
   assert.match(app, /heading: t\("tribunalSessions"\),\s*icon: navigationIcon\("sessionsGroup"\)/);
   assert.match(app, /const appealsReturnIcon = \(\) =>/);
@@ -381,7 +378,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(app, /communications: "Email"/);
   assert.match(app, /caseCollaboration: "Email & Notes"/);
   assert.match(app, /items: ["case", "timeline", "parties", "marriage", "separation"]/);
-  assert.match(app, /id === "separation"\s*\? h\(P\.Icon, \{ name: "person-cancel"/);
+  assert.match(app, /id === "separation"\s*\? h\(P\.Icon, \{ name: "person_cancel"/);
   assert.match(app, /page === "separation" && council && councilModule\?\.CaseSeparation/);
   assert.match(app, /items: \["communications", "calls", "notes"\]/);
   assert.match(councilCase, /function CaseSeparation\(\{ api, lang, user, caseId \}\)/);
@@ -546,7 +543,7 @@ test("case hearings use full-width current and past tabs with an in-progress hea
 });
 
 test("case navigation uses the requested Material folder icons", () => {
-  assert.match(app, /id: "myCases", icon: h\(P\.Icon, \{ name: "folder-shared", "aria-hidden": true \}\), label: t\("myCases"\)/);
+  assert.match(app, /id: "myCases", icon: h\(P\.Icon, \{ name: "folder_shared", "aria-hidden": true \}\), label: t\("myCases"\)/);
   assert.match(app, /id: "cases", icon: h\(P\.Icon, \{ name: "folder", "aria-hidden": true \}\), label: t\("allCases"\)/);
 });
 

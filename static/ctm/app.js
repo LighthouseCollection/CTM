@@ -14,7 +14,7 @@
   // Separately loaded council workspace module (static/ctm/council.js), if present.
   const councilModule = window.CTMCouncil || null;
   const navigationIcons = {
-    home: "home", sessions: "today", sessionsGroup: "calendar-month", sessionsUpcoming: "calendar", sessionsArchived: "calendar-lock", cases: "work", search: "search",
+    home: "home", sessions: "today", sessionsGroup: "calendar_month", sessionsUpcoming: "calendar", sessionsArchived: "calendar_lock", cases: "work", search: "search",
     archived: "archive", statistics: "chart", applications: "doc-text",
     appointments: "schedule", past: "archive", case: "document", timeline: "progress",
     parties: "settings-users", marriage: "wedding", separation: "move", petition: "doc-text",
@@ -28,9 +28,9 @@
     );
   const navigationIcon = (id) =>
     id === "search"
-      ? h(P.Icon, { name: "document-search", "aria-hidden": true })
+      ? h(P.Icon, { name: "document_search", "aria-hidden": true })
       : id === "separation"
-      ? h(P.Icon, { name: "person-cancel", "aria-hidden": true })
+      ? h(P.Icon, { name: "person_cancel", "aria-hidden": true })
       : id === "marriage"
         ? h(P.Icon, { name: "wedding", "aria-hidden": true })
       : id === "decision" || id === "hearings"
@@ -1431,7 +1431,7 @@
       { id: "sessionsArchived", icon: navigationIcon("sessionsArchived"), label: t("sessionArchived") },
     ];
     const casesNavigationItems = [
-      { id: "myCases", icon: h(P.Icon, { name: "folder-shared", "aria-hidden": true }), label: t("myCases") },
+      { id: "myCases", icon: h(P.Icon, { name: "folder_shared", "aria-hidden": true }), label: t("myCases") },
       { id: "cases", icon: h(P.Icon, { name: "folder", "aria-hidden": true }), label: t("allCases") },
       { id: "archived", icon: navigationIcon("archived"), label: t("archivedCases") },
       { id: "statistics", icon: navigationIcon("statistics"), label: t("statistics"), disabled: unavailable.has("statistics") },
