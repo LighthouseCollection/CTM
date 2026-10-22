@@ -444,3 +444,30 @@
 }
 
 .ctm-demo-evidence-gallery__item:hover img { transform: scale(1.03); }
+
+/* Demo-only documents supplied for the CTM walkthrough. */
+.ctm-demo-document-list {
+  display: grid;
+  gap: var(--plx-space-sm, .75rem);
+}
+
+.ctm-demo-document-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--plx-space-md, 1rem);
+  padding: var(--plx-space-sm, .75rem);
+  background: var(--plx-sys-color-surface-subtle, #f8fafc);
+  border: 1px solid var(--plx-sys-color-border, #d7dce4);
+  border-radius: var(--plx-radius-md, .5rem);
+}
+
+.ctm-demo-document-list__type {
+  margin-block-start: .125rem;
+  color: var(--plx-sys-color-text-muted, #5f6b7a);
+  font-size: var(--plx-font-size-sm, .875rem);
+}
+
+@media (max-width: 560px) {
+  .ctm-demo-document-list__item { align-items: flex-start; flex-direction: column; }
+}

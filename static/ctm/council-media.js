@@ -346,6 +346,10 @@
       demoEvidenceHint: "Demo-only images supplied for the case review walkthrough.",
       demoEvidenceImage: "Open demo evidence image {number}",
       documentsTitle: "Documents",
+      demoDocumentsTitle: "Demo documents",
+      demoDocumentsHint: "Demo-only documents supplied for the case review walkthrough.",
+      openDocument: "Open document",
+      downloadDocument: "Download document",
       olderVersions: "Include older versions",
       noFiles: "No technically cleared files are available in this section.",
       chooseFile: "Select a file",
@@ -557,6 +561,10 @@
       demoEvidenceHint: "صور تجريبية مضافة لشرح مراجعة القضية فقط.",
       demoEvidenceImage: "فتح صورة الدليل التجريبي {number}",
       documentsTitle: "المستندات",
+      demoDocumentsTitle: "مستندات تجريبية",
+      demoDocumentsHint: "مستندات تجريبية مضافة لشرح مراجعة القضية فقط.",
+      openDocument: "فتح المستند",
+      downloadDocument: "تنزيل المستند",
       olderVersions: "تضمين الإصدارات السابقة",
       noFiles: "لا توجد ملفات اجتازت فحص الأمان في هذا القسم.",
       chooseFile: "اختر ملفًا",
@@ -2092,6 +2100,10 @@
       alt: t("demoEvidenceImage", { number: index + 1 }),
       title: t("demoEvidenceImage", { number: index + 1 }),
     }));
+    const demoDocuments = [
+      { name: "PDF Test.pdf", type: "PDF", src: "/static/ctm/demo-documents/PDF-Test.pdf" },
+      { name: "MSWORD TEST.docx", type: "Word document", src: "/static/ctm/demo-documents/MSWORD-TEST.docx" },
+    ];
     return h(
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
@@ -2107,6 +2119,20 @@
               onClick: () => setDemoViewerIndex(index),
               "aria-label": t("demoEvidenceImage", { number: index + 1 }),
             }, h("img", { src, alt: t("demoEvidenceImage", { number: index + 1 }) })),
+          )),
+        ))
+        : null,
+      section === "documents"
+        ? h(P.Panel, { icon: "doc-text", title: t("demoDocumentsTitle") }, h(P.Stack, { gap: "sm" },
+          h(P.Text, null, t("demoDocumentsHint")),
+          h("div", { className: "ctm-demo-document-list" }, ...demoDocuments.map((document) =>
+            h("article", { key: document.src, className: "ctm-demo-document-list__item" },
+              h("div", null, h("strong", null, document.name), h("div", { className: "ctm-demo-document-list__type" }, document.type)),
+              h(P.Inline, { wrap: true },
+                h(P.Button, { size: "sm", href: document.src, target: "_blank", rel: "noreferrer" }, t("openDocument")),
+                h("a", { className: "plx-button plx-button--secondary plx-button--sm", href: document.src, download: document.name }, t("downloadDocument")),
+              ),
+            ),
           )),
         ))
         : null,
