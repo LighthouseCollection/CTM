@@ -113,8 +113,8 @@
 
 .ctm-spouse-photo-control__change {
   color: var(--plx-sys-color-text-primary);
-  font-size: var(--plx-sys-font-size-caption);
-  line-height: var(--plx-sys-line-height-caption);
+  font-size: var(--plx-comp-badge-sm-font-size);
+  line-height: 1;
   cursor: pointer;
 }
 

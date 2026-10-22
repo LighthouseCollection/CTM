@@ -2495,6 +2495,7 @@ ${ar}` : en;
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
+    const [expandedParties, setExpandedParties] = R.useState({});
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const record = state.data;
@@ -2539,7 +2540,13 @@ ${ar}` : en;
             key: party.id,
             title: spouseHeaderTitle(P, h, t, party),
             collapsible: true,
-            defaultExpanded: false,
+            expanded: Boolean(expandedParties[party.id]),
+            onToggle: (next) => setExpandedParties((current) => ({ ...current, [party.id]: next })),
+            onClick: (event) => {
+              if (!event.target.closest(".plx-panel__header")) return;
+              if (event.target.closest(".plx-panel__toggle, .ctm-spouse-photo-control__change, .ctm-spouse-photo-control__input")) return;
+              setExpandedParties((current) => ({ ...current, [party.id]: !current[party.id] }));
+            },
             strings: { collapse: t("collapse"), expand: t("expand") },
           },
           h(
