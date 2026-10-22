@@ -13,6 +13,10 @@ test("static table headers retain their full label on hover", () => {
   assert.match(shellLayout, /typeIcons: false/);
 });
 
+test("shared person pills prefer recorded gender over the generic person treatment", () => {
+  assert.match(shellLayout, /gender \? \{ gender \} : \{ person: true \}/);
+});
+
 test("session layout assets use a current cache version", () => {
   assert.match(shell, /ctm\/shell-layout\.js\x27 %\}\?v=[a-z0-9-]+/);
   assert.match(shell, /ctm\/council\.js\x27 %\}\?v=[a-z0-9-]+/);
