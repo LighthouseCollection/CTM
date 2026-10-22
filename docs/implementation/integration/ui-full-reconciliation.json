@@ -28,7 +28,7 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "sha256": "be3a5b9e9d2dd69706d298a0b4de263483cbccea0f91f58b1e0b07822a15a30a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -83,7 +83,7 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "sha256": "be3a5b9e9d2dd69706d298a0b4de263483cbccea0f91f58b1e0b07822a15a30a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -785,7 +785,7 @@
         },
         {
           "file": "static/ctm/app.js",
-          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "sha256": "be3a5b9e9d2dd69706d298a0b4de263483cbccea0f91f58b1e0b07822a15a30a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -848,7 +848,7 @@
         },
         {
           "file": "static/ctm/app.js",
-          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "sha256": "be3a5b9e9d2dd69706d298a0b4de263483cbccea0f91f58b1e0b07822a15a30a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1138,7 +1138,7 @@
         },
         {
           "file": "static/ctm/app.js",
-          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "sha256": "be3a5b9e9d2dd69706d298a0b4de263483cbccea0f91f58b1e0b07822a15a30a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1363,7 +1363,7 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "sha256": "be3a5b9e9d2dd69706d298a0b4de263483cbccea0f91f58b1e0b07822a15a30a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1418,7 +1418,7 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "sha256": "be3a5b9e9d2dd69706d298a0b4de263483cbccea0f91f58b1e0b07822a15a30a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -1546,7 +1546,7 @@
         },
         {
           "file": "static/ctm/app.js",
-          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "sha256": "be3a5b9e9d2dd69706d298a0b4de263483cbccea0f91f58b1e0b07822a15a30a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         }
@@ -2004,7 +2004,7 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "sha256": "be3a5b9e9d2dd69706d298a0b4de263483cbccea0f91f58b1e0b07822a15a30a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         },
@@ -2355,7 +2355,7 @@
       "source_references": [
         {
           "file": "static/ctm/app.js",
-          "sha256": "e5fb8e7d0f682efd33cb09265c0ce4b96a6d10b79d85b0415d7f4669c84b0a41",
+          "sha256": "be3a5b9e9d2dd69706d298a0b4de263483cbccea0f91f58b1e0b07822a15a30a",
           "review_anchor": 1,
           "anchor_scope": "Module-level source hash; prototype control source lines are in ui-prototype-controls.json"
         },
@@ -2633,6 +2633,6 @@
       "persistent case row highlight after blur",
       "0.60.1 white bordered avatar, Card.icon, council-owned PDF rendering"
     ],
-    "login_branding": "Anonymous login: supplied seal outside CDN Panel, CTM logo inside, exact office lines; EN/AR switching at390/768/1440; decoded images; no overflow/errors; provider POST preserved. Synthetic provider availability, not live provider acceptance."
+    "login_branding": "Anonymous login: supplied seal/office lines in shell header, centered CTM logo and Sign in in centered login Panel; no welcome/council-use copy or language switch. Geometry/image/overflow/error/provider POST checks at390/768/1440. Synthetic providers, not live authentication acceptance."
   }
 }
