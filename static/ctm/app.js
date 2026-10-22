@@ -1702,6 +1702,13 @@
               : h(P.EmptyState, { title: t("noCurrent") }),
         );
       }
+      if (council && councilModule?.CasesTable && ["cases", "archived"].includes(page))
+        return h(councilModule.CasesTable, {
+          cases: data.items,
+          archived: page === "archived",
+          lang,
+          onOpen: (id) => go("case", id),
+        });
       if (["home", "cases", "archived", "past"].includes(page))
         return h(
           P.Stack,

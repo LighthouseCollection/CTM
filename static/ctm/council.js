@@ -298,6 +298,17 @@
       sessionClosed: "The council session was closed.",
       closedReadOnly: "This session is closed and read-only.",
       unknownParty: "Unknown spouse",
+      casesTitle: "Cases",
+      archivedTitle: "Archived",
+      searchCases: "Find a case by number or case manager",
+      caseNumber: "Case number",
+      noOpenCases: "No open cases.",
+      noArchived: "No closed cases.",
+      noMatchingCases: "No cases match.",
+      tablePerPage: "Rows per page",
+      tableRange: "{first}–{last} of {total}",
+      tableCount: "{shown} of {total}",
+      tablePages: "{label} pages",
       state_submitted: "Submitted",
       state_accepted: "Accepted",
       state_returned: "Returned for correction",
@@ -473,6 +484,17 @@
       sessionClosed: "تم إغلاق جلسة المجلس.",
       closedReadOnly: "هذه الجلسة مغلقة ومتاحة للقراءة فقط.",
       unknownParty: "زوج غير معروف",
+      casesTitle: "القضايا",
+      archivedTitle: "الأرشيف",
+      searchCases: "ابحث عن قضية برقمها أو بمسؤولها",
+      caseNumber: "رقم القضية",
+      noOpenCases: "لا توجد قضايا مفتوحة.",
+      noArchived: "لا توجد قضايا مغلقة.",
+      noMatchingCases: "لا توجد قضايا مطابقة.",
+      tablePerPage: "عدد الصفوف في الصفحة",
+      tableRange: "{first}–{last} من {total}",
+      tableCount: "{shown} من {total}",
+      tablePages: "صفحات {label}",
       state_submitted: "مُقدَّم",
       state_accepted: "مقبول",
       state_returned: "أُعيد للتصحيح",
@@ -1760,6 +1782,63 @@
     );
   }
 
+  // Cases workspace table (open or archived). Built-in header/row menus are off so
+  // no untranslated table chrome appears in the Arabic interface.
+  function caseRows(cases, archived, query) {
+    const q = String(query || "").trim().toLowerCase();
+    return (cases || [])
+      .filter((row) => (archived ? row.status === "closed" : row.status === "open"))
+      .filter((row) => !q || [row.number, row.assigned_member || ""].some((v) => String(v).toLowerCase().includes(q)));
+  }
+
+  function CasesTable({ cases, archived, lang, onOpen }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [query, setQuery] = R.useState("");
+    const rows = caseRows(cases, archived, query).map((row) => ({
+      id: row.id,
+      number: row.number,
+      status: t(row.status === "closed" ? "closed" : "open"),
+      manager: row.assigned_member || t("unassigned"),
+    }));
+    return h(
+      P.Stack,
+      { gap: "md" },
+      h(P.Text, { as: "h1", variant: "title" }, t(archived ? "archivedTitle" : "casesTitle")),
+      h(P.Field, { label: t("searchCases") }, h(P.Input, { type: "search", width: "md", value: query, onChange: (e) => setQuery(e.target.value) })),
+      rows.length
+        ? h(P.DataTable, {
+            label: t(archived ? "archivedTitle" : "casesTitle"),
+            data: rows,
+            index: "id",
+            mode: "pages",
+            pageSize: 25,
+            headerMenu: false,
+            rowMenuButton: false,
+            narrow: "list",
+            keyColumns: ["number", "manager", "status"],
+            columns: [
+              { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
+              { title: t("assigned"), field: "manager", kind: "name", sorter: "string" },
+              { title: t("statusLabel"), field: "status", sorter: "string" },
+            ],
+            strings: {
+              perPage: t("tablePerPage"),
+              range: t("tableRange"),
+              count: t("tableCount"),
+              pages: t("tablePages"),
+              empty: t("noMatchingCases"),
+              failed: t("loadFailed"),
+              retry: t("retry"),
+            },
+            onRowClick: (row) => onOpen(row.id),
+          })
+        : h(P.EmptyState, { title: t(query ? "noMatchingCases" : archived ? "noArchived" : "noOpenCases") }),
+    );
+  }
+
   window.CTMCouncil = {
     words,
     translator,
@@ -1793,5 +1872,7 @@
     SearchWorkspace,
     myCases,
     CouncilHome,
+    caseRows,
+    CasesTable,
   };
 })();

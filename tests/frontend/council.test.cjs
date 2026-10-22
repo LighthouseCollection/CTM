@@ -241,3 +241,15 @@ test("word tables have no duplicate keys that would silently override text", () 
     }
   }
 });
+
+test("cases table filters open or archived cases by number or manager", () => {
+  const cases = [
+    { id: "1", number: "20261020-01", status: "open", assigned_member: "Fr. Mark" },
+    { id: "2", number: "20261020-02", status: "open", assigned_member: null },
+    { id: "3", number: "20260901-01", status: "closed", assigned_member: "Fr. Mark" },
+  ];
+  assert.deepEqual([...C.caseRows(cases, false, "")].map((c) => c.id), ["1", "2"]);
+  assert.deepEqual([...C.caseRows(cases, true, "")].map((c) => c.id), ["3"]);
+  assert.deepEqual([...C.caseRows(cases, false, "mark")].map((c) => c.id), ["1"]);
+  assert.deepEqual([...C.caseRows(cases, false, "-02")].map((c) => c.id), ["2"]);
+});
