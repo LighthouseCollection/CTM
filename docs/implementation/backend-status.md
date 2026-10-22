@@ -1,3 +1,7 @@
+Current validation: **863 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0049. Nineteen new paper-source/permission/recovery regressions included; SQLite paper/receipt endpoint contract separately passed. Integration/UI/independent acceptance remains pending.
+
+C05 paper-recording API:0049 accepts only authorized clean current request-bound council PDF, preserves original/actual recorder and received date, stops online writes and provides exact replay/minimal receipt. No general narrative edits to paper source. See external-paper-completion.md. UI orchestration, print/wrong-upload exception/recording/invitation remain unfinished. Unique later UI metadata proposal0050.
+
 Current validation: **844 PostgreSQL passed, 1 skipped**; rollback/reapply through0048. Eleven focused message tests and SQLite recipient-authorization contract passed. Known same-case other party403, absent/unrelated422, own-thread send preserved; no new migration/grant/row access.
 
 Applicant recipient authorization normalized before RLS-filtered existence lookup: known same-case spouse403, absent/unrelated422, own thread works. Reuses existing applicant case-party metadata; no new row access, migration or grant. Prior equal422 guidance is superseded; see message-sender-projection.md. Exact-successor applicant/QA reruns remain pending.
@@ -148,7 +152,7 @@ UI's other requested backend contracts remain unfinished: approved own-profile/
 contact/portrait mutations, verified email/provider administration, broader normalized/admin session history, member
 contact/portrait editing and broader institutional history, formal-source factual discrepancy views,
 and consumer integration of stored settings beyond account status notices and filing document labels. Council C05 external
-recording/paper-completion/invitation contracts remain unfinished. Capability status/receipt is implemented; council UI binding and independent acceptance remain pending. Browser-entry routing and council link metadata are implemented; combined UI acceptance remains pending. Pagination and per-family settings
+recording/print/wrong-upload-correction/invitation contracts remain unfinished. Paper-completion API is implemented; council upload/readiness/completion UI and independent acceptance remain pending. Capability status/receipt is implemented; council UI binding and independent acceptance remain pending. Browser-entry routing and council link metadata are implemented; combined UI acceptance remains pending. Pagination and per-family settings
 edit schemas are addressed in these continuations;
 those separate contracts are not claimed complete or all blocked by credentials.
 

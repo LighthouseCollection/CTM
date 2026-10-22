@@ -56,6 +56,7 @@ urlpatterns = [
     path("api/requests/<uuid:request_id>/cancel/", api.report_request_cancel),
     path("api/pending-party-links/<uuid:pending_id>/cancel/", api.pending_link_cancel),
     path("api/requests/<uuid:request_id>/complete/", api.complete_report_request),
+    path("api/requests/<uuid:request_id>/paper-completion/", api.complete_paper_report_request),
     path("api/requests/<uuid:request_id>/release/", api.medical_release),
     path("api/requests/<uuid:request_id>/files/", api.request_files),
     path("api/cases/<uuid:case_id>/reports/", api.reports),

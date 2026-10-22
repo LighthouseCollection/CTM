@@ -1128,7 +1128,7 @@ def reports(request, case_id):
                 **({"author_id": str(report.author_id) if report.author_id else None,
                     "author": f"{report.author.first_name} {report.author.last_name}".strip() if report.author else None,
                     "submitted_at": report.created_at.isoformat(), "method": report.method,
-                    "can_revise": bool(report.author_id == request.user.pk and report.author
+                    "can_revise": bool(report.method != "paper" and report.author_id == request.user.pk and report.author
                         and report.author.role != "applicant" and report.request.proceeding.status == "open"
                         and report.request.case.status == "open" and (request.user.role in {"admin", "secretary"}
                             or report.request.case.assigned_member_id == request.user.pk))}
@@ -2037,3 +2037,11 @@ def external_report_status(request, request_id):
         return JsonResponse(external_status_receipt(request_id, token))
     except (PermissionDenied, ValidationError, ObjectDoesNotExist):
         return JsonResponse({'error':'link_unavailable'}, status=403)
+
+
+@endpoint(("POST",))
+def complete_paper_report_request(request, request_id):
+    from tribunal.services.reports import complete_external_paper
+    data = body(request)
+    return JsonResponse(encoded(complete_external_paper(request.user, request_id,
+        data.get('file_id'), data.get('completion_date'), expected_version=data.get('expected_version'))), status=201)

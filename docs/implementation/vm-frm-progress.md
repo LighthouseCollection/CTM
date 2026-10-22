@@ -1,3 +1,7 @@
+Current validation: **863 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0049. Nineteen new paper-source/permission/recovery regressions included; SQLite paper/receipt endpoint contract separately passed. Integration/UI/independent acceptance remains pending.
+
+C05 paper-recording API:0049 accepts only authorized clean current request-bound council PDF, preserves original/actual recorder and received date, stops online writes and provides exact replay/minimal receipt. No general narrative edits to paper source. See external-paper-completion.md. UI orchestration, print/wrong-upload exception/recording/invitation remain unfinished. Unique later UI metadata proposal0050.
+
 Current validation: **844 PostgreSQL passed, 1 skipped**; rollback/reapply through0048. Eleven focused message tests and SQLite recipient-authorization contract passed. Known same-case other party403, absent/unrelated422, own-thread send preserved; no new migration/grant/row access.
 
 Applicantd43a46a contract normalization: known other same-case party403 vs absent/unrelated422, using already-authorized case-party IDs before private row lookup. No policy/migration/grant expansion; priorb79c8c0 equal422 guidance is historical/superseded. See message-sender-projection.md.
