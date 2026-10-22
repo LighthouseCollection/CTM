@@ -1349,7 +1349,15 @@
     }
     function startCreate() {
       resetSessionForm();
+      select("");
+      setCreated(false);
       setFormOpen(true);
+    }
+    function cancelSessionForm() {
+      resetSessionForm();
+      select("");
+      setCreated(false);
+      setFormOpen(false);
     }
 
     async function create(event) {
@@ -1393,6 +1401,7 @@
         ? h(P.Toolbar, { label: t("tribunalSession") },
             h(P.Button, { icon: "add", onClick: startCreate, disabled: pending }, t("createSession")),
             h(P.Button, { icon: "pencil", onClick: () => selectedSession && editSession(selectedSession), disabled: pending || !selectedSession }, t("editSession")),
+            formOpen ? h(P.Button, { icon: "close", onClick: cancelSessionForm, disabled: pending }, t("cancel")) : null,
             formOpen ? h(P.Toolbar.Spacer) : null,
             formOpen ? h(P.Button, { icon: "save", type: "submit", form: "ctm-session-form", variant: "primary", disabled: pending, loading: pending }, t("saveSession")) : null,
           )

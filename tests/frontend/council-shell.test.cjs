@@ -520,3 +520,10 @@ test("case navigation uses the requested Material folder icons", () => {
   assert.match(app, /id: "myCases", icon: h\(P\.Icon, \{ name: "folder_shared", "aria-hidden": true \}\), label: t\("myCases"\)/);
   assert.match(app, /id: "cases", icon: h\(P\.Icon, \{ name: "folder", "aria-hidden": true \}\), label: t\("allCases"\)/);
 });
+
+test("upcoming session editing offers Cancel that clears selection and closes the form", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const source = council.slice(council.indexOf("function SessionList"), council.indexOf("function AgendaItemCard"));
+  assert.match(source, /function cancelSessionForm\(\)[\s\S]*select\(""\)[\s\S]*setFormOpen\(false\)/);
+  assert.match(source, /icon: "close", onClick: cancelSessionForm, disabled: pending[\s\S]*t\("cancel"\)/);
+});
