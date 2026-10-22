@@ -601,3 +601,12 @@ def test_session_metadata_can_be_edited_before_a_hearing(filed, people):
     assert updated.date == date(2030, 2, 9)
     assert updated.presiding_member_id == people["president"].pk
     assert updated.location == "St. Mark Coptic Orthodox Church"
+
+
+def test_admin_only_account_cannot_be_a_council_voter(filed, people):
+    decision = record_decision(people["admin"], filed.proceeding_id, "denied", "Recorded grounds", {})
+    with pytest.raises(PermissionDenied):
+        cast_vote(people["admin"], decision.pk, "approve")
+    recorded = cast_vote(people["admin"], decision.pk, "approve", people["member"].pk)
+    assert recorded.member_id == people["member"].pk
+    assert recorded.actor_id == people["admin"].pk

@@ -104,7 +104,7 @@ test("tally lists the whole roster and counts only the latest vote per member", 
   assert.equal(result.rows.length, 3);
   assert.deepEqual(plain(result.counts), { approve: 1, deny: 0, abstain: 1, none: 1 });
   assert.equal(result.rows[2].vote, null);
-  assert.deepEqual(plain(C.councilRoster([{ id: "x", role: "applicant" }, ...roster]).map((r) => r.id)), ["m1", "m2", "m3"]);
+  assert.deepEqual(plain(C.councilRoster([{ id: "x", role: "applicant" }, { id: "admin-only", role: "admin" }, ...roster]).map((r) => r.id)), ["m1", "m2", "m3"]);
 });
 
 const bank = [

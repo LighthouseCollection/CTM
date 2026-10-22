@@ -121,6 +121,8 @@ def cast_vote(actor, decision_id, choice, member_id=None, *, idempotency_key=Non
     current_decision(decision)
     member = Account.objects.get(pk=member_id or actor.pk, is_active=True)
     staff(member)
+    if member.role not in {"president", "secretary", "member"}:
+        raise PermissionDenied("Only council members may be recorded as voters.")
     if member.pk != actor.pk:
         administrator(actor)
     if not isinstance(choice, str) or choice not in {"approve", "deny", "abstain"}:
