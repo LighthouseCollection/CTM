@@ -88,6 +88,8 @@ QuestionnaireVersion.objects.create(purpose="appeal",number=1,published=True,
     definition={"fields":[{"code":"new_information","type":"textarea","required":True,
         "label_en":"New information for consideration","label_ar":"معلومات جديدة للنظر فيها"}]},
     declaration_en="Synthetic appeal declaration only",declaration_ar="إقرار استئناف تجريبي للاختبار فقط")
+release_definition=QuestionnaireVersion.objects.create(purpose="medical_release",number=1,published=True,definition={},
+    declaration_en="Synthetic bound professional disclosure only",declaration_ar="تفويض إفصاح مهني تجريبي مرتبط فقط")
 
 def session_cookie(account):
     client=Client()
@@ -559,23 +561,129 @@ try:
             from django.utils import timezone
             from tribunal.models import ReportRequest,Proceeding
             proceeding=Proceeding.objects.filter(case_id=current["case_id"],status="open").first()
-            for kind,state,title in [("intake","sent","Own sent intake"),("medical","sent","Own assessment"),
+            for kind,state,title in [("intake","sent","Own sent intake"),("intake","sent","Own unresolved intake"),("medical","sent","Own assessment"),
                                      ("intake","draft","Private staff draft"),("interview","sent","Private interview"),
                                      ("external_priest","sent","Private external request")]:
                 ReportRequest.objects.create(case_id=current["case_id"],proceeding=proceeding,subject_id=party_id,
                     author=admin,kind=kind,state=state,title=title,language="both",sent_at=timezone.now() if state=="sent" else None,
                     instructions="Own private request instructions",questions=[{"code":"Q1","version":1,
-                        "en":"Own bound request question","ar":"سؤال خاص بالطلب"}] if kind=="intake" else [])
+                        "en":"Own bound request question" if title=="Own sent intake" else "Unresolved bound question",
+                        "ar":"سؤال خاص بالطلب"}] if kind=="intake" else [])
         fixture_db(own_requests_fixture)  # Synthetic sent snapshots; not institution wording/send acceptance.
         own_requests=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"]
-        assert {row["title"] for row in own_requests}=={"Own sent intake","Own assessment"}
-        assert all("can_respond" not in row and "release_scope" not in row for row in own_requests)
+        assert {row["title"] for row in own_requests}=={"Own sent intake","Own unresolved intake","Own assessment"}
+        assert all(isinstance(row["can_respond"],bool) and len(row["request_version"])==64 for row in own_requests)
+        intake_request=next(row for row in own_requests if row["title"]=="Own sent intake")
+        assessment_request=next(row for row in own_requests if row["title"]=="Own assessment")
+        page.get_by_role("navigation").get_by_role("button",name="Home",exact=True).click()
+        page.get_by_text(current["case_number"],exact=True).click()
+        intake_panel=page.get_by_role("region",name="Own sent intake",exact=True)
+        intake_panel.get_by_role("button",name="Open request",exact=True).click()
+        expect(page.get_by_label("Own bound request question",exact=True)).to_be_enabled()
+        page.get_by_label("Own bound request question",exact=True).fill("Own private bound intake answer")
+        assert not errors,errors
+        page.locator("#main").get_by_role("button",name="Back to cases",exact=True).click()
+        expect(page.get_by_text("Your local response has not been submitted.",exact=False)).to_be_visible()
+        page.get_by_role("button",name="Keep editing",exact=True).click()
+        assert context.request.post(f"{BASE}/api/requests/{intake_request['id']}/complete/",data={
+            "expected_version":"0"*64,"answers":{"Q1":"Stale"}},headers={"X-CSRFToken":csrf}).status==422
+        page.get_by_role("button",name="Review response",exact=True).click()
+        with page.expect_response(lambda response:response.url==f"{BASE}/api/requests/{intake_request['id']}/complete/") as intake_sent:
+            page.get_by_role("button",name="Submit response",exact=True).click()
+        assert intake_sent.value.status==201,intake_sent.value.text()
+        intake_payload=intake_sent.value.request.post_data_json;intake_report=intake_sent.value.json()["id"]
+        assert intake_payload=={"expected_version":intake_request["request_version"],"answers":{"Q1":"Own private bound intake answer"}}
+        expect(page.get_by_role("region",name="Own response receipt",exact=True)).to_be_visible()
+        replay=context.request.post(f"{BASE}/api/requests/{intake_request['id']}/complete/",data=intake_payload,headers={"X-CSRFToken":csrf})
+        assert replay.status==201 and replay.json()["id"]==intake_report
+        changed={**intake_payload,"answers":{"Q1":"Changed retry"}}
+        assert context.request.post(f"{BASE}/api/requests/{intake_request['id']}/complete/",data=changed,headers={"X-CSRFToken":csrf}).status==422
+        from tribunal.models import ReportRevision,MedicalRelease
+        assert fixture_db(lambda:ReportRevision.objects.filter(report_id=intake_report).count())==1
+        checks.append("Actual intake browser binds fingerprint/questions, guards local navigation, rejects stale write and recovers one receipt on exact replay")
+        page.get_by_role("button",name="Back to requests",exact=True).click()
+        page.get_by_role("region",name="Own assessment",exact=True).get_by_role("button",name="Open request",exact=True).click()
+        expect(page.get_by_text("Synthetic bound professional disclosure only",exact=True)).to_be_visible()
+        expect(page.get_by_text("No signed release is recorded.",exact=True)).to_be_visible()
+        assert page.get_by_role("button",name="Submit response",exact=True).count()==0
+        assert context.request.post(f"{BASE}/api/requests/{assessment_request['id']}/complete/",data={
+            "expected_version":assessment_request["request_version"],"answers":{"files":[]}},headers={"X-CSRFToken":csrf}).status==422
+        checks.append("Actual assessment read binds published bilingual disclosure and explicit capability; upload alone cannot stand in for consent or report submission")
+        request_pdf=b"%PDF-1.7 synthetic-request-original-only"
+        for purpose,legend,name in [("report","Report or response evidence","assessment.pdf"),("consent","Signed release original","consent.pdf")]:
+            slot=page.get_by_role("group",name=legend,exact=True)
+            slot.locator('input[type="file"]').set_input_files({"name":name,"mimeType":"application/pdf","buffer":request_pdf})
+            with page.expect_response(lambda response:response.url==BASE+"/api/files/" and response.request.method=="POST") as original:
+                slot.get_by_role("button",name="Upload original",exact=True).click()
+            assert original.value.status==201,original.value.text()
+            expect(page.get_by_text("The server acknowledged the upload.",exact=False)).to_be_visible()
+            expect(page.get_by_role("button",name="Refresh request and files",exact=True)).to_be_enabled()
+        request_files=context.request.get(f"{BASE}/api/requests/{assessment_request['id']}/files/")
+        assert request_files.status==200 and "no-store" in request_files.headers.get("cache-control","")
+        files=request_files.json()["items"];consent_original=next(file for file in files if file["purpose"]=="consent")
+        report_original=next(file for file in files if file["purpose"]=="report")
+        assert all(file["scan_state"]=="clean" and file["download_url"]==f"/api/files/{file['id']}/" for file in files)
+        assert staff.request.get(f"{BASE}/api/files/{report_original['id']}/").status==403
+        alien=browser.new_context();alien.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["outsider"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
+        assert alien.request.get(f"{BASE}/api/requests/{assessment_request['id']}/files/").status==403
+        assert alien.request.get(f"{BASE}/api/files/{report_original['id']}/").status==403
+        alien.close()
+        checks.append("Actual request multipart uploads derive subject/case/proceeding, preserve consent/report purpose and deny other subjects and unconsented council bytes")
+        fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=report_original["id"],task="scan",result="pending"))
+        page.get_by_role("button",name="Refresh request and files",exact=True).click()
+        expect(page.get_by_text("Report or response evidence · Safety check pending",exact=True)).to_be_visible()
+        assert context.request.get(f"{BASE}/api/files/{report_original['id']}/").status==403
+        fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=report_original["id"],task="scan",result="clean"))
+        page.get_by_role("button",name="Refresh request and files",exact=True).click()
+        expect(page.get_by_text("Report or response evidence · Safety check passed",exact=True)).to_be_visible()
+        checks.append("Latest actual technical event removes unsafe request byte access; clean refresh restores current original without implying consent")
+        page.get_by_role("button",name="العربية",exact=True).click()
+        expect(page.get_by_text("تفويض إفصاح مهني تجريبي مرتبط فقط",exact=True)).to_be_visible()
+        page.set_viewport_size({"width":390,"height":1100})
+        assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
+        page.get_by_role("button",name="English",exact=True).click();page.set_viewport_size({"width":1280,"height":1000})
+        page.get_by_label("Choose the signed release original",exact=True).select_option(consent_original["id"])
+        expect(page.get_by_role("button",name="Review disclosure consent",exact=True)).to_be_disabled()
+        page.get_by_role("checkbox",name="I have read and accept this exact disclosure declaration for the council and this request.",exact=True).check()
+        page.get_by_role("button",name="Review disclosure consent",exact=True).click()
+        with page.expect_response(lambda response:response.url==f"{BASE}/api/requests/{assessment_request['id']}/release/") as signed:
+            page.get_by_role("button",name="Confirm disclosure consent",exact=True).click()
+        assert signed.value.status==201,signed.value.text()
+        consent_payload=signed.value.request.post_data_json
+        assert consent_payload=={"expected_version":assessment_request["request_version"],"declaration_id":str(release_definition.pk),
+            "accepted":True,"file_id":consent_original["id"],"scope":{"council":True}}
+        expect(page.get_by_text("A signed release for this request and purpose is recorded.",exact=True)).to_be_visible()
+        own_after_sign=next(row for row in context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"] if row["id"]==assessment_request["id"])
+        assert own_after_sign["can_respond"] and not own_after_sign["can_sign_release"]
+        assert own_after_sign["signed_releases"][0]["scope"]=={"council":True,"purpose":"medical","request_id":assessment_request["id"],"proceeding_id":assessment_request["proceeding_id"]}
+        assert staff.request.get(f"{BASE}/api/files/{report_original['id']}/").status==200
+        checks.append("Actual explicit consent binds displayed declaration ID, literal acceptance and exact safe CONSENT original; server retains request/purpose scope and enables report response")
+        replacement= context.request.post(BASE+"/api/files/",multipart={"request_id":assessment_request["id"],
+            "expected_request_version":assessment_request["request_version"],"category":"CONSENT","attachment_id":consent_original["attachment_id"],
+            "file":{"name":"replacement.pdf","mimeType":"application/pdf","buffer":request_pdf}},headers={"X-CSRFToken":csrf})
+        assert replacement.status==422,replacement.text()
+        assert context.request.get(f"{BASE}/api/files/{consent_original['id']}/").body()==request_pdf
+        page.get_by_role("checkbox",name=report_original["name"],exact=True).check()
+        page.get_by_role("button",name="Review response",exact=True).click()
+        with page.expect_response(lambda response:response.url==f"{BASE}/api/requests/{assessment_request['id']}/complete/") as assessment_sent:
+            page.get_by_role("button",name="Submit response",exact=True).click()
+        assert assessment_sent.value.status==201,assessment_sent.value.text()
+        assessment_payload=assessment_sent.value.request.post_data_json;assessment_report=assessment_sent.value.json()["id"]
+        assert assessment_payload=={"expected_version":assessment_request["request_version"],"answers":{"files":[report_original["id"]]}}
+        expect(page.get_by_role("region",name="Own response receipt",exact=True)).to_be_visible()
+        assert context.request.post(f"{BASE}/api/requests/{assessment_request['id']}/complete/",data=assessment_payload,headers={"X-CSRFToken":csrf}).json()["id"]==assessment_report
+        assert fixture_db(lambda:ReportRevision.objects.filter(report_id=assessment_report).count())==1
+        assert fixture_db(lambda:MedicalRelease.objects.filter(request_id=assessment_request["id"]).count())==1
+        assert page.locator('input[type="file"]').count()==0
+        checks.append("Actual assessment submission uses distinct report original, preserves signed consent original and recovers exactly one report/release without another signature")
+        page.get_by_role("button",name="Back to requests",exact=True).click()
         def closed_case_fixture():
             from tribunal.models import Case,Proceeding,OpenCaseClaim
             Case.objects.filter(pk=current["case_id"]).update(status="closed")
             Proceeding.objects.filter(case_id=current["case_id"],status="open").update(status="closed")
             OpenCaseClaim.objects.filter(case_id=current["case_id"]).delete()
         fixture_db(closed_case_fixture)  # Explicit closed-case setup, not decree/closure acceptance.
+        page.locator("#main").get_by_role("button",name="Back to cases",exact=True).click()
         page.get_by_role("navigation").get_by_role("button",name="Past cases",exact=True).click()
         page.get_by_text(current["case_number"],exact=True).click()
         expect(page.get_by_text("Own sent intake",exact=True)).to_be_visible()
@@ -738,10 +846,16 @@ try:
                 "scope":"Isolated synthetic request closure privacy diagnostic",
                 "preceding_scenario_groups_passed":len(checks),
                 "unsent_staff_draft_excluded":not any(row["title"]=="Private staff draft" for row in closed_requests),
-                "sent_request_retained":any(row["title"]=="Own sent intake" and row["state"]=="closed" for row in closed_requests)}
+                "sent_request_retained":any(row["title"]=="Own unresolved intake" and row["state"]=="closed" for row in closed_requests)}
             (ROOT/"request-closure-privacy-result.json").write_text(json.dumps(closure_report,indent=2),encoding="utf-8")
             print(json.dumps(closure_report,indent=2))
             assert closure_report["unsent_staff_draft_excluded"],"Backend request closure exposes unsent staff draft; see request-closure-privacy-result.json"
+            assert closure_report["sent_request_retained"]
+            for request_id,payload,report_id in [(intake_request["id"],intake_payload,intake_report),
+                    (assessment_request["id"],assessment_payload,assessment_report)]:
+                recovered=context.request.post(f"{BASE}/api/requests/{request_id}/complete/",data=payload,headers={"X-CSRFToken":csrf})
+                assert recovered.status==201 and recovered.json()["id"]==report_id
+            checks.append("Actual closure preserves never-sent draft privacy and sent closed reads; exact intake/assessment receipt replays still recover after closure")
         staff.close()
         assert page.locator("[style]").count()==0
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")

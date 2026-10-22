@@ -33,7 +33,7 @@ class Handler(BaseHTTPRequestHandler):
 server=HTTPServer(('127.0.0.1',0),Handler);threading.Thread(target=server.serve_forever,daemon=True).start()
 id='11111111-1111-4111-8111-111111111111';intent='22222222-2222-4222-8222-222222222222'
 request={'id':id,'title':'Own response request','kind':'intake','state':'sent','instructions':'Own instructions','language':'both',
- 'sent_at':'2026-10-21T12:00:00Z','can_respond':True,'response_version':2,
+ 'sent_at':'2026-10-21T12:00:00Z','can_respond':True,'request_version':'a'*64,'proceeding_id':intent,
  'questions':[{'code':'Q1','version':1,'en':'Bound response question','ar':'السؤال المحدد'}]}
 application={'id':id,'kind':'petition','version':2,'status':'draft','can_checkout':True,'fee':{'status':'due','amount_minor':25000,'currency':'USD'},
  'questionnaire':{'id':id,'version':1,'published':True,'declaration_en':'New declaration','declaration_ar':'إقرار جديد'}}
@@ -74,7 +74,7 @@ try:
         page.get_by_role('button',name='Submit response',exact=True).click()
         expect(page.get_by_role('alert')).to_contain_text('The result is uncertain.')
         expect(page.get_by_role('button',name='Submit response',exact=True)).to_be_disabled()
-        assert len(posts)==1 and posts[0]['body']=={'answers':{'Q1':'<b>Own local response</b>'},'expected_version':2}
+        assert len(posts)==1 and posts[0]['body']=={'answers':{'Q1':'<b>Own local response</b>'},'expected_version':'a'*64}
         checks.append('Bound intake response reviews escaped answers, guards navigation/unload and locks uncertain attempt without observations or retry')
         page.get_by_role('button',name='العربية',exact=True).click();page.set_viewport_size({'width':390,'height':950})
         assert page.locator('[style]').count()==0

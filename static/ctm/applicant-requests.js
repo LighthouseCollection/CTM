@@ -1,4 +1,4 @@
-/* Own request reading only. Response/release capability and signed scope remain server contracts. */
+/* Own sent requests and bound workspaces. Server capabilities govern every mutation. */
 (() => {
   "use strict";
   const uuid=value=>typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -21,13 +21,13 @@
       unavailable:"Your requests are unavailable. Refresh or contact the tribunal.",empty:"No requests are currently listed for you.",
       intake:"Written response request",medical:"Medical assessment request",psychological:"Psychological assessment request",
       sent:"Awaiting response",completed:"Completed",cancelled:"Cancelled",closed:"Closed",instructions:"Instructions",questions:"Requested questions",sentAt:"Sent",
-      respond:"Respond to request",response:"Online response submission is not available here yet. Contact the tribunal about responding to this request.",
+      open:"Open request",respond:"Respond to request",response:"Online response submission is not available here yet. Contact the tribunal about responding to this request.",
       release:"An assessment report and its signed, scoped release are separate requirements. Uploading a report does not grant disclosure consent. Contact the tribunal for the approved release and submission process."},
     ar:{title:"طلباتي من المجلس",refresh:"تحديث طلباتي",loading:"جارٍ تحميل طلباتك…",
       unavailable:"طلباتك غير متاحة حاليًا. حدّث الصفحة أو تواصل مع المجلس.",empty:"لا توجد طلبات مدرجة لك حاليًا.",
       intake:"طلب إجابة مكتوبة",medical:"طلب تقييم طبي",psychological:"طلب تقييم نفسي",
       sent:"بانتظار الإجابة",completed:"مكتمل",cancelled:"ملغى",closed:"مغلق",instructions:"التعليمات",questions:"الأسئلة المطلوبة",sentAt:"تاريخ الإرسال",
-      respond:"الإجابة عن الطلب",response:"تقديم الإجابات عبر هذه الصفحة غير متاح بعد. تواصل مع المجلس لمعرفة كيفية الإجابة عن هذا الطلب.",
+      open:"فتح الطلب",respond:"الإجابة عن الطلب",response:"تقديم الإجابات عبر هذه الصفحة غير متاح بعد. تواصل مع المجلس لمعرفة كيفية الإجابة عن هذا الطلب.",
       release:"تقرير التقييم والتفويض الموقّع المحدد النطاق متطلبان منفصلان. رفع التقرير لا يعني الموافقة على الإفصاح. تواصل مع المجلس للحصول على التفويض المعتمد وطريقة التقديم."}
   };
   function Requests({caseId,api,lang="en",onNavigationGuard}) {
@@ -42,6 +42,8 @@
       }).catch(()=>{if(active)setError(true);}).finally(()=>{if(active)setLoading(false);});
       return()=>{active=false;};
     },[caseId,api,revision]);
+    if(selected&&window.CTMApplicantAssessments?.validOwnRequest(selected))return h(window.CTMApplicantAssessments.Workspace,{
+      key:selected.id,request:selected,caseId,api,lang,onNavigationGuard,onBack:()=>{select(null);reload(n=>n+1);}});
     if(selected&&window.CTMApplicantResponses)return h(window.CTMApplicantResponses.ResponseEditor,{
       key:selected.id,request:selected,api,lang,onNavigationGuard,onBack:()=>{select(null);reload(n=>n+1);}});
     return h(P.Panel,{title:t("title")},h(P.Stack,null,
@@ -56,6 +58,7 @@
         row.questions.length?h(P.Panel,{title:t("questions")},h(P.List,{variant:"bullets",items:row.questions.map(q=>({
           children:h("span",{lang:row.language==="both"?lang:row.language,dir:row.language==="ar"||row.language==="both"&&lang==="ar"?"rtl":"ltr"},questionText(q,row,lang))
         }))})):null,
+        window.CTMApplicantAssessments?.validOwnRequest(row)?h(P.Button,{onClick:()=>select(row)},t("open")):
         window.CTMApplicantResponses?.canRespond(row)
           ?h(P.Button,{onClick:()=>select(row)},t("respond"))
           :row.state==="sent"?h(P.Notice,null,t(row.kind==="intake"?"response":"release")):null

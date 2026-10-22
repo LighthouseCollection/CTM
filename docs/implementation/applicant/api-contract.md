@@ -234,47 +234,41 @@ by the new UI fixtures. No replacement, signing or release write is exposed here
 Refresh clears old links before fetching; failed/malformed reads clear them too.
 
 
-## Own tribunal requests: actual read, response/release dependencies
+## Actual own request workspace (480a246)
 
-GET `/api/cases/{id}/requests/` exists at backend f0e21b4. Applicant reads are
-subject-account filtered and exclude draft, interview and external-priest requests.
-The panel consumes `items` with UUID `id`, `title`, `kind`, `state`, `instructions`,
-`language` (`en`,`ar`,`both`), offset-aware `sent_at` and bound `questions` snapshots
-(`code`,`version`,`en`,`ar`). Only sent/completed/cancelled/previously-sent closed intake/medical/psychological
-rows are rendered; malformed projections clear prior content. Request language
-controls which supplied wording appears. No translation is generated or substituted.
-Instructions are shown as escaped plain text; council author/subject identifiers,
-internal observations and other applicant content are not requested by the UI.
+GET `/api/cases/{id}/requests/` supplies sent own intake/medical/psychological
+requests, including previously sent closed rows. Staff drafts, interviews, external
+requests and other subjects are excluded. The client validates nonnull sent timestamps,
+bound question wording, UUID `proceeding_id`, opaque 64-hex `request_version`, and
+boolean `can_respond`, `can_upload`, `can_sign_release`. This fingerprint is not an
+integer response version. Own `response` receipts and exact `signed_releases` are
+retained. Supplied EN/AR text is escaped and displayed without invented translations.
 
-The existing POST `/api/requests/{id}/complete/` accepts `{answers,observations}`;
-applicants must not author observations. POST `/api/requests/{id}/release/` accepts
-`{file_id,scope}`. Neither is invoked by this read slice. The own read lacks explicit
-response/release capabilities, request/proceeding concurrency identity, approved
-release-definition read, existing signed scope and request-bound safe file listing.
-A request marked sent alone cannot authorize a write after closure/cancellation.
+GET `/api/requests/{id}/files/` must match request/proceeding/fingerprint. Only latest
+own originals are selectable; clean files may link only to their exact `/api/files/{id}/`
+route. Pending/rejected files expose no byte link. Multipart POST `/api/files/` sends
+`request_id`, `expected_request_version`, `category`, `file`; the server derives ownership
+and context. Consent accepts PDF/PNG/JPEG; clinical report originals are distinct.
 
-Before response UI integration, backend should supply own `can_respond` and
-`can_sign_release`, bound question/release definition versions, signed declaration
-text and recipient/purpose scope, current own request-scoped safe originals and
-submission/recovery semantics. Preserve report and signed release as distinct
-artifacts. No consent inferred from report upload, no council signing on behalf of
-the subject and no institutional declaration wording invented. Follow-up requests
-stay linked new requests, not edits to previous reports. Real signed-scope byte,
-OCR/search and disclosure enforcement remain backend acceptance.
+The exact published `release_definition` contains ID, version and both declarations.
+The applicant selects an own safe CONSENT original, explicitly accepts the displayed
+declaration, reviews, then POSTs `/api/requests/{id}/release/` with
+`{expected_version:request_version,declaration_id,accepted:true,file_id,scope:{council:true}}`.
+Retained scope must match council, kind purpose, request and proceeding. No report
+upload implies consent. An uncertain attempt blocks writes until authoritative refresh;
+only the matching declaration/signature/scope recovers consent success.
 
+POST `/api/requests/{id}/complete/` sends
+`{expected_version:request_version,answers:{question_code:string,files:[report_ids]}}`.
+All bound questions require answers. Clinical responses require signed exact scope and
+nonempty safe report originals; CONSENT cannot be report evidence. No applicant
+observations are sent. Review precedes submission. The report UUID acknowledges the
+response; exact replay returns the same receipt, including after closure, while a
+changed replay is rejected. Local answers/evidence and navigation/unload guards survive
+refresh or lost acknowledgement. Stale evidence requires explicit removal and review.
+Uploads and consent/response attempts block competing writes and pending navigation.
 
-## Prepared intake response and lifecycle actions
-
-An intake response editor becomes available only for explicit `can_respond:true`,
-positive `response_version`, state `sent` and supported bound questions. It sends
-only question-code answers and `expected_version` to the existing complete endpoint;
-no internal observations. Review precedes submission. Acknowledgement is a new
-report UUID, not a request UUID or proof of current request status. Every attempt
-locks against automatic retry; uncertain local answers remain visible and guarded.
-Navigation/unload protection applies until acknowledgement or explicit discard.
-Shared-shell navigation registration is supplied through the proposed patch.
-The current server supplies neither capability nor concurrency version/enforcement,
-so this prepared editor remains unavailable against the actual backend.
+## Prepared lifecycle actions
 
 Prepared lifecycle controls require `can_delete_draft:true` on a draft or
 `can_withdraw:true` on a submitted/returned/accepted petition or appeal. They send
@@ -306,21 +300,22 @@ candidate or interprets return query parameters as payment success. Backend must
 supply the original immutable snapshot and currently authorized URL. Missing data
 keeps the hold visible, with refresh/contact guidance.
 
-## Request closure privacy regression
+## Current verification: ten batches (2026-10-21)
 
-`close_case` changes both draft and sent requests to `closed`, while applicant GET
-requests excludes only state `draft` at f0e21b4. Real diagnostic proves formerly
-unsent staff draft content is returned with null `sent_at`. Previously sent closed
-requests are valid read-only rows; never-sent content is not. The UI rejects null
-sent timestamps, but API/RLS must exclude never-sent requests independently.
-Default API acceptance now fails on this regression. Baseline-only override is
-explicit and does not count as closure/privacy acceptance.
+Backend `480a246118cce8c4ac338c32c71c79cde74816d2` supplies the own request
+fingerprint, capabilities, scoped originals, published declaration and retained
+consent/response receipts. Intake and assessment workspaces now use these actual
+contracts. The previously reported closure disclosure is resolved and independently
+verified: never-sent drafts remain private; previously sent closed requests remain
+readable, and exact submitted responses recover their original receipts after closure.
+The default closure gate remains enabled.
 
+Final local checks: 66 frontend tests, 42 real API/browser scenario groups, five
+assessment interruption groups, nine next-batch groups, nine shell groups and four
+request-reader groups pass. The real API runner uses isolated SQLite, synthetic
+accounts/content, temporary backend archives and a scanner test policy. It does not
+establish PostgreSQL, live provider/payment/antivirus, institutional wording approval,
+signature issuance or operational delivery acceptance. See the consolidated ten-batch report and JSON evidence.
 
-Released-decree integration is independently verified against backend 444bad8:
-actual own empty/released/withdrawn reads, bilingual metadata, exact Plenix PDF
-action, Arabic mobile layout, linked-spouse isolation, no-store delivery and retained
-full/range/preview/HEAD denial after withdrawal. The fixture uses a dedicated council
-DEC attachment with a clean technical event, synthetic stored bytes and explicitly
-created decision/decree/closed state. It does not claim approval, signature capture
-or issuance acceptance. The unrelated unsent-request closure gate still fails.
+Released-decree reads and exact-byte withdrawal remain verified with synthetic
+stored DEC bytes. Real signing/issuance and PostgreSQL acceptance remain separate.

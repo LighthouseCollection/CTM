@@ -9,7 +9,7 @@ owners; applicant PR #5 remains draft.
 | --- | --- | --- |
 | 1 | Pending appeal supplements | UI prepared with review, safe evidence selection and uncertain-response locking. Actual owner supplement POST and staff denial verified; integration remains pending own supplement history and authoritative `can_supplement`. Existing POST additions accepts text/file IDs but has no idempotency key. |
 | 2 | Released decree access — read integration verified | Backend 444bad8 supplies own active release rows. Actual browser shows bilingual metadata/exact PDF link, isolates linked spouse, and removes withdrawn release links. Retained full/range/preview/HEAD URLs revoke. Synthetic stored PDF only; real signing/issuance and PostgreSQL acceptance remain separate. |
-| 3 | Applicant request responses and professional release | Actual own request reader implemented with bound questions/instructions; intake response editor prepared with review/guards/version payload. Response capability/version enforcement, approved release definition and signed scope remain pending. Closure currently exposes unsent drafts through the backend API (P1). Keep drafts/interviews/other spouse requests private; no signature or institutional wording invented. |
+| 3 | Request response/release operational acceptance | Actual fingerprint-bound intake and assessment responses, request originals, explicit published declaration consent and exact receipt recovery are integrated and locally verified at 480a246. Institution-approved wording, live clinical disclosure and PostgreSQL acceptance remain separate. |
 | 4 | Checkout recovery | Actual own payment history now blocks fresh checkout for unresolved/unknown candidates. Resume UI prepared; own pending candidate/original-attestation/resume contract is still missing. Recover an existing attempt without a new charge or signature; do not infer success from return URLs. |
 | 5 | Draft deletion and withdrawal controls | Explicit confirmation UI prepared with single-attempt locks and parent filing/navigation protection. Authoritative action capabilities and version enforcement remain pending. Returned filings must never use draft deletion; joint withdrawal and shared claim closure must follow owner decisions. |
 | 6 | Complete approved bilingual forms | Technical candidate checker and source JSON inventory added. Reference seed contains 59 English questions and no Arabic wording; this is not a bound applicant form. Institution-approved questionnaire/declaration/repeat labels and backend nested repeat validation remain pending. Synthetic fixtures are test data, not approval of content. |
@@ -32,11 +32,19 @@ party linking are explicit fixtures, not proof of decree issuance, council appea
 acceptance or identity onboarding. Supplement UI is prepared; its own read/capability contract remains pending.
 
 
-## Current acceptance blocker
+## Current verification: ten batches (2026-10-21)
 
-The default real API suite now checks never-sent request privacy after actual case
-closure and still fails at backend 444bad8 (previously f0e21b4): a staff draft changes to `closed`, then is
-returned by the applicant request endpoint. The frontend rejects its null sent
-stamp, but cannot repair API disclosure. See `request-closure-privacy-result.json`
-and GitHub #2. Do not call the full acceptance suite green. An explicit
-`CTM_APPLICANT_REQUEST_CLOSURE_AUDIT=0` run is baseline-only, not full acceptance.
+Backend `480a246118cce8c4ac338c32c71c79cde74816d2` supplies the own request
+fingerprint, capabilities, scoped originals, published declaration and retained
+consent/response receipts. Intake and assessment workspaces now use these actual
+contracts. The previously reported closure disclosure is resolved and independently
+verified: never-sent drafts remain private; previously sent closed requests remain
+readable, and exact submitted responses recover their original receipts after closure.
+The default closure gate remains enabled.
+
+Final local checks: 66 frontend tests, 42 real API/browser scenario groups, five
+assessment interruption groups, nine next-batch groups, nine shell groups and four
+request-reader groups pass. The real API runner uses isolated SQLite, synthetic
+accounts/content, temporary backend archives and a scanner test policy. It does not
+establish PostgreSQL, live provider/payment/antivirus, institutional wording approval,
+signature issuance or operational delivery acceptance. See the consolidated ten-batch report and JSON evidence.

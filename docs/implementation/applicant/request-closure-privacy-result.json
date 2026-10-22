@@ -1,7 +1,7 @@
 {
-  "backend_sha": "444bad8a14535a6911b53c554c1fd9b80831dd72",
+  "backend_sha": "480a246118cce8c4ac338c32c71c79cde74816d2",
   "scope": "Isolated synthetic request closure privacy diagnostic",
-  "preceding_scenario_groups_passed": 35,
-  "unsent_staff_draft_excluded": false,
+  "preceding_scenario_groups_passed": 41,
+  "unsent_staff_draft_excluded": true,
   "sent_request_retained": true
 }

@@ -1,5 +1,26 @@
 # Applicant workflow implementation slice
 
+## Current verification: ten batches (2026-10-21)
+
+Backend `480a246118cce8c4ac338c32c71c79cde74816d2` supplies the own request
+fingerprint, capabilities, scoped originals, published declaration and retained
+consent/response receipts. Intake and assessment workspaces now use these actual
+contracts. The previously reported closure disclosure is resolved and independently
+verified: never-sent drafts remain private; previously sent closed requests remain
+readable, and exact submitted responses recover their original receipts after closure.
+The default closure gate remains enabled.
+
+Final local checks: 66 frontend tests, 42 real API/browser scenario groups, five
+assessment interruption groups, nine next-batch groups, nine shell groups and four
+request-reader groups pass. The real API runner uses isolated SQLite, synthetic
+accounts/content, temporary backend archives and a scanner test policy. It does not
+establish PostgreSQL, live provider/payment/antivirus, institutional wording approval,
+signature issuance or operational delivery acceptance. See the consolidated ten-batch report and JSON evidence.
+
+## Earlier evidence (historical snapshots)
+
+Earlier missing-contract and closure-failure statements below describe their recorded backend versions; the current verification above supersedes those statuses.
+
 Implements issue #1 under governance #4 and the approved build-spec. This document
 records implementation boundaries, not replacement product or questionnaire approval.
 

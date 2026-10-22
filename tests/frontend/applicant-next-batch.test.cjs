@@ -6,7 +6,7 @@ for(const name of ['responses','recovery','lifecycle']){
  if(fs.existsSync(path))vm.runInNewContext(fs.readFileSync(path,'utf8'),context);
 }
 const id='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222';
-const response=()=>({id,kind:'intake',state:'sent',can_respond:true,response_version:2,
+const response=()=>({id,kind:'intake',state:'sent',can_respond:true,proceeding_id:other,request_version:"a".repeat(64),
  language:'both',questions:[{code:'Q1',version:1,en:'Question',ar:'السؤال'}]});
 test('response controller requires explicit capability and freezes uncertain response without retry',async()=>{
  const Q=context.window.CTMApplicantResponses;const row=response();let calls=0,payload;
@@ -14,7 +14,7 @@ test('response controller requires explicit capability and freezes uncertain res
  assert.equal(Q.canRespond({...row,kind:'medical'}),false);
  const session=Q.createResponseSession(row,async(url,options)=>{calls++;payload=JSON.parse(options.body);throw Error('lost');});
  assert.equal(await session.send({Q1:'Own answer'}),false);
- assert.equal(payload.expected_version,2);assert.deepEqual(payload.answers,{Q1:'Own answer'});
+ assert.equal(payload.expected_version,"a".repeat(64));assert.deepEqual(payload.answers,{Q1:'Own answer'});
  assert.equal('observations' in payload,false);assert.equal(session.state.error,'uncertain');
  await session.send({Q1:'Changed'});assert.equal(calls,1);
 });
