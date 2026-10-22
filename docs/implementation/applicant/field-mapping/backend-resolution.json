@@ -1,0 +1,47 @@
+{
+  "backend_sha": "ff8571720ae1940034832bfbb69ddf9503f94c0e",
+  "frontend_base": "104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc",
+  "verification": {
+    "frontend_tests": 96,
+    "direct_validator_cases": 17,
+    "backend_recursive_tests_sqlite": 30,
+    "actual_api_browser_sqlite_groups": 76,
+    "row_repeat_browser_fixture_groups": 9
+  },
+  "resolutions": [
+    {
+      "id": "F02",
+      "status": "technical validation verified in isolated SQLite/direct probes",
+      "evidence": "17 direct validator comparisons and30 archived backend recursive-answer tests pass; textarea publisher/runtime vocabulary aligned",
+      "remaining": "approved field choice sets/Unknown/requiredness and full runtime-role acceptance"
+    },
+    {
+      "id": "F04",
+      "status": "technical bindings clarified by backend and covered by archived tests",
+      "evidence": "restraining_orders[].case_number canonical; legacy number must match if both present; prior_marriages[].id UUID, spouse_name text, ecclesiastical_permit nullable text; no new permit-upload category",
+      "remaining": "institutional representation/requiredness and normalized typed backfill acceptance"
+    },
+    {
+      "id": "F06",
+      "status": "English code meanings and both mandatory categories corrected",
+      "evidence": "MC church; CMC civil; base petition requires both; archived tests pass",
+      "remaining": "exact approved Arabic civil certificate label and institutional content review"
+    },
+    {
+      "id": "F01/F05",
+      "status": "blocked",
+      "dependency": "institutional/configuration owners: full reviewed EN/AR bound labels/help/choices/conditions/declarations/release wording; no publication claimed"
+    },
+    {
+      "id": "F03",
+      "status": "unfinished backend/institution work",
+      "dependency": "approved semantic/answer-state mappings and guarded normalized migrations; current JSON adapter is not schema equivalence"
+    },
+    {
+      "id": "PG/integration",
+      "status": "awaiting recovery and acceptance",
+      "dependency": "governance/operator recover prior owned Docker container, reconcile successor integration, resolve older strict403/404 contract and investigate prior stall; ff85717 not rerun under PostgreSQL here"
+    }
+  ],
+  "scope": "Local isolated review candidate and source reconciliation; no approved content publication, normalized migration sign-off or PostgreSQL success"
+}

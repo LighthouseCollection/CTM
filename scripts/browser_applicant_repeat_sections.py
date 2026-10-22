@@ -39,6 +39,10 @@ for family,children in families.items():
   for code,kind in children:row[code]='2010-01-02' if kind=='date' else ('unknown' if family=='children' else 'active') if kind=='choice' else 'Original '+family+' '+str(index)
   rows.append(row)
  answers[family]=rows
+# Generic row-condition grammar fixture; this is not an added approved application question.
+fields[2]['item_fields'].append({'code':'fixture_detail','type':'text','label_en':'Fixture-only conditional detail','label_ar':'تفصيل شرطي تجريبي فقط','when':{'field':'outcome','equals':'needs_detail'}})
+answers['prior_applications'][0].update(outcome='needs_detail',fixture_detail='Original conditional source')
+answers['prior_applications'][1]['fixture_detail']='Hidden second-row source'
 app={'id':'fixture-repeat-app','version':0,'status':'draft','can_edit':True,'answers':answers,'questionnaire':{'id':'fixture-not-approved','version':1,'published':True,'definition':{'fields':fields}}}
 original=copy.deepcopy(app);writes=[];fail=False;errors=[];checks=[]
 server=HTTPServer(('127.0.0.1',0),Handler);threading.Thread(target=server.serve_forever,daemon=True).start()
@@ -52,6 +56,17 @@ try:
    if fail:route.abort('failed');return
    assert payload['expected_version']==app['version'];app={**app,'version':app['version']+1,'answers':copy.deepcopy(payload['answers'])};route.fulfill(status=201,json={'version':app['version']})
   page.route('**/api/**',route_api);page.goto(f'http://127.0.0.1:{server.server_port}/',wait_until='networkidle')
+  condition_region=page.get_by_role('region',name=label('prior_applications'),exact=True)
+  detail=condition_region.get_by_label('Fixture-only conditional detail',exact=True)
+  expect(detail).to_have_count(1);expect(detail).to_have_value('Original conditional source');detail.fill('Corrected conditional source')
+  condition_region.get_by_label(label('prior_applications.outcome'),exact=True).first.fill('ordinary')
+  expect(detail).to_have_count(0)
+  condition_region.get_by_label(label('prior_applications.outcome'),exact=True).nth(1).fill('needs_detail')
+  expect(detail).to_have_count(1);expect(detail).to_have_value('Hidden second-row source')
+  condition_region.get_by_label(label('prior_applications.outcome'),exact=True).nth(1).fill(original['answers']['prior_applications'][1]['outcome'])
+  condition_region.get_by_label(label('prior_applications.outcome'),exact=True).first.fill('needs_detail')
+  expect(detail).to_have_value('Corrected conditional source')
+  checks.append('Row-local conditions affect only the matching repeat row and restore exact hidden source values without creating an approved question')
   for family,children in families.items():
    region=page.get_by_role('region',name=label(family),exact=True)
    first,kind=children[0];region.get_by_label(label(family+'.'+first),exact=True).first.fill('2020-03-04' if kind=='date' else 'Corrected '+family)
@@ -71,6 +86,7 @@ try:
   page.screenshot(path=str(OUT/'ar-five-repeats-390.png'),full_page=True,caret='initial')
   checks.append('Failed save retains all five locally edited repeat families; Arabic390px/language switch preserves values without styles or overflow and performs no automatic retry')
   fail=False;page.get_by_role('button',name='حفظ المسودة',exact=True).click();expect(page.get_by_text('تم حفظ إجاباتك.',exact=True)).to_be_visible()
+  assert app['answers']['prior_applications'][0]['fixture_detail']=='Corrected conditional source'
   assert writes[-1]['answers']==frozen and len(writes)==2 and app['answers']['unmapped_root']==original['answers']['unmapped_root']
   for family,children in families.items():
    saved=app['answers'][family]
@@ -97,6 +113,7 @@ try:
     for code,kind in families[family]:expect(region.get_by_label(label(family+'.'+code),exact=True).nth(index)).to_have_value(row[code])
    assert app['answers'][family]==keep[family]
   checks.append('Arabic review/remove/save/reload across all five families retains surviving UUIDs and exact unmapped source values; no object coercion')
+  expect(page.get_by_label('Fixture-only conditional detail',exact=True)).to_have_value('Corrected conditional source')
   retained=copy.deepcopy(app['answers']);del app['questionnaire']['definition']['fields'][0]['item_fields'][0]['label_ar']
   page.reload(wait_until='networkidle');expect(page.get_by_text('The approved application form is not available.',exact=False)).to_be_visible()
   assert app['answers']==retained and len(writes)==3

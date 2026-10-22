@@ -1,5 +1,9 @@
 # Applicant acceptance reconciliation
 
+## Current backend validation alignment
+
+At ff85717:17 direct probes,30 archived backend SQLite recursive tests,76 applicant SQLite API/browser groups,96 frontend tests and nine row/repeat browser fixture groups pass. F02/F04 and English MC/CMC technical gaps are addressed; approved content, normalized schema and PostgreSQL/integration acceptance remain. [Successor report](backend-validation-report.md) | [Resolution JSON](field-mapping/backend-resolution.json). Earlier status snapshots below are historical.
+
 ## Current linked first-petition checkpoint
 
 Linked-spouse first-petition entry is implemented; actual two-filer and closed-case first-petition submission coverage replaces prior constructed-filing state.94 frontend tests, six entry fixture groups and nine shell groups pass. Unmodified integration104e4fd passes75 applicant API/browser groups; the explicit local review candidate with the named module/minimal hook passes76. This is not an integrated successor or institutional acceptance. [Report and blockers](linked-petition-report.md) | [Candidate JSON](linked-petition-api-result.json). Earlier counts and fixture gaps below are historical snapshots.
