@@ -440,7 +440,8 @@ try:
             finally:settings.STRIPE_SECRET_KEY=original
         retained_intent=fixture_db(retained_checkout_fixture)
         retained=context.request.get(f"{BASE}/api/applications/{app_id}/")
-        original_checkout=retained.json()["pending_checkout"]
+        retained_payload=retained.json()
+        original_checkout=retained_payload["pending_checkout"]
         assert "no-store" in retained.headers["cache-control"] and retained.json()["can_resume_checkout"]
         assert not retained.json()["can_checkout"] and not retained.json()["can_delete_draft"]
         assert original_checkout["id"]==retained_intent and original_checkout["version"]==ready_version
@@ -475,14 +476,61 @@ try:
             assert hidden_app.status==absent_app.status==404 and hidden_app.json()==absent_app.json()
         else:assert hidden_app.status==403
         probe.close()
-        for payment_state in ["processing","paid","needs_review"]:
-            fixture_db(lambda state=payment_state:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state=state))
-            page.get_by_role("button",name="Refresh application status",exact=True).click()
-            expect(page.get_by_text("An existing payment attempt must be resolved",exact=False)).to_be_visible()
-            expect(page.get_by_role("button",name="Resume existing secure checkout",exact=True)).to_have_count(0)
-            assert page.get_by_label("Your full name",exact=True).count()==0 and not checkout_posts
-        checks.append("Actual processing/paid/reconciliation candidates remove resume and fresh signature; foreign owner cannot read original checkout")
-        fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state="pending"))
+        if POSTGRES_OWNER:
+            # Finance states are monotonic in PostgreSQL. Exercise each terminal or
+            # in-flight projection on its own clone-only synthetic application
+            # instead of rewinding a successful payment candidate.
+            def finance_candidate_fixture():
+                import hashlib
+                from tribunal.models import Application,AnswerRevision,Attachment,FeeObligation,FileVersion,FileTechnicalEvent
+                from tribunal.services.applications import required_documents
+                from tribunal.services.files import private_path,write_private_original
+                source=Application.objects.select_related("questionnaire").get(pk=app_id)
+                actor=Account.objects.create_user(email=f"finance-{uuid.uuid4().hex}@example.invalid",email_verified=True)
+                candidate=Application.objects.create(owner=actor,kind="petition",status="draft",current_version=1,questionnaire=source.questionnaire)
+                FeeObligation.objects.create(application=candidate)
+                revision=AnswerRevision.objects.create(application=candidate,number=1,answers=retained_payload["answers"],actor=actor,questionnaire=source.questionnaire)
+                for source_file in required_documents(source,retained_payload["answers"]):
+                    payload=private_path(source_file.object_key).read_bytes()
+                    attachment=Attachment.objects.create(application=candidate,owner=actor,category=source_file.attachment.category,
+                        context=source_file.attachment.context,visibility="own")
+                    copied=FileVersion.objects.create(attachment=attachment,number=1,object_key=f"synthetic-finance/{uuid.uuid4().hex}",
+                        original_name=source_file.original_name,display_name=source_file.display_name,mime_type=source_file.mime_type,
+                        byte_count=len(payload),sha256=hashlib.sha256(payload).hexdigest(),actor=actor)
+                    FileTechnicalEvent.objects.create(file=copied,task="scan",result="clean")
+                    write_private_original(private_path(copied.object_key),payload)
+                return str(candidate.pk),str(revision.pk),actor
+            def finance_state_fixture(candidate_id,revision_id,state):
+                from tribunal.models import Application,AnswerRevision,CheckoutIntent
+                from tribunal.services.applications import required_documents
+                candidate=Application.objects.get(pk=candidate_id);revision=AnswerRevision.objects.get(pk=revision_id)
+                manifest=[{"id":str(file.pk),"sha256":file.sha256} for file in required_documents(candidate,revision.answers)]
+                intent=CheckoutIntent.objects.create(application=candidate,revision=revision,attestation={"accepted":True,"name":"Synthetic finance state"},manifest=manifest,
+                    provider_reference=f"cs_{state}_{uuid.uuid4().hex}",state=state)
+                return str(intent.pk)
+            for payment_state in ["processing","paid","needs_review"]:
+                candidate_id,candidate_revision,candidate_actor=fixture_db(finance_candidate_fixture)
+                candidate_context=browser.new_context()
+                try:
+                    candidate_context.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":session_cookie(candidate_actor),"url":BASE}])
+                    ready_candidate=candidate_context.request.get(f"{BASE}/api/applications/{candidate_id}/").json()
+                    assert ready_candidate["can_checkout"] and not ready_candidate["can_resume_checkout"]
+                    candidate_intent=fixture_db(lambda state=payment_state:finance_state_fixture(candidate_id,candidate_revision,state))
+                    candidate_projection=candidate_context.request.get(f"{BASE}/api/applications/{candidate_id}/").json()
+                    assert not candidate_projection["can_resume_checkout"] and candidate_projection["pending_checkout"] is None
+                    assert not candidate_projection["can_checkout"]
+                    assert fixture_db(lambda intent=candidate_intent:isolated_models.CheckoutIntent.objects.get(pk=intent).state)==payment_state
+                finally:candidate_context.close()
+        else:
+            for payment_state in ["processing","paid","needs_review"]:
+                fixture_db(lambda state=payment_state:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state=state))
+                page.get_by_role("button",name="Refresh application status",exact=True).click()
+                expect(page.get_by_text("An existing payment attempt must be resolved",exact=False)).to_be_visible()
+                expect(page.get_by_role("button",name="Resume existing secure checkout",exact=True)).to_have_count(0)
+                assert page.get_by_label("Your full name",exact=True).count()==0 and not checkout_posts
+            fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.filter(pk=retained_intent).update(state="pending"))
+        assert fixture_db(lambda:isolated_models.CheckoutIntent.objects.get(pk=retained_intent).state)=="pending"
+        checks.append("Actual processing/paid/reconciliation candidates remove checkout/resume capability from otherwise-ready filings while preserving exact immutable states; foreign owner cannot read original checkout")
         from unittest.mock import patch
         from django.utils import timezone
         future=timezone.now()+timezone.timedelta(hours=2)
@@ -491,7 +539,7 @@ try:
         assert expired_projection["pending_checkout"] is None and not expired_projection["can_resume_checkout"] and not expired_projection["can_checkout"]
         assert fixture_db(lambda:__import__('tribunal.models',fromlist=['CheckoutIntent']).CheckoutIntent.objects.get(pk=retained_intent).state)=="pending"
         checks.append("Authoritative provider-expiry read hides resume while preserving pending candidate and blocking fresh charge; elapsed time is not payment reconciliation")
-        changed_answers={**retained.json()["answers"],"statement":"Changed after original checkout"}
+        changed_answers={**retained_payload["answers"],"statement":"Changed after original checkout"}
         changed=context.request.post(f"{BASE}/api/applications/{app_id}/",data={"answers":changed_answers,"expected_version":ready_version},headers={"X-CSRFToken":csrf})
         assert changed.status==201,changed.text()
         changed_projection=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
