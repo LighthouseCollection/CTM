@@ -48,6 +48,10 @@
 
 Services on ctm-internal only (postgres, redis, meilisearch, celery-documents, celery-media, celery-beat, engram) cannot reach the internet. Services on both networks can communicate with internal services and reach external APIs.
 
+### Candidate replacement procedure
+
+A manually started Django candidate must attach to **both** ctm-internal (with its fixed application IP) and ctm-egress before it replaces the live container. Attaching only ctm-internal makes the health endpoint succeed but prevents Microsoft OAuth host resolution and sign-in. Verify DNS and HTTPS access to login.microsoftonline.com and graph.microsoft.com inside the candidate before accepting a replacement.
+
 ## Database roles
 
 | Role | Superuser | BYPASSRLS | Purpose |
