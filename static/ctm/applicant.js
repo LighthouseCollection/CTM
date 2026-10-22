@@ -355,7 +355,8 @@
       body = h(P.Stack, { gap: "lg" },
         text(`${t("status")}: ${t(record.status === "expired" ? "expiredStatus" :
           ["draft","submitted","returned","accepted","withdrawn","deleted","declined"].includes(record.status) ? record.status : "statusUnknown")}`),
-        record.case_number ? text(`${t("caseReference")}: ${record.case_number}`, {variant:"secondary"}) : null,
+        record.case_number ? h(P.Text,{variant:"secondary"},`${t("caseReference")}: `,
+          h("bdi",{dir:"ltr"},record.case_number)) : null,
         record.status === "draft" ? h(P.Notice, null, t("fee")) : null,
         !state.editable ? h(P.Notice, null, t("readOnly")) : text(t(record.status === "draft" ? "draftNotice" : "correctionNotice")),
         state.error ? h(P.Notice, { tone: "danger", role: "alert",

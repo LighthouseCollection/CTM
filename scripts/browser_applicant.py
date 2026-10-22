@@ -345,6 +345,17 @@ try:
         assert len(writes[-1]["answers"]["orders"])==1
         assert writes[-1]["answers"]["orders"][0]["id"]=="order-a"
         checks.append("Repeated records add/correct/review/remove in RTL while retaining stable IDs and opaque original data")
+        app.update(status="submitted",can_edit=False,can_submit=False,can_checkout=False,case_number="20261021-01")
+        page.reload(wait_until="networkidle")
+        expect(page.get_by_text("Application status: Submitted",exact=True)).to_be_visible()
+        expect(page.locator('bdi[dir="ltr"]').filter(has_text="20261021-01")).to_be_visible()
+        assert page.get_by_text("Save and review your current answers before filing.",exact=True).count()==0
+        assert page.get_by_text("Complete the required answers and documents, then refresh your application status.",exact=False).count()==0
+        page.get_by_role("button",name="العربية",exact=True).click()
+        expect(page.locator('bdi[dir="ltr"]').filter(has_text="20261021-01")).to_be_visible()
+        assert page.locator("[style]").count()==0
+        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        checks.append("Submitted records avoid new-filing prompts and case reference remains bidi-isolated in Arabic")
         assert not errors, errors
         browser.close()
 finally:

@@ -136,8 +136,9 @@
       state.submitted ? h(P.Notice, {tone:"success", role:"status"}, t("received")) : null,
       state.attempted ? h(P.Notice, {tone:"warning"}, t("frozen")) : null,
       (state.error || state.submitted) && onRefresh ? h(P.Button, {disabled:state.busy, onClick:onRefresh}, t("reload")) : null,
-      dirty || !reviewed ? h(P.Notice, null, t("saveFirst")) : null,
-      !actions.checkout && !actions.submit && !actions.resubmit ? h(P.Notice, null, t("unavailable")) : null,
+      ["draft","returned"].includes(application.status) && (dirty || !reviewed) ? h(P.Notice, null, t("saveFirst")) : null,
+      ["draft","returned"].includes(application.status) && !actions.checkout && !actions.submit && !actions.resubmit
+        ? h(P.Notice, null, t("unavailable")) : null,
       application.status === "draft" && actions.declaration && (actions.checkout || actions.submit)
         ? h(P.Stack, null,
           h(P.Panel, {title:t("declaration")}, h(P.Text, null, application.questionnaire[lang === "ar" ? "declaration_ar" : "declaration_en"])),

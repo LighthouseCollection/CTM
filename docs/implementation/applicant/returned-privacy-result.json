@@ -1,0 +1,20 @@
+{
+  "backend_sha": "6e690b5de5a107e6a76dad3cc259b1290ce6373a",
+  "acceptance": "F08/F25 direct-owner returned privacy",
+  "checks": {
+    "council_detail_keeps_formal_answers": false,
+    "council_version_keeps_formal_revision": false,
+    "council_history_excludes_pending_answers": false,
+    "council_case_files_exclude_pending_original": false,
+    "council_direct_download_denies_pending_original": false,
+    "council_range_denies_pending_original": false,
+    "council_preview_denies_pending_original": false,
+    "council_manifest_keeps_submitted_original": true
+  },
+  "remaining_surfaces": [
+    "search",
+    "notification routing/content",
+    "PostgreSQL RLS"
+  ],
+  "scope": "Isolated SQLite/browser API fixtures; no actual case data"
+}

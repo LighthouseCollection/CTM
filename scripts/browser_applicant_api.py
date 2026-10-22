@@ -267,14 +267,65 @@ try:
         assert returned.status==201,returned.text()
         current=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
         assert current["can_resubmit"] and not current["can_checkout"] and current["return_instructions"]=="Synthetic correction instruction"
+        from tribunal.models import Submission
+        formal_submission_id=submitted.json()["id"]
+        formal_submission=fixture_db(lambda:Submission.objects.get(pk=formal_submission_id))
+        fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=replacement_id,task="scan",result="pending"))
+        blocked=context.request.post(f"{BASE}/api/applications/{app_id}/submit/",data={
+            "expected_version":current["version"],"idempotency_key":"blocked-scan-"+uuid.uuid4().hex},headers={"X-CSRFToken":csrf})
+        assert blocked.status==422,blocked.text()
+        assert fixture_db(lambda:Submission.objects.filter(application_id=app_id).count())==1
+        still_returned=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
+        assert still_returned["status"]=="returned" and still_returned["fee"]["status"]=="waived" and not still_returned["can_resubmit"]
+        fixture_db(lambda:FileTechnicalEvent.objects.create(file_id=replacement_id,task="scan",result="clean"))
+        checks.append("Returned resubmit rechecks latest safety event; pending required original rejects atomically without a new submission or fee change")
         page.get_by_role("button",name="Refresh application status",exact=True).click()
         expect(page.get_by_text("Synthetic correction instruction",exact=True)).to_be_visible()
+        if os.environ.get("CTM_APPLICANT_ACCEPTANCE")=="returned_privacy":
+            # Separate acceptance probe: intentionally fails until direct-owner F08 is enforced.
+            formal=staff.request.get(f"{BASE}/api/applications/{app_id}/").json()
+            marker="Private pending returned correction"
+            page.get_by_label("First name",exact=False).fill(marker)
+            page.get_by_role("button",name="Save corrections",exact=True).click()
+            expect(page.get_by_text("Your answers have been saved.",exact=True)).to_be_visible()
+            slot=page.get_by_role("region",name=requirement["label_en"],exact=True)
+            slot.locator('input[type="file"]').set_input_files({"name":"pending.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.7 private-pending-correction"})
+            with page.expect_response(lambda response:response.url==BASE+"/api/files/" and response.request.method=="POST") as pending_received:
+                slot.get_by_role("button",name="Upload corrected original",exact=True).click()
+            assert pending_received.value.status==201,pending_received.value.text()
+            pending_file=pending_received.value.json()["id"]
+            expect(slot.get_by_role("link",name="Download original",exact=True)).to_have_attribute("href",f"/api/files/{pending_file}/")
+            staff_detail=staff.request.get(f"{BASE}/api/applications/{app_id}/").json()
+            staff_history=staff.request.get(f"{BASE}/api/applications/{app_id}/history/").json()
+            case_files=staff.request.get(f"{BASE}/api/cases/{current['case_id']}/files/").json()
+            privacy={
+                "council_detail_keeps_formal_answers":staff_detail["answers"].get("first_name")==formal["answers"].get("first_name"),
+                "council_version_keeps_formal_revision":staff_detail["version"]==formal["version"],
+                "council_history_excludes_pending_answers":marker not in json.dumps(staff_history),
+                "council_case_files_exclude_pending_original":pending_file not in json.dumps(case_files),
+                "council_direct_download_denies_pending_original":staff.request.get(f"{BASE}/api/files/{pending_file}/").status in {403,404},
+                "council_range_denies_pending_original":staff.request.get(f"{BASE}/api/files/{pending_file}/",headers={"Range":"bytes=0-3"}).status in {403,404},
+                "council_preview_denies_pending_original":staff.request.get(f"{BASE}/api/files/{pending_file}/?view=1").status in {403,404},
+                "council_manifest_keeps_submitted_original":replacement_id in json.dumps(staff_detail.get("manifest",[])) and pending_file not in json.dumps(staff_detail.get("manifest",[])),
+            }
+            report={"backend_sha":os.environ["CTM_TEST_BACKEND_SHA"],"acceptance":"F08/F25 direct-owner returned privacy",
+                    "checks":privacy,"remaining_surfaces":["search","notification routing/content","PostgreSQL RLS"],
+                    "scope":"Isolated SQLite/browser API fixtures; no actual case data"}
+            (ROOT/"returned-privacy-result.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+            print(json.dumps(report,indent=2))
+            assert all(privacy.values()),"Returned privacy acceptance failed; see returned-privacy-result.json"
         page.get_by_role("button",name="Review answers",exact=True).click()
         with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{app_id}/submit/" and response.request.method=="POST") as received:
             page.get_by_role("button",name="Resubmit corrections",exact=True).click()
         response=received.value
         assert response.status==201,response.text()
         assert "attestation" not in response.request.post_data_json
+        correction_submission_id=response.json()["id"]
+        correction_submission=fixture_db(lambda:Submission.objects.get(pk=correction_submission_id))
+        assert correction_submission.pk!=formal_submission.pk
+        assert correction_submission.attestation=={"original_submission":str(formal_submission.pk)}
+        assert fixture_db(lambda:Submission.objects.get(pk=formal_submission_id).attestation)==formal_submission.attestation
+        assert fixture_db(lambda:Submission.objects.filter(application_id=app_id).count())==2
         assert context.request.get(f"{BASE}/api/applications/{app_id}/").json()["fee"]["status"]=="waived"
         staff.close()
         checks.append("Real return instructions and resubmission reuse original fee/signature without new attestation")
