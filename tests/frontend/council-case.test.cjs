@@ -155,3 +155,25 @@ test("case module follows Plenix rules", () => {
   assert.doesNotMatch(source, /#[0-9a-fA-F]{3,8}\b/);
   assert.doesNotMatch(source, /!important/);
 });
+
+test("topic groups are an alternate view of the same selection", () => {
+  const qs = [
+    { code: "A-1", version: 1, category: "Cat A", foundational: false, topic_groups: [{ id: "TG02", title: "Common" }, { id: "TG03", title: "Annulment" }] },
+    { code: "B-1", version: 1, category: "Cat B", foundational: false, topic_groups: [{ id: "TG02", title: "Common" }] },
+  ];
+  assert.equal(C.hasTaxonomy(qs), true);
+  assert.equal(C.hasTaxonomy(bank), false);
+  const view = C.topicGroupView(qs);
+  assert.deepEqual(plain(view.map((g) => [g.id, g.questions.map((q) => q.code)])), [["TG02", ["A-1", "B-1"]], ["TG03", ["A-1"]]]);
+  assert.equal(C.groupTitle({ title: "Common", title_ar: null }, "ar"), "Common");
+  assert.equal(C.groupTitle({ category: "Cat A", category_ar: "فئة" }, "ar"), "فئة");
+});
+
+test("interview report keeps only answered questions and separates observations", () => {
+  const questions = [{ code: "A" }, { code: "B" }];
+  assert.equal(C.interviewProblem({ A: " " }, questions), "answerRequired");
+  assert.equal(C.interviewProblem({ B: "said" }, questions), null);
+  assert.deepEqual(plain(C.interviewPayload({ A: "  yes ", B: "", X: "ignored" }, " note ", questions)), { answers: { A: "yes" }, observations: "note" });
+  assert.equal(C.requestPayload({ kind: "interview", party: "p", title: "t", language: "en", selected: [] }, "x").kind, "interview");
+  assert.equal(C.requestPayload({ party: "p", title: "t", language: "en", selected: [] }, "x").kind, "intake");
+});

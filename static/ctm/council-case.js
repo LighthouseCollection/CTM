@@ -99,11 +99,36 @@
     const groups = [];
     for (const q of Object.values(latest)) {
       let group = groups.find((row) => row.category === q.category);
-      if (!group) groups.push((group = { category: q.category, questions: [] }));
+      if (!group) groups.push((group = { category: q.category, category_ar: q.category_ar, questions: [] }));
       group.questions.push(q);
     }
     for (const group of groups) group.questions.sort((a, b) => a.code.localeCompare(b.code));
     return groups;
+  }
+
+  // Topic groups are an alternate view over the same questions; a question may sit
+  // in several groups and keeps one shared selection.
+  function topicGroupView(questions) {
+    const latest = questionGroups(questions).flatMap((group) => group.questions);
+    const groups = [];
+    for (const q of latest) {
+      for (const tg of q.topic_groups || []) {
+        let group = groups.find((row) => row.id === tg.id);
+        if (!group) groups.push((group = { id: tg.id, title: tg.title, title_ar: tg.title_ar, questions: [] }));
+        group.questions.push(q);
+      }
+    }
+    groups.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    return groups;
+  }
+
+  function hasTaxonomy(questions) {
+    return (questions || []).some((q) => Array.isArray(q.topic_groups));
+  }
+
+  function groupTitle(group, lang) {
+    const ar = String(group.title_ar || group.category_ar || "").trim();
+    return lang === "ar" && ar ? ar : group.title || group.category;
   }
 
   function foundationalCodes(questions) {
@@ -123,6 +148,7 @@
 
   function requestProblem(form, questions) {
     if (!form.party) return "chooseSubject";
+    if (form.kind && !["intake", "interview"].includes(form.kind)) return "chooseMethod";
     if (!String(form.title || "").trim()) return "titleRequired";
     if (!LANGUAGES.includes(form.language)) return "chooseLanguage";
     if (missingArabic(form.selected, questions, form.language).length) return "arabicMissing";
@@ -133,13 +159,27 @@
     return {
       proceeding_id: proceedingId,
       party_id: form.party,
-      kind: "intake",
+      kind: form.kind === "interview" ? "interview" : "intake",
       title: form.title.trim(),
       language: form.language,
-      instructions: String(form.instructions || "").trim(),
+      instructions: form.kind === "interview" ? "" : String(form.instructions || "").trim(),
       questions: [...form.selected],
       parent_id: form.parent || null,
     };
+  }
+
+  function interviewProblem(answers, questions) {
+    const filled = (questions || []).filter((q) => String(answers?.[q.code] || "").trim());
+    return filled.length ? null : "answerRequired";
+  }
+
+  function interviewPayload(answers, observations, questions) {
+    const out = {};
+    for (const q of questions || []) {
+      const value = String(answers?.[q.code] || "").trim();
+      if (value) out[q.code] = value;
+    }
+    return { answers: out, observations: String(observations || "").trim() };
   }
 
   function openProceeding(record) {
@@ -195,9 +235,9 @@
       selectedCount: "{n} selected in addition to the foundational questions",
       instructions: "Instructions to the applicant (optional)",
       saveDraft: "Save draft request",
-      draftSaved: "The draft request was saved. Review the questions, then send it.",
+      draftSaved: "The draft request was saved. Review the questions before continuing.",
       frozenNotice:
-        "These are the exact questions saved with this request. Sending freezes their wording and order.",
+        "These are the exact questions saved with this request. Sending or starting it freezes their wording and order.",
       send: "Send to applicant",
       sendTitle: "Send this request to the applicant?",
       sendMessage:
@@ -261,6 +301,29 @@
         "Only the assigned case manager, or the administrator or secretary, enters the decision type and grounds.",
       actionFailed: "The action could not be completed. Nothing was changed.",
       back: "Back",
+      interviewHelp: "Record the applicant's answers yourself. The applicant is not notified and cannot see this interview.",
+      chooseMethod: "Choose how the questions are answered.",
+      questionView: "Show questions",
+      byCategory: "By question category",
+      byTopicGroup: "By topic group",
+      startInterview: "Start interview",
+      startInterviewTitle: "Start this interview?",
+      startInterviewMessage: "The question list is frozen. The applicant is not notified.",
+      interviewStarted: "The interview was started. Record the answers when ready.",
+      recordInterview: "Record interview answers",
+      interviewRecordHelp: "Enter what the applicant said for each question. Leave a question empty if it was not asked.",
+      internalObservations: "Internal observations (council only)",
+      internalObservationsHelp: "Kept separate from the applicant's answers and never shown to applicants.",
+      saveInterview: "Save interview report",
+      answerRequired: "Enter at least one answer before saving.",
+      interviewRecorded: "The interview report was saved under Completed reports.",
+      preparedBy: "Prepared by",
+      createdAt: "Created",
+      sentAt: "Sent",
+      startedAt: "Started",
+      followUpYes: "Yes",
+      recordedBy: "Recorded by",
+      earlierVersions: "Earlier versions",
     },
     ar: {
       reports: "التقارير",
@@ -302,8 +365,8 @@
       selectedCount: "تم تحديد {n} بالإضافة إلى الأسئلة الأساسية",
       instructions: "تعليمات لمقدم الطلب (اختياري)",
       saveDraft: "حفظ مسودة الطلب",
-      draftSaved: "تم حفظ مسودة الطلب. راجع الأسئلة ثم أرسله.",
-      frozenNotice: "هذه هي الأسئلة المحفوظة بالضبط مع هذا الطلب. يؤدي الإرسال إلى تثبيت صياغتها وترتيبها.",
+      draftSaved: "تم حفظ مسودة الطلب. راجع الأسئلة قبل المتابعة.",
+      frozenNotice: "هذه هي الأسئلة المحفوظة بالضبط مع هذا الطلب. يؤدي إرساله أو بدؤه إلى تثبيت صياغتها وترتيبها.",
       send: "إرسال إلى مقدم الطلب",
       sendTitle: "هل تريد إرسال هذا الطلب إلى مقدم الطلب؟",
       sendMessage: "يتم إخطار مقدم الطلب في البوابة ويمكنه الإجابة عن الأسئلة بشكل خاص. لا يمكن تغيير الأسئلة بعد إرسالها.",
@@ -363,6 +426,29 @@
       writerDecision: "يُدخل نوع القرار وأسبابه مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط.",
       actionFailed: "تعذر إتمام الإجراء. لم يتم تغيير أي شيء.",
       back: "رجوع",
+      interviewHelp: "سجّل إجابات مقدم الطلب بنفسك. لا يتم إخطار مقدم الطلب ولا يمكنه رؤية هذه المقابلة.",
+      chooseMethod: "اختر طريقة الإجابة عن الأسئلة.",
+      questionView: "عرض الأسئلة",
+      byCategory: "حسب فئة الأسئلة",
+      byTopicGroup: "حسب مجموعة الموضوعات",
+      startInterview: "بدء المقابلة",
+      startInterviewTitle: "هل تريد بدء هذه المقابلة؟",
+      startInterviewMessage: "يتم تثبيت قائمة الأسئلة. ولا يتم إخطار مقدم الطلب.",
+      interviewStarted: "بدأت المقابلة. سجّل الإجابات عندما تكون جاهزًا.",
+      recordInterview: "تسجيل إجابات المقابلة",
+      interviewRecordHelp: "أدخل ما قاله مقدم الطلب عن كل سؤال. اترك السؤال فارغًا إذا لم يُطرح.",
+      internalObservations: "ملاحظات داخلية (للمجلس فقط)",
+      internalObservationsHelp: "تُحفظ منفصلة عن إجابات مقدم الطلب ولا تُعرض على مقدمي الطلبات أبدًا.",
+      saveInterview: "حفظ تقرير المقابلة",
+      answerRequired: "أدخل إجابة واحدة على الأقل قبل الحفظ.",
+      interviewRecorded: "تم حفظ تقرير المقابلة ضمن التقارير المكتملة.",
+      preparedBy: "أعدّه",
+      createdAt: "تاريخ الإنشاء",
+      sentAt: "تاريخ الإرسال",
+      startedAt: "تاريخ البدء",
+      followUpYes: "نعم",
+      recordedBy: "سجّله",
+      earlierVersions: "الإصدارات السابقة",
     },
   };
 
@@ -377,8 +463,11 @@
     };
   }
 
-  function writerFor(user, caseRow) {
-    return base.canManage(user) || Boolean(caseRow?.assigned_member && caseRow.assigned_member === user?.name);
+  function writerFor(user, caseRow, record) {
+    if (base.canManage(user)) return true;
+    if (record && record.assigned_member_id !== undefined)
+      return Boolean(user && record.assigned_member_id === user.id);
+    return Boolean(caseRow?.assigned_member && caseRow.assigned_member === user?.name);
   }
 
   // ---------- Report requests ----------
@@ -390,6 +479,7 @@
       t = translator(lang);
     const proceeding = openProceeding(record);
     const [form, setForm] = R.useState({
+      kind: "intake",
       party: "",
       title: "",
       language: "en",
@@ -400,7 +490,12 @@
     const [problem, setProblem] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
-    const groups = questionGroups(questions);
+    const taxonomy = hasTaxonomy(questions);
+    const [view, setView] = R.useState("category");
+    const groups = view === "topic" && taxonomy ? topicGroupView(questions) : questionGroups(questions);
+    // The in-person interview path is offered only by servers that no longer notify
+    // the applicant when an interview starts (shipped with the question taxonomy).
+    const interviewReady = taxonomy;
     const update = (patch) => {
       setForm((old) => ({ ...old, ...patch }));
       setProblem(null);
@@ -440,17 +535,21 @@
             onChange: (e) => update({ party: e.target.value }),
             options: [
               { value: "", label: t("chooseSubject") },
-              ...record.parties.filter((p) => p.can_receive).map((p) => ({ value: p.id, label: p.name })),
+              ...record.parties
+                .filter((p) => p.can_receive || (form.kind === "interview" && interviewReady))
+                .map((p) => ({ value: p.id, label: p.name })),
             ],
           }),
         ),
         h(P.RadioGroup, {
           label: t("method"),
-          value: "intake",
-          onChange: () => {},
+          value: form.kind,
+          onChange: (value) => update({ kind: value }),
           options: [
-            { value: "intake", label: t("methodApplicant") },
-            { value: "interview", label: t("methodInterview"), description: t("interviewBlocked"), disabled: true },
+            { value: "intake", label: t("methodApplicant"), disabled: pending },
+            interviewReady
+              ? { value: "interview", label: t("methodInterview"), description: t("interviewHelp"), disabled: pending }
+              : { value: "interview", label: t("methodInterview"), description: t("interviewBlocked"), disabled: true },
           ],
         }),
         h(
@@ -490,10 +589,22 @@
       h(
         P.FormSection,
         { title: t("questions"), description: t("selectedCount", { n: form.selected.length }) },
+        taxonomy
+          ? h(P.RadioGroup, {
+              label: t("questionView"),
+              layout: "row",
+              value: view,
+              onChange: setView,
+              options: [
+                { value: "category", label: t("byCategory") },
+                { value: "topic", label: t("byTopicGroup") },
+              ],
+            })
+          : null,
         ...groups.map((group) =>
           h(
             P.Fieldset,
-            { key: group.category, legend: group.category },
+            { key: group.id || group.category, legend: groupTitle(group, lang) },
             ...group.questions.map((q) =>
               h(P.Checkbox, {
                 key: q.code,
@@ -515,7 +626,9 @@
             ),
           ),
         ),
-        h(
+        form.kind === "interview"
+          ? null
+          : h(
           P.Field,
           { label: t("instructions") },
           h(P.Textarea, {
@@ -538,6 +651,75 @@
     );
   }
 
+  function InterviewForm({ api, lang, request, onRecorded, onCancel }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [answers, setAnswers] = R.useState({});
+    const [observations, setObservations] = R.useState("");
+    const [problem, setProblem] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    async function save(event) {
+      event.preventDefault();
+      const issue = interviewProblem(answers, request.questions);
+      setProblem(issue);
+      if (issue) return;
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/requests/${encodeURIComponent(request.id)}/complete/`, {
+          method: "POST",
+          body: JSON.stringify(interviewPayload(answers, observations, request.questions)),
+        });
+        onRecorded();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    return h(
+      P.Form,
+      { onSubmit: save, label: t("recordInterview"), noValidate: true },
+      h(
+        P.FormSection,
+        { title: t("recordInterview"), description: t("interviewRecordHelp") },
+        ...(request.questions || []).map((q) =>
+          h(
+            P.Field,
+            { key: q.code, label: `${q.code} — ${wording(q, lang)}` },
+            h(P.Textarea, {
+              rows: 3,
+              autoGrow: true,
+              value: answers[q.code] || "",
+              maxLength: 50000,
+              disabled: pending,
+              onChange: (e) => {
+                setAnswers((old) => ({ ...old, [q.code]: e.target.value }));
+                setProblem(null);
+              },
+            }),
+          ),
+        ),
+        h(
+          P.Field,
+          { label: t("internalObservations"), description: t("internalObservationsHelp") },
+          h(P.Textarea, { rows: 4, autoGrow: true, value: observations, maxLength: 50000, disabled: pending, onChange: (e) => setObservations(e.target.value) }),
+        ),
+      ),
+      problem ? h(P.Notice, { tone: "danger" }, t(problem)) : null,
+      failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+      h(
+        P.FormActions,
+        { sticky: false },
+        h(P.Button, { disabled: pending, onClick: onCancel }, t("cancel")),
+        h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveInterview")),
+      ),
+    );
+  }
+
   function RequestDetail({ api, lang, request, canWrite, onSent }) {
     const R = window.React,
       P = window.Plenix,
@@ -546,13 +728,15 @@
     const [confirm, setConfirm] = R.useState(false);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
+    const [recording, setRecording] = R.useState(false);
+    const interview = request.kind === "interview";
     async function send() {
       setPending(true);
       setFailure(null);
       try {
         await api(`/api/requests/${encodeURIComponent(request.id)}/send/`, { method: "POST", body: "{}" });
         setConfirm(false);
-        onSent();
+        onSent(interview ? "interviewStarted" : "sentNotice");
       } catch (error) {
         setFailure(base.serverMessage(error, t));
       } finally {
@@ -568,6 +752,12 @@
         h(P.PropertyList.Item, { label: t("title") }, request.title),
         h(P.PropertyList.Item, { label: base.translator(lang)("statusLabel") }, h(P.Badge, { tone: request.state === "draft" ? "neutral" : request.state === "sent" ? "active" : "success" }, t(request.state))),
         h(P.PropertyList.Item, { label: t("method") }, t(request.kind)),
+        request.subject_name ? h(P.PropertyList.Item, { label: t("subject") }, request.subject_name) : null,
+        request.language ? h(P.PropertyList.Item, { label: t("language") }, t(request.language)) : null,
+        request.author ? h(P.PropertyList.Item, { label: t("preparedBy") }, request.author) : null,
+        request.created_at ? h(P.PropertyList.Item, { label: t("createdAt"), data: true }, base.formatWhen(request.created_at, lang)) : null,
+        request.sent_at ? h(P.PropertyList.Item, { label: t(interview ? "startedAt" : "sentAt"), data: true }, base.formatWhen(request.sent_at, lang)) : null,
+        request.parent_report_id ? h(P.PropertyList.Item, { label: t("parent") }, t("followUpYes")) : null,
       ),
       h(P.Notice, { tone: "info" }, t(request.state === "draft" ? "frozenNotice" : "answerReadOnly")),
       h(
@@ -580,16 +770,31 @@
       ),
       request.instructions ? h(P.Panel, { title: t("instructions") }, h(P.Text, { as: "p" }, request.instructions)) : null,
       failure && !confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
-      request.state === "draft" && canWrite && request.kind === "intake"
-        ? h(P.Inline, null, h(P.Button, { variant: "primary", onClick: () => setConfirm(true) }, t("send")))
+      request.state === "draft" && canWrite && (request.kind === "intake" || interview)
+        ? h(P.Inline, null, h(P.Button, { variant: "primary", onClick: () => setConfirm(true) }, t(interview ? "startInterview" : "send")))
+        : null,
+      request.state === "sent" && interview && canWrite && !recording
+        ? h(P.Inline, null, h(P.Button, { variant: "primary", onClick: () => setRecording(true) }, t("recordInterview")))
+        : null,
+      recording
+        ? h(InterviewForm, {
+            api,
+            lang,
+            request,
+            onCancel: () => setRecording(false),
+            onRecorded: () => {
+              setRecording(false);
+              onSent("interviewRecorded");
+            },
+          })
         : null,
       h(
         P.ConfirmDialog,
         {
           open: confirm,
-          title: t("sendTitle"),
-          message: t("sendMessage"),
-          confirmLabel: t("send"),
+          title: t(interview ? "startInterviewTitle" : "sendTitle"),
+          message: t(interview ? "startInterviewMessage" : "sendMessage"),
+          confirmLabel: t(interview ? "startInterview" : "send"),
           cancelLabel: t("cancel"),
           onConfirm: send,
           onCancel: () => !pending && setConfirm(false),
@@ -626,7 +831,7 @@
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, requests, questions, caseRow } = state.data;
     const proceeding = openProceeding(record);
-    const canWrite = writerFor(user, caseRow) && Boolean(proceeding);
+    const canWrite = writerFor(user, caseRow, record) && Boolean(proceeding);
     const chosen = requests.find((row) => row.id === selected);
     const list = h(
       P.Stack,
@@ -638,7 +843,7 @@
         h(P.Card, {
           key: row.id,
           title: row.title,
-          meta: `${t(row.kind)} · ${t(row.state)}`,
+          meta: [t(row.kind), row.subject_name, t(row.state)].filter(Boolean).join(" · "),
           selected: row.id === selected,
           onOpen: () => {
             setComposing(false);
@@ -671,8 +876,8 @@
             lang,
             request: chosen,
             canWrite,
-            onSent: () => {
-              setNotice("sentNotice");
+            onSent: (key) => {
+              setNotice(key || "sentNotice");
               retry();
             },
           })
@@ -844,6 +1049,8 @@
     const { rows, counts } = tally(decision.votes, roster);
     const manage = canRecordFor(user);
     const isPresident = user?.role === "president";
+    const canVote = decision.can_vote !== false;
+    const canApprove = typeof decision.can_approve === "boolean" ? decision.can_approve : isPresident || manage;
     const partyName = (id) => record.parties.find((p) => p.id === id)?.name || id;
 
     async function submitVote() {
@@ -857,10 +1064,13 @@
           method: "POST",
           body: JSON.stringify(manage && member ? { choice: vote, member_id: member } : { choice: vote }),
         });
-        onChange({
-          ...decision,
-          votes: [...decision.votes, { member_id: memberId, choice: vote, actor_id: user.id }],
-        });
+        onChange(
+          {
+            ...decision,
+            votes: [...decision.votes.filter((v) => v.member_id !== memberId), { member_id: memberId, choice: vote, actor_id: user.id }],
+          },
+          true,
+        );
         setVote("");
         setMember("");
         setNotice("voteRecorded");
@@ -880,7 +1090,7 @@
           body: JSON.stringify(isPresident ? {} : { president_id: president }),
         });
         const name = isPresident ? user.name : presidentRows.find((p) => p.id === president)?.name;
-        onChange({ ...decision, approval: { president: name, actor: user.name } });
+        onChange({ ...decision, approval: { president: name, actor: user.name } }, true);
         setConfirm(false);
         setNotice("approvalRecorded");
       } catch (error) {
@@ -912,6 +1122,7 @@
               )
             : null,
           decision.conditions ? h(P.PropertyList.Item, { label: t("conditions") }, decision.conditions) : null,
+          decision.actor ? h(P.PropertyList.Item, { label: t("recordedBy") }, `${decision.actor} · ${base.formatWhen(decision.timestamp, lang)}`) : null,
         ),
       ),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
@@ -937,7 +1148,9 @@
               ),
             ),
           ),
-          h(
+          !canVote
+            ? null
+            : h(
                 P.Inline,
                 { wrap: true, align: "end" },
                 manage
@@ -975,8 +1188,11 @@
               { gap: "sm" },
               h(P.Badge, { tone: "success" }, t("approved")),
               h(P.Text, { as: "p" }, `${t("president")}: ${decision.approval.president || ""}`),
+              decision.approval.actor && decision.approval.actor !== decision.approval.president
+                ? h(P.Text, { as: "p", variant: "secondary" }, `${t("recordedBy")}: ${decision.approval.actor}${decision.approval.timestamp ? " · " + base.formatWhen(decision.approval.timestamp, lang) : ""}`)
+                : null,
             )
-          : isPresident || manage
+          : canApprove
             ? h(
                 P.Stack,
                 { gap: "sm" },
@@ -1058,16 +1274,18 @@
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, members, caseRow, proceeding, versions } = state.data;
     const readAvailable = versions !== null;
+    const noticeKey = readAvailable ? null : "readUnavailable";
     const latestSaved = readAvailable && versions.length
       ? [...versions].sort((a, b) => b.number - a.number)[0]
       : null;
     const current = local || (latestSaved ? { votes: [], approval: null, ...latestSaved } : null);
-    const canWrite = writerFor(user, caseRow) && Boolean(proceeding);
+    const earlier = readAvailable ? [...versions].sort((a, b) => b.number - a.number).slice(1) : [];
+    const canWrite = writerFor(user, caseRow, record) && Boolean(proceeding);
     return h(
       P.Stack,
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("decisionVoting")),
-      !readAvailable ? h(P.Notice, { tone: "info" }, t("readUnavailable")) : null,
+      noticeKey ? h(P.Notice, { tone: "info" }, t(noticeKey)) : null,
       !proceeding ? h(P.Notice, { tone: "info" }, t("noOpenProceeding")) : null,
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       current
@@ -1080,9 +1298,22 @@
             decision: current,
             members,
             readAvailable,
-            onChange: setLocal,
+            // With the server read available, reload the saved record after each action.
+            onChange: (next, saved) => (readAvailable && saved ? retry() : setLocal(next)),
           })
         : h(P.EmptyState, { title: t("noDecision") }),
+      earlier.length
+        ? h(
+            P.Panel,
+            { title: t("earlierVersions"), collapsible: true, defaultExpanded: false },
+            h(P.List, {
+              variant: "bullets",
+              items: earlier.map((v) => ({
+                children: `${t("version")} ${v.number} · ${typeLabel(v.type)} · ${v.actor || ""} · ${base.formatWhen(v.timestamp, lang)}${v.approval ? " · " + t("approved") : ""}`,
+              })),
+            }),
+          )
+        : null,
       proceeding
         ? canWrite
           ? h(DecisionForm, {
@@ -1092,8 +1323,11 @@
               proceeding,
               revising: Boolean(current),
               onRecorded: (decision) => {
-                setLocal(decision);
                 setNotice("decisionRecorded");
+                if (readAvailable) {
+                  setLocal(null);
+                  retry();
+                } else setLocal(decision);
               },
             })
           : h(P.Notice, { tone: "info" }, t("writerDecision"))
@@ -1113,6 +1347,11 @@
     tally,
     councilRoster,
     questionGroups,
+    topicGroupView,
+    hasTaxonomy,
+    groupTitle,
+    interviewProblem,
+    interviewPayload,
     foundationalCodes,
     missingArabic,
     requestProblem,

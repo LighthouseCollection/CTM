@@ -95,6 +95,43 @@
     return null;
   }
 
+  function writerOf(user, row, caseRow) {
+    if (canManage(user)) return true;
+    if (row && row.assigned_member_id !== undefined) return Boolean(user && row.assigned_member_id === user.id);
+    return Boolean(caseRow?.assigned_member && caseRow.assigned_member === user?.name);
+  }
+
+  // Which controls an agenda row shows. Server capability flags win when present;
+  // the role/name fallback only applies to servers without them.
+  function agendaActions(row, session, user, caseRow) {
+    const planned = session.state === "planned";
+    const scheduled = row.state === "scheduled";
+    const manage = typeof session.can_manage === "boolean" ? session.can_manage : canManage(user) && planned;
+    const assignedName = row.assigned_member_name ?? caseRow?.assigned_member ?? null;
+    const mine =
+      row.assigned_member_id !== undefined
+        ? Boolean(user && row.assigned_member_id === user.id)
+        : Boolean(assignedName && assignedName === user?.name);
+    const present =
+      typeof row.can_present === "boolean" ? row.can_present : planned && scheduled && row.part === 2 && mine;
+    return {
+      assign: planned && scheduled && row.part === 1 && manage,
+      present,
+      presentNeedsAttendance: !present && planned && scheduled && row.part === 2 && mine && typeof row.can_present === "boolean",
+      outcome: row.can_record_outcome === true && Boolean(row.hearing_id),
+      testimony: planned && scheduled && row.part === 2 && writerOf(user, row, caseRow),
+    };
+  }
+
+  function testimonyProblem(form, sessionDate) {
+    if (!form.party) return "chooseParty";
+    if (!/^\d{2}:\d{2}$/.test(form.start || "") || !/^\d{2}:\d{2}$/.test(form.end || "")) return "timesRequired";
+    if (form.end <= form.start) return "endAfterStart";
+    if (!String(form.instructions || "").trim()) return "instructionsRequired";
+    if (!DATE.test(sessionDate || "")) return "timesRequired";
+    return null;
+  }
+
   function groupAgenda(items) {
     const sorted = [...(items || [])].sort(
       (a, b) => a.part - b.part || (a.position || 0) - (b.position || 0),
@@ -115,6 +152,26 @@
       return data.messages.join(" ");
     if (data && typeof data.detail === "string") return data.detail;
     return t("actionFailed");
+  }
+
+  // Label from the submission's bound questionnaire; null when none is approved.
+  function fieldLabel(row, code, lang) {
+    const fields = row?.questionnaire?.definition?.fields;
+    if (!Array.isArray(fields)) return null;
+    const field = fields.find((f) => f && f.code === code);
+    if (!field) return null;
+    const ar = String(field.label_ar || "").trim();
+    const en = String(field.label_en || "").trim();
+    return (lang === "ar" ? ar || null : en || null) || null;
+  }
+
+  function formatTime(value, lang) {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value || "");
+    return new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", {
+      timeStyle: "short",
+      timeZone: "America/Los_Angeles",
+    }).format(d);
   }
 
   function answerText(value, t) {
@@ -151,6 +208,13 @@
       codesNotice:
         "Approved question wording is not yet available here, so answer codes are shown exactly as stored.",
       noAnswers: "No answers are stored for this version.",
+      applicant: "Applicant",
+      submittedAt: "Submitted",
+      previousReturns: "Previous returns for correction",
+      manifest: "Submitted documents",
+      noManifest: "No documents are recorded in this submission.",
+      download: "Download",
+      scanPending: "Safety check not complete",
       documents: "Open case documents",
       accept: "Accept application",
       acceptTitle: "Accept this application?",
@@ -234,6 +298,40 @@
       sessionClosed: "The council session was closed.",
       closedReadOnly: "This session is closed and read-only.",
       unknownParty: "Unknown party",
+      assigned_state: "Assigned",
+      presentNeedsAttendance: "Your attendance must be recorded as present before you can present this case.",
+      recordOutcome: "Recommendations and update",
+      hearingOutcome: "Hearing recommendations and applicant update",
+      outcomeFirstNotice: "Saving the first record sends each registered applicant a private update that the case was presented on this date and is still pending, followed by your message if you write one.",
+      outcomeRevisionNotice: "Revisions are kept in history and are not sent to applicants. The update already sent is not changed or resent.",
+      internalDiscussion: "Internal discussion (council only)",
+      recommendations: "Recommendations (council only)",
+      applicantMessage: "Message to applicants (optional)",
+      applicantMessageHelp: "Added after the standard pending-case update. Each applicant receives a private copy.",
+      saveAndSend: "Save and send update",
+      saveRevision: "Save revision",
+      outcomeHistory: "Revision history",
+      outcomeSentNotice: "The hearing record was saved and the applicant update was sent.",
+      outcomeRevisedNotice: "The revision was saved. No message was sent.",
+      scheduleTestimony: "Schedule testimony",
+      testimonyHelp: "Applicants attend only their own testimony, never the deliberation. The applicant receives a private invitation and can confirm or reject it.",
+      testifyingApplicant: "Applicant",
+      chooseParty: "Select the applicant.",
+      startTime: "Start time",
+      endTime: "End time",
+      timesRequired: "Enter the start and end times.",
+      endAfterStart: "The end time must be after the start time.",
+      testimonyInstructions: "Location or remote instructions",
+      testimonyInstructionsHelp: "Shown privately to this applicant only.",
+      instructionsRequired: "Enter the location or remote instructions.",
+      sendInvitation: "Send invitation",
+      testimonyScheduled: "The testimony invitation was sent.",
+      pacificTime: "Pacific time (Los Angeles)",
+      testimony: "Testimony",
+      awaitingResponse: "Awaiting response",
+      response_confirm: "Confirmed",
+      response_reject: "Rejected",
+      cancelled: "Cancelled",
       caseHearingOf: "Case Hearing of",
       versus: "vs.",
       onSession: "on",
@@ -262,6 +360,13 @@
       codesNotice:
         "لم تُتَح بعد عناوين الأسئلة المعتمدة لهذه الصفحة، لذلك تُعرض رموز الإجابات كما هي محفوظة.",
       noAnswers: "لا توجد إجابات محفوظة لهذا الإصدار.",
+      applicant: "مقدم الطلب",
+      submittedAt: "تاريخ التقديم",
+      previousReturns: "مرات الإعادة للتصحيح السابقة",
+      manifest: "المستندات المقدَّمة",
+      noManifest: "لا توجد مستندات مسجلة في هذا التقديم.",
+      download: "تنزيل",
+      scanPending: "لم يكتمل فحص الأمان",
       documents: "فتح مستندات القضية",
       accept: "قبول الطلب",
       acceptTitle: "هل تريد قبول هذا الطلب؟",
@@ -341,6 +446,40 @@
       sessionClosed: "تم إغلاق جلسة المجلس.",
       closedReadOnly: "هذه الجلسة مغلقة ومتاحة للقراءة فقط.",
       unknownParty: "طرف غير معروف",
+      assigned_state: "تم التعيين",
+      presentNeedsAttendance: "يجب تسجيل حضورك قبل أن تتمكن من عرض هذه القضية.",
+      recordOutcome: "التوصيات والتحديث",
+      hearingOutcome: "توصيات الجلسة والتحديث الموجَّه لمقدمي الطلب",
+      outcomeFirstNotice: "يؤدي حفظ السجل الأول إلى إرسال تحديث خاص لكل مقدم طلب مسجَّل يفيد بأن القضية عُرضت في هذا التاريخ وما زالت قيد النظر، تليه رسالتك إن كتبتها.",
+      outcomeRevisionNotice: "تُحفظ التعديلات في السجل ولا تُرسل إلى مقدمي الطلب. ولا يتغير التحديث المُرسل سابقًا ولا يُعاد إرساله.",
+      internalDiscussion: "المداولة الداخلية (للمجلس فقط)",
+      recommendations: "التوصيات (للمجلس فقط)",
+      applicantMessage: "رسالة إلى مقدمي الطلب (اختياري)",
+      applicantMessageHelp: "تُضاف بعد التحديث المعتاد بأن القضية ما زالت قيد النظر. ويتلقى كل مقدم طلب نسخة خاصة.",
+      saveAndSend: "حفظ وإرسال التحديث",
+      saveRevision: "حفظ التعديل",
+      outcomeHistory: "سجل التعديلات",
+      outcomeSentNotice: "تم حفظ سجل الجلسة وإرسال التحديث إلى مقدمي الطلب.",
+      outcomeRevisedNotice: "تم حفظ التعديل. لم تُرسل أي رسالة.",
+      scheduleTestimony: "جدولة الإدلاء بالشهادة",
+      testimonyHelp: "يحضر مقدم الطلب جلسة إدلائه بشهادته فقط، ولا يحضر المداولة. ويتلقى دعوة خاصة يمكنه تأكيدها أو رفضها.",
+      testifyingApplicant: "مقدم الطلب",
+      chooseParty: "اختر مقدم الطلب.",
+      startTime: "وقت البدء",
+      endTime: "وقت الانتهاء",
+      timesRequired: "أدخل وقتَي البدء والانتهاء.",
+      endAfterStart: "يجب أن يكون وقت الانتهاء بعد وقت البدء.",
+      testimonyInstructions: "المكان أو تعليمات الحضور عن بُعد",
+      testimonyInstructionsHelp: "تظهر لمقدم الطلب هذا فقط بشكل خاص.",
+      instructionsRequired: "أدخل المكان أو تعليمات الحضور عن بُعد.",
+      sendInvitation: "إرسال الدعوة",
+      testimonyScheduled: "تم إرسال دعوة الإدلاء بالشهادة.",
+      pacificTime: "توقيت المحيط الهادئ (لوس أنجلوس)",
+      testimony: "الشهادة",
+      awaitingResponse: "في انتظار الرد",
+      response_confirm: "تم التأكيد",
+      response_reject: "تم الرفض",
+      cancelled: "ملغاة",
       caseHearingOf: "جلسة نظر قضية",
       versus: "ضد",
       onSession: "في",
@@ -387,6 +526,21 @@
   }
 
   const feeLabel = (row, t) => (row.fee ? t(row.fee.status) : t("unknown"));
+  const REVIEW_URL = "/api/applications/?state=awaiting_review";
+  function formatWhen(value, lang) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "America/Los_Angeles",
+    }).format(d);
+  }
+  const reviewMeta = (row, t, lang) =>
+    [row.applicant_name, row.submitted_at ? formatWhen(row.submitted_at, lang) : null, `${t("fee")}: ${feeLabel(row, t)}`]
+      .filter(Boolean)
+      .join(" · ");
 
   // Home panel for admin/secretary. Members never see this queue.
   function ReviewQueuePanel({ api, lang, user, onOpen }) {
@@ -394,7 +548,7 @@
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [state, retry] = useLoad(() => api("/api/applications/"), [user?.id]);
+    const [state, retry] = useLoad(() => api(REVIEW_URL), [user?.id]);
     if (!canManage(user)) return null;
     const rows = awaitingReview(state.data?.items);
     return h(
@@ -418,7 +572,7 @@
                   h(P.Card, {
                     key: row.id,
                     title: row.case_number || t("unnumbered"),
-                    meta: `${t("version")} ${row.version} · ${t("fee")}: ${feeLabel(row, t)}`,
+                    meta: reviewMeta(row, t, lang),
                     onOpen,
                   }),
                 ),
@@ -437,7 +591,8 @@
     const [problem, setProblem] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
-    const manage = canManage(user);
+    // Server capability when provided; role check only as a display fallback.
+    const manage = typeof row.can_review === "boolean" ? row.can_review : canManage(user);
 
     async function submit(result) {
       const issue = reviewProblem(result, instructions);
@@ -466,6 +621,10 @@
     }
 
     const answers = Object.entries(row.answers || {});
+    const labelled = answers.map(([code, value]) => [code, fieldLabel(row, code, lang), value]);
+    const allLabelled = labelled.every(([, label]) => Boolean(label));
+    const manifest = row.manifest || [];
+    const returns = (row.reviews || []).filter((r) => r.result === "reject");
     return h(
       P.Stack,
       { gap: "lg" },
@@ -473,9 +632,43 @@
         P.PropertyList,
         null,
         h(P.PropertyList.Item, { label: t("reference"), data: true }, row.case_number || t("unnumbered")),
-        h(P.PropertyList.Item, { label: t("version"), data: true }, String(row.version)),
+        row.applicant_name ? h(P.PropertyList.Item, { label: t("applicant") }, row.applicant_name) : null,
+        row.submitted_at ? h(P.PropertyList.Item, { label: t("submittedAt"), data: true }, formatWhen(row.submitted_at, lang)) : null,
+        h(P.PropertyList.Item, { label: t("version"), data: true }, String(row.submitted_version ?? row.version)),
         h(P.PropertyList.Item, { label: t("fee") }, feeLabel(row, t)),
       ),
+      returns.length
+        ? h(
+            P.Panel,
+            { title: t("previousReturns") },
+            h(P.List, {
+              variant: "bullets",
+              items: returns.map((r) => ({ children: `${formatWhen(r.timestamp, lang)} · ${r.actor}: ${r.instructions}` })),
+            }),
+          )
+        : null,
+      row.manifest
+        ? h(
+            P.Panel,
+            { title: t("manifest") },
+            manifest.length
+              ? h(
+                  P.Stack,
+                  { gap: "sm" },
+                  ...manifest.map((file) =>
+                    h(
+                      P.Inline,
+                      { key: file.file_id, wrap: true, justify: "between" },
+                      h(P.Text, { variant: "data" }, `${file.category} · ${file.name || file.file_id}`),
+                      file.scan_state === "clean"
+                        ? h(P.Button, { size: "xs", href: `/api/files/${encodeURIComponent(file.file_id)}/` }, t("download"))
+                        : h(P.Badge, { tone: "waiting" }, t("scanPending")),
+                    ),
+                  ),
+                )
+              : h(P.EmptyState, { title: t("noManifest") }),
+          )
+        : null,
       row.case_id
         ? h(
             P.Inline,
@@ -489,13 +682,13 @@
         h(
           P.Stack,
           { gap: "sm" },
-          h(P.Notice, { tone: "info" }, t("codesNotice")),
+          !allLabelled ? h(P.Notice, { tone: "info" }, t("codesNotice")) : null,
           answers.length
             ? h(
                 P.PropertyList,
                 { layout: "stacked" },
-                ...answers.map(([code, value]) =>
-                  h(P.PropertyList.Item, { key: code, label: code }, answerText(value, t)),
+                ...labelled.map(([code, label, value]) =>
+                  h(P.PropertyList.Item, { key: code, label: label || code }, answerText(value, t)),
                 ),
               )
             : h(P.EmptyState, { title: t("noAnswers") }),
@@ -581,7 +774,7 @@
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [state, retry] = useLoad(() => api("/api/applications/"), [user?.id]);
+    const [state, retry] = useLoad(() => api(REVIEW_URL), [user?.id]);
     const [selected, select] = R.useState(null);
     const [done, setDone] = R.useState({});
     const [notice, setNotice] = R.useState(null);
@@ -599,7 +792,7 @@
                 h(P.Card, {
                   key: row.id,
                   title: row.case_number || t("unnumbered"),
-                  meta: `${t("version")} ${row.version} · ${t("fee")}: ${feeLabel(row, t)}`,
+                  meta: reviewMeta(row, t, lang),
                   selected: row.id === selected,
                   onOpen: () => {
                     setNotice(null);
@@ -734,45 +927,281 @@
     );
   }
 
-  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onCase }) {
+  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onCase, onOutcome, onTestimony }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const planned = session.state === "planned";
-    const assignedName = caseRow?.assigned_member || null;
-    const mine = assignedName && assignedName === user?.name;
+    const flags = agendaActions(row, session, user, caseRow);
+    const assignedName = row.assigned_member_name ?? caseRow?.assigned_member ?? null;
     const actions = [];
-    if (planned && row.state === "scheduled" && row.part === 1 && canManage(user))
+    if (flags.assign)
       actions.push(
         h(P.Button, { key: "assign", size: "xs", onClick: () => onAssign(row) }, t(assignedName ? "recordReassignment" : "recordAssignment")),
       );
-    if (planned && row.state === "scheduled" && row.part === 2 && mine)
+    if (flags.present)
       actions.push(
         h(P.Button, { key: "present", size: "xs", variant: "primary", onClick: () => onPresent(row) }, t("present")),
       );
+    if (flags.outcome)
+      actions.push(h(P.Button, { key: "outcome", size: "xs", onClick: () => onOutcome(row) }, t("recordOutcome")));
+    if (flags.testimony)
+      actions.push(h(P.Button, { key: "testimony", size: "xs", onClick: () => onTestimony(row) }, t("scheduleTestimony")));
     actions.push(
       h(P.Button, { key: "case", size: "xs", variant: "ghost", onClick: () => onCase(row.case_id) }, t("openCase")),
     );
+    const titled = row.part === 2 && Array.isArray(row.party_names) && row.party_names.length;
     return h(
       P.Card,
       {
-        title: row.case_number,
-        meta: `${t("assigned")}: ${assignedName || t("unassigned")}`,
-        actions: h(P.Inline, { gap: "xs" }, ...actions),
+        title: titled ? hearingTitle(row.party_names, session.date, t) : row.case_number,
+        meta: [titled ? row.case_number : null, `${t("assigned")}: ${assignedName || t("unassigned")}`].filter(Boolean).join(" · "),
+        actions: h(P.Inline, { gap: "xs", wrap: true }, ...actions),
       },
       h(
-        P.Badge,
-        {
-          tone:
-            row.state === "heard"
-              ? "success"
-              : row.state === "scheduled"
-                ? "active"
-                : "action-required",
-        },
-        t(row.state),
+        P.Stack,
+        { gap: "xs" },
+        h(
+          P.Badge,
+          {
+            tone:
+              row.state === "heard" || row.state === "assigned"
+                ? "success"
+                : row.state === "scheduled"
+                  ? "active"
+                  : "action-required",
+          },
+          t(row.state === "assigned" ? "assigned_state" : row.state),
+        ),
+        flags.presentNeedsAttendance ? h(P.Text, { variant: "secondary" }, t("presentNeedsAttendance")) : null,
+        ...(row.testimony || []).map((a) =>
+          h(
+            P.Text,
+            { key: a.id, variant: "secondary" },
+            `${t("testimony")}: ${a.party_name} · ${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)} · ${t(a.state === "cancelled" ? "cancelled" : a.response ? "response_" + a.response : "awaitingResponse")}`,
+          ),
+        ),
       ),
+    );
+  }
+
+  // Hearing outcome: internal text and recommendations are revised silently; only the
+  // first record sends the default pending update (plus any message) to applicants.
+  function HearingOutcomeDialog({ api, lang, hearingId, title, onClose, onSaved }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = useLoad(() => api(`/api/hearings/${encodeURIComponent(hearingId)}/`), [hearingId]);
+    const [form, setForm] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const outcomes = state.data?.outcomes || [];
+    const latest = outcomes[outcomes.length - 1];
+    const first = !outcomes.length;
+    R.useEffect(() => {
+      if (state.data && !form)
+        setForm({
+          internal_text: latest?.internal_text || "",
+          recommendations: latest?.recommendations || "",
+          applicant_message: "",
+        });
+    }, [state.data]);
+    async function save() {
+      setPending(true);
+      setFailure(null);
+      try {
+        const payload = { internal_text: form.internal_text, recommendations: form.recommendations };
+        if (first && form.applicant_message.trim()) payload.applicant_message = form.applicant_message.trim();
+        await api(`/api/hearings/${encodeURIComponent(hearingId)}/outcome/`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        onSaved(first ? "outcomeSentNotice" : "outcomeRevisedNotice");
+      } catch (error) {
+        setFailure(serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    const writable = state.data?.can_record_outcome !== false;
+    const area = (key, rows, max) =>
+      h(P.Textarea, {
+        rows,
+        autoGrow: true,
+        value: form[key],
+        maxLength: max,
+        disabled: pending || !writable,
+        onChange: (e) => setForm({ ...form, [key]: e.target.value }),
+      });
+    return h(
+      P.Dialog,
+      {
+        open: true,
+        size: "lg",
+        title: t("hearingOutcome"),
+        description: title,
+        closeLabel: t("cancel"),
+        onClose: () => !pending && onClose(),
+        footer: h(
+          P.Inline,
+          null,
+          h(P.Button, { disabled: pending, onClick: onClose }, t("cancel")),
+          writable && form
+            ? h(
+                P.Button,
+                { variant: "primary", loading: pending, disabled: pending, onClick: save },
+                t(first ? "saveAndSend" : "saveRevision"),
+              )
+            : null,
+        ),
+      },
+      state.pending && !state.data
+        ? h(P.Text, { as: "p" }, t("loading"))
+        : state.error
+          ? loadFailure(P, h, t, retry, state.error)
+          : form
+            ? h(
+                P.Stack,
+                { gap: "md" },
+                h(P.Notice, { tone: first ? "warning" : "info" }, t(first ? "outcomeFirstNotice" : "outcomeRevisionNotice")),
+                h(P.Field, { label: t("internalDiscussion") }, area("internal_text", 5, 50000)),
+                h(P.Field, { label: t("recommendations") }, area("recommendations", 5, 50000)),
+                first
+                  ? h(
+                      P.Field,
+                      { label: t("applicantMessage"), description: t("applicantMessageHelp") },
+                      area("applicant_message", 4, 20000),
+                    )
+                  : null,
+                outcomes.length
+                  ? h(
+                      P.Panel,
+                      { title: t("outcomeHistory"), collapsible: true, defaultExpanded: false },
+                      h(P.List, {
+                        variant: "bullets",
+                        items: [...outcomes]
+                          .reverse()
+                          .map((o) => ({ children: `${formatWhen(o.timestamp, lang)} · ${o.actor}` })),
+                      }),
+                    )
+                  : null,
+                failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+              )
+            : null,
+    );
+  }
+
+  // Testimony is a separately scheduled, private applicant appointment on the session date.
+  function TestimonyDialog({ api, lang, row, sessionDate, onClose, onSaved }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = useLoad(() => api(`/api/cases/${encodeURIComponent(row.case_id)}/`), [row.case_id]);
+    const [form, setForm] = R.useState({ party: "", start: "", end: "", instructions: "" });
+    const [problem, setProblem] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const parties = (state.data?.parties || []).filter((p) => p.can_receive);
+    const update = (patch) => {
+      setForm((old) => ({ ...old, ...patch }));
+      setProblem(null);
+    };
+    async function save() {
+      const issue = testimonyProblem(form, sessionDate);
+      setProblem(issue);
+      if (issue) return;
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/agenda/${encodeURIComponent(row.id)}/testimony/`, {
+          method: "POST",
+          // Los Angeles wall-clock times on the session date (the server's time zone).
+          body: JSON.stringify({
+            party_id: form.party,
+            starts_at: `${sessionDate}T${form.start}`,
+            ends_at: `${sessionDate}T${form.end}`,
+            instructions: form.instructions.trim(),
+          }),
+        });
+        onSaved("testimonyScheduled");
+      } catch (error) {
+        setFailure(serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    const err = (key) => (problem === key ? t(key) : undefined);
+    return h(
+      P.Dialog,
+      {
+        open: true,
+        title: t("scheduleTestimony"),
+        description: t("testimonyHelp"),
+        closeLabel: t("cancel"),
+        onClose: () => !pending && onClose(),
+        footer: h(
+          P.Inline,
+          null,
+          h(P.Button, { disabled: pending, onClick: onClose }, t("cancel")),
+          h(
+            P.Button,
+            { variant: "primary", loading: pending, disabled: pending || !parties.length, onClick: save },
+            t("sendInvitation"),
+          ),
+        ),
+      },
+      state.pending && !state.data
+        ? h(P.Text, { as: "p" }, t("loading"))
+        : state.error
+          ? loadFailure(P, h, t, retry, state.error)
+          : h(
+              P.Stack,
+              { gap: "md" },
+              h(P.Text, { as: "p", variant: "strong" }, `${sessionLabel(sessionDate, t)} · ${t("pacificTime")}`),
+              h(
+                P.Field,
+                { label: t("testifyingApplicant"), required: true, error: err("chooseParty") },
+                h(P.Select, {
+                  value: form.party,
+                  disabled: pending,
+                  onChange: (e) => update({ party: e.target.value }),
+                  options: [{ value: "", label: t("chooseParty") }, ...parties.map((p) => ({ value: p.id, label: p.name }))],
+                }),
+              ),
+              h(
+                P.Inline,
+                { wrap: true },
+                h(
+                  P.Field,
+                  { label: t("startTime"), required: true, error: err("timesRequired") },
+                  h(P.Input, { type: "time", width: "sm", value: form.start, disabled: pending, onChange: (e) => update({ start: e.target.value }) }),
+                ),
+                h(
+                  P.Field,
+                  { label: t("endTime"), required: true, error: err("endAfterStart") },
+                  h(P.Input, { type: "time", width: "sm", value: form.end, disabled: pending, onChange: (e) => update({ end: e.target.value }) }),
+                ),
+              ),
+              h(
+                P.Field,
+                {
+                  label: t("testimonyInstructions"),
+                  description: t("testimonyInstructionsHelp"),
+                  required: true,
+                  error: err("instructionsRequired"),
+                },
+                h(P.Textarea, {
+                  rows: 4,
+                  value: form.instructions,
+                  disabled: pending,
+                  maxLength: 5000,
+                  onChange: (e) => update({ instructions: e.target.value }),
+                }),
+              ),
+              failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+            ),
     );
   }
 
@@ -928,6 +1357,14 @@
                 setFailure(null);
                 setDialog({ kind: "present", row: item });
               },
+              onOutcome: (item) => {
+                setFailure(null);
+                setDialog({ kind: "outcome", row: item });
+              },
+              onTestimony: (item) => {
+                setFailure(null);
+                setDialog({ kind: "testimony", row: item });
+              },
             }),
           ),
           !groups[n].length ? h(P.EmptyState, { title: t(`part${n}Empty`) }) : null,
@@ -943,7 +1380,7 @@
         P.Inline,
         { justify: "between", wrap: true },
         h(P.Text, { as: "h1", variant: "title" }, sessionLabel(session.date, t)),
-        manage && planned
+        (typeof session.can_close === "boolean" ? session.can_close : manage && planned)
           ? h(P.Button, { variant: "danger-secondary", disabled: pending, onClick: () => setDialog({ kind: "close" }) }, t("closeSession"))
           : null,
       ),
@@ -967,7 +1404,35 @@
       h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
       part(1),
       part(2),
-      h(P.Notice, { tone: "info" }, t("outcomeDependency")),
+      !data.items.some((row) => "hearing_id" in row) ? h(P.Notice, { tone: "info" }, t("outcomeDependency")) : null,
+      dialog?.kind === "outcome"
+        ? h(HearingOutcomeDialog, {
+            api,
+            lang,
+            hearingId: dialog.row.hearing_id,
+            title: hearingTitle(dialog.row.party_names, session.date, t),
+            onClose: () => setDialog(null),
+            onSaved: (key) => {
+              setDialog(null);
+              setNotice(key);
+              retry();
+            },
+          })
+        : null,
+      dialog?.kind === "testimony"
+        ? h(TestimonyDialog, {
+            api,
+            lang,
+            row: dialog.row,
+            sessionDate: session.date,
+            onClose: () => setDialog(null),
+            onSaved: (key) => {
+              setDialog(null);
+              setNotice(key);
+              retry();
+            },
+          })
+        : null,
       h(
         P.Dialog,
         {
@@ -1068,8 +1533,13 @@
     assignableMembers,
     assignmentProblem,
     groupAgenda,
+    agendaActions,
+    testimonyProblem,
+    writerOf,
     serverMessage,
     answerText,
+    fieldLabel,
+    formatWhen,
     useLoad,
     loadFailure,
     ReviewQueuePanel,

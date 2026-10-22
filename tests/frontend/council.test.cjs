@@ -168,3 +168,46 @@ test("module follows Plenix rules: no inline styles, raw colors or copied CSS", 
   assert.doesNotMatch(source, /!important/);
   assert.doesNotMatch(source, /<link|\.css['"]/);
 });
+
+test("agenda controls follow server capability flags when present", () => {
+  const planned = { state: "planned", date: "2026-11-05", can_manage: true };
+  const row = { part: 2, state: "scheduled", assigned_member_id: "m", can_present: false, can_record_outcome: false, hearing_id: null };
+  const memberFlags = C.agendaActions(row, { ...planned, can_manage: false }, member, null);
+  assert.equal(memberFlags.present, false);
+  assert.equal(memberFlags.presentNeedsAttendance, true);
+  assert.equal(memberFlags.testimony, true);
+  assert.equal(C.agendaActions({ ...row, can_present: true }, planned, member, null).present, true);
+  assert.equal(C.agendaActions(row, planned, { ...member, id: "other" }, null).testimony, false);
+  assert.equal(C.agendaActions({ ...row, state: "heard", hearing_id: "h", can_record_outcome: true }, planned, member, null).outcome, true);
+  assert.equal(C.agendaActions({ ...row, state: "heard", hearing_id: "h" }, planned, member, null).outcome, false);
+  const part1 = { part: 1, state: "scheduled", assigned_member_id: null };
+  assert.equal(C.agendaActions(part1, planned, admin, null).assign, true);
+  assert.equal(C.agendaActions(part1, { ...planned, can_manage: false }, admin, null).assign, false);
+  assert.equal(C.agendaActions(part1, { state: "closed", date: "2026-11-05" }, admin, null).assign, false);
+});
+
+test("agenda fallback for older servers uses role and shown name only for display", () => {
+  const legacy = { part: 2, state: "scheduled" };
+  const caseRow = { assigned_member: "Fr. Member" };
+  assert.equal(C.agendaActions(legacy, { state: "planned" }, member, caseRow).present, true);
+  assert.equal(C.agendaActions(legacy, { state: "planned" }, admin, caseRow).present, false);
+  assert.equal(C.agendaActions(legacy, { state: "planned" }, member, caseRow).presentNeedsAttendance, false);
+});
+
+test("testimony needs applicant, ordered times and private instructions", () => {
+  const ok = { party: "p", start: "10:00", end: "10:30", instructions: "Room 2" };
+  assert.equal(C.testimonyProblem(ok, "2026-11-05"), null);
+  assert.equal(C.testimonyProblem({ ...ok, party: "" }, "2026-11-05"), "chooseParty");
+  assert.equal(C.testimonyProblem({ ...ok, start: "" }, "2026-11-05"), "timesRequired");
+  assert.equal(C.testimonyProblem({ ...ok, end: "09:00" }, "2026-11-05"), "endAfterStart");
+  assert.equal(C.testimonyProblem({ ...ok, end: "10:00" }, "2026-11-05"), "endAfterStart");
+  assert.equal(C.testimonyProblem({ ...ok, instructions: " " }, "2026-11-05"), "instructionsRequired");
+});
+
+test("review labels come from the bound questionnaire and never invent wording", () => {
+  const row = { questionnaire: { definition: { fields: [{ code: "first_name", label_en: "First name", label_ar: "" }] } } };
+  assert.equal(C.fieldLabel(row, "first_name", "en"), "First name");
+  assert.equal(C.fieldLabel(row, "first_name", "ar"), null);
+  assert.equal(C.fieldLabel(row, "unknown_code", "en"), null);
+  assert.equal(C.fieldLabel({}, "first_name", "en"), null);
+});

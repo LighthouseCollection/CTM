@@ -1,77 +1,153 @@
 /* Synthetic council contract fixture for browser checks on machines without
-   Python. Serves the real shell assets (pinned Plenix CDN, council.js, app.js)
-   with an in-memory stub of the existing endpoints. It is NOT a real-API,
-   provider-login or database test and contains no real case data.
+   Python. Serves the real shell assets (pinned Plenix CDN, council modules,
+   app.js) with an in-memory stub of the council endpoints. It is NOT a
+   real-API, provider-login or database test and contains no real case data.
 
-   Usage: node scripts/council_fixture.cjs [port] [role]
-   role: secretary (default) | member | president */
+   Usage: node scripts/council_fixture.cjs [port] [role] [--contract=main|pr7]
+   role: secretary (default) | member | president
+   --contract=pr7 adds the council projections proposed in backend PR #7
+   (review projection, agenda capabilities, hearing read, decision read,
+   question taxonomy, request metadata, interview boundary). */
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
-const port = Number(process.argv[2] || 18850);
-let role = process.argv[3] || "secretary";
+const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const pr7 = process.argv.includes("--contract=pr7");
+const port = Number(args[0] || 18850);
+let role = args[1] || "secretary";
 
 const people = {
   secretary: { id: "u-sec", name: "Synthetic Secretary", role: "secretary" },
   member: { id: "u-mem", name: "Fr. Synthetic Member", role: "member" },
   president: { id: "u-pre", name: "Synthetic President", role: "president" },
 };
+const nameOf = (id) => Object.values(people).find((p) => p.id === id)?.name || null;
+const now = () => new Date().toISOString();
 const state = {
   applications: [
     {
-      id: "a-1", kind: "petition", status: "submitted", case_id: "c-1", case_number: "20261020-01",
-      version: 2, answers: { first_name_en: "Test", last_name_en: "Applicant", grounds: ["desertion"] },
+      id: "a-1", kind: "petition", status: "submitted", case_id: "c-1", case_number: "20261020-01", version: 2,
+      answers: { first_name_en: "Test", last_name_en: "Applicant", grounds: ["desertion"] },
       fee: { amount_minor: 25000, currency: "usd", status: "paid" },
     },
     {
-      id: "a-2", kind: "petition", status: "submitted", case_id: "c-2", case_number: "20261020-02",
-      version: 1, answers: {}, fee: { amount_minor: 25000, currency: "usd", status: "waived" },
+      id: "a-2", kind: "petition", status: "submitted", case_id: "c-2", case_number: "20261020-02", version: 1,
+      answers: {}, fee: { amount_minor: 25000, currency: "usd", status: "waived" },
     },
     { id: "a-3", kind: "petition", status: "accepted", case_id: "c-3", case_number: "20261019-01", version: 1, answers: {}, fee: null },
   ],
+  reviews: [],
   cases: [
-    { id: "c-1", number: "20261020-01", status: "open", assigned_member: null },
-    { id: "c-2", number: "20261020-02", status: "open", assigned_member: null },
-    { id: "c-3", number: "20261019-01", status: "open", assigned_member: null },
-    { id: "c-4", number: "20261001-01", status: "open", assigned_member: "Fr. Synthetic Member" },
+    { id: "c-1", number: "20261020-01", status: "open", assigned: null },
+    { id: "c-2", number: "20261020-02", status: "open", assigned: null },
+    { id: "c-3", number: "20261019-01", status: "open", assigned: null },
+    { id: "c-4", number: "20261001-01", status: "open", assigned: "u-mem" },
   ],
   sessions: [{ id: "s-1", date: "2026-11-05", reference: "CS20261105", state: "planned" }],
   agenda: [],
   attendance: [],
+  hearings: [],
+  outcomes: [],
+  testimony: [],
   posts: [],
   requests: [],
   decisions: [],
+  votes: [],
+  approvals: [],
   questions: [
     { id: "q1", code: "OPEN-01", version: 1, category: "Foundational questions", wording_en: "Please state your full name and your spouse’s full name.", wording_ar: "", foundational: true, guidance: {} },
     { id: "q2", code: "DM-01", version: 1, category: "Decision to marry", wording_en: "Synthetic question one?", wording_ar: "", foundational: false, guidance: {} },
     { id: "q3", code: "DM-02", version: 1, category: "Decision to marry", wording_en: "Synthetic question two?", wording_ar: "", foundational: false, guidance: {} },
   ],
 };
+const taxonomy = {
+  "OPEN-01": { category_id: "QC01", category_ar: null, topic_groups: [{ id: "TG01", title: "Foundation", title_ar: null }] },
+  "DM-01": { category_id: "QC05", category_ar: null, topic_groups: [{ id: "TG02", title: "Common guided interview", title_ar: null }, { id: "TG03", title: "Annulment-related factual inquiry", title_ar: null }] },
+  "DM-02": { category_id: "QC05", category_ar: null, topic_groups: [{ id: "TG02", title: "Common guided interview", title_ar: null }] },
+};
 const parties = (c) => [
   { id: "pa-" + c.id, name: "Synthetic Applicant", is_self: false, can_receive: true, reference: null },
   { id: "pb-" + c.id, name: "Synthetic Spouse", is_self: false, can_receive: true, reference: null },
 ];
-const members = () => Object.values(people).map(({ id, name, role }) => ({ id, name, role }));
+const members = () =>
+  Object.values(people).map(({ id, name, role }) => (pr7 ? { id, name, role, president: role === "president", active: true } : { id, name, role }));
 const json = (res, status, body) => {
   res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
   res.end(JSON.stringify(body));
 };
 const admin = () => ["secretary", "admin"].includes(role);
+const me = () => people[role];
+const caseRow = (c) => ({ id: c.id, number: c.number, status: c.status, assigned_member: nameOf(c.assigned) });
+
+function applicationRow(a) {
+  const base = { ...a };
+  if (!pr7) return base;
+  return {
+    ...base,
+    applicant_name: "Synthetic Applicant",
+    submitted_at: "2026-10-20T18:04:00Z",
+    submitted_version: a.version,
+    questionnaire: { id: "qn-1", version: 1, published: true, definition: { fields: [
+      { code: "first_name_en", label_en: "First name (English)", label_ar: "" },
+      { code: "last_name_en", label_en: "Last name (English)", label_ar: "" },
+      { code: "grounds", label_en: "Grounds", label_ar: "" },
+    ] } },
+    manifest: [
+      { file_id: "f-mc-" + a.id, category: "MC", name: `${a.case_number}-MC-20261020-1804.pdf`, scan_state: "clean" },
+      { file_id: "f-cdd-" + a.id, category: "CDD", name: `${a.case_number}-CDD-20261020-1805.pdf`, scan_state: "pending" },
+    ],
+    reviews: state.reviews.filter((r) => r.app === a.id),
+    can_review: admin() && a.status === "submitted",
+  };
+}
+
+function agendaRow(item, s) {
+  const c = state.cases.find((x) => x.id === item.case_id);
+  const row = { id: item.id, case_id: c.id, case_number: c.number, part: item.part, state: item.state, position: item.position };
+  if (!pr7) return row;
+  const hearing = state.hearings.find((h) => h.agenda === item.id);
+  const presence = state.attendance.find((r) => r.member_id === me().id);
+  return {
+    ...row,
+    hearing_id: hearing ? hearing.id : null,
+    assigned_member_id: c.assigned,
+    assigned_member_name: nameOf(c.assigned),
+    party_names: parties(c).map((p) => p.name),
+    can_present: Boolean(c.assigned === me().id && item.part === 2 && item.state === "scheduled" && s.state === "planned" && presence && presence.present),
+    can_record_outcome: Boolean(hearing && (admin() || c.assigned === me().id) && c.status === "open"),
+    testimony: state.testimony.filter((t) => t.agenda === item.id),
+  };
+}
+
+function decisionRow(d) {
+  const effective = {};
+  for (const v of state.votes.filter((v) => v.decision === d.id)) effective[v.member_id] = v;
+  const approvals = state.approvals.filter((a) => a.decision === d.id);
+  const current = state.decisions.filter((x) => x.proceeding === d.proceeding).every((x) => x.number <= d.number);
+  return {
+    ...d, votes: Object.values(effective), vote_history: state.votes.filter((v) => v.decision === d.id),
+    approval: approvals[approvals.length - 1] || null, approval_history: approvals, current,
+    can_vote: current, can_approve: current && (role === "president" || admin()),
+  };
+}
 
 function api(req, res, url, body) {
   const p = url.pathname;
-  const me = people[role];
   let m;
   if (p === "/__role/") { role = body.role; return json(res, 200, { role }); }
   if (p === "/__posts/") return json(res, 200, state.posts);
   if (req.method === "POST") state.posts.push({ path: p, body });
   if (p === "/api/session/")
-    return json(res, 200, { ...me, portal: "council", ui_language: "en", notification_language: "en", csrf_token: "x" });
+    return json(res, 200, { ...me(), portal: "council", ui_language: "en", notification_language: "en", csrf_token: "x" });
   if (p === "/api/account/settings/") return json(res, 200, { ui_language: body.ui_language || "en", notification_language: "en", email: "synthetic@example.test" });
   if (p === "/api/notifications/") return json(res, 200, { items: [], next_offset: null, unread_count: 0 });
-  if (p === "/api/applications/") return json(res, 200, { items: state.applications });
+  if (p === "/api/applications/") {
+    let rows = state.applications;
+    if (pr7 && url.searchParams.get("state") === "awaiting_review") rows = rows.filter((a) => a.kind === "petition" && a.status === "submitted");
+    return json(res, 200, { items: rows.map(applicationRow) });
+  }
   if ((m = p.match(/^\/api\/applications\/([^/]+)\/review\/$/))) {
     if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
     const app = state.applications.find((a) => a.id === m[1]);
@@ -79,65 +155,63 @@ function api(req, res, url, body) {
     if (body.result === "reject" && !String(body.instructions || "").trim())
       return json(res, 422, { error: "validation", messages: ["Reject requires correction instructions."] });
     app.status = body.result === "accept" ? "accepted" : "returned";
+    state.reviews.push({ app: app.id, result: body.result, instructions: body.instructions, actor: me().name, timestamp: now() });
     return json(res, 201, { id: "r-" + app.id });
   }
-  if (p === "/api/cases/") return json(res, 200, { items: state.cases });
+  if (p === "/api/cases/") return json(res, 200, { items: state.cases.map(caseRow) });
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/$/))) {
     const c = state.cases.find((x) => x.id === m[1]);
-    return json(res, 200, { ...c, can_message: true, parties: parties(c), proceedings: [{ id: "p-" + c.id, kind: "initial", status: "open", sequence: 1 }] });
+    const extra = pr7
+      ? { assigned_member_id: c.assigned, can_place_part2: admin() || c.assigned === me().id, can_assign: admin() && c.status === "open" }
+      : {};
+    return json(res, 200, { ...caseRow(c), ...extra, can_message: true, parties: parties(c), proceedings: [{ id: "p-" + c.id, kind: "initial", status: c.status, sequence: 1 }] });
   }
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/files\/$/))) return json(res, 200, { items: [], next_offset: null });
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/))) return json(res, 200, { items: [] });
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/assignment\/$/))) {
     if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
     const c = state.cases.find((x) => x.id === m[1]);
-    const mem = members().find((x) => x.id === body.member_id);
     if (!members().some((x) => x.id === body.president_id && x.role === "president")) return json(res, 404, { error: "resource_or_input_invalid" });
-    c.assigned_member = mem.name;
+    c.assigned = body.member_id;
     return json(res, 201, { id: "as-" + c.id });
   }
   if (p === "/api/council/members/") return json(res, 200, { items: members() });
-  if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/))) return json(res, 200, { items: [] });
-  if (p === "/api/report-questions/") return json(res, 200, { items: state.questions });
+  if (p === "/api/report-questions/")
+    return json(res, 200, { items: state.questions.map((q) => (pr7 ? { ...q, ...taxonomy[q.code] } : q)) });
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/requests\/$/))) {
     const c = state.cases.find((x) => x.id === m[1]);
     if (req.method === "POST") {
-      if (!admin() && c.assigned_member !== people[role].name)
+      if (!admin() && c.assigned !== me().id)
         return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
       if (!body.title || !body.party_id) return json(res, 404, { error: "resource_or_input_invalid" });
       const codes = new Set(["OPEN-01", ...(body.questions || [])]);
       const r = {
         id: "rq-" + (state.requests.length + 1), case: c.id, title: body.title, kind: body.kind, state: "draft", instructions: body.instructions,
         questions: state.questions.filter((q) => codes.has(q.code)).map((q) => ({ code: q.code, version: q.version, en: q.wording_en, ar: q.wording_ar })),
+        subject_party_id: body.party_id, subject_name: parties(c).find((x) => x.id === body.party_id)?.name, language: body.language,
+        created_at: now(), sent_at: null, parent_report_id: body.parent_id, author: me().name,
       };
       state.requests.unshift(r);
       return json(res, 201, { id: r.id });
     }
-    return json(res, 200, { items: state.requests.filter((r) => r.case === c.id) });
+    const rows = state.requests.filter((r) => r.case === c.id).map((r) => {
+      if (pr7) return r;
+      const { subject_party_id, subject_name, language, created_at, sent_at, parent_report_id, author, ...old } = r;
+      return old;
+    });
+    return json(res, 200, { items: rows });
   }
   if ((m = p.match(/^\/api\/requests\/([^/]+)\/send\/$/))) {
     const r = state.requests.find((x) => x.id === m[1]);
     r.state = "sent";
+    r.sent_at = now();
     return json(res, 200, { id: r.id, token: null });
   }
-  if ((m = p.match(/^\/api\/proceedings\/([^/]+)\/decision\/$/))) {
-    if (req.method !== "POST") return json(res, 405, { error: "method_not_allowed" });
-    if (!String(body.grounds || "").trim())
-      return json(res, 422, { error: "validation", messages: ["Record the decision type and grounds/reason."] });
-    const d = { id: "dv-" + (state.decisions.length + 1), ...body };
-    state.decisions.push(d);
-    return json(res, 201, { id: d.id });
-  }
-  if ((m = p.match(/^\/api\/decisions\/([^/]+)\/vote\/$/))) {
-    if (body.member_id && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
-    if (state.decisions[state.decisions.length - 1].id !== m[1])
-      return json(res, 422, { error: "validation", messages: ["This decision has been revised; use the latest version."] });
-    return json(res, 201, { id: "vote-" + Date.now() });
-  }
-  if ((m = p.match(/^\/api\/decisions\/([^/]+)\/approve\/$/))) {
-    if (role !== "president" && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
-    if (role !== "president" && !members().some((x) => x.id === body.president_id && x.role === "president"))
-      return json(res, 404, { error: "resource_or_input_invalid" });
-    return json(res, 201, { id: "appr-" + m[1] });
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/complete\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    if (r.state !== "sent") return json(res, 422, { error: "validation", messages: ["Request is not awaiting this response."] });
+    r.state = "completed";
+    return json(res, 201, { id: "rep-" + r.id });
   }
   if (p === "/api/sessions/") {
     if (req.method === "POST") {
@@ -154,22 +228,21 @@ function api(req, res, url, body) {
     if (req.method === "POST") {
       const c = state.cases.find((x) => x.id === body.case_id);
       if (body.part === 1 && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
-      if (body.part === 2 && !admin() && c.assigned_member !== people[role].name)
+      if (body.part === 2 && !admin() && c.assigned !== me().id)
         return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
-      const item = { id: "i-" + s.id + c.id, session: s.id, case_id: c.id, case_number: c.number, part: body.part, state: "scheduled", position: state.agenda.length + 1 };
+      const item = { id: "i-" + s.id + c.id, session: s.id, case_id: c.id, part: body.part, state: "scheduled", position: state.agenda.length + 1 };
       state.agenda.push(item);
       return json(res, 201, { id: item.id });
     }
-    return json(res, 200, {
-      session: { id: s.id, date: s.date, state: s.state, can_record_attendance: admin() && s.state === "planned" },
-      items: state.agenda.filter((x) => x.session === s.id),
-    });
+    const session = { id: s.id, date: s.date, state: s.state, can_record_attendance: admin() && s.state === "planned" };
+    if (pr7) Object.assign(session, { can_manage: admin() && s.state === "planned", can_close: admin() && s.state === "planned" });
+    return json(res, 200, { session, items: state.agenda.filter((x) => x.session === s.id).map((x) => agendaRow(x, s)) });
   }
   if ((m = p.match(/^\/api\/sessions\/([^/]+)\/attendance\/$/))) {
     if (req.method === "POST") {
       const mem = members().find((x) => x.id === body.member_id);
       state.attendance = state.attendance.filter((r) => r.member_id !== body.member_id);
-      state.attendance.push({ id: "at-" + mem.id, member_id: mem.id, member_name: mem.name, member_active: true, present: body.present, actor_id: me.id, timestamp: new Date().toISOString() });
+      state.attendance.push({ id: "at-" + mem.id, member_id: mem.id, member_name: mem.name, member_active: true, present: body.present, actor_id: me().id, timestamp: now() });
       return json(res, 201, { id: "at-" + mem.id });
     }
     return json(res, 200, { items: state.attendance });
@@ -177,18 +250,78 @@ function api(req, res, url, body) {
   if ((m = p.match(/^\/api\/sessions\/([^/]+)\/close\/$/))) {
     const s = state.sessions.find((x) => x.id === m[1]);
     s.state = "closed";
-    state.agenda.filter((x) => x.session === s.id && x.state === "scheduled").forEach((x) => (x.state = "unpresented"));
+    for (const x of state.agenda.filter((x) => x.session === s.id && x.state === "scheduled")) {
+      const c = state.cases.find((y) => y.id === x.case_id);
+      x.state = pr7 && x.part === 1 && c.assigned ? "assigned" : "unpresented";
+    }
     return json(res, 200, { id: s.id });
   }
   if ((m = p.match(/^\/api\/agenda\/([^/]+)\/hear\/$/))) {
     const item = state.agenda.find((x) => x.id === m[1]);
     const c = state.cases.find((x) => x.id === item.case_id);
-    if (c.assigned_member !== people[role].name) return json(res, 403, { error: "forbidden", detail: "Only the assigned member presents the hearing." });
-    const row = state.attendance.find((r) => r.member_id === people[role].id);
+    if (c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned member presents the hearing." });
+    const row = state.attendance.find((r) => r.member_id === me().id);
     if (!row) return json(res, 422, { error: "validation", messages: ["Record the assigned presenter's attendance before the hearing."] });
     if (!row.present) { item.state = "presenter_absent"; return json(res, 200, { state: "presenter_absent", awaiting_manual_placement: true }); }
     item.state = "heard";
-    return json(res, 201, { id: "h-" + item.id });
+    const hearing = { id: "h-" + item.id, agenda: item.id, case_id: c.id, state: "held", presenter_id: me().id };
+    state.hearings.push(hearing);
+    return json(res, 201, { id: hearing.id });
+  }
+  if ((m = p.match(/^\/api\/agenda\/([^/]+)\/testimony\/$/))) {
+    const item = state.agenda.find((x) => x.id === m[1]);
+    const c = state.cases.find((x) => x.id === item.case_id);
+    if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    const s = state.sessions.find((x) => x.id === item.session);
+    if (!body.starts_at.startsWith(s.date) || body.starts_at >= body.ends_at)
+      return json(res, 422, { error: "validation", messages: ["Use non-overlapping testimony times on the session date."] });
+    if (state.testimony.some((t) => t.session === s.id && t.starts_at < body.ends_at && t.ends_at > body.starts_at))
+      return json(res, 422, { error: "validation", messages: ["Another applicant's testimony overlaps this appointment."] });
+    const party = parties(c).find((x) => x.id === body.party_id);
+    const appt = { id: "t-" + (state.testimony.length + 1), agenda: item.id, session: s.id, party_id: party.id, party_name: party.name,
+      starts_at: body.starts_at + ":00-08:00", ends_at: body.ends_at + ":00-08:00", instructions: body.instructions, version: 1, state: "scheduled", response: null };
+    state.testimony.push(appt);
+    return json(res, 201, { id: appt.id });
+  }
+  if ((m = p.match(/^\/api\/hearings\/([^/]+)\/$/))) {
+    if (!pr7) return json(res, 404, { error: "resource_or_input_invalid" });
+    const hearing = state.hearings.find((x) => x.id === m[1]);
+    const c = state.cases.find((x) => x.id === hearing.case_id);
+    return json(res, 200, { ...hearing, can_record_outcome: admin() || c.assigned === me().id, outcomes: state.outcomes.filter((o) => o.hearing === hearing.id) });
+  }
+  if ((m = p.match(/^\/api\/hearings\/([^/]+)\/outcome\/$/))) {
+    const hearing = state.hearings.find((x) => x.id === m[1]);
+    const c = state.cases.find((x) => x.id === hearing.case_id);
+    if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    const o = { id: "o-" + (state.outcomes.length + 1), hearing: hearing.id, internal_text: body.internal_text, recommendations: body.recommendations, actor: me().name, actor_id: me().id, timestamp: now() };
+    state.outcomes.push(o);
+    return json(res, 201, { id: o.id });
+  }
+  if ((m = p.match(/^\/api\/proceedings\/([^/]+)\/decision\/$/))) {
+    if (req.method !== "POST") {
+      if (!pr7) return json(res, 405, { error: "method_not_allowed" });
+      return json(res, 200, { items: state.decisions.filter((d) => d.proceeding === m[1]).sort((a, b) => b.number - a.number).map(decisionRow) });
+    }
+    if (!String(body.grounds || "").trim())
+      return json(res, 422, { error: "validation", messages: ["Record the decision type and grounds/reason."] });
+    const number = state.decisions.filter((d) => d.proceeding === m[1]).length + 1;
+    const d = { id: "dv-" + m[1] + "-" + number, proceeding: m[1], number, ...body, actor: me().name, timestamp: now() };
+    state.decisions.push(d);
+    return json(res, 201, { id: d.id });
+  }
+  if ((m = p.match(/^\/api\/decisions\/([^/]+)\/vote\/$/))) {
+    if (body.member_id && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const d = state.decisions.find((x) => x.id === m[1]);
+    if (!decisionRow(d).current) return json(res, 422, { error: "validation", messages: ["This decision has been revised; use the latest version."] });
+    state.votes.push({ decision: d.id, member_id: body.member_id || me().id, choice: body.choice, actor_id: me().id, actor: me().name, timestamp: now() });
+    return json(res, 201, { id: "vote-" + state.votes.length });
+  }
+  if ((m = p.match(/^\/api\/decisions\/([^/]+)\/approve\/$/))) {
+    if (role !== "president" && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const presidentId = role === "president" ? me().id : body.president_id;
+    if (!members().some((x) => x.id === presidentId && x.role === "president")) return json(res, 404, { error: "resource_or_input_invalid" });
+    state.approvals.push({ decision: m[1], president_id: presidentId, president: nameOf(presidentId), actor: me().name, actor_id: me().id, timestamp: now() });
+    return json(res, 201, { id: "appr-" + m[1] });
   }
   return json(res, 404, { error: "resource_or_input_invalid" });
 }
@@ -223,4 +356,4 @@ http
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
     res.end(shell);
   })
-  .listen(port, "127.0.0.1", () => console.log(`council fixture on http://127.0.0.1:${port} as ${role}`));
+  .listen(port, "127.0.0.1", () => console.log(`council fixture on http://127.0.0.1:${port} as ${role} (${pr7 ? "pr7" : "main"} contract)`));
