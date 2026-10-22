@@ -26,3 +26,13 @@ The next confirmed session UI review must cover narrow-screen action wrapping, A
 
 Independent combined-backend review, English/Arabic/RTL/mobile visual acceptance, all restored agenda action journeys, and integration of this UI slice. No merge, deployment, migration or backend contract change.
 
+
+## Responsive/RTL follow-up
+
+Confirmed and fixed: at 390px, case navigation previously occupied 220px and squeezed content to 170px. SecondaryPane now uses documented detailOpen/onBack: narrow screens open full-width selected content, Back shows full-width case navigation, and selecting the same section returns to content. Desktop retains independent main rail/case pane behavior. SecondaryPane control strings and attendance Panel collapse/expand strings are localized in Arabic; no CSS dimensions or custom layout were added.
+
+The synthetic fixture served every static file as JavaScript, so the SVG logo failed image decoding and appeared unavailable in screenshots. Static MIME types now match the requested asset; this is a test-harness correction, not a claim that the production logo was broken.
+
+Fresh regression evidence: browser_case_responsive.py passes English/Arabic at 390 and 1253px, including Back/reselect and no page overflow. browser_session_responsive.py passes English/Arabic at 390, 768 and 1253px, including logo decoding, localized collapse/reopen, semantic direction and content bounds. Both product regressions failed before correction. Independent navigation, all 14 split workspaces, attendance/agenda and all 189 frontend unit tests still pass.
+
+Remaining: responsive/RTL interactions for other case section contents and dialogs, long-text content stress, Arabic institutional-content review and actual-backend acceptance. The register remains an unfinished full-screen audit; these matrix checks cover the session shell and case navigation only. No report guard, expected_version, schema or provider changes.

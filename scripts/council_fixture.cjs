@@ -666,7 +666,8 @@ http
       if (!file.startsWith(path.join(root, "static"))) return json(res, 404, {});
       return fs.readFile(file, (err, data) => {
         if (err) return json(res, 404, {});
-        res.writeHead(200, { "Content-Type": "text/javascript; charset=utf-8" });
+        const contentTypes = { ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg" };
+        res.writeHead(200, { "Content-Type": contentTypes[path.extname(file).toLowerCase()] || "application/octet-stream" });
         res.end(data);
       });
     }
