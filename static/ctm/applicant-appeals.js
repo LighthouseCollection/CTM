@@ -39,7 +39,7 @@
     const generation=R.useRef(0);
     R.useEffect(()=>{generation.current++;return()=>{generation.current++;};},[starter]);
     const {state}=starter;
-    return h(P.Panel,{title:t("title")},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
       h(P.Text,null,t("help")),h(P.Notice,null,t("fee")),
       state.error?h(P.Notice,{tone:"danger",role:"alert"},t(state.error)):null,
       h(P.Button,{disabled:state.busy||state.locked,onClick:async()=>{

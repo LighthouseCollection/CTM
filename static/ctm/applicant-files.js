@@ -120,7 +120,7 @@
       h(P.Text,null,`${row.name} · ${t(["clean","pending","rejected"].includes(row.scan_state)?row.scan_state:"unknown")}`),
       downloadURL(row)?h(P.Button,{href:downloadURL(row)},t("download")):null);
     const additional=(data?.items||[]).filter(row=>!data.requirements.some(r=>r.category===row.category&&r.context===row.context));
-    return h(P.Panel,{title:t("title")},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
       error?h(P.Notice,{tone:"danger",role:"alert"},t(error)):null,
       received?h(P.Notice,{role:"status"},t("received")):null,
       disabled?h(P.Notice,null,t("savedContext")):null,
@@ -133,7 +133,7 @@
         // offered only for an unambiguous same-context attachment.
         const replacement=rows.length===1?rows[0]:null;
         const controlsDisabled=busy||disabled||locked||needsRefresh||data.can_upload!==true;
-        return h(P.Panel,{key,title:requirement[lang==="ar"?"label_ar":"label_en"],
+        return h(P.Panel,{ icon: "doc-text",key,title:requirement[lang==="ar"?"label_ar":"label_en"],
           description:t(requirement.required?"required":"optional")},h(P.Stack,null,
           ...(requirement.category==="RO" ? (orderDetails.find(order=>order.context===requirement.context)?.fields||[]) : [])
             .map((field,index)=>h(P.Text,{key:index},`${field[lang==="ar"?"label_ar":"label_en"]}: `,
@@ -148,7 +148,7 @@
             h(P.Button,{disabled:controlsDisabled||!selected[key],onClick:()=>send(requirement,replacement,key)},
               t(busy?"busy":replacement?"replace":"upload"))) : null));
       }),
-      additional.length?h(P.Panel,{title:t("additional")},h(P.Stack,null,...additional.map(renderRow))):null));
+      additional.length?h(P.Panel,{ icon: "doc-text",title:t("additional")},h(P.Stack,null,...additional.map(renderRow))):null));
   }
   window.CTMApplicantFiles={savedOrderDetails,validRequirement,validListing,downloadURL,uploadFile,ApplicationFiles};
 })();

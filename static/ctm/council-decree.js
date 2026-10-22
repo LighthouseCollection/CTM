@@ -353,7 +353,7 @@
       { gap: "lg" },
       h(
         P.Panel,
-        { title: t("issuedTitle") },
+        { icon: "doc-text", title: t("issuedTitle") },
         h(
           P.PropertyList,
           null,
@@ -374,7 +374,7 @@
       failure && !dialog ? h(P.Notice, { tone: "danger" }, failure) : null,
       h(
         P.Panel,
-        { title: t("recipients") },
+        { icon: "doc-text", title: t("recipients") },
         recipients.length
           ? h(
               P.Stack,
@@ -626,7 +626,7 @@
       }),
       notice ? h(P.Notice, { tone: notice === "stillWaiting" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !confirm ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
-      h(P.Panel, { title: t(["stepUpload", "stepScan", "stepSignature", "issueSummary"][step]) }, body),
+      h(P.Panel, { icon: "doc-text", title: t(["stepUpload", "stepScan", "stepSignature", "issueSummary"][step]) }, body),
       h(
         P.ConfirmDialog,
         {
@@ -705,7 +705,7 @@
       current && !eligibility
         ? h(
             P.Panel,
-            { title: t("approvedDecision") },
+            { icon: "doc-text", title: t("approvedDecision") },
             h(
               P.PropertyList,
               null,
@@ -812,7 +812,7 @@
       ),
       h(
         P.Panel,
-        { title: t(isLaterFiling(row) ? "laterFilingStatement" : "appealStatement") },
+        { icon: "doc-text", title: t(isLaterFiling(row) ? "laterFilingStatement" : "appealStatement") },
         answers.length
           ? h(
               P.PropertyList,
@@ -826,7 +826,7 @@
       Array.isArray(row.supplements)
         ? h(
             P.Panel,
-            { title: t("supplementsTitle"), description: t("supplementsHelp") },
+            { icon: "doc-text", title: t("supplementsTitle"), description: t("supplementsHelp") },
             row.supplements.length
               ? h(
                   P.Stack,
@@ -848,7 +848,7 @@
       row.disposition
         ? h(
             P.Panel,
-            { title: t("appealOutcome") },
+            { icon: "doc-text", title: t("appealOutcome") },
             h(
               P.PropertyList,
               null,
@@ -862,7 +862,7 @@
         ? writer
           ? h(
               P.Panel,
-              { title: t("recordAppealResult"), description: t("appealResultHelp") },
+              { icon: "doc-text", title: t("recordAppealResult"), description: t("appealResultHelp") },
               !known
                 ? h(P.Notice, { tone: "info" }, t("hearingsUnavailable"))
                 : !eligible.length

@@ -769,7 +769,7 @@
     const supportsQuestions = (templates || []).every((tpl) => Array.isArray(tpl.questions));
     return h(
       P.Panel,
-      { title: t("templates"), description: t("templatesHelp"), collapsible: true, defaultExpanded: false },
+      { icon: "doc-text", title: t("templates"), description: t("templatesHelp"), collapsible: true, defaultExpanded: false },
       h(
         P.Stack,
         { gap: "md" },
@@ -1144,13 +1144,13 @@
       h(P.Notice, { tone: "info" }, t(request.state === "draft" ? "frozenNotice" : "answerReadOnly")),
       h(
         P.Panel,
-        { title: t("questions") },
+        { icon: "doc-text", title: t("questions") },
         h(P.List, {
           ordered: "decimal",
           items: (request.questions || []).map((q) => ({ children: `${q.code} — ${wording(q, lang)}` })),
         }),
       ),
-      request.instructions ? h(P.Panel, { title: t("instructions") }, h(P.Text, { as: "p" }, request.instructions)) : null,
+      request.instructions ? h(P.Panel, { icon: "doc-text", title: t("instructions") }, h(P.Text, { as: "p" }, request.instructions)) : null,
       failure && !confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
       request.state === "draft" && canWrite && (request.kind === "intake" || interview)
         ? h(P.Inline, null, h(P.Button, { variant: "primary", onClick: () => setConfirm(true) }, t(interview ? "startInterview" : "send")))
@@ -1497,7 +1497,7 @@
       { gap: "lg" },
       h(
         P.Panel,
-        { title: t("votedOn"), description: decision.number ? `${t("version")} ${decision.number}` : undefined },
+        { icon: "doc-text", title: t("votedOn"), description: decision.number ? `${t("version")} ${decision.number}` : undefined },
         h(
           P.PropertyList,
           { layout: "stacked" },
@@ -1521,7 +1521,7 @@
       failure && !confirm ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
       h(
         P.Panel,
-        { title: t("votes"), description: t("rosterNotice") },
+        { icon: "doc-text", title: t("votes"), description: t("rosterNotice") },
         h(
           P.Stack,
           { gap: "md" },
@@ -1573,7 +1573,7 @@
       ),
       h(
         P.Panel,
-        { title: t("approval") },
+        { icon: "doc-text", title: t("approval") },
         decision.approval
           ? h(
               P.Stack,
@@ -1697,7 +1697,7 @@
       earlier.length
         ? h(
             P.Panel,
-            { title: t("earlierVersions"), collapsible: true, defaultExpanded: false },
+            { icon: "doc-text", title: t("earlierVersions"), collapsible: true, defaultExpanded: false },
             h(P.List, {
               variant: "bullets",
               items: earlier.map((v) => ({
@@ -1948,7 +1948,7 @@
     const err = (key) => (problem === key ? t(key) : undefined);
     return h(
       P.Panel,
-      { title: t("callLog"), description: t("callLogHelp") },
+      { icon: "doc-text", title: t("callLog"), description: t("callLogHelp") },
       h(
         P.Stack,
         { gap: "md" },
@@ -2118,7 +2118,7 @@
       failure && !confirm ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
       h(
         P.Panel,
-        {
+        { icon: "lock",
           title: t("assessmentRequests"),
           actions: canWrite && !composing ? h(P.Button, { size: "sm", variant: "primary", onClick: () => setComposing(true) }, t("newAssessment")) : null,
         },
@@ -2185,7 +2185,7 @@
       ),
       h(
         P.Panel,
-        { title: t("assessmentReports") },
+        { icon: "doc-text", title: t("assessmentReports") },
         reports.length
           ? h(
               P.Stack,
@@ -2282,7 +2282,7 @@
       ...record.parties.map((party) =>
         h(
           P.Panel,
-          { key: party.id, title: party.name },
+          { icon: "doc-text", key: party.id, title: party.name },
           h(
             P.PropertyList,
             null,
@@ -2469,7 +2469,7 @@
         const labelled = answers.every(([code]) => base.fieldLabel(row, code, lang));
         return h(
           P.Panel,
-          {
+          { icon: "doc-text",
             key: row.id,
             title: row.applicant_name || t("petition"),
             description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "),
@@ -2495,7 +2495,7 @@
       findings
         ? h(
             P.Panel,
-            { title: t("findingsTitle"), description: t("findingsHelp") },
+            { icon: "doc-text", title: t("findingsTitle"), description: t("findingsHelp") },
             findings.length
               ? h(
                   P.PropertyList,
@@ -2513,7 +2513,7 @@
         : null,
       h(
         P.Panel,
-        { title: t("internalNotes"), description: t("internalNotesHelp") },
+        { icon: "doc-text", title: t("internalNotes"), description: t("internalNotesHelp") },
         h(
           P.Stack,
           { gap: "md" },
@@ -2619,7 +2619,7 @@
       history
         ? h(
             P.Panel,
-            { title: t("managerHistory") },
+            { icon: "doc-text", title: t("managerHistory") },
             history.length
               ? h(P.List, {
                   variant: "bullets",
@@ -2695,7 +2695,7 @@
       ),
       h(
         P.Panel,
-        { title: t("whereThingsStand") },
+        { icon: "info", title: t("whereThingsStand") },
         h(
           P.PropertyList,
           null,

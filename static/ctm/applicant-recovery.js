@@ -51,12 +51,12 @@
       const timer=window.setTimeout(()=>tick(),Math.min(2147483647,Math.max(1,Date.parse(p.expires_at)-Date.now())));
       return()=>window.clearTimeout(timer);
     },[url,p,clock]);
-    return h(P.Panel,{title:t("title")},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
       h(P.Button,{disabled:loading,onClick:()=>reload(n=>n+1)},t("refresh")),
       loading?h(P.Text,{role:"status"},t("loading")):null,
       error?h(P.Notice,{tone:"warning",role:"alert"},t("unavailable")):null,
       data?h(P.Notice,null,t(blocked?"hold":"clear")):null,
-      url?h(P.Stack,null,h(P.Panel,{title:t("original")},h(P.Text,null,p[lang==="ar"?"declaration_ar":"declaration_en"])),
+      url?h(P.Stack,null,h(P.Panel,{ icon: "doc-text",title:t("original")},h(P.Text,null,p[lang==="ar"?"declaration_ar":"declaration_en"])),
         h(P.Text,null,t("signer"),": ",p.attestation.name),
         h(P.Button,{disabled:disabled,onClick:()=>{const current=resumeURL(data.app,data.history);if(current&&!disabled)onCheckout(current);else tick();}},t("resume"))):null
     ));

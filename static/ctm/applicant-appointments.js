@@ -65,11 +65,11 @@
     const session=R.useMemo(()=>createResponseSession(row,api,render),[row,api]);
     const s=session.state,disabled=!row.can_respond || s.busy || s.locked || s.acknowledged;
     R.useEffect(()=>{onBusyChange(row.id,s.busy);return()=>onBusyChange(row.id,false);},[row.id,s.busy,onBusyChange]);
-    return h(P.Panel,{title:row.case_number ? `${t("case")}: ${row.case_number}` : t("invitation")},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:row.case_number ? `${t("case")}: ${row.case_number}` : t("invitation")},h(P.Stack,null,
       h(P.Text,null,`${t("version")}: ${row.version}`),h(P.Text,null,t("time")),
       h(P.Text,null,`${t("start")}: `,h("bdi",{dir:"ltr"},row.starts_at)),
       h(P.Text,null,`${t("end")}: `,h("bdi",{dir:"ltr"},row.ends_at)),
-      h(P.Panel,{title:t("instructions")},h(P.Text,null,row.instructions)),
+      h(P.Panel,{ icon: "doc-text",title:t("instructions")},h(P.Text,null,row.instructions)),
       h(P.Text,null,t(row.response === "confirm" ? "confirmResponse" : row.response === "reject" ? "rejectResponse" : "noResponse")),
       !row.can_respond ? h(P.Notice,null,t("closed")) : null,
       s.error ? h(P.Notice,{role:"alert",tone:"danger"},t(s.error)) : null,
@@ -95,7 +95,7 @@
       }).catch(()=>{if(active)setError(true);}).finally(()=>{if(active)setLoading(false);});
       return()=>{active=false;};
     },[api,revision]);
-    return h(P.Panel,{title:t("title")},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
       h(P.Button,{disabled:busy || loading,onClick:()=>reload(n=>n+1)},t("refresh")),
       loading ? h(P.Text,{role:"status"},t("loading")) : null,
       error ? h(P.Notice,{role:"alert",tone:"danger"},t("unavailable")) : null,

@@ -49,7 +49,7 @@
       return()=>{active=false;};
     },[applicationId,api,revision,refreshKey]);
     const money=row=>new Intl.NumberFormat(lang==="ar"?"ar":"en",{style:"currency",currency:"USD"}).format(row.amount_minor/100);
-    return h(P.Panel,{title:t("title")},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
       h(P.Button,{disabled:loading,onClick:()=>reload(n=>n+1)},t("refresh")),
       loading?h(P.Text,{role:"status"},t("loading")):null,
       error?h(P.Notice,{tone:"danger",role:"alert"},t("unavailable")):null,
@@ -57,10 +57,10 @@
         h(P.Text,null,`${t("fee")}: ${money(data.fee)} · ${t(statusKey(data.fee.status,"fee"))}`),
         h(P.Text,null,t(data.verified_payment?"verified":"unverified")),h(P.Notice,null,t("separate")),
         !data.events.length&&!data.checkouts.length?h(P.Text,null,t("none")):null,
-        data.checkouts.length?h(P.Panel,{title:t("attempts")},h(P.Stack,null,...data.checkouts.map(row=>
+        data.checkouts.length?h(P.Panel,{ icon: "doc-text",title:t("attempts")},h(P.Stack,null,...data.checkouts.map(row=>
           h(P.Stack,{key:row.id},h(P.Text,null,`${t(statusKey(row.state,"checkout"))} · ${t("version")}: ${row.version}`),
             h(P.Text,null,h("bdi",{dir:"ltr"},row.timestamp)))))):null,
-        data.events.length?h(P.Panel,{title:t("events")},h(P.Stack,null,...data.events.map(row=>
+        data.events.length?h(P.Panel,{ icon: "doc-text",title:t("events")},h(P.Stack,null,...data.events.map(row=>
           h(P.Stack,{key:row.id},h(P.Text,null,`${t(statusKey(row.kind,"event"))} · ${money(row)}`),
             row.amount_basis==="cumulative_refunded"?h(P.Text,null,t("cumulative")):null,
             h(P.Text,null,h("bdi",{dir:"ltr"},row.timestamp)))))):null):null));

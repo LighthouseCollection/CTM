@@ -197,7 +197,7 @@
       catch(e){setError(e?.status===401?"expired":"startFailed");}
       finally{setBusy(false);}
     };
-    return h(P.Panel,{title:t("start")},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:t("start")},h(P.Stack,null,
       h(P.Notice,null,t("fee")),h(P.Text,null,t("startHelp")),
       error?h(P.Notice,{tone:"danger",role:"alert"},t(error)):null,
       h(P.Button,{disabled:busy,onClick:start},t(busy?"starting":"start"))));
@@ -313,10 +313,10 @@
         const controlsDisabled=state.saving||filingBusy||actionBusy||filingLocked||actionLocked||uploadBusy;
         if(field.item_fields) {
           const rows=Array.isArray(value)?value:[];
-          return h(P.Panel,{key:field.code,title:fieldLabel,description:field.required?t("required"):undefined},
+          return h(P.Panel,{ icon: "doc-text",key:field.code,title:fieldLabel,description:field.required?t("required"):undefined},
             h(P.Stack,null,
               !rows.length?text(t("noRecords")):null,
-              ...rows.map((row,index)=>h(P.Panel,{key:row.id||index,title:`${fieldLabel} ${index+1}`},
+              ...rows.map((row,index)=>h(P.Panel,{ icon: "doc-text",key:row.id||index,title:`${fieldLabel} ${index+1}`},
                 h(P.Stack,null,...field.item_fields.map(child=>renderField(child,row,
                   (code,next)=>change(field.code,updateRecord(rows,index,code,next)))),
                   state.editable&&!review?h(P.Button,{disabled:controlsDisabled,
@@ -330,7 +330,7 @@
             ? value.map(v => options.find(o => o.value === v)?.label || v).join("، ")
             : typeof value === "boolean" ? t(value ? "yes" : "no")
             : options.find(o => o.value === value)?.label || String(value);
-        if (review || !state.editable) return h(P.Panel, {
+        if (review || !state.editable) return h(P.Panel, { icon: "doc-text",
           key: field.code, title: fieldLabel,
           description: field.required ? t("required") : undefined,
         }, text(display));

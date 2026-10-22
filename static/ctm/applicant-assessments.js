@@ -125,9 +125,9 @@
       try{await uploadRequestFile(latest,selected[purpose],purpose,api);setSelected({});setFileEpoch(n=>n+1);setUploadReceived(true);reload(n=>n+1);}
       catch{setError("uncertain");setUploadLocked(true);}finally{setUploadBusy(false);}
     }
-    const filePanel=h(P.Panel,{title:t("files")},h(P.Stack,null,
+    const filePanel=h(P.Panel,{ icon: "lock",title:t("files")},h(P.Stack,null,
       h(P.Text,null,t("uploadNotice")),!files.length?h(P.Text,null,t("empty")):null,
-      ...files.map(file=>h(P.Panel,{key:file.id,title:file.name},h(P.Stack,null,
+      ...files.map(file=>h(P.Panel,{ icon: "lock",key:file.id,title:file.name},h(P.Stack,null,
         h(P.Text,null,t(file.purpose==="consent"?"consentFile":"reportFile")," · ",t(file.scan_state)),
         safeURL(file)?h(P.Button,{href:safeURL(file),target:"_blank",rel:"noopener noreferrer"},t("download")):null))),
       ...[...(assessment(request)&&!latest?.signed_releases.length?["consent"]:[]),"report"].map(purpose=>
@@ -136,13 +136,13 @@
             onChange:e=>setSelected({...selected,[purpose]:e.target.files?.[0]})}),
           h(P.Button,{disabled:blocked||uploadLocked||!selected[purpose],onClick:()=>upload(purpose)},t("upload"))):null)
     ));
-    const consentPanel=assessment(request)?h(P.Panel,{title:t("consent")},h(P.Stack,null,
+    const consentPanel=assessment(request)?h(P.Panel,{ icon: "lock",title:t("consent")},h(P.Stack,null,
       latest?h(P.Notice,null,t(hasSignedScope(latest)?"signed":latest.release_status==="none"?"none":"outOfScope")):null,
       ...(latest?.signed_releases||[]).map(s=>h(P.Stack,{key:s.id},
         h(P.Text,null,t("signedAt"),": ",h("bdi",{dir:"ltr"},s.signed_at)),
         h(P.Text,null,t("retainedSignature"),": ",files.find(f=>f.id===s.signature_file_id)?.name||t("missingOriginal")))),
       (canSign(latest)||consent.state.attempted)&&validDefinition(definition)?h(P.Stack,null,
-        h(P.Text,null,t("version"),": ",definition.version),h(P.Panel,{title:t("declaration")},h(P.Text,{dir:lang==="ar"?"rtl":"ltr"},definition[lang==="ar"?"declaration_ar":"declaration_en"])),
+        h(P.Text,null,t("version"),": ",definition.version),h(P.Panel,{ icon: "lock",title:t("declaration")},h(P.Text,{dir:lang==="ar"?"rtl":"ltr"},definition[lang==="ar"?"declaration_ar":"declaration_en"])),
         h(P.Text,null,t("scope")),h(P.Field,{label:t("choose")},h(P.Select,{value:signature,disabled:blocked||consent.state.attempted,
           options:[{value:"",label:"—"},...signatures.map(f=>({value:f.id,label:f.name}))],onChange:e=>{setSignature(e.target.value);setReview(false);}})),
         h(P.Checkbox,{label:t("accept"),checked:accepted,disabled:blocked||consent.state.attempted,onChange:e=>{setAccepted(e.target.checked);setReview(false);}}),
@@ -155,12 +155,12 @@
       consent.state.error?h(P.Notice,{tone:"warning",role:"alert"},t(consent.state.error)):null,
       consent.state.recovered||consent.state.received?h(P.Notice,{role:"status"},t(consent.state.recovered?"recovered":"received")):null
     )):null;
-    return h(P.Stack,null,h(P.Panel,{title:request.title},h(P.Text,{dir:"auto"},request.instructions)),
+    return h(P.Stack,null,h(P.Panel,{ icon: "lock",title:request.title},h(P.Text,{dir:"auto"},request.instructions)),
       h(P.Inline,{wrap:true},h(P.Button,{disabled:busy,onClick:()=>navigate(onBack)},t("back")),
       h(P.Button,{disabled:busy||loading,onClick:()=>reload(n=>n+1)},t("refresh"))),
       loading?h(P.Text,{role:"status"},t("loading")):null,error?h(P.Notice,{tone:"warning",role:"alert"},t(error)):null,
       uploadReceived?h(P.Notice,{role:"status"},t("uploadReceived")):null,
-      latest?.response?h(P.Panel,{title:t("receipt")},h(P.Text,null,h("bdi",{dir:"ltr"},latest.response.id)," · ",h("bdi",{dir:"ltr"},latest.response.submitted_at))):null,
+      latest?.response?h(P.Panel,{ icon: "lock",title:t("receipt")},h(P.Text,null,h("bdi",{dir:"ltr"},latest.response.id)," · ",h("bdi",{dir:"ltr"},latest.response.submitted_at))):null,
       data?filePanel:null,consentPanel,
       window.CTMApplicantResponses?h(window.CTMApplicantResponses.ResponseEditor,{request:latest||request,api,lang,evidence:files,evidenceVerified:!!data,
         disabled:blocked||uploadLocked,navigationBusy:busy,onNavigationGuard:register,onBusyChange:setResponseBusy,onLockChange:setResponseLocked,

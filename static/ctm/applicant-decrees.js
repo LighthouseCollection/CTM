@@ -34,12 +34,12 @@
       }).catch(()=>{if(active)setError(true);}).finally(()=>{if(active)setLoading(false);});
       return()=>{active=false;};
     },[caseId,api,revision]);
-    return h(P.Panel,{title:t("title")},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
       h(P.Text,null,t("help")),h(P.Button,{disabled:loading,onClick:()=>reload(n=>n+1)},t("refresh")),
       loading?h(P.Text,{role:"status"},t("loading")):null,
       error?h(P.Notice,{tone:"danger",role:"alert"},t("unavailable")):null,
       data&&!data.released_decrees.length?h(P.Text,null,t("empty")):null,
-      ...(data?.released_decrees||[]).map(row=>h(P.Panel,{key:row.id,title:row.reference},h(P.Stack,null,
+      ...(data?.released_decrees||[]).map(row=>h(P.Panel,{ icon: "doc-text",key:row.id,title:row.reference},h(P.Stack,null,
         h(P.Text,null,t(row.language)),h(P.Text,null,t("released"),": ",h("bdi",{dir:"ltr"},row.released_at)),
         h(P.Button,{href:downloadURL(row.signed_file),target:"_blank",rel:"noopener noreferrer"},t("open"))
       )))

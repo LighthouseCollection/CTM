@@ -61,7 +61,7 @@
     const blocked=disabled||state.locked||!canRespond(request);
     const complete=request.questions.every(q=>text(answers[q.code]))&&(request.kind==="intake"||fileIds.length>0)&&
       fileIds.every(id=>reportFiles.some(f=>f.id===id));
-    return h(P.Panel,{title:request.title},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:request.title},h(P.Stack,null,
       showBack?h(P.Button,{disabled:state.busy||navigationBusy,onClick:()=>navigate(onBack)},t("back")):null,
       pending?h(P.Notice,{tone:"warning",role:"alert"},h(P.Stack,null,t("unsaved"),h(P.Inline,{wrap:true},
         h(P.Button,{disabled:state.busy||navigationBusy,onClick:()=>{if(state.busy||navigationBusy)return;const action=pending;setPending(null);action();}},t("discard")),

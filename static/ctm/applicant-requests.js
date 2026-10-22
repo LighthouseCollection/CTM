@@ -46,16 +46,16 @@
       key:selected.id,request:selected,caseId,api,lang,onNavigationGuard,onBack:()=>{select(null);reload(n=>n+1);}});
     if(selected&&window.CTMApplicantResponses)return h(window.CTMApplicantResponses.ResponseEditor,{
       key:selected.id,request:selected,api,lang,onNavigationGuard,onBack:()=>{select(null);reload(n=>n+1);}});
-    return h(P.Panel,{title:t("title")},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
       h(P.Button,{disabled:loading,onClick:()=>reload(n=>n+1)},t("refresh")),
       loading?h(P.Text,{role:"status"},t("loading")):null,
       error?h(P.Notice,{tone:"danger",role:"alert"},t("unavailable")):null,
       data&&!data.items.length?h(P.Text,null,t("empty")):null,
-      ...(data?.items||[]).map(row=>h(P.Panel,{key:row.id,title:row.title},h(P.Stack,null,
+      ...(data?.items||[]).map(row=>h(P.Panel,{ icon: "doc-text",key:row.id,title:row.title},h(P.Stack,null,
         h(P.Text,null,t(row.kind)," · ",t(row.state)),
         h(P.Text,null,t("sentAt"),": ",h("bdi",{dir:"ltr"},row.sent_at)),
-        row.instructions?h(P.Panel,{title:t("instructions")},h(P.Text,{dir:"auto"},row.instructions)):null,
-        row.questions.length?h(P.Panel,{title:t("questions")},h(P.List,{variant:"bullets",items:row.questions.map(q=>({
+        row.instructions?h(P.Panel,{ icon: "doc-text",title:t("instructions")},h(P.Text,{dir:"auto"},row.instructions)):null,
+        row.questions.length?h(P.Panel,{ icon: "doc-text",title:t("questions")},h(P.List,{variant:"bullets",items:row.questions.map(q=>({
           children:h("span",{lang:row.language==="both"?lang:row.language,dir:row.language==="ar"||row.language==="both"&&lang==="ar"?"rtl":"ltr"},questionText(q,row,lang))
         }))})):null,
         window.CTMApplicantAssessments?.validOwnRequest(row)?h(P.Button,{onClick:()=>select(row)},t("open")):

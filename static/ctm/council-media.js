@@ -766,7 +766,7 @@
     const problemText = problem ? (words.en[problem] ? t(problem) : problem) : null;
     return h(
       P.Panel,
-      { title: t("recordingTitle"), description: t("recordingHelp") },
+      { icon: "doc-text", title: t("recordingTitle"), description: t("recordingHelp") },
       h(
         P.Stack,
         { gap: "md" },
@@ -1115,9 +1115,9 @@
       ...answerEntries(report, shown.answers).map(([code, answer]) => {
         const question = (report.questions || []).find((q) => q.code === code);
         const label = question ? `${code} — ${base.isolate((lang === "ar" && question.ar) || question.en || code)}` : code === "files" ? t("response") : code;
-        return h(P.Panel, { key: code, title: label }, h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
+        return h(P.Panel, { icon: "document", key: code, title: label }, h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
       }),
-      shown.observations ? h(P.Panel, { title: t("observations") }, h(P.Text, { as: "p", dir: "auto" }, shown.observations)) : null,
+      shown.observations ? h(P.Panel, { icon: "document", title: t("observations") }, h(P.Text, { as: "p", dir: "auto" }, shown.observations)) : null,
       access === "unknown" ? h(P.Text, { variant: "secondary" }, t("revisionPending")) : null,
       access === "denied" ? h(P.Text, { variant: "secondary" }, t("revisionNotAllowed")) : null,
     );

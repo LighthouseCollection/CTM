@@ -105,21 +105,21 @@
       return h(P.Stack,{key:original.id},h(P.Text,null,original.name),current
         ?h(P.Button,{href:downloadURL(current)},t("download")):h(P.Text,null,t("localEvidence")));
     });
-    return h(P.Panel,{title:t("title")},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
       h(P.Button,{disabled:disabled||state.busy||loading,onClick:()=>reload(n=>n+1)},t("refresh")),
       loading?h(P.Text,{role:"status"},t("loading")):null,
       error?h(P.Notice,{tone:"warning",role:"alert"},t("unavailable")):null,
       data?h(P.Stack,null,
-        h(P.Panel,{title:t("history")},h(P.Stack,null,
+        h(P.Panel,{ icon: "progress",title:t("history")},h(P.Stack,null,
           !data.supplements.length?h(P.Text,null,t("none")):null,
-          ...data.supplements.map(row=>h(P.Panel,{key:row.id,title:t("ownEntry")},h(P.Stack,null,
+          ...data.supplements.map(row=>h(P.Panel,{ icon: "doc-text",key:row.id,title:t("ownEntry")},h(P.Stack,null,
             h(P.Text,null,h("bdi",{dir:"ltr"},row.timestamp)),h(P.Text,null,row.text),...row.manifest.map(file=>{const current=files.find(item=>item.id===file.id&&safeEvidence(item));return current?h(P.Stack,{key:file.id},...renderFiles([current])):h(P.Text,{key:file.id},t("retainedEvidence"));})))))),
         !allowed?h(P.Notice,null,t("closed")):null,
         h(P.Text,null,t("help")),h(P.Text,null,t("uploadHelp")),
         state.error?h(P.Notice,{role:"alert",tone:"danger"},t(state.error)):null,
         state.acknowledged?h(P.Notice,{role:"status"},t("received")):null,
         state.attempted?h(P.Notice,null,t("frozen")):null,
-        reviewed?h(P.Panel,{title:t("review")},h(P.Stack,null,h(P.Text,null,text||t("empty")),
+        reviewed?h(P.Panel,{ icon: "doc-text",title:t("review")},h(P.Stack,null,h(P.Text,null,text||t("empty")),
           ...(state.attempted?renderFrozen():renderFiles(files.filter(file=>selected.includes(file.id)&&safeEvidence(file))))))
           :h(P.Field,{label:t("text")},h(P.Textarea,{value:text,rows:5,disabled:blocked,onChange:event=>{setText(event.target.value);setReviewed(false);}})),
         !reviewed?h(P.Fieldset,{legend:t("evidence")},...files.filter(safeEvidence).map(file=>h(P.Checkbox,{key:file.id,label:file.name,

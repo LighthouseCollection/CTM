@@ -13,6 +13,16 @@
   const config = JSON.parse(document.getElementById("ctm-config").textContent);
   // Separately loaded council workspace module (static/ctm/council.js), if present.
   const councilModule = window.CTMCouncil || null;
+  const navigationIcons = {
+    home: "home", sessions: "calendar", cases: "folder-open", search: "search",
+    archived: "archive", statistics: "chart", applications: "doc-text",
+    appointments: "schedule", past: "archive", case: "document", timeline: "progress",
+    parties: "settings-users", marriage: "settings-users", separation: "move", petition: "doc-text",
+    reports: "document", hearings: "list-lines", evidence: "image-a-2", documents: "folder",
+    medical: "lock", decision: "checklist", decree: "file-pdf", appeals: "progress",
+    communications: "message", audit: "list-lines",
+  };
+  const navigationIcon = (id) => h(P.Icon, { name: navigationIcons[id] });
   const words = {
     en: {
       event_report_requested: "A report has been requested.",
@@ -457,7 +467,7 @@
     }
     return h(
       P.Panel,
-      { title: t("newMessage") },
+      { icon: "doc-text", title: t("newMessage") },
       h(
         P.Stack,
         { as: "form", onSubmit: submit },
@@ -584,7 +594,7 @@
     ];
     return h(
       P.Panel,
-      { title: t("attendance") },
+      { icon: "doc-text", title: t("attendance") },
       h(
         P.Stack,
         null,
@@ -665,7 +675,7 @@
       ...rows.map((row) =>
         h(
           P.Panel,
-          {
+          { icon: "doc-text",
             key: row.id,
             title: row.case_number || t("caseUpdate"),
             description: `${new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(row.timestamp))} · ${t(row.read ? "read" : "unread")}`,
@@ -755,7 +765,7 @@
         const question = (report.questions || []).find((q) => q.code === code);
         return h(
           P.Panel,
-          {
+          { icon: "doc-text",
             key: code,
             title: question?.[lang] || question?.en || t("response"),
           },
@@ -763,7 +773,7 @@
         );
       }),
       shown.observations
-        ? h(P.Panel, { title: t("observations") }, text(shown.observations))
+        ? h(P.Panel, { icon: "document", title: t("observations") }, text(shown.observations))
         : null,
     );
   }
@@ -1255,9 +1265,11 @@
     const caseGroups = [
       {
         heading: t("overview"),
+        icon: navigationIcon("case"),
         items: ["case", "timeline", "parties", "marriage", "separation"].map(
           (id) => ({
             id,
+            icon: navigationIcon(id),
             label: t(id === "case" ? "summary" : id),
             disabled: !(
               id === "case" ||
@@ -1271,6 +1283,7 @@
     const reviewGroups = [
       {
         heading: t("assessment"),
+        icon: navigationIcon("reports"),
         items: [
           "petition",
           "reports",
@@ -1280,6 +1293,7 @@
           "medical",
         ].map((id) => ({
           id,
+          icon: navigationIcon(id),
           label: t(id),
           disabled: !(
             ["documents", "evidence", "reports"].includes(id) ||
@@ -1291,8 +1305,10 @@
       },
       {
         heading: t("decision"),
+        icon: navigationIcon("decision"),
         items: ["decision", "decree", "appeals"].map((id) => ({
           id,
+          icon: navigationIcon(id),
           label: t(id === "decision" ? "decisionVoting" : id),
           disabled: !(
             (id === "decision" && councilModule?.DecisionWorkspace) ||
@@ -1327,7 +1343,7 @@
             label: t("communications"),
             value: page,
             onSelect: (id) => go(id, selection),
-            items: [{ id: "communications", label: t("communications") }],
+            items: [{ id: "communications", label: t("communications"), icon: navigationIcon("communications") }],
           }),
           council
             ? h(P.NavList, {
@@ -1342,7 +1358,7 @@
                 label: t("audit"),
                 value: page,
                 onSelect: (id) => go(id, selection),
-                items: [{ id: "audit", label: t("audit") }],
+                items: [{ id: "audit", label: t("audit"), icon: navigationIcon("audit") }],
               })
             : null,
         )
@@ -1355,6 +1371,7 @@
             onSelect: (id) => go(id),
             items: navItems.map((id) => ({
               id,
+              icon: navigationIcon(id),
               label: t(id),
               disabled: unavailable.has(id),
             })),
@@ -1421,7 +1438,7 @@
     const applicationCard = (row) =>
       h(
         P.Panel,
-        { key: row.id, title: t(row.kind), description: t(row.status) },
+        { icon: "doc-text", key: row.id, title: t(row.kind), description: t(row.status) },
         h(
           P.Stack,
           null,
@@ -1557,10 +1574,10 @@
           P.Stack,
           null,
           heading(t("settings")),
-          h(P.Panel, { title: t("interfaceLanguage") }, language),
+          h(P.Panel, { icon: "fields", title: t("interfaceLanguage") }, language),
           h(
             P.Panel,
-            { title: t("notificationLanguage") },
+            { icon: "hdr-bell", title: t("notificationLanguage") },
             h(
               P.Inline,
               null,
@@ -1593,7 +1610,7 @@
           ...data.messages.map((row) =>
             h(
               P.Panel,
-              {
+              { icon: "doc-text",
                 key: row.id,
                 title: row.sender,
                 description: new Intl.DateTimeFormat(
@@ -1647,7 +1664,7 @@
             ? h(window.CTMApplicantRequests.Requests, {key:selection,caseId:selection,api,lang,onNavigationGuard:registerApplicantGuard}) : null,
           h(
             P.Panel,
-            { title: t("parties") },
+            { icon: "doc-text", title: t("parties") },
             h(P.List, {
               variant: "bullets",
               items: data.parties.map((p) => ({ children: p.name })),
@@ -1655,7 +1672,7 @@
           ),
           h(
             P.Panel,
-            { title: t("timeline") },
+            { icon: "doc-text", title: t("timeline") },
             h(P.List, {
               variant: "bullets",
               items: data.proceedings.map((p) => ({
@@ -1731,7 +1748,7 @@
           ...[1, 2].map((part) =>
             h(
               P.Panel,
-              { key: part, title: t(part === 1 ? "assignment" : "hearing") },
+              { icon: "doc-text", key: part, title: t(part === 1 ? "assignment" : "hearing") },
               ...data.items
                 .filter((row) => row.part === part)
                 .map((row) =>

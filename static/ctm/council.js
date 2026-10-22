@@ -796,7 +796,7 @@
     const rows = awaitingReview(state.data?.items);
     return h(
       P.Panel,
-      {
+      { icon: "doc-text",
         title: t("reviewQueue"),
         actions: rows.length
           ? h(P.Button, { size: "sm", onClick: onOpen }, t("reviewOpen"))
@@ -883,7 +883,7 @@
       returns.length
         ? h(
             P.Panel,
-            { title: t("previousReturns") },
+            { icon: "progress", title: t("previousReturns") },
             h(P.List, {
               variant: "bullets",
               items: returns.map((r) => ({ children: `${formatWhen(r.timestamp, lang)} · ${r.actor}: ${r.instructions}` })),
@@ -893,7 +893,7 @@
       row.manifest
         ? h(
             P.Panel,
-            { title: t("manifest") },
+            { icon: "attachment", title: t("manifest") },
             manifest.length
               ? h(
                   P.Stack,
@@ -921,7 +921,7 @@
         : null,
       h(
         P.Panel,
-        { title: t("answers") },
+        { icon: "doc-text", title: t("answers") },
         h(
           P.Stack,
           { gap: "sm" },
@@ -1125,7 +1125,7 @@
       canManage(user)
         ? h(
             P.Panel,
-            { title: t("newSession") },
+            { icon: "calendar", title: t("newSession") },
             h(
               P.Form,
               { onSubmit: create, label: t("newSession"), noValidate: true },
@@ -1166,7 +1166,7 @@
                   .map(([key, list]) =>
                     h(
                       P.Panel,
-                      { key, title: t(key) },
+                      { icon: "doc-text", key, title: t(key) },
                       h(
                         P.Stack,
                         { gap: "sm" },
@@ -1407,7 +1407,7 @@
                 Array.isArray(state.data.hearingAttendance)
                   ? h(
                       P.Panel,
-                      { title: t("hearingAttendance"), description: t("hearingAttendanceHelp"), collapsible: true, defaultExpanded: false },
+                      { icon: "settings-users", title: t("hearingAttendance"), description: t("hearingAttendanceHelp"), collapsible: true, defaultExpanded: false },
                       h(
                         P.Stack,
                         { gap: "sm" },
@@ -1434,7 +1434,7 @@
                 outcomes.length
                   ? h(
                       P.Panel,
-                      { title: t("outcomeHistory"), collapsible: true, defaultExpanded: false },
+                      { icon: "progress", title: t("outcomeHistory"), collapsible: true, defaultExpanded: false },
                       h(P.List, {
                         variant: "bullets",
                         items: [...outcomes]
@@ -1839,7 +1839,7 @@
     const part = (n) =>
       h(
         P.Panel,
-        { key: n, title: t(`part${n}`) },
+        { icon: "doc-text", key: n, title: t(`part${n}`) },
         h(
           P.Stack,
           { gap: "sm" },
@@ -2175,7 +2175,7 @@
                     { gap: "md" },
                     h(P.Text, { variant: "data" }, chosen.name),
                     cases[chosen.case_id] ? h(P.Text, { variant: "secondary" }, cases[chosen.case_id]) : null,
-                    chosen.snippet ? h(P.Panel, { title: t("searchExcerpt") }, h(P.Text, { as: "p" }, chosen.snippet)) : h(P.Text, { variant: "secondary" }, t("searchNoExcerpt")),
+                    chosen.snippet ? h(P.Panel, { icon: "doc-text", title: t("searchExcerpt") }, h(P.Text, { as: "p" }, chosen.snippet)) : h(P.Text, { variant: "secondary" }, t("searchNoExcerpt")),
                     h(
                       P.Inline,
                       { wrap: true },
@@ -2235,7 +2235,7 @@
       h(P.Text, { as: "h1", variant: "title" }, t("homeTitle")),
       h(
         P.Panel,
-        { title: t("upcomingSession") },
+        { icon: "calendar", title: t("upcomingSession") },
         upcoming.length
           ? h(
               P.Stack,
@@ -2248,7 +2248,7 @@
       ),
       h(
         P.Panel,
-        { title: t("needsAttention") },
+        { icon: "hdr-bell", title: t("needsAttention") },
         h(
           P.Stack,
           { gap: "sm" },
@@ -2276,7 +2276,7 @@
       ),
       h(
         P.Panel,
-        { title: t("myCases"), description: typeof dashboard.my_cases === "number" ? t("myCasesCount", { n: dashboard.my_cases }) : undefined },
+        { icon: "folder-open", title: t("myCases"), description: typeof dashboard.my_cases === "number" ? t("myCasesCount", { n: dashboard.my_cases }) : undefined },
         mine.length
           ? h(
               P.Stack,
@@ -2386,7 +2386,7 @@
       s.partial ? h(P.Notice, { tone: "warning" }, t("statsPartial")) : null,
       h(
         P.Panel,
-        { title: t("statsCases") },
+        { icon: "folder-open", title: t("statsCases") },
         h(
           P.PropertyList,
           null,
@@ -2397,14 +2397,14 @@
       ),
       h(
         P.Panel,
-        { title: t("statsByManager") },
+        { icon: "settings-users", title: t("statsByManager") },
         s.byManager.length
           ? h(P.PropertyList, null, ...s.byManager.map(([name, count]) => h(P.PropertyList.Item, { key: name, label: name }, n(count))))
           : h(P.EmptyState, { title: t("statsNoAssigned") }),
       ),
       h(
         P.Panel,
-        { title: t("statsSessions") },
+        { icon: "calendar", title: t("statsSessions") },
         h(
           P.PropertyList,
           null,

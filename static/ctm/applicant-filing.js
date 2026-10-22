@@ -127,14 +127,14 @@
     const fee = application.fee;
     const amount = Number.isInteger(fee?.amount_minor) && fee.amount_minor >= 0 && fee.currency === "USD"
       ? new Intl.NumberFormat(lang === "ar" ? "ar" : "en", {style:"currency", currency:"USD"}).format(fee.amount_minor / 100) : null;
-    return h(P.Panel, { title: t("title") }, h(P.Stack, null,
+    return h(P.Panel, { icon: "doc-text", title: t("title") }, h(P.Stack, null,
       application.status==="draft"&&window.CTMApplicantRecovery?h(window.CTMApplicantRecovery.Recovery,{
         application,api,lang,disabled:dirty||state.busy||state.attempted,onBlockChange:setRecoveryBlocked,onCheckout}):null,
       h(P.Text, null, `${t("fee")}: ${amount || "—"} · ${t(["due","paid","waived","historical_exempt"].includes(fee?.status) ? fee.status : "unknown")}`),
       h(P.Text, {variant:"secondary"}, t("notRefundable")),
       application.status === "returned" ? h(P.Notice, null, t("returnNotice")) : null,
       typeof application.return_instructions === "string" && application.return_instructions.trim()
-        ? h(P.Panel, {title:t("returned")}, h(P.Text, null, application.return_instructions)) : null,
+        ? h(P.Panel, { icon: "doc-text",title:t("returned")}, h(P.Text, null, application.return_instructions)) : null,
       state.error ? h(P.Notice, {tone:"danger", role:"alert"}, t(state.error)) : null,
       state.submitted ? h(P.Notice, {tone:"success", role:"status"}, t("received")) : null,
       state.attempted ? h(P.Notice, {tone:"warning"}, t("frozen")) : null,
@@ -144,7 +144,7 @@
         ? h(P.Notice, null, t("unavailable")) : null,
       application.status === "draft" && !recoveryBlocked && actions.declaration && (actions.checkout || actions.submit)
         ? h(P.Stack, null,
-          h(P.Panel, {title:t("declaration")}, h(P.Text, null, application.questionnaire[lang === "ar" ? "declaration_ar" : "declaration_en"])),
+          h(P.Panel, { icon: "doc-text",title:t("declaration")}, h(P.Text, null, application.questionnaire[lang === "ar" ? "declaration_ar" : "declaration_en"])),
           h(P.Checkbox, {label:t("accept"), checked:accepted, disabled:blocked || state.attempted, onChange:e => setAccepted(e.target.checked)}),
           h(P.Field, {label:t("name"), required:true}, h(P.Input, {value:name, disabled:blocked || state.attempted, onChange:e => setName(e.target.value)}))) : null,
       h(P.Inline, {wrap:true},

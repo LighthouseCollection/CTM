@@ -43,7 +43,7 @@
     R.useEffect(()=>{onBusyChange?.(state.busy);return()=>onBusyChange?.(false);},[state.busy,onBusyChange]);
     R.useEffect(()=>{onLockChange?.(state.locked);return()=>onLockChange?.(false);},[state.locked,onLockChange]);
     if(!available(application,"delete")&&!available(application,"withdraw"))return null;
-    return h(P.Panel,{title:t("title")},h(P.Stack,null,
+    return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
       state.error?h(P.Notice,{tone:"warning",role:"alert"},t(state.error)):null,
       state.received?h(P.Notice,{role:"status"},t("received")):null,
       selected?h(P.Notice,{tone:"warning",role:"alert"},h(P.Stack,null,t(selected==="delete"?"deleteHelp":"withdrawHelp"),
