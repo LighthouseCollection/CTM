@@ -176,6 +176,23 @@ def external_request(request_id, token):
 
 
 @transaction.atomic
+def cancel_request(actor, request_id, expected_version):
+    from .request_contracts import check_request_version
+    request = lock_request(request_id)
+    writer(actor, request.case)
+    check_request_version(request, expected_version)
+    if request.state == "cancelled":
+        return request
+    open_proceeding(request.proceeding)
+    if request.state not in {"draft", "sent"}:
+        raise ValidationError("Only an unfinished request can be cancelled.")
+    request.state = "cancelled"
+    request.save(update_fields=["state"])
+    audit(actor, "report_request_cancelled", request, request.case)
+    return request
+
+
+@transaction.atomic
 def complete_external(request_id, token, answers):
     lock_request(request_id)
     request = external_request(request_id, token)
@@ -342,9 +359,16 @@ def sign_medical_release(actor, request_id, file_id, scope, *, expected_version=
 
 @transaction.atomic
 def create_recording(
-    actor, file_id, report_id=None, appointment_id=None, notice_recorded=False
+    actor, file_id, report_id=None, appointment_id=None, notice_recorded=False,
+    *, duration_ms=None, recording_notice=None,
 ):
     staff(actor)
+    import json
+    if duration_ms is not None and (type(duration_ms) is not int or not 0 <= duration_ms < 2**63):
+        raise ValidationError("Measured duration must be a non-negative integer or null.")
+    if recording_notice is not None and (not isinstance(recording_notice, dict)
+            or len(json.dumps(recording_notice)) > 10000 or recording_notice.get("acknowledged") is not True):
+        raise ValidationError("Notice detail requires an explicit acknowledged boolean and bounded object.")
     if type(notice_recorded) is not bool:
         raise ValidationError("Recording notice must be an explicit boolean.")
     if bool(report_id) == bool(appointment_id):
@@ -400,12 +424,16 @@ def create_recording(
             raise ValidationError(
                 "This original recording already belongs to another report or appointment."
             )
+        if ((duration_ms is not None and existing.duration_ms != duration_ms)
+                or (recording_notice is not None and existing.recording_notice != recording_notice)):
+            raise ValidationError("Recording capture facts are already retained.")
         return existing
     recording = Recording.objects.create(
         report=report,
         appointment=appointment,
         file=file,
         notice_recorded=bool(notice_recorded),
+        duration_ms=duration_ms, recording_notice=recording_notice or {}, captured_by=actor,
     )
     audit(actor, "recording_associated", recording, case)
     return recording

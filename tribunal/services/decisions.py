@@ -322,9 +322,27 @@ def withdraw_application(actor, application_id, *, expected_version=None):
 
 
 @transaction.atomic
-def add_appeal_information(actor, application_id, text, file_ids=None):
+def add_appeal_information(actor, application_id, text, file_ids=None, *, expected_version=None, idempotency_key=None):
     app = application_for(actor, application_id)
     app = Application.objects.select_for_update(of=("self",)).get(pk=app.pk)
+    from .applications import check_filing_version
+    check_filing_version(app, expected_version)
+    if actor.pk != app.owner_id:
+        raise PermissionDenied("Only the filing owner can supplement it.")
+    if not isinstance(text, str) or len(text) > 100000:
+        raise ValidationError("Supplement text must be within the supported size.")
+    if file_ids is None:
+        file_ids = []
+    if not isinstance(file_ids, list) or len(file_ids) != len(set(map(str, file_ids))):
+        raise ValidationError("Provide distinct evidence identifiers as a list.")
+    if idempotency_key is not None:
+        if not isinstance(idempotency_key, str) or not idempotency_key.strip() or len(idempotency_key) > 100:
+            raise ValidationError("A nonempty supplement idempotency_key up to100 characters is required.")
+        previous = AppealSupplement.objects.filter(application=app, idempotency_key=idempotency_key).first()
+        if previous:
+            if previous.text == text and [x["id"] for x in previous.manifest] == list(map(str, file_ids)):
+                return previous
+            raise ValidationError("This supplement key already identifies different information.")
     if (
         actor.pk != app.owner_id
         or not council_filing(app)
@@ -337,11 +355,14 @@ def add_appeal_information(actor, application_id, text, file_ids=None):
     manifest = []
     for file_id in file_ids or []:
         file = FileVersion.objects.select_related("attachment").get(pk=file_id)
-        if file.attachment.application_id != app.pk or not safe_file(file):
+        if (file.attachment.application_id != app.pk or file.attachment.owner_id != actor.pk
+                or file.attachment.report_request_id or file.attachment.visibility != "own"
+                or file.attachment.case_id != app.case_id or not safe_file(file)
+                or file.attachment.versions.order_by("-number").first().pk != file.pk):
             raise PermissionDenied("Evidence must belong to this appeal.")
         manifest.append({"id": str(file.pk), "sha256": file.sha256})
     extra = AppealSupplement.objects.create(
-        application=app, actor=actor, text=text, manifest=manifest
+        application=app, actor=actor, text=text, manifest=manifest, idempotency_key=idempotency_key
     )
     notify_manager(app.case, "appeal_added", extra, digest=True)
     audit(actor, "appeal_added", extra, app.case)

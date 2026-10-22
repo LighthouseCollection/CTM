@@ -1,5 +1,27 @@
 # VM-FRM backend progress
 
+## Twenty functional continuation batches
+
+Full isolated PostgreSQL suite: **401 passed, 1 skipped**; no model drift;
+rollback/reapply through0029, non-owner isolation and concurrent supplement/link
+checks pass. Protected build-spec sources are unchanged.
+
+All20 requested batches are implemented: own supplements/capability/version/replay/
+safe evidence; capture metadata/provenance; transcript correction/pagination/private
+processing status; explicit151-to-adapter review inventory; pending-link validation/
+reuse/serialization/authority/cancellation/RLS; private historical publication/typed
+payloads; account administration safeguards; request cancellation/revocation.
+
+Detailed numbered delivery and API contracts:
+[twenty-batch-continuation.md](twenty-batch-continuation.md).
+Reconciliation inventory associates122 approved concepts with candidate adapters
+and marks29 unmapped for review; it claims neither field equivalence nor completion.
+No new domain model/table was added to chase the count:63 models/151 approved
+target remain.55 forced-RLS tables;8 core policy reviews remain.87 routes.
+Live provider, full schema/identity and independent browser acceptance, unlimited
+capture and institutional wording remain gates. No operational migrations,
+configuration/credentials, deployment or merge.
+
 ## D20 media continuation batches
 
 Full isolated PostgreSQL suite: **376 passed, 1 skipped**; no model drift;

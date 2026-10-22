@@ -432,6 +432,9 @@ class PendingPartyLink(Root):
     state = models.CharField(max_length=15, default="pending")
     activated_party = models.ForeignKey("Party", null=True, on_delete=models.PROTECT)
 
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["case", "email"], condition=Q(state="pending"), name="one_pending_party_email")]
+
 
 class HistoricalWorkspace(Root):
     actor = models.ForeignKey(Account, on_delete=models.PROTECT)
@@ -641,6 +644,9 @@ class Recording(Root):
     file = models.OneToOneField(FileVersion, on_delete=models.PROTECT)
     notice_recorded = models.BooleanField(default=False)
     finalized_at = models.DateTimeField(null=True)
+    captured_by = models.ForeignKey(Account, null=True, on_delete=models.PROTECT)
+    duration_ms = models.PositiveBigIntegerField(null=True)
+    recording_notice = models.JSONField(default=dict)
 
 
 class ProcessingRun(Root):
@@ -758,6 +764,10 @@ class AppealSupplement(Immutable):
     actor = models.ForeignKey(Account, on_delete=models.PROTECT)
     text = models.TextField()
     manifest = models.JSONField(default=list)
+    idempotency_key = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["application", "idempotency_key"], name="supplement_replay_identity")]
 
 
 class AppealDisposition(Immutable):

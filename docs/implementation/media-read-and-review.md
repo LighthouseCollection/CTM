@@ -8,8 +8,10 @@ approved151-table sources stay unchanged. Live transcription remains unconfigure
 `GET /api/reports/{id}/recordings/` returns council-only `{items:[...]}`:
 
 - Recording `{id,file_id,mime_type,byte_count,notice_recorded,created_at,finalized_at}`.
-  `duration_ms` and `captured_by` are null because the current adapter does not retain
-  those facts. File uploader identity is not misrepresented as the capture author.
+  `duration_ms` and `captured_by` retain supplied measurement and actual association
+  actor for new captures; unknown legacy facts remain null. `recording_notice` retains
+  supplied acknowledgement detail. See twenty-batch-continuation.md for new inputs.
+  File uploader identity is not substituted for the capture author.
 - `download_url` is the existing authorized file route only while the original is
   safe. Unsafe originals receive null; the file route independently reauthorizes
   every byte/range/preview request.
@@ -63,12 +65,12 @@ until a separate reviewed worker scope exists. No worker success is fabricated.
 ## Remaining boundaries
 
 This does not configure a provider, certify WebM/MP4 processing, approve recording
-notice wording/category, implement D21 capture metadata or provide unlimited/chunked
+notice wording/category or provide unlimited/chunked
 streaming. Existing500MB uploads remain a limitation. Council browser/device/range
 acceptance remains independent of synthetic backend tests. Rollback of the attempt
 schema after multiple attempts exist requires retaining/reconciling that history;
 it cannot silently collapse it into one run.
 
-54 of63 domain tables now have forced RLS;9 remain for review. Full151-table
+55 of63 domain tables now have forced RLS;8 remain for review. Full151-table
 reconciliation, institutional/provider acceptance and operational deployment remain
 separate. No operational migrations, credentials, deployment or merge occurred.

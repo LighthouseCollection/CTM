@@ -2694,6 +2694,28 @@
           "type": "DateTimeField",
           "nullable": true,
           "primary_key": false
+        },
+        {
+          "name": "captured_by",
+          "column": "captured_by_id",
+          "type": "ForeignKey",
+          "nullable": true,
+          "primary_key": false,
+          "target": "tribunal.Account"
+        },
+        {
+          "name": "duration_ms",
+          "column": "duration_ms",
+          "type": "PositiveBigIntegerField",
+          "nullable": true,
+          "primary_key": false
+        },
+        {
+          "name": "recording_notice",
+          "column": "recording_notice",
+          "type": "JSONField",
+          "nullable": false,
+          "primary_key": false
         }
       ]
     },
@@ -3419,6 +3441,13 @@
           "column": "manifest",
           "type": "JSONField",
           "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "idempotency_key",
+          "column": "idempotency_key",
+          "type": "CharField",
+          "nullable": true,
           "primary_key": false
         }
       ]

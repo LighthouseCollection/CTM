@@ -41,12 +41,15 @@ def publish(actor, workspace_id):
     if actor.role != "admin":
         raise PermissionDenied("Historical finalization requires administrator.")
     record = HistoricalWorkspace.objects.select_for_update(of=("self",)).get(
-        pk=workspace_id
+        pk=workspace_id, actor=actor
     )
     if record.finalized_case_id:
         return record.finalized_case
     payload = record.payload
-    if not str(payload.get("number", "")).strip() or payload.get("status") not in {
+    if (not isinstance(payload.get("number"), str) or len(payload["number"])>100
+            or not isinstance(payload.get("parties", []), list) or len(payload.get("parties", []))>2):
+        raise ValidationError("Historical number and up to two structured party rows are required.")
+    if not str(payload.get("number", "")).strip() or not isinstance(payload.get("status"), str) or payload.get("status") not in {
         "open",
         "closed",
     }:
@@ -54,14 +57,24 @@ def publish(actor, workspace_id):
             "Preserve original case number and explicitly choose open or closed."
         )
     people = []
+    slots = set()
+    identities = set()
     for party in payload.get("parties", []):
-        if party.get("slot") not in {"A", "B"}:
+        if not isinstance(party, dict) or party.get("slot") not in {"A", "B"} or party["slot"] in slots:
             raise ValidationError("Invalid party slot.")
+        slots.add(party["slot"])
+        if (not isinstance(party.get("name", ""), str) or len(party.get("name", ""))>300
+                or not isinstance(party.get("legacy_reference", ""), str) or len(party.get("legacy_reference", ""))>150):
+            raise ValidationError("Historical party name/reference is invalid.")
         account = (
             Account.objects.get(pk=party["account_id"], role="applicant")
             if party.get("account_id")
             else None
         )
+        if account:
+            if not account.person_id or not account.email_verified or not account.is_active or account.person_id in identities:
+                raise ValidationError("Historical account links require distinct active verified applicant identities.")
+            identities.add(account.person_id)
         people.append((party, account))
     for _, account in sorted(people, key=lambda x: str(x[1].person_id) if x[1] else ""):
         if account:

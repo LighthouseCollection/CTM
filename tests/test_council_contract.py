@@ -261,7 +261,10 @@ def test_d15_appeal_supplements_disposition_and_eligible_hearings(client, hearin
     assert data["disposition"]["hearing_id"] == str(appeal_hearing.pk)
     login(client, filed.owner)
     data = client.get(url).json()
-    assert "eligible_hearings" not in data and "supplements" not in data
+    assert "eligible_hearings" not in data and "can_record_result" not in data
+    assert data["supplements"][0]["id"] == str(supplement.pk)
+    assert data["supplements"][0]["text"] == "Additional facts"
+    assert not data["can_supplement"]
 
 
 def test_d16_assessment_release_metadata_omits_private_contents(client, filed, people):

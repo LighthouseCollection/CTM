@@ -164,6 +164,14 @@
     "handler": "send_report_request"
   },
   {
+    "route": "api/requests/<uuid:request_id>/cancel/",
+    "handler": "report_request_cancel"
+  },
+  {
+    "route": "api/pending-party-links/<uuid:pending_id>/cancel/",
+    "handler": "pending_link_cancel"
+  },
+  {
     "route": "api/requests/<uuid:request_id>/complete/",
     "handler": "complete_report_request"
   },
@@ -314,6 +322,10 @@
   {
     "route": "api/transcripts/<uuid:revision_id>/review/",
     "handler": "transcript_review"
+  },
+  {
+    "route": "api/transcripts/<uuid:revision_id>/correct/",
+    "handler": "transcript_correct"
   },
   {
     "route": "api/processing/<uuid:run_id>/retry/",

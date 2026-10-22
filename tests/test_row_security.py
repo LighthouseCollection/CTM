@@ -81,6 +81,10 @@ def runtime():
             "ctm_call_writable(jsonb)",
             "ctm_media_readable(text,jsonb)",
             "ctm_media_writable(text,jsonb,text)",
+            "ctm_pending_readable(jsonb)",
+            "ctm_pending_writable(jsonb,text)",
+            "ctm_media_status(uuid)",
+            "ctm_supplement_manifest_valid(jsonb)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -679,7 +683,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0027_media_privacy")])
+        MigrationExecutor(connection).migrate([("tribunal", "0029_onboarding_and_capture_guards")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -849,7 +853,7 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 54
+        assert report["checks"]["forced_rls_table_count"] == 55
         assert "tribunal_reportrequest" not in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
@@ -1721,3 +1725,57 @@ def test_media_exact_review_and_attempt_isolation_under_runtime_role(runtime, re
         retried = retry_processing(people["admin"], run.pk)
         assert retried.attempt == 2 and retry_processing(people["admin"], run.pk).pk == retried.pk
     assert TranscriptRevision.objects.filter(pk=revision.pk).exists()
+
+
+def test_pending_link_activation_privacy_and_cancel_under_runtime_role(runtime, ready_application, people):
+    from tribunal.services.identity import add_other_party, activate_pending_links, cancel_pending_link
+    from tribunal.models import PendingPartyLink, Party
+    from django.db import DatabaseError
+    app = ready_application
+    submit_application(app.owner, app.pk, "pending-rls", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    with runtime(people["secretary"]):
+        pending = add_other_party(people["secretary"], app.case_id, "Jane", "Smith", "pending-rls@example.test")
+    account = Account.objects.create_user(email="pending-rls@example.test")
+    for actor in [None, app.owner, account, people["member"]]:
+        with runtime(actor):
+            assert not PendingPartyLink.objects.exists()
+    Account.objects.filter(pk=account.pk).update(email_verified=True)
+    account.refresh_from_db()
+    with runtime(account):
+        assert PendingPartyLink.objects.get(pk=pending.pk).email == account.email
+        linked = activate_pending_links(account)
+        assert len(linked) == 1
+    assert Party.objects.filter(case=app.case, account=account).count() == 1
+    with pytest.raises(DatabaseError), runtime(account):
+        PendingPartyLink.objects.filter(pk=pending.pk).update(email="retarget@example.test")
+    with runtime(people["admin"]):
+        other = add_other_party(people["admin"], app.case_id, "Other", "Person", "cancelled-pending@example.test")
+        assert cancel_pending_link(people["admin"], other.pk).state == "cancelled"
+
+
+def test_scoped_processing_status_and_attributed_correction_runtime(runtime, ready_application, people):
+    from tests.test_backend_followups import recorded
+    from tribunal.services.reports import finalize_recording, review_transcript
+    from tribunal.services.media import correct_transcript, report_recordings, transcript_for
+    from tribunal.models import ProcessingRun, TranscriptRevision
+    app = ready_application
+    submit_application(app.owner, app.pk, "correction-rls", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    recording, report = recorded(app, people)
+    run = finalize_recording(people["admin"], recording.pk)
+    ProcessingRun.objects.filter(pk=run.pk).update(state="completed", error="Synthetic private diagnostic")
+    original = TranscriptRevision.objects.create(recording=recording, run=run, language="en", number=1, text="Synthetic source")
+    with runtime(people["admin"]):
+        review_transcript(people["admin"], original.pk)
+    with runtime(people["member"]):
+        assert not ProcessingRun.objects.filter(pk=run.pk).exists()
+        assert transcript_for(people["member"], original.pk).text == original.text
+        row = report_recordings(people["member"], report.pk)["items"][0]
+        assert row["processing"]["state"] == "succeeded" and "diagnostic" not in str(row)
+    with runtime(people["admin"]):
+        corrected = correct_transcript(people["admin"], original.pk, "Attributed correction", [], 1)
+        assert corrected.actor_id == people["admin"].pk
+    with runtime(people["member"]):
+        assert not TranscriptRevision.objects.filter(pk=corrected.pk).exists()
+        assert TranscriptRevision.objects.filter(pk=original.pk).exists()

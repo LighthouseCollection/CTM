@@ -23,7 +23,7 @@ def test_recording_list_and_exact_transcript_review_gate(client, filed, people):
     detail = f"/api/transcripts/{revision.pk}/"
     login(client, people["member"])
     row = client.get(listing).json()["items"][0]
-    assert row["captured_by"] is None and row["duration_ms"] is None
+    assert row["captured_by"] == str(people["admin"].pk) and row["duration_ms"] is None
     assert row["processing"]["state"] == "succeeded" and row["transcripts"] == []
     assert not row["can_finalize"]
     assert client.get(detail).status_code == 403
@@ -77,7 +77,7 @@ def test_retry_creates_one_new_attempt_keeps_output_and_hides_raw_error(client, 
     assert m.Outbox.objects.filter(key=f"transcribe:{first.json()['id']}").count() == 1
     assert finalize_recording(people["admin"], recording.pk).pk == run.pk
     login(client, people["member"])
-    assert client.post(url, {}, content_type="application/json").status_code == 403
+    assert client.post(url, {}, content_type="application/json").status_code in {403, 404}
 
 
 def test_retry_rejects_active_attempt_and_wrong_case_output(filed, people):

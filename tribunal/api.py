@@ -892,7 +892,7 @@ def report_questions(request):
 @endpoint(("GET", "POST"))
 def report_requests(request, case_id):
     from tribunal.projections import release_metadata
-    from tribunal.services.request_contracts import own_request_data
+    from tribunal.services.request_contracts import own_request_data, request_version
     case = case_for(request.user, case_id)
     if request.method == "GET":
         qs = m.ReportRequest.objects.filter(case=case)
@@ -921,6 +921,8 @@ def report_requests(request, case_id):
                         parent_report_id=str(x.parent_report_id) if x.parent_report_id else None,
                         author=f"{x.author.first_name} {x.author.last_name}".strip(),
                         **release_metadata(x, request.user),
+                        **({"request_version": request_version(x)}
+                            if request.user.role != "applicant" else {}),
                         **(own_request_data(x, request.user) if request.user.role == "applicant" else {}),
                     )
                     for x in qs.order_by("-created_at")
@@ -1180,10 +1182,13 @@ def appeal_addition(request, app_id):
     from tribunal.services.decisions import add_appeal_information
 
     data = body(request)
+    if not isinstance(data.get("idempotency_key"), str) or not data["idempotency_key"].strip():
+        raise ValidationError("A supplement idempotency_key is required.")
     return JsonResponse(
         encoded(
             add_appeal_information(
-                request.user, app_id, data.get("text", ""), data.get("file_ids")
+                request.user, app_id, data.get("text", ""), data.get("file_ids"),
+                expected_version=filing_version(data), idempotency_key=data["idempotency_key"],
             )
         ),
         status=201,
@@ -1660,6 +1665,7 @@ def recording(request):
                 data.get("report_id"),
                 data.get("appointment_id"),
                 data.get("notice_recorded", False),
+                duration_ms=data.get("duration_ms"), recording_notice=data.get("recording_notice"),
             )
         ),
         status=201,
@@ -1726,7 +1732,8 @@ def report_revision(request, report_id):
 @endpoint()
 def report_recordings(request, report_id):
     from tribunal.services.media import report_recordings as query
-    return JsonResponse(query(request.user, report_id))
+    return JsonResponse(query(request.user, report_id, offset=int(request.GET.get("offset", 0)),
+        transcript_offset=int(request.GET.get("transcript_offset", 0))))
 
 
 @endpoint()
@@ -1746,6 +1753,28 @@ def processing_retry(request, run_id):
     from tribunal.services.media import retry_processing
     value = retry_processing(request.user, run_id)
     return JsonResponse(encoded(value, attempt=value.attempt, state=value.state), status=201)
+
+
+@endpoint(("POST",))
+def transcript_correct(request, revision_id):
+    from tribunal.services.media import correct_transcript
+    data = body(request)
+    row = correct_transcript(request.user, revision_id, data["text"], data.get("segments", []), data.get("expected_version"))
+    return JsonResponse(encoded(row, version=row.number, reviewed=m.TranscriptReview.objects.filter(revision=row).exists()), status=201)
+
+
+@endpoint(("POST",))
+def pending_link_cancel(request, pending_id):
+    from tribunal.services.identity import cancel_pending_link
+    row = cancel_pending_link(request.user, pending_id)
+    return JsonResponse(encoded(row, state=row.state))
+
+
+@endpoint(("POST",))
+def report_request_cancel(request, request_id):
+    from tribunal.services.reports import cancel_request
+    row = cancel_request(request.user, request_id, body(request).get("expected_version"))
+    return JsonResponse(encoded(row, state=row.state))
 
 
 @endpoint(("GET", "POST"))
