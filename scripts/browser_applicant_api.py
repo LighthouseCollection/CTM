@@ -289,7 +289,11 @@ try:
         page.set_viewport_size({"width":390,"height":1000})
         assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
         page.set_viewport_size({"width":1280,"height":1000})
-        page.get_by_role("button",name="English",exact=True).click()
+        # Wait for the language write before synthetic DB setup; SQLite cannot
+        # safely overlap that browser transaction with the fixture writer.
+        with page.expect_response(lambda response:response.url==BASE+"/api/account/settings/" and response.request.method=="POST") as language_saved:
+            page.get_by_role("button",name="English",exact=True).click()
+        assert language_saved.value.status==200,language_saved.value.text()
         checks.append("Real repeated orders keep distinct saved IDs; each needs its own safe copy, and cross-context replacement403 preserves both originals")
         csrf=next(cookie["value"] for cookie in context.cookies() if cookie["name"]=="csrftoken")
         from tribunal.models import Application,CheckoutIntent
@@ -802,16 +806,8 @@ try:
         assert pending_appeal["status"]=="submitted" and not pending_appeal["can_edit"]
         assert context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["status"]=="closed"
         checks.append("Browser appeal evidence/declaration and actual authorized waiver submit to same closed case without reopening or mutating original proceeding")
-        page.get_by_role("button",name="Refresh application status",exact=True).click()
-        expect(page.get_by_text("Additional appeal information is unavailable.",exact=False)).to_be_visible()
-        assert page.get_by_role("button",name="Submit additional information",exact=True).count()==0
-        checks.append("Current backend missing own supplement capability/history cannot enable applicant append controls")
-        before_supplement=context.request.get(f"{BASE}/api/applications/{appeal_id}/").json()["answers"]
-        addition=context.request.post(f"{BASE}/api/appeals/{appeal_id}/additions/",data={"text":"Own synthetic supplement","file_ids":[]},headers={"X-CSRFToken":csrf})
-        assert addition.status==201,addition.text()
-        assert context.request.get(f"{BASE}/api/applications/{appeal_id}/").json()["answers"]==before_supplement
-        assert staff.request.post(f"{BASE}/api/appeals/{appeal_id}/additions/",data={"text":"Not the owner"},headers={"X-CSRFToken":staff_csrf}).status==403
-        checks.append("Actual owner supplement POST preserves original submitted answers and rejects staff authorship; own read/history integration remains pending")
+        from applicant_supplement_acceptance import run as run_supplement_acceptance
+        checks.extend(run_supplement_acceptance(page,context,staff,BASE,csrf,staff_csrf,appeal_id,uploaded[0][0],fixture_db,ROOT,cookies["outsider"],settings.SESSION_COOKIE_NAME))
         def sibling_reopened_fixture():
             from tribunal.models import Case,Proceeding,Party,OpenCaseClaim
             Case.objects.filter(pk=current["case_id"]).update(status="open")
@@ -832,7 +828,11 @@ try:
         assert sibling.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()=={"items":[]}
         expect(sibling_page.get_by_text("No requests are currently listed for you.",exact=True)).to_be_visible()
         assert sibling_page.get_by_text("Own sent intake",exact=True).count()==0
-        checks.append("Linked spouse cannot read another applicant's intake or assessment requests through own case request list")
+        assert sibling.request.get(f"{BASE}/api/applications/{appeal_id}/").status==403
+        sibling_csrf=next(cookie["value"] for cookie in sibling.cookies() if cookie["name"]=="csrftoken")
+        assert sibling.request.post(f"{BASE}/api/appeals/{appeal_id}/additions/",data={"text":"Not my supplement","file_ids":[],
+            "expected_version":pending_appeal["version"],"idempotency_key":str(uuid.uuid4())},headers={"X-CSRFToken":sibling_csrf}).status==403
+        checks.append("Linked spouse cannot read another applicant's requests or supplement history, or author additions")
         expect(sibling_page.get_by_role("button",name="Start or resume appeal",exact=True)).to_be_visible()
         sibling_page.get_by_role("button",name="Start or resume appeal",exact=True).click()
         expect(sibling_page.get_by_label("New information for consideration",exact=False)).to_be_visible()

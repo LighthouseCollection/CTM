@@ -405,7 +405,7 @@
           key:"payment-history",applicationId,api,lang,
           refreshKey:`${record.version}:${record.status}:${record.fee?.status}`,
         }) : null,
-        record.kind==="appeal"&&record.status!=="draft"&&window.CTMApplicantSupplements
+        (record.kind==="appeal"||record.origin==="closed_case_intake")&&record.status!=="draft"&&window.CTMApplicantSupplements
           ? h(window.CTMApplicantSupplements.Supplements,{key:applicationId,applicationId,api,lang,
             disabled:state.dirty||state.saving||uploadBusy||filingBusy||actionBusy||filingLocked||actionLocked||projectionPending,
             onDirtyChange:setSupplementDirty,onBusyChange:setSupplementBusy}) : null);

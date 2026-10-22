@@ -1,5 +1,20 @@
 # Remaining applicant work
 
+## Current supplement integration (2026-10-21)
+
+Backend a0bd138 now supplies own supplement history/capability, version checks and
+idempotent recovery. The applicant workspace consumes actual hash-only manifests,
+freezes the displayed version and one key, recovers matching own receipts, and offers
+explicit exact retry after refresh. It supports appeal and closed-case first-filing
+reconsideration; the latter is verified with controller/contract browser fixtures.
+
+Current checks: 78 frontend tests, 61 real API/browser scenario groups, nine
+supplement interruption/EN–AR groups and nine shell groups pass. The real runner
+uses isolated SQLite, synthetic sessions/content and scanner test policy. Controlled
+provider output remains a fixture. No PostgreSQL/live-provider/antivirus/institutional
+wording/signature/issuance acceptance is claimed. [Report](supplement-integration-report.md)
+and [Download JSON](supplement-integration-result.json).
+
 ## Schema reconciliation: next ten audit batches completed
 
 The source-only comparison at backend d724ba5 / applicant 72ee829 covers 101 of
@@ -19,8 +34,8 @@ prior 54 real API/browser groups retain their previous scope and were not rerun.
 Full approved-schema implementation remains an owner-managed backend/governance
 workstream: typed assertions/repeat relations, candidate/payment separation,
 identity/version history, clinical and decree provenance need explicit mapping
-and guarded migration plans. The supplement read/capability dependency remains
-unresolved. Do not treat this completed audit as completion of those migrations.
+and guarded migration plans. The supplement read/capability dependency recorded in this older audit is resolved
+in the current local integration; normalized appeal schema mapping remains open. Do not treat this completed audit as completion of those migrations.
 
 ## Current filing/recovery verification (2026-10-21)
 
@@ -46,7 +61,7 @@ owners; applicant PR #5 remains draft.
 
 | Order | Remaining task | Next concrete action / dependency |
 | --- | --- | --- |
-| 1 | Pending appeal supplements | UI prepared with review, safe evidence selection and uncertain-response locking. Actual owner supplement POST and staff denial verified; integration remains pending own supplement history and authoritative `can_supplement`. Existing POST additions accepts text/file IDs but has no idempotency key. |
+| 1 | Supplements — locally integrated | Actual own history/capability/version/idempotency contracts integrated at a0bd138. Lost-ack recovery, safe evidence, exact replay and post-withdrawal history verified. Closed-case first-filing support has controller/contract browser coverage; independent operational/PostgreSQL acceptance remains. |
 | 2 | Released decree access — read integration verified | Backend 444bad8 supplies own active release rows. Actual browser shows bilingual metadata/exact PDF link, isolates linked spouse, and removes withdrawn release links. Retained full/range/preview/HEAD URLs revoke. Synthetic stored PDF only; real signing/issuance and PostgreSQL acceptance remain separate. |
 | 3 | Request response/release operational acceptance | Actual fingerprint-bound intake and assessment responses, request originals, explicit published declaration consent and exact receipt recovery are integrated and locally verified at 480a246. Institution-approved wording, live clinical disclosure and PostgreSQL acceptance remain separate. |
 | 4 | Checkout recovery — locally integrated | Actual retained candidate/version/attestation/declaration/expiry read verified at d724ba5. Exact safe URL resume performs no checkout POST; expiry/changed revisions/processing/reconciliation block resume and fresh charges. Live provider acceptance remains separate. |
@@ -69,7 +84,7 @@ required PET original, authorized fixture waiver/declaration/submit, draft reuse
 and no reopening on submission. A distinct previously non-filing linked spouse can
 start an own appeal in a reopened-sibling state fixture. Closed/reopened state and
 party linking are explicit fixtures, not proof of decree issuance, council appeal
-acceptance or identity onboarding. Supplement UI is prepared; its own read/capability contract remains pending.
+acceptance or identity onboarding. Supplement own read/write/recovery integration is now verified at a0bd138.
 
 
 ## Earlier verification: first ten batches (2026-10-21)

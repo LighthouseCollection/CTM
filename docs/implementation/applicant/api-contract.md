@@ -185,7 +185,7 @@ Refresh is explicit and also follows answer-version/application-status/fee chang
 The pending-candidate attestation/resume contract remains a separate dependency;
 this read projection does not supply a checkout URL or original attestation.
 
-## Appeal entry and supplement dependencies
+## Appeal entry and actual supplement contracts (a0bd138)
 
 The appeal starter consumes the actual application acknowledgement, requiring
 matching `case_id`, `kind:"appeal"` and a valid application UUID before navigation.
@@ -193,26 +193,40 @@ The shared shell proposal preserves both closed-case and reopened-sibling contex
 through the authorized proceeding list; eligibility remains server-owned. A stale
 start acknowledgement cannot navigate after the case view has been left.
 
-The existing bound editor handles new-information draft answers, required originals,
-declaration/fee and submission. Submitted appeal answers are immutable. Supplements
-will use existing POST `/api/appeals/{id}/additions/` with `{text,file_ids}` only after
-own authoritative `can_supplement` and supplement history are projected. Own history
-must include attributed text, exact safe evidence versions and timestamps without
-other spouse/council content. An uncertain append needs authoritative refresh because
-the existing endpoint does not supply idempotent retry semantics.
+The bound editor handles new-information draft answers, required originals,
+declaration/fee and submission. Formal submitted answers remain immutable.
 
-The prepared supplement UI proposes this extension to the own application read:
+Own GET `/api/applications/{id}/` supplies `version`, `can_supplement` and
+`supplements:[{id,text,timestamp,idempotency_key,manifest:[{id,sha256}]}]` for appeal
+and `origin:"closed_case_intake"` reconsideration filings. History is own-only;
+no actor display name, file label, scan state or download URL is invented from this
+receipt. Null legacy keys are readable. Current clean ordinary evidence is read
+separately from own application files and linked only by exact matching version ID.
+Old/unavailable evidence remains identified as retained receipt evidence without a
+fabricated byte URL. Failed/malformed refresh clears private views while preserving
+local entry/navigation guards.
 
-```json
-{"id":"<application UUID>","kind":"appeal","status":"submitted","can_supplement":true,"supplements":[{"id":"<supplement UUID>","text":"Additional information","actor":"Applicant","timestamp":"2026-10-21T12:00:00Z","manifest":[{"id":"<file UUID>","name":"Evidence.pdf","scan_state":"clean","download_url":"/api/files/<file UUID>/"}]}]}
-```
+POST `/api/appeals/{id}/additions/` sends exactly
+`{text,file_ids,expected_version,idempotency_key}`. Each new entry creates one stable
+key (up to100 characters server-side); version is the displayed nonnegative answer
+version. Required original text/file IDs/version/key freeze before the first request.
+Only latest clean own ordinary same-application evidence can be selected; consent
+sources are excluded. Backend independently checks ownership/context/current safety.
 
-This is a proposed contract, not an existing backend response. Missing or malformed
-capability/history clears displayed history and disables append. Only clean own
-current files with exact authorized download paths can be selected. Review precedes
-POST; any uncertain response freezes that local attempt. Authoritative refresh and
-explicit clearing are required before starting another entry. The current real-API
-test verifies missing-contract controls stay disabled; append success is fixture-only.
+Any uncertain write locks edits and fresh submission. Explicit own refresh reconciles
+only a matching key, exact text and ordered file IDs. A matching receipt acknowledges
+the original attempt, including after withdrawal. If receipt is absent, an explicit
+retry after successful refresh reuses the exact original payload and same version;
+there is no automatic resend or new key. Changed replay fails. Starting a new entry
+requires acknowledgement/recovery, authoritative refresh and explicit clearing.
+
+Review preserves frozen local evidence names even if later unsafe/superseded, but
+links are resolved only from the current safe projection. Until receipt exists, copy
+describes a local selection and makes no server-retention claim. Before any attempt,
+refresh preserves unavailable selections until explicit removal and renewed review.
+The parent editor guards local text/evidence and blocks navigation/competing writes
+while append is in flight. Returned/withdrawn/disposed capabilities are server-owned;
+exact replay recovery does not authorize a fresh supplement.
 
 ## Own released decree read
 

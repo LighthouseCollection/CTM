@@ -1,5 +1,20 @@
 # Applicant acceptance reconciliation
 
+## Current supplement integration (2026-10-21)
+
+Backend a0bd138 now supplies own supplement history/capability, version checks and
+idempotent recovery. The applicant workspace consumes actual hash-only manifests,
+freezes the displayed version and one key, recovers matching own receipts, and offers
+explicit exact retry after refresh. It supports appeal and closed-case first-filing
+reconsideration; the latter is verified with controller/contract browser fixtures.
+
+Current checks: 78 frontend tests, 61 real API/browser scenario groups, nine
+supplement interruption/EN–AR groups and nine shell groups pass. The real runner
+uses isolated SQLite, synthetic sessions/content and scanner test policy. Controlled
+provider output remains a fixture. No PostgreSQL/live-provider/antivirus/institutional
+wording/signature/issuance acceptance is claimed. [Report](supplement-integration-report.md)
+and [Download JSON](supplement-integration-result.json).
+
 ## Current filing/recovery verification (2026-10-21)
 
 The next ten batches integrate backend `d724ba56b8bd5cf501d55fbbca416470108f963a`

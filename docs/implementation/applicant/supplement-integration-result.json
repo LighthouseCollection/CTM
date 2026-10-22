@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-21",
+  "backend_sha": "a0bd1380a97d69687d12f3be200ff8dfd6571d65",
+  "applicant_base": "63db388",
+  "scope": "local applicant supplement integration; isolated SQLite/synthetic sessions",
+  "batches": [
+    {
+      "number": 1,
+      "task": "Own history",
+      "result": "Actual private own capability/history with hashed manifests; no invented actor/file metadata.",
+      "verification": "real API"
+    },
+    {
+      "number": 2,
+      "task": "Bound submission",
+      "result": "Displayed version and one frozen idempotency key; stale/malformed requests denied.",
+      "verification": "unit and real API"
+    },
+    {
+      "number": 3,
+      "task": "Safe evidence",
+      "result": "Latest own ordinary originals only; superseded/pending/cross-application evidence and unsafe bytes denied.",
+      "verification": "real API and fixtures"
+    },
+    {
+      "number": 4,
+      "task": "Review preservation",
+      "result": "Escaped local text and frozen evidence names retained; links require current clean authorization.",
+      "verification": "real API and interruption fixtures"
+    },
+    {
+      "number": 5,
+      "task": "Lost acknowledgement",
+      "result": "One real committed append recovered by matching own key/text/files after explicit refresh.",
+      "verification": "real API"
+    },
+    {
+      "number": 6,
+      "task": "Exact retry",
+      "result": "Original payload/key/version reused; exact server replay returns same receipt without extra alerts, changed replay rejects.",
+      "verification": "real API and explicit-retry browser fixture"
+    },
+    {
+      "number": 7,
+      "task": "Closed-case first filing",
+      "result": "Same supplement panel enabled for closed_case_intake, with neutral filing wording.",
+      "verification": "controller and synthetic contract browser; not full real intake journey"
+    },
+    {
+      "number": 8,
+      "task": "EN/AR",
+      "result": "Actual receipt history and recovery fit Arabic390px without runtime styles/overflow.",
+      "verification": "real API and browser fixture"
+    },
+    {
+      "number": 9,
+      "task": "Privacy/interruption",
+      "result": "Linked spouse/staff denial, parent dirty/unload/navigation guards, denied-refresh private-view clearing and post-withdrawal recovery.",
+      "verification": "real API and fixtures"
+    },
+    {
+      "number": 10,
+      "task": "Evidence/integration",
+      "result": "Independent review findings reproduced/fixed; reports, JSON, queue and contract updated.",
+      "verification": "source review and checks"
+    }
+  ],
+  "checks": {
+    "frontend_tests": 78,
+    "real_api_browser_groups": 61,
+    "supplement_interruption_groups": 9,
+    "shell_groups": 9
+  },
+  "resolved_dependency": "AS09 own supplement read/capability/recovery; normalized schema mapping remains open",
+  "remaining": [
+    "Complete approved bilingual forms and backend nested repeat validation",
+    "Owner-managed full schema reconciliation/migrations",
+    "Governance serial integration",
+    "PostgreSQL/RLS/concurrency and live service/issuance acceptance"
+  ],
+  "limits": [
+    "Closed-case first-filing supplement support has unit/contract browser coverage, not a new full real intake journey",
+    "No live provider/payment/antivirus/content/signature approval",
+    "No protected schema/backend/shared shell changes"
+  ]
+}
