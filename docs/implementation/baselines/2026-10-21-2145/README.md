@@ -93,3 +93,9 @@ The local preview serves the working tree, including the UI stream's active edit
 - Main merge is zero across all listed PRs. Integration merges exist only on the integration branch.
 - Local preview HTTP200; public HTTPS502. No operational migration/deployment or credential change is part of this baseline.
 - Machine-readable register: baseline.json; all source status is timestamped, so later updates should produce a successor baseline rather than silently overwrite B01.
+
+## Post-capture UI checkpoint
+
+After B01 capture, governance reviewed and checked in the UI stream at integration commit0527500 (PR16). The integration working tree is now clean. Fresh checks:180 frontend tests,10 PostgreSQL account tests,14 fixture split screens, navigation and header browser checks passed. Hosted checks for this successor are newly queued; B01's previous green hosted results do not apply automatically to it. This successor does not include the two newer backend commits or one applicant commit identified above. The immutable B01 tag and captured JSON remain historical evidence and are not rewritten.
+
+Follow-up record: https://github.com/LighthouseCollection/CTM/blob/0527500/docs/implementation/integration/ui-checkpoint-B01-followup.md
