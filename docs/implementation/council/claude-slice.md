@@ -1,52 +1,45 @@
-# Council workspace — Claude stream, slice 1
+# Council workspace — Claude stream
 
-Branch `work/claude-council`, issue #3. Status 2026-10-21: draft, awaiting governance review.
+Branch `work/claude-council`, draft PR #6, issue #3. UI only: no backend, migration or protected build-spec edits. Status 2026-10-21: awaiting governance review.
 
-## Implemented
+## Modules
 
-| Area | Behavior | Endpoints used (existing) |
+| File | Contents |
+|---|---|
+| `static/ctm/council.js` | `window.CTMCouncil`: shared helpers (translator, `useLoad`, server messages, dates in Los Angeles time), council Home, completeness review, Tribunal Sessions (create, agenda, assignment, present, attendance slot, hearing outcome, testimony, close), Search. |
+| `static/ctm/council-case.js` | Reports → Requests (intake and in-person interview), Decision & Voting, Case Audit, call records, Professional Assessments, Spouses, case Hearings. |
+| `static/ctm/council-decree.js` | Decree (signed PDF, safety check, signature record, issue, release/withdraw) and Appeals. |
+| `static/ctm/app.js`, `tribunal/templates/tribunal/shell.html` | Shell hook (separate commits): load the three modules before `app.js`; route council pages; enable locked-navigation items only when the module is loaded; `api()` errors carry `status`/server JSON; `FormData` bodies keep the browser's multipart type. |
+| `tests/frontend/council*.test.cjs` | `node --test tests/frontend/` (56 tests). Catalog test reads `decisions.py` and `prototype-decision-types.json`. |
+| `scripts/council_fixture.cjs` | Synthetic browser fixture: `node scripts/council_fixture.cjs [port] [role] [--contract=pr7] [--decree-read]`. Not a real-API, database or provider-login test. |
+
+## Behavior by area
+
+| Area | Behavior | Existing endpoints |
 |---|---|---|
-| Completeness review | Admin/secretary queue panel on Home (locked navigation unchanged). Split list/detail reader of submitted petitions. **Accept** with confirmation; **Return for correction** requires instructions (client check plus existing server rule). Typed instructions are kept if the request fails. Members see no queue. | `GET /api/applications/`, `POST /api/applications/{id}/review/` |
-| Tribunal Sessions | List with `Council Session YYYY-MM-DD` and `CSYYYYMMDD` reference. Admin/secretary create a dated session; duplicate date blocked client-side and on server 409. | `GET/POST /api/sessions/` |
-| Session agenda | Part 1: admin/secretary place open unassigned cases; record assignment (case manager + authorizing President, both required). Part 2: assigned cases placed by admin/secretary or the shown assigned member. **Present case** only for the assigned member; absent presenter result shown as deferred awaiting manual placement. **Close session** with confirmation that states the carryover rules. Closed session is read-only. | `GET/POST /api/sessions/{id}/agenda/`, `POST /api/cases/{id}/assignment/`, `POST /api/agenda/{id}/hear/`, `POST /api/sessions/{id}/close/`, `GET /api/council/members/`, `GET /api/cases/` |
-| Attendance | Existing shell `SessionAttendance` kept; the module supplies fresh attendance/session data after each action so it becomes read-only immediately after close. | `GET/POST /api/sessions/{id}/attendance/` |
-
-All controls are display decisions only; the server enforces permissions. Server validation text is shown verbatim; no success is shown unless the request succeeded.
-
-## Files
-
-- `static/ctm/council.js` — separate `window.CTMCouncil` module (logic + Plenix views, EN/AR words).
-- `static/ctm/app.js`, `tribunal/templates/tribunal/shell.html` — small shell hook (separate commit): load `council.js` before `app.js`; delegate Home review panel, `review`, `sessions`, `session` pages; `api()` errors now carry `status` and the server JSON body.
-- `tests/frontend/council.test.cjs` — `node --test` logic checks.
-- `scripts/council_fixture.cjs` — synthetic contract fixture for browser checks without Python.
+| Home | Upcoming sessions, needs attention (unread notifications; completeness queue for admin/secretary), own open cases. No analytics. | `/api/dashboard/`, `/api/cases/`, `/api/notifications/` |
+| Completeness review | Queue and split reader; applicant, submission time, bound questionnaire labels, submitted manifest (download only after clean scan), previous returns; Accept (confirm) / Return with required instructions. | `/api/applications/?state=awaiting_review`, `/review/` |
+| Sessions | One session per date; Part 1 placement and President-authorized assignment; Part 2 placement; formal hearing title; presenter-only Present (attendance hint); recommendations and applicant update (first save sends standard update, revisions silent, history); testimony invitation (LA times, private instructions, response state); close with carryover rules; read-only when closed. | sessions, agenda, attendance, assignment, hear, hearings, outcome, testimony, close |
+| Reports | Completed reports (existing reader) and Requests tab: intake to applicant, or interview recorded by the manager (offered only with the PR #7 boundary); category or topic-group view of one selection; foundational questions locked; Arabic/bilingual blocked without approved Arabic wording; frozen snapshot before send/start. | report-questions, requests, send, complete |
+| Decision & Voting | Exact catalog (Deferred excluded as a hearing outcome); grounds required; named per-spouse entitlements; nullity and conditional rules; full roster tally; own and on-behalf votes; President approval or recorded approval; denial closing warning; saved versions and earlier versions with PR #7. | decision, vote, approve |
+| Decree | Admin/secretary only: store signed PDF (`DEC`, council-only, ≤25 MB), safety check, President signature record, confirmed issue (closes case), release/withdraw per entitled spouse. Template generation stated as unavailable. No replacement workflow. | files, signature, decree, release |
+| Appeals | Split list/detail; Accept/Decline against a heard case hearing, optional explanation; consequences stated. | applications, sessions/agenda, appeals result |
+| Professional Assessments | Separate section; medical/psychological requests with optional recommended doctors; contents hidden without council-scope release; excluded from ordinary Requests. | requests, reports |
+| Communications | Existing messages plus manual call records (who, when with time zone, outcome, notes). | calls |
+| Case Audit | Searchable audit events with EN/AR labels for known codes. | audit |
+| Search | Split results with server-authorized excerpts; earlier versions optional; server errors shown as returned. | search |
+| Spouses / Hearings | Owner-approved "Spouses" wording; add the other spouse (admin/secretary); case agenda appearances. | case detail, parties, sessions |
 
 ## Evidence
 
-- `node --test tests/frontend/council.test.cjs`: 15 passed.
-- Browser (built-in Chromium pane, real Plenix 0.58.0 CDN, real `council.js`/`app.js`, **synthetic fixture API — not a real-API, database or provider-login test**): empty return blocked with no request sent; return and accept send the exact payloads; duplicate session date blocked; Part 1 placement and assignment (incomplete form blocked, complete form posts member + president); Part 2 placement; secretary sees no Present button, assigned member does; hearing recorded; close session makes attendance read-only; member sees no review queue, session creation, assignment or close controls; EN/AR at 1280px and 390px: `dir=rtl` in Arabic, zero `[style]` attributes, no horizontal overflow, zero console errors.
-- Python/PostgreSQL: this machine has no Python/uv/Docker; GitHub Actions on the branch is the evidence for unchanged backend tests.
+- `node --test tests/frontend/`: 56 passed.
+- Built-in Chromium with the real Plenix 0.58.0 CDN and real modules against the synthetic fixture, in both `main` and `--contract=pr7` modes. Every slice was checked as secretary and as member (and on the assigned/unassigned split). Checks covered: validation blocking with no request sent, exact request payloads, server error text shown, EN/AR at 1280 and 390 px, `dir=rtl`, zero `[style]` attributes, no horizontal overflow, and no console errors apart from the expected 405 decision probe on `main`.
+- Python/PostgreSQL: no Python/uv/Docker on this machine; GitHub Actions on PR #6 has passed on each push checked.
 
-## Backend dependencies (posted on #2)
+## Backend dependencies (issue #2)
 
-D1 review projection (applicant name, submitted time, manifest, prior returns, questionnaire labels, `can_review`); D2 agenda projection (`hearing_id`, assigned member id/name, party names for the hearing title, `can_present`, testimony); D3 hearing read endpoint with outcome revisions; D4 case capability flags; D5 members/president seed. Additional: D6 — recording a Part 1 assignment does not change the agenda item state, so closing the session marks an assigned Part 1 item "unpresented"; please confirm intended Part 1 completion state.
+D1–D8 and D11 are delivered in backend PR #7 and are consumed when present. Open: D9 Arabic topic/category names and reviewed Arabic wording; D10 external priest page and delivery; D12 decree read inside the decision projection; D13 file scan status; D14 approved decree templates; D15 appeal supplements, disposition and eligible hearings; D16 assessment release status. Backend note from review F27: the server still accepts `deferred` as a decision type.
 
-Until D1 is supplied, answers are shown as stored codes with an explicit notice. Until D2/D3, hearing recommendations/applicant update are not editable from the session view (the existing POST endpoint needs a hearing id the agenda does not return).
+## Not built on purpose
 
-# Slice 2 — report requests and Decision & Voting
-
-Module `static/ctm/council-case.js` (loads after `council.js`, extends `window.CTMCouncil`), tests `tests/frontend/council-case.test.cjs`.
-
-| Area | Behavior | Endpoints used (existing) |
-|---|---|---|
-| Reports → Requests tab | Completed reports stay in the shell's existing reader (first tab). Requests tab: split list/detail. Assigned manager or admin/secretary composes an applicant intake: subject (registered parties only), title, language (English / Arabic / both), questions grouped by reusable category with latest published version, foundational questions always included and locked, optional follow-up parent report and instructions. Saved as draft, then the frozen question snapshot is shown before **Send to applicant** (confirmation). Arabic/both is blocked when any question sent lacks approved Arabic wording. Members see read-only notice. | `GET /api/report-questions/`, `GET/POST /api/cases/{id}/requests/`, `POST /api/requests/{id}/send/` |
-| Decision & Voting (new case nav item under Decision) | Writer records a version: exact prototype type catalog (8 server types; withdrawal/reconciliation excluded), grounds required, per-party entitlement required for granting types, Nullity requires both certificate, conditional types require stated conditions. Shows what is being voted on first. Full council roster with latest vote per member and tally. Own vote for all council; admin/secretary may record on behalf. President approves own; admin/secretary records President's approval (President selected). Petition Denied approval shows the closing warning. Revised version notice: earlier votes/approval stay with earlier version. | `POST /api/proceedings/{id}/decision/`, `POST /api/decisions/{id}/vote/`, `POST /api/decisions/{id}/approve/`, `GET /api/council/members/`, `GET /api/cases/{id}/` |
-
-Evidence: `node --test tests/frontend/` 28 passed (catalog test reads `decisions.py` and `prototype-decision-types.json` so drift fails). Browser on synthetic fixture (same caveat as slice 1): empty composer blocked with no request; Arabic request blocked without approved wording; draft posts exact payload; frozen questions shown; send confirmation; decision Nullity entitlement rule blocked before request; recorded version shown first; own vote and on-behalf vote payloads (`member_id` only on behalf); on-behalf approval posts `president_id`; denial warning; member: no entitlements for denial, own vote only, no approval control, no write controls on another member's case; EN/AR at 1280 and 390 px with RTL, zero `[style]`, no overflow.
-
-Not implemented on purpose: external priest requests (no priest-facing page or email delivery yet); interview conducted by the manager (D7); Arabic decision-type labels (not approved — English approved label shown with notice); voting is not blocked after approval (no contract rule).
-
-Additional backend dependencies (posted on #2): D7 interview kind should not notify the applicant on send, or a separate "record interview" command; D8 decision read `GET /api/proceedings/{id}/decision/` → `{items:[{id, number, type, grounds, entitlements, conditions, actor, timestamp, votes:[{member_id, choice, actor_id, timestamp}], approval:{president_id, president, actor, timestamp}|null}]}`; D9 topic groups and Arabic category names in `/api/report-questions/`; D10 external priest capability page/email delivery; D11 request projection fields (subject party id/name, language, created/sent time, parent report, author).
-
-## Remaining council work
-
-Hearing outcome and applicant update editor, testimony scheduling, report intake authoring (question bank selection), decision/voting, decree preparation/issue/release, appeals, communications refinements, case overview pages.
+External priest requests (no capability page or delivery), Arabic decision-type labels (not approved), replacement/clerical decree workflow (removed by contract), Statistics and Reports (needs a valid-denominator definition and aggregates endpoint), timeline/marriage/separation overview pages (no projection yet).
