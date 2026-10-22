@@ -220,16 +220,12 @@
       associating: "Linking the recording to this report…",
       queueing: "Queuing transcription…",
       submitted: "The recording was submitted and transcription was queued.",
-      submittedNoRead:
-        "Submitted. Transcription status cannot be shown here yet; the original audio is stored with the report.",
       uploadFailed: "The recording could not be submitted. It is still kept on this device; try again.",
       scanRejected: "The automatic safety check rejected this recording. It is kept on this device.",
       checkAgain: "Check again",
       retrySubmit: "Try again",
       writerOnlyRecording: "Only the assigned case manager, or the administrator or secretary, records while the proceeding is open.",
       notInterview: "Recordings are used for interviews conducted by the case manager.",
-      transcriptsPending:
-        "Transcription status and transcripts are not available from this server yet. Submitted recordings keep their original audio.",
       beforeUnload: "A recording is in progress.",
       reportsList: "Completed reports",
       noReports: "No completed reports are available.",
@@ -279,6 +275,63 @@
       discardRevisionTitle: "Discard unsaved changes?",
       discardRevisionMessage: "The text you typed in this revision will be removed. Nothing has been saved.",
       keepEditing: "Keep editing",
+      recordingsTitle: "Submitted recordings",
+      noRecordings: "No recording has been submitted for this report.",
+      recordingItem: "Recording {n}",
+      submittedOn: "Submitted",
+      recDuration: "Length",
+      durationUnknown: "Not recorded",
+      noticeState: "Recording notice",
+      noticeGiven: "Confirmed",
+      noticeMissing: "Not confirmed",
+      originalUnavailable: "The original audio is not available here: it has not passed the automatic safety check.",
+      statusNotQueued: "Transcription has not been requested for this recording.",
+      statusNotQueuedNoAuthority: "Transcription has not been requested. The case manager can request it.",
+      queueTranscription: "Request transcription",
+      queuedDone: "Transcription requested. The original audio is kept.",
+      statusMissing: "Transcription was requested, but no processing record exists. The original audio is kept.",
+      statusQueued: "Waiting for transcription (attempt {attempt}). The transcription service may not be configured on this server yet, so nothing may have been processed. The original audio is kept.",
+      statusRunning: "Transcription in progress (attempt {attempt}).",
+      statusSucceeded: "Transcription finished (attempt {attempt}). Generated text is shown to other council members only after the case manager reviews it.",
+      statusFailed: "Transcription failed (attempt {attempt}). {error} You can retry; earlier attempts are kept.",
+      statusFailedNoRetry: "Transcription failed (attempt {attempt}). {error} Only the case manager can retry, while the case is open.",
+      statusOther: "Transcription state: {state} (attempt {attempt}).",
+      retryTranscription: "Retry transcription",
+      retryDone: "Attempt {attempt} is queued. Earlier attempts and any earlier text are kept.",
+      noTranscriptReleased: "No transcript is available to you yet. Generated text is shown to other council members only after the case manager reviews it.",
+      transcriptLanguage: "Language",
+      transcriptKind: "Version type",
+      transcriptState: "Review",
+      transcriptSaved: "Saved",
+      transcriptText: "Transcript text",
+      lang_en: "English",
+      lang_ar: "Arabic",
+      lang_mixed: "Mixed English and Arabic",
+      kind_original: "Original",
+      kind_translation: "Translation",
+      versionOption: "Version {version} · {when} · {state}",
+      stateReviewed: "Reviewed",
+      stateUnreviewed: "Not reviewed",
+      unreviewedNotice: "Generated text, not yet reviewed. Until this exact version is reviewed, only the case manager and administrators can read it.",
+      olderVersionNotice: "This is an earlier version. The latest version is {version}.",
+      markReviewed: "Mark as reviewed",
+      reviewTitle: "Mark version {version} as reviewed?",
+      reviewMessage: "Other council members will be able to read this exact version. Later corrections need their own review.",
+      reviewDone: "Version {version} is reviewed.",
+      correctText: "Correct text",
+      correctTitle: "Correct transcript text",
+      correctHelp: "Saving creates version {next}. Earlier versions are kept. The new version needs its own review. Timings from the generated text are not carried into corrected text.",
+      saveCorrection: "Save as version {next}",
+      correctionSaved: "Saved as version {version}. It needs review.",
+      correctionStale: "A newer version of this transcript was saved. Your text is kept below. Load the latest version, then correct it again.",
+      reloadLatest: "Load latest version",
+      correctionEmpty: "Enter the corrected text.",
+      correctionUncertain: "The server did not confirm this correction. Your text is kept. Saving the same text again will not create a duplicate.",
+      correctionRestored: "Your unsaved correction was restored. Save it or discard it.",
+      discardCorrectionTitle: "Discard your correction?",
+      discardCorrectionMessage: "The corrected text you typed will be removed. Nothing has been saved.",
+      unsavedCorrection: "A transcript correction has not been saved.",
+      segmentsTitle: "Timed segments",
       reportAuthor: "Author",
       reportSubmitted: "Submitted",
       reportMethod: "Method",
@@ -366,14 +419,12 @@
       associating: "جارٍ ربط التسجيل بهذا التقرير…",
       queueing: "جارٍ وضع التفريغ في قائمة الانتظار…",
       submitted: "تم تقديم التسجيل ووضع التفريغ في قائمة الانتظار.",
-      submittedNoRead: "تم التقديم. لا يمكن عرض حالة التفريغ هنا بعد؛ والصوت الأصلي محفوظ مع التقرير.",
       uploadFailed: "تعذر تقديم التسجيل. وما زال محفوظًا على هذا الجهاز؛ حاول مجددًا.",
       scanRejected: "رفض فحص الأمان التلقائي هذا التسجيل. وما زال محفوظًا على هذا الجهاز.",
       checkAgain: "التحقق مرة أخرى",
       retrySubmit: "إعادة المحاولة",
       writerOnlyRecording: "يسجّل مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط ما دام الإجراء مفتوحًا.",
       notInterview: "تُستخدم التسجيلات للمقابلات التي يجريها مسؤول القضية.",
-      transcriptsPending: "حالة التفريغ والنصوص المفرغة غير متاحة من هذا الخادم بعد. وتحتفظ التسجيلات المقدَّمة بصوتها الأصلي.",
       beforeUnload: "يوجد تسجيل قيد التنفيذ.",
       reportsList: "التقارير المكتملة",
       noReports: "لا توجد تقارير مكتملة.",
@@ -423,6 +474,63 @@
       discardRevisionTitle: "هل تريد تجاهل التغييرات غير المحفوظة؟",
       discardRevisionMessage: "سيُحذف النص الذي كتبته في هذا التعديل. لم يُحفظ أي شيء.",
       keepEditing: "متابعة التعديل",
+      recordingsTitle: "التسجيلات المقدَّمة",
+      noRecordings: "لم يُقدَّم أي تسجيل لهذا التقرير.",
+      recordingItem: "التسجيل {n}",
+      submittedOn: "تاريخ التقديم",
+      recDuration: "المدة",
+      durationUnknown: "غير مسجَّلة",
+      noticeState: "إشعار التسجيل",
+      noticeGiven: "مؤكَّد",
+      noticeMissing: "غير مؤكَّد",
+      originalUnavailable: "الصوت الأصلي غير متاح هنا: لم يجتز فحص الأمان التلقائي.",
+      statusNotQueued: "لم يُطلب تفريغ هذا التسجيل.",
+      statusNotQueuedNoAuthority: "لم يُطلب التفريغ. ويمكن لمسؤول القضية طلبه.",
+      queueTranscription: "طلب التفريغ",
+      queuedDone: "طُلب التفريغ. والصوت الأصلي محفوظ.",
+      statusMissing: "طُلب التفريغ، لكن لا يوجد سجل معالجة. والصوت الأصلي محفوظ.",
+      statusQueued: "في انتظار التفريغ (المحاولة {attempt}). قد لا تكون خدمة التفريغ مهيأة على هذا الخادم بعد، لذا ربما لم يُعالَج شيء. والصوت الأصلي محفوظ.",
+      statusRunning: "التفريغ جارٍ (المحاولة {attempt}).",
+      statusSucceeded: "اكتمل التفريغ (المحاولة {attempt}). ولا يُعرض النص المولَّد على باقي أعضاء المجلس إلا بعد أن يراجعه مسؤول القضية.",
+      statusFailed: "فشل التفريغ (المحاولة {attempt}). {error} يمكنك إعادة المحاولة؛ وتُحفظ المحاولات السابقة.",
+      statusFailedNoRetry: "فشل التفريغ (المحاولة {attempt}). {error} لا يعيد المحاولة إلا مسؤول القضية ما دامت القضية مفتوحة.",
+      statusOther: "حالة التفريغ: {state} (المحاولة {attempt}).",
+      retryTranscription: "إعادة محاولة التفريغ",
+      retryDone: "المحاولة {attempt} في قائمة الانتظار. وتُحفظ المحاولات السابقة وأي نص سابق.",
+      noTranscriptReleased: "لا يوجد نص مفرغ متاح لك بعد. ولا يُعرض النص المولَّد على باقي أعضاء المجلس إلا بعد أن يراجعه مسؤول القضية.",
+      transcriptLanguage: "اللغة",
+      transcriptKind: "نوع الإصدار",
+      transcriptState: "المراجعة",
+      transcriptSaved: "تاريخ الحفظ",
+      transcriptText: "نص التفريغ",
+      lang_en: "الإنجليزية",
+      lang_ar: "العربية",
+      lang_mixed: "مزيج من الإنجليزية والعربية",
+      kind_original: "الأصلي",
+      kind_translation: "ترجمة",
+      versionOption: "الإصدار {version} · {when} · {state}",
+      stateReviewed: "تمت مراجعته",
+      stateUnreviewed: "لم تتم مراجعته",
+      unreviewedNotice: "نص مولَّد لم تتم مراجعته بعد. وحتى تتم مراجعة هذا الإصدار بعينه، لا يطّلع عليه إلا مسؤول القضية والمسؤولون الإداريون.",
+      olderVersionNotice: "هذا إصدار سابق. وأحدث إصدار هو {version}.",
+      markReviewed: "اعتماد المراجعة",
+      reviewTitle: "هل تريد اعتماد مراجعة الإصدار {version}؟",
+      reviewMessage: "سيتمكن باقي أعضاء المجلس من قراءة هذا الإصدار بعينه. وتحتاج التصحيحات اللاحقة إلى مراجعة خاصة بها.",
+      reviewDone: "تمت مراجعة الإصدار {version}.",
+      correctText: "تصحيح النص",
+      correctTitle: "تصحيح نص التفريغ",
+      correctHelp: "يُنشئ الحفظ الإصدار {next}. وتُحفظ الإصدارات السابقة. ويحتاج الإصدار الجديد إلى مراجعة خاصة به. ولا تُنقل توقيتات النص المولَّد إلى النص المصحَّح.",
+      saveCorrection: "الحفظ كإصدار {next}",
+      correctionSaved: "تم الحفظ كالإصدار {version}. ويحتاج إلى مراجعة.",
+      correctionStale: "حُفظ إصدار أحدث من هذا التفريغ. وما زال نصك محفوظًا أدناه. حمّل أحدث إصدار ثم صحّحه مجددًا.",
+      reloadLatest: "تحميل أحدث إصدار",
+      correctionEmpty: "أدخل النص المصحَّح.",
+      correctionUncertain: "لم يؤكد الخادم هذا التصحيح. وما زال نصك محفوظًا هنا. ولن يؤدي حفظ النص نفسه مجددًا إلى إنشاء نسخة مكررة.",
+      correctionRestored: "تمت استعادة تصحيحك غير المحفوظ. احفظه أو تجاهله.",
+      discardCorrectionTitle: "هل تريد تجاهل تصحيحك؟",
+      discardCorrectionMessage: "سيُحذف النص المصحَّح الذي كتبته. لم يُحفظ أي شيء.",
+      unsavedCorrection: "يوجد تصحيح على نص التفريغ لم يُحفظ.",
+      segmentsTitle: "المقاطع الموقَّتة",
       reportAuthor: "الكاتب",
       reportSubmitted: "تاريخ التقديم",
       reportMethod: "الطريقة",
@@ -772,7 +880,13 @@
           setProgress("associating");
           const recording = await api("/api/recordings/", {
             method: "POST",
-            body: JSON.stringify({ file_id: r.fileId, report_id: reportId, notice_recorded: true }),
+            body: JSON.stringify({
+              file_id: r.fileId,
+              report_id: reportId,
+              notice_recorded: true,
+              recording_notice: { acknowledged: true },
+              ...(r.segments.length && r.segments.every((x) => x.end) ? { duration_ms: Math.round(elapsedMs(r.segments, Date.now())) } : {}),
+            }),
           });
           r.recordingId = recording.id;
           await saveMeta();
@@ -1232,6 +1346,392 @@
     );
   }
 
+  // ---------- Recording status and transcripts (D20) ----------
+  // Contract: backend #7 docs/implementation/media-read-and-review.md and twenty-batch-continuation.md.
+  // GET /api/reports/{id}/recordings/ · GET /api/transcripts/{id}/ · POST .../review/ {} ·
+  // POST .../correct/ {expected_version,text,segments} · POST /api/processing/{run}/retry/ {} ·
+  // POST /api/recordings/{id}/finalize/. No provider success is ever inferred: "queued" means waiting.
+
+  function processingView(recording) {
+    const p = recording.processing;
+    const attempt = String((p && p.attempt) || 1);
+    if (!recording.download_url) return { key: "originalUnavailable", tone: "danger" };
+    if (!recording.finalized_at)
+      return recording.can_finalize ? { key: "statusNotQueued", tone: "info", finalize: true } : { key: "statusNotQueuedNoAuthority", tone: "info" };
+    if (!p) return { key: "statusMissing", tone: "warning" };
+    if (p.state === "queued") return { key: "statusQueued", tone: "info", attempt };
+    if (p.state === "running") return { key: "statusRunning", tone: "info", attempt };
+    if (p.state === "succeeded") return { key: "statusSucceeded", tone: "success", attempt };
+    if (p.state === "failed") return { key: p.can_retry ? "statusFailed" : "statusFailedNoRetry", tone: "danger", attempt, retry: Boolean(p.can_retry) };
+    return { key: "statusOther", tone: "info", attempt, state: String(p.state) };
+  }
+
+  // Versions grouped by language and kind, newest version first in each group.
+  function transcriptGroups(transcripts) {
+    const groups = new Map();
+    for (const row of transcripts || []) {
+      const key = `${row.language}|${row.kind}`;
+      if (!groups.has(key)) groups.set(key, { key, language: row.language, kind: row.kind, versions: [] });
+      groups.get(key).versions.push(row);
+    }
+    return [...groups.values()]
+      .map((g) => ({ ...g, versions: g.versions.sort((a, b) => b.version - a.version) }))
+      .sort((a, b) => (a.language + a.kind).localeCompare(b.language + b.kind));
+  }
+
+  // Only well-formed timed segments are shown; anything else is left to the text.
+  function timedSegments(segments) {
+    if (!Array.isArray(segments)) return [];
+    return segments.filter(
+      (s) => s && typeof s.text === "string" && s.text.trim() && Number.isFinite(s.start) && Number.isFinite(s.end) && s.end >= s.start,
+    );
+  }
+
+  const codeLabel = (t, prefix, value) => {
+    const label = t(`${prefix}_${value}`);
+    return label === `${prefix}_${value}` || !label ? String(value || "—") : label;
+  };
+
+  function RecordingStatusList({ api, lang, report, refreshKey }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = base.useLoad(() => api(`/api/reports/${encodeURIComponent(report.id)}/recordings/`), [report.id, refreshKey]);
+    const [busy, setBusy] = R.useState(null);
+    const [notes, setNotes] = R.useState({}); // recording id -> { tone, text }
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const items = (state.data && state.data.items) || [];
+    async function act(recording, kind) {
+      setBusy(recording.id);
+      try {
+        if (kind === "retry") {
+          const run = await api(`/api/processing/${encodeURIComponent(recording.processing.run_id)}/retry/`, { method: "POST", body: "{}" });
+          setNotes((n) => ({ ...n, [recording.id]: { tone: "success", text: t("retryDone", { attempt: String(run.attempt) }) } }));
+        } else {
+          await api(`/api/recordings/${encodeURIComponent(recording.id)}/finalize/`, { method: "POST", body: "{}" });
+          setNotes((n) => ({ ...n, [recording.id]: { tone: "success", text: t("queuedDone") } }));
+        }
+        retry();
+      } catch (error) {
+        setNotes((n) => ({ ...n, [recording.id]: { tone: "danger", text: base.serverMessage(error, t) } }));
+      } finally {
+        setBusy(null);
+      }
+    }
+    return h(
+      P.Stack,
+      { gap: "md" },
+      h(P.Text, { as: "h3", variant: "heading" }, t("recordingsTitle")),
+      items.length
+        ? h(
+            P.Stack,
+            { gap: "md" },
+            ...items.map((recording, i) => {
+              const view = processingView(recording);
+              const note = notes[recording.id];
+              return h(
+                P.Panel,
+                { key: recording.id, icon: "triangle-right", title: t("recordingItem", { n: String(i + 1) }) },
+                h(
+                  P.Stack,
+                  { gap: "sm" },
+                  h(
+                    P.PropertyList,
+                    null,
+                    h(P.PropertyList.Item, { label: t("submittedOn"), data: true }, base.formatWhen(recording.created_at, lang)),
+                    h(P.PropertyList.Item, { label: t("recDuration"), data: true }, recording.duration_ms != null ? formatDuration(recording.duration_ms) : t("durationUnknown")),
+                    recording.byte_count ? h(P.PropertyList.Item, { label: t("size"), data: true }, formatBytes(recording.byte_count, lang)) : null,
+                    h(P.PropertyList.Item, { label: t("noticeState") }, t(recording.notice_recorded ? "noticeGiven" : "noticeMissing")),
+                  ),
+                  recording.download_url
+                    ? h(P.MediaPlayer, { src: recording.download_url, kind: "audio", label: t("recordingItem", { n: String(i + 1) }), strings: mediaStrings(t) })
+                    : null,
+                  h(P.Notice, { tone: view.tone }, t(view.key, { attempt: view.attempt || "1", error: (recording.processing && recording.processing.safe_error) || "", state: view.state || "" })),
+                  note ? h(P.Notice, { tone: note.tone }, note.text) : null,
+                  view.finalize || view.retry
+                    ? h(
+                        P.Inline,
+                        { wrap: true },
+                        h(
+                          P.Button,
+                          { size: "sm", variant: "primary", loading: busy === recording.id, disabled: Boolean(busy), onClick: () => act(recording, view.retry ? "retry" : "finalize") },
+                          t(view.retry ? "retryTranscription" : "queueTranscription"),
+                        ),
+                      )
+                    : null,
+                ),
+              );
+            }),
+          )
+        : h(P.EmptyState, { title: t("noRecordings") }),
+    );
+  }
+
+  function TranscriptCorrection({ api, lang, data, draftKey, onSaved, onCancel, onStale }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [stored] = R.useState(() => base.unsavedDrafts.get(draftKey) || null);
+    const [text, setText] = R.useState(() => (stored ? stored.text : data.text || ""));
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const [stale, setStale] = R.useState(false);
+    const [confirm, setConfirm] = R.useState(false);
+    const [done, setDone] = R.useState(false);
+    const dirty = !done && text !== (data.text || "");
+    R.useEffect(() => {
+      if (dirty) base.unsavedDrafts.set(draftKey, { version: data.version, text });
+      else base.unsavedDrafts.delete(draftKey);
+      if (!dirty) return undefined;
+      const guard = (event) => {
+        event.preventDefault();
+        event.returnValue = t("unsavedCorrection");
+        return event.returnValue;
+      };
+      window.addEventListener("beforeunload", guard);
+      return () => window.removeEventListener("beforeunload", guard);
+    }, [text]);
+    const next = String(data.version + 1);
+    async function save(event) {
+      if (event && event.preventDefault) event.preventDefault();
+      setFailure(null);
+      if (!text.trim()) return setFailure(t("correctionEmpty"));
+      if (!dirty) return setFailure(t("revisionNoChange"));
+      setPending(true);
+      try {
+        // Corrected text does not carry the generated timings (they would no longer match the words).
+        const row = await api(`/api/transcripts/${encodeURIComponent(data.id)}/correct/`, {
+          method: "POST",
+          body: JSON.stringify({ expected_version: data.version, text, segments: [] }),
+        });
+        setDone(true);
+        base.unsavedDrafts.delete(draftKey);
+        onSaved(row);
+      } catch (error) {
+        const kind = saveFailure(error);
+        if (kind === "invalid" && /newer transcript version/i.test(base.serverMessage(error, t))) setStale(true);
+        else setFailure(kind === "uncertain" ? t("correctionUncertain") : `${base.serverMessage(error, t)} ${t("revisionKept")}`);
+      } finally {
+        setPending(false);
+      }
+    }
+    function discard() {
+      base.unsavedDrafts.delete(draftKey);
+      setConfirm(false);
+      onCancel();
+    }
+    return h(
+      P.Form,
+      { onSubmit: save, label: t("correctTitle"), noValidate: true },
+      stored ? h(P.Notice, { tone: "info" }, t("correctionRestored")) : null,
+      h(
+        P.FormSection,
+        { title: t("correctTitle"), description: t("correctHelp", { next }) },
+        h(P.Field, { label: t("transcriptText") }, h(P.Textarea, { dir: "auto", rows: 10, autoGrow: true, value: text, maxLength: 5000000, disabled: pending, onChange: (e) => setText(e.target.value) })),
+      ),
+      stale
+        ? h(
+            P.Notice,
+            { tone: "warning" },
+            h(P.Stack, { gap: "sm" }, h(P.Text, { as: "p" }, t("correctionStale")), h(P.Inline, { wrap: true }, h(P.Button, { size: "sm", onClick: onStale }, t("reloadLatest")))),
+          )
+        : null,
+      failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+      h(
+        P.FormActions,
+        { sticky: false },
+        h(P.Button, { disabled: pending, onClick: () => (dirty ? setConfirm(true) : discard()) }, t("cancel")),
+        stale ? null : h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveCorrection", { next })),
+      ),
+      h(P.ConfirmDialog, {
+        open: confirm,
+        title: t("discardCorrectionTitle"),
+        message: t("discardCorrectionMessage"),
+        confirmLabel: t("discardChanges"),
+        cancelLabel: t("keepEditing"),
+        destructive: true,
+        onConfirm: discard,
+        onCancel: () => setConfirm(false),
+      }),
+    );
+  }
+
+  function TranscriptViewer({ api, lang, revisionId, latestVersion, onChanged }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = base.useLoad(() => api(`/api/transcripts/${encodeURIComponent(revisionId)}/`), [revisionId]);
+    const data = state.data;
+    const draftKey = data ? `transcript:${data.recording_id}:${data.language}:${data.kind}` : null;
+    const [editing, setEditing] = R.useState(null);
+    const [confirm, setConfirm] = R.useState(false);
+    const [busy, setBusy] = R.useState(false);
+    const [note, setNote] = R.useState(null);
+    if (state.pending && !data) return base.loadingView(P, h, t);
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const isEditing = editing === revisionId || (draftKey && base.unsavedDrafts.has(draftKey) && editing !== false);
+    async function review() {
+      setConfirm(false);
+      setBusy(true);
+      setNote(null);
+      try {
+        await api(`/api/transcripts/${encodeURIComponent(data.id)}/review/`, { method: "POST", body: "{}" });
+        setNote({ tone: "success", text: t("reviewDone", { version: String(data.version) }) });
+        retry();
+        if (onChanged) onChanged(null);
+      } catch (error) {
+        setNote({ tone: "danger", text: base.serverMessage(error, t) });
+      } finally {
+        setBusy(false);
+      }
+    }
+    const segments = timedSegments(data.segments);
+    const meta = h(
+      P.PropertyList,
+      null,
+      h(P.PropertyList.Item, { label: t("transcriptLanguage") }, codeLabel(t, "lang", data.language)),
+      h(P.PropertyList.Item, { label: t("transcriptKind") }, codeLabel(t, "kind", data.kind)),
+      h(P.PropertyList.Item, { label: t("version") }, String(data.version)),
+      h(P.PropertyList.Item, { label: t("transcriptState") }, h(P.Badge, { tone: data.reviewed ? "success" : "warning" }, t(data.reviewed ? "stateReviewed" : "stateUnreviewed"))),
+      data.timestamp ? h(P.PropertyList.Item, { label: t("transcriptSaved"), data: true }, base.formatWhen(data.timestamp, lang)) : null,
+    );
+    if (isEditing)
+      return h(
+        P.Stack,
+        { gap: "md" },
+        meta,
+        h(TranscriptCorrection, {
+          api,
+          lang,
+          data,
+          draftKey,
+          onCancel: () => setEditing(false),
+          onStale: () => {
+            base.unsavedDrafts.delete(draftKey);
+            setEditing(false);
+            if (onChanged) onChanged(null);
+          },
+          onSaved: (row) => {
+            setEditing(false);
+            setNote({ tone: "success", text: t("correctionSaved", { version: String(row.version) }) });
+            if (onChanged) onChanged(row.id);
+          },
+        }),
+      );
+    const latest = latestVersion == null || data.version === latestVersion;
+    return h(
+      P.Stack,
+      { gap: "md" },
+      meta,
+      !data.reviewed ? h(P.Notice, { tone: "warning" }, t("unreviewedNotice")) : null,
+      !latest ? h(P.Notice, { tone: "info" }, t("olderVersionNotice", { version: String(latestVersion) })) : null,
+      note ? h(P.Notice, { tone: note.tone }, note.text) : null,
+      h(P.Panel, { icon: "document", title: t("transcriptText") }, ...String(data.text || "").split(/\n{2,}/).map((para, i) => h(P.Text, { key: i, as: "p", dir: "auto" }, para))),
+      segments.length
+        ? h(
+            P.Panel,
+            { icon: "clock", title: t("segmentsTitle") },
+            h(
+              P.Stack,
+              { gap: "xs" },
+              ...segments.map((s, i) =>
+                h(P.Text, { key: i, as: "p", dir: "auto" }, `${base.isolate(`${formatDuration(s.start * 1000)}–${formatDuration(s.end * 1000)}`)} ${s.text}`),
+              ),
+            ),
+          )
+        : null,
+      data.can_review && latest
+        ? h(
+            P.Inline,
+            { wrap: true },
+            !data.reviewed ? h(P.Button, { variant: "primary", loading: busy, disabled: busy, onClick: () => setConfirm(true) }, t("markReviewed")) : null,
+            h(P.Button, { disabled: busy, onClick: () => setEditing(revisionId) }, t("correctText")),
+          )
+        : null,
+      h(P.ConfirmDialog, {
+        open: confirm,
+        title: t("reviewTitle", { version: String(data.version) }),
+        message: t("reviewMessage"),
+        confirmLabel: t("markReviewed"),
+        cancelLabel: t("cancel"),
+        onConfirm: review,
+        onCancel: () => setConfirm(false),
+      }),
+    );
+  }
+
+  function TranscriptsPanel({ api, lang, report, refreshKey }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [bump, setBump] = R.useState(0);
+    const [state, retry] = base.useLoad(() => api(`/api/reports/${encodeURIComponent(report.id)}/recordings/`), [report.id, refreshKey, bump]);
+    const [chosen, setChosen] = R.useState({}); // group key -> revision id
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const items = (state.data && state.data.items) || [];
+    if (!items.length) return h(P.EmptyState, { title: t("noRecordings") });
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      ...items.map((recording, i) => {
+        const groups = transcriptGroups(recording.transcripts);
+        const view = processingView(recording);
+        return h(
+          P.Stack,
+          { key: recording.id, gap: "md" },
+          h(P.Text, { as: "h3", variant: "heading" }, t("recordingItem", { n: String(i + 1) })),
+          groups.length
+            ? h(
+                P.Stack,
+                { gap: "md" },
+                ...groups.map((group) => {
+                  const key = `${recording.id}|${group.key}`;
+                  const selected = chosen[key] && group.versions.some((v) => v.id === chosen[key]) ? chosen[key] : group.versions[0].id;
+                  return h(
+                    P.Panel,
+                    { key, icon: "document", title: `${codeLabel(t, "lang", group.language)} · ${codeLabel(t, "kind", group.kind)}` },
+                    h(
+                      P.Stack,
+                      { gap: "md" },
+                      h(
+                        P.Field,
+                        { label: t("history") },
+                        h(P.Select, {
+                          value: selected,
+                          onChange: (e) => setChosen((c) => ({ ...c, [key]: e.target.value })),
+                          options: group.versions.map((v) => ({
+                            value: v.id,
+                            label: t("versionOption", { version: String(v.version), when: base.formatWhen(v.timestamp, lang), state: t(v.reviewed ? "stateReviewed" : "stateUnreviewed") }),
+                          })),
+                        }),
+                      ),
+                      h(TranscriptViewer, {
+                        key: selected,
+                        api,
+                        lang,
+                        revisionId: selected,
+                        latestVersion: group.versions[0].version,
+                        onChanged: (newId) => {
+                          if (newId) setChosen((c) => ({ ...c, [key]: newId }));
+                          setBump((b) => b + 1);
+                        },
+                      }),
+                    ),
+                  );
+                }),
+              )
+            : h(P.Notice, { tone: view.key === "statusSucceeded" ? "info" : view.tone }, view.key === "statusSucceeded" ? t("noTranscriptReleased") : t(view.key, { attempt: view.attempt || "1", error: (recording.processing && recording.processing.safe_error) || "", state: view.state || "" })),
+        );
+      }),
+    );
+  }
+
   // ---------- Completed reports reader ----------
 
   function ReportDetailTabs({ api, lang, user, report, record, onOriginal, onRevised }) {
@@ -1248,6 +1748,7 @@
     const [editing, setEditing] = R.useState(() => (restored ? restored.base : null)); // version the edit started from
     const [opening, setOpening] = R.useState(false);
     const [saved, setSaved] = R.useState(null);
+    const [submittedCount, setSubmittedCount] = R.useState(0); // reloads recording status after a submission
     const historyUrl = `/api/reports/${encodeURIComponent(report.id)}/revisions/`;
     function showHistory(items) {
       setHistory(items);
@@ -1343,15 +1844,21 @@
     );
     const interview = report.kind === "interview";
     const recording = interview
-      ? h(ReportRecorder, {
-          key: report.id,
-          api,
-          lang,
-          storageKey: `report:${report.id}`,
-          reportId: report.id,
-          caseId: record.id,
-          canSubmit: writer,
-        })
+      ? h(
+          P.Stack,
+          { gap: "lg" },
+          h(RecordingStatusList, { api, lang, report, refreshKey: submittedCount }),
+          h(ReportRecorder, {
+            key: report.id,
+            api,
+            lang,
+            storageKey: `report:${report.id}`,
+            reportId: report.id,
+            caseId: record.id,
+            canSubmit: writer,
+            onSubmitted: () => setSubmittedCount((n) => n + 1),
+          }),
+        )
       : h(P.EmptyState, { title: t("notInterview") });
     return h(P.Tabs, {
       label: report.title,
@@ -1360,7 +1867,7 @@
       items: [
         { value: "answers", label: t("answersTab"), content: answers },
         { value: "recording", label: t("recordingTab"), content: interview && !writer ? h(P.Stack, { gap: "md" }, h(P.Notice, { tone: "info" }, t("writerOnlyRecording")), recording) : recording },
-        { value: "transcripts", label: t("transcriptsTab"), content: h(P.Notice, { tone: "info" }, t("transcriptsPending")) },
+        { value: "transcripts", label: t("transcriptsTab"), content: interview ? h(TranscriptsPanel, { api, lang, report, refreshKey: submittedCount }) : h(P.EmptyState, { title: t("notInterview") }) },
       ],
     });
   }
@@ -1580,6 +2087,12 @@
     saveFailure,
     stableJson,
     isSameSave,
+    processingView,
+    transcriptGroups,
+    timedSegments,
+    RecordingStatusList,
+    TranscriptsPanel,
+    TranscriptViewer,
     answerEntries,
     extensionFor,
     sizeLimitBytes,
