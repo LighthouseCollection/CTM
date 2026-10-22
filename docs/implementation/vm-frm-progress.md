@@ -1,3 +1,7 @@
+Current validation: **813 PostgreSQL passed, 1 skipped**, migration rollback/reapply through0046;16 new physical-role browser-entry regressions and Chromium fragment-transport smoke passed. No model/route/migration/grant changes in this continuation.
+
+External browser entry: explicit HTML navigation redirects generically to council-owned static page, preserving fragment transport and all Bearer JSON/error contracts. No asset copy or migration; see external-browser-entry.md. Combined static/UI acceptance remains required.
+
 Current validation: **797 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply through0046. Nine new restricted-role withdrawal regressions;17focused withdrawal/appeal checks passed.
 
 Withdrawal500 correction:0046 uses an authorized global participation decision without revealing other Party rows, then bounded authorized closed-case cleanup of hidden claims/unfinished requests. See withdrawal-case-scope.md. Exact-successor applicant and QA reruns remain pending; UI metadata successor proposal now0047after0046.
