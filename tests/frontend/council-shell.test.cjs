@@ -70,8 +70,8 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(council, /adjournedSessionMessage/);
   assert.match(council, /kind: "attendance"/);
   assert.match(council, /dialog\?\.kind === "attendance"/);
-  assert.match(council, /kind: "agenda"/);
-  assert.match(council, /title: t\("openCase"\)/);
+  assert.match(council, /onClick: \(\) => onCase\(row\.case_id\)/);
+  assert.doesNotMatch(council, /dialog\?\.kind === "agenda"/);
   const agendaTable = council.slice(council.indexOf("const agendaTable"), council.indexOf("return h(", council.indexOf("const agendaTable")));
   assert.doesNotMatch(agendaTable, /P\.SplitView/);
   assert.match(agendaTable, /previousRecommendation/);

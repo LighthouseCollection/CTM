@@ -2116,7 +2116,7 @@
             { title: t("reason"), field: "reason" },
             { title: t("yearsMarried"), field: "married_years", render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
             { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => setDialog({ kind: "agenda", row }) }, t("open")) },
+            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
           ]
         : [
             { title: "#", field: "position", kind: "name" },
@@ -2124,7 +2124,7 @@
             { title: t("respondent"), field: "respondent_name", render: (row) => personPill(row.respondent_name, "respondent", row.respondent_gender) },
             { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
             { title: t("previousRecommendation"), field: "previous_recommendation", render: (row) => row.previous_recommendation || t("notRecorded") },
-            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => setDialog({ kind: "agenda", row }) }, t("open")) },
+            { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
           ];
       return h(P.Panel, { key: n, title: first ? t("casesToAssign") : t("scheduledCasesForHearing") },
         h(window.CTMShell.Table, { label: title, rows, columns, empty: t(`part${n}Empty`) }),
@@ -2239,21 +2239,6 @@
             }),
           )
         : null,
-      dialog?.kind === "agenda"
-        ? h(
-            P.Dialog,
-            { open: true, size: "lg", title: t("openCase"), onClose: () => setDialog(null) },
-            h(AgendaItemCard, {
-              row: dialog.row,
-              session,
-              caseRow: caseById[dialog.row.case_id],
-              user,
-              lang,
-              canAssign: recorder,
-              ...agendaCallbacks,
-            }),
-          )
-        : null,
       h(P.ConfirmDialog, {
         open: dialog?.kind === "adjourn",
         title: t("adjournSessionTitle"),
@@ -2294,7 +2279,7 @@
                   onChange: (event) => setChoice((old) => ({ ...old, [`part${dialog.part}`]: event.target.value })),
                   options: [
                     { value: "", label: (dialog.part === 1 ? c1 : c2).length ? t("chooseCase") : t("noCandidates") },
-                    ...(dialog.part === 1 ? c1 : c2).map((row) => ({ value: row.id, label: row.number })),
+                    ...(dialog.part === 1 ? c1 : c2).map((row) => ({ value: row.id, label: casePlacementLabel(row) })),
                   ],
                 }),
               ),
