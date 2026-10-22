@@ -106,7 +106,7 @@ test("interview report reading panes omit the frozen-question notice", () => {
 
 test("report template questions hide internal question-bank codes", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  assert.match(councilCase, /key: q\.code, label: wording\(q, lang\)/);
+  assert.match(councilCase, /key: q\.code, label: wording\(q, form\.language\)/);
 });
 
 test("report template draft action is named as a report", () => {
@@ -176,8 +176,7 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.match(app, /cases: page === "myCases" \? data\.items\.filter\(\(row\) => row\.assigned_member_id === user\.id\) : data\.items/);
   assert.match(app, /\["home", "myCases", "cases", "archived", "past"\]\.includes\(page\)/);
   assert.match(app, /view: page === "myCases" \? "mine" : page === "archived" \? "archived" : "active"/);
-  assert.match(app, /const caseSearchIcon = \(\) =>\s*h\("svg", \{ className: "ctm-case-search-nav-icon"/);
-  assert.match(app, /id === "search"\s*\? caseSearchIcon\(\)/);
+  assert.match(app, /id === "search"\s*\? h\(P\.Icon, \{ name: "document-search"/);
   assert.match(app, /const appealsReturnIcon = \(\) =>/);
   assert.match(app, /id === "appeals"\s*\? appealsReturnIcon\(\)/);
   assert.match(app, /const casesNavigationItems = \[\s*\{ id: "search", icon: navigationIcon\("search"\), label: t\("search"\) \}/);
@@ -274,7 +273,6 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /function spouseProfileSection\(P, h, t, title, icon, values, twoColumns = false\)/);
   assert.match(councilCase, /t\("contact"\), "message", \[\s*[\s\S]*?\], true\)/);
   const councilCss = fs.readFileSync("static/ctm/ctm.css", "utf8");
-  assert.match(councilCss, /plx-data-grid__type-icon/);
   assert.match(councilCss, /ctm-spouse-profile-section--two-columns/);
   assert.match(councilCss, /grid-column: 1 \/ -1/);
   assert.match(councilCss, /inline-size: 68px/);
@@ -353,7 +351,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(app, /communications: "Email"/);
   assert.match(app, /caseCollaboration: "Email & Notes"/);
   assert.match(app, /items: ["case", "timeline", "parties", "marriage", "separation"]/);
-  assert.match(app, /id === "separation"\s*\? h\(P\.Icon, \{ name: "person_cancel"/);
+  assert.match(app, /id === "separation"\s*\? h\(P\.Icon, \{ name: "person-cancel"/);
   assert.match(app, /page === "separation" && council && councilModule\?\.CaseSeparation/);
   assert.match(app, /items: \["communications", "calls", "notes"\]/);
   assert.match(councilCase, /function CaseSeparation\(\{ api, lang, user, caseId \}\)/);

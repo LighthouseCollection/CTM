@@ -30,19 +30,15 @@
     h("svg", { className: "ctm-decree-nav-icon", width: "1em", height: "1em", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
       h("path", { d: "M6 3h9l3 3v15H6zM15 3v4h4M9 11h6M9 15h3M15 16.5a2.5 2.5 0 1 0-2 0v2l2-1 2 1v-2a2.5 2.5 0 0 0-2 0z" }),
     );
-  const caseSearchIcon = () =>
-    h("svg", { className: "ctm-case-search-nav-icon", width: "1em", height: "1em", viewBox: "0 0 24 24", fill: "currentColor", "aria-hidden": true },
-      h("path", { d: "M6 19q-.825 0-1.412-.588T4 17V5q0-.825.588-1.412T6 3h7l5 5v2.35q-.475-.175-.975-.262T16 10V9h-4V5H6v12h4.35q.15.575.425 1.075t.7.925H6Zm10.5 1q-1.45 0-2.475-1.025T13 16.5q0-1.45 1.025-2.475T16.5 13q1.45 0 2.475 1.025T20 16.5q0 .625-.225 1.188T19.15 18.7L22 21.55 20.55 23l-2.85-2.85q-.45.275-.963.413T15.675 20H16.5Zm0-2q.625 0 1.063-.438T18 16.5q0-.625-.438-1.063T16.5 15q-.625 0-1.063.438T15 16.5q0 .625.438 1.063T16.5 18Z" }),
-    );
   const appealsReturnIcon = () =>
     h("svg", { className: "ctm-appeals-nav-icon", width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
       h("path", { d: "m9 7-5 5 5 5M5 12h8a6 6 0 0 1 6 6v1" }),
     );
   const navigationIcon = (id) =>
     id === "search"
-      ? caseSearchIcon()
+      ? h(P.Icon, { name: "document-search", "aria-hidden": true })
       : id === "separation"
-      ? h(P.Icon, { name: "person_cancel", "aria-hidden": true })
+      ? h(P.Icon, { name: "person-cancel", "aria-hidden": true })
       : id === "decision"
         ? decisionBalanceIcon()
         : id === "decree"
