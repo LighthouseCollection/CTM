@@ -353,7 +353,7 @@
       { gap: "lg" },
       h(
         P.Panel,
-        { title: t("issuedTitle") },
+        { icon: "doc-text", title: t("issuedTitle") },
         h(
           P.PropertyList,
           null,
@@ -374,7 +374,7 @@
       failure && !dialog ? h(P.Notice, { tone: "danger" }, failure) : null,
       h(
         P.Panel,
-        { title: t("recipients") },
+        { icon: "doc-text", title: t("recipients") },
         recipients.length
           ? h(
               P.Stack,
@@ -626,7 +626,7 @@
       }),
       notice ? h(P.Notice, { tone: notice === "stillWaiting" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !confirm ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
-      h(P.Panel, { title: t(["stepUpload", "stepScan", "stepSignature", "issueSummary"][step]) }, body),
+      h(P.Panel, { icon: "doc-text", title: t(["stepUpload", "stepScan", "stepSignature", "issueSummary"][step]) }, body),
       h(
         P.ConfirmDialog,
         {
@@ -697,7 +697,7 @@
           setNotice("issued");
         },
       });
-    return h(
+    const detail = h(
       P.Stack,
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("decree")),
@@ -705,7 +705,7 @@
       current && !eligibility
         ? h(
             P.Panel,
-            { title: t("approvedDecision") },
+            { icon: "doc-text", title: t("approvedDecision") },
             h(
               P.PropertyList,
               null,
@@ -718,6 +718,12 @@
       !manage && decree ? h(P.Notice, { tone: "info" }, t("adminOnly")) : null,
       content,
     );
+    return h(window.CTMShell.Workspace, {
+      label: t("decree"), rows: decree ? [{ ...decree, title: decree.reference || t("decree") }] : current ? [{ id: current.id, title: t("approvedDecision") }] : [],
+      showDetailWhenEmpty: true, empty: t("decree"),
+      columns: [{ title: t("decree"), field: "title", kind: "name" }],
+    }, detail);
+
   }
 
   // ---------- Appeals ----------
@@ -812,7 +818,7 @@
       ),
       h(
         P.Panel,
-        { title: t(isLaterFiling(row) ? "laterFilingStatement" : "appealStatement") },
+        { icon: "doc-text", title: t(isLaterFiling(row) ? "laterFilingStatement" : "appealStatement") },
         answers.length
           ? h(
               P.PropertyList,
@@ -826,7 +832,7 @@
       Array.isArray(row.supplements)
         ? h(
             P.Panel,
-            { title: t("supplementsTitle"), description: t("supplementsHelp") },
+            { icon: "doc-text", title: t("supplementsTitle"), description: t("supplementsHelp") },
             row.supplements.length
               ? h(
                   P.Stack,
@@ -848,7 +854,7 @@
       row.disposition
         ? h(
             P.Panel,
-            { title: t("appealOutcome") },
+            { icon: "doc-text", title: t("appealOutcome") },
             h(
               P.PropertyList,
               null,
@@ -862,7 +868,7 @@
         ? writer
           ? h(
               P.Panel,
-              { title: t("recordAppealResult"), description: t("appealResultHelp") },
+              { icon: "doc-text", title: t("recordAppealResult"), description: t("appealResultHelp") },
               !known
                 ? h(P.Notice, { tone: "info" }, t("hearingsUnavailable"))
                 : !eligible.length
@@ -953,31 +959,18 @@
     const chosen = appeals.find((row) => row.id === selected);
     return h(
       P.Stack,
-      { gap: "lg" },
+      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("appeals")),
       h(P.Text, { variant: "secondary" }, t("appealsScope")),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       h(P.SplitView, {
         label: t("appeals"),
         firstLabel: t("appeals"),
-        first: appeals.length
-          ? h(
-              P.Stack,
-              { gap: "sm" },
-              ...appeals.map((row) =>
-                h(P.Card, {
-                  key: row.id,
-                  title: `${row.applicant_name ? base.isolate(row.applicant_name) : t("appeal")} · ${t(isLaterFiling(row) ? "laterFiling" : "appeal")}`,
-                  meta: [t("appeal_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "),
-                  selected: row.id === selected,
-                  onOpen: () => {
-                    setNotice(null);
-                    select(row.id);
-                  },
-                }),
-              ),
-            )
-          : h(P.EmptyState, { title: t("noAppeals") }),
+        first: h(window.CTMShell.Table, {
+          label: t("appeals"), rows: appeals, selected,
+          onSelect: (id) => { setNotice(null); select(id); }, empty: t("noAppeals"),
+          columns: [{ title: t("appeal"), field: "applicant_name", kind: "name" }, { title: t("appeals"), field: "status", render: (row) => t("appeal_" + row.status) }],
+        }),
         second: h(
           P.ReadingPane,
           { label: chosen ? chosen.applicant_name || t("appeal") : t("chooseAppeal"), empty: h(P.EmptyState, { title: t("chooseAppeal") }) },

@@ -449,6 +449,12 @@
       startInterviewMessage: "The question list is frozen. The applicant is not notified.",
       interviewStarted: "The interview was started. Record the answers when ready.",
       recordInterview: "Record interview answers",
+      interviewRestored: "Your unsaved interview answers were restored. Save them or discard them.",
+      interviewUnsaved: "Interview answers have not been saved.",
+      interviewDiscardTitle: "Discard unsaved interview answers?",
+      interviewDiscardMessage: "The answers and observations you typed will be removed. Nothing has been saved.",
+      interviewDiscard: "Discard answers",
+      interviewKeepEditing: "Keep editing",
       interviewRecordHelp: "Enter what the applicant said for each question. Leave a question empty if it was not asked.",
       internalObservations: "Internal observations (council only)",
       internalObservationsHelp: "Kept separate from the applicant's answers and never shown to applicants.",
@@ -685,6 +691,12 @@
       startInterviewMessage: "يتم تثبيت قائمة الأسئلة. ولا يتم إخطار مقدم الطلب.",
       interviewStarted: "بدأت المقابلة. سجّل الإجابات عندما تكون جاهزًا.",
       recordInterview: "تسجيل إجابات المقابلة",
+      interviewRestored: "تمت استعادة إجابات المقابلة غير المحفوظة. احفظها أو تجاهلها.",
+      interviewUnsaved: "لم تُحفظ إجابات المقابلة.",
+      interviewDiscardTitle: "هل تريد تجاهل إجابات المقابلة غير المحفوظة؟",
+      interviewDiscardMessage: "ستُحذف الإجابات والملاحظات التي كتبتها. لم يُحفظ أي شيء.",
+      interviewDiscard: "تجاهل الإجابات",
+      interviewKeepEditing: "متابعة التعديل",
       interviewRecordHelp: "أدخل ما قاله مقدم الطلب عن كل سؤال. اترك السؤال فارغًا إذا لم يُطرح.",
       internalObservations: "ملاحظات داخلية (للمجلس فقط)",
       internalObservationsHelp: "تُحفظ منفصلة عن إجابات مقدم الطلب ولا تُعرض على مقدمي الطلبات أبدًا.",
@@ -769,7 +781,7 @@
     const supportsQuestions = (templates || []).every((tpl) => Array.isArray(tpl.questions));
     return h(
       P.Panel,
-      { title: t("templates"), description: t("templatesHelp"), collapsible: true, defaultExpanded: false },
+      { icon: "doc-text", title: t("templates"), description: t("templatesHelp"), collapsible: true, defaultExpanded: false },
       h(
         P.Stack,
         { gap: "md" },
@@ -1022,16 +1034,40 @@
     );
   }
 
+  const interviewDraftKey = (request) => `interview:${request.id}`;
+
   function InterviewForm({ api, lang, request, onRecorded, onCancel }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [answers, setAnswers] = R.useState({});
-    const [observations, setObservations] = R.useState("");
+    const draftKey = interviewDraftKey(request);
+    const [stored] = R.useState(() => base.unsavedDrafts.get(draftKey) || null);
+    const [answers, setAnswers] = R.useState(() => (stored ? stored.answers : {}));
+    const [observations, setObservations] = R.useState(() => (stored ? stored.observations : ""));
     const [problem, setProblem] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
+    const [confirmDiscard, setConfirmDiscard] = R.useState(false);
+    const dirty = Object.values(answers).some((v) => String(v || "").trim()) || Boolean(observations.trim());
+    // Keep typed answers across in-app navigation; warn before the page itself unloads.
+    R.useEffect(() => {
+      if (dirty) base.unsavedDrafts.set(draftKey, { answers, observations });
+      else base.unsavedDrafts.delete(draftKey);
+      if (!dirty) return undefined;
+      const guard = (event) => {
+        event.preventDefault();
+        event.returnValue = t("interviewUnsaved");
+        return event.returnValue;
+      };
+      window.addEventListener("beforeunload", guard);
+      return () => window.removeEventListener("beforeunload", guard);
+    }, [answers, observations]);
+    function discard() {
+      base.unsavedDrafts.delete(draftKey);
+      setConfirmDiscard(false);
+      onCancel();
+    }
     async function save(event) {
       event.preventDefault();
       const issue = interviewProblem(answers, request.questions);
@@ -1044,6 +1080,7 @@
           method: "POST",
           body: JSON.stringify(interviewPayload(answers, observations, request.questions)),
         });
+        base.unsavedDrafts.delete(draftKey);
         // Audio captured during the interview moves to the saved report, where it is submitted.
         if (report && report.id && base.recordingStore) {
           try {
@@ -1062,6 +1099,7 @@
     return h(
       P.Form,
       { onSubmit: save, label: t("recordInterview"), noValidate: true },
+      stored ? h(P.Notice, { tone: "info" }, t("interviewRestored")) : null,
       base.ReportRecorder
         ? h(base.ReportRecorder, { api, lang, storageKey: `request:${request.id}`, reportId: null, caseId: null, canSubmit: false, captureOnly: true })
         : null,
@@ -1096,9 +1134,19 @@
       h(
         P.FormActions,
         { sticky: false },
-        h(P.Button, { disabled: pending, onClick: onCancel }, t("cancel")),
+        h(P.Button, { disabled: pending, onClick: () => (dirty ? setConfirmDiscard(true) : discard()) }, t("cancel")),
         h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveInterview")),
       ),
+      h(P.ConfirmDialog, {
+        open: confirmDiscard,
+        title: t("interviewDiscardTitle"),
+        message: t("interviewDiscardMessage"),
+        confirmLabel: t("interviewDiscard"),
+        cancelLabel: t("interviewKeepEditing"),
+        destructive: true,
+        onConfirm: discard,
+        onCancel: () => setConfirmDiscard(false),
+      }),
     );
   }
 
@@ -1110,7 +1158,8 @@
     const [confirm, setConfirm] = R.useState(false);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
-    const [recording, setRecording] = R.useState(false);
+    // Reopen the answer form when typed answers were left by in-app navigation.
+    const [recording, setRecording] = R.useState(() => base.unsavedDrafts.has(interviewDraftKey(request)));
     const interview = request.kind === "interview";
     async function send() {
       setPending(true);
@@ -1144,13 +1193,13 @@
       h(P.Notice, { tone: "info" }, t(request.state === "draft" ? "frozenNotice" : "answerReadOnly")),
       h(
         P.Panel,
-        { title: t("questions") },
+        { icon: "doc-text", title: t("questions") },
         h(P.List, {
           ordered: "decimal",
           items: (request.questions || []).map((q) => ({ children: `${q.code} — ${wording(q, lang)}` })),
         }),
       ),
-      request.instructions ? h(P.Panel, { title: t("instructions") }, h(P.Text, { as: "p" }, request.instructions)) : null,
+      request.instructions ? h(P.Panel, { icon: "doc-text", title: t("instructions") }, h(P.Text, { as: "p" }, request.instructions)) : null,
       failure && !confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
       request.state === "draft" && canWrite && (request.kind === "intake" || interview)
         ? h(P.Inline, null, h(P.Button, { variant: "primary", onClick: () => setConfirm(true) }, t(interview ? "startInterview" : "send")))
@@ -1296,23 +1345,18 @@
       h = R.createElement,
       t = translator(lang);
     const [tab, setTab] = R.useState("reports");
-    return h(P.Tabs, {
-      label: t("reports"),
-      value: tab,
-      onChange: setTab,
-      items: [
-        {
-          value: "reports",
-          label: t("completedReports"),
-          content: base.ReportsReader ? h(base.ReportsReader, { api, lang, user, caseId, reports }) : renderReports(),
-        },
-        {
-          value: "requests",
-          label: t("requests"),
-          content: h(RequestsPanel, { api, lang, user, caseId, reports }),
-        },
-      ],
-    });
+    return h(R.Fragment, null,
+      h(P.Tabs, {
+        label: t("reports"), value: tab, onChange: setTab,
+        items: [
+          { value: "reports", label: t("completedReports") },
+          { value: "requests", label: t("requests") },
+        ],
+      }),
+      tab === "reports"
+        ? base.ReportsReader ? h(base.ReportsReader, { api, lang, user, caseId, reports }) : renderReports()
+        : h(RequestsPanel, { api, lang, user, caseId, reports }),
+    );
   }
 
   // ---------- Decision & Voting ----------
@@ -1497,7 +1541,7 @@
       { gap: "lg" },
       h(
         P.Panel,
-        { title: t("votedOn"), description: decision.number ? `${t("version")} ${decision.number}` : undefined },
+        { icon: "doc-text", title: t("votedOn"), description: decision.number ? `${t("version")} ${decision.number}` : undefined },
         h(
           P.PropertyList,
           { layout: "stacked" },
@@ -1521,7 +1565,7 @@
       failure && !confirm ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
       h(
         P.Panel,
-        { title: t("votes"), description: t("rosterNotice") },
+        { icon: "doc-text", title: t("votes"), description: t("rosterNotice") },
         h(
           P.Stack,
           { gap: "md" },
@@ -1573,7 +1617,7 @@
       ),
       h(
         P.Panel,
-        { title: t("approval") },
+        { icon: "doc-text", title: t("approval") },
         decision.approval
           ? h(
               P.Stack,
@@ -1673,7 +1717,7 @@
     const current = local || (latestSaved ? { votes: [], approval: null, ...latestSaved } : null);
     const earlier = readAvailable ? [...versions].sort((a, b) => b.number - a.number).slice(1) : [];
     const canWrite = writerFor(user, caseRow, record) && Boolean(proceeding);
-    return h(
+    const detail = h(
       P.Stack,
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("decisionVoting")),
@@ -1697,7 +1741,7 @@
       earlier.length
         ? h(
             P.Panel,
-            { title: t("earlierVersions"), collapsible: true, defaultExpanded: false },
+            { icon: "doc-text", title: t("earlierVersions"), collapsible: true, defaultExpanded: false },
             h(P.List, {
               variant: "bullets",
               items: earlier.map((v) => ({
@@ -1725,6 +1769,12 @@
           : h(P.Notice, { tone: "info" }, t("writerDecision"))
         : null,
     );
+    return h(window.CTMShell.Workspace, {
+      label: t("decisionVoting"), rows: current ? [{ ...current, title: t("decisionVoting") }] : proceeding ? [{ id: proceeding.id, title: t("recordDecision") }] : [],
+      showDetailWhenEmpty: true, empty: t("noDecision"),
+      columns: [{ title: t("decisionVoting"), field: "title", kind: "name" }, { title: t("version"), field: "number" }],
+    }, detail);
+
   }
 
   // ---------- Case audit and manual call records ----------
@@ -1814,6 +1864,7 @@
       petitions_withdrawn: "سُحبت الطلبات وأُغلقت القضية",
       assignment_agenda_completed: "اكتمل تعيين القضية الجديدة في الجلسة",
     },
+
   };
 
   // Known codes get a readable label; unknown codes are shown exactly as stored.
@@ -1867,28 +1918,19 @@
     const rows = filterAudit(auditRows(state.data.items, state.data.members, lang), query);
     return h(
       P.Stack,
-      { gap: "lg" },
+      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("caseAudit")),
       h(P.Field, { label: t("searchAudit") }, h(P.Input, { type: "search", value: query, onChange: (e) => setQuery(e.target.value) })),
       h(P.Text, { variant: "secondary" }, t("auditCount", { n: rows.length })),
-      rows.length
-        ? h(
-            P.Stack,
-            { gap: "xs" },
-            ...rows.map((row) =>
-              h(
-                P.Inline,
-                { key: row.id, justify: "between", wrap: true },
-                h(P.Text, { variant: "strong" }, row.label),
-                h(
-                  P.Text,
-                  { variant: "secondary" },
-                  `${row.actor === "system" ? t("systemActor") : row.actor || t("otherAccount")} · ${base.formatWhen(row.timestamp, lang)}`,
-                ),
-              ),
-            ),
-          )
-        : h(P.EmptyState, { title: t("noAudit") }),
+      h(window.CTMShell.Workspace, {
+        label: t("caseAudit"), rows, empty: t("noAudit"),
+        columns: [{ title: t("caseAudit"), field: "label", kind: "name" }, { title: t("recordedBy"), field: "actor" }],
+      }, (row) => h(P.Stack, null,
+        h(P.Text, { as: "h2", variant: "title" }, row.label),
+        h(P.Text, null, row.actor === "system" ? t("systemActor") : row.actor || t("otherAccount")),
+        h(P.Text, null, base.formatWhen(row.timestamp, lang)),
+        h(P.Text, { variant: "data" }, row.action),
+      )),
     );
   }
 
@@ -1948,7 +1990,7 @@
     const err = (key) => (problem === key ? t(key) : undefined);
     return h(
       P.Panel,
-      { title: t("callLog"), description: t("callLogHelp") },
+      { icon: "doc-text", title: t("callLog"), description: t("callLogHelp") },
       h(
         P.Stack,
         { gap: "md" },
@@ -2047,6 +2089,7 @@
         })),
       [caseId],
     );
+    const [selected, select] = R.useState(null);
     const [composing, setComposing] = R.useState(false);
     const [form, setForm] = R.useState({ party: "", kind: "medical", title: "", instructions: "" });
     const [problem, setProblem] = R.useState(null);
@@ -2108,7 +2151,7 @@
       }
     }
     const err = (key) => (problem === key ? t(key) : undefined);
-    return h(
+    const detail = h(
       P.Stack,
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("assessments")),
@@ -2118,7 +2161,7 @@
       failure && !confirm ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
       h(
         P.Panel,
-        {
+        { icon: "lock",
           title: t("assessmentRequests"),
           actions: canWrite && !composing ? h(P.Button, { size: "sm", variant: "primary", onClick: () => setComposing(true) }, t("newAssessment")) : null,
         },
@@ -2164,7 +2207,7 @@
                 ),
               )
             : null,
-          ...requests.map((row) =>
+          ...requests.filter((row) => row.id === selected).map((row) =>
             h(
               P.Card,
               {
@@ -2185,12 +2228,12 @@
       ),
       h(
         P.Panel,
-        { title: t("assessmentReports") },
+        { icon: "doc-text", title: t("assessmentReports") },
         reports.length
           ? h(
               P.Stack,
               { gap: "sm" },
-              ...reports.map((row) =>
+              ...reports.filter((row) => row.id === selected).map((row) =>
                 row.restricted
                   ? h(P.Card, { key: row.id, title: t("restrictedAssessment"), meta: t("restrictedAssessmentHelp") })
                   : h(
@@ -2218,6 +2261,13 @@
         failure && confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
       ),
     );
+    return h(window.CTMShell.Workspace, {
+      label: t("assessments"), selected, onSelect: select, showDetailWhenEmpty: true,
+      rows: [...requests, ...reports].map((row) => ({ ...row, title: row.restricted ? t("restrictedAssessment") : row.title })),
+      empty: t("noAssessmentReports"),
+      columns: [{ title: t("assessments"), field: "title", kind: "name" }, { title: t("assessmentKind"), field: "kind", render: (row) => row.kind ? t(row.kind) : "" }],
+    }, detail);
+
   }
 
   // ---------- Parties and case hearings ----------
@@ -2282,7 +2332,7 @@
       ...record.parties.map((party) =>
         h(
           P.Panel,
-          { key: party.id, title: party.name },
+          { icon: "doc-text", key: party.id, title: party.name },
           h(
             P.PropertyList,
             null,
@@ -2347,32 +2397,19 @@
     const bt = base.translator(lang);
     return h(
       P.Stack,
-      { gap: "lg" },
+      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("hearingsTitle")),
       h(P.Text, { variant: "secondary" }, t("hearingsScope")),
-      state.data.length
-        ? h(
-            P.Stack,
-            { gap: "sm" },
-            ...state.data.map(({ session, item }) =>
-              h(
-                P.Card,
-                {
-                  key: item.id,
-                  title:
-                    item.part === 2 && Array.isArray(item.party_names) && item.party_names.length
-                      ? base.hearingTitle(item.party_names, session.date, bt)
-                      : base.sessionLabel(session.date, bt),
-                  meta: `${bt(item.part === 1 ? "part1" : "part2")} · ${bt(item.state === "assigned" ? "assigned_state" : item.state)}`,
-                  onOpen: () => onSession(session.id),
-                },
-                (item.testimony || []).length
-                  ? h(P.Text, { variant: "secondary" }, `${bt("testimony")}: ${item.testimony.length}`)
-                  : null,
-              ),
-            ),
-          )
-        : h(P.EmptyState, { title: t("noHearings") }),
+      h(window.CTMShell.Workspace, {
+        label: t("hearingsTitle"), rows: state.data.map(({ session, item }) => ({ id: item.id, session, item, date: session.date })),
+        empty: t("noHearings"),
+        columns: [{ title: t("hearingsTitle"), field: "date", kind: "name" }],
+      }, ({ session, item }) => h(P.Stack, null,
+        h(P.Text, { as: "h2", variant: "title" },
+          item.part === 2 && item.party_names?.length ? base.hearingTitle(item.party_names, session.date, bt) : base.sessionLabel(session.date, bt)),
+        h(P.Text, null, `${bt(item.part === 1 ? "part1" : "part2")} · ${bt(item.state === "assigned" ? "assigned_state" : item.state)}`),
+        h(P.Button, { onClick: () => onSession(session.id) }, base.sessionLabel(session.date, bt)),
+      )),
     );
   }
 
@@ -2469,7 +2506,7 @@
         const labelled = answers.every(([code]) => base.fieldLabel(row, code, lang));
         return h(
           P.Panel,
-          {
+          { icon: "doc-text",
             key: row.id,
             title: row.applicant_name || t("petition"),
             description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "),
@@ -2495,7 +2532,7 @@
       findings
         ? h(
             P.Panel,
-            { title: t("findingsTitle"), description: t("findingsHelp") },
+            { icon: "doc-text", title: t("findingsTitle"), description: t("findingsHelp") },
             findings.length
               ? h(
                   P.PropertyList,
@@ -2513,7 +2550,7 @@
         : null,
       h(
         P.Panel,
-        { title: t("internalNotes"), description: t("internalNotesHelp") },
+        { icon: "doc-text", title: t("internalNotes"), description: t("internalNotesHelp") },
         h(
           P.Stack,
           { gap: "md" },
@@ -2619,7 +2656,7 @@
       history
         ? h(
             P.Panel,
-            { title: t("managerHistory") },
+            { icon: "doc-text", title: t("managerHistory") },
             history.length
               ? h(P.List, {
                   variant: "bullets",
@@ -2695,7 +2732,7 @@
       ),
       h(
         P.Panel,
-        { title: t("whereThingsStand") },
+        { icon: "info", title: t("whereThingsStand") },
         h(
           P.PropertyList,
           null,
@@ -2725,6 +2762,8 @@
   Object.assign(window.CTMCouncil, {
     caseWords: words,
     caseTranslator: translator,
+    InterviewForm, // exported for the unsaved-text regression test
+    RequestDetail,
     DECISION_TYPES,
     typeLabel,
     needsEntitlements,

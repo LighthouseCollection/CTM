@@ -259,6 +259,10 @@
       revisionKept: "Your text is kept; try again.",
       nonTextKept: "Attached files and other non-text answers are kept unchanged.",
       unsavedRevision: "A report revision has not been saved.",
+      revisionRestored: "Your unsaved revision was restored. Save it as a new version or discard it.",
+      discardRevisionTitle: "Discard unsaved changes?",
+      discardRevisionMessage: "The text you typed in this revision will be removed. Nothing has been saved.",
+      keepEditing: "Keep editing",
       reportAuthor: "Author",
       reportSubmitted: "Submitted",
       reportMethod: "Method",
@@ -383,6 +387,10 @@
       revisionKept: "نصك محفوظ؛ حاول مجددًا.",
       nonTextKept: "تبقى الملفات المرفقة والإجابات غير النصية دون تغيير.",
       unsavedRevision: "يوجد تعديل على التقرير لم يُحفظ.",
+      revisionRestored: "تمت استعادة تعديلك غير المحفوظ. احفظه كإصدار جديد أو تجاهله.",
+      discardRevisionTitle: "هل تريد تجاهل التغييرات غير المحفوظة؟",
+      discardRevisionMessage: "سيُحذف النص الذي كتبته في هذا التعديل. لم يُحفظ أي شيء.",
+      keepEditing: "متابعة التعديل",
       reportAuthor: "الكاتب",
       reportSubmitted: "تاريخ التقديم",
       reportMethod: "الطريقة",
@@ -766,7 +774,7 @@
     const problemText = problem ? (words.en[problem] ? t(problem) : problem) : null;
     return h(
       P.Panel,
-      { title: t("recordingTitle"), description: t("recordingHelp") },
+      { icon: "doc-text", title: t("recordingTitle"), description: t("recordingHelp") },
       h(
         P.Stack,
         { gap: "md" },
@@ -856,6 +864,8 @@
     return Object.entries(answers || {}).sort((a, b) => rank(a[0]) - rank(b[0]));
   }
 
+  const revisionDraftKey = (report) => `revision:${report.id}`;
+
   function revisionDraft(report, latest) {
     const answers = (latest && latest.answers) || {};
     return {
@@ -871,7 +881,7 @@
       if (answers[code] === undefined && !value) continue;
       answers[code] = value;
     }
-    return { answers, observations: draft.observations || "" };
+    return { expected_version: latest?.version, answers, observations: draft.observations || "" };
   }
 
   function revisionChanged(latest, draft) {
@@ -882,19 +892,36 @@
     return before.observations !== after.observations;
   }
 
-  function ReportRevisionEditor({ api, lang, report, latest, onCancel, onSaved, onHistory, onDenied }) {
+  function ReportRevisionEditor({ api, lang, report, latest, restored, onCancel, onSaved, onHistory, onDenied }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [draft, setDraft] = R.useState(() => revisionDraft(report, latest));
-    const [base0, setBase0] = R.useState(latest);
+    const draftKey = revisionDraftKey(report);
+    const [stored] = R.useState(() => base.unsavedDrafts.get(draftKey) || null);
+    const [draft, setDraft] = R.useState(() => (stored ? stored.draft : revisionDraft(report, latest)));
+    const [base0, setBase0] = R.useState(() => (stored ? stored.base : latest));
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [denied, setDenied] = R.useState(false);
     const [stale, setStale] = R.useState(null);
     const [problem, setProblem] = R.useState(null);
+    const [confirmDiscard, setConfirmDiscard] = R.useState(false);
     const dirty = revisionChanged(base0, draft);
+    // Keep unsaved text across in-app navigation (the editor unmounts when another page opens).
+    R.useEffect(() => {
+      if (dirty) base.unsavedDrafts.set(draftKey, { base: base0, draft });
+      else base.unsavedDrafts.delete(draftKey);
+    }, [draft, base0]);
+    function discard() {
+      base.unsavedDrafts.delete(draftKey);
+      setConfirmDiscard(false);
+      onCancel();
+    }
+    function cancel() {
+      if (dirty) setConfirmDiscard(true);
+      else discard();
+    }
     R.useEffect(() => {
       if (!dirty) return undefined;
       const guard = (event) => {
@@ -913,7 +940,7 @@
       if (!force && !revisionChanged(base0, draft)) return setProblem("revisionNoChange");
       setPending(true);
       try {
-        // The write route has no version check, so confirm nobody saved a newer version first.
+        // Preflight offers a helpful stale warning; the bound version also guards the write race.
         const current = await api(url);
         const newest = (current.items || [])[0] || null;
         onHistory(current.items || []);
@@ -922,6 +949,7 @@
           return;
         }
         await api(url, { method: "POST", body: JSON.stringify(revisionPayload(newest || base0, draft)) });
+        base.unsavedDrafts.delete(draftKey);
         const after = await api(url).catch(() => null);
         if (after) onHistory(after.items || []);
         onSaved(after?.items?.[0]?.version ?? null);
@@ -945,6 +973,7 @@
     return h(
       P.Form,
       { onSubmit: (e) => save(e, false), label: t("reviseTitle"), noValidate: true },
+      restored && stored ? h(P.Notice, { tone: "info" }, t("revisionRestored")) : null,
       h(
         P.FormSection,
         { title: t("reviseTitle"), description: t("reviseHelp") },
@@ -999,7 +1028,7 @@
                 P.Inline,
                 null,
                 h(P.Button, { size: "sm", disabled: pending, onClick: adoptLatest }, t("saveAnyway")),
-                h(P.Button, { size: "sm", disabled: pending, onClick: onCancel }, t("discardChanges")),
+                h(P.Button, { size: "sm", disabled: pending, onClick: () => setConfirmDiscard(true) }, t("discardChanges")),
               ),
             ),
           )
@@ -1009,9 +1038,19 @@
       h(
         P.FormActions,
         { sticky: false },
-        h(P.Button, { disabled: pending, onClick: onCancel }, t("cancel")),
+        h(P.Button, { disabled: pending, onClick: cancel }, t("cancel")),
         denied || stale ? null : h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveRevision")),
       ),
+      h(P.ConfirmDialog, {
+        open: confirmDiscard,
+        title: t("discardRevisionTitle"),
+        message: t("discardRevisionMessage"),
+        confirmLabel: t("discardChanges"),
+        cancelLabel: t("keepEditing"),
+        destructive: true,
+        onConfirm: discard,
+        onCancel: () => setConfirmDiscard(false),
+      }),
     );
   }
 
@@ -1026,7 +1065,9 @@
     const [history, setHistory] = R.useState(null);
     const [version, setVersion] = R.useState(null);
     const [failure, setFailure] = R.useState(null);
-    const [editing, setEditing] = R.useState(null); // latest revision the edit started from
+    // Unsaved text left by in-app navigation reopens the editor where the author stopped.
+    const [restored] = R.useState(() => base.unsavedDrafts.get(revisionDraftKey(report)) || null);
+    const [editing, setEditing] = R.useState(() => (restored ? restored.base : null)); // version the edit started from
     const [opening, setOpening] = R.useState(false);
     const [saved, setSaved] = R.useState(null);
     const historyUrl = `/api/reports/${encodeURIComponent(report.id)}/revisions/`;
@@ -1071,6 +1112,7 @@
           lang,
           report,
           latest: editing,
+          restored: Boolean(restored),
           onCancel: () => setEditing(null),
           onHistory: showHistory,
           onDenied: onRevised,
@@ -1115,9 +1157,9 @@
       ...answerEntries(report, shown.answers).map(([code, answer]) => {
         const question = (report.questions || []).find((q) => q.code === code);
         const label = question ? `${code} — ${base.isolate((lang === "ar" && question.ar) || question.en || code)}` : code === "files" ? t("response") : code;
-        return h(P.Panel, { key: code, title: label }, h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
+        return h(P.Panel, { icon: "document", key: code, title: label }, h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
       }),
-      shown.observations ? h(P.Panel, { title: t("observations") }, h(P.Text, { as: "p", dir: "auto" }, shown.observations)) : null,
+      shown.observations ? h(P.Panel, { icon: "document", title: t("observations") }, h(P.Text, { as: "p", dir: "auto" }, shown.observations)) : null,
       access === "unknown" ? h(P.Text, { variant: "secondary" }, t("revisionPending")) : null,
       access === "denied" ? h(P.Text, { variant: "secondary" }, t("revisionNotAllowed")) : null,
     );
@@ -1165,21 +1207,10 @@
     return h(P.SplitView, {
       label: t("reportsList"),
       firstLabel: t("reportsList"),
-      first: rows.length
-        ? h(
-            P.Stack,
-            { gap: "sm" },
-            ...rows.map((row) =>
-              h(P.Card, {
-                key: row.id,
-                title: row.title,
-                meta: [row.date, row.parent_report_id ? t("followUpOf") : null].filter(Boolean).join(" · "),
-                selected: row.id === selected,
-                onOpen: () => select(row.id),
-              }),
-            ),
-          )
-        : h(P.EmptyState, { title: t("noReports") }),
+      first: h(window.CTMShell.Table, {
+        label: t("reportsList"), rows, selected, onSelect: select, empty: t("noReports"),
+        columns: [{ title: t("reportsList"), field: "title", kind: "name" }, { title: t("version"), field: "version", type: "number" }],
+      }),
       second: h(
         P.ReadingPane,
         { label: chosen ? chosen.title : t("chooseReport"), empty: h(P.EmptyState, { title: t("chooseReport") }) },
@@ -1310,24 +1341,20 @@
     const viewerItems = images.map((row) => ({ src: fileUrls(row).inline, alt: row.name, title: row.name, meta: [row.category, formatBytes(row.byte_count, lang)] }));
     return h(
       P.Stack,
-      { gap: "lg" },
+      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t(section === "documents" ? "documentsTitle" : "evidenceTitle")),
       h(P.SplitView, {
         label: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
         firstLabel: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
         first: h(
           P.Stack,
-          { gap: "sm" },
+          { gap: "sm", className: "plx-u-flex-1 plx-u-min-h-0" },
           h(P.Checkbox, { label: t("olderVersions"), checked: history, onChange: (e) => setHistory(e.target.checked) }),
-          ...visible.map((row) =>
-            h(P.Card, {
-              key: row.id,
-              title: row.name,
-              meta: `${row.category} · ${t("version")} ${row.version}`,
-              selected: row.id === selected,
-              onOpen: () => select(row.id),
-            }),
-          ),
+          h(window.CTMShell.Table, {
+            label: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
+            rows: visible, selected, onSelect: select, empty: t("noFiles"),
+            columns: [{ title: t(section === "documents" ? "documentsTitle" : "evidenceTitle"), field: "name", kind: "name" }, { title: t("version"), field: "version", type: "number" }],
+          }),
           pending ? base.loadingView(P, h, t) : null,
           !pending && !visible.length && !failure ? h(P.EmptyState, { title: t("noFiles") }) : null,
           failure ? base.loadFailure(P, h, t, () => setReload((n) => n + 1), failure) : null,
@@ -1364,6 +1391,8 @@
   Object.assign(window.CTMCouncil, {
     mediaWords: words,
     mediaTranslator: translator,
+    ReportRevisionEditor, // exported for the unsaved-text regression test
+    ReportDetailTabs,
     chooseMimeType,
     revisionAccess,
     revisionFields,

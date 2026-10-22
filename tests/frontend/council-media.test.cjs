@@ -121,7 +121,7 @@ test("D19: text answers are editable; files and structured answers are carried u
   draft.answers.Q1 = "new one";
   draft.answers.files = "forged"; // never overrides a structured answer
   const payload = JSON.parse(JSON.stringify(C.revisionPayload(latest, draft)));
-  assert.deepEqual(payload, { answers: { Q1: "new one", Q2: "kept", files: ["f1"], extra: "loose text" }, observations: "obs" });
+  assert.deepEqual(payload, { expected_version: 2, answers: { Q1: "new one", Q2: "kept", files: ["f1"], extra: "loose text" }, observations: "obs" });
   assert.equal(C.revisionChanged(latest, draft), true);
   assert.equal("Q3" in payload.answers, false); // an empty unanswered question is not added
   assert.equal(C.revisionChanged(latest, { answers: {}, observations: "obs 2" }), true);
