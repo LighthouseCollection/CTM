@@ -372,6 +372,8 @@
       addHearingCase: "Add a Case to Hearings",
       attendance: "Council Attendance",
       scheduledCasesForHearing: "Scheduled Cases for Hearing",
+      collapse: "Collapse {title}",
+      expand: "Expand {title}",
       respondent: "Respondent",
       yearsMarried: "Years married",
       reason: "Reason",
@@ -642,6 +644,8 @@
       addHearingCase: "إضافة قضية لجلسات النظر",
       attendance: "حضور أعضاء المجلس",
       scheduledCasesForHearing: "القضايا المجدولة للنظر",
+      collapse: "طي {title}",
+      expand: "توسيع {title}",
       respondent: "الطرف الآخر",
       yearsMarried: "سنوات الزواج",
       reason: "السبب",
@@ -2126,7 +2130,13 @@
             { title: t("previousRecommendation"), field: "previous_recommendation", render: (row) => row.previous_recommendation || t("notRecorded") },
             { title: "", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
           ];
-      return h(P.Panel, { key: n, title: first ? t("casesToAssign") : t("scheduledCasesForHearing") },
+      return h(P.Panel, {
+        key: n,
+        title: first ? t("casesToAssign") : t("scheduledCasesForHearing"),
+        collapsible: true,
+        defaultExpanded: true,
+        strings: { collapse: t("collapse"), expand: t("expand") },
+      },
         h(window.CTMShell.Table, { label: title, rows, columns, empty: t(`part${n}Empty`) }),
       );
     };

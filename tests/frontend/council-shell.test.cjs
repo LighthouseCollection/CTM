@@ -74,6 +74,8 @@ test("the current session keeps labeled actions and its status control inside th
   assert.doesNotMatch(council, /dialog\?\.kind === "agenda"/);
   const agendaTable = council.slice(council.indexOf("const agendaTable"), council.indexOf("return h(", council.indexOf("const agendaTable")));
   assert.doesNotMatch(agendaTable, /P\.SplitView/);
+  assert.match(council, /collapsible: true,[\s\S]*defaultExpanded: true/);
+  assert.match(council, /strings: \{ collapse: t\("collapse"\), expand: t\("expand"\) \}/);
   assert.match(agendaTable, /previousRecommendation/);
   assert.match(agendaTable, /title: "", field: "open_action"/);
   const assignmentColumns = agendaTable.slice(agendaTable.indexOf("const columns = first"), agendaTable.indexOf("        : ["));
