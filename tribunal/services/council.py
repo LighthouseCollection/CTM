@@ -240,6 +240,21 @@ def activate_session(actor, session_id):
     return session
 
 
+@transaction.atomic
+def return_session_to_planned(actor, session_id):
+    """Return an in-progress session to Planned before it is adjourned."""
+    administrator(actor)
+    session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    if session.state == "draft":
+        return session
+    if session.state != "planned":
+        raise ValidationError("Only an in-progress tribunal session can return to Planned.")
+    session.state = "draft"
+    session.save(update_fields=["state"])
+    audit(actor, "session_returned_to_planned", session)
+    return session
+
+
 def attendance_for(actor, session_id, hearing_id=None):
     staff(actor)
     session = CouncilSession.objects.get(pk=session_id)

@@ -1077,6 +1077,15 @@ def activate_session(request, session_id):
 
 
 @endpoint(("POST",))
+def return_session_to_planned(request, session_id):
+    from tribunal.projections import session_data
+    from tribunal.services.council import return_session_to_planned as command
+
+    session = command(request.user, session_id)
+    return JsonResponse(encoded(session, **session_data(session, request.user)))
+
+
+@endpoint(("POST",))
 def adjourn_session(request, session_id):
     from tribunal.projections import session_data
     from tribunal.services.council import set_session_adjourned

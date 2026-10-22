@@ -74,8 +74,10 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(council, /className: "ctm-session-header-action"/);
   assert.match(council, /className: "ctm-session-agenda-grid"/);
   assert.match(shell, /ctm\/ctm\.css/);
-  assert.match(council, /value: "draft", label: t\("sessionStatusDraft"\), icon: "document"/);
+  assert.match(council, /value: "draft", label: t\("sessionStatusPlanned"\), icon: "document"/);
   assert.match(council, /value: "adjourned", label: t\("sessionStatusAdjourned"\), icon: "stop"/);
+  assert.match(council, /session\.state === "planned" && manage/);
+  assert.match(council, /\/plan\//);
   assert.match(council, /session\.state === "draft" && session\.can_activate/);
   assert.match(council, /\/activate\//);
   assert.match(council, /P\.DataPill, \{ gender: normalizedGender \}/);
@@ -90,8 +92,8 @@ test("the current session keeps labeled actions and its status control inside th
   assert.doesNotMatch(sessionFacts, /location/);
   assert.match(council, /P\.SegmentedControl,/);
   assert.match(council, /h\(P\.Inline, \{ justify: "end" \},\s*h\(P\.SegmentedControl,/);
-  assert.match(council, /sessionStatusDraft/);
-  assert.match(council, /sessionStatusInSession/);
+  assert.match(council, /sessionStatusPlanned/);
+  assert.match(council, /sessionStatusInProgress/);
   assert.match(council, /sessionStatusAdjourned/);
   assert.match(council, /adjournedSessionMessage/);
   assert.match(council, /kind: "attendance"/);

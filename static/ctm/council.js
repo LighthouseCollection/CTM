@@ -376,6 +376,7 @@
       sessionStatusInProgress: "In progress",
       sessionStatusAdjourned: "Adjourned",
       sessionActivated: "The tribunal session is now in session.",
+      sessionReturnedToPlanned: "The tribunal session is planned.",
       moveCase: "Move",
       transferCaseTitle: "Move case to another session",
       transferCaseHelp: "This authorized override keeps the original agenda item and records why it moved.",
@@ -673,6 +674,7 @@
       sessionStatusInProgress: "قيد التنفيذ",
       sessionStatusAdjourned: "مؤجلة",
       sessionActivated: "جلسة المجلس الآن قيد الانعقاد.",
+      sessionReturnedToPlanned: "جلسة المجلس مخططة.",
       moveCase: "نقل",
       transferCaseTitle: "نقل القضية إلى جلسة أخرى",
       transferCaseHelp: "يحفظ هذا التجاوز المصرح به بند جدول الأعمال الأصلي ويسجل سبب نقله.",
@@ -2355,6 +2357,8 @@
                     { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "stop" },
                   ],
                   onChange: (value) => {
+                    if (value === "draft" && session.state === "planned" && manage)
+                      run(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/plan/`, { method: "POST", body: "{}" }), "sessionReturnedToPlanned", onChanged);
                     if (value === "in-session" && session.state === "draft" && session.can_activate)
                       run(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/activate/`, { method: "POST", body: "{}" }), "sessionActivated", onChanged);
                     if (value === "adjourned" && planned && manage) {
