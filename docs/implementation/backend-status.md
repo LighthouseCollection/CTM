@@ -5,8 +5,8 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **739 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
-reapply through0042. Protected151-table specification and accepted questions unchanged.
+Validation: **751 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+reapply through0043. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
   domain tables forced RLS; queue provenance in0036.
@@ -103,6 +103,15 @@ scope and derived scan/text rows. Original evidence is not rewritten. External-l
 responses consistently use no-referrer. Twenty-one targeted regressions and full suite
 pass; independent exact-successor negative-access acceptance remains required.
 [Root cause, migration coordination and limits](council-request-file-privacy.md).
+
+## Applicant request author projection correction
+
+Reproduced valid admin-authored requests returning generic404 because author
+Account RLS correctly hid the administrator.0043 exposes only author display names
+bound to authorized request IDs; the endpoint keeps its author field without
+Account dereferences or broader Account SELECT. Admin remains hidden, member author
+remains genuine, and outsider/private/external/interview/worker access stays denied.
+[Source-scoped lookup, grants and successor acceptance](request-author-projection.md).
 
 ## Unfinished
 

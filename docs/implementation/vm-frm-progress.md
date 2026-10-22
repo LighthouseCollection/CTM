@@ -1,3 +1,14 @@
+## Applicant request author-name RLS projection correction
+
+Reproduced admin-authored sent request404 with hidden Account and visible request
+rows. Added bounded request-ID-based current-name lookup in0043, app-only execute,
+repeated own/council request authorization and no Account policy widening. Twelve
+restrictedctm_app tests; full PostgreSQL751 passed/1skip, roundtrip through0043.
+C05 prior0042/privacy/medical guards preserved. See request-author-projection.md;
+governance integrates0042→0043 and reconciles UI metadata separately (proposed0044).
+Applicant34outer partial/focused7pass remains scoped until exact-successor rerun.
+No server mutation/merge/deploy by backend; publication SHA recorded issue #2.
+
 ## C05 council request attachment privacy correction
 
 Reproduced restrictedctm_app subject GET200 for clean priest original. Fixed new
