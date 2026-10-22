@@ -1061,7 +1061,7 @@
       else if (
         councilModule &&
         user.portal === "council" &&
-        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings", "petition", "timeline"].includes(page)
+        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings", "petition", "timeline", "statistics"].includes(page)
       )
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
@@ -1193,7 +1193,10 @@
       ? ["home", "sessions", "cases", "search", "archived", "statistics"]
       : ["home", "applications", "past"];
     const unavailable = new Set(
-      councilModule?.SearchWorkspace ? ["statistics"] : ["search", "statistics"],
+      [
+        ...(councilModule?.SearchWorkspace ? [] : ["search"]),
+        ...(councilModule?.StatisticsWorkspace ? [] : ["statistics"]),
+      ],
     );
     const caseContext =
       [
@@ -1586,6 +1589,8 @@
             }),
           ),
         );
+      if (councilModule?.StatisticsWorkspace && council && page === "statistics")
+        return h(councilModule.StatisticsWorkspace, { api, lang });
       if (councilModule?.SearchWorkspace && council && page === "search")
         return h(councilModule.SearchWorkspace, {
           api,

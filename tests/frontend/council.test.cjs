@@ -253,3 +253,23 @@ test("cases table filters open or archived cases by number or manager", () => {
   assert.deepEqual([...C.caseRows(cases, false, "mark")].map((c) => c.id), ["1"]);
   assert.deepEqual([...C.caseRows(cases, false, "-02")].map((c) => c.id), ["2"]);
 });
+
+test("statistics are plain counts, flagged partial at the list limit, never rates", () => {
+  const cases = [
+    { status: "open", assigned_member: "Fr. A" },
+    { status: "open", assigned_member: "Fr. A" },
+    { status: "open", assigned_member: null },
+    { status: "closed", assigned_member: "Fr. B" },
+  ];
+  const s = C.caseStatistics(cases, [{ state: "planned" }, { state: "closed" }, { state: "closed" }]);
+  assert.equal(s.open, 3);
+  assert.equal(s.unassigned, 1);
+  assert.equal(s.closed, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(s.byManager)), [["Fr. A", 2]]);
+  assert.equal(s.plannedSessions, 1);
+  assert.equal(s.closedSessions, 2);
+  assert.equal(s.partial, false);
+  assert.equal(C.caseStatistics(Array(100).fill({ status: "open" }), []).partial, true);
+  const src = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.doesNotMatch(src.slice(src.indexOf("function caseStatistics"), src.indexOf("function StatisticsWorkspace")), /\/|percent|rate/i);
+});

@@ -298,6 +298,15 @@
       sessionClosed: "The council session was closed.",
       closedReadOnly: "This session is closed and read-only.",
       unknownParty: "Unknown spouse",
+      statsTitle: "Statistics and Reports",
+      statsScope: "Operational counts for council planning. These are not rates: tribunal cases have no population denominator, so no divorce or approval rate is implied.",
+      statsPartial: "Counts cover the most recent 100 cases or sessions returned to this view. Complete figures need a server summary.",
+      statsCases: "Cases",
+      statsOpen: "Open cases",
+      statsUnassigned: "Open cases awaiting a case manager",
+      statsClosed: "Closed cases",
+      statsByManager: "Open cases by case manager",
+      statsSessions: "Council sessions",
       casesTitle: "Cases",
       archivedTitle: "Archived",
       searchCases: "Find a case by number or case manager",
@@ -484,6 +493,15 @@
       sessionClosed: "تم إغلاق جلسة المجلس.",
       closedReadOnly: "هذه الجلسة مغلقة ومتاحة للقراءة فقط.",
       unknownParty: "زوج غير معروف",
+      statsTitle: "الإحصاءات والتقارير",
+      statsScope: "أعداد تشغيلية لتخطيط عمل المجلس. وهي ليست نسبًا: فقضايا المجلس ليس لها مقام سكاني، لذلك لا يُستنتج منها أي معدل للطلاق أو للموافقة.",
+      statsPartial: "تشمل الأعداد أحدث ١٠٠ قضية أو جلسة معروضة في هذه الصفحة. وتحتاج الأرقام الكاملة إلى ملخص من الخادم.",
+      statsCases: "القضايا",
+      statsOpen: "القضايا المفتوحة",
+      statsUnassigned: "قضايا مفتوحة في انتظار تعيين مسؤول",
+      statsClosed: "القضايا المغلقة",
+      statsByManager: "القضايا المفتوحة حسب مسؤول القضية",
+      statsSessions: "جلسات المجلس",
       casesTitle: "القضايا",
       archivedTitle: "الأرشيف",
       searchCases: "ابحث عن قضية برقمها أو بمسؤولها",
@@ -1839,6 +1857,76 @@
     );
   }
 
+  // Operational counts only. No rates: tribunal cases have no valid population
+  // denominator, so nothing here implies a divorce or approval rate.
+  const LIST_LIMIT = 100;
+
+  function caseStatistics(cases, sessions) {
+    const rows = cases || [];
+    const byManager = {};
+    for (const row of rows)
+      if (row.status === "open" && row.assigned_member) byManager[row.assigned_member] = (byManager[row.assigned_member] || 0) + 1;
+    return {
+      open: rows.filter((r) => r.status === "open").length,
+      closed: rows.filter((r) => r.status === "closed").length,
+      unassigned: rows.filter((r) => r.status === "open" && !r.assigned_member).length,
+      byManager: Object.entries(byManager).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])),
+      plannedSessions: (sessions || []).filter((s) => s.state === "planned").length,
+      closedSessions: (sessions || []).filter((s) => s.state === "closed").length,
+      partial: rows.length >= LIST_LIMIT || (sessions || []).length >= LIST_LIMIT,
+    };
+  }
+
+  function StatisticsWorkspace({ api, lang }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = useLoad(
+      () => Promise.all([api("/api/cases/"), api("/api/sessions/")]).then(([cases, sessions]) => caseStatistics(cases.items, sessions.items)),
+      [],
+    );
+    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.error) return loadFailure(P, h, t, retry, state.error);
+    const s = state.data;
+    const n = (value) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(value);
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("statsTitle")),
+      h(P.Notice, { tone: "info" }, t("statsScope")),
+      s.partial ? h(P.Notice, { tone: "warning" }, t("statsPartial")) : null,
+      h(
+        P.Panel,
+        { title: t("statsCases") },
+        h(
+          P.PropertyList,
+          null,
+          h(P.PropertyList.Item, { label: t("statsOpen") }, n(s.open)),
+          h(P.PropertyList.Item, { label: t("statsUnassigned") }, n(s.unassigned)),
+          h(P.PropertyList.Item, { label: t("statsClosed") }, n(s.closed)),
+        ),
+      ),
+      h(
+        P.Panel,
+        { title: t("statsByManager") },
+        s.byManager.length
+          ? h(P.PropertyList, null, ...s.byManager.map(([name, count]) => h(P.PropertyList.Item, { key: name, label: name }, n(count))))
+          : h(P.EmptyState, { title: t("noMyCases") }),
+      ),
+      h(
+        P.Panel,
+        { title: t("statsSessions") },
+        h(
+          P.PropertyList,
+          null,
+          h(P.PropertyList.Item, { label: t("planned") }, n(s.plannedSessions)),
+          h(P.PropertyList.Item, { label: t("closed") }, n(s.closedSessions)),
+        ),
+      ),
+    );
+  }
+
   window.CTMCouncil = {
     words,
     translator,
@@ -1874,5 +1962,7 @@
     CouncilHome,
     caseRows,
     CasesTable,
+    caseStatistics,
+    StatisticsWorkspace,
   };
 })();
