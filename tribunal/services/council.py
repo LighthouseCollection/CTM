@@ -229,7 +229,13 @@ def update_session(actor, session_id, session_date, *, starts_at=None, presiding
     session.starts_at = starts_at
     session.presiding_member = presiding_member
     session.location = location
-    session.save(update_fields=["date", "starts_at", "presiding_member", "location"])
+    # A rescheduled in-progress session becomes a draft when moved into the
+    # future. Upcoming sessions must never be presented as in progress.
+    if session.state == "planned" and session_date > timezone.localdate():
+        session.state = "draft"
+        session.save(update_fields=["date", "starts_at", "presiding_member", "location", "state"])
+    else:
+        session.save(update_fields=["date", "starts_at", "presiding_member", "location"])
     audit(actor, "session_updated", session)
     return session
 

@@ -216,13 +216,13 @@ class Command(BaseCommand):
             location="St. George Coptic Orthodox Church, Bellflower, California",
         )
         existing_upcoming = (
-            m.CouncilSession.objects.filter(state="planned", date__gt=today)
+            m.CouncilSession.objects.filter(state="draft", date__gt=today)
             .order_by("date")
             .first()
         )
         session = session_at(
             existing_upcoming.date if existing_upcoming else today + timedelta(days=7),
-            state="planned",
+            state="draft",
             hour=10,
             location="St. Mark Coptic Orthodox Church, Los Angeles, California",
         )
@@ -243,7 +243,7 @@ class Command(BaseCommand):
             )
             session_at(
                 today + timedelta(days=7 * (offset + 1)),
-                state="planned",
+                state="draft",
                 hour=10,
                 location="St. Mark Coptic Orthodox Church, Los Angeles, California",
             )

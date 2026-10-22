@@ -603,6 +603,19 @@ def test_session_metadata_can_be_edited_before_a_hearing(filed, people):
     assert updated.location == "St. Mark Coptic Orthodox Church"
 
 
+def test_moving_an_in_progress_session_to_a_future_date_returns_it_to_draft(
+    filed, people, monkeypatch
+):
+    session = create_session(people["admin"], date(2030, 2, 2), location="Original location")
+    monkeypatch.setattr("tribunal.services.council.timezone.localdate", lambda: date(2030, 2, 1))
+    updated = update_session(
+        people["secretary"], session.pk, date(2030, 2, 9),
+        starts_at=datetime(2030, 2, 9, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
+        presiding_member=people["president"], location="Rescheduled location",
+    )
+    assert updated.state == "draft"
+
+
 def test_admin_only_account_cannot_be_a_council_voter(filed, people):
     decision = record_decision(people["admin"], filed.proceeding_id, "denied", "Recorded grounds", {})
     with pytest.raises(PermissionDenied):
