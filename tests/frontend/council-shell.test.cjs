@@ -49,7 +49,7 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(council, /mode === "current"/);
   assert.match(council, /plx-entity-header\$\{current/);
   assert.match(council, /className: "plx-entity-header__aside"/);
-  assert.match(council, /className: "plx-entity-header__actions"/);
+  assert.match(council, /P\.Stack, \{ gap: "xs" \},/);
   assert.match(council, /name: "calendar", size: "lg"/);
   assert.match(council, /sessionHeaderActions\.map/);
   assert.match(council, /h\(P\.Button, \{ key: action\.label, size: "sm", icon: action\.icon/);

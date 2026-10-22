@@ -2162,7 +2162,7 @@
             h(
               P.Stack,
               { gap: "sm" },
-              h("div", { className: "plx-entity-header__actions" },
+              h(P.Stack, { gap: "xs" },
                 ...sessionHeaderActions.map((action) => h(P.Button, { key: action.label, size: "sm", icon: action.icon, variant: action.primary ? "primary" : "secondary", disabled: action.disabled, onClick: action.onClick }, action.label)),
               ),
               current ? h(P.SegmentedControl, {
