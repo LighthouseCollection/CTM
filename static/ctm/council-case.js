@@ -3109,6 +3109,7 @@
     CaseNotesWorkspace: base.guarded(CaseNotesWorkspace),
     marriageDuration,
     CaseMarriage: base.guarded(CaseMarriage),
+    CaseSeparation: base.guarded(CaseSeparation),
     timelineRows,
     summaryFacts,
     CaseSummary: base.guarded(CaseSummary),
