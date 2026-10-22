@@ -184,6 +184,17 @@ def validate_finding_sources(actor, proceeding, sources):
                 raise PermissionDenied("Citation source belongs to another proceeding.")
 
 
+def configured_president():
+    president = (
+        Account.objects.filter(is_active=True, role="president")
+        .order_by("created_at", "pk")
+        .first()
+    )
+    if president is None:
+        raise ValidationError("Configure an active president before creating or editing a council session.")
+    return president
+
+
 @transaction.atomic
 def create_session(actor, session_date, *, starts_at=None, presiding_member=None, location="", state="planned"):
     administrator(actor)
@@ -192,8 +203,9 @@ def create_session(actor, session_date, *, starts_at=None, presiding_member=None
             raise ValidationError("Session start time must include a UTC offset.")
         if starts_at.astimezone(ZoneInfo("America/Los_Angeles")).date() != session_date:
             raise ValidationError("Session start time must fall on the session date in Los Angeles.")
-    if presiding_member is not None and (not presiding_member.is_active or presiding_member.role == "applicant"):
-        raise ValidationError("Presiding member must be an active council account.")
+    # Session presidings are defined by CTM's active president configuration,
+    # never selected in an individual session form.
+    presiding_member = configured_president()
     location = str(location or "").strip()
     if len(location) > 300:
         raise ValidationError("Session location is too long.")
@@ -239,8 +251,9 @@ def update_session(actor, session_id, session_date, *, starts_at=None, presiding
         raise ValidationError("Session start time must include a UTC offset.")
     if starts_at.astimezone(ZoneInfo("America/Los_Angeles")).date() != session_date:
         raise ValidationError("Session start time must fall on the session date in Los Angeles.")
-    if presiding_member is None or not presiding_member.is_active or presiding_member.role == "applicant":
-        raise ValidationError("Presiding member must be an active council account.")
+    # Session presidings are defined by CTM's active president configuration,
+    # never selected in an individual session form.
+    presiding_member = configured_president()
     location = str(location or "").strip()
     if not location or len(location) > 300:
         raise ValidationError("Session location is required and must be at most 300 characters.")

@@ -614,3 +614,10 @@ test("scheduled hearing numbers are sequential within the hearing tab", () => {
   assert.match(council, /hearing_number: first \? null : index \+ 1/);
   assert.match(council, /field: "hearing_number"/);
 });
+
+
+test("session forms show the centrally configured president as read-only", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(council, /h\(P\.Select, \{ value: presiding, disabled: true,/);
+  assert.doesNotMatch(council, /presiding_member_id: presiding/);
+});

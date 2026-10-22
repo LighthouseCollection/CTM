@@ -1402,7 +1402,7 @@
       try {
         await api(editing ? `/api/sessions/${encodeURIComponent(selectedSession.id)}/` : "/api/sessions/", {
           method: editing ? "PATCH" : "POST",
-          body: JSON.stringify({ date, starts_at: laIso(date, time), presiding_member_id: presiding, location: location.trim() }),
+          body: JSON.stringify({ date, starts_at: laIso(date, time), location: location.trim() }),
         });
         resetSessionForm();
         setFormOpen(false);
@@ -1461,8 +1461,7 @@
                 h(P.Input, { type: "time", value: time, width: "sm", disabled: pending,
                   onChange: (event) => { setTime(event.target.value); setProblem(null); } })),
               h(P.Field, { label: t("presiding"), required: true, error: problem === "presidingRequired" ? t(problem) : undefined },
-                h(P.Select, { value: presiding, disabled: pending,
-                  onChange: (event) => { setPresiding(event.target.value); setProblem(null); },
+                h(P.Select, { value: presiding, disabled: true,
                   options: [{ value: "", label: t("presidingRequired") }, ...presidingMembers.map((row) => ({ value: row.id, label: row.name || row.id }))] })),
               h(P.Field, { label: t("location"), required: true, error: problem === "locationRequired" ? t(problem) : undefined },
                 h(P.Input, { value: location, maxLength: 300, disabled: pending,

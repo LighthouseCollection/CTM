@@ -1060,15 +1060,12 @@ def sessions(request):
     from tribunal.services.council import create_session
 
     data = body(request)
-    presiding_member = None
-    if data.get("presiding_member_id"):
-        presiding_member = m.Account.objects.get(pk=data["presiding_member_id"])
+    # The active president is configured centrally; session payloads cannot override it.
     starts_at = datetime.fromisoformat(data["starts_at"]) if data.get("starts_at") else None
     session = create_session(
         request.user,
         date.fromisoformat(data["date"]),
         starts_at=starts_at,
-        presiding_member=presiding_member,
         location=data.get("location", ""),
         state="draft",
     )
@@ -1088,7 +1085,6 @@ def update_session(request, session_id):
     session = command(
         request.user, session_id, date.fromisoformat(data["date"]),
         starts_at=datetime.fromisoformat(data["starts_at"]),
-        presiding_member=m.Account.objects.get(pk=data["presiding_member_id"]),
         location=data.get("location", ""),
     )
     return JsonResponse(encoded(session, **session_data(session, request.user)))

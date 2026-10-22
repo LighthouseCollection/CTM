@@ -85,6 +85,15 @@ def test_manager_agenda_api_uses_same_permission(assigned, people, client):
     assert response.status_code == 201
 
 
+def test_session_presiding_member_comes_from_the_configured_president(people):
+    session = council.create_session(
+        people["admin"], date(2031, 2, 2), presiding_member=people["member"]
+    )
+
+    assert session.presiding_member_id == people["president"].pk
+
+
+
 def test_council_president_cannot_be_assigned_as_case_manager(ready_application, people):
     app = ready_application
     submit_application(
