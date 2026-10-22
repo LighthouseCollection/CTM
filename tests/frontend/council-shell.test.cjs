@@ -266,6 +266,7 @@ test("upcoming sessions use a full table and load the selected session into the 
   assert.doesNotMatch(source, /P\.SplitView/);
   assert.match(source, /function editSession\(row\)/);
   assert.match(source, /onSelect: \(id\) => editSession\(rows\.find/);
+  assert.match(source, /empty: t\(emptyKey\), isStatic: true/);
   assert.match(source, /method: editing \? "PATCH" : "POST"/);
   assert.doesNotMatch(source.slice(source.indexOf("columns: ["), source.indexOf("]),\n      }),")), /presiding_member_name/);
   assert.doesNotMatch(source.slice(source.indexOf("columns: ["), source.indexOf("]),\n      }),")), /locationNotRecorded/);
