@@ -6,6 +6,10 @@ const shell = fs.readFileSync("tribunal/templates/tribunal/shell.html", "utf8");
 const app = fs.readFileSync("static/ctm/app.js", "utf8");
 const shellLayout = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
 
+test("session layout assets use a current cache version", () => {
+  assert.match(shell, /ctm\/shell-layout\.js\x27 %\}\?v=session-table-layout-20261022an/);
+  assert.match(shell, /ctm\/council\.js\x27 %\}\?v=session-table-layout-20261022an/);
+});
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
   const order = ["cdn/0.61.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
   for (const index of order) assert.ok(index > 0);
