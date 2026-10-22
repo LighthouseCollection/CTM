@@ -136,6 +136,7 @@ test("Decision & Voting uses stacked decision and council-vote containers", () =
   assert.match(councilCase, /function CouncilVoteRecord\(/);
   assert.match(decisionWorkspace, /ctm-decision-voting-workspace/);
   assert.doesNotMatch(decisionWorkspace, /noDecision/);
+  assert.doesNotMatch(decisionWorkspace, /title: t\(revising \? "reviseDecision" : "recordDecision"\)/);
   assert.doesNotMatch(decisionWorkspace, /window\.CTMShell\.Workspace/);
   assert.match(councilCase, /ctm-council-vote-table/);
   assert.match(councilCase, /recordVotesContinue/);

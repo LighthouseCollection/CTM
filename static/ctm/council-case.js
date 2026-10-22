@@ -1394,7 +1394,7 @@ ${ar}` : en;
       { onSubmit: save, label: t(revising ? "reviseDecision" : "recordDecision"), noValidate: true },
       h(
         P.FormSection,
-        { title: t(revising ? "reviseDecision" : "recordDecision"), description: revising ? t("revisionNotice") : undefined },
+        { description: revising ? t("revisionNotice") : undefined },
         h(
           P.Field,
           { label: t("decisionType"), required: true, error: err("chooseType") },
