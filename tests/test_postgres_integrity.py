@@ -6,6 +6,43 @@ from tribunal.models import Account, Application, AnswerRevision, OpenCaseClaim,
 
 
 @pytest.mark.django_db(transaction=True)
+def test_checkout_rechecks_version_after_waiting_for_answer_save(ready_application):
+    from threading import Event
+    from django.core.exceptions import ValidationError
+    from tribunal.models import FeeObligation, CheckoutIntent
+    from tribunal.services.applications import save_answers
+    from tribunal.services.payments import prepare_checkout
+
+    if connection.vendor != "postgresql":
+        pytest.skip("PostgreSQL row-lock contention test")
+    app = ready_application
+    FeeObligation.objects.filter(application=app).update(status="due", waived_by=None)
+    started = Event()
+
+    def checkout():
+        try:
+            owner = Account.objects.get(pk=app.owner_id)
+            started.set()
+            return prepare_checkout(
+                owner, app.pk, {"accepted": True, "name": "John Smith"},
+                expected_version=1,
+            )
+        finally:
+            connections.close_all()
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with transaction.atomic():
+            Application.objects.select_for_update().get(pk=app.pk)
+            answers = app.revisions.get(number=1).answers
+            future = pool.submit(checkout)
+            assert started.wait(timeout=5)
+            save_answers(app.owner, app.pk, {**answers, "statement": "New"}, 1)
+        with pytest.raises(ValidationError, match="Reload before filing"):
+            future.result(timeout=10)
+    assert not CheckoutIntent.objects.exists()
+
+
+@pytest.mark.django_db(transaction=True)
 def test_concurrent_case_allocation_postgres():
     if connection.vendor != "postgresql":
         pytest.skip("PostgreSQL transaction test")

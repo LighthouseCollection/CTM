@@ -43,7 +43,9 @@ def validate_filing_declaration(app):
         or not questionnaire.declaration_en.strip()
         or not questionnaire.declaration_ar.strip()
     ):
-        raise ValidationError("A published bilingual declaration is required before filing.")
+        raise ValidationError(
+            "A published bilingual declaration is required before filing."
+        )
 
 
 @transaction.atomic
@@ -236,7 +238,9 @@ def validate_petition(answers):
 
 
 @transaction.atomic
-def submit_application(actor, app_id, idempotency_key, attestation=None, *, expected_version=None):
+def submit_application(
+    actor, app_id, idempotency_key, attestation=None, *, expected_version=None
+):
     app = application_for(actor, app_id)
     if actor.pk != app.owner_id:
         raise PermissionDenied("Only the applicant can attest and submit.")

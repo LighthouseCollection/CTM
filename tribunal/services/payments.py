@@ -16,8 +16,11 @@ from tribunal.models import (
 )
 from tribunal.policy import application_for
 from .applications import (
-    required_documents, validate_petition, submit_application,
-    check_filing_version, validate_filing_declaration,
+    required_documents,
+    validate_petition,
+    submit_application,
+    check_filing_version,
+    validate_filing_declaration,
 )
 from .common import audit, notify, lock_key
 from tribunal.validation import validate_answers, validate_attestation
@@ -66,7 +69,9 @@ def create_checkout(actor, app_id, attestation, base_url, *, expected_version=No
         raise ValidationError(
             "Payment provider is not configured; no charge was attempted."
         )
-    intent = prepare_checkout(actor, app_id, attestation, expected_version=expected_version)
+    intent = prepare_checkout(
+        actor, app_id, attestation, expected_version=expected_version
+    )
     stripe.api_key = settings.STRIPE_SECRET_KEY
     session = stripe.checkout.Session.create(
         mode="payment",

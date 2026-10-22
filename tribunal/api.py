@@ -105,19 +105,24 @@ def application_data(app, actor):
     )
     if app.owner_id == actor.pk:
         from tribunal.services.applications import (
-            required_documents, validate_petition, validate_filing_declaration,
+            required_documents,
+            validate_petition,
+            validate_filing_declaration,
         )
         from tribunal.validation import validate_answers
 
         questionnaire = app.questionnaire
-        result["questionnaire"] = encoded(
-            questionnaire,
-            version=questionnaire.number,
-            published=questionnaire.published,
-            definition=questionnaire.definition,
-            declaration_en=questionnaire.declaration_en,
-            declaration_ar=questionnaire.declaration_ar,
-        ) if questionnaire else None
+        result["questionnaire"] = (
+            encoded(
+                questionnaire,
+                version=questionnaire.number,
+                published=questionnaire.published,
+                definition=questionnaire.definition,
+                declaration_en=questionnaire.declaration_en,
+                declaration_ar=questionnaire.declaration_ar,
+            )
+            if questionnaire else None
+        )
         editable = app.status not in {"withdrawn", "expired", "deleted"}
         if app.submitted_at:
             editable = bool(
@@ -147,12 +152,17 @@ def application_data(app, actor):
         ).order_by("-created_at", "-id").first()
         result.update(
             can_edit=editable,
-            can_checkout=bool(ready and app.status == "draft" and fee and fee.status == "due"),
+            can_checkout=bool(
+                ready and app.status == "draft" and fee and fee.status == "due"
+            ),
             can_submit=bool(ready and satisfied and not returned),
             can_resubmit=bool(ready and satisfied and returned),
             duplicate_hold=app.duplicate_hold,
-            return_instructions=(latest_review.instructions if returned and latest_review
-                                 and latest_review.result == "reject" else ""),
+            return_instructions=(
+                latest_review.instructions
+                if returned and latest_review and latest_review.result == "reject"
+                else ""
+            ),
         )
     return result
 
@@ -233,7 +243,9 @@ def applications(request):
 @endpoint(("GET", "POST"))
 def application(request, app_id):
     if request.method == "GET":
-        return JsonResponse(application_data(application_for(request.user, app_id), request.user))
+        return JsonResponse(
+            application_data(application_for(request.user, app_id), request.user)
+        )
     from tribunal.services.applications import save_answers
 
     data = body(request)
@@ -314,8 +326,10 @@ def checkout(request, app_id):
         else request.build_absolute_uri("/").rstrip("/")
     )
     return JsonResponse(
-        create_checkout(request.user, app_id, data["attestation"], base,
-                        expected_version=filing_version(data))
+        create_checkout(
+            request.user, app_id, data["attestation"], base,
+            expected_version=filing_version(data),
+        )
     )
 
 

@@ -81,6 +81,24 @@ def test_missing_actor_context_fails_closed(runtime, ready_application):
         assert FileVersion.objects.count() == 0
 
 
+def test_returned_filing_projection_with_non_owner_database_role(runtime, ready_application, people):
+    from tribunal.api import application_data
+    from tribunal.policy import application_for
+    from tribunal.services.applications import review_application
+
+    app = ready_application
+    submit_application(app.owner, app.pk, "projection-rls", {"accepted": True, "name": "John Smith"})
+    review_application(people["admin"], app.pk, "reject", "Correct the date.")
+    with runtime(app.owner):
+        data = application_data(application_for(app.owner, app.pk), app.owner)
+        assert data["can_resubmit"] and not data["can_checkout"]
+        assert data["return_instructions"] == "Correct the date."
+        assert data["questionnaire"]["id"] == str(app.questionnaire_id)
+    other = Account.objects.create_user(email="projection-other@example.test", email_verified=True)
+    with runtime(other):
+        assert not Application.objects.filter(pk=app.pk).exists()
+
+
 def test_applicant_raw_queries_only_return_own_sources(runtime, ready_application):
     app = ready_application
     other = Account.objects.create_user(email="other@example.test", email_verified=True)

@@ -127,6 +127,27 @@ def test_stale_checkout_never_contacts_provider(client, ready_application):
     assert not CheckoutIntent.objects.exists()
 
 
+def test_current_checkout_freezes_revision_without_claiming_payment(client, ready_application):
+    from types import SimpleNamespace
+
+    app = ready_application
+    FeeObligation.objects.filter(application=app).update(status="due", waived_by=None)
+    login(client, app.owner)
+    data = client.get(f"/api/applications/{app.pk}/").json()
+    assert data["can_checkout"] and not data["can_submit"]
+    with override_settings(STRIPE_SECRET_KEY="test-key"), patch(
+        "stripe.checkout.Session.create",
+        return_value=SimpleNamespace(id="cs_unit_test", url="https://example.test/checkout"),
+    ) as provider:
+        response = post(client, app, "checkout", attestation=ATTESTATION, expected_version=1)
+    assert response.status_code == 200
+    intent = CheckoutIntent.objects.get()
+    assert intent.revision.number == 1 and intent.state == "pending"
+    assert response.json()["intent"] == str(intent.pk)
+    assert app.fee.status == "due" and not Submission.objects.exists()
+    assert provider.call_args.kwargs["idempotency_key"] == f"ctm-checkout:{intent.pk}"
+
+
 def test_stale_submit_does_not_finalize_newer_answers(client, ready_application):
     app = ready_application
     answers = app.revisions.get(number=1).answers

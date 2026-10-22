@@ -34,8 +34,15 @@ file listing and council projections in issue #2 remain subsequent slices.
 
 ## Validation and remaining work
 
-- 21 filing contract regressions pass on SQLite in an isolated container.
-- Full PostgreSQL suite, including existing non-owner RLS tests: in progress.
+- 22 filing contract regressions pass on SQLite in an isolated container.
+- Full isolated PostgreSQL suite: 209 passed, 1 skipped. Includes all application
+  migrations, raw non-owner RLS tests, returned filing projection under a
+  non-owner role, and checkout waiting for a concurrent answer save.
+- Skipped check is `test_deployment_init.py`'s disposable GitHub-service-only
+  deployment initialization check; no operational initialization was run.
+- `makemigrations --check --dry-run`: no changes detected. Structural build-spec
+  validation passes (151 tables, 59 accepted questions preserved). These checks
+  do not establish full model/contract reconciliation or production readiness.
 - No schema changes; preserve existing models and protected 151-table contract.
 - Full schema reconciliation, outstanding policies/grants, council projections,
   file listing contract and live payment/email acceptance remain incomplete.
