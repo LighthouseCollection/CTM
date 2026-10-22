@@ -227,6 +227,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(councilCase, /"Separation Details"/);
   assert.match(councilCase, /"Civil Divorce"/);
   assert.match(councilCase, /"Restraining Order"/);
+  assert.match(councilCase, /scope: "restraining_order", title: "Restraining Order", icon: "link"/);
   assert.match(councilCase, /"Reconciliation"/);
   assert.match(app, /const collaborationGroups = \[/);
   assert.match(app, /items: ["notes", "communications"]/);
