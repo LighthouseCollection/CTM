@@ -43,7 +43,7 @@ def safe_configuration(value):
 
 
 @transaction.atomic
-def save_setting(actor, key, value, *, expected_version=_UNBOUND):
+def save_setting(actor, key, value, *, expected_version=_UNBOUND, schema_version=1):
     administrator(actor)
     if not isinstance(key, str):
         raise ValidationError("Unsupported setting key.")
@@ -58,6 +58,8 @@ def save_setting(actor, key, value, *, expected_version=_UNBOUND):
         raise ValidationError("Unsupported setting key.")
     validate_json_value(value, maximum=100_000)
     safe_configuration(value)
+    from .setting_schemas import validate_setting_value
+    validate_setting_value(key, value, schema_version=schema_version)
     lock_key(f"setting:{key}")
     number = (
         SettingRevision.objects.filter(key=key).aggregate(n=Max("number"))["n"] or 0

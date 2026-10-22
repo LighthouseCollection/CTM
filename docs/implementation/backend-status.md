@@ -5,7 +5,7 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **617 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+Validation: **647 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
 reapply through0039. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
@@ -36,12 +36,21 @@ and authorized continuation for cases and case/system audit are implemented.
 The applicant's external account-query stall was not reproduced by these tests and
 remains unresolved; no shared engine/container operation was performed.
 
+## Typed settings continuation
+
+All six setting families now expose bounded value schemas and validation, HTTP
+writes require expected_version, and safe incompatible legacy values are flagged
+while unsafe legacy values are redacted. This is typed version storage; provider/
+consumer activation and approved bilingual content remain separate unfinished work.
+[Wire contract, compatibility and acceptance](typed-settings-contract.md).
+
 ## Unfinished
 
 UI's other requested backend contracts remain unfinished: approved own-profile/
 contact/portrait mutations, verified email/provider/session administration, member
 contact/appointment/history projections, formal-source factual discrepancy views,
-and per-family settings edit schemas. Pagination is addressed in this continuation;
+and consumer integration of stored settings. Pagination and per-family settings
+edit schemas are addressed in these continuations;
 those separate contracts are not claimed complete or all blocked by credentials.
 
 Full approved-schema implementation is not complete. Required identity/version,

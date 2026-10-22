@@ -1,5 +1,17 @@
 # VM-FRM backend progress
 
+## Typed settings schemas and conflict-safe HTTP editing
+
+**647 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply
+through0039. Inventory unchanged:63 models/91 routes/63 forced-RLS tables.
+
+All six current nonsecret setting families expose versioned field schemas with
+server validation; HTTP expected_version is required. Legacy values stay intact
+and incompatible/unsafe values receive review/redaction metadata. No provider or
+consumer activation is claimed. Exact contract and remaining scope:
+[typed-settings-contract.md](typed-settings-contract.md).
+
+
 ## Runtime identity and authorized list continuation
 
 **617 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/reapply

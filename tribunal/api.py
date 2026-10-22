@@ -1320,23 +1320,42 @@ def external_report(request, request_id):
 
 @endpoint(("GET", "POST"))
 def settings_endpoint(request):
+    from tribunal.services.configuration import save_setting, safe_configuration
+    from tribunal.services.setting_schemas import validate_setting_value, schema_descriptors
     administrator(request.user)
     if request.method == "GET":
         current = {}
         for record in m.SettingRevision.objects.order_by("key", "-number"):
-            current.setdefault(
-                record.key,
-                encoded(
-                    record, key=record.key, version=record.number, value=record.value
-                ),
-            )
-        return JsonResponse({"items": list(current.values())})
-    from tribunal.services.configuration import save_setting
-
+            if record.key in current:
+                continue
+            from tribunal.validation import validate_json_value
+            from tribunal.services.setting_schemas import schemas
+            value = record.value
+            if record.key not in schemas():
+                value, state = None, "unsupported_legacy_key"
+            else:
+                try:
+                    validate_json_value(value, maximum=100_000)
+                    safe_configuration(value)
+                except ValidationError:
+                    value, state = None, "unsafe_legacy_value"
+                else:
+                    try:
+                        validate_setting_value(record.key, value)
+                        state = "valid"
+                    except ValidationError:
+                        state = "legacy_requires_review"
+            current[record.key] = encoded(record, key=record.key, version=record.number,
+                value=value, schema_version=1, validation_state=state)
+        return JsonResponse({"items": list(current.values()),
+            "schemas": schema_descriptors({key:row["version"] for key,row in current.items()})})
     data = body(request)
+    if (set(data)-{"key", "value", "expected_version", "schema_version"}
+            or not {"key", "value", "expected_version"} <= set(data)):
+        raise ValidationError("Provide key, value and expected_version using the declared setting write fields.")
     row = save_setting(request.user, data["key"], data["value"],
-                       **({"expected_version": data["expected_version"]} if "expected_version" in data else {}))
-    return JsonResponse(encoded(row, version=row.number), status=201)
+        expected_version=filing_version(data), schema_version=data.get("schema_version", 1))
+    return JsonResponse(encoded(row, version=row.number, schema_version=1), status=201)
 
 
 @endpoint(("GET", "POST"))
