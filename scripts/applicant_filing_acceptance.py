@@ -303,10 +303,30 @@ def run(browser, base, settings, fixture_db, session_cookie, staff, staff_csrf, 
         for payload in [{},{"expected_version":0}]:assert post(one,one_csrf,f"/api/applications/{first_id}/withdraw/",payload).status==422
         first_page=open_editor(one)
         assert first_page.get_by_role("button",name="Delete unsubmitted draft",exact=True).count()==0
-        first_page.get_by_role("button",name="Withdraw my filing",exact=True).click()
-        with first_page.expect_response(lambda r:r.url==f"{base}/api/applications/{first_id}/withdraw/") as result:
-            first_page.get_by_role("button",name="Confirm action",exact=True).click()
-        assert result.value.status==200 and result.value.request.post_data_json=={"expected_version":original["version"]}
+        withdrawal_trace={"application_id":first_id,"before":original,
+            "expected_payload":{"expected_version":original["version"]}}
+        try:
+            first_page.get_by_role("button",name="Withdraw my filing",exact=True).click()
+            with first_page.expect_response(lambda r:r.url==f"{base}/api/applications/{first_id}/withdraw/") as result:
+                first_page.get_by_role("button",name="Confirm action",exact=True).click()
+            withdrawal_response=result.value
+            withdrawal_trace["response"]={"status":withdrawal_response.status,
+                "payload":withdrawal_response.request.post_data_json,
+                "content_type":withdrawal_response.headers.get("content-type"),
+                "body":withdrawal_response.text()[:4000]}
+            withdrawal_trace["after_response"]=detail(one,first_id)
+            assert withdrawal_response.status==200 and withdrawal_response.request.post_data_json==withdrawal_trace["expected_payload"]
+        except Exception:
+            artifact=Path(output);artifact.mkdir(parents=True,exist_ok=True)
+            withdrawal_trace["failure_state"]={"server_application":detail(one,first_id),"url":first_page.url,
+                "buttons":first_page.get_by_role("button").all_text_contents(),
+                "confirm_count":first_page.get_by_role("button",name="Confirm action",exact=True).count(),
+                "alerts":first_page.get_by_role("alert").all_text_contents(),
+                "body":first_page.locator("body").inner_text(),"viewport":first_page.viewport_size}
+            (artifact/"returned-withdrawal-failure.json").write_text(json.dumps(withdrawal_trace,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+            (artifact/"returned-withdrawal-failure.html").write_text(first_page.content(),encoding="utf-8")
+            first_page.screenshot(path=str(artifact/"returned-withdrawal-failure.png"),full_page=True,caret="initial")
+            raise
         first_page.get_by_role("button",name="Refresh application",exact=True).click()
         expect(first_page.get_by_role("button",name="Withdraw my filing",exact=True)).to_have_count(0)
         assert detail(one,first_id)["status"]=="withdrawn"
