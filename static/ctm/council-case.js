@@ -1296,23 +1296,18 @@
       h = R.createElement,
       t = translator(lang);
     const [tab, setTab] = R.useState("reports");
-    return h(P.Tabs, {
-      label: t("reports"),
-      value: tab,
-      onChange: setTab,
-      items: [
-        {
-          value: "reports",
-          label: t("completedReports"),
-          content: base.ReportsReader ? h(base.ReportsReader, { api, lang, user, caseId, reports }) : renderReports(),
-        },
-        {
-          value: "requests",
-          label: t("requests"),
-          content: h(RequestsPanel, { api, lang, user, caseId, reports }),
-        },
-      ],
-    });
+    return h(R.Fragment, null,
+      h(P.Tabs, {
+        label: t("reports"), value: tab, onChange: setTab,
+        items: [
+          { value: "reports", label: t("completedReports") },
+          { value: "requests", label: t("requests") },
+        ],
+      }),
+      tab === "reports"
+        ? base.ReportsReader ? h(base.ReportsReader, { api, lang, user, caseId, reports }) : renderReports()
+        : h(RequestsPanel, { api, lang, user, caseId, reports }),
+    );
   }
 
   // ---------- Decision & Voting ----------
@@ -1673,7 +1668,7 @@
     const current = local || (latestSaved ? { votes: [], approval: null, ...latestSaved } : null);
     const earlier = readAvailable ? [...versions].sort((a, b) => b.number - a.number).slice(1) : [];
     const canWrite = writerFor(user, caseRow, record) && Boolean(proceeding);
-    return h(
+    const detail = h(
       P.Stack,
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("decisionVoting")),
@@ -1725,6 +1720,12 @@
           : h(P.Notice, { tone: "info" }, t("writerDecision"))
         : null,
     );
+    return h(window.CTMShell.Workspace, {
+      label: t("decisionVoting"), rows: current ? [{ ...current, title: t("decisionVoting") }] : proceeding ? [{ id: proceeding.id, title: t("recordDecision") }] : [],
+      showDetailWhenEmpty: true, empty: t("noDecision"),
+      columns: [{ title: t("decisionVoting"), field: "title", kind: "name" }, { title: t("version"), field: "number" }],
+    }, detail);
+
   }
 
   // ---------- Case audit and manual call records ----------
@@ -1814,6 +1815,7 @@
       petitions_withdrawn: "سُحبت الطلبات وأُغلقت القضية",
       assignment_agenda_completed: "اكتمل تعيين القضية الجديدة في الجلسة",
     },
+
   };
 
   // Known codes get a readable label; unknown codes are shown exactly as stored.
@@ -1867,28 +1869,19 @@
     const rows = filterAudit(auditRows(state.data.items, state.data.members, lang), query);
     return h(
       P.Stack,
-      { gap: "lg" },
+      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("caseAudit")),
       h(P.Field, { label: t("searchAudit") }, h(P.Input, { type: "search", value: query, onChange: (e) => setQuery(e.target.value) })),
       h(P.Text, { variant: "secondary" }, t("auditCount", { n: rows.length })),
-      rows.length
-        ? h(
-            P.Stack,
-            { gap: "xs" },
-            ...rows.map((row) =>
-              h(
-                P.Inline,
-                { key: row.id, justify: "between", wrap: true },
-                h(P.Text, { variant: "strong" }, row.label),
-                h(
-                  P.Text,
-                  { variant: "secondary" },
-                  `${row.actor === "system" ? t("systemActor") : row.actor || t("otherAccount")} · ${base.formatWhen(row.timestamp, lang)}`,
-                ),
-              ),
-            ),
-          )
-        : h(P.EmptyState, { title: t("noAudit") }),
+      h(window.CTMShell.Workspace, {
+        label: t("caseAudit"), rows, empty: t("noAudit"),
+        columns: [{ title: t("caseAudit"), field: "label", kind: "name" }, { title: t("recordedBy"), field: "actor" }],
+      }, (row) => h(P.Stack, null,
+        h(P.Text, { as: "h2", variant: "title" }, row.label),
+        h(P.Text, null, row.actor === "system" ? t("systemActor") : row.actor || t("otherAccount")),
+        h(P.Text, null, base.formatWhen(row.timestamp, lang)),
+        h(P.Text, { variant: "data" }, row.action),
+      )),
     );
   }
 
@@ -2047,6 +2040,7 @@
         })),
       [caseId],
     );
+    const [selected, select] = R.useState(null);
     const [composing, setComposing] = R.useState(false);
     const [form, setForm] = R.useState({ party: "", kind: "medical", title: "", instructions: "" });
     const [problem, setProblem] = R.useState(null);
@@ -2108,7 +2102,7 @@
       }
     }
     const err = (key) => (problem === key ? t(key) : undefined);
-    return h(
+    const detail = h(
       P.Stack,
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("assessments")),
@@ -2164,7 +2158,7 @@
                 ),
               )
             : null,
-          ...requests.map((row) =>
+          ...requests.filter((row) => row.id === selected).map((row) =>
             h(
               P.Card,
               {
@@ -2190,7 +2184,7 @@
           ? h(
               P.Stack,
               { gap: "sm" },
-              ...reports.map((row) =>
+              ...reports.filter((row) => row.id === selected).map((row) =>
                 row.restricted
                   ? h(P.Card, { key: row.id, title: t("restrictedAssessment"), meta: t("restrictedAssessmentHelp") })
                   : h(
@@ -2218,6 +2212,13 @@
         failure && confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
       ),
     );
+    return h(window.CTMShell.Workspace, {
+      label: t("assessments"), selected, onSelect: select, showDetailWhenEmpty: true,
+      rows: [...requests, ...reports].map((row) => ({ ...row, title: row.restricted ? t("restrictedAssessment") : row.title })),
+      empty: t("noAssessmentReports"),
+      columns: [{ title: t("assessments"), field: "title", kind: "name" }, { title: t("assessmentKind"), field: "kind", render: (row) => row.kind ? t(row.kind) : "" }],
+    }, detail);
+
   }
 
   // ---------- Parties and case hearings ----------
@@ -2347,32 +2348,19 @@
     const bt = base.translator(lang);
     return h(
       P.Stack,
-      { gap: "lg" },
+      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("hearingsTitle")),
       h(P.Text, { variant: "secondary" }, t("hearingsScope")),
-      state.data.length
-        ? h(
-            P.Stack,
-            { gap: "sm" },
-            ...state.data.map(({ session, item }) =>
-              h(
-                P.Card,
-                {
-                  key: item.id,
-                  title:
-                    item.part === 2 && Array.isArray(item.party_names) && item.party_names.length
-                      ? base.hearingTitle(item.party_names, session.date, bt)
-                      : base.sessionLabel(session.date, bt),
-                  meta: `${bt(item.part === 1 ? "part1" : "part2")} · ${bt(item.state === "assigned" ? "assigned_state" : item.state)}`,
-                  onOpen: () => onSession(session.id),
-                },
-                (item.testimony || []).length
-                  ? h(P.Text, { variant: "secondary" }, `${bt("testimony")}: ${item.testimony.length}`)
-                  : null,
-              ),
-            ),
-          )
-        : h(P.EmptyState, { title: t("noHearings") }),
+      h(window.CTMShell.Workspace, {
+        label: t("hearingsTitle"), rows: state.data.map(({ session, item }) => ({ id: item.id, session, item, date: session.date })),
+        empty: t("noHearings"),
+        columns: [{ title: t("hearingsTitle"), field: "date", kind: "name" }],
+      }, ({ session, item }) => h(P.Stack, null,
+        h(P.Text, { as: "h2", variant: "title" },
+          item.part === 2 && item.party_names?.length ? base.hearingTitle(item.party_names, session.date, bt) : base.sessionLabel(session.date, bt)),
+        h(P.Text, null, `${bt(item.part === 1 ? "part1" : "part2")} · ${bt(item.state === "assigned" ? "assigned_state" : item.state)}`),
+        h(P.Button, { onClick: () => onSession(session.id) }, base.sessionLabel(session.date, bt)),
+      )),
     );
   }
 

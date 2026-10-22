@@ -235,6 +235,7 @@ def session(request):
         {
             "id": str(user.pk),
             "name": f"{user.first_name} {user.last_name}".strip(),
+            "email": user.email,
             "role": user.role,
             "portal": "applicant" if user.role == "applicant" else "council",
             "ui_language": user.ui_language,

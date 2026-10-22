@@ -1083,12 +1083,13 @@
     );
   }
 
-  function SessionList({ api, lang, user, onOpen }) {
+  function SessionList({ api, lang, user, onOpen, onCase, renderAttendance }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
     const [state, retry] = useLoad(() => api("/api/sessions/"), [user?.id]);
+    const [selected, select] = R.useState(null);
     const [date, setDate] = R.useState("");
     const [problem, setProblem] = R.useState(null);
     const [pending, setPending] = R.useState(false);
@@ -1120,7 +1121,7 @@
 
     return h(
       P.Stack,
-      { gap: "lg" },
+      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("sessions")),
       canManage(user)
         ? h(
@@ -1157,32 +1158,18 @@
         ? loadingView(P, h, t)
         : state.error
           ? loadFailure(P, h, t, retry, state.error)
-          : rows.length
-            ? h(
-                P.Stack,
-                { gap: "lg" },
-                ...[["upcomingSessions", groups.upcoming], ["pastSessions", groups.past]]
-                  .filter(([, list]) => list.length)
-                  .map(([key, list]) =>
-                    h(
-                      P.Panel,
-                      { icon: "doc-text", key, title: t(key) },
-                      h(
-                        P.Stack,
-                        { gap: "sm" },
-                        ...list.map((row) =>
-                          h(P.Card, {
-                            key: row.id,
-                            title: sessionLabel(row.date, t),
-                            meta: `${t(row.state === "planned" && row.date < today ? "awaitingClose" : row.state)} · ${isolate(row.reference || sessionReference(row.date) || "")}`,
-                            onOpen: () => onOpen(row.id),
-                          }),
-                        ),
-                      ),
-                    ),
-                  ),
-              )
-            : h(P.EmptyState, { title: t("noSessions") }),
+          : h(P.SplitView, {
+              label: t("sessions"), firstLabel: t("sessions"),
+              first: h(window.CTMShell.Table, {
+                label: t("sessions"), rows, selected, onSelect: select, empty: t("noSessions"),
+                columns: [{ title: t("sessionDate"), field: "date", kind: "name" }, { title: t("statusLabel"), field: "state", render: (row) => t(row.state) }],
+              }),
+              second: h(P.ReadingPane, { label: t("sessions") },
+                selected ? h(SessionWorkspace, { key: selected, api, lang, user, sessionId: selected,
+                  onCase, onBack: () => select(null), onSession: select, renderAttendance })
+                  : h(P.EmptyState, { title: t("sessions") }),
+              ),
+            }),
     );
   }
 
@@ -2128,7 +2115,7 @@
     const chosen = rows.find((row) => row.file_id === selected);
     return h(
       P.Stack,
-      { gap: "lg" },
+      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("searchTitle")),
       h(
         P.Form,
@@ -2146,33 +2133,21 @@
         h(P.Checkbox, { label: t("searchHistory"), checked: history, disabled: pending, onChange: (e) => setHistory(e.target.checked) }),
       ),
       failure ? h(P.Notice, { tone: "warning" }, failure) : null,
-      result
-        ? h(P.SplitView, {
+      h(P.SplitView, {
             label: t("searchResults"),
             firstLabel: t("searchResults"),
-            first: rows.length
-              ? h(
-                  P.Stack,
-                  { gap: "sm" },
-                  h(P.Text, { variant: "secondary" }, t("searchCount", { n: rows.length })),
-                  ...rows.map((row) =>
-                    h(P.Card, {
-                      key: row.file_id,
-                      title: row.name,
-                      meta: cases[row.case_id] || "",
-                      selected: row.file_id === selected,
-                      onOpen: () => select(row.file_id),
-                    }),
-                  ),
-                )
-              : h(P.EmptyState, { title: t("searchNone") }),
+            first: h(window.CTMShell.Table, {
+              label: t("searchResults"), rows: rows.map((row) => ({ ...row, id: row.file_id })),
+              selected, onSelect: select, empty: t("searchNone"),
+              columns: [{ title: t("searchResults"), field: "name", kind: "name" }],
+            }),
             second: h(
               P.ReadingPane,
               { label: chosen ? chosen.name : t("searchChoose"), empty: h(P.EmptyState, { title: t("searchChoose") }) },
               chosen
                 ? h(
                     P.Stack,
-                    { gap: "md" },
+                    { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
                     h(P.Text, { variant: "data" }, chosen.name),
                     cases[chosen.case_id] ? h(P.Text, { variant: "secondary" }, cases[chosen.case_id]) : null,
                     chosen.snippet ? h(P.Panel, { icon: "doc-text", title: t("searchExcerpt") }, h(P.Text, { as: "p" }, chosen.snippet)) : h(P.Text, { variant: "secondary" }, t("searchNoExcerpt")),
@@ -2185,8 +2160,7 @@
                   )
                 : null,
             ),
-          })
-        : null,
+          }),
     );
   }
 
@@ -2297,11 +2271,12 @@
       .filter((row) => !q || [row.number, row.assigned_member || ""].some((v) => String(v).toLowerCase().includes(q)));
   }
 
-  function CasesTable({ cases, archived, lang, onOpen }) {
+  function CasesTable({ cases, archived, lang, api, user, onOpen }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
+    const [selected, select] = R.useState(null);
     const [query, setQuery] = R.useState("");
     const rows = caseRows(cases, archived, query).map((row) => ({
       id: row.id,
@@ -2309,9 +2284,9 @@
       status: t(row.status === "closed" ? "closed" : "open"),
       manager: row.assigned_member || t("unassigned"),
     }));
-    return h(
-      P.Stack,
-      { gap: "md" },
+    const table = h(
+      R.Fragment,
+      null,
       h(P.Text, { as: "h1", variant: "title" }, t(archived ? "archivedTitle" : "casesTitle")),
       h(P.Field, { label: t("searchCases") }, h(P.Input, { type: "search", width: "md", value: query, onChange: (e) => setQuery(e.target.value) })),
       rows.length
@@ -2319,11 +2294,11 @@
             label: t(archived ? "archivedTitle" : "casesTitle"),
             data: rows,
             index: "id",
-            mode: "pages",
+            mode: "fill",
             pageSize: 25,
             headerMenu: false,
             rowMenuButton: false,
-            narrow: "list",
+            narrow: "table",
             keyColumns: ["number", "manager", "status"],
             columns: [
               { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
@@ -2339,10 +2314,20 @@
               failed: t("loadFailed"),
               retry: t("retry"),
             },
-            onRowClick: (row) => onOpen(row.id),
+            onRowClick: (row) => select(row.id),
           })
         : h(P.EmptyState, { title: t(query ? "noMatchingCases" : archived ? "noArchived" : "noOpenCases") }),
     );
+    return h(P.SplitView, {
+      label: t(archived ? "archivedTitle" : "casesTitle"), firstLabel: t("casesTitle"),
+      first: h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" }, table),
+      second: h(P.ReadingPane, { label: t("casesTitle") },
+        selected ? h(P.Stack, null,
+          h(P.Button, { onClick: () => onOpen(selected) }, t("openCase")),
+          h(window.CTMCouncil.CaseSummary, { key: selected, api, lang, user, caseId: selected, onNavigate: () => onOpen(selected) }),
+        ) : h(P.EmptyState, { title: t("casesTitle") }),
+      ),
+    });
   }
 
   // Operational counts only. No rates: tribunal cases have no valid population

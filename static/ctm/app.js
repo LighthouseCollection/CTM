@@ -1013,6 +1013,65 @@
       }),
     );
   }
+  function CommunicationsWorkspace({ data, t, lang, council, councilModule, api, user, selection, reload }) {
+    const [selected, select] = R.useState(null);
+    const detail = h(
+          P.Stack,
+          { gap: "lg" },
+          heading(t("communications")),
+          ...data.messages.filter((row) => row.id === selected).map((row) =>
+            h(
+              P.Panel,
+              { icon: "doc-text",
+                key: row.id,
+                title: row.sender,
+                description: new Intl.DateTimeFormat(
+                  lang === "ar" ? "ar-EG" : "en-US",
+                  { dateStyle: "medium", timeStyle: "short" },
+                ).format(new Date(row.timestamp)),
+              },
+              text(row.body),
+            ),
+          ),
+          !data.messages.length
+            ? h(P.EmptyState, { title: t("noMessages") })
+            : null,
+          data.record.can_message
+            ? h(MessageComposer, {
+                key: selection,
+                record: data.record,
+                sessions: data.sessions,
+                council,
+                t,
+                onSent: () => reload((n) => n + 1),
+              })
+            : null,
+          council && councilModule?.CallLog
+            ? h(councilModule.CallLog, {
+                key: `calls-${selection}`,
+                api,
+                lang,
+                user,
+                caseId: selection,
+              })
+            : null,
+        );
+    return h(window.CTMShell.Workspace, {
+      label: t("communications"), rows: data.messages, selected, onSelect: select,
+      empty: t("noMessages"), showDetailWhenEmpty: true,
+      columns: [{ title: t("communications"), field: "sender", kind: "name" }, { title: t("message"), field: "body", kind: "wrap" }],
+    }, detail);
+  }
+  function CaseNavigationState({ caseId }) {
+    const layout = P.useAppLayout();
+    const previousCase = R.useRef(null);
+    R.useLayoutEffect(() => {
+      if (caseId && caseId !== previousCase.current && layout.mode === "inline") layout.toggle();
+      previousCase.current = caseId;
+    }, [caseId, layout]);
+    return null;
+  }
+
   function App() {
     const [lang, setLang] = R.useState(() => {
       try {
@@ -1318,13 +1377,32 @@
         })),
       },
     ];
-    const nav = caseContext
+    const mainNavigationItems = navItems.map((id) => ({
+      id, icon: navigationIcon(id), label: t(id), disabled: unavailable.has(id),
+    }));
+    const caseNavigationItems = [
+      ...caseGroups.flatMap((group) => group.items),
+      { id: "communications", label: t("communications"), icon: navigationIcon("communications") },
+      ...(council ? reviewGroups.flatMap((group) => group.items) : []),
+      ...(council && councilModule?.CaseAudit ? [{ id: "audit", label: t("audit"), icon: navigationIcon("audit") }] : []),
+    ];
+    const navigationRail = (items, onSelect) => h(R.Fragment, null,
+      ...items.map((item) => h(P.ToolRail.Item, {
+        key: item.id, icon: item.icon, label: item.label,
+        disabled: item.disabled, pressed: page === item.id,
+        onClick: () => onSelect(item.id),
+      })),
+    );
+    const caseNav = caseContext
       ? h(
-          P.NavPane,
+          P.SecondaryPane,
           {
-            title: t("overview"),
-            label: t("overview"),
-            header: h(
+            key: selection,
+            title: t("overview"), label: t("overview"), icon: navigationIcon("case"),
+            collapsible: true, resizable: true, defaultCollapsed: false, width: "md",
+            rail: navigationRail(caseNavigationItems, (id) => go(id, selection)),
+          },
+          h(
               P.Button,
               {
                 variant: "ghost",
@@ -1332,7 +1410,6 @@
               },
               t("backCases"),
             ),
-          },
           h(P.NavList, {
             label: t("overview"),
             value: page,
@@ -1362,9 +1439,11 @@
               })
             : null,
         )
-      : h(
+      : null;
+    const nav = h(
           P.NavPane,
-          { title: t(council ? "council" : "applicant"), label: t("tribunal") },
+          { title: t(council ? "council" : "applicant"), label: t("tribunal"),
+            rail: navigationRail(mainNavigationItems, (id) => go(id)) },
           h(P.NavList, {
             label: t("tribunal"),
             value: page,
@@ -1377,45 +1456,43 @@
             })),
           }),
         );
-    const account = h(
-      P.Menu,
-      {
-        label: t("account"),
-        placement: "bottom-end",
-        trigger: h(
-          P.Button,
-          {
-            variant: "ghost",
-            caret: true,
-            icon: h(P.Avatar, { name: user.name, size: "xs" }),
-          },
-          user.name,
-        ),
-      },
-      h(P.MenuItem, { onSelect: () => go("profile") }, t("account")),
-      h(P.MenuItem, { onSelect: () => go("settings") }, t("settings")),
-      h(P.MenuDivider),
-      h(
-        P.MenuItem,
-        { onSelect: () => postForm("/accounts/logout/") },
-        t("signOut"),
-      ),
+    const accountIdentity = { name: user.name, email: user.email || "", src: user.avatar_url || null };
+    const account = h(P.SessionProvider, { session: { account: accountIdentity, notifications: [], pinnedApps: [] } },
+      h(P.AppHeader.Account, {
+        name: accountIdentity.name, email: accountIdentity.email, src: accountIdentity.src,
+        current: page === "profile" ? "account" : page === "settings" ? "app-settings" : undefined,
+        myAccount: { onSelect: () => go("profile") },
+        appSettings: { app: "CTM", onSelect: () => go("settings") },
+        signOut: { onSelect: () => postForm("/accounts/logout/") },
+      }),
     );
     const header = h(P.AppHeader, {
       appName: "CTM",
-      brand: "CTM",
+      brand: h(R.Fragment, null,
+        h(P.Image, {
+          src: "/static/ctm/tribunal-logo-cropped.svg",
+          alt: "", width: 36, height: 36,
+          className: "plx-u-w-36px plx-u-bg-transparent",
+          fit: "contain", placeholder: "none", priority: true,
+        }),
+        h("span", { className: "plx-app-header__name" },
+          h("strong", { className: "plx-app-header__product" }, "DIOCESE OF LOS ANGELES"),
+          h("strong", { className: "plx-app-header__app" }, "CLERICAL TRIBUNAL MANAGEMENT"),
+        ),
+      ),
+      brandHref: "/",
       switcher: false,
       nav: null,
       account,
-      actions: h(
-        P.Inline,
-        null,
-        h(
-          P.Button,
-          { variant: "ghost", onClick: () => go("notifications") },
-          t("notifications"),
-        ),
-        language,
+      actions: h(R.Fragment, null,
+        h(P.AppHeader.Item, {
+          icon: h(P.Icon, { name: "hdr-bell" }), label: t("notifications"),
+          current: page === "notifications", onClick: () => go("notifications"),
+        }),
+        h(P.AppHeader.Item, {
+          icon: h("span", null, lang === "en" ? "ع" : "EN"), label: t("language"),
+          onClick: () => { if (!saving) savePreference("ui_language", lang === "en" ? "ar" : "en"); },
+        }),
       ),
     });
     const caseCard = (row) =>
@@ -1602,48 +1679,9 @@
             ),
           ),
         );
-      if (page === "communications")
-        return h(
-          P.Stack,
-          { gap: "lg" },
-          heading(t("communications")),
-          ...data.messages.map((row) =>
-            h(
-              P.Panel,
-              { icon: "doc-text",
-                key: row.id,
-                title: row.sender,
-                description: new Intl.DateTimeFormat(
-                  lang === "ar" ? "ar-EG" : "en-US",
-                  { dateStyle: "medium", timeStyle: "short" },
-                ).format(new Date(row.timestamp)),
-              },
-              text(row.body),
-            ),
-          ),
-          !data.messages.length
-            ? h(P.EmptyState, { title: t("noMessages") })
-            : null,
-          data.record.can_message
-            ? h(MessageComposer, {
-                key: selection,
-                record: data.record,
-                sessions: data.sessions,
-                council,
-                t,
-                onSent: () => reload((n) => n + 1),
-              })
-            : null,
-          council && councilModule?.CallLog
-            ? h(councilModule.CallLog, {
-                key: `calls-${selection}`,
-                api,
-                lang,
-                user,
-                caseId: selection,
-              })
-            : null,
-        );
+      if (page === "communications") return h(CommunicationsWorkspace, {
+        key: selection, data, t, lang, council, councilModule, api, user, selection, reload,
+      });
       if (page === "case")
         return h(
           P.Stack,
@@ -1704,6 +1742,10 @@
           lang,
           user,
           onOpen: (id) => go("session", id),
+          onCase: (id) => go("case", id),
+          renderAttendance: ({ session, members, attendance, key, onSaved }) => h(SessionAttendance, {
+            key, onSaved, sessionId: session.id, session, members, initial: attendance, t,
+          }),
         });
       if (councilModule && council && page === "session")
         return h(councilModule.SessionWorkspace, {
@@ -1813,6 +1855,7 @@
       }
       if (council && councilModule?.CasesTable && ["cases", "archived"].includes(page))
         return h(councilModule.CasesTable, {
+          api, user,
           cases: data.items,
           archived: page === "archived",
           lang,
@@ -1843,11 +1886,14 @@
     }
     return h(
       P.AppShell,
-      { header, sideNav: nav, page: "workspace", strings: { skip: t("skip") } },
-      h(P.PageContent, null, h(P.Stack, null,
-        preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
-        content(),
-      )),
+      { header, sideNav: nav, page: ["sessions", "cases", "archived", "search", "communications", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit"].includes(page) ? "master-detail" : "workspace", strings: { skip: t("skip") } },
+      h(CaseNavigationState, { caseId: caseContext ? selection : null }),
+      h("div", { className: "plx-page-panes" }, caseNav,
+        h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
+          preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
+          content(),
+        )),
+      ),
     );
   }
   window.ReactDOM.createRoot(root).render(h(P.ThemeProvider, null, h(App)));

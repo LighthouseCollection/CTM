@@ -68,3 +68,11 @@ def test_unchanged_preference_does_not_add_history(client, people):
         == 200
     )
     assert not AuditEvent.objects.filter(action="account_preferences_changed").exists()
+
+
+def test_session_exposes_signed_in_email_for_header(client, people):
+    user = people["member"]
+    sign_in(client, user)
+    response = client.get("/api/session/")
+    assert response.status_code == 200
+    assert response.json()["email"] == user.email

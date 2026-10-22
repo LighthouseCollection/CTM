@@ -1165,21 +1165,10 @@
     return h(P.SplitView, {
       label: t("reportsList"),
       firstLabel: t("reportsList"),
-      first: rows.length
-        ? h(
-            P.Stack,
-            { gap: "sm" },
-            ...rows.map((row) =>
-              h(P.Card, {
-                key: row.id,
-                title: row.title,
-                meta: [row.date, row.parent_report_id ? t("followUpOf") : null].filter(Boolean).join(" · "),
-                selected: row.id === selected,
-                onOpen: () => select(row.id),
-              }),
-            ),
-          )
-        : h(P.EmptyState, { title: t("noReports") }),
+      first: h(window.CTMShell.Table, {
+        label: t("reportsList"), rows, selected, onSelect: select, empty: t("noReports"),
+        columns: [{ title: t("reportsList"), field: "title", kind: "name" }, { title: t("version"), field: "version", type: "number" }],
+      }),
       second: h(
         P.ReadingPane,
         { label: chosen ? chosen.title : t("chooseReport"), empty: h(P.EmptyState, { title: t("chooseReport") }) },
@@ -1310,24 +1299,20 @@
     const viewerItems = images.map((row) => ({ src: fileUrls(row).inline, alt: row.name, title: row.name, meta: [row.category, formatBytes(row.byte_count, lang)] }));
     return h(
       P.Stack,
-      { gap: "lg" },
+      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t(section === "documents" ? "documentsTitle" : "evidenceTitle")),
       h(P.SplitView, {
         label: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
         firstLabel: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
         first: h(
           P.Stack,
-          { gap: "sm" },
+          { gap: "sm", className: "plx-u-flex-1 plx-u-min-h-0" },
           h(P.Checkbox, { label: t("olderVersions"), checked: history, onChange: (e) => setHistory(e.target.checked) }),
-          ...visible.map((row) =>
-            h(P.Card, {
-              key: row.id,
-              title: row.name,
-              meta: `${row.category} · ${t("version")} ${row.version}`,
-              selected: row.id === selected,
-              onOpen: () => select(row.id),
-            }),
-          ),
+          h(window.CTMShell.Table, {
+            label: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
+            rows: visible, selected, onSelect: select, empty: t("noFiles"),
+            columns: [{ title: t(section === "documents" ? "documentsTitle" : "evidenceTitle"), field: "name", kind: "name" }, { title: t("version"), field: "version", type: "number" }],
+          }),
           pending ? base.loadingView(P, h, t) : null,
           !pending && !visible.length && !failure ? h(P.EmptyState, { title: t("noFiles") }) : null,
           failure ? base.loadFailure(P, h, t, () => setReload((n) => n + 1), failure) : null,
