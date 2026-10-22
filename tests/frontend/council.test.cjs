@@ -440,3 +440,9 @@ test("every notification kind the backend sends has EN and AR labels in the shel
     "appeal_accept", "appeal_decline", "decree_issued", "petition_denied", "petitions_withdrawn", "payment_finance_review", "paid_filing_review"];
   for (const kind of kinds) assert.equal((app.match(new RegExp("event_" + kind + ":", "g")) || []).length, 2, kind);
 });
+
+
+test("adjournment requires an editable end time and sends it to the session endpoint", () => {
+  assert.match(source, /label: t\("adjournEndTime"\)/);
+  assert.match(source, /JSON\.stringify\(\{ adjourned: true, ended_at:/);
+});

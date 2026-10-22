@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 import pytest
 from tribunal.services.council import create_session, set_session_adjourned
 
@@ -42,13 +43,14 @@ def test_attendance_projection_preserves_deactivated_members(client, people):
 def test_adjournment_closes_session_and_retains_its_timestamp_for_current_view(client, people):
     session = create_session(people["admin"], date(2030, 1, 2))
 
-    result = set_session_adjourned(people["admin"], session.pk, True)
+    ended_at = datetime(2030, 1, 2, 12, 15, tzinfo=ZoneInfo("America/Los_Angeles"))
+    result = set_session_adjourned(people["admin"], session.pk, True, ended_at)
 
     result.refresh_from_db()
     assert result.state == "closed"
     assert result.closed_at is not None
-    assert result.adjourned_at is not None
+    assert result.adjourned_at == ended_at
     client.force_login(people["admin"], backend="allauth.account.auth_backends.AuthenticationBackend")
     row = next(item for item in client.get("/api/sessions/").json()["items"] if item["id"] == str(session.pk))
     assert row["state"] == "closed"
-    assert row["adjourned_at"]
+    assert row["adjourned_at"] == ended_at.astimezone(ZoneInfo("UTC")).isoformat()

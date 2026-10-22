@@ -425,12 +425,19 @@ def close_session(actor, session_id):
 
 
 @transaction.atomic
-def set_session_adjourned(actor, session_id, adjourned):
-    """Adjournment closes a session while preserving a same-day Current view marker."""
+def set_session_adjourned(actor, session_id, adjourned, ended_at):
+    """Adjourn an in-session council session at its recorded local end time."""
     staff(actor)
     if actor.role not in {"admin", "secretary"}:
         raise PermissionDenied("Only the tribunal administrator or secretary can adjourn a session.")
+    if not isinstance(ended_at, datetime) or not timezone.is_aware(ended_at):
+        raise ValidationError("Session end time must include a time zone.")
     session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    local_end = ended_at.astimezone(ZoneInfo("America/Los_Angeles"))
+    if local_end.date() != session.date:
+        raise ValidationError("Session end time must fall on the session date.")
+    if session.starts_at and ended_at <= session.starts_at:
+        raise ValidationError("Session end time must be after the session start time.")
     if not adjourned:
         raise ValidationError("An adjourned session remains closed; open its record to take notes.")
     if session.state != "planned":
@@ -438,7 +445,7 @@ def set_session_adjourned(actor, session_id, adjourned):
     # Keep all normal close-side effects (agenda completion, carryovers, and
     # queued communication release) in the established command.
     session = close_session(actor, session_id)
-    session.adjourned_at = timezone.now()
+    session.adjourned_at = ended_at
     session.save(update_fields=["adjourned_at"])
     audit(actor, "session_adjourned", session)
     return session

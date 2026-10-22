@@ -1052,9 +1052,16 @@ def adjourn_session(request, session_id):
 
     data = body(request)
     adjourned = data.get("adjourned")
+    ended_at_text = data.get("ended_at")
     if not isinstance(adjourned, bool):
         raise ValidationError("Adjourned must be true or false.")
-    session = set_session_adjourned(request.user, session_id, adjourned)
+    if not isinstance(ended_at_text, str):
+        raise ValidationError("Session end time is required.")
+    try:
+        ended_at = datetime.fromisoformat(ended_at_text)
+    except ValueError as error:
+        raise ValidationError("Session end time must be a valid timestamp.") from error
+    session = set_session_adjourned(request.user, session_id, adjourned, ended_at)
     return JsonResponse(encoded(session, **session_data(session, request.user)))
 
 

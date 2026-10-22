@@ -376,8 +376,9 @@
       transferReasonRequired: "Enter a reason for this move.",
       transferRecorded: "The case was moved and the override was recorded.",
       noTransferSessions: "No other draft or in-session sessions are available.",
-      adjournSessionTitle: "Adjourn this tribunal session?",
-      adjournedSessionMessage: "This closes the session. It remains in Current view until midnight Los Angeles time.",
+      adjournSessionTitle: "Adjourn this tribunal session",
+      adjournedSessionMessage: "Record the time the session ended. It remains in Current view until midnight Los Angeles time.",
+      adjournEndTime: "Session end time",
       adjournSessionAction: "Adjourn session",
       addAssignmentCase: "Add a Case to Be Assigned",
       addHearingCase: "Add a Case to Hearings",
@@ -662,8 +663,9 @@
       transferReasonRequired: "أدخل سببًا لهذا النقل.",
       transferRecorded: "تم نقل القضية وتسجيل التجاوز.",
       noTransferSessions: "لا تتوفر جلسات مسودة أو قيد الانعقاد أخرى.",
-      adjournSessionTitle: "هل تريد تأجيل جلسة المجلس هذه؟",
-      adjournedSessionMessage: "سيؤدي هذا إلى إغلاق الجلسة. ستظل في العرض «الحالي» حتى منتصف الليل في لوس أنجلوس.",
+      adjournSessionTitle: "تأجيل جلسة المجلس",
+      adjournedSessionMessage: "سجّل وقت انتهاء الجلسة. ستظل في العرض «الحالي» حتى منتصف الليل في لوس أنجلوس.",
+      adjournEndTime: "وقت انتهاء الجلسة",
       adjournSessionAction: "تأجيل الجلسة",
       addAssignmentCase: "إضافة قضية للتعيين",
       addHearingCase: "إضافة قضية لجلسات النظر",
@@ -1405,6 +1407,7 @@
         columns: [
           { title: t("sessionDate"), field: "date", kind: "name", minWidth: "8rem" },
           { title: t("sessionTime"), field: "starts_at", minWidth: "8rem", render: (row) => formatTime(row.starts_at, lang) || t("timeNotRecorded") },
+          ...(mode === "archived" ? [{ title: t("adjournEndTime"), field: "adjourned_at", minWidth: "8rem", render: (row) => formatTime(row.adjourned_at, lang) || t("timeNotRecorded") }] : []),
           { title: t("statusLabel"), field: "state", minWidth: "8rem", render: (row) => t(row.state) },
         ],
       }),
@@ -1971,6 +1974,7 @@
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
+    const [adjournEnd, setAdjournEnd] = R.useState("");
 
     if (state.pending && !state.data) return loadingView(P, h, t);
     if (state.error) return loadFailure(P, h, t, retry, state.error);
@@ -2280,7 +2284,11 @@
                   onChange: (value) => {
                     if (value === "in-session" && session.state === "draft" && session.can_activate)
                       run(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/activate/`, { method: "POST", body: "{}" }), "sessionActivated", onChanged);
-                    if (value === "adjourned" && planned && manage) setDialog({ kind: "adjourn" });
+                    if (value === "adjourned" && planned && manage) {
+                      setFailure(null);
+                      setAdjournEnd("");
+                      setDialog({ kind: "adjourn" });
+                    }
                   },
                 }),
               ) : null,
@@ -2360,20 +2368,25 @@
             }),
           )
         : null,
-      h(P.ConfirmDialog, {
-        open: dialog?.kind === "adjourn",
-        title: t("adjournSessionTitle"),
-        message: t("adjournedSessionMessage"),
-        confirmLabel: t("adjournSessionAction"),
-        cancelLabel: t("cancel"),
-        destructive: true,
-        onConfirm: () => run(
-          () => api(`/api/sessions/${encodeURIComponent(sessionId)}/adjourn/`, { method: "POST", body: JSON.stringify({ adjourned: true }) }),
-          "hearingAdjournedNotice",
-          onChanged,
-        ),
-        onCancel: () => !pending && setDialog(null),
-      }),
+      dialog?.kind === "adjourn"
+        ? h(P.Dialog, { open: true, size: "sm", title: t("adjournSessionTitle"), onClose: () => !pending && setDialog(null) },
+            h(P.Stack, { gap: "md" },
+              h(P.Text, { variant: "secondary" }, t("adjournedSessionMessage")),
+              h(P.Field, { label: t("adjournEndTime"), required: true },
+                h(P.Input, { type: "time", value: adjournEnd, disabled: pending, onChange: (event) => setAdjournEnd(event.target.value) }),
+              ),
+              failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+              h(P.Inline, { justify: "end", gap: "sm" },
+                h(P.Button, { variant: "secondary", disabled: pending, onClick: () => setDialog(null) }, t("cancel")),
+                h(P.Button, { variant: "primary", disabled: pending || !adjournEnd, onClick: () => run(
+                  () => api(`/api/sessions/${encodeURIComponent(sessionId)}/adjourn/`, { method: "POST", body: JSON.stringify({ adjourned: true, ended_at: laIso(session.date, adjournEnd) }) }),
+                  "hearingAdjournedNotice",
+                  onChanged,
+                ) }, t("adjournSessionAction")),
+              ),
+            ),
+          )
+        : null,
       dialog?.kind === "place"
         ? h(
             P.Dialog,
