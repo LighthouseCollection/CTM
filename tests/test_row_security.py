@@ -64,6 +64,8 @@ def runtime():
             "ctm_library_readable(text,jsonb)",
             "ctm_library_writable(text,jsonb)",
             "ctm_assessment_release_metadata(uuid)",
+            "ctm_reference_readable(text,jsonb)",
+            "ctm_reference_writable(text,jsonb)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -662,7 +664,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0019_assessment_parent_guard")])
+        MigrationExecutor(connection).migrate([("tribunal", "0020_reference_privacy")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -832,7 +834,7 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 39
+        assert report["checks"]["forced_rls_table_count"] == 42
         assert "tribunal_reportrequest" in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
@@ -1232,3 +1234,44 @@ def test_assessment_parent_scope_is_enforced_for_raw_database_writes(runtime, re
     with runtime(people["admin"]):
         followup = create_request(people["admin"], app.proceeding_id, app.party_id, "psychological", "Permitted", [], parent_id=parent.pk)
         assert followup.parent_report_id == parent.pk
+
+
+def test_reference_rows_use_separate_questionnaire_question_and_settings_permissions(runtime, people):
+    from tribunal.models import SettingRevision, ReportQuestion
+    unpublished = QuestionnaireVersion.objects.create(purpose="petition", number=2, definition={})
+    question = ReportQuestion.objects.create(code="reference-private", version=1, category="test", wording_en="Question")
+    setting = SettingRevision.objects.create(key="tribunal_contact", number=1, value={"display": "Test contact"}, actor=people["admin"])
+    with runtime(people["applicant"]):
+        assert QuestionnaireVersion.objects.filter(published=True).count() == 3
+        assert not QuestionnaireVersion.objects.filter(pk=unpublished.pk).exists()
+        assert not ReportQuestion.objects.exists() and not SettingRevision.objects.exists()
+    with runtime(people["member"]):
+        assert ReportQuestion.objects.filter(pk=question.pk).exists()
+        assert not SettingRevision.objects.exists()
+        assert not QuestionnaireVersion.objects.filter(pk=unpublished.pk).exists()
+    with runtime(people["secretary"]):
+        assert SettingRevision.objects.filter(pk=setting.pk).exists()
+        assert QuestionnaireVersion.objects.filter(pk=unpublished.pk).exists()
+    with runtime():
+        assert not QuestionnaireVersion.objects.exists() and not ReportQuestion.objects.exists() and not SettingRevision.objects.exists()
+
+
+def test_reference_writes_reject_forged_actor_secret_payloads_and_retained_history_changes(runtime, people):
+    from tribunal.models import SettingRevision, ReportQuestion
+    from tribunal.services.configuration import save_setting
+    from django.db import DatabaseError
+    with runtime(people["secretary"]):
+        setting = save_setting(people["secretary"], "tribunal_contact", {"display": "Test contact"})
+    with pytest.raises(DatabaseError), runtime(people["member"]):
+        ReportQuestion.objects.create(code="forged-question", version=1, category="test", wording_en="Question")
+    with pytest.raises(DatabaseError), runtime(people["secretary"]):
+        SettingRevision.objects.create(key="tribunal_contact", number=2, value={}, actor=people["admin"])
+    with pytest.raises(DatabaseError), runtime(people["admin"]):
+        SettingRevision.objects.create(key="translation_routing", number=1,
+            value={"nested": [{"Client_Secret": "synthetic-rejected-value"}]}, actor=people["admin"])
+    with pytest.raises(DatabaseError), runtime(people["admin"]):
+        QuestionnaireVersion.objects.create(purpose="petition", number=2, published=True, definition={}, declaration_en="Test", declaration_ar="")
+    with runtime(people["secretary"]):
+        assert SettingRevision.objects.filter(pk=setting.pk).update(value={}) == 0
+        assert SettingRevision.objects.filter(pk=setting.pk).delete()[0] == 0
+        assert SettingRevision.objects.get(pk=setting.pk).value == {"display": "Test contact"}

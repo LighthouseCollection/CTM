@@ -279,3 +279,24 @@ closed F08 is made by the earlier test counts.
   consent-bearing cached hits/index suppression, POST-only request contract,
   raw parent/rebinding denials and migration rollback/reapply through 0019.
   Prior council head `e2f714a` passed both GitHub PostgreSQL checks.
+
+## Reference configuration PostgreSQL policies
+
+- Migration 0020 adds forced RLS to QuestionnaireVersion, ReportQuestion and
+  SettingRevision: **42 protected domain tables**. Active applicants can read
+  published questionnaires; council can read shared questions; settings and
+  unpublished questionnaire versions remain admin/secretary-only.
+- Runtime inserts require admin/secretary authority. Settings require the actual
+  context actor, an approved configuration key and recursively credential-free
+  JSON (including nested arrays and case-insensitive forbidden key names).
+  Published questionnaires require their approved-purpose shape and nonempty
+  English/Arabic declarations; this does not invent or publish institutional text.
+- All three sources retain their existing immutable-update guards, lack runtime
+  update/delete policies, and now reject retained-history deletion even by owner
+  SQL outside controlled migration rollback. No reference wording was changed.
+- Full isolated PostgreSQL suite: **292 passed, 1 skipped**; no model drift;
+  reversal/reapplication verified through 0020. Tests include missing/suspended
+  context, applicant/council/admin read separation, setting-author forgery,
+  nested credential payload denial and retained reference history.
+- F15/F12, remaining 18 domain-table policy reviews, full151-table reconciliation,
+  independent browser reacceptance and institutional/provider gates remain open.
