@@ -29,6 +29,7 @@ from tribunal.policy import active, administrator, staff, writer, open_proceedin
 from .common import audit, notify, notify_manager, lock_key
 from .closed_filings import pending_council_filings
 from tribunal.db.context import database_settings, database_actor
+from tribunal.validation import validate_json_value, revision_replay, UNBOUND_VERSION
 
 
 @transaction.atomic
@@ -75,7 +76,7 @@ def _assign_case(actor, case_id, member_id, president_id):
 
 
 @transaction.atomic
-def save_note(actor, proceeding_id, text, note_id=None):
+def save_note(actor, proceeding_id, text, note_id=None, *, expected_version=UNBOUND_VERSION):
     proceeding = (
         Proceeding.objects.select_for_update(of=("self",))
         .select_related("case")
@@ -83,8 +84,9 @@ def save_note(actor, proceeding_id, text, note_id=None):
     )
     writer(actor, proceeding.case)
     open_proceeding(proceeding)
-    if not text.strip():
-        raise ValidationError("Note cannot be empty.")
+    if not isinstance(text, str) or not text.strip() or len(text) > 100_000:
+        raise ValidationError("Note must be nonempty text up to100000 characters.")
+    validate_json_value(text)
     note = (
         CaseNote.objects.get(pk=note_id, proceeding=proceeding)
         if note_id
@@ -92,18 +94,21 @@ def save_note(actor, proceeding_id, text, note_id=None):
     )
     if note.author_id != actor.pk:
         raise PermissionDenied("Only the original author can edit a note.")
-    number = (
-        NoteRevision.objects.filter(note=note).aggregate(n=Max("number"))["n"] or 0
-    ) + 1
+    latest = NoteRevision.objects.filter(note=note).order_by("-number").first()
+    if revision_replay(latest, actor, expected_version, text=text):
+        note.saved_version = latest.number
+        return note
+    number = latest.number + 1 if latest else 1
     revision = NoteRevision.objects.create(
         note=note, number=number, text=text, actor=actor
     )
     audit(actor, "note_saved", revision, proceeding.case)
+    note.saved_version = revision.number
     return note
 
 
 @transaction.atomic
-def save_finding(actor, proceeding_id, fact_code, value, sources=None):
+def save_finding(actor, proceeding_id, fact_code, value, sources=None, *, expected_version=UNBOUND_VERSION):
     proceeding = (
         Proceeding.objects.select_for_update(of=("self",))
         .select_related("case")
@@ -111,22 +116,58 @@ def save_finding(actor, proceeding_id, fact_code, value, sources=None):
     )
     writer(actor, proceeding.case)
     open_proceeding(proceeding)
-    number = (
-        FindingRevision.objects.filter(
-            proceeding=proceeding, fact_code=fact_code
-        ).aggregate(n=Max("number"))["n"]
-        or 0
-    ) + 1
+    if not isinstance(fact_code, str) or not fact_code.strip() or len(fact_code)>100:
+        raise ValidationError("Provide a fact code of1–100 characters.")
+    validate_json_value({"fact_code": fact_code, "value": value})
+    sources = [] if sources is None else sources
+    validate_finding_sources(actor, proceeding, sources)
+    latest = FindingRevision.objects.filter(proceeding=proceeding, fact_code=fact_code).order_by("-number").first()
+    if revision_replay(latest, actor, expected_version, value=value, sources=sources):
+        return latest
+    number = latest.number + 1 if latest else 1
     revision = FindingRevision.objects.create(
         proceeding=proceeding,
         fact_code=fact_code,
         number=number,
         value=value,
-        sources=sources or [],
+        sources=sources,
         actor=actor,
     )
     audit(actor, "finding_saved", revision, proceeding.case)
     return revision
+
+
+def validate_finding_sources(actor, proceeding, sources):
+    import uuid
+    from tribunal.models import Report, FileVersion
+    from .files import authorized_file
+    from .reports import require_report_disclosure
+    if not isinstance(sources, list) or len(sources)>100:
+        raise ValidationError("Provide up to100 source citations as a list.")
+    validate_json_value(sources)
+    seen = set()
+    for source in sources:
+        if not isinstance(source, dict) or len(source)!=1:
+            raise ValidationError("Citations require one note_id, report_id or file_id.")
+        kind, value = next(iter(source.items()))
+        if kind not in {"note_id", "report_id", "file_id"} or not isinstance(value, str):
+            raise ValidationError("Unsupported citation identifier.")
+        try:
+            identifier = uuid.UUID(value)
+        except ValueError:
+            raise ValidationError("Invalid citation identifier.")
+        if (kind, identifier) in seen:
+            raise ValidationError("Source citations must be distinct.")
+        seen.add((kind, identifier))
+        if kind == "note_id":
+            CaseNote.objects.get(pk=identifier, proceeding=proceeding)
+        elif kind == "report_id":
+            report = Report.objects.select_related("request__subject__account").get(pk=identifier, request__proceeding=proceeding)
+            require_report_disclosure(report.request)
+        else:
+            file = authorized_file(actor, identifier)
+            if file.attachment.case_id != proceeding.case_id or file.attachment.proceeding_id != proceeding.pk:
+                raise PermissionDenied("Citation source belongs to another proceeding.")
 
 
 @transaction.atomic

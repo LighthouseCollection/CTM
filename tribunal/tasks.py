@@ -10,6 +10,7 @@ from tribunal.models import Outbox, Case
 from tribunal.services.common import lock_key
 import uuid
 from datetime import datetime
+from django.core.validators import validate_email
 
 DIGEST_KINDS = {"answer_changed", "file_uploaded", "appeal_added"}
 MANAGER_KINDS = DIGEST_KINDS | {
@@ -17,6 +18,15 @@ MANAGER_KINDS = DIGEST_KINDS | {
     "filing_withdrawn",
     "testimony_response",
     "applicant_message",
+}
+EMAIL_KINDS = MANAGER_KINDS | {
+    "assignment_changed", "decree_available", "case_reopened", "submission_received",
+    "intake_submitted", "closed_intake_submitted", "report_requested", "questionnaire_updated",
+    "paid_filing_review", "payment_finance_review", "manager_authority_review", "draft_expiring",
+    "message", "message_session", "testimony_invited", "testimony_rescheduled", "testimony_reminder",
+    "testimony_cancelled", "application_accepted", "application_returned", "petition_denied",
+    "decree_issued", "petitions_withdrawn", "appeal_accept", "appeal_decline",
+    "closed_intake_accept", "closed_intake_decline",
 }
 
 
@@ -30,14 +40,16 @@ class DeferredDelivery(Exception):
 
 
 @transaction.atomic
-def claim_delivery(identifier):
+def claim_delivery(identifier, limit=500):
+    if type(limit) is not int or not 1 <= limit <= 500:
+        raise ValueError("Claim limit must be an integer from1 to500")
     now = timezone.now()
     scope = Outbox.objects.filter(pk=identifier).values("case_id", "kind").first()
     if scope and scope["case_id"] and scope["kind"] in DIGEST_KINDS:
         lock_key(f"digest:{scope['case_id']}")
     available = Q(lease_until__isnull=True) | Q(lease_until__lte=now)
     event = (
-        Outbox.objects.select_for_update(of=("self",))
+        Outbox.objects.select_for_update(of=("self",), skip_locked=True)
         .filter(available, pk=identifier, delivered_at__isnull=True, discarded_at__isnull=True, due_at__lte=now)
         .first()
     )
@@ -46,7 +58,7 @@ def claim_delivery(identifier):
     ids = [event.pk]
     if event.kind in DIGEST_KINDS and event.case_id:
         ids = list(
-            Outbox.objects.select_for_update(of=("self",))
+            Outbox.objects.select_for_update(of=("self",), skip_locked=True)
             .filter(
                 available,
                 case_id=event.case_id,
@@ -55,8 +67,8 @@ def claim_delivery(identifier):
                 discarded_at__isnull=True,
                 due_at__lte=now,
             )
-            .order_by("created_at")
-            .values_list("pk", flat=True)
+            .order_by("due_at", "created_at", "id")
+            .values_list("pk", flat=True)[:limit]
         )
     Outbox.objects.filter(pk__in=ids).update(
         lease_until=now + timezone.timedelta(minutes=10), lease_token=uuid.uuid4()
@@ -66,6 +78,12 @@ def claim_delivery(identifier):
 
 def deliver(events):
     event = events[0]
+    if event.kind == "private_orphan_cleanup":
+        from tribunal.services.queue import cleanup_orphan
+        cleanup_orphan(event)
+        return
+    if event.kind not in EMAIL_KINDS | {"finalize_payment", "transcribe"}:
+        raise RuntimeError("Unsupported queue action requires review")
     if event.kind in DIGEST_KINDS and event.case_id:
         future = Outbox.objects.filter(case_id=event.case_id, kind__in=DIGEST_KINDS,
             delivered_at__isnull=True, discarded_at__isnull=True, due_at__gt=timezone.now()).order_by("-due_at").first()
@@ -149,8 +167,9 @@ def deliver(events):
         recipient = case.assigned_member
         if recipient and recipient.role == "applicant":
             raise RuntimeError("Current manager authority requires review")
-    if not recipient or not recipient.is_active:
+    if not recipient or not recipient.is_active or not recipient.email_verified:
         raise RuntimeError("Notification recipient requires review")
+    validate_email(recipient.email)
     if not settings.EMAIL_HOST:
         raise RuntimeError("Email provider not configured")
     message = "There is an update in your private CTM portal. Sign in at https://ctm.lighthouseway.org."
@@ -159,13 +178,15 @@ def deliver(events):
             f"{len(events)} updates were saved during the recent editing session. "
             + message
         )
-    EmailMessage(
+    accepted = EmailMessage(
         "CTM — portal update",
         message,
         settings.DEFAULT_FROM_EMAIL,
         [recipient.email],
         headers={"Message-ID": f"<ctm-{event.pk}@ctm.lighthouseway.org>"},
     ).send(fail_silently=False)
+    if type(accepted) is not int or accepted != 1:
+        raise RuntimeError("Email backend did not acknowledge delivery")
 
 
 @shared_task
@@ -173,13 +194,19 @@ def dispatch_outbox(limit=50):
     if type(limit) is not int or not 1 <= limit <= 500:
         raise ValueError("Delivery batch limit must be an integer from1 to500")
     delivered = 0
+    claimed = 0
+    now = timezone.now()
     ids = list(
-        Outbox.objects.filter(delivered_at__isnull=True, discarded_at__isnull=True, due_at__lte=timezone.now())
-        .order_by("created_at")
+        Outbox.objects.filter(Q(lease_until__isnull=True) | Q(lease_until__lte=now),
+            delivered_at__isnull=True, discarded_at__isnull=True, due_at__lte=now)
+        .order_by("due_at", "created_at", "id")
         .values_list("pk", flat=True)[:limit]
     )
     for identifier in ids:
-        events = claim_delivery(identifier)
+        if claimed >= limit:
+            break
+        events = claim_delivery(identifier, limit=limit-claimed)
+        claimed += len(events)
         if not events:
             continue
         visible = []

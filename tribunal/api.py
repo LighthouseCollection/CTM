@@ -87,6 +87,10 @@ def filing_version(data):
     return version
 
 
+def optional_version(data):
+    return {"expected_version": data["expected_version"]} if "expected_version" in data else {}
+
+
 def application_data(app, actor):
     from tribunal.services.filing_privacy import revision_visible
     from tribunal.services.closed_filings import CLOSED_INTAKE, require_new_information
@@ -1077,6 +1081,8 @@ def notes(request, proceeding_id):
     proceeding = m.Proceeding.objects.select_related("case").get(pk=proceeding_id)
     staff(request.user)
     if request.method == "GET":
+        from django.db.models import OuterRef, Exists
+        later = m.NoteRevision.objects.filter(note_id=OuterRef("note_id"), number__gt=OuterRef("number"))
         return JsonResponse(
             {
                 "items": [
@@ -1084,24 +1090,21 @@ def notes(request, proceeding_id):
                             author_id=str(x.note.author_id),
                             author=f"{x.note.author.first_name} {x.note.author.last_name}".strip(),
                             timestamp=x.created_at.isoformat(),
-                            can_edit=bool(x.note.author_id == request.user.pk
+                            current=not x.has_later,
+                            can_edit=bool(not x.has_later and x.note.author_id == request.user.pk
                                 and proceeding.status == "open" and proceeding.case.status == "open"
                                 and (request.user.role in {"admin", "secretary"} or proceeding.case.assigned_member_id == request.user.pk)))
                     for x in m.NoteRevision.objects.filter(
                         note__proceeding=proceeding
-                    ).select_related("note__author").order_by("created_at", "id")
+                    ).annotate(has_later=Exists(later)).select_related("note__author").order_by("created_at", "id")
                 ]
             }
         )
     from tribunal.services.council import save_note
 
     data = body(request)
-    return JsonResponse(
-        encoded(
-            save_note(request.user, proceeding_id, data["text"], data.get("note_id"))
-        ),
-        status=201,
-    )
+    row = save_note(request.user, proceeding_id, data["text"], data.get("note_id"), **optional_version(data))
+    return JsonResponse(encoded(row, version=row.saved_version), status=201)
 
 
 @endpoint(("GET", "POST"))
@@ -1111,9 +1114,12 @@ def decision(request, proceeding_id):
         from tribunal.projections import decision_data
 
         proceeding = m.Proceeding.objects.get(pk=proceeding_id)
-        return JsonResponse({"items": [decision_data(row, request.user)
-                             for row in m.DecisionRevision.objects.filter(proceeding=proceeding)
-                             .select_related("actor", "proceeding__case").order_by("-number")]})
+        rows = list(m.DecisionRevision.objects.filter(proceeding=proceeding).select_related("actor", "proceeding__case").order_by("-number"))
+        can_record = proceeding.status == "open" and proceeding.case.status == "open" and (
+            request.user.role in {"admin", "secretary"} or proceeding.case.assigned_member_id == request.user.pk)
+        return JsonResponse({"current_version": rows[0].number if rows else 0, "can_record": can_record,
+                             "items": [decision_data(row, request.user)
+                             for row in rows]})
     from tribunal.services.decisions import record_decision
 
     data = body(request)
@@ -1126,6 +1132,7 @@ def decision(request, proceeding_id):
                 data["grounds"],
                 data.get("entitlements", {}),
                 data.get("conditions", ""),
+                **optional_version(data),
             )
         ),
         status=201,
@@ -1139,7 +1146,7 @@ def vote(request, decision_id):
     data = body(request)
     return JsonResponse(
         encoded(
-            cast_vote(request.user, decision_id, data["choice"], data.get("member_id"))
+            cast_vote(request.user, decision_id, data["choice"], data.get("member_id"), idempotency_key=data.get("idempotency_key"))
         ),
         status=201,
     )
@@ -1808,6 +1815,7 @@ def finding(request, proceeding_id):
                 data["fact_code"],
                 data["value"],
                 data.get("sources"),
+                **optional_version(data),
             )
         ),
         status=201,
@@ -1819,17 +1827,41 @@ def historical_stage(request):
     from tribunal.services.historical import stage
 
     data = body(request)
-    return JsonResponse(
-        encoded(stage(request.user, data["payload"], data.get("workspace_id"))),
-        status=201,
-    )
+    row = stage(request.user, data["payload"], data.get("workspace_id"), **optional_version(data))
+    return JsonResponse(encoded(row, version=row.version), status=201)
+
+
+@endpoint()
+def historical_detail(request, workspace_id):
+    administrator(request.user)
+    if request.user.role != "admin":
+        raise PermissionDenied("Historical workspaces belong to their original administrator.")
+    row = m.HistoricalWorkspace.objects.get(pk=workspace_id, actor=request.user)
+    return JsonResponse(encoded(row, version=row.version, payload=row.payload,
+        finalized_case_id=str(row.finalized_case_id) if row.finalized_case_id else None))
+
+
+@endpoint()
+def delivery_status(request):
+    from tribunal.services.queue import queue_status
+    return JsonResponse(queue_status(request.user, state=request.GET.get("state"), offset=int(request.GET.get("offset", "0"))))
+
+
+@endpoint(("POST",))
+def delivery_retry(request, event_id):
+    from tribunal.services.queue import retry_delivery
+    try:
+        row = retry_delivery(request.user, event_id, body(request).get("expected_attempts"))
+    except VersionConflict as exc:
+        return JsonResponse({"error": "attempt_conflict", "current_attempts": exc.current_version}, status=409)
+    return JsonResponse(encoded(row, attempts=row.attempts, queued=True))
 
 
 @endpoint(("POST",))
 def historical_publish(request, workspace_id):
     from tribunal.services.historical import publish
 
-    case = publish(request.user, workspace_id)
+    case = publish(request.user, workspace_id, **optional_version(body(request)))
     return JsonResponse(encoded(case, number=case.number), status=201)
 
 

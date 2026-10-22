@@ -440,6 +440,7 @@ class HistoricalWorkspace(Root):
     actor = models.ForeignKey(Account, on_delete=models.PROTECT)
     payload = models.JSONField(default=dict)
     finalized_case = models.ForeignKey(Case, null=True, on_delete=models.PROTECT)
+    version = models.PositiveIntegerField(default=1)
 
 
 class CallRecord(Immutable):
@@ -702,6 +703,9 @@ class NoteRevision(Immutable):
     text = models.TextField()
     actor = models.ForeignKey(Account, on_delete=models.PROTECT)
 
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["note", "number"], name="note_revision_version")]
+
 
 class FindingRevision(Immutable):
     proceeding = models.ForeignKey(Proceeding, on_delete=models.PROTECT)
@@ -710,6 +714,9 @@ class FindingRevision(Immutable):
     value = models.JSONField(default=dict)
     sources = models.JSONField(default=list)
     actor = models.ForeignKey(Account, on_delete=models.PROTECT)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["proceeding", "fact_code", "number"], name="finding_revision_version")]
 
 
 class DecisionRevision(Immutable):
@@ -734,6 +741,10 @@ class Vote(Immutable):
     member = models.ForeignKey(Account, on_delete=models.PROTECT, related_name="votes")
     actor = models.ForeignKey(Account, on_delete=models.PROTECT)
     choice = models.CharField(max_length=10)
+    idempotency_key = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["decision", "member", "idempotency_key"], name="vote_replay_identity")]
 
 
 class PresidentialApproval(Immutable):

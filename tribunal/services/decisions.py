@@ -32,6 +32,7 @@ from .common import audit, lock_key, notify, notify_manager
 from .applications import safe_file
 from .closed_filings import CLOSED_INTAKE, council_filing, require_new_information
 from tribunal.db.context import database_actor, database_settings
+from tribunal.validation import validate_json_value, revision_replay, UNBOUND_VERSION
 
 DECISION_TYPES = {
     "diss-applicant",
@@ -62,17 +63,20 @@ def lock_decision(decision_id):
 
 
 @transaction.atomic
-def record_decision(actor, proceeding_id, type, grounds, entitlements, conditions=""):
+def record_decision(actor, proceeding_id, type, grounds, entitlements, conditions="", *, expected_version=UNBOUND_VERSION):
     proceeding = lock_proceeding(proceeding_id)
     writer(actor, proceeding.case)
     open_proceeding(proceeding)
-    if type not in DECISION_TYPES or not grounds.strip():
+    if (not isinstance(type, str) or type not in DECISION_TYPES
+            or not isinstance(grounds, str) or not grounds.strip() or len(grounds)>100_000
+            or not isinstance(conditions, str) or len(conditions)>100_000):
         raise ValidationError("Record the decision type and grounds/reason.")
+    validate_json_value({"grounds": grounds, "conditions": conditions, "entitlements": entitlements})
     parties = {str(x) for x in proceeding.case.parties.values_list("pk", flat=True)}
     if (
         not isinstance(entitlements, dict)
         or not set(entitlements) <= parties
-        or not set(entitlements.values()) <= {"certificate", "notice_only"}
+        or any(not isinstance(value, str) or value not in {"certificate", "notice_only"} for value in entitlements.values())
     ):
         raise ValidationError(
             "Decision entitlements must reference this case's parties."
@@ -83,12 +87,11 @@ def record_decision(actor, proceeding_id, type, grounds, entitlements, condition
         raise ValidationError("Declaration of Nullity entitles both parties.")
     if type.endswith("conditional") and not conditions.strip():
         raise ValidationError("State the parties and conditions explicitly.")
-    number = (
-        DecisionRevision.objects.filter(proceeding=proceeding).aggregate(
-            n=Max("number")
-        )["n"]
-        or 0
-    ) + 1
+    latest = DecisionRevision.objects.filter(proceeding=proceeding).order_by("-number").first()
+    if revision_replay(latest, actor, expected_version, type=type, grounds=grounds,
+                       entitlements=entitlements, conditions=conditions):
+        return latest
+    number = latest.number + 1 if latest else 1
     revision = DecisionRevision.objects.create(
         proceeding=proceeding,
         number=number,
@@ -110,7 +113,7 @@ def current_decision(decision):
 
 
 @transaction.atomic
-def cast_vote(actor, decision_id, choice, member_id=None):
+def cast_vote(actor, decision_id, choice, member_id=None, *, idempotency_key=None):
     staff(actor)
     decision = lock_decision(decision_id)
     open_proceeding(decision.proceeding)
@@ -119,10 +122,19 @@ def cast_vote(actor, decision_id, choice, member_id=None):
     staff(member)
     if member.pk != actor.pk:
         administrator(actor)
-    if choice not in {"approve", "deny", "abstain"}:
+    if not isinstance(choice, str) or choice not in {"approve", "deny", "abstain"}:
         raise ValidationError("Invalid vote.")
+    if idempotency_key is not None:
+        if not isinstance(idempotency_key, str) or not idempotency_key.strip() or len(idempotency_key)>100:
+            raise ValidationError("Provide a nonempty vote key up to100 characters.")
+        validate_json_value(idempotency_key)
+        previous = Vote.objects.filter(decision=decision, member=member, idempotency_key=idempotency_key).first()
+        if previous:
+            if previous.actor_id == actor.pk and previous.choice == choice:
+                return previous
+            raise ValidationError("Vote key already identifies a different choice or recorder.")
     vote = Vote.objects.create(
-        decision=decision, member=member, actor=actor, choice=choice
+        decision=decision, member=member, actor=actor, choice=choice, idempotency_key=idempotency_key
     )
     audit(actor, "vote_recorded", vote, decision.proceeding.case)
     return vote

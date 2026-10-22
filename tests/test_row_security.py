@@ -89,6 +89,7 @@ def runtime():
             "ctm_allocate_case_number(date)",
             "ctm_message_delivery_valid(uuid,uuid)",
             "ctm_draft_warning_current(uuid,timestamptz,uuid)",
+            "ctm_orphan_cleanup_allowed(text)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -165,6 +166,47 @@ def test_report_version_gate_and_closed_receipt_recovery_under_rls(runtime, read
         assert revise_report(people["admin"], report.pk, revision.answers, expected_version=1).pk == revision.pk
         with pytest.raises(ValidationError):
             revise_report(people["admin"], report.pk, {"answer": "New"}, expected_version=2)
+
+
+def test_council_compare_save_vote_replay_and_unique_versions_under_rls(runtime, ready_application, people):
+    from tribunal import models as m
+    from tribunal.services.council import save_note, save_finding
+    from tribunal.services.decisions import record_decision, cast_vote
+    from tribunal.validation import VersionConflict
+    from django.db import IntegrityError
+    submit_application(ready_application.owner, ready_application.pk, "runtime-council-versions", {"accepted": True, "name": "John Smith"})
+    ready_application.refresh_from_db()
+    with runtime(people["admin"]):
+        note = save_note(people["admin"], ready_application.proceeding_id, "Original", expected_version=0)
+        save_note(people["admin"], ready_application.proceeding_id, "Changed", note.pk, expected_version=1)
+        finding = save_finding(people["admin"], ready_application.proceeding_id, "fact", {"source": "Note"}, [{"note_id": str(note.pk)}], expected_version=0)
+        decision = record_decision(people["admin"], ready_application.proceeding_id, "deferred", "Reason", {}, expected_version=0)
+        vote = cast_vote(people["admin"], decision.pk, "approve", idempotency_key="runtime-vote")
+        assert cast_vote(people["admin"], decision.pk, "approve", idempotency_key="runtime-vote").pk == vote.pk
+        with pytest.raises(VersionConflict):
+            save_finding(people["admin"], ready_application.proceeding_id, "fact", {"changed": True}, expected_version=0)
+    for model, values in [(m.NoteRevision, {"note": note, "number": 1, "text": "Duplicate"}),
+                          (m.FindingRevision, {"proceeding_id": ready_application.proceeding_id, "fact_code": "fact", "number": 1, "value": {}})]:
+        with pytest.raises(IntegrityError):
+            with runtime(people["admin"]):
+                model.objects.create(actor=people["admin"], **values)
+
+
+def test_historical_workspace_monotonic_versions_under_rls(runtime, people):
+    from tribunal.services.historical import stage, publish
+    from django.db import DatabaseError
+    with runtime(people["admin"]):
+        workspace = stage(people["admin"], {"number": "RUNTIME-LEGACY", "status": "closed"})
+        workspace = stage(people["admin"], {"number": "RUNTIME-LEGACY", "status": "closed", "parties": []}, workspace.pk, expected_version=1)
+        assert workspace.version == 2
+    with pytest.raises(DatabaseError):
+        with runtime(people["admin"]):
+            HistoricalWorkspace.objects.filter(pk=workspace.pk).update(payload={})
+    with runtime(people["admin"]):
+        case = publish(people["admin"], workspace.pk, expected_version=2)
+        assert case.origin == "historical"
+    with runtime(people["secretary"]):
+        assert not HistoricalWorkspace.objects.filter(pk=workspace.pk).exists()
 
 
 def test_returned_filing_projection_with_non_owner_database_role(runtime, ready_application, people):
@@ -732,7 +774,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0032_notification_evidence")])
+        MigrationExecutor(connection).migrate([("tribunal", "0035_queue_source_and_cleanup_guards")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -905,6 +947,21 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert report["checks"]["forced_rls_table_count"] == 56
         assert "tribunal_reportrequest" not in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
+
+
+def test_cleanup_reference_check_sees_files_hidden_from_runtime_actor(runtime, ready_application, people, settings, tmp_path):
+    from tribunal.services.queue import enqueue_cleanup, cleanup_orphan
+    from tribunal.services.files import private_path, write_private_original
+    from tribunal.tasks import SupersededDelivery
+    settings.MEDIA_ROOT = tmp_path
+    file = ready_application.attachments.first().versions.first()
+    write_private_original(private_path(file.object_key), b"retained")
+    job = enqueue_cleanup(file.object_key)
+    with runtime(people["member"]):
+        assert not FileVersion.objects.filter(pk=file.pk).exists()
+        with pytest.raises(SupersededDelivery):
+            cleanup_orphan(job)
+    assert private_path(file.object_key).read_bytes() == b"retained"
 
 
 def test_restricted_role_checkout_response_can_bind_only_provider_reference(runtime, unpaid_application):
