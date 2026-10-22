@@ -232,3 +232,32 @@ access. Retained links must fail after revocation. Existing authorized_file chec
 latest recipient release, but transport/cache/revocation acceptance is not proven
 by the new UI fixtures. No replacement, signing or release write is exposed here.
 Refresh clears old links before fetching; failed/malformed reads clear them too.
+
+
+## Own tribunal requests: actual read, response/release dependencies
+
+GET `/api/cases/{id}/requests/` exists at backend f0e21b4. Applicant reads are
+subject-account filtered and exclude draft, interview and external-priest requests.
+The panel consumes `items` with UUID `id`, `title`, `kind`, `state`, `instructions`,
+`language` (`en`,`ar`,`both`), offset-aware `sent_at` and bound `questions` snapshots
+(`code`,`version`,`en`,`ar`). Only sent/completed/cancelled intake/medical/psychological
+rows are rendered; malformed projections clear prior content. Request language
+controls which supplied wording appears. No translation is generated or substituted.
+Instructions are shown as escaped plain text; council author/subject identifiers,
+internal observations and other applicant content are not requested by the UI.
+
+The existing POST `/api/requests/{id}/complete/` accepts `{answers,observations}`;
+applicants must not author observations. POST `/api/requests/{id}/release/` accepts
+`{file_id,scope}`. Neither is invoked by this read slice. The own read lacks explicit
+response/release capabilities, request/proceeding concurrency identity, approved
+release-definition read, existing signed scope and request-bound safe file listing.
+A request marked sent alone cannot authorize a write after closure/cancellation.
+
+Before response UI integration, backend should supply own `can_respond` and
+`can_sign_release`, bound question/release definition versions, signed declaration
+text and recipient/purpose scope, current own request-scoped safe originals and
+submission/recovery semantics. Preserve report and signed release as distinct
+artifacts. No consent inferred from report upload, no council signing on behalf of
+the subject and no institutional declaration wording invented. Follow-up requests
+stay linked new requests, not edits to previous reports. Real signed-scope byte,
+OCR/search and disclosure enforcement remain backend acceptance.

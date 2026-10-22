@@ -541,6 +541,21 @@ try:
         assert stranger.request.post(f"{BASE}/api/appointments/{invitation_id}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf}).status==403
         stranger.close()
         checks.append("Actual cancellation removes browser response actions; cancelled and outsider responses are denied by server")
+        def own_requests_fixture():
+            from django.utils import timezone
+            from tribunal.models import ReportRequest,Proceeding
+            proceeding=Proceeding.objects.filter(case_id=current["case_id"],status="open").first()
+            for kind,state,title in [("intake","sent","Own sent intake"),("medical","sent","Own assessment"),
+                                     ("intake","draft","Private staff draft"),("interview","sent","Private interview"),
+                                     ("external_priest","sent","Private external request")]:
+                ReportRequest.objects.create(case_id=current["case_id"],proceeding=proceeding,subject_id=party_id,
+                    author=admin,kind=kind,state=state,title=title,language="both",sent_at=timezone.now() if state=="sent" else None,
+                    instructions="Own private request instructions",questions=[{"code":"Q1","version":1,
+                        "en":"Own bound request question","ar":"سؤال خاص بالطلب"}] if kind=="intake" else [])
+        fixture_db(own_requests_fixture)  # Synthetic sent snapshots; not institution wording/send acceptance.
+        own_requests=context.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()["items"]
+        assert {row["title"] for row in own_requests}=={"Own sent intake","Own assessment"}
+        assert all("can_respond" not in row and "release_scope" not in row for row in own_requests)
         def closed_case_fixture():
             from tribunal.models import Case,Proceeding,OpenCaseClaim
             Case.objects.filter(pk=current["case_id"]).update(status="closed")
@@ -549,6 +564,13 @@ try:
         fixture_db(closed_case_fixture)  # Explicit closed-case setup, not decree/closure acceptance.
         page.get_by_role("navigation").get_by_role("button",name="Past cases",exact=True).click()
         page.get_by_text(current["case_number"],exact=True).click()
+        expect(page.get_by_text("Own sent intake",exact=True)).to_be_visible()
+        expect(page.get_by_text("Own bound request question",exact=True)).to_be_visible()
+        expect(page.get_by_text("Own assessment",exact=True)).to_be_visible()
+        assert page.get_by_text("Private staff draft",exact=True).count()==0
+        assert page.get_by_text("Private interview",exact=True).count()==0
+        assert page.get_by_text("Private external request",exact=True).count()==0
+        checks.append("Actual own request list renders bound questions and assessment instructions while excluding staff drafts/interviews/external requests")
         expect(page.get_by_role("button",name="Start or resume appeal",exact=True)).to_be_visible()
         expect(page.get_by_text("Released certificates are unavailable. Refresh or contact the tribunal.",exact=True)).to_be_visible()
         assert page.get_by_role("link",name="View or download signed PDF",exact=True).count()==0
@@ -606,6 +628,10 @@ try:
         sibling_page=sibling.new_page();sibling_page.on("pageerror",lambda error:errors.append(str(error)))
         sibling_page.goto(BASE,wait_until="networkidle")
         sibling_page.get_by_text(current["case_number"],exact=True).click()
+        assert sibling.request.get(f"{BASE}/api/cases/{current['case_id']}/requests/").json()=={"items":[]}
+        expect(sibling_page.get_by_text("No requests are currently listed for you.",exact=True)).to_be_visible()
+        assert sibling_page.get_by_text("Own sent intake",exact=True).count()==0
+        checks.append("Linked spouse cannot read another applicant's intake or assessment requests through own case request list")
         expect(sibling_page.get_by_role("button",name="Start or resume appeal",exact=True)).to_be_visible()
         sibling_page.get_by_role("button",name="Start or resume appeal",exact=True).click()
         expect(sibling_page.get_by_label("New information for consideration",exact=False)).to_be_visible()

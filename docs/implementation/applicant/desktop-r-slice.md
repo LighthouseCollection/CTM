@@ -140,3 +140,15 @@ PDF actions with Plenix controls. No filing-order or closed-case entitlement gue
 is made. Refresh clears stale links; denied or malformed responses show unavailable.
 The required own case release-list extension is not supplied by current backend.
 Fixture checks cover presentation only; server byte-route revocation remains pending.
+
+
+## Own request reader
+
+`applicant-requests.js` reads the actual private case request endpoint through the
+proposed shell integration. It shows sent request instructions and bound question
+wording, switches bilingual snapshots with locale, and clears stale content on
+failed/malformed refresh. Staff drafts, interviews and external requests are rejected
+by the client contract as well as filtered by the server. This read slice has no
+response editor, upload or consent checkbox: own action capabilities and approved
+signed-release/scope contracts remain pending. Intake responses and professional
+report/release submission are therefore not complete.

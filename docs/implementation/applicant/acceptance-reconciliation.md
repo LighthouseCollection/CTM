@@ -42,7 +42,7 @@ and index suppression, private intermediate corrections, and obsolete queued-ale
 discard with EmailMessage.send mocked and never called. Live search service, live
 mail delivery and PostgreSQL RLS remain separate acceptance surfaces.
 
-All29 real API/browser scenario groups pass in the default mode. An explicitly
+All31 real API/browser scenario groups pass in the default mode. An explicitly
 selected baseline-only mode (`CTM_APPLICANT_ACCEPTANCE=baseline`) omits this privacy
 scenario and is not full returned-privacy acceptance. No shared backend or protected
 specification changes are made in the applicant stream.
@@ -59,8 +59,16 @@ separate acceptance surfaces.
 
 
 Latest complete API/browser rerun: backend
-`f0e21b4e0b5c76f1e99a4135c3701ea3e39a74d3`, 29 scenario groups passed.
+`f0e21b4e0b5c76f1e99a4135c3701ea3e39a74d3`, 31 scenario groups passed.
 The added check verifies the missing own decree release-list projection cannot
 expose certificate links. Supplement/decree successful read/write flows remain
 proposed-contract fixtures; no real decree issuance/release/revocation acceptance.
 Earlier per-feature evidence and saved privacy artifact retain their recorded SHAs.
+
+
+Own request reading is integrated with the actual case request endpoint: bound
+question/instruction rendering and server exclusion of staff drafts/interviews/
+external requests pass. A linked spouse receives no other applicant requests.
+Request setup is an explicit synthetic sent-snapshot fixture, not published
+institution wording, notification/send or professional consent acceptance.
+Own response submission and signed professional release remain pending contracts.
