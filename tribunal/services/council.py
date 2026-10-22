@@ -214,6 +214,11 @@ def close_session(actor, session_id):
     )
     attendance = attendance_for(actor, session.pk)
     for item in session.agenda.select_for_update(of=("self",)).select_related("case"):
+        if item.part == 1 and item.state == "scheduled" and item.case.assigned_member_id:
+            item.state = "assigned"
+            item.save(update_fields=["state"])
+            audit(actor, "assignment_agenda_completed", item, item.case)
+            continue
         if item.state in {"scheduled", "time_exhausted"}:
             presenter = attendance.get(item.case.assigned_member_id)
             if item.part == 2 and presenter is not None and not presenter.present:
@@ -269,7 +274,7 @@ def hear_case(actor, item_id):
     item.case = Case.objects.select_for_update().get(pk=item.case_id)
     if item.case.assigned_member_id != actor.pk:
         raise PermissionDenied("Only the assigned member presents the hearing.")
-    if item.session.state == "closed" or item.state != "scheduled":
+    if item.part != 2 or item.session.state == "closed" or item.state != "scheduled":
         raise ValidationError("Agenda item cannot be heard.")
     proceeding = item.case.proceedings.select_for_update().filter(status="open").first()
     pending_appeal = item.case.applications.filter(
@@ -322,8 +327,12 @@ def save_hearing_outcome(
 ):
     hearing = Hearing.objects.select_related("agenda__case").get(pk=hearing_id)
     writer(actor, hearing.agenda.case)
+    if hearing.state != "held":
+        raise ValidationError("Hearing outcome requires a held hearing.")
     if hearing.proceeding:
         open_proceeding(hearing.proceeding)
+    elif not hearing.agenda.case.applications.filter(kind="appeal", status="submitted").exists():
+        raise ValidationError("Completed appeal hearing is read-only.")
     prior = HearingOutcome.objects.filter(hearing=hearing).exists()
     result = HearingOutcome.objects.create(
         hearing=hearing,

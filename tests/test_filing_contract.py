@@ -99,7 +99,8 @@ def test_owner_projection_does_not_expose_other_or_staff_drafts(client, ready_ap
     assert client.get(f"/api/applications/{app.pk}/").status_code == 403
     submit_application(app.owner, app.pk, "submitted", ATTESTATION)
     data = client.get(f"/api/applications/{app.pk}/").json()
-    assert "can_submit" not in data and "questionnaire" not in data
+    assert "can_submit" not in data and data["can_review"]
+    assert data["questionnaire"]["id"] == str(app.questionnaire_id)
 
 
 @pytest.mark.parametrize("value", [None, True, -1, "1", 1.0])

@@ -164,6 +164,10 @@ def application_data(app, actor):
                 else ""
             ),
         )
+    else:
+        from tribunal.projections import staff_application_data
+
+        result.update(staff_application_data(app, actor))
     return result
 
 
@@ -223,11 +227,16 @@ def session(request):
 @endpoint(("GET", "POST"))
 def applications(request):
     if request.method == "GET":
+        qs = visible_applications(request.user)
+        if request.GET.get("state") == "awaiting_review":
+            if request.user.role == "applicant":
+                raise PermissionDenied("Council completeness queue required.")
+            qs = qs.filter(kind="petition", status="submitted")
         return JsonResponse(
             {
                 "items": [
                     application_data(x, request.user)
-                    for x in visible_applications(request.user)[:100]
+                    for x in qs.order_by("created_at", "pk")[:100]
                 ]
             }
         )
@@ -394,6 +403,7 @@ def cases(request):
 
 @endpoint()
 def case_detail(request, case_id):
+    from tribunal.projections import case_capabilities
     case = case_for(request.user, case_id)
     parties = case.parties.all()
     return JsonResponse(
@@ -401,6 +411,7 @@ def case_detail(request, case_id):
             case,
             number=case.number,
             status=case.status,
+            **case_capabilities(case, request.user),
             can_message=request.user.role in {"applicant", "admin", "secretary"}
             or case.assigned_member_id == request.user.pk,
             parties=[
@@ -442,7 +453,8 @@ def members(request):
     return JsonResponse(
         {
             "items": [
-                encoded(x, name=f"{x.first_name} {x.last_name}".strip(), role=x.role)
+                encoded(x, name=f"{x.first_name} {x.last_name}".strip(), role=x.role,
+                        president=x.role == "president", active=x.is_active)
                 for x in m.Account.objects.filter(is_active=True).exclude(
                     role="applicant"
                 )
@@ -497,6 +509,8 @@ def sessions(request):
 
 @endpoint(("GET", "POST"))
 def agenda(request, session_id):
+    from tribunal.projections import agenda_item_data
+    from tribunal.services.council import attendance_for
     staff(request.user)
     if request.method == "GET":
         session = m.CouncilSession.objects.get(pk=session_id)
@@ -506,19 +520,15 @@ def agenda(request, session_id):
                     session,
                     date=session.date.isoformat(),
                     state=session.state,
+                    can_manage=request.user.role in {"admin", "secretary"} and session.state == "planned",
+                    can_close=request.user.role in {"admin", "secretary"} and session.state == "planned",
                     can_record_attendance=request.user.role in {"admin", "secretary"}
                     and session.state == "planned",
                 ),
                 "items": [
-                    encoded(
-                        x,
-                        case_id=str(x.case_id),
-                        case_number=x.case.number,
-                        part=x.part,
-                        state=x.state,
-                    )
+                    agenda_item_data(x, request.user, attendance_for(request.user, session.pk))
                     for x in m.AgendaItem.objects.filter(session_id=session_id)
-                    .select_related("case")
+                    .select_related("case__assigned_member", "session")
                     .order_by("part", "position")
                 ],
             }
@@ -689,6 +699,15 @@ def upload(request):
     )
 
 
+@endpoint()
+def application_files(request, app_id):
+    from tribunal.services.files import application_file_listing
+
+    if request.GET.get("history"):
+        raise PermissionDenied("Applicant file history is not available.")
+    return JsonResponse(application_file_listing(request.user, app_id))
+
+
 @endpoint(("GET", "HEAD"))
 def download(request, file_id):
     from tribunal.file_delivery import deliver_file
@@ -698,6 +717,8 @@ def download(request, file_id):
 
 @endpoint()
 def report_questions(request):
+    from tribunal.projections import question_taxonomy
+
     staff(request.user)
     return JsonResponse(
         {
@@ -707,6 +728,7 @@ def report_questions(request):
                     code=x.code,
                     version=x.version,
                     category=x.category,
+                    **question_taxonomy().get(x.code, {"category_id": None, "category_ar": None, "topic_groups": []}),
                     wording_en=x.wording_en,
                     wording_ar=x.wording_ar,
                     foundational=x.foundational,
@@ -741,6 +763,13 @@ def report_requests(request, case_id):
                         state=x.state,
                         questions=x.questions,
                         instructions=x.instructions,
+                        subject_party_id=str(x.subject_id),
+                        subject_name=x.subject.name,
+                        language=x.language,
+                        created_at=x.created_at.isoformat(),
+                        sent_at=x.sent_at.isoformat() if x.sent_at else None,
+                        parent_report_id=str(x.parent_report_id) if x.parent_report_id else None,
+                        author=f"{x.author.first_name} {x.author.last_name}".strip(),
                     )
                     for x in qs.order_by("-created_at")
                 ]
@@ -885,8 +914,16 @@ def notes(request, proceeding_id):
     )
 
 
-@endpoint(("POST",))
+@endpoint(("GET", "POST"))
 def decision(request, proceeding_id):
+    staff(request.user)
+    if request.method == "GET":
+        from tribunal.projections import decision_data
+
+        proceeding = m.Proceeding.objects.get(pk=proceeding_id)
+        return JsonResponse({"items": [decision_data(row, request.user)
+                             for row in m.DecisionRevision.objects.filter(proceeding=proceeding)
+                             .select_related("actor", "proceeding__case").order_by("-number")]})
     from tribunal.services.decisions import record_decision
 
     data = body(request)
@@ -1313,6 +1350,15 @@ def signature(request, file_id):
         ),
         status=201,
     )
+
+
+@endpoint()
+def hearing_detail(request, hearing_id):
+    from tribunal.projections import hearing_data
+
+    staff(request.user)
+    hearing = m.Hearing.objects.select_related("agenda__case", "proceeding").get(pk=hearing_id)
+    return JsonResponse(hearing_data(hearing, request.user))
 
 
 @endpoint(("POST",))

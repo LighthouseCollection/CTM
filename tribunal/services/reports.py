@@ -121,6 +121,10 @@ def send_request(actor, request_id, external_name="", external_email=""):
     open_proceeding(request.proceeding)
     if request.state not in {"draft", "sent"}:
         raise ValidationError("Completed/cancelled request cannot be sent.")
+    for question in request.questions:
+        for language in (["en", "ar"] if request.language == "both" else [request.language]):
+            if not str(question.get(language, "")).strip():
+                raise ValidationError("Approved question wording is missing for the selected language.")
     request.state = "sent"
     request.sent_at = timezone.now()
     token = None
@@ -130,10 +134,10 @@ def send_request(actor, request_id, external_name="", external_email=""):
         request.expires_at = timezone.now() + timezone.timedelta(days=30)
         request.external_name = external_name
         request.external_email = external_email
-    elif not request.subject.account:
+    elif request.kind != "interview" and not request.subject.account:
         raise ValidationError("Applicant must register before receiving this request.")
     request.save()
-    if request.subject.account and request.kind != "external_priest":
+    if request.subject.account and request.kind not in {"external_priest", "interview"}:
         notify(request.subject.account, "report_requested", request, case=request.case)
     # Plain external capability is returned once to the authorized issuer, never stored in audit.
     audit(actor, "report_request_sent", request, request.case)
@@ -187,6 +191,8 @@ def complete_request(actor, request_id, answers, observations="", completion_dat
     if request.state != "sent" or request.kind == "external_priest":
         raise ValidationError("Request is not awaiting this response.")
     if actor.role == "applicant":
+        if request.kind == "interview":
+            raise PermissionDenied("Council records an in-person interview.")
         if request.subject.account_id != actor.pk:
             raise PermissionDenied("Not your request.")
         if observations:

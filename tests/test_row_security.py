@@ -48,6 +48,9 @@ def runtime():
             "ctm_council_visible()",
             "ctm_council_writable(text,jsonb,text)",
             "ctm_council_mutable(text,jsonb)",
+            "ctm_decision_readable(text,jsonb)",
+            "ctm_decision_writable(text,jsonb)",
+            "ctm_decree_writable(jsonb)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -646,12 +649,94 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0012_council_privacy")])
+        MigrationExecutor(connection).migrate([("tribunal", "0013_decision_privacy")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
         )
         assert cursor.fetchone()[0] == 1
+
+
+def test_pending_application_files_under_runtime_role(runtime, ready_application):
+    from tribunal.services.files import application_file_listing
+
+    app = ready_application
+    file = app.attachments.get(category="MC").versions.first()
+    FileTechnicalEvent.objects.create(file=file, task="scan", result="pending")
+    with runtime(app.owner):
+        data = application_file_listing(app.owner, app.pk)
+        row = next(x for x in data["items"] if x["category"] == "MC")
+        assert row["scan_state"] == "pending" and "download_url" not in row
+        assert data["can_upload"]
+
+
+def test_decision_policies_allow_self_vote_and_block_forgery(runtime, ready_application, people):
+    from django.db import DatabaseError
+    from tribunal.models import DecisionRevision, Vote, PresidentialApproval
+    from tribunal.services.decisions import record_decision, cast_vote, approve_decision
+    from tribunal.services.council import assign_case
+
+    app = ready_application
+    submit_application(app.owner, app.pk, "decision-rls", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    assign_case(people["admin"], app.case_id, people["member"].pk, people["president"].pk)
+    with runtime(people["member"]):
+        first = record_decision(people["member"], app.proceeding_id, "diss-both", "Grounds", {})
+        cast_vote(people["member"], first.pk, "approve")
+    with runtime(people["president"]):
+        cast_vote(people["president"], first.pk, "abstain")
+        approve_decision(people["president"], first.pk)
+    with runtime(app.owner):
+        assert not DecisionRevision.objects.exists() and not Vote.objects.exists()
+        assert not PresidentialApproval.objects.exists()
+    with pytest.raises(DatabaseError), runtime(people["member"]):
+        Vote.objects.create(decision=first, member=people["president"], actor=people["member"], choice="approve")
+    with pytest.raises(DatabaseError), runtime(people["member"]):
+        PresidentialApproval.objects.create(decision=first, president=people["president"], actor=people["member"])
+    with runtime(people["admin"]):
+        second = record_decision(people["admin"], app.proceeding_id, "deferred", "New inquiry", {})
+        assert second.number == 2
+    with pytest.raises(DatabaseError), runtime(people["member"]):
+        Vote.objects.create(decision=first, member=people["member"], actor=people["member"], choice="deny")
+    with runtime():
+        assert not DecisionRevision.objects.exists()
+
+
+def test_decree_policies_require_signature_and_exact_release(runtime, ready_application, people):
+    from django.db import DatabaseError
+    from django.utils import timezone
+    from tribunal.models import Decree, DecreeRelease
+    from tribunal.services.decisions import record_decision, approve_decision, attest_signature, issue_decree, release_decree
+
+    app = ready_application
+    submit_application(app.owner, app.pk, "decree-rls", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    decision = record_decision(people["admin"], app.proceeding_id, "diss-applicant", "Grounds", {str(app.party_id): "certificate"})
+    approve_decision(people["president"], decision.pk)
+    attachment = Attachment.objects.create(case=app.case, proceeding=app.proceeding, category="DEC", visibility="council")
+    file = FileVersion.objects.create(attachment=attachment, number=1, object_key="rls/signed.pdf",
+        original_name="signed.pdf", display_name="signed.pdf", mime_type="application/pdf",
+        byte_count=5, sha256="d"*64, actor=people["admin"])
+    FileTechnicalEvent.objects.create(file=file, task="scan", result="clean")
+    with pytest.raises(DatabaseError), runtime(people["admin"]):
+        Decree.objects.create(decision=decision, reference="forged", language="en", signed_file=file,
+            signer=people["president"], issued_at=timezone.now())
+    with runtime(people["president"]):
+        attest_signature(people["president"], file.pk, people["president"].pk, "signed_scan", {"confirmed_signed": True})
+    with runtime(people["admin"]):
+        decree = issue_decree(people["admin"], decision.pk, file.pk, people["president"].pk)
+    with runtime(app.owner):
+        assert not Decree.objects.exists() and not FileVersion.objects.filter(pk=file.pk).exists()
+    with runtime(people["secretary"]):
+        release_decree(people["secretary"], decree.pk, app.party_id)
+    with runtime(app.owner):
+        assert Decree.objects.get().pk == decree.pk
+        assert DecreeRelease.objects.count() == 1
+        assert FileVersion.objects.filter(pk=file.pk).exists()
+    with runtime(people["secretary"]):
+        release_decree(people["secretary"], decree.pk, app.party_id, "withdraw")
+    with runtime(app.owner):
+        assert not Decree.objects.exists() and not FileVersion.objects.filter(pk=file.pk).exists()
 
 
 @pytest.fixture

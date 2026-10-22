@@ -160,8 +160,48 @@ def allocate_case_number(at=None):
 
 
 def safe_file(file):
-    result = file.technical_events.filter(task="scan").order_by("-created_at").first()
+    result = file.technical_events.filter(task="scan").order_by("-created_at", "-id").first()
     return result is not None and result.result == "clean"
+
+
+DOCUMENT_LABELS = {
+    "MC": ("Marriage certificate", "شهادة الزواج"),
+    "CMC": ("Church marriage certificate", "شهادة الزواج الكنسي"),
+    "CDD": ("Final civil divorce decree", "حكم الطلاق المدني النهائي"),
+    "PHOTO": ("Applicant photo", "صورة مقدم الطلب"),
+    "SPOUSE_PHOTO": ("Spouse photo, if available", "صورة الزوج أو الزوجة إن توفرت"),
+    "PET": ("Petition statement", "بيان الالتماس"),
+    "RO": ("Restraining order copy", "نسخة من أمر الحماية"),
+}
+
+
+def document_requirements(app, answers):
+    required = {"MC", "CDD", "PHOTO"} if app.kind == "petition" else set()
+    if app.kind == "petition":
+        required |= set(app.questionnaire.definition.get("required_document_categories", []))
+    statement = answers.get("statement")
+    if not isinstance(statement, str) or not statement.strip():
+        required.add("PET")
+    categories = list(DOCUMENT_LABELS)[:-1] if app.kind == "petition" else ["PET"]
+    categories += sorted(required - set(categories))
+    requirements = [
+        {"category": category, "context": "", "label_en": DOCUMENT_LABELS.get(category, (category, ""))[0],
+         "label_ar": DOCUMENT_LABELS.get(category, (category, ""))[1], "required": category in required}
+        for category in categories
+    ]
+    orders = answers.get("restraining_orders", [])
+    if not isinstance(orders, list):
+        raise ValidationError("Restraining orders must be a list.")
+    seen = set()
+    for order in orders:
+        context = order.get("id") if isinstance(order, dict) else None
+        if not isinstance(context, str) or not context.strip() or len(context) > 150 or context in seen:
+            raise ValidationError("Every restraining order requires its own saved identifier.")
+        seen.add(context)
+        requirements.append({"category": "RO", "context": context,
+                             "label_en": DOCUMENT_LABELS["RO"][0],
+                             "label_ar": DOCUMENT_LABELS["RO"][1], "required": True})
+    return requirements
 
 
 def required_documents(app, answers):
@@ -173,22 +213,12 @@ def required_documents(app, answers):
 
             validate_category(attachment.category, file.mime_type)
             current.append(file)
-    categories = {f.attachment.category for f in current}
-    required = {"MC", "CDD", "PHOTO"}
-    # CMC is independently required if the published questionnaire defines it.
-    required |= set(
-        app.questionnaire.definition.get("required_document_categories", [])
-    )
-    if app.kind == "appeal":
-        required = set()
-    if not required <= categories:
-        raise ValidationError(
-            f"Required documents missing: {', '.join(sorted(required - categories))}"
-        )
-    raw_statement = answers.get("statement")
-    statement = raw_statement.strip() if isinstance(raw_statement, str) else ""
-    if not statement and "PET" not in categories:
-        raise ValidationError("A petition statement or PDF/Word statement is required.")
+    for requirement in document_requirements(app, answers):
+        if requirement["required"] and not any(
+            file.attachment.category == requirement["category"]
+            and file.attachment.context == requirement["context"] for file in current
+        ):
+            raise ValidationError(f"Required document missing: {requirement['category']}")
     for order in answers.get("restraining_orders", []):
         if not all(
             str(order.get(k, "")).strip() and str(order[k]).lower() != "unknown"
@@ -435,6 +465,9 @@ def review_application(actor, app_id, result, instructions=""):
     app = Application.objects.select_for_update(of=("self",)).get(pk=app_id)
     if app.kind != "petition" or app.status != "submitted":
         raise ValidationError("No petition is awaiting completeness review.")
+    if not app.proceeding:
+        raise ValidationError("Proceeding missing.")
+    open_proceeding(app.proceeding)
     if result not in {"accept", "reject"} or (
         result == "reject" and not instructions.strip()
     ):

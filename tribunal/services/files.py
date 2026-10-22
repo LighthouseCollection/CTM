@@ -184,6 +184,15 @@ def upload(
         )
     elif app_id:
         app = application_for(actor, app_id)
+        from tribunal.models import Application, Case
+
+        if app.owner_id == actor.pk or actor.role in {"admin", "secretary"}:
+            app = Application.objects.select_for_update(of=("self",)).get(pk=app.pk)
+        if app.case_id:
+            # Managers may correct files without permission to UPDATE the application.
+            # Case locking serializes those corrections with closure and reassignment.
+            Case.objects.select_for_update(of=("self",)).get(pk=app.case_id)
+            app = Application.objects.get(pk=app.pk)
         if app.owner_id != actor.pk:
             writer(actor, app.case)
         case = app.case
@@ -195,6 +204,8 @@ def upload(
         if app.kind == "appeal" and app.status not in {"draft", "submitted"}:
             raise ValidationError("Appeal is not pending.")
         owner = app.owner
+        if actor.role == "applicant" and visibility != "own":
+            raise PermissionDenied("Application documents must use ordinary owner visibility.")
     else:
         case = case_for(actor, case_id, write=True)
         if case.status != "open":
@@ -221,6 +232,8 @@ def upload(
             attachment.application_id != (app.pk if app else None)
             or attachment.case_id != (case.pk if case else None)
             or attachment.category != category
+            or attachment.context != context
+            or attachment.visibility != visibility
             or attachment.report_request_id != (request.pk if request else None)
         ):
             raise PermissionDenied("Replacement belongs to a different context.")
@@ -271,6 +284,40 @@ def upload(
     if app and app.submitted_at and actor.pk == app.owner_id:
         notify_manager(case, "file_uploaded", file, digest=True)
     return file
+
+
+def application_file_listing(actor, app_id):
+    """Owner-only current ordinary originals, including honest pending scan state."""
+    from .applications import document_requirements
+
+    app = application_for(actor, app_id)
+    if actor.role != "applicant" or app.owner_id != actor.pk:
+        raise PermissionDenied("Only the filing applicant can list draft documents.")
+    can_upload = app.status not in {"withdrawn", "expired", "deleted", "declined"}
+    if app.kind == "appeal":
+        can_upload = can_upload and app.status in {"draft", "submitted"}
+    elif app.submitted_at:
+        can_upload = bool(can_upload and app.proceeding and app.proceeding.status == "open"
+                          and app.case.status == "open")
+    items = []
+    for attachment in app.attachments.filter(
+        owner=actor, visibility="own", report_request__isnull=True
+    ).order_by("created_at", "pk"):
+        file = attachment.versions.order_by("-number").first()
+        if not file or Decree.objects.filter(signed_file=file).exists():
+            continue
+        event = file.technical_events.filter(task="scan").order_by("-created_at", "-id").first()
+        state = event.result if event and event.result in {"clean", "pending", "rejected"} else "pending"
+        item = {"id": str(file.pk), "attachment_id": str(attachment.pk),
+                "category": attachment.category, "context": attachment.context,
+                "name": display_filename(file), "scan_state": state}
+        if state == "clean":
+            authorized_file(actor, file.pk)
+            item["download_url"] = f"/api/files/{file.pk}/"
+        items.append(item)
+    revision = app.revisions.filter(number=app.current_version).first()
+    return {"can_upload": can_upload, "items": items,
+            "requirements": document_requirements(app, revision.answers if revision else {})}
 
 
 def authorized_file(actor, file_id):
