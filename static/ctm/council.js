@@ -9,6 +9,13 @@
 
   // ---------- Pure logic (unit tested in tests/frontend/council.test.cjs) ----------
 
+  // Unicode first-strong isolate: keeps names, case numbers, references and emails
+  // in their own direction inside Arabic (RTL) sentences (F34). Invisible.
+  function isolate(value) {
+    const text = value === null || value === undefined ? "" : String(value);
+    return text ? `\u2068${text}\u2069` : text;
+  }
+
   function canManage(user) {
     return Boolean(user && user.portal === "council" && ADMIN_ROLES.has(user.role));
   }
@@ -36,6 +43,24 @@
     return DATE.test(date || "") ? `CS${date.replace(/-/g, "")}` : null;
   }
 
+  function todayInLosAngeles(now = new Date()) {
+    const p = Object.fromEntries(
+      new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", year: "numeric", month: "2-digit", day: "2-digit" })
+        .formatToParts(now)
+        .map((x) => [x.type, x.value]),
+    );
+    return `${p.year}-${p.month}-${p.day}`;
+  }
+
+  // Upcoming = planned sessions from today (Los Angeles), soonest first. Everything
+  // else (closed, or planned in the past and not yet closed) is listed after.
+  function splitSessions(rows, today) {
+    const upcoming = (rows || []).filter((s) => s.state === "planned" && s.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+    const ids = new Set(upcoming.map((s) => s.id));
+    const past = (rows || []).filter((s) => !ids.has(s.id)).sort((a, b) => b.date.localeCompare(a.date));
+    return { upcoming, past };
+  }
+
   function sessionDateProblem(value, existing) {
     if (!DATE.test(value || "")) return "dateRequired";
     const parsed = new Date(`${value}T00:00:00Z`);
@@ -54,7 +79,7 @@
     const prefix = t ? t("caseHearingOf") : "Case Hearing of";
     const vs = t ? t("versus") : "vs.";
     const on = t ? t("onSession") : "on";
-    return `${prefix} ${first} ${vs} ${second} ${on} ${sessionLabel(date, t)}`;
+    return `${prefix} ${isolate(first)} ${vs} ${isolate(second)} ${on} ${sessionLabel(date, t)}`;
   }
 
   // Part 1: accepted open cases still awaiting a case manager, not yet on this agenda.
@@ -321,6 +346,9 @@
       sessionClosed: "The council session was closed.",
       closedReadOnly: "This session is closed and read-only.",
       unknownParty: "Unknown spouse",
+      upcomingSessions: "Upcoming sessions",
+      pastSessions: "Past sessions",
+      awaitingClose: "Planned date has passed — not yet closed",
       rescheduleAction: "Reschedule session",
       rescheduleTitle: "Reschedule this council session",
       rescheduleHelp: "Moves this planned session and its agenda to a new date. Each testimony invitation needs a new time; applicants receive a new invitation version to confirm or reject. The original session is removed from the list; its history is kept with each case.",
@@ -534,6 +562,9 @@
       sessionClosed: "تم إغلاق جلسة المجلس.",
       closedReadOnly: "هذه الجلسة مغلقة ومتاحة للقراءة فقط.",
       unknownParty: "زوج غير معروف",
+      upcomingSessions: "الجلسات القادمة",
+      pastSessions: "الجلسات السابقة",
+      awaitingClose: "انقضى الموعد المحدد — لم تُغلق بعد",
       rescheduleAction: "إعادة جدولة الجلسة",
       rescheduleTitle: "إعادة جدولة جلسة المجلس هذه",
       rescheduleHelp: "تنقل هذه الجلسة المجدولة وجدول أعمالها إلى تاريخ جديد. وتحتاج كل دعوة للإدلاء بالشهادة إلى موعد جديد؛ ويتلقى مقدمو الطلبات إصدارًا جديدًا من الدعوة لتأكيده أو رفضه. وتُحذف الجلسة الأصلية من القائمة مع الاحتفاظ بسجلها في كل قضية.",
@@ -691,7 +722,7 @@
     }).format(d);
   }
   const reviewMeta = (row, t, lang) =>
-    [row.applicant_name, row.submitted_at ? formatWhen(row.submitted_at, lang) : null, `${t("fee")}: ${feeLabel(row, t)}`]
+    [isolate(row.applicant_name), row.submitted_at ? formatWhen(row.submitted_at, lang) : null, `${t("fee")}: ${feeLabel(row, t)}`]
       .filter(Boolean)
       .join(" · ");
 
@@ -1005,6 +1036,8 @@
     const [failure, setFailure] = R.useState(null);
     const [created, setCreated] = R.useState(false);
     const rows = state.data?.items || [];
+    const today = todayInLosAngeles();
+    const groups = splitSessions(rows, today);
 
     async function create(event) {
       event.preventDefault();
@@ -1068,15 +1101,27 @@
           : rows.length
             ? h(
                 P.Stack,
-                { gap: "sm" },
-                ...rows.map((row) =>
-                  h(P.Card, {
-                    key: row.id,
-                    title: sessionLabel(row.date, t),
-                    meta: `${t(row.state)} · ${row.reference || sessionReference(row.date) || ""}`,
-                    onOpen: () => onOpen(row.id),
-                  }),
-                ),
+                { gap: "lg" },
+                ...[["upcomingSessions", groups.upcoming], ["pastSessions", groups.past]]
+                  .filter(([, list]) => list.length)
+                  .map(([key, list]) =>
+                    h(
+                      P.Panel,
+                      { key, title: t(key) },
+                      h(
+                        P.Stack,
+                        { gap: "sm" },
+                        ...list.map((row) =>
+                          h(P.Card, {
+                            key: row.id,
+                            title: sessionLabel(row.date, t),
+                            meta: `${t(row.state === "planned" && row.date < today ? "awaitingClose" : row.state)} · ${isolate(row.reference || sessionReference(row.date) || "")}`,
+                            onOpen: () => onOpen(row.id),
+                          }),
+                        ),
+                      ),
+                    ),
+                  ),
               )
             : h(P.EmptyState, { title: t("noSessions") }),
     );
@@ -1110,7 +1155,7 @@
       P.Card,
       {
         title: titled ? hearingTitle(row.party_names, session.date, t) : row.case_number,
-        meta: [titled ? row.case_number : null, `${t("assigned")}: ${assignedName || t("unassigned")}`].filter(Boolean).join(" · "),
+        meta: [titled ? isolate(row.case_number) : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`].filter(Boolean).join(" · "),
         actions: h(P.Inline, { gap: "xs", wrap: true }, ...actions),
       },
       h(
@@ -2222,11 +2267,14 @@
     words,
     translator,
     canManage,
+    isolate,
     awaitingReview,
     reviewProblem,
     sessionLabel,
     sessionReference,
     sessionDateProblem,
+    todayInLosAngeles,
+    splitSessions,
     hearingTitle,
     part1Candidates,
     part2Candidates,

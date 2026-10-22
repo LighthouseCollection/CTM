@@ -323,7 +323,7 @@ function api(req, res, url, body) {
   if (p === "/api/dashboard/")
     return json(res, 200, {
       my_cases: state.cases.filter((c) => c.status === "open" && c.assigned === me().id).length,
-      review_queue: admin() ? state.applications.filter((a) => a.kind === "petition" && a.status === "submitted").length : null,
+      review_queue: admin() ? state.applications.filter((a) => a.kind === "petition" && a.status === "submitted" && a.origin !== "closed_case_intake").length : null,
       upcoming_sessions: state.sessions.filter((s) => s.state === "planned").map((s) => ({ id: s.id, date: s.date })),
     });
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/parties\/$/))) {

@@ -69,13 +69,15 @@ test("one session per date and real calendar dates only", () => {
   assert.equal(C.sessionDateProblem("2026-13-01", existing), "dateRequired");
 });
 
+const visible = (text) => text.replace(/[⁦-⁩]/g, "");
 test("hearing title uses exact contract wording and never invents names", () => {
+  assert.match(C.hearingTitle(["John Smith", "Mary Smith"], "2026-10-20", t), /⁨John Smith⁩/);
   assert.equal(
-    C.hearingTitle(["John Smith", "Mary Smith"], "2026-10-20", t),
+    visible(C.hearingTitle(["John Smith", "Mary Smith"], "2026-10-20", t)),
     "Case Hearing of John Smith vs. Mary Smith on Council Session 2026-10-20",
   );
   assert.equal(
-    C.hearingTitle(["John Smith"], "2026-10-20", t),
+    visible(C.hearingTitle(["John Smith"], "2026-10-20", t)),
     "Case Hearing of John Smith vs. Unknown spouse on Council Session 2026-10-20",
   );
 });
@@ -354,4 +356,34 @@ test("F12: council consideration queue is pending appeals plus closed-case later
     { id: "d", kind: "petition", status: "submitted" },
   ];
   assert.deepEqual([...C.considerationQueue(rows)].map((r) => r.id), ["a", "c"]);
+});
+
+
+test("F34: names, numbers and emails are isolated inside RTL text; empty stays empty", () => {
+  assert.equal(C.isolate("20261020-01"), "⁨20261020-01⁩");
+  assert.equal(C.isolate("mary@example.test"), "⁨mary@example.test⁩");
+  assert.equal(C.isolate(""), "");
+  assert.equal(C.isolate(null), "");
+});
+
+test("sessions split into upcoming (soonest first) and past (latest first)", () => {
+  const rows = [
+    { id: "a", date: "2026-11-05", state: "planned" },
+    { id: "b", date: "2026-10-01", state: "closed" },
+    { id: "c", date: "2026-10-15", state: "planned" },
+    { id: "d", date: "2026-12-03", state: "planned" },
+  ];
+  const g = C.splitSessions(rows, "2026-10-21");
+  assert.deepEqual(g.upcoming.map((s) => s.id), ["a", "d"]);
+  assert.deepEqual(g.past.map((s) => s.id), ["c", "b"]);
+  assert.match(C.todayInLosAngeles(new Date("2026-10-22T05:00:00Z")), /^2026-10-21$/);
+});
+
+test("every notification kind the backend sends has EN and AR labels in the shell", () => {
+  const app = fs.readFileSync("static/ctm/app.js", "utf8");
+  const kinds = ["report_requested", "report_received", "file_uploaded", "answer_changed", "applicant_message", "case_message", "assignment_changed",
+    "submission_received", "intake_submitted", "decree_available", "case_reopened", "filing_withdrawn", "appeal_added", "testimony_response",
+    "testimony_invited", "testimony_rescheduled", "testimony_cancelled", "closed_intake_submitted", "application_accepted", "application_returned",
+    "appeal_accept", "appeal_decline", "decree_issued", "petition_denied", "petitions_withdrawn", "payment_finance_review", "paid_filing_review"];
+  for (const kind of kinds) assert.equal((app.match(new RegExp("event_" + kind + ":", "g")) || []).length, 2, kind);
 });

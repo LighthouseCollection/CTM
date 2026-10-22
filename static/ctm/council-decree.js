@@ -967,7 +967,7 @@
               ...appeals.map((row) =>
                 h(P.Card, {
                   key: row.id,
-                  title: `${row.applicant_name || t("appeal")} · ${t(isLaterFiling(row) ? "laterFiling" : "appeal")}`,
+                  title: `${row.applicant_name ? base.isolate(row.applicant_name) : t("appeal")} · ${t(isLaterFiling(row) ? "laterFiling" : "appeal")}`,
                   meta: [t("appeal_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "),
                   selected: row.id === selected,
                   onOpen: () => {

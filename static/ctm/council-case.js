@@ -1201,7 +1201,7 @@
         h(P.Card, {
           key: row.id,
           title: row.title,
-          meta: [t(row.kind), row.subject_name, t(row.state)].filter(Boolean).join(" · "),
+          meta: [t(row.kind), base.isolate(row.subject_name), t(row.state)].filter(Boolean).join(" · "),
           selected: row.id === selected,
           onOpen: () => {
             setComposing(false);
@@ -1929,7 +1929,7 @@
               ...calls.map((call) =>
                 h(
                   P.Card,
-                  { key: call.id, title: `${partyName(call.party_id)} · ${base.formatWhen(call.occurred_at, lang)}`, meta: `${t("recordedAt")}: ${base.formatWhen(call.recorded_at, lang)}` },
+                  { key: call.id, title: `${base.isolate(partyName(call.party_id))} · ${base.formatWhen(call.occurred_at, lang)}`, meta: `${t("recordedAt")}: ${base.formatWhen(call.recorded_at, lang)}` },
                   h(P.Text, { as: "p", variant: "strong" }, call.outcome),
                   call.notes ? h(P.Text, { as: "p" }, call.notes) : null,
                 ),
@@ -2139,7 +2139,7 @@
               {
                 key: row.id,
                 title: row.title,
-                meta: [t(row.kind), row.subject_name, t(row.state), row.release_status ? t("release_" + row.release_status) : null].filter(Boolean).join(" · "),
+                meta: [t(row.kind), base.isolate(row.subject_name), t(row.state), row.release_status ? t("release_" + row.release_status) : null].filter(Boolean).join(" · "),
                 actions:
                   canWrite && row.state === "draft"
                     ? h(P.Button, { size: "xs", variant: "primary", onClick: () => setConfirm(row) }, t("send"))
@@ -2593,7 +2593,7 @@
               ? h(P.List, {
                   variant: "bullets",
                   items: history.map((row) => ({
-                    children: `${base.formatWhen(row.timestamp, lang)} — ${row.member} · ${t("authorizedBy")} ${row.president} · ${t("recordedByInline")} ${row.actor}`,
+                    children: `${base.formatWhen(row.timestamp, lang)} — ${base.isolate(row.member)} · ${t("authorizedBy")} ${base.isolate(row.president)} · ${t("recordedByInline")} ${base.isolate(row.actor)}`,
                   })),
                 })
               : h(P.EmptyState, { title: t("noManagerHistory") }),
