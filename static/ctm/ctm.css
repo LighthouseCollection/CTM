@@ -55,6 +55,14 @@
   background-color: var(--plx-sys-color-surface-default, white);
   border-radius: 999px;
 }
+
+/* The CDN lacks a scale glyph, so Decision uses a semantic balance icon. */
+.ctm-decision-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 /* Contact is a balanced two-column details grid; the long address has its own row. */
 .ctm-spouse-profile-section--two-columns .plx-property-list {
   display: grid;

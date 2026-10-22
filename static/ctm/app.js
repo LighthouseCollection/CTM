@@ -19,13 +19,19 @@
     appointments: "schedule", past: "archive", case: "document", timeline: "progress",
     parties: "settings-users", marriage: "settings-users", separation: "move", petition: "doc-text",
     reports: "document", hearings: "list-lines", evidence: "image-a-2", documents: "folder",
-    medical: "lock", decision: "scale", decree: "certificate", appeals: "progress",
+    medical: "lock", decree: "certificate", appeals: "progress",
     communications: "mail", notes: "message", audit: "list-lines",
   };
+  const decisionBalanceIcon = () =>
+    h("svg", { className: "ctm-decision-nav-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
+      h("path", { d: "M12 3v17M5 7h14M4 7l-3 6h6L4 7zm16 0-3 6h6l-3-6zM7 21h10" }),
+    );
   const navigationIcon = (id) =>
     id === "separation"
       ? h("span", { className: "ctm-separation-nav-icon", "aria-hidden": true }, h(P.Icon, { name: "person" }), h(P.Icon, { name: "close" }))
-      : h(P.Icon, { name: navigationIcons[id] });
+      : id === "decision"
+        ? decisionBalanceIcon()
+        : h(P.Icon, { name: navigationIcons[id] });
   const words = {
     en: {
       event_report_requested: "A report has been requested.",
