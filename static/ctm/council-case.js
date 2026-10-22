@@ -1392,9 +1392,7 @@
     const list = h(
       P.Stack,
       { gap: "sm" },
-      canWrite
-        ? h(P.Inline, null, h(P.Button, { variant: "primary", size: "sm", onClick: () => { setComposing(true); select(null); setNotice(null); } }, t("newRequest")))
-        : h(P.Notice, { tone: "info" }, t(proceeding ? "writerOnly" : "noOpenProceeding")),
+      !canWrite ? h(P.Notice, { tone: "info" }, t(proceeding ? "writerOnly" : "noOpenProceeding")) : null,
       ...requests.map((row) =>
         h(P.Card, { icon: "doc-text",
           key: row.id,
@@ -1410,24 +1408,14 @@
       ),
       !requests.length ? h(P.EmptyState, { title: t("noRequests") }) : null,
     );
-    const detail = composing
-      ? h(RequestComposer, {
-          api,
-          lang,
-          record,
-          questions,
-          templates: state.data.templates,
-          onTemplatesChanged: retry,
-          reports: reports || [],
-          onCancel: () => setComposing(false),
-          onSaved: (id) => {
-            setComposing(false);
-            setNotice("draftSaved");
-            select(id);
-            retry();
-          },
-        })
-      : chosen
+    const requestDialog = composing ? h(P.Dialog, { open: true, title: t("newRequest"), size: "xl", onClose: () => setComposing(false) },
+      h(RequestComposer, {
+        api, lang, record, questions, templates: state.data.templates, onTemplatesChanged: retry, reports: reports || [],
+        onCancel: () => setComposing(false),
+        onSaved: (id) => { setComposing(false); setNotice("draftSaved"); select(id); retry(); },
+      }),
+    ) : null;
+    const detail = chosen
         ? h(RequestDetail, {
             key: chosen.id,
             api,
@@ -1440,9 +1428,10 @@
             },
           })
         : null;
-    return h(
-      P.Stack,
-      { gap: "md" },
+    return h(R.Fragment, null,
+      requestDialog,
+      h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
+      h(P.Toolbar, { label: t("requests") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => { setComposing(true); setNotice(null); } }, t("newRequest")) : null),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       h(P.SplitView, {
         label: t("requests"),
@@ -1457,6 +1446,7 @@
           detail,
         ),
       }),
+      ),
     );
   }
 
