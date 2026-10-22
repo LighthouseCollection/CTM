@@ -230,6 +230,8 @@ ${ar}` : en;
     en: {
       reports: "Reports",
       completedReports: "Completed reports",
+      interviewReports: "Reports for Interview",
+      noInterviewReports: "No reports are waiting for an interview.",
       requests: "Requests",
       reportTemplates: "Report Templates",
       questionCategories: "Question categories",
@@ -543,6 +545,8 @@ ${ar}` : en;
     ar: {
       reports: "التقارير",
       completedReports: "التقارير المكتملة",
+      interviewReports: "تقارير للمقابلة",
+      noInterviewReports: "لا توجد تقارير بانتظار المقابلة.",
       requests: "الطلبات",
       reportTemplates: "قوالب التقارير",
       questionCategories: "فئات الأسئلة",
@@ -1366,8 +1370,10 @@ ${ar}` : en;
     );
   }
 
-  function RequestsPanel({ api, lang, user, caseId, reports }) {
+  function RequestsPanel({ api, lang, user, caseId, reports, mode = "templates", onCreated }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const interviewOnly = mode === "interviews";
+    const panelTitle = interviewOnly ? t("interviewReports") : t("reportTemplates");
     const [state, retry] = base.useLoad(() => Promise.all([
       api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
       api(`/api/cases/${encodeURIComponent(caseId)}/requests/`), api("/api/report-questions/"),
@@ -1378,11 +1384,12 @@ ${ar}` : en;
       questions: questions.items, caseRow: cases.items.find((row) => row.id === caseId),
     })), [caseId]);
     const [selected, select] = R.useState(null);
-    const [editing, setEditing] = R.useState(true);
+    const [editing, setEditing] = R.useState(!interviewOnly);
     const [notice, setNotice] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const { record, requests, questions, caseRow, templates } = state.data;
+    const { record, questions, caseRow, templates } = state.data;
+    const requests = state.data.requests.filter((row) => interviewOnly ? row.kind === "interview" : row.kind !== "interview");
     const proceeding = openProceeding(record);
     const canWrite = writerFor(user, caseRow, record) && Boolean(proceeding);
     const chosen = requests.find((row) => row.id === selected);
@@ -1390,17 +1397,17 @@ ${ar}` : en;
       icon: "doc-text", key: row.id, title: row.title,
       meta: [t(row.kind), base.isolate(row.subject_name), t(row.state)].filter(Boolean).join(" · "),
       selected: row.id === selected, onOpen: () => { setEditing(false); setNotice(null); select(row.id); },
-    })), !requests.length ? h(P.EmptyState, { title: t("noRequests") }) : null);
+    })), !requests.length ? h(P.EmptyState, { title: t(interviewOnly ? "noInterviewReports" : "noRequests") }) : null);
     const editor = h(RequestComposer, {
       api, lang, record, questions, templates, reports: reports || [], onTemplatesChanged: retry,
       onCancel: () => setEditing(false),
-      onSaved: (result) => { const id = Array.isArray(result) ? result[0] : result; setEditing(false); setNotice("draftSaved"); select(id); retry(); },
+      onSaved: (result) => { const id = Array.isArray(result) ? result[0] : result; setEditing(false); setNotice("draftSaved"); select(id); retry(); onCreated?.(id); },
     });
     return h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
-      h(P.Toolbar, { label: t("reportTemplates") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => { setEditing(true); setNotice(null); } }, t("newRequest")) : null),
+      h(P.Toolbar, { label: panelTitle }, !interviewOnly && canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => { setEditing(true); setNotice(null); } }, t("newRequest")) : null),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-      editing ? editor : h(P.SplitView, {
-        label: t("reportTemplates"), firstLabel: t("requests"), first: drafts,
+      !interviewOnly && editing ? editor : h(P.SplitView, {
+        label: panelTitle, firstLabel: t("requests"), first: drafts,
         second: h(P.ReadingPane, { label: chosen?.title || t("chooseRequest"), empty: h(P.EmptyState, { title: t("chooseRequest") }) },
           chosen ? h(RequestDetail, { key: chosen.id, api, lang, request: chosen, canWrite, onSent: (key) => { setNotice(key || "sentNotice"); retry(); } }) : null,
         ),
@@ -1416,11 +1423,13 @@ ${ar}` : en;
       t = translator(lang);
     const [tab, setTab] = R.useState("reports");
     const completedReports = base.ReportsReader ? h(base.ReportsReader, { api, lang, user, caseId, reports }) : renderReports();
-    const requests = h(RequestsPanel, { api, lang, user, caseId, reports });
+    const requests = h(RequestsPanel, { api, lang, user, caseId, reports, onCreated: () => setTab("interviews") });
+    const interviewReports = h(RequestsPanel, { api, lang, user, caseId, reports, mode: "interviews" });
     return h(P.Tabs, {
       variant: "contained", label: t("reports"), value: tab, onChange: setTab,
       items: [
         { value: "reports", label: t("completedReports"), content: completedReports },
+        { value: "interviews", label: t("interviewReports"), content: interviewReports },
         { value: "requests", label: t("reportTemplates"), content: requests },
       ],
     });

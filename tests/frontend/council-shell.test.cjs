@@ -42,6 +42,15 @@ test("all tabbed workspaces place their content inside contained tabs", () => {
     assert.match(source, /items: \[[\s\S]*content:/);
 });
 
+test("reports separate interview work from completed reports and template composition", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(councilCase, /interviewReports: "Reports for Interview"/);
+  assert.match(councilCase, /value: "interviews", label: t\("interviewReports"\), content: interviewReports/);
+  assert.match(councilCase, /mode: "interviews"/);
+  assert.match(councilCase, /interviewOnly \? row\.kind === "interview" : row\.kind !== "interview"/);
+  assert.match(councilCase, /onCreated: \(\) => setTab\("interviews"\)/);
+});
+
 test("report templates are an inline category-to-question workspace", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(councilCase, /label: t\("reportTemplates"\)/);
