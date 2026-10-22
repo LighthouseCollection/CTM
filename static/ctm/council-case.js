@@ -1459,7 +1459,7 @@
     const [tab, setTab] = R.useState("reports");
     return h(R.Fragment, null,
       h(P.Tabs, {
-        label: t("reports"), value: tab, onChange: setTab,
+        variant: "contained", label: t("reports"), value: tab, onChange: setTab,
         items: [
           { value: "reports", label: t("completedReports") },
           { value: "requests", label: t("requests") },
@@ -2093,7 +2093,7 @@
       h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
         h(P.Toolbar, { label: t("callLog") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => setComposing(true) }, "New Call") : null),
         notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-        h(P.Tabs, { label: t("callLog"), value: tab, onChange: (value) => { setTab(value); select(null); }, items: [{ value: "received", label: "Received" }, { value: "sent", label: "Sent" }] }),
+        h(P.Tabs, { variant: "contained", label: t("callLog"), value: tab, onChange: (value) => { setTab(value); select(null); }, items: [{ value: "received", label: "Received" }, { value: "sent", label: "Sent" }] }),
         h(window.CTMShell.Workspace, { label: t("callLog"), rows, selected, onSelect: select, empty: t("noCalls"), showDetailWhenEmpty: true, columns: [{ title: t("callParty"), field: "person", kind: "name" }, { title: t("callOutcome"), field: "outcome" }, { title: t("callTime"), field: "occurred" }] },
           (call) => call ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, call.person), h(P.Text, { variant: "secondary" }, call.occurred), h(P.Text, { as: "p", variant: "strong" }, call.outcome), call.notes ? h(P.Text, { as: "p" }, call.notes) : null) : h(P.EmptyState, { title: t("noCalls") }),
         ),
