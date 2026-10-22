@@ -1840,6 +1840,22 @@ def historical_detail(request, workspace_id):
         finalized_case_id=str(row.finalized_case_id) if row.finalized_case_id else None))
 
 
+@endpoint()
+def delivery_status(request):
+    from tribunal.services.queue import queue_status
+    return JsonResponse(queue_status(request.user, state=request.GET.get("state"), offset=int(request.GET.get("offset", "0"))))
+
+
+@endpoint(("POST",))
+def delivery_retry(request, event_id):
+    from tribunal.services.queue import retry_delivery
+    try:
+        row = retry_delivery(request.user, event_id, body(request).get("expected_attempts"))
+    except VersionConflict as exc:
+        return JsonResponse({"error": "attempt_conflict", "current_attempts": exc.current_version}, status=409)
+    return JsonResponse(encoded(row, attempts=row.attempts, queued=True))
+
+
 @endpoint(("POST",))
 def historical_publish(request, workspace_id):
     from tribunal.services.historical import publish

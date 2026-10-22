@@ -1,5 +1,29 @@
 # VM-FRM backend progress
 
+## Next twenty worker reliability/readiness batches
+
+All20 implemented: positive backend email acknowledgement, verified/valid
+destinations and supported job dispatch; durable transactional orphan cleanup,
+global retained-source checks/canonical path guards/storage-key serialization;
+bounded deterministic/fair/skip-locked claiming; sanitized administrative queue
+counts/pagination and explicit attempt/lease-fenced retries; retained queue identity
+with controlled session transfer; broader policy/helper/PUBLIC/worker diagnostics
+and one shared database-readiness path for both CLI gates.
+
+Full isolated PostgreSQL: **556 passed, 1 skipped**; no model drift; migration
+rollback/reapply through0035. Non-owner hidden-source cleanup denial, raw queue
+provenance guards, zero-ack email failures, bounded digest/lease fairness, private
+queue projections/retries and injected catalog readiness failures pass.
+Inventory: **63 domain models,91 routes,56 forced-RLS tables**. No new domain models
+or RLS-table completion claim; seven core reviews remain, including Outbox.
+Runtime worker grants, semantic schema/identity, independent browser, institution
+and provider acceptance remain gates. Contracts, numbered20 and specific limits:
+[worker-readiness-continuation.md](worker-readiness-continuation.md).
+Draft removal now journals byte cleanup for the worker; large digests may span
+bounded batches. Positive backend email acknowledgement is not inbox/read evidence.
+Protected specification unchanged; no operational migrations, credential changes,
+merge or deployment.
+
 ## Next twenty council revision/historical recovery batches
 
 All20 implemented: typed/optimistic/replay-safe note edits and latest-only edit

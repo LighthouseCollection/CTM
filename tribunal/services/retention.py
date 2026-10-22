@@ -42,20 +42,11 @@ def remove_draft(actor, app_id, expired=False, *, expected_version=None):
     app.save(update_fields=["status", "current_version"])
     audit(actor, "draft_" + app.status, app)
 
-    def clean_bytes():
-        for key in keys:
-            try:
-                private_path(key).unlink(missing_ok=True)
-            except OSError:
-                Outbox.objects.get_or_create(
-                    key=f"cleanup:{key}",
-                    defaults={
-                        "kind": "private_orphan_cleanup",
-                        "payload": {"object_key": key},
-                    },
-                )
-
-    transaction.on_commit(clean_bytes)
+    # Journal cleanup in the same transaction as deletion. A crash after commit
+    # must not lose the only record of the orphaned original.
+    from .queue import enqueue_cleanup
+    for key in keys:
+        enqueue_cleanup(key)
     return app
 
 

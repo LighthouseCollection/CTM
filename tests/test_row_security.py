@@ -89,6 +89,7 @@ def runtime():
             "ctm_allocate_case_number(date)",
             "ctm_message_delivery_valid(uuid,uuid)",
             "ctm_draft_warning_current(uuid,timestamptz,uuid)",
+            "ctm_orphan_cleanup_allowed(text)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -773,7 +774,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0034_workspace_provenance")])
+        MigrationExecutor(connection).migrate([("tribunal", "0035_queue_source_and_cleanup_guards")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -946,6 +947,21 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert report["checks"]["forced_rls_table_count"] == 56
         assert "tribunal_reportrequest" not in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
+
+
+def test_cleanup_reference_check_sees_files_hidden_from_runtime_actor(runtime, ready_application, people, settings, tmp_path):
+    from tribunal.services.queue import enqueue_cleanup, cleanup_orphan
+    from tribunal.services.files import private_path, write_private_original
+    from tribunal.tasks import SupersededDelivery
+    settings.MEDIA_ROOT = tmp_path
+    file = ready_application.attachments.first().versions.first()
+    write_private_original(private_path(file.object_key), b"retained")
+    job = enqueue_cleanup(file.object_key)
+    with runtime(people["member"]):
+        assert not FileVersion.objects.filter(pk=file.pk).exists()
+        with pytest.raises(SupersededDelivery):
+            cleanup_orphan(job)
+    assert private_path(file.object_key).read_bytes() == b"retained"
 
 
 def test_restricted_role_checkout_response_can_bind_only_provider_reference(runtime, unpaid_application):

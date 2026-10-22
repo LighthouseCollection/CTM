@@ -348,6 +348,14 @@
     "handler": "historical_stage"
   },
   {
+    "route": "api/system/delivery/",
+    "handler": "delivery_status"
+  },
+  {
+    "route": "api/system/delivery/<uuid:event_id>/retry/",
+    "handler": "delivery_retry"
+  },
+  {
     "route": "api/historical/<uuid:workspace_id>/",
     "handler": "historical_detail"
   },
