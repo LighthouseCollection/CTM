@@ -210,12 +210,12 @@ def agenda_item_data(item, actor, attendance):
         revision = formal.revision if formal else None
     grounds = revision.answers.get("grounds") if revision else None
     reason = ", ".join(str(value) for value in grounds) if isinstance(grounds, list) else str(grounds or "")
+    parties = list(case.parties.select_related("person", "account__person").order_by("slot"))
     applicant_party = application.party if application and application.party_id else (
-        case.parties.filter(account_id=application.owner_id).order_by("slot").first() if application else None
+        next((party for party in parties if party.slot == "A"), parties[0] if parties else None)
     )
     applicant_name = (applicant_party.name if applicant_party else "") or (name(application.owner) if application else "")
-    parties = case.parties.select_related("person", "account__person").order_by("slot")
-    respondent = parties.exclude(pk=applicant_party.pk).first() if applicant_party else None
+    respondent = next((party for party in parties if party.pk != applicant_party.pk), None) if applicant_party else None
     applicant_gender = (
         applicant_party.person.gender
         if applicant_party and applicant_party.person_id
