@@ -126,6 +126,14 @@ function load(h, extra = {}) {
   return window.CTMCouncil;
 }
 
+// The external priest page module (static/ctm/external-report.js) is standalone, not part of CTMCouncil.
+function loadExternal(h, extra = {}) {
+  const window = { React: h.React, Plenix, addEventListener() {}, removeEventListener() {}, ...extra };
+  const context = { window, console, URLSearchParams, document: { documentElement: {} } };
+  vm.runInNewContext(fs.readFileSync("static/ctm/external-report.js", "utf8"), context);
+  return { api: window.CTMExternalReport, document: context.document };
+}
+
 // Walks children and element-valued props (Tabs items[].content, SplitView first/second, ...).
 function find(tree, predicate, out = []) {
   if (!tree || typeof tree !== "object") return out;
@@ -159,4 +167,4 @@ const dialogs = (tree) => byName(tree, "ConfirmDialog");
 const type = (area, value) => area.props.onChange({ target: { value } });
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-module.exports = { harness, load, find, textOf, byName, textareas, notices, buttons, dialogs, type, settle, nameOf };
+module.exports = { harness, load, loadExternal, find, textOf, byName, textareas, notices, buttons, dialogs, type, settle, nameOf };
