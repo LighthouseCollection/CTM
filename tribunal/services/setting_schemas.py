@@ -1,6 +1,7 @@
 """Server-owned value schemas for nonsecret versioned configuration storage."""
 from copy import deepcopy
 import uuid
+import re
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
@@ -44,7 +45,7 @@ def schemas():
             'phone':text(100),'address':text(2000)},minProperties=1),
         'email_templates':record({'templates':collection(record({
             'code':{'type':'string','enum':sorted(EMAIL_KINDS)},
-            'subject_en':text(300),'subject_ar':text(300),
+            'subject_en':text(300,**{'not':{'pattern':r'[\r\n]'}}),'subject_ar':text(300,**{'not':{'pattern':r'[\r\n]'}}),
             'body_en':text(20_000),'body_ar':text(20_000)},
             ['code','subject_en','subject_ar','body_en','body_ar']),unique_by='code')},['templates']),
         'document_categories':record({'categories':collection(record({
@@ -98,6 +99,10 @@ def validate_setting_value(key, value, *, schema_version=SCHEMA_VERSION):
         elif kind=='string':
             if (not definition.get('minLength',0)<=len(node)<=definition.get('maxLength',100_000) or not node.strip()):
                 raise ValidationError(f'Configuration text length is invalid: {path}')
+            if not re.search(definition.get('pattern',r'\S'),node):
+                raise ValidationError(f'Invalid configuration text: {path}')
+            if 'not' in definition and re.search(definition['not']['pattern'],node):
+                raise ValidationError(f'Invalid configuration text: {path}')
             if definition.get('format')=='email':
                 try:
                     validate_email(node)
@@ -121,4 +126,4 @@ def validate_setting_value(key, value, *, schema_version=SCHEMA_VERSION):
 def schema_descriptors(current_versions):
     return {key:{'schema_version':SCHEMA_VERSION,'value_schema':value,
         'current_version':current_versions.get(key,0), 'expected_version_required':True,
-        'activation_supported':False,'max_json_bytes':100_000,'max_json_depth':20} for key,value in schemas().items()}
+        'activation_supported':False,'runtime_consumers':(['account_status_email'] if key=='email_templates' else []),'max_json_bytes':100_000,'max_json_depth':20} for key,value in schemas().items()}

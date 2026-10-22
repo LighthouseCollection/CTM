@@ -19,7 +19,8 @@ MANAGER_KINDS = DIGEST_KINDS | {
     "testimony_response",
     "applicant_message",
 }
-EMAIL_KINDS = MANAGER_KINDS | {
+ACCOUNT_STATUS_KINDS = {"account_suspended", "account_reactivated"}
+EMAIL_KINDS = MANAGER_KINDS | ACCOUNT_STATUS_KINDS | {
     "assignment_changed", "decree_available", "case_reopened", "submission_received",
     "intake_submitted", "closed_intake_submitted", "report_requested", "questionnaire_updated",
     "paid_filing_review", "payment_finance_review", "manager_authority_review", "draft_expiring",
@@ -170,6 +171,11 @@ def deliver(events):
             import json
             destination = json.loads(destination)
         recipient = SimpleNamespace(**destination) if destination else None
+    elif event.kind in ACCOUNT_STATUS_KINDS:
+        from types import SimpleNamespace
+        from tribunal.services.account_administration import sqlite_status_destination
+        destination=sqlite_status_destination(event)
+        recipient=SimpleNamespace(**destination) if destination else None
     else:
         recipient = event.recipient
         if event.kind in MANAGER_KINDS and event.case_id:
@@ -177,7 +183,12 @@ def deliver(events):
     if event.kind in MANAGER_KINDS and event.case_id:
         if recipient and recipient.role == "applicant":
             raise RuntimeError("Current manager authority requires review")
-    if not recipient or not recipient.is_active or not recipient.email_verified:
+    status_notice=event.kind in ACCOUNT_STATUS_KINDS
+    if status_notice and not recipient:
+        raise SupersededDelivery("Account status notice is obsolete or has invalid source evidence")
+    if (not recipient or not recipient.email_verified or
+            (not recipient.is_active and not status_notice) or
+            (status_notice and (not getattr(recipient,'status_notice',False) or recipient.role!='applicant'))):
         raise RuntimeError("Notification recipient requires review")
     validate_email(recipient.email)
     if not settings.EMAIL_HOST:
@@ -188,8 +199,11 @@ def deliver(events):
             f"{len(events)} updates were saved during the recent editing session. "
             + message
         )
+    subject="CTM — portal update"
+    if status_notice:
+        subject,message=recipient.subject,recipient.body
     accepted = EmailMessage(
-        "CTM — portal update",
+        subject,
         message,
         settings.DEFAULT_FROM_EMAIL,
         [recipient.email],
