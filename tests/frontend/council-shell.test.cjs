@@ -412,6 +412,12 @@ test("Tribunal Config provides saved administration sections including mobile se
     assert.match(workspaces, new RegExp(title));
   assert.match(workspaces, /api\("\/api\/system\/settings\//);
 });
+test("Audit and Security includes active session revocation controls", () => {
+  const workspaces = fs.readFileSync("static/ctm/ui-workspaces.js", "utf8");
+  assert.match(workspaces, /function SecuritySessions/);
+  assert.match(workspaces, /Revoke all other sessions/);
+  assert.match(workspaces, /\/api\/account\/sessions\//);
+});
 test("CTM Settings opens the complete administration workspace for administrators", () => {
   assert.match(app, /if \(page === "settings" && window\.CTMUI\?\.canAdminister\(user\)\)\s*return h\(window\.CTMUI\.Administration/);
 });

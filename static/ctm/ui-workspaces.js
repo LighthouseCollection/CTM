@@ -161,7 +161,19 @@
     );
   }
 
-  function ConfigurationValue({ value, lang }) {
+  function SecuritySessions({ api, lang }) {
+    const R = window.React, P = window.Plenix, h = R.createElement;
+    const [saving, setSaving] = R.useState(false), [failure, setFailure] = R.useState(null);
+    const [state, retry] = window.CTMCouncil.useLoad(() => api("/api/account/sessions/"), []);
+    const sessions = state.data?.items || [];
+    const revoke = async (row) => { setSaving(true); setFailure(null); try { await api(`/api/account/sessions/${encodeURIComponent(row.handle)}/revoke/`, { method: "POST", body: "{}" }); retry(); } catch (error) { setFailure(window.CTMCouncil.serverMessage(error)); } finally { setSaving(false); } };
+    const revokeOthers = async () => { setSaving(true); setFailure(null); try { for (const row of sessions.filter((item) => !item.current)) await api(`/api/account/sessions/${encodeURIComponent(row.handle)}/revoke/`, { method: "POST", body: "{}" }); retry(); } catch (error) { setFailure(window.CTMCouncil.serverMessage(error)); } finally { setSaving(false); } };
+    return h(P.Panel, { title: "Active Sessions", icon: "lock" }, h(P.Stack, { gap: "md" },
+      h(P.Inline, { align: "between", wrap: true }, h(P.Text, { variant: "secondary" }, "Sessions currently signed in to your account."), h(P.Button, { disabled: saving || !sessions.some((row) => !row.current), onClick: revokeOthers }, "Revoke all other sessions")),
+      failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
+      state.pending ? h(P.Text, { variant: "secondary" }, "Loading sessions…") : state.error ? h(P.Button, { onClick: retry }, "Retry") : sessions.length ? h(P.List, { items: sessions.map((row) => ({ children: h(P.Inline, { align: "between", wrap: true }, h("span", null, row.current ? "Current session" : `Session ending ${window.CTMCouncil.formatWhen(row.expires_at, lang)}`), row.current ? h(P.Text, { variant: "secondary" }, "Current session") : h(P.Button, { size: "xs", variant: "danger-secondary", disabled: saving, onClick: () => revoke(row) }, "Revoke")) })) }) : h(P.EmptyState, { title: "No active sessions." })
+    ));
+  }  function ConfigurationValue({ value, lang }) {
     const P = window.Plenix, h = window.React.createElement, t = translator(lang);
     if (value === null || value === undefined) return h(P.Text, null, "—");
     if (Array.isArray(value)) return value.length ? h(P.List, { items: value.map((item) => ({ children: h(ConfigurationValue, { value: item, lang }) })) }) : h(P.EmptyState, { title: t("noRows") });
@@ -345,6 +357,7 @@
       h(MemberDirectory, { api, user, lang, rows, pending: state.pending, retry, onNavigationGuard: registerGuard, onAdded: () => { setNotice(true); retry(); } })
     );    const configurationContent = state.pending ? base.loadingView(P, h, t) : state.error ? base.loadFailure(P, h, t, retry, state.error) : h(ConfigurationWorkspace, { api, rows, lang, onNavigationGuard: registerGuard });
     const auditContent = h(R.Fragment, null,
+      h(SecuritySessions, { api, lang }),
       h(AuditFilters, { rows, filters, onChange: setFilters, lang, includeActor: false }),
       table((row) => h(Properties, { lang, entries: [["action", row.action], ["source", row.source], ["date", base.formatWhen(row.timestamp, lang)]] }))
     );
