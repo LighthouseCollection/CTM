@@ -372,6 +372,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(app, /items: ["notes", "communications"]/);
   assert.match(app, /className: "ctm-decree-nav-icon"/);
   assert.match(app, /className: "ctm-decision-nav-icon"/);
+  assert.match(app, /id === "decision" \|\| id === "hearings"/);
   assert.match(app, /M12 3v17M5 7h14/);
   assert.match(app, /groups: collaborationGroups/);
   assert.match(app, /page === "notes" && council && councilModule\?\.CaseNotesWorkspace/);

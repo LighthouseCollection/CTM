@@ -39,7 +39,7 @@
       ? h(P.Icon, { name: "document_search", "aria-hidden": true })
       : id === "separation"
       ? h(P.Icon, { name: "person_cancel", "aria-hidden": true })
-      : id === "decision"
+      : id === "decision" || id === "hearings"
         ? decisionBalanceIcon()
         : id === "decree"
           ? decreeCertificateIcon()
