@@ -9,7 +9,8 @@
    (review projection, agenda capabilities, hearing read, decision read,
    question taxonomy, request metadata, interview boundary, D19 report
    authorship and can_revise). Report revisions are stateful; POST
-   /__revise_fail/ {mode:"403"|"500"} fails the next revision save and
+   /__revise_fail/ {mode:"403"|"500"|"lostack"} fails the next revision save
+   ("lostack" stores it, then drops the connection) and
    /__revise_bump/ {report} adds a concurrent revision by another actor. */
 const http = require("node:http");
 const fs = require("node:fs");

@@ -477,7 +477,7 @@
     return (key, vars) => {
       let value = own[key] ?? words.en[key];
       if (value === undefined) return fallback(key, vars);
-      if (vars) for (const [k, v] of Object.entries(vars)) value = value.replace(`{${k}}`, v);
+      if (vars) for (const [k, v] of Object.entries(vars)) value = value.split(`{${k}}`).join(v); // every occurrence
       return value;
     };
   }
@@ -1168,7 +1168,7 @@
               h(P.Text, { as: "p" }, t("revisionConflict", conflictVars)),
               h(
                 P.Inline,
-                null,
+                { wrap: true },
                 h(P.Button, { size: "sm", disabled: pending, onClick: () => setShowLatest(!showLatest) }, t(showLatest ? "hideVersion" : "showVersion", conflictVars)),
                 h(P.Button, { size: "sm", disabled: pending, onClick: () => setConfirm("overwrite") }, t("saveAnyway")),
                 h(P.Button, { size: "sm", disabled: pending, onClick: () => setConfirm("discard") }, t("discardChanges")),

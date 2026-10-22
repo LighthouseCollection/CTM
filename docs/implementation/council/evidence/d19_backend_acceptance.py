@@ -1,4 +1,4 @@
-"""Council D19 acceptance against backend #7 (copy into a #7 checkout as tests/test_council_d19_acceptance.py and run with pytest --ds=ctm.settings_postgres_test).
+"""Council D19 and C-02 acceptance against backend #7 (copy into a #7 checkout as tests/test_council_revision_acceptance.py; run pytest --ds=ctm.settings_postgres_test).
 
 Synthetic accounts and an isolated PostgreSQL database; no operational data.
 """
@@ -32,8 +32,9 @@ def rows(client, app):
     return {r["id"]: r for r in client.get(f"/api/cases/{app.case_id}/reports/").json()["items"]}
 
 
-def revise(client, report, answers, observations="", expected=201):
-    response = client.post(f"/api/reports/{report.pk}/revisions/", {"answers": answers, "observations": observations},
+def revise(client, report, answers, observations="", expected=201, version=1):
+    response = client.post(f"/api/reports/{report.pk}/revisions/",
+                           {"expected_version": version, "answers": answers, "observations": observations},
                            content_type="application/json")
     assert response.status_code == expected, response.content
     return response
@@ -98,7 +99,7 @@ def test_closed_case_withdraws_revision(client, assigned, people):
     close_case(people["admin"], assigned.case, "synthetic_close")
     login(client, people["member"])
     assert rows(client, assigned)[str(report.pk)]["can_revise"] is False
-    response = client.post(f"/api/reports/{report.pk}/revisions/", {"answers": {"text": "After closure"}},
+    response = client.post(f"/api/reports/{report.pk}/revisions/", {"expected_version": 1, "answers": {"text": "After closure"}},
                            content_type="application/json")
     assert response.status_code in {403, 422}, response.content
     assert [r["version"] for r in history(client, report)] == [1]
@@ -113,10 +114,44 @@ def test_applicant_authored_report_is_not_revisable(client, assigned, people):
         revise(client, report, {"text": "Council rewrite"}, expected=403)
 
 
-def test_no_server_version_check_documented_gap(client, assigned, people):
-    """Two saves built from the same base version both succeed: the server has no expected-version check (reported on #2)."""
+def test_c02_stale_version_is_refused_with_current_version(client, assigned, people):
+    """C-02: the council editor reads error/current_version from this exact body."""
     report = member_report(assigned, people)
     login(client, people["member"])
     revise(client, report, {"text": "Tab A", "attendance": ["applicant", "spouse"]})
-    revise(client, report, {"text": "Tab B (edited from v1)", "attendance": ["applicant", "spouse"]})
-    assert [r["version"] for r in history(client, report)] == [3, 2, 1]
+    body = revise(client, report, {"text": "Tab B (edited from v1)", "attendance": ["applicant", "spouse"]}, expected=409).json()
+    assert body == {"error": "version_conflict", "current_version": 2}
+    assert [r["version"] for r in history(client, report)] == [2, 1]
+
+
+def test_c02_exact_retry_after_lost_acknowledgement_is_replayed_not_duplicated(client, assigned, people):
+    """C-02: Try again resends the identical request; the server returns the retained revision."""
+    report = member_report(assigned, people)
+    login(client, people["member"])
+    answers = {"text": "Reply lost on the way back.", "attendance": ["applicant", "spouse"]}
+    first = revise(client, report, answers, "Obs.").json()
+    again = revise(client, report, {"attendance": ["applicant", "spouse"], "text": "Reply lost on the way back."}, "Obs.").json()
+    assert again == first and first["version"] == 2  # key order is immaterial (jsonb)
+    assert [r["version"] for r in history(client, report)] == [2, 1]
+    changed = revise(client, report, {**answers, "text": "Edited after the lost reply."}, "Obs.", expected=409).json()
+    assert changed == {"error": "version_conflict", "current_version": 2}
+
+
+def test_c02_deliberate_save_over_newer_version_binds_to_it(client, assigned, people):
+    report = member_report(assigned, people)
+    login(client, people["member"])
+    revise(client, report, {"text": "Other session", "attendance": ["applicant", "spouse"]})
+    saved = revise(client, report, {"text": "Mine, after reviewing v2", "attendance": ["applicant", "spouse"]}, version=2).json()
+    assert saved["version"] == 3
+    assert [r["answers"]["text"] for r in history(client, report)] == ["Mine, after reviewing v2", "Other session", "Original synthetic answer."]
+
+
+def test_c02_withdrawn_authority_is_a_403_when_the_version_is_present(client, assigned, people):
+    """QA run 2 saw 422 for a real denial only because the editor omitted expected_version."""
+    report = member_report(assigned, people)
+    other = m.Account.objects.create_user(email="member3@example.test", first_name="member3", last_name="Test",
+                                          role="member", email_verified=True)
+    assign_case(people["admin"], assigned.case_id, other.pk, people["admin"].pk)
+    login(client, people["member"])
+    body = revise(client, report, {"text": "Late", "attendance": ["applicant", "spouse"]}, expected=403).json()
+    assert body["error"] == "forbidden" and body["detail"]

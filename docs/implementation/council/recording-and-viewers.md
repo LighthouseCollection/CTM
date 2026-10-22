@@ -40,6 +40,22 @@ Testing:
 - **Fixed after real-backend testing:** answers now follow the request's question order (PostgreSQL does not keep JSON key order); rows refresh after a 403 so Revise disappears; English question wording and answers inside the Arabic page are direction-isolated so punctuation stays in place.
 - **Observed backend facts:** members lose the case from their lists once reassigned. `seed_reference` loads English wording only, so Arabic pages show English question wording (correct fallback). The revision route doesn't validate answer shape (the original completion does); no file access derives from report answers. Reported on #2.
 
+## Revision conflicts and safe retry (C-02)
+
+Contract (backend #7 `1ce1259`, `tribunal/api.py` `report_revision` and `endpoint()`, `services/reports.py` `revise_report`): `POST /api/reports/{id}/revisions/ {expected_version, answers, observations}`.
+
+| Server answer | Editor behaviour |
+|---|---|
+| `201 {id, version}`, a new save **or** an exact replay (same author, `expected_version`, answers and observations; jsonb key order immaterial) | Saved as version N; kept text cleared. |
+| `409 {"error":"version_conflict","current_version":N}` or `409 {"error":"conflict"}` (write race) | Re-read history. If the newest version is exactly this save (the replay rule), it is a confirmation. Otherwise: warning with the author of version N; text kept; Save withheld; **Show version N** (read-only, in place); **Save my text as a new version** (confirmation names version N+1, then sends `expected_version: N`); **Discard my changes** (confirmation). Never resubmitted automatically. |
+| No reply (network failure) or 5xx | Not reported as saved. Text kept; the exact request is kept; **Try again** resends it unchanged (no early history check, which would misread our own stored save as a conflict). If the text was edited meanwhile, the next save recognises the earlier stored save, rebases on it and says later edits are not yet saved. |
+| `403 {detail}` | Server reason + "not allowed"; text kept to copy; Save withheld; rows refresh so Revise disappears. |
+| `422 {messages}` | Server messages + "correct the text and save again"; Save stays. |
+| `401` | Session ended: sign in again in a new tab, then save here; text stays while the page is open. |
+| `404` | No longer available; text kept to copy; Save withheld. |
+
+Expected version is always the version the edit is based on. S10 retention (page memory only), the refresh warning and author-only rules are unchanged.
+
 ## Evidence viewers
 
 Case → Evidence and Case → Documents (council). Split list/detail, optional earlier versions, load more.
@@ -74,4 +90,4 @@ Only `/api/files/…` routes are ever used; a listing URL that is not an `/api/f
 
 D19 server-side expected-version check on report revisions (UI done, see above), D20 recordings/transcript read and retry (published in PR #7, UI not yet built), D21 recording category, worker format acceptance, resumable upload, duration/notice detail (issue #2); PDF.js packaging (issue #4). OCR stays with the backend stream; council processing status and retry displays will follow D20.
 
-Evidence files: [`evidence/d19_backend_acceptance.py`](evidence/d19_backend_acceptance.py) (copy into a backend #7 checkout's `tests/` to rerun) and [`evidence/d19-arabic-editor-390px-real-backend.jpg`](evidence/d19-arabic-editor-390px-real-backend.jpg) (synthetic data).
+Evidence files: [`evidence/d19_backend_acceptance.py`](evidence/d19_backend_acceptance.py) (D19 + C-02 server contract; copy into a backend #7 checkout's `tests/` to rerun), [`evidence/d19-arabic-editor-390px-real-backend.jpg`](evidence/d19-arabic-editor-390px-real-backend.jpg), and C-02 screens [`c02-en-390-conflict-real-backend.jpg`](evidence/c02-en-390-conflict-real-backend.jpg), [`c02-ar-390-conflict-real-backend.jpg`](evidence/c02-ar-390-conflict-real-backend.jpg), [`c02-ar-390-unconfirmed-save-real-backend.jpg`](evidence/c02-ar-390-unconfirmed-save-real-backend.jpg) (synthetic data, restricted `ctm_app` role).

@@ -198,3 +198,12 @@ test("Arabic: conflict and retry messages are translated", async () => {
   assert.ok(buttons(ui.tree, "عرض الإصدار 2").length);
   assert.equal(ui.text(), "نص غير محفوظ.");
 });
+
+test("messages fill every occurrence of a placeholder (real-backend finding)", () => {
+  const { load, harness } = require("./harness.cjs");
+  const C = load(harness());
+  const text = C.mediaTranslator("en")("revisionConflict", { version: "3", next: "4", actor: "A" });
+  assert.doesNotMatch(text, /\{version\}|\{next\}|\{actor\}/);
+  assert.match(text, /Look at version 3, then save your text as version 4/);
+  assert.doesNotMatch(C.mediaTranslator("ar")("overwriteMessage", { version: "3", next: "4" }), /\{version\}|\{next\}/);
+});
