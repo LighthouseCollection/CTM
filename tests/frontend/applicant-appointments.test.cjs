@@ -9,6 +9,12 @@ const invitation=()=>({id:'11111111-1111-4111-8111-111111111111',case_number:'T-
   starts_at:'2026-12-01T10:00:00-08:00',ends_at:'2026-12-01T10:30:00-08:00',
   instructions:'Private instructions',version:2,state:'invited',response:null,can_respond:true});
 
+test('actual backend private projection uses case identity without requiring a display number',()=>{
+  const row=invitation();delete row.case_number;row.case_id='22222222-2222-4222-8222-222222222222';
+  assert.equal(A.validListing({items:[row]}),true);
+  delete row.case_id;assert.equal(A.validListing({items:[row]}),false);
+});
+
 test('private invitation requires explicit version/capability and offset dates',()=>{
   assert.equal(A.validListing({items:[invitation()]}),true);
   for(const mutation of [r=>delete r.can_respond,r=>r.version=0,r=>r.starts_at='2026-12-01T10:00:00',

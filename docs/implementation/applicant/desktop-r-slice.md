@@ -69,8 +69,10 @@ current-version response. Confirm/Reject sends the exact invitation version;
 rejection explanation is optional. Successful acknowledgement, stale version,
 permission failure and network uncertainty lock actions until an explicit refresh.
 Cancellation/ineligibility removes response controls. No council schedule fallback
-or self-rescheduling exists. Its proposed owner-only read route remains a backend
-dependency; tests use an explicit contract fixture. The shared shell patch proposes
+or self-rescheduling exists. Its owner-only read route is integrated at backend
+`7684169`; actual API/browser checks cover confirmation, rescheduling, rejection,
+cancellation and isolation. A generic invitation heading accommodates the actual
+case-ID projection without exposing a raw UUID. The shared shell patch proposes
 applicant-only My appointments navigation and module loading, without modifying
 shared source files in this branch.
 

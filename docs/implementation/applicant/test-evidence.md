@@ -6,10 +6,10 @@ deployment or production-readiness acceptance is represented by these checks.
 
 | Check | Result | Scope |
 | --- | --- | --- |
-| `node --test tests/frontend/*.test.cjs` | 35 passed | Bound definitions, repeat stable IDs/opaque fields, incomplete save, optimistic versions, errors/permission lock, boolean false/unanswered, conditional retention, start/reuse, filing eligibility, immutable signature/idempotency retry, private download paths, context replacement, size gates, malformed current-file projection, invitation version/capability and response locks |
+| `node --test tests/frontend/*.test.cjs` | 36 passed | Bound definitions, repeat stable IDs/opaque fields, incomplete save, optimistic versions, errors/permission lock, boolean false/unanswered, conditional retention, start/reuse, filing eligibility, immutable signature/idempotency retry, private download paths, context replacement, size gates, malformed current-file projection, invitation version/capability and response locks |
 | `uv run --group browser python scripts/browser_applicant.py` | 18 scenario groups passed; no page errors | Real Plenix 0.58.0 CDN, synthetic API; escaped review, save, language/RTL, unsaved guards, declaration/fee/signature layout, waived filing, read-only returned resubmission, unsafe checkout, uncertain upload/readiness, boolean conditional save, automatic checklist/capability refresh, repeat add/correct/review/remove in RTL, submitted prompt and bidi case-reference regression, editable/read-only identity-hold notice EN/AR |
 | `uv run --group browser python scripts/browser_applicant_shell.py` | 9 scenario groups passed; no page errors | Proposed shell patch applied only to temporary copies; actual helper, sidebar/back, preference success/failure, 403/404 lock, multipart boundary/context/replacement, pending-scan links, Arabic layout, start/reuse/eligibility error, applicant appointment navigation |
-| `uv run --group browser python scripts/browser_applicant_api.py` | 16 scenario groups passed; no page errors | Real Django APIs against backend `6e690b5de5a107e6a76dad3cc259b1290ce6373a`, isolated SQLite/synthetic accounts; start/form/repeat save/preferences, stale history, draft/file privacy, browser required uploads/downloads/correction with retained original bytes, latest synthetic scan-event gates, clean current-file listing/capability refresh, authorized fixture waiver, browser declaration/signature/submit and real key replay, browser returned resubmit, actual status refresh, own payment history and draft-payment privacy, resubmit pending-scan atomic rejection and original attestation linkage, held-draft save with blocked checkout preparation/submission |
+| `uv run --group browser python scripts/browser_applicant_api.py` | 20 scenario groups passed; no page errors | Real Django APIs against backend `7684169d998cd2678757f8431378eaec8fdd1258`, isolated SQLite/synthetic accounts; start/form/repeat save/preferences, stale history, draft/file privacy, browser required uploads/downloads/correction with retained original bytes, latest synthetic scan-event gates, clean current-file listing/capability refresh, authorized fixture waiver, browser declaration/signature/submit and real key replay, browser returned resubmit, actual status refresh, own payment history and draft-payment privacy, resubmit pending-scan atomic rejection and original attestation linkage, held-draft save with blocked checkout preparation/submission, returned retention/delete safety, actual appointment confirmation/reschedule/stale rejection/cancel/isolation |
 | `uv run --group browser python scripts/browser_applicant_appointments.py` | 5 scenario groups passed; no page errors | Proposed read-contract fixtures only; private escaped instructions, exact offset times, Confirm/Reject/version, stale/uncertain lock, rescheduled version reset, cancelled controls, Arabic mobile layout, malformed/empty/unavailable listing |
 | `uv run --group browser python scripts/browser_applicant_payments.py` | 4 scenario groups passed; no page errors | Payment read facts, processing/reconciliation, cumulative refund labels, Arabic mobile timestamp isolation, denied/malformed refresh clears old data, GET requests only |
 | `uv run pytest tests/test_workflows.py tests/test_input_validation.py tests/test_row_security.py tests/test_shell.py -q` | 15 passed; 37 skipped | SQLite local regression; PostgreSQL-only checks skipped, not passed |
@@ -67,12 +67,12 @@ No live provider payment, antivirus, production database or deployment acceptanc
 
 ## Open dependencies
 
-- VM-FRM: owner-only appointment read/lifecycle contract, nested repeat validation,
+- VM-FRM: returned-correction privacy blocker F08, nested repeat validation,
   pending-checkout resume projection. Own current-file listing/capabilities and returned
   instructions now pass the isolated real-API integration runner at `6e89c22`.
 - Governance/content: approved published bilingual applicant form definition,
   declarations and repeat-field contracts; apply shared shell hooks serially.
-- Later acceptance: actual appointment integration; PostgreSQL lifecycle/races,
+- Later acceptance: PostgreSQL lifecycle/races,
   provider payment and live antivirus acceptance. Real-API applicant draft/file
   isolation and waived filing/correction controls are covered in the isolated runner.
 
@@ -82,8 +82,8 @@ dependencies and subsequent slices are implemented and reviewed.
 ## Current returned-privacy acceptance failure
 
 The opt-in `CTM_APPLICANT_ACCEPTANCE=returned_privacy` real-API probe fails seven
-of eight privacy predicates on backend `6e690b5`. This failure is not included in
-the16 baseline passing groups. See [acceptance reconciliation](acceptance-reconciliation.md)
+of eight privacy predicates on backend `7684169`. This failure is not included in
+the20 baseline passing groups. See [acceptance reconciliation](acceptance-reconciliation.md)
 and [sanitized JSON evidence](returned-privacy-result.json). Detail/history/list and
 download/preview/range expose pending returned corrections to council before
 resubmission; the formal manifest remains bound to the submitted file. Backend

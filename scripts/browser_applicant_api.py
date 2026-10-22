@@ -294,6 +294,22 @@ try:
         assert returned.status==201,returned.text()
         current=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
         assert current["can_resubmit"] and not current["can_checkout"] and current["return_instructions"]=="Synthetic correction instruction"
+        def returned_retention():
+            from django.utils import timezone
+            from tribunal.services.retention import process_drafts
+            app=Application.objects.get(pk=app_id)
+            before=(app.revisions.count(),FileVersion.objects.filter(attachment__application=app).count())
+            Application.objects.filter(pk=app_id).update(last_activity=timezone.now()-timezone.timedelta(days=500))
+            result=process_drafts()
+            app.refresh_from_db()
+            after=(app.revisions.count(),FileVersion.objects.filter(attachment__application=app).count())
+            return result,app.status,before,after
+        retention=fixture_db(returned_retention)
+        assert retention[0]["expired"]==0 and retention[1]=="returned" and retention[2]==retention[3]
+        delete_returned=context.request.post(f"{BASE}/api/applications/{app_id}/delete-draft/",data={},headers={"X-CSRFToken":csrf})
+        assert delete_returned.status==422,delete_returned.text()
+        assert private_path(original.object_key).read_bytes()==original_bytes
+        checks.append("Actual retention ignores returned filing after500 idle days; draft-delete rejects it and retained answers/originals survive")
         from tribunal.models import Submission
         formal_submission_id=submitted.json()["id"]
         formal_submission=fixture_db(lambda:Submission.objects.get(pk=formal_submission_id))
@@ -354,12 +370,67 @@ try:
         assert fixture_db(lambda:Submission.objects.get(pk=formal_submission_id).attestation)==formal_submission.attestation
         assert fixture_db(lambda:Submission.objects.filter(application_id=app_id).count())==2
         assert context.request.get(f"{BASE}/api/applications/{app_id}/").json()["fee"]["status"]=="waived"
-        staff.close()
         checks.append("Real return instructions and resubmission reuse original fee/signature without new attestation")
         page.get_by_role("button",name="Refresh application status",exact=True).click()
         expect(page.get_by_text("Application status: Submitted",exact=True)).to_be_visible()
         expect(page.get_by_text("Case reference:",exact=False)).to_be_visible()
         checks.append("Explicit status refresh displays actual submitted state and allocated case reference")
+        meeting=staff.request.post(BASE+"/api/sessions/",data={"date":"2030-01-02"},headers={"X-CSRFToken":staff_csrf})
+        assert meeting.status==201,meeting.text()
+        meeting_id=meeting.json()["id"]
+        agenda=staff.request.post(f"{BASE}/api/sessions/{meeting_id}/agenda/",data={"case_id":current["case_id"],"part":2},headers={"X-CSRFToken":staff_csrf})
+        assert agenda.status==201,agenda.text()
+        parties=context.request.get(f"{BASE}/api/cases/{current['case_id']}/").json()["parties"]
+        party_id=next(party["id"] for party in parties if party["is_self"])
+        invitation=staff.request.post(f"{BASE}/api/agenda/{agenda.json()['id']}/testimony/",data={
+            "party_id":party_id,"starts_at":"2030-01-02T10:00:00-08:00","ends_at":"2030-01-02T10:30:00-08:00",
+            "instructions":"Private applicant appointment instructions"},headers={"X-CSRFToken":staff_csrf})
+        assert invitation.status==201,invitation.text()
+        invitation_id=invitation.json()["id"]
+        own_invitations=context.request.get(BASE+"/api/appointments/")
+        assert own_invitations.status==200 and len(own_invitations.json()["items"])==1
+        private=own_invitations.json()["items"][0]
+        assert private["version"]==1 and private["can_respond"] and private["case_id"]==current["case_id"]
+        assert not any(key in private for key in ("agenda","session","testimony","party_name","party_id"))
+        stranger=browser.new_context()
+        stranger.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["outsider"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
+        assert stranger.request.get(BASE+"/api/appointments/").json()=={"items":[]}
+        assert context.request.get(BASE+"/api/sessions/").status==403
+        assert staff.request.get(BASE+"/api/appointments/").status==403
+        page.get_by_role("navigation").get_by_role("button",name="My appointments",exact=True).click()
+        expect(page.get_by_text("Private applicant appointment instructions",exact=True)).to_be_visible()
+        with page.expect_response(lambda response:response.url==f"{BASE}/api/appointments/{invitation_id}/response/") as received:
+            page.get_by_role("button",name="Confirm attendance",exact=True).click()
+        assert received.value.status==201 and received.value.request.post_data_json["version"]==1
+        page.get_by_role("button",name="Refresh invitations",exact=True).click()
+        expect(page.get_by_text("Your current response: Confirmed",exact=True)).to_be_visible()
+        checks.append("Real private invitation listing and browser confirmation work without council schedule access; outsiders see no invitations")
+        moved=staff.request.post(f"{BASE}/api/sessions/{meeting_id}/reschedule/",data={"date":"2030-01-03","reason":"Synthetic scheduling correction",
+            "appointments":{invitation_id:{"starts_at":"2030-01-03T11:00:00-08:00","ends_at":"2030-01-03T11:30:00-08:00","instructions":"Updated private invitation"}}},headers={"X-CSRFToken":staff_csrf})
+        assert moved.status==201,moved.text()
+        stale=context.request.post(f"{BASE}/api/appointments/{invitation_id}/response/",data={"version":1,"response":"confirm"},headers={"X-CSRFToken":csrf})
+        assert stale.status==422,stale.text()
+        page.get_by_role("button",name="Refresh invitations",exact=True).click()
+        expect(page.get_by_text("Invitation version: 2",exact=True)).to_be_visible()
+        expect(page.get_by_text("You have not responded to this invitation version.",exact=True)).to_be_visible()
+        expect(page.get_by_text("Updated private invitation",exact=True)).to_be_visible()
+        page.get_by_label("Reason for rejecting (optional)",exact=True).fill("Unavailable on the new date")
+        with page.expect_response(lambda response:response.url==f"{BASE}/api/appointments/{invitation_id}/response/") as received:
+            page.get_by_role("button",name="Reject invitation",exact=True).click()
+        assert received.value.status==201 and received.value.request.post_data_json=={"version":2,"response":"reject","explanation":"Unavailable on the new date"}
+        checks.append("Actual reschedule issues fresh version; stale response rejects and browser rejection binds updated invitation with optional reason")
+        cancelled=staff.request.post(f"{BASE}/api/appointments/{invitation_id}/cancel/",data={"expected_version":2},headers={"X-CSRFToken":staff_csrf})
+        assert cancelled.status==200,cancelled.text()
+        page.get_by_role("button",name="Refresh invitations",exact=True).click()
+        expect(page.get_by_text("This invitation is not accepting responses.",exact=True)).to_be_visible()
+        assert page.get_by_role("button",name="Confirm attendance",exact=True).count()==0
+        forbidden=context.request.post(f"{BASE}/api/appointments/{invitation_id}/response/",data={"version":3,"response":"confirm"},headers={"X-CSRFToken":csrf})
+        assert forbidden.status==422,forbidden.text()
+        stranger.request.get(BASE+"/api/session/")
+        stranger_csrf=next(cookie["value"] for cookie in stranger.cookies() if cookie["name"]=="csrftoken")
+        assert stranger.request.post(f"{BASE}/api/appointments/{invitation_id}/response/",data={"version":3,"response":"reject"},headers={"X-CSRFToken":stranger_csrf}).status==403
+        stranger.close();staff.close()
+        checks.append("Actual cancellation removes browser response actions; cancelled and outsider responses are denied by server")
         assert page.locator("[style]").count()==0
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         assert not errors,errors

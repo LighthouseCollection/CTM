@@ -120,7 +120,7 @@ responses. JSON requests retain Content-Type application/json; FormData must omi
 so the browser supplies the real multipart boundary. No production mock endpoint or
 fixture login is introduced by these modules. Browser fixtures are test-only scripts.
 
-## Private appointment read projection proposed
+## Private appointment read projection
 
 Existing write: POST `/api/appointments/{id}/response/` with
 `{version,response:"confirm"|"reject",explanation:""}`. The applicant module sends
@@ -129,10 +129,10 @@ empty for confirmation. An acknowledgement locks local actions until refresh.
 Stale, unauthorized or uncertain responses also require authoritative refresh;
 there is no automatic retry because the existing response write is not idempotent.
 
-Requested GET `/api/appointments/` returns only this account's private invitations:
+GET `/api/appointments/` at backend `7684169` returns only this account's private invitations:
 
 ```json
-{"items":[{"id":"appointment-uuid","case_number":"T-2026-0001",
+{"items":[{"id":"appointment-uuid","case_id":"case-uuid","date":"2026-12-01",
 "starts_at":"2026-12-01T10:00:00-08:00","ends_at":"2026-12-01T10:30:00-08:00",
 "instructions":"Server invitation instructions","version":2,"state":"invited",
 "response":null,"can_respond":true}]}
@@ -145,9 +145,13 @@ otherwise ineligible invitations. The frontend additionally requires state invit
 Timestamps must include UTC offsets; the frontend displays both supplied times
 without guessing an end/duration/timezone. No session/agenda/member/other-party
 fields are requested. Missing/invalid projection fails closed and never falls back
-to council agenda. No self-rescheduling is provided. Backend read/lifecycle contract
-is requested on issue #2 and remains unimplemented at `6e89c22`; fixture tests are
-explicitly separate from real backend acceptance.
+to council agenda. No self-rescheduling is provided. The actual projection supplies
+case identity without a display number; the UI uses a generic localized invitation
+heading instead of showing the raw UUID. A supplied display number remains supported.
+Real API/browser acceptance now covers own listing, confirmation, staff rescheduling
+to a fresh version, stale422, rejection reason, cancellation and outsider denial.
+Session lifecycle and private invitation PostgreSQL policies remain separate from
+the isolated SQLite browser acceptance.
 
 ## Own payment history
 
