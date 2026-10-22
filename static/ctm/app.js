@@ -1438,7 +1438,7 @@
     ];
     const casesNavigationItems = [
       { id: "search", icon: navigationIcon("search"), label: t("search") },
-      { id: "myCases", icon: navigationIcon("cases"), label: t("myCases") },
+      { id: "myCases", icon: h(P.Icon, { name: "folder_shared", "aria-hidden": true }), label: t("myCases") },
       { id: "cases", icon: h(P.Icon, { name: "folder", "aria-hidden": true }), label: t("allCases") },
       { id: "archived", icon: navigationIcon("archived"), label: t("archivedCases") },
       { id: "statistics", icon: navigationIcon("statistics"), label: t("statistics"), disabled: unavailable.has("statistics") },

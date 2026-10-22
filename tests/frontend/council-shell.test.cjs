@@ -507,6 +507,7 @@ test("case hearings use full-width current and past tabs with an in-progress hea
   assert.doesNotMatch(councilCase.slice(councilCase.indexOf("function CaseHearings"), councilCase.indexOf("// ---------- Petition")), /CTMShell\.Workspace/);
 });
 
-test("All Active Cases uses the requested Material folder icon", () => {
+test("case navigation uses the requested Material folder icons", () => {
+  assert.match(app, /id: "myCases", icon: h\(P\.Icon, \{ name: "folder_shared", "aria-hidden": true \}\), label: t\("myCases"\)/);
   assert.match(app, /id: "cases", icon: h\(P\.Icon, \{ name: "folder", "aria-hidden": true \}\), label: t\("allCases"\)/);
 });
