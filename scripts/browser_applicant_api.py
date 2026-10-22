@@ -686,7 +686,19 @@ try:
             print(json.dumps(report,indent=2))
             assert all(privacy.values()) and all(owner_checks.values()),"Returned privacy acceptance failed; see returned-privacy-result.json"
             checks.append("Returned privacy isolates pending answers/originals/audit/alerts while owner retains corrections and council retains formal snapshot")
+        ready_to_resubmit=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
+        assert ready_to_resubmit["status"]=="returned" and ready_to_resubmit["can_resubmit"]
+        ready_files=context.request.get(f"{BASE}/api/applications/{app_id}/files/").json()
+        required_keys={(row["category"],row.get("context") or "") for row in ready_files["requirements"] if row["required"]}
+        current_items=ready_files["items"]
+        current_safe_items=[item for item in current_items if item["scan_state"]=="clean"]
+        current_safe_keys={(item["category"],item.get("context") or "") for item in current_safe_items}
+        assert required_keys<=current_safe_keys and len(current_safe_items)==len(current_items)
+        assert {item["context"] for item in current_safe_items if item["category"]=="RO"}==set(contexts)
+        page.get_by_role("button",name="Refresh application status",exact=True).click()
+        expect(page.get_by_role("link",name="Download original",exact=True)).to_have_count(len(current_safe_items))
         page.get_by_role("button",name="Review answers",exact=True).click()
+        expect(page.get_by_role("button",name="Resubmit corrections",exact=True)).to_be_enabled()
         with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{app_id}/submit/" and response.request.method=="POST") as received:
             page.get_by_role("button",name="Resubmit corrections",exact=True).click()
         response=received.value
