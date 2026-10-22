@@ -21,8 +21,9 @@ migrations; independent QA accepts the exact integrated successor SHA.
 
 ## Unfinished implementation, in priority order
 
-1. External-priest recording journey: connect original capture/upload to the
-   appropriate request/report lifecycle; preserve notice, original media,
+1. External-priest recording journey: council completion of an already uploaded
+   original is implemented (priest-recording-completion.md). Capture/chunk/uncapped
+   transfer and provider processing remain unfinished. Preserve notice, original media,
    scan, source association, designated reviewer and exact-version approval.
    `deliver()` currently rejects transcription jobs as provider unconfigured;
    recording finalization is not successful transcription.

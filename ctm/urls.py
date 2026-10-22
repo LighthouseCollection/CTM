@@ -1,6 +1,7 @@
 from django.urls import path, include
 from tribunal import api
 from tribunal import priest_pdf_api
+from tribunal import priest_recording_api
 
 urlpatterns = [
     path("", api.shell),
@@ -62,6 +63,7 @@ urlpatterns = [
     path("api/pending-party-links/<uuid:pending_id>/cancel/", api.pending_link_cancel),
     path("api/requests/<uuid:request_id>/complete/", api.complete_report_request),
     path("api/requests/<uuid:request_id>/paper-completion/", api.complete_paper_report_request),
+    path("api/requests/<uuid:request_id>/recording-completion/", priest_recording_api.complete_recording_request),
     path("api/requests/<uuid:request_id>/release/", api.medical_release),
     path("api/requests/<uuid:request_id>/files/", api.request_files),
     path("api/cases/<uuid:case_id>/reports/", api.reports),
