@@ -233,3 +233,12 @@ test("petition view shows the submitted petition without a redundant navigation 
   assert.doesNotMatch(councilCase, /petitionReadOnly/);
   assert.doesNotMatch(councilCase, /codesNotice/);
 });
+
+
+test("active-session transfers require a reason and use the retained override endpoint", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(council, /transferCaseTitle/);
+  assert.match(council, /transferReason/);
+  assert.match(council, /\/transfer\//);
+  assert.match(council, /row\.can_transfer/);
+});

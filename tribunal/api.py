@@ -999,6 +999,22 @@ def agenda(request, session_id):
 
 
 @endpoint(("POST",))
+def transfer_agenda(request, item_id):
+    from tribunal.projections import agenda_item_data
+    from tribunal.services.council import attendance_for, transfer_agenda_item
+
+    data = body(request)
+    target_session_id = data.get("target_session_id")
+    if not target_session_id:
+        raise ValidationError("A destination tribunal session is required.")
+    item = transfer_agenda_item(request.user, item_id, target_session_id, data.get("reason", ""))
+    return JsonResponse(
+        encoded(item, **agenda_item_data(item, request.user, attendance_for(request.user, item.session_id))),
+        status=201,
+    )
+
+
+@endpoint(("POST",))
 def close_session(request, session_id):
     from tribunal.services.council import close_session as command
 

@@ -278,6 +278,11 @@ def place_agenda(actor, session_id, case_id, part=2):
         and not pending_council_filings(case).exists()
     ):
         raise ValidationError("Closed case has no pending appeal to hear.")
+    active_agenda = AgendaItem.objects.select_for_update(of=("self",)).filter(
+        case=case, session__state="planned", state__in={"scheduled", "time_exhausted"}
+    ).exclude(session=session).first()
+    if active_agenda:
+        raise ValidationError("Case is tied to an in-session agenda. Use the documented transfer override.")
     position = (session.agenda.aggregate(n=Max("position"))["n"] or 0) + 1
     item, created = AgendaItem.objects.get_or_create(
         session=session, case=case, defaults={"part": part, "position": position}
@@ -289,6 +294,47 @@ def place_agenda(actor, session_id, case_id, part=2):
     if created:
         audit(actor, "agenda_placed", item, case)
     return item
+
+
+@transaction.atomic
+def transfer_agenda_item(actor, item_id, target_session_id, reason):
+    """Move an active agenda item only through an authorized, retained override."""
+    if not isinstance(reason, str) or not reason.strip():
+        raise ValidationError("A reason is required to move a case to another session.")
+    source = (
+        AgendaItem.objects.select_for_update(of=("self",))
+        .select_related("case", "session")
+        .get(pk=item_id)
+    )
+    case = Case.objects.select_for_update(of=("self",)).get(pk=source.case_id)
+    writer(actor, case)
+    target = CouncilSession.objects.select_for_update(of=("self",)).get(pk=target_session_id)
+    if source.session.state != "planned" or source.state not in {"scheduled", "time_exhausted"}:
+        raise ValidationError("Only a scheduled case in an in-session agenda can be moved.")
+    if target.pk == source.session_id or target.state not in {"draft", "planned"}:
+        raise ValidationError("Choose a different draft or in-session tribunal session.")
+    if AgendaItem.objects.filter(session=target, case=case).exists():
+        raise ValidationError("The case is already on the selected session agenda.")
+    position = (target.agenda.aggregate(n=Max("position"))["n"] or 0) + 1
+    destination = AgendaItem.objects.create(
+        session=target, case=case, part=source.part, position=position, carried_from=source
+    )
+    source_state = source.state
+    source.state = "transferred"
+    source.save(update_fields=["state"])
+    event = AgendaTransferEvent.objects.create(
+        case=case,
+        from_session_snapshot={
+            "session_id": str(source.session_id), "reference": source.session.reference,
+            "agenda_id": str(source.pk), "part": source.part, "state": source_state,
+        },
+        to_session=target, destination_item=destination, reason=reason.strip(), actor=actor,
+    )
+    audit(actor, "agenda_transferred", event, case, metadata={
+        "source_agenda_id": str(source.pk), "destination_agenda_id": str(destination.pk),
+        "source_session_id": str(source.session_id), "target_session_id": str(target.pk),
+    })
+    return destination
 
 
 @transaction.atomic

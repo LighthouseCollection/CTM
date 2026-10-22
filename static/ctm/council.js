@@ -367,6 +367,15 @@
       sessionStatusInSession: "In session",
       sessionStatusAdjourned: "Adjourned",
       sessionActivated: "The tribunal session is now in session.",
+      moveCase: "Move",
+      transferCaseTitle: "Move case to another session",
+      transferCaseHelp: "This authorized override keeps the original agenda item and records why it moved.",
+      moveToSession: "Move to session",
+      chooseSession: "Choose a session",
+      transferReason: "Reason for move",
+      transferReasonRequired: "Enter a reason for this move.",
+      transferRecorded: "The case was moved and the override was recorded.",
+      noTransferSessions: "No other draft or in-session sessions are available.",
       adjournSessionTitle: "Adjourn this tribunal session?",
       adjournedSessionMessage: "This closes the session. It remains in Current view until midnight Los Angeles time.",
       adjournSessionAction: "Adjourn session",
@@ -640,6 +649,15 @@
       sessionStatusInSession: "قيد الجلسة",
       sessionStatusAdjourned: "مؤجلة",
       sessionActivated: "جلسة المجلس الآن قيد الانعقاد.",
+      moveCase: "نقل",
+      transferCaseTitle: "نقل القضية إلى جلسة أخرى",
+      transferCaseHelp: "يحفظ هذا التجاوز المصرح به بند جدول الأعمال الأصلي ويسجل سبب نقله.",
+      moveToSession: "نقل إلى جلسة",
+      chooseSession: "اختر جلسة",
+      transferReason: "سبب النقل",
+      transferReasonRequired: "أدخل سببًا لهذا النقل.",
+      transferRecorded: "تم نقل القضية وتسجيل التجاوز.",
+      noTransferSessions: "لا تتوفر جلسات مسودة أو قيد الانعقاد أخرى.",
       adjournSessionTitle: "هل تريد تأجيل جلسة المجلس هذه؟",
       adjournedSessionMessage: "سيؤدي هذا إلى إغلاق الجلسة. ستظل في العرض «الحالي» حتى منتصف الليل في لوس أنجلوس.",
       adjournSessionAction: "تأجيل الجلسة",
@@ -1353,7 +1371,7 @@
     );
   }
 
-  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onCase, onOutcome, onTestimony, onCancelTestimony, canAssign, compact = false }) {
+  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onTransfer, onCase, onOutcome, onTestimony, onCancelTestimony, canAssign, compact = false }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1373,6 +1391,8 @@
       actions.push(h(P.Button, { key: "outcome", size: "xs", onClick: () => onOutcome(row) }, t("recordOutcome")));
     if (flags.testimony)
       actions.push(h(P.Button, { key: "testimony", size: "xs", onClick: () => onTestimony(row) }, t("scheduleTestimony")));
+    if (row.can_transfer && onTransfer)
+      actions.push(h(P.Button, { key: "transfer", size: "xs", onClick: () => onTransfer(row) }, t("moveCase")));
     actions.push(
       h(P.Button, { key: "case", size: "xs", variant: "ghost", onClick: () => onCase(row.case_id) }, t("openCase")),
     );
@@ -1906,7 +1926,7 @@
       [sessionId],
     );
     const [dialog, setDialog] = R.useState(null); // {kind, row}
-    const [choice, setChoice] = R.useState({ part1: "", part2: "", member: "", president: "" });
+    const [choice, setChoice] = R.useState({ part1: "", part2: "", member: "", president: "", targetSession: "", transferReason: "" });
     const [problem, setProblem] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
@@ -1928,6 +1948,7 @@
     const presidentRows = assignmentAuthorizers(data.members);
     const recorder = canRecordAssignment(user, data.members);
     const memberRows = assignableMembers(data.members);
+    const transferSessions = data.sessions.filter((candidate) => candidate.id !== session.id && ["draft", "planned"].includes(candidate.state));
     // EntityHeader is the default Plenix record header.  Values come from the
     // selected session payload; a reference/state badge is deliberately not
     // repeated here because it is not part of the session's requested header.
@@ -2060,6 +2081,11 @@
                 setFailure(null);
                 setDialog({ kind: "present", row: item });
               },
+              onTransfer: (item) => {
+                setFailure(null);
+                setChoice((old) => ({ ...old, targetSession: "", transferReason: "" }));
+                setDialog({ kind: "transfer", row: item });
+              },
               onOutcome: (item) => {
                 setFailure(null);
                 setDialog({ kind: "outcome", row: item });
@@ -2090,6 +2116,11 @@
       onPresent: (item) => {
         setFailure(null);
         setDialog({ kind: "present", row: item });
+      },
+      onTransfer: (item) => {
+        setFailure(null);
+        setChoice((old) => ({ ...old, targetSession: "", transferReason: "" }));
+        setDialog({ kind: "transfer", row: item });
       },
       onOutcome: (item) => {
         setFailure(null);
@@ -2130,7 +2161,9 @@
             { title: t("reason"), field: "reason" },
             { title: t("yearsMarried"), field: "married_years", render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
             { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: "\u00a0", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
+            { title: "\u00a0", field: "open_action", render: (row) => h(P.Inline, { gap: "xs" },
+              h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
+              row.can_transfer && transferSessions.length ? h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase")) : null) },
           ]
         : [
             { title: "#", field: "position", kind: "name" },
@@ -2138,7 +2171,9 @@
             { title: t("respondent"), field: "respondent", render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("assignedTo"), field: "assigned_member_name", render: (row) => personPill(row.assigned_member_name, "clergy") },
             { title: t("previousRecommendation"), field: "previous_recommendation", render: (row) => row.previous_recommendation || t("notRecorded") },
-            { title: "\u00a0", field: "open_action", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
+            { title: "\u00a0", field: "open_action", render: (row) => h(P.Inline, { gap: "xs" },
+              h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
+              row.can_transfer && transferSessions.length ? h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase")) : null) },
           ];
       return h(P.Panel, {
         key: n,
@@ -2251,6 +2286,27 @@
               if (onSession) onSession(targetId);
             },
           })
+        : null,
+      dialog?.kind === "transfer"
+        ? h(P.Dialog, { open: true, size: "sm", title: t("transferCaseTitle"), onClose: () => !pending && setDialog(null) },
+            h(P.Stack, { gap: "md" },
+              h(P.Text, { variant: "secondary" }, t("transferCaseHelp")),
+              h(P.Field, { label: t("moveToSession") }, h(P.Select, {
+                value: choice.targetSession,
+                onChange: (event) => setChoice((old) => ({ ...old, targetSession: event.target.value })),
+                options: [{ value: "", label: transferSessions.length ? t("chooseSession") : t("noTransferSessions") }, ...transferSessions.map((candidate) => ({ value: candidate.id, label: sessionLabel(candidate.date, t) }))],
+              })),
+              h(P.Field, { label: t("transferReason") }, h(P.Textarea, { value: choice.transferReason, onChange: (event) => setChoice((old) => ({ ...old, transferReason: event.target.value })) })),
+              failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+              h(P.Inline, { justify: "end", gap: "sm" },
+                h(P.Button, { variant: "secondary", disabled: pending, onClick: () => setDialog(null) }, t("cancel")),
+                h(P.Button, { variant: "primary", disabled: pending || !choice.targetSession || !choice.transferReason.trim(), onClick: () => run(
+                  () => api(`/api/agenda/${encodeURIComponent(dialog.row.id)}/transfer/`, { method: "POST", body: JSON.stringify({ target_session_id: choice.targetSession, reason: choice.transferReason }) }),
+                  "transferRecorded", onChanged,
+                ) }, t("moveCase")),
+              ),
+            ),
+          )
         : null,
       dialog?.kind === "attendance" && renderAttendance
         ? h(

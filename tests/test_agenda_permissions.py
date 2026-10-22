@@ -109,6 +109,8 @@ def test_session_close_preserves_existing_next_session_placement(assigned, peopl
     from datetime import timedelta
 
     app, session = assigned
+    session.state = "draft"
+    session.save(update_fields=["state"])
     source = council.place_agenda(people["member"], session.pk, app.case_id, part=2)
     next_session = council.create_session(
         people["admin"], session.date + timedelta(days=7)

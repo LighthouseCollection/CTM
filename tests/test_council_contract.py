@@ -3,11 +3,11 @@ from zoneinfo import ZoneInfo
 import json
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
-from tribunal.models import Account, AgendaItem, Notification, Party, ReportQuestion
+from tribunal.models import Account, AgendaItem, AgendaTransferEvent, Notification, Party, ReportQuestion
 from tribunal.services.applications import submit_application, review_application, save_answers
 from tribunal.services.council import (
     assign_case, create_session, place_agenda, record_attendance, hear_case,
-    save_hearing_outcome, close_session,
+    save_hearing_outcome, close_session, transfer_agenda_item,
 )
 from tribunal.services.decisions import record_decision, cast_vote, approve_decision
 from tribunal.services.reports import create_request, send_request, complete_request
@@ -516,3 +516,25 @@ def test_f20_concurrent_outcome_revision_does_not_repeat_first_message(hearing, 
     assert HearingOutcome.objects.filter(hearing=hearing).count() == 2
     assert Message.objects.filter(case=filed.case).count() == 1
     assert Message.objects.get(case=filed.case).email_timing == "after_session"
+
+
+def test_active_session_agenda_requires_an_audited_override_to_move(filed, people):
+    app = filed
+    assign_case(people["admin"], app.case_id, people["member"].pk, people["president"].pk)
+    active_session = create_session(people["admin"], date(2030, 2, 2))
+    next_session = create_session(people["admin"], date(2030, 2, 9), state="draft")
+    source = place_agenda(people["member"], active_session.pk, app.case_id)
+
+    with pytest.raises(ValidationError, match="tied to an in-session agenda"):
+        place_agenda(people["member"], next_session.pk, app.case_id)
+
+    destination = transfer_agenda_item(
+        people["member"], source.pk, next_session.pk, "The council ran out of time."
+    )
+    source.refresh_from_db()
+    assert source.state == "transferred"
+    assert destination.session_id == next_session.pk
+    assert destination.carried_from_id == source.pk
+    transfer = AgendaTransferEvent.objects.get(destination_item=destination)
+    assert transfer.case_id == app.case_id
+    assert transfer.reason == "The council ran out of time."

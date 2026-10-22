@@ -40,6 +40,7 @@ urlpatterns = [
     path("api/sessions/<uuid:session_id>/activate/", api.activate_session),
     path("api/sessions/<uuid:session_id>/adjourn/", api.adjourn_session),
     path("api/sessions/<uuid:session_id>/reschedule/", api.reschedule_session),
+    path("api/agenda/<uuid:item_id>/transfer/", api.transfer_agenda),
     path("api/agenda/<uuid:item_id>/hear/", api.hear),
     path("api/cases/<uuid:case_id>/messages/", api.messages),
     path("api/notifications/", api.notifications),
