@@ -149,6 +149,19 @@
     return all.filter((q) => codes.has(q.code) && !String(q.wording_ar || "").trim()).map((q) => q.code);
   }
 
+  // Templates usable to pre-fill a request: active, with question codes (newer servers).
+  function usableTemplates(templates) {
+    return (templates || []).filter((tpl) => !tpl.retired && Array.isArray(tpl.questions) && tpl.questions.length);
+  }
+
+  // Selected codes from a template, excluding foundational questions (always included)
+  // and codes no longer published.
+  function templateSelection(template, questions) {
+    const published = new Set((questions || []).map((q) => q.code));
+    const foundational = new Set(foundationalCodes(questions));
+    return [...new Set((template?.questions || []).map((q) => q.code))].filter((code) => published.has(code) && !foundational.has(code));
+  }
+
   function requestProblem(form, questions) {
     if (!form.party) return "chooseSubject";
     if (form.kind && !["intake", "interview"].includes(form.kind)) return "chooseMethod";
@@ -311,6 +324,32 @@
         "Only the assigned case manager, or the administrator or secretary, enters the decision type and grounds.",
       actionFailed: "The action could not be completed. Nothing was changed.",
       back: "Back",
+      templates: "Question templates",
+      templatesHelp: "Reusable selections of published questions. Templates never contain applicant answers.",
+      startFromTemplate: "Start from a template",
+      chooseTemplate: "Select a template",
+      useTemplate: "Use template",
+      templateApplied: "The template's questions were selected. Foundational questions stay included.",
+      templateTitle: "Name for a new personal template",
+      templateTitleRequired: "Enter a name for the template.",
+      saveAsTemplate: "Save selection as my template",
+      templateSaved: "Your personal template was saved.",
+      sharedTemplate: "Shared",
+      personalTemplate: "Personal",
+      publishTemplate: "Publish as shared",
+      templatePublished: "A shared copy was published. The personal template is unchanged.",
+      retireTemplate: "Retire",
+      templateRetired: "The template was retired. Its history is kept.",
+      release_none: "No signed release",
+      release_signed: "Release covers council",
+      release_out_of_scope: "Release out of scope",
+      editNote: "Edit",
+      editingNote: "Edit your note",
+      editNoteHelp: "Saving keeps the earlier text in the note's history.",
+      saveRevision: "Save revision",
+      findingsTitle: "Council findings",
+      findingsHelp: "The council's own findings. They never change what either spouse submitted.",
+      noFindings: "No findings have been recorded.",
       timelineTitle: "Timeline",
       timelineHelp: "Key case events, oldest first. Every recorded action is listed in Case Audit.",
       noTimeline: "No key events are recorded yet.",
@@ -508,6 +547,32 @@
       writerDecision: "يُدخل نوع القرار وأسبابه مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط.",
       actionFailed: "تعذر إتمام الإجراء. لم يتم تغيير أي شيء.",
       back: "رجوع",
+      templates: "نماذج الأسئلة",
+      templatesHelp: "مجموعات قابلة لإعادة الاستخدام من الأسئلة المنشورة. ولا تحتوي النماذج أبدًا على إجابات مقدمي الطلبات.",
+      startFromTemplate: "البدء من نموذج",
+      chooseTemplate: "اختر نموذجًا",
+      useTemplate: "استخدام النموذج",
+      templateApplied: "تم تحديد أسئلة النموذج. وتبقى الأسئلة الأساسية مُدرجة.",
+      templateTitle: "اسم نموذج شخصي جديد",
+      templateTitleRequired: "أدخل اسمًا للنموذج.",
+      saveAsTemplate: "حفظ التحديد كنموذج خاص بي",
+      templateSaved: "تم حفظ نموذجك الشخصي.",
+      sharedTemplate: "مشترك",
+      personalTemplate: "شخصي",
+      publishTemplate: "نشر كنموذج مشترك",
+      templatePublished: "نُشرت نسخة مشتركة. ولم يتغير النموذج الشخصي.",
+      retireTemplate: "إيقاف",
+      templateRetired: "تم إيقاف النموذج مع الاحتفاظ بسجله.",
+      release_none: "لا يوجد إذن موقَّع",
+      release_signed: "الإذن يشمل المجلس",
+      release_out_of_scope: "الإذن خارج النطاق",
+      editNote: "تعديل",
+      editingNote: "تعديل ملاحظتك",
+      editNoteHelp: "يُحتفظ بالنص السابق في سجل الملاحظة عند الحفظ.",
+      saveRevision: "حفظ التعديل",
+      findingsTitle: "نتائج المجلس",
+      findingsHelp: "نتائج المجلس الخاصة به. ولا تغيّر أبدًا ما قدّمه أي من الزوجين.",
+      noFindings: "لم تُسجَّل أي نتائج.",
       timelineTitle: "التسلسل الزمني",
       timelineHelp: "الأحداث الرئيسية للقضية من الأقدم إلى الأحدث. وتُعرض جميع الإجراءات المسجلة في سجل تدقيق القضية.",
       noTimeline: "لم تُسجَّل أحداث رئيسية بعد.",
@@ -636,7 +701,109 @@
 
   // ---------- Report requests ----------
 
-  function RequestComposer({ api, lang, record, questions, reports, onSaved, onCancel }) {
+  function TemplateTools({ api, lang, templates, questions, selected, onUse, onChanged }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const usable = usableTemplates(templates);
+    const [choice, setChoice] = R.useState("");
+    const [title, setTitle] = R.useState("");
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const [notice, setNotice] = R.useState(null);
+    async function act(fn, key) {
+      setPending(true);
+      setFailure(null);
+      setNotice(null);
+      try {
+        await fn();
+        setNotice(key);
+        onChanged();
+        return true;
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+        return false;
+      } finally {
+        setPending(false);
+      }
+    }
+    const save = () => {
+      if (!title.trim()) {
+        setFailure(t("templateTitleRequired"));
+        return;
+      }
+      act(() => api("/api/templates/", { method: "POST", body: JSON.stringify({ title: title.trim(), questions: selected }) }), "templateSaved").then((ok) => ok && setTitle(""));
+    };
+    const supportsQuestions = (templates || []).every((tpl) => Array.isArray(tpl.questions));
+    return h(
+      P.Panel,
+      { title: t("templates"), description: t("templatesHelp"), collapsible: true, defaultExpanded: false },
+      h(
+        P.Stack,
+        { gap: "md" },
+        supportsQuestions && usable.length
+          ? h(
+              P.Inline,
+              { wrap: true, align: "end" },
+              h(
+                P.Field,
+                { label: t("startFromTemplate") },
+                h(P.Select, {
+                  value: choice,
+                  disabled: pending,
+                  onChange: (e) => setChoice(e.target.value),
+                  options: [
+                    { value: "", label: t("chooseTemplate") },
+                    ...usable.map((tpl) => ({ value: tpl.id, label: `${tpl.title}${tpl.shared ? " · " + t("sharedTemplate") : ""}` })),
+                  ],
+                }),
+              ),
+              h(
+                P.Button,
+                {
+                  disabled: pending || !choice,
+                  onClick: () => {
+                    onUse(templateSelection(usable.find((tpl) => tpl.id === choice), questions));
+                    setNotice("templateApplied");
+                  },
+                },
+                t("useTemplate"),
+              ),
+            )
+          : null,
+        h(
+          P.Inline,
+          { wrap: true, align: "end" },
+          h(P.Field, { label: t("templateTitle") }, h(P.Input, { value: title, maxLength: 200, disabled: pending, onChange: (e) => setTitle(e.target.value) })),
+          h(P.Button, { disabled: pending || !selected.length, onClick: save }, t("saveAsTemplate")),
+        ),
+        ...(templates || [])
+          .filter((tpl) => !tpl.retired && (tpl.can_publish || tpl.can_retire))
+          .map((tpl) =>
+            h(
+              P.Inline,
+              { key: tpl.id, justify: "between", wrap: true },
+              h(P.Text, null, `${tpl.title}${tpl.shared ? " · " + t("sharedTemplate") : " · " + t("personalTemplate")}`),
+              h(
+                P.Inline,
+                { gap: "xs" },
+                tpl.can_publish
+                  ? h(P.Button, { size: "xs", disabled: pending, onClick: () => act(() => api(`/api/templates/${encodeURIComponent(tpl.id)}/publish/`, { method: "POST", body: "{}" }), "templatePublished") }, t("publishTemplate"))
+                  : null,
+                tpl.can_retire
+                  ? h(P.Button, { size: "xs", variant: "danger-secondary", disabled: pending, onClick: () => act(() => api(`/api/templates/${encodeURIComponent(tpl.id)}/retire/`, { method: "POST", body: "{}" }), "templateRetired") }, t("retireTemplate"))
+                  : null,
+              ),
+            ),
+          ),
+        notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+      ),
+    );
+  }
+
+  function RequestComposer({ api, lang, record, questions, reports, templates, onTemplatesChanged, onSaved, onCancel }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -753,6 +920,15 @@
       h(
         P.FormSection,
         { title: t("questions"), description: t("selectedCount", { n: form.selected.length }) },
+        h(TemplateTools, {
+          api,
+          lang,
+          templates,
+          questions,
+          selected: form.selected,
+          onUse: (codes) => update({ selected: codes }),
+          onChanged: onTemplatesChanged || (() => {}),
+        }),
         taxonomy
           ? h(P.RadioGroup, {
               label: t("questionView"),
@@ -980,8 +1156,10 @@
           api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
           api("/api/report-questions/"),
           api("/api/cases/"),
-        ]).then(([record, requests, questions, cases]) => ({
+          api("/api/templates/"),
+        ]).then(([record, requests, questions, cases, templates]) => ({
           record,
+          templates: templates.items || [],
           // Professional Assessments have their own section; never list them with ordinary reports.
           requests: requests.items.filter((row) => !["medical", "psychological"].includes(row.kind)),
           questions: questions.items,
@@ -1025,6 +1203,8 @@
           lang,
           record,
           questions,
+          templates: state.data.templates,
+          onTemplatesChanged: retry,
           reports: reports || [],
           onCancel: () => setComposing(false),
           onSaved: (id) => {
@@ -1944,7 +2124,7 @@
               {
                 key: row.id,
                 title: row.title,
-                meta: [t(row.kind), row.subject_name, t(row.state)].filter(Boolean).join(" · "),
+                meta: [t(row.kind), row.subject_name, t(row.state), row.release_status ? t("release_" + row.release_status) : null].filter(Boolean).join(" · "),
                 actions:
                   canWrite && row.state === "draft"
                     ? h(P.Button, { size: "xs", variant: "primary", onClick: () => setConfirm(row) }, t("send"))
@@ -2168,6 +2348,15 @@
     return [...byNote.values()].reverse();
   }
 
+  function latestFindings(rows) {
+    const byCode = new Map();
+    for (const row of rows || []) {
+      const prior = byCode.get(row.fact_code);
+      if (!prior || prior.version < row.version) byCode.set(row.fact_code, row);
+    }
+    return [...byCode.values()].sort((a, b) => String(a.fact_code).localeCompare(String(b.fact_code)));
+  }
+
   function PetitionWorkspace({ api, lang, user, caseId }) {
     const R = window.React,
       P = window.Plenix,
@@ -2179,17 +2368,27 @@
         Promise.all([api("/api/applications/"), api(`/api/cases/${encodeURIComponent(caseId)}/`)]).then(async ([apps, record]) => {
           const proceeding = openProceeding(record) || [...(record.proceedings || [])].sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0] || null;
           const notes = proceeding ? await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`) : { items: [] };
-          return { petitions: casePetitions(apps.items, caseId), record, proceeding, notes: latestNotes(notes.items) };
+          let findings = null;
+          if (proceeding) {
+            try {
+              findings = latestFindings((await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`)).items);
+            } catch (error) {
+              // Older servers have no findings read (405); findings are then not shown.
+              if (error.status !== 405) throw error;
+            }
+          }
+          return { petitions: casePetitions(apps.items, caseId), record, proceeding, notes: latestNotes(notes.items), findings };
         }),
       [caseId],
     );
     const [text, setText] = R.useState("");
+    const [editing, setEditing] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const { petitions, record, proceeding, notes } = state.data;
+    const { petitions, record, proceeding, notes, findings } = state.data;
     const canWrite = writerFor(user, null, record) && proceeding && proceeding.status === "open";
     async function save(event) {
       event.preventDefault();
@@ -2200,8 +2399,12 @@
       setPending(true);
       setFailure(null);
       try {
-        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`, { method: "POST", body: JSON.stringify({ text: text.trim() }) });
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`, {
+          method: "POST",
+          body: JSON.stringify(editing ? { text: text.trim(), note_id: editing } : { text: text.trim() }),
+        });
         setText("");
+        setEditing(null);
         setNotice("noteSaved");
         retry();
       } catch (error) {
@@ -2243,6 +2446,25 @@
         );
       }),
       !petitions.length ? h(P.EmptyState, { title: t("noPetitions") }) : null,
+      findings
+        ? h(
+            P.Panel,
+            { title: t("findingsTitle"), description: t("findingsHelp") },
+            findings.length
+              ? h(
+                  P.PropertyList,
+                  { layout: "stacked" },
+                  ...findings.map((f) =>
+                    h(
+                      P.PropertyList.Item,
+                      { key: f.fact_code, label: f.fact_code, description: `${f.actor} · ${base.formatWhen(f.timestamp, lang)} · ${t("version")} ${f.version}` },
+                      typeof f.value === "string" ? f.value : JSON.stringify(f.value),
+                    ),
+                  ),
+                )
+              : h(P.EmptyState, { title: t("noFindings") }),
+          )
+        : null,
       h(
         P.Panel,
         { title: t("internalNotes"), description: t("internalNotesHelp") },
@@ -2251,15 +2473,37 @@
           { gap: "md" },
           notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
           notes.length
-            ? h(P.Stack, { gap: "sm" }, ...notes.map((note) => h(P.Card, { key: note.note_id, title: `${t("note")} · ${t("version")} ${note.version}` }, h(P.Text, { as: "p" }, note.text))))
+            ? h(
+                P.Stack,
+                { gap: "sm" },
+                ...notes.map((note) =>
+                  h(
+                    P.Card,
+                    {
+                      key: note.note_id,
+                      title: note.author ? `${note.author} · ${base.formatWhen(note.timestamp, lang)}` : t("note"),
+                      meta: `${t("version")} ${note.version}`,
+                      actions: note.can_edit && canWrite
+                        ? h(P.Button, { size: "xs", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); } }, t("editNote"))
+                        : null,
+                    },
+                    h(P.Text, { as: "p" }, note.text),
+                  ),
+                ),
+              )
             : h(P.EmptyState, { title: t("noNotes") }),
           canWrite
             ? h(
                 P.Form,
                 { onSubmit: save, label: t("addNote"), noValidate: true },
-                h(P.Field, { label: t("addNote") }, h(P.Textarea, { rows: 4, autoGrow: true, value: text, maxLength: 50000, disabled: pending, onChange: (e) => { setText(e.target.value); setFailure(null); } })),
+                h(P.Field, { label: t(editing ? "editingNote" : "addNote"), description: editing ? t("editNoteHelp") : undefined }, h(P.Textarea, { rows: 4, autoGrow: true, value: text, maxLength: 50000, disabled: pending, onChange: (e) => { setText(e.target.value); setFailure(null); } })),
                 failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-                h(P.FormActions, { sticky: false }, h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveNote"))),
+                h(
+                  P.FormActions,
+                  { sticky: false },
+                  editing ? h(P.Button, { disabled: pending, onClick: () => { setEditing(null); setText(""); } }, t("cancel")) : null,
+                  h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t(editing ? "saveRevision" : "saveNote")),
+                ),
               )
             : null,
         ),
@@ -2342,6 +2586,8 @@
     foundationalCodes,
     missingArabic,
     requestProblem,
+    usableTemplates,
+    templateSelection,
     requestPayload,
     openProceeding,
     ordinaryReports,
@@ -2365,6 +2611,7 @@
     CaseHearings,
     casePetitions,
     latestNotes,
+    latestFindings,
     PetitionWorkspace,
     timelineRows,
     CaseTimeline,

@@ -10,7 +10,7 @@ Branch `work/claude-council`, draft PR #6, issue #3. UI only: no backend, migrat
 | `static/ctm/council-case.js` | Reports → Requests (intake and in-person interview), Decision & Voting, Case Audit, call records, Professional Assessments, Spouses, case Hearings. |
 | `static/ctm/council-decree.js` | Decree (signed PDF, safety check, signature record, issue, release/withdraw) and Appeals. |
 | `static/ctm/app.js`, `tribunal/templates/tribunal/shell.html` | Shell hook (separate commits): load the three modules before `app.js`; route council pages; enable locked-navigation items only when the module is loaded; `api()` errors carry `status`/server JSON; `FormData` bodies keep the browser's multipart type. |
-| `tests/frontend/council*.test.cjs` | `node --test tests/frontend/` (63 tests). Catalog test reads `decisions.py` and `prototype-decision-types.json`. |
+| `tests/frontend/council*.test.cjs` | `node --test tests/frontend/` (73 tests). Catalog test reads `decisions.py` and `prototype-decision-types.json`. |
 | `scripts/council_fixture.cjs` | Synthetic browser fixture: `node scripts/council_fixture.cjs [port] [role] [--contract=pr7] [--decree-read]`. Not a real-API, database or provider-login test. |
 
 ## Behavior by area
@@ -35,14 +35,14 @@ Branch `work/claude-council`, draft PR #6, issue #3. UI only: no backend, migrat
 
 ## Evidence
 
-- `node --test tests/frontend/`: 63 passed.
+- `node --test tests/frontend/`: 73 passed.
 - Built-in Chromium with the real Plenix 0.58.0 CDN and real modules against the synthetic fixture, in both `main` and `--contract=pr7` modes. Every slice was checked as secretary and as member (and on the assigned/unassigned split). Checks covered: validation blocking with no request sent, exact request payloads, server error text shown, EN/AR at 1280 and 390 px, `dir=rtl`, zero `[style]` attributes, no horizontal overflow, and no console errors apart from the expected 405 decision probe on `main`.
 - Python/PostgreSQL: no Python/uv/Docker on this machine; GitHub Actions on PR #6 has passed on each push checked.
 
 ## Backend dependencies (issue #2)
 
-D1–D8 and D11 are delivered in backend PR #7 and are consumed when present. Open: D9 Arabic topic/category names and reviewed Arabic wording; D10 external priest page and delivery; D12 decree read inside the decision projection; D13 file scan status; D14 approved decree templates; D15 appeal supplements, disposition and eligible hearings; D16 assessment release status. Backend note from review F27: the server still accepts `deferred` as a decision type.
+D1–D8, D11–D13 and D15–D18 are delivered in backend PR #7 (through 5cb1428) and consumed when present: decree read, file scan status, appeal supplements/disposition/eligible hearings, assessment release status, note authorship and editing, findings read, templates with questions/publish/retire, POST search. Open: D9 reviewed Arabic wording and Arabic topic/category names; D10 external priest page and delivery; D14 approved decree templates. Backend note from review F27: the server still accepts `deferred` as a decision type.
 
 ## Not built on purpose
 
-External priest requests (no capability page or delivery), Arabic decision-type labels (not approved), replacement/clerical decree workflow (removed by contract), Marriage/Separation overview pages (no projection yet), findings (no read endpoint, D17), templates (D18). Shell patches for governance: `shell-integration.patch` (against main) and `shell-integration-after-applicant.patch` (over Desktop-R patch).
+External priest requests (no capability page or delivery), Arabic decision-type labels (not approved), replacement/clerical decree workflow (removed by contract), Marriage/Separation overview pages (no projection yet), findings creation (no approved fact-code list; findings are shown read-only). Shell patches for governance: `shell-integration.patch` (against main) and `shell-integration-after-applicant.patch` (over Desktop-R patch).

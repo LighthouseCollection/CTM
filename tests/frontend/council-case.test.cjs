@@ -149,7 +149,8 @@ test("English and Arabic case words cover the same keys and every used key", () 
   assert.deepEqual(Object.keys(C.caseWords.ar).sort(), en);
   for (const key of en) assert.ok(C.caseWords.ar[key].trim(), key);
   const known = new Set([...en, ...Object.keys(C.words.en)]);
-  for (const [, key] of source.matchAll(/\bt\("([A-Za-z0-9_]+)"/g)) assert.ok(known.has(key), key);
+  for (const [, key] of source.matchAll(/\bt\("([A-Za-z0-9_]+)"[),]/g)) assert.ok(known.has(key), key);
+  for (const status of ["none", "signed", "out_of_scope"]) assert.ok(known.has("release_" + status), status);
 });
 
 test("case module follows Plenix rules", () => {
@@ -285,4 +286,24 @@ test("assigned manager keeps write controls on servers without assigned_member_i
   assert.equal(enriched.assigned_member, "Fr. Member");
   const untouched = { id: "c1", assigned_member_id: "m" };
   assert.equal(await C.withAssignee(async () => { throw new Error("not called"); }, untouched), untouched);
+});
+
+test("findings show the latest revision per fact, sorted by code", () => {
+  const rows = C.latestFindings([
+    { fact_code: "B", version: 1, value: "old" },
+    { fact_code: "A", version: 1, value: "a" },
+    { fact_code: "B", version: 2, value: "new" },
+  ]);
+  assert.deepEqual(plain(rows.map((r) => `${r.fact_code}:${r.value}`)), ["A:a", "B:new"]);
+});
+
+test("templates pre-fill only published, non-foundational codes and skip retired ones", () => {
+  const templates = [
+    { id: "t1", retired: false, questions: [{ code: "OPEN-01" }, { code: "DM-01" }, { code: "GONE-9" }, { code: "DM-01" }] },
+    { id: "t2", retired: true, questions: [{ code: "DM-02" }] },
+    { id: "t3", retired: false, questions: [] },
+    { id: "t4", retired: false },
+  ];
+  assert.deepEqual(plain(C.usableTemplates(templates).map((t) => t.id)), ["t1"]);
+  assert.deepEqual(plain(C.templateSelection(templates[0], bank)), ["DM-01"]);
 });

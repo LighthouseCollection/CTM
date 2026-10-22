@@ -114,6 +114,19 @@ function applicationRow(a) {
     ],
     reviews: state.reviews.filter((r) => r.app === a.id),
     can_review: admin() && a.status === "submitted",
+    ...(a.kind === "appeal" ? appealExtras(a) : {}),
+  };
+}
+
+function appealExtras(a) {
+  const c = state.cases.find((x) => x.id === a.case_id);
+  const eligible = state.hearings.filter((hh) => hh.case_id === a.case_id && hh.state === "held" && hh.presenter_id === c.assigned)
+    .map((hh) => ({ id: hh.id, session_date: state.sessions.find((x) => x.id === state.agenda.find((i) => i.id === hh.agenda)?.session)?.date || "2026-10-08" }));
+  return {
+    supplements: [{ id: "sup-1", text: "Synthetic supplement.", manifest: [], actor: "Synthetic Applicant", actor_id: "applicant-x", timestamp: "2026-10-12T17:00:00Z" }],
+    disposition: a.disposition || null,
+    eligible_hearings: eligible,
+    can_record_result: Boolean(a.status === "submitted" && !a.disposition && eligible.length && (admin() || c.assigned === me().id)),
   };
 }
 
@@ -144,7 +157,7 @@ function decisionRow(d) {
     ...d, votes: Object.values(effective), vote_history: state.votes.filter((v) => v.decision === d.id),
     approval: approvals[approvals.length - 1] || null, approval_history: approvals, current,
     can_vote: current, can_approve: current && (role === "president" || admin()),
-    ...(decreeRead ? { decree: state.decrees.find((x) => x.decision === d.id) || null } : {}),
+    ...(decreeRead || pr7 ? { decree: state.decrees.find((x) => x.decision === d.id) || null } : {}),
   };
 }
 
@@ -248,11 +261,51 @@ function api(req, res, url, body) {
       const c = state.cases.find((x) => "p-" + x.id === m[1]);
       if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
       if (!String(body.text || "").trim()) return json(res, 422, { error: "validation", messages: ["Note cannot be empty."] });
+      if (body.note_id) {
+        const prior = state.notes.filter((n) => n.note_id === body.note_id);
+        if (!prior.length || prior[0].author_id !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the original author can edit a note." });
+        state.notes.push({ ...prior[0], id: "nr-" + body.note_id + "-" + (prior.length + 1), version: prior.length + 1, text: body.text, timestamp: now() });
+        return json(res, 201, { id: body.note_id });
+      }
       const id = "n-" + (state.notes.length + 1);
-      state.notes.push({ id: "nr-" + id, note_id: id, version: 1, text: body.text, proceeding: m[1] });
+      state.notes.push({ id: "nr-" + id, note_id: id, version: 1, text: body.text, proceeding: m[1], author_id: me().id, author: me().name, timestamp: now() });
       return json(res, 201, { id });
     }
-    return json(res, 200, { items: state.notes.filter((n) => n.proceeding === m[1]) });
+    return json(res, 200, {
+      items: state.notes
+        .filter((n) => n.proceeding === m[1])
+        .map((n) => (pr7 ? { ...n, can_edit: n.author_id === me().id } : { id: n.id, note_id: n.note_id, version: n.version, text: n.text })),
+    });
+  }
+  if ((m = p.match(/^\/api\/proceedings\/([^/]+)\/findings\/$/))) {
+    if (!pr7) return json(res, 405, { error: "method_not_allowed" });
+    return json(res, 200, {
+      items: m[1] === "p-c-4" ? [{ id: "fr-1", fact_code: "marriage_date_confirmed", version: 1, value: "Confirmed against certificate", sources: [], actor_id: "u-mem", actor: "Fr. Synthetic Member", timestamp: "2026-10-21T18:00:00Z" }] : [],
+    });
+  }
+  if ((m = p.match(/^\/api\/files\/([^/]+)\/status\/$/))) {
+    if (!pr7) return json(res, 404, { error: "resource_or_input_invalid" });
+    const f = state.files.find((x) => x.id === m[1]);
+    if (f && f.scan_state === "pending") { if (f.checked) f.scan_state = "clean"; f.checked = true; }
+    return json(res, 200, { id: m[1], scan_state: f ? f.scan_state : "pending", can_download: f?.scan_state === "clean" });
+  }
+  if (p === "/api/templates/") {
+    if (!state.templates) state.templates = [{ id: "tpl-1", title: "Common guided interview", shared: true, retired: false, owner_id: null, version: 1, questions: [{ code: "DM-01", version: 1 }, { code: "DM-02", version: 1 }] }];
+    if (req.method === "POST") {
+      const tpl = { id: "tpl-" + (state.templates.length + 1), title: body.title, shared: false, retired: false, owner_id: me().id, version: 1, questions: (body.questions || []).map((code) => ({ code, version: 1 })) };
+      state.templates.push(tpl);
+      return json(res, 201, { id: tpl.id });
+    }
+    const view = (tpl) => pr7
+      ? { ...tpl, can_publish: admin() && !tpl.shared && !tpl.retired, can_retire: !tpl.retired && (tpl.shared ? admin() : tpl.owner_id === me().id) }
+      : { id: tpl.id, title: tpl.title, shared: tpl.shared, retired: tpl.retired };
+    return json(res, 200, { items: state.templates.filter((tpl) => tpl.shared || tpl.owner_id === me().id).map(view) });
+  }
+  if ((m = p.match(/^\/api\/templates\/([^/]+)\/(publish|retire)\/$/))) {
+    const tpl = state.templates.find((x) => x.id === m[1]);
+    if (m[2] === "retire") tpl.retired = true;
+    else state.templates.push({ ...tpl, id: tpl.id + "-shared", shared: true, owner_id: null });
+    return json(res, m[2] === "publish" ? 201 : 200, { id: tpl.id });
   }
   if (p === "/api/dashboard/")
     return json(res, 200, {
@@ -265,7 +318,10 @@ function api(req, res, url, body) {
     return json(res, 201, { id: "pending-" + Date.now() });
   }
   if (p === "/api/search/") {
-    const q = url.searchParams.get("q") || "";
+    // PR #7: POST JSON only (GET 405); main: GET query only.
+    if (pr7 && req.method !== "POST") return json(res, 405, { error: "method_not_allowed" });
+    if (!pr7 && req.method !== "GET") return json(res, 405, { error: "method_not_allowed" });
+    const q = (pr7 ? body.q : url.searchParams.get("q")) || "";
     if (q.trim().length < 2) return json(res, 422, { error: "validation", messages: ["Use a search phrase of2–200characters."] });
     if (q === "unconfigured") return json(res, 422, { error: "validation", messages: ["Search engine is not configured."] });
     return json(res, 200, {
@@ -281,6 +337,7 @@ function api(req, res, url, body) {
       return json(res, 422, { error: "validation", messages: ["No pending appeal or invalid result."] });
     if (!state.hearings.some((h) => h.id === body.hearing_id && h.case_id === c.id)) return json(res, 404, { error: "resource_or_input_invalid" });
     app.status = body.result === "accept" ? "accepted" : "declined";
+    app.disposition = { id: "disp-" + app.id, result: body.result, explanation: body.explanation, actor: me().name, actor_id: me().id, timestamp: now(), hearing_id: body.hearing_id, reopened_proceeding_id: null };
     if (body.result === "accept") c.status = "open";
     return json(res, 201, { id: "disp-" + app.id });
   }
@@ -321,7 +378,7 @@ function api(req, res, url, body) {
       return json(res, 201, { id: r.id });
     }
     const rows = state.requests.filter((r) => r.case === c.id).map((r) => {
-      if (pr7) return r;
+      if (pr7) return ["medical", "psychological"].includes(r.kind) ? { ...r, release_status: "none", release_scope: null } : r;
       const { subject_party_id, subject_name, language, created_at, sent_at, parent_report_id, author, ...old } = r;
       return old;
     });

@@ -1855,6 +1855,17 @@
     return null;
   }
 
+  // Search phrases go in a POST body so names never land in URLs or access logs.
+  // Older servers only accept GET; fall back only on 405.
+  async function runSearch(api, q, history) {
+    try {
+      return await api("/api/search/", { method: "POST", body: JSON.stringify({ q, history }) });
+    } catch (error) {
+      if (error.status !== 405) throw error;
+      return api(`/api/search/?q=${encodeURIComponent(q)}&history=${history ? "true" : "false"}`);
+    }
+  }
+
   function SearchWorkspace({ api, lang, user, onCase }) {
     const R = window.React,
       P = window.Plenix,
@@ -1878,7 +1889,7 @@
       select(null);
       try {
         const [data, caseList] = await Promise.all([
-          api(`/api/search/?q=${encodeURIComponent(query.trim())}&history=${history ? "true" : "false"}`),
+          runSearch(api, query.trim(), history),
           api("/api/cases/"),
         ]);
         setCases(Object.fromEntries((caseList.items || []).map((c) => [c.id, c.number])));
@@ -2198,6 +2209,7 @@
     SessionList,
     SessionWorkspace,
     searchProblem,
+    runSearch,
     SearchWorkspace,
     myCases,
     CouncilHome,

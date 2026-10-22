@@ -140,6 +140,11 @@
       withdrawDone: "Access was withdrawn.",
       noticeOnly: "Official decision notice only",
       cancel: "Cancel",
+      scanRejected: "The automatic safety check rejected this file. Store a different signed PDF.",
+      supplementsTitle: "Additional information from the appellant",
+      supplementsHelp: "Added after submission. Each addition is kept as submitted.",
+      noSupplements: "No additional information has been added.",
+      appealOutcome: "Council result",
       signerMissing: "The approving President is not identified in the decision record, so the signature cannot be recorded here.",
       appeals: "Appeals",
       appeal: "Appeal",
@@ -242,6 +247,11 @@
       withdrawDone: "تم سحب الإتاحة.",
       noticeOnly: "إخطار رسمي بالقرار فقط",
       cancel: "إلغاء",
+      scanRejected: "رفض فحص الأمان التلقائي هذا الملف. احفظ ملف PDF موقَّعًا آخر.",
+      supplementsTitle: "معلومات إضافية من مقدم الاستئناف",
+      supplementsHelp: "أُضيفت بعد التقديم. وتُحفظ كل إضافة كما قُدِّمت.",
+      noSupplements: "لم تُضف أي معلومات إضافية.",
+      appealOutcome: "نتيجة المجلس",
       signerMissing: "لم يُحدَّد الرئيس المعتمِد في سجل القرار، لذلك لا يمكن تسجيل التوقيع هنا.",
       appeals: "الاستئنافات",
       appeal: "استئناف",
@@ -442,9 +452,17 @@
 
     const recheck = () =>
       run(async () => {
-        const listing = await api(`/api/cases/${encodeURIComponent(record.id)}/files/?history=1`);
-        const found = (listing.items || []).find((row) => row.id === work.file.id);
-        // The listing only returns files whose latest safety check is clean.
+        let found = false;
+        try {
+          const status = await api(`/api/files/${encodeURIComponent(work.file.id)}/status/`);
+          if (status.scan_state === "rejected") throw { data: { detail: t("scanRejected") } };
+          found = status.scan_state === "clean";
+        } catch (error) {
+          if (error.status !== 404 && error.status !== 405) throw error;
+          // Older servers: the case listing only returns files whose latest check is clean.
+          const listing = await api(`/api/cases/${encodeURIComponent(record.id)}/files/?history=1`);
+          found = (listing.items || []).some((row) => row.id === work.file.id);
+        }
         if (found) {
           setWork((old) => ({ ...old, file: { ...old.file, scan_state: "clean" } }));
           setNotice("uploaded");
@@ -715,13 +733,20 @@
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [form, setForm] = R.useState({ hearing: hearings[0]?.id || "", result: "", explanation: "" });
+    // Server-provided eligible hearings win; older servers use agenda hearing ids.
+    const eligible = Array.isArray(row.eligible_hearings)
+      ? row.eligible_hearings.map((x) => ({ id: x.id, date: x.session_date }))
+      : hearings;
+    const known = Array.isArray(row.eligible_hearings) || hearingsKnown;
+    const [form, setForm] = R.useState({ hearing: eligible[0]?.id || "", result: "", explanation: "" });
     const [problem, setProblem] = R.useState(null);
     const [confirm, setConfirm] = R.useState(false);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
-    const writer = base.writerFor(user, null, record);
-    const pendingAppeal = row.status === "submitted";
+    const writer = typeof row.can_record_result === "boolean"
+      ? row.can_record_result || (!eligible.length && base.writerFor(user, null, record))
+      : base.writerFor(user, null, record);
+    const pendingAppeal = row.status === "submitted" && !row.disposition;
     const answers = Object.entries(row.answers || {});
     async function save() {
       setPending(true);
@@ -768,15 +793,49 @@
             )
           : h(P.EmptyState, { title: t("noAnswers") }),
       ),
-      h(P.Notice, { tone: "info" }, t("supplementsPending")),
+      Array.isArray(row.supplements)
+        ? h(
+            P.Panel,
+            { title: t("supplementsTitle"), description: t("supplementsHelp") },
+            row.supplements.length
+              ? h(
+                  P.Stack,
+                  { gap: "sm" },
+                  ...row.supplements.map((s) =>
+                    h(
+                      P.Card,
+                      { key: s.id, title: base.formatWhen(s.timestamp, lang), meta: s.actor },
+                      s.text ? h(P.Text, { as: "p" }, s.text) : null,
+                      ...(s.manifest || []).map((f) =>
+                        h(P.Button, { key: f.id, size: "xs", href: `/api/files/${encodeURIComponent(f.id)}/` }, t("download")),
+                      ),
+                    ),
+                  ),
+                )
+              : h(P.EmptyState, { title: t("noSupplements") }),
+          )
+        : h(P.Notice, { tone: "info" }, t("supplementsPending")),
+      row.disposition
+        ? h(
+            P.Panel,
+            { title: t("appealOutcome") },
+            h(
+              P.PropertyList,
+              null,
+              h(P.PropertyList.Item, { label: t("appealResult") }, t(row.disposition.result === "accept" ? "appeal_accepted" : "appeal_declined")),
+              h(P.PropertyList.Item, { label: t("recordedBy") }, `${row.disposition.actor} · ${base.formatWhen(row.disposition.timestamp, lang)}`),
+              row.disposition.explanation ? h(P.PropertyList.Item, { label: t("appealExplanation") }, row.disposition.explanation) : null,
+            ),
+          )
+        : null,
       pendingAppeal
         ? writer
           ? h(
               P.Panel,
               { title: t("recordAppealResult"), description: t("appealResultHelp") },
-              !hearingsKnown
+              !known
                 ? h(P.Notice, { tone: "info" }, t("hearingsUnavailable"))
-                : !hearings.length
+                : !eligible.length
                   ? h(P.Notice, { tone: "warning" }, t("noHeardHearing"))
                   : h(
                       P.Stack,
@@ -790,7 +849,7 @@
                           onChange: (e) => setForm({ ...form, hearing: e.target.value }),
                           options: [
                             { value: "", label: t("chooseHearing") },
-                            ...hearings.map((x) => ({ value: x.id, label: base.sessionLabel(x.date, base.translator(lang)) })),
+                            ...eligible.map((x) => ({ value: x.id, label: base.sessionLabel(x.date, base.translator(lang)) })),
                           ],
                         }),
                       ),

@@ -307,3 +307,19 @@ test("reschedule needs a new free date, a reason and non-overlapping times for e
     },
   });
 });
+
+test("search posts the phrase in the body and falls back to GET only on 405", async () => {
+  const calls = [];
+  const modern = async (url, options) => { calls.push([url, options?.method, options?.body]); return { items: [] }; };
+  await C.runSearch(modern, "Smith", false);
+  assert.deepEqual(calls[0], ["/api/search/", "POST", JSON.stringify({ q: "Smith", history: false })]);
+  const legacyCalls = [];
+  const legacy = async (url, options) => {
+    legacyCalls.push(url);
+    if (options?.method === "POST") throw Object.assign(new Error("x"), { status: 405 });
+    return { items: [] };
+  };
+  await C.runSearch(legacy, "Smith Jr", true);
+  assert.deepEqual(legacyCalls, ["/api/search/", "/api/search/?q=Smith%20Jr&history=true"]);
+  await assert.rejects(C.runSearch(async () => { throw Object.assign(new Error("x"), { status: 422 }); }, "ab", false));
+});
