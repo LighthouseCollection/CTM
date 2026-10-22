@@ -527,13 +527,15 @@ def enroll(request):
 
 @endpoint(("GET", "POST"))
 def sessions(request):
+    from tribunal.projections import session_capabilities
     staff(request.user)
     if request.method == "GET":
         return JsonResponse(
             {
                 "items": [
                     encoded(
-                        x, date=x.date.isoformat(), reference=x.reference, state=x.state
+                        x, date=x.date.isoformat(), reference=x.reference, state=x.state,
+                        **session_capabilities(x, request.user)
                     )
                     for x in m.CouncilSession.objects.order_by("-date")[:100]
                 ]
@@ -551,7 +553,7 @@ def sessions(request):
 
 @endpoint(("GET", "POST"))
 def agenda(request, session_id):
-    from tribunal.projections import agenda_item_data
+    from tribunal.projections import agenda_item_data, session_capabilities
     from tribunal.services.council import attendance_for
     staff(request.user)
     if request.method == "GET":
@@ -562,10 +564,7 @@ def agenda(request, session_id):
                     session,
                     date=session.date.isoformat(),
                     state=session.state,
-                    can_manage=request.user.role in {"admin", "secretary"} and session.state == "planned",
-                    can_close=request.user.role in {"admin", "secretary"} and session.state == "planned",
-                    can_record_attendance=request.user.role in {"admin", "secretary"}
-                    and session.state == "planned",
+                    **session_capabilities(session, request.user),
                 ),
                 "items": [
                     agenda_item_data(x, request.user, attendance_for(request.user, session.pk))
@@ -591,6 +590,24 @@ def close_session(request, session_id):
     from tribunal.services.council import close_session as command
 
     return JsonResponse(encoded(command(request.user, session_id)))
+
+
+@endpoint(("POST",))
+def reschedule_session(request, session_id):
+    from tribunal.services.council import reschedule_session as command
+
+    data = body(request)
+    replacements = data.get("appointments", {})
+    if not isinstance(replacements, dict):
+        raise ValidationError("Appointments must be keyed by identifier.")
+    times = {}
+    for identifier, value in replacements.items():
+        if not isinstance(value, dict):
+            raise ValidationError("Each appointment requires new start/end times.")
+        times[identifier] = {**value, "starts_at": datetime.fromisoformat(value["starts_at"]),
+                             "ends_at": datetime.fromisoformat(value["ends_at"])}
+    target = command(request.user, session_id, date.fromisoformat(data["date"]), times, data.get("reason", ""))
+    return JsonResponse(encoded(target, date=target.date.isoformat(), reference=target.reference), status=201)
 
 
 @endpoint(("POST",))
@@ -1459,6 +1476,21 @@ def testimony_response(request, appointment_id):
         ),
         status=201,
     )
+
+
+@endpoint()
+def own_testimony(request):
+    from tribunal.services.council import own_testimony as query
+
+    return JsonResponse(query(request.user))
+
+
+@endpoint(("POST",))
+def cancel_testimony(request, appointment_id):
+    from tribunal.services.council import cancel_testimony as command
+
+    value = command(request.user, appointment_id, body(request).get("expected_version"))
+    return JsonResponse(encoded(value, version=value.version, state=value.state))
 
 
 @endpoint(("POST",))

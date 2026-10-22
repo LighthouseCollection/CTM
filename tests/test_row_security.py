@@ -56,6 +56,10 @@ def runtime():
             "ctm_finance_writable(text,jsonb)",
             "ctm_finance_notice(text,jsonb)",
             "ctm_fee_can_waive(uuid)",
+            "ctm_session_transfer_context(uuid)",
+            "ctm_testimony_readable(text,jsonb)",
+            "ctm_testimony_writable(text,jsonb)",
+            "ctm_invitation_context(uuid)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -654,7 +658,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0015_finance_privacy")])
+        MigrationExecutor(connection).migrate([("tribunal", "0016_session_transfer_history")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -824,7 +828,7 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 33
+        assert report["checks"]["forced_rls_table_count"] == 37
         assert "tribunal_reportrequest" in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
@@ -841,6 +845,51 @@ def test_restricted_role_checkout_response_can_bind_only_provider_reference(runt
     ):
         result = create_checkout(app.owner, app.pk, {"accepted": True, "name": "John Smith"}, "https://example.test", expected_version=1)
         assert result["checkout_url"] == "https://checkout.stripe.com/test"
+
+
+def test_planned_reschedule_and_private_response_under_non_owner_role(runtime, ready_application, people):
+    from datetime import date, datetime, timezone as tz
+    from django.db import DatabaseError
+    from tribunal.services import council
+    from tribunal.services.communications import send_message
+    from tribunal.models import TestimonyAppointmentVersion, AgendaTransferEvent, Message, AppointmentResponse
+
+    app = ready_application
+    submit_application(app.owner, app.pk, "transfer-rls", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    with runtime(people["admin"]):
+        council.assign_case(people["admin"], app.case_id, people["member"].pk, people["president"].pk)
+        source = council.create_session(people["admin"], date(2031, 1, 2))
+        source_id = source.pk
+        item = council.place_agenda(people["admin"], source.pk, app.case_id)
+        council.record_attendance(people["admin"], source.pk, people["member"].pk, True)
+        appointment = council.schedule_testimony(people["admin"], item.pk, app.party_id,
+            datetime(2031, 1, 2, 18, tzinfo=tz.utc), datetime(2031, 1, 2, 19, tzinfo=tz.utc), "Private instructions")
+        message = send_message(people["admin"], app.case_id, "Retained body", [app.party_id], "after_session", source.pk)
+        target = council.reschedule_session(people["admin"], source.pk, date(2031, 1, 3), {
+            str(appointment.pk): {"starts_at": datetime(2031, 1, 3, 18, tzinfo=tz.utc), "ends_at": datetime(2031, 1, 3, 19, tzinfo=tz.utc)}}, "Move meeting")
+        assert not council.CouncilSession.objects.filter(pk=source_id).exists()
+        assert AgendaTransferEvent.objects.count() == 1
+        assert Message.objects.get(pk=message.pk).session_id == target.pk
+    with runtime(app.owner):
+        own = council.own_testimony(app.owner)["items"][0]
+        assert own["version"] == 2 and own["can_respond"]
+        assert TestimonyAppointmentVersion.objects.count() == 2
+        assert not AgendaTransferEvent.objects.exists()
+        assert not council.AgendaItem.objects.exists()
+        response = council.respond_testimony(app.owner, appointment.pk, 2, "confirm")
+        assert AppointmentResponse.objects.get(pk=response.pk).version == 2
+    with pytest.raises(DatabaseError), runtime(people["admin"]):
+        Message.objects.filter(pk=message.pk).update(body="Rewritten body")
+    with runtime(people["member"]):
+        assert TestimonyAppointmentVersion.objects.filter(appointment=appointment).update(instructions="Changed history") == 0
+    with pytest.raises(DatabaseError), runtime(people["admin"]):
+        council.TestimonyAppointment.objects.create(agenda=target.agenda.get(), party_id=app.party_id,
+            starts_at=datetime(2031, 1, 3, 18, tzinfo=tz.utc), ends_at=datetime(2031, 1, 3, 19, tzinfo=tz.utc), instructions="Overlap")
+    with runtime(people["admin"]):
+        council.close_session(people["admin"], target.pk)
+    with runtime(app.owner):
+        assert not council.own_testimony(app.owner)["items"][0]["can_respond"]
 
 
 @pytest.fixture

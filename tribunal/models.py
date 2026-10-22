@@ -432,6 +432,7 @@ class Outbox(Root):
     payload = models.JSONField(default=dict)
     due_at = models.DateTimeField(default=timezone.now)
     delivered_at = models.DateTimeField(null=True)
+    discarded_at = models.DateTimeField(null=True)
     lease_until = models.DateTimeField(null=True)
     attempts = models.PositiveIntegerField(default=0)
     last_error = models.CharField(max_length=250, blank=True)
@@ -733,6 +734,7 @@ class Message(Immutable):
     file_links = models.JSONField(default=list)
     email_timing = models.CharField(max_length=25, default="immediate")
     session = models.ForeignKey(CouncilSession, null=True, on_delete=models.PROTECT)
+    session_snapshot = models.JSONField(default=dict)
 
 
 class MessageRecipient(Root):
@@ -752,6 +754,36 @@ class TestimonyAppointment(Root):
     instructions = models.TextField()
     version = models.PositiveIntegerField(default=1)
     state = models.CharField(max_length=15, default="invited")
+
+
+class TestimonyAppointmentVersion(Immutable):
+    __test__ = False
+    appointment = models.ForeignKey(TestimonyAppointment, on_delete=models.PROTECT, related_name="versions")
+    version = models.PositiveIntegerField()
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField()
+    instructions = models.TextField()
+    attendance_location = models.JSONField(default=dict)
+    cancelled = models.BooleanField(default=False)
+    actor = models.ForeignKey(Account, on_delete=models.PROTECT)
+    request_id = models.UUIDField(null=True)
+
+    class Meta:
+        db_table = "testimony_appointment_versions"
+        constraints = [models.UniqueConstraint(fields=["appointment", "version"], name="testimony_invitation_version")]
+
+
+class AgendaTransferEvent(Immutable):
+    case = models.ForeignKey(Case, on_delete=models.PROTECT)
+    from_session_snapshot = models.JSONField()
+    to_session = models.ForeignKey(CouncilSession, on_delete=models.PROTECT)
+    destination_item = models.ForeignKey(AgendaItem, on_delete=models.PROTECT)
+    reason = models.TextField()
+    actor = models.ForeignKey(Account, on_delete=models.PROTECT)
+    request_id = models.UUIDField(null=True)
+
+    class Meta:
+        db_table = "agenda_transfer_events"
 
 
 class AppointmentResponse(Immutable):

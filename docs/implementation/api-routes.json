@@ -104,6 +104,10 @@
     "handler": "close_session"
   },
   {
+    "route": "api/sessions/<uuid:session_id>/reschedule/",
+    "handler": "reschedule_session"
+  },
+  {
     "route": "api/agenda/<uuid:item_id>/hear/",
     "handler": "hear"
   },
@@ -250,6 +254,14 @@
   {
     "route": "api/appointments/<uuid:appointment_id>/response/",
     "handler": "testimony_response"
+  },
+  {
+    "route": "api/appointments/",
+    "handler": "own_testimony"
+  },
+  {
+    "route": "api/appointments/<uuid:appointment_id>/cancel/",
+    "handler": "cancel_testimony"
   },
   {
     "route": "api/recordings/",

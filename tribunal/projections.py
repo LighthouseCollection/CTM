@@ -58,6 +58,15 @@ def case_capabilities(case, actor):
             "can_assign": bool(actor.role in {"admin", "secretary"} and case.status == "open")}
 
 
+def session_capabilities(session, actor):
+    administrative = actor.role in {"admin", "secretary"} and session.state == "planned"
+    can_reschedule = bool(administrative and not m.Hearing.objects.filter(agenda__session=session).exists()
+                          and not m.AgendaTransferEvent.objects.filter(to_session=session).exists()
+                          and not m.AgendaItem.objects.filter(carried_from__session=session).exists())
+    return {"can_manage": administrative, "can_close": administrative,
+            "can_reschedule": can_reschedule, "can_record_attendance": administrative}
+
+
 def hearing_writable(hearing, actor):
     case = hearing.agenda.case
     if actor.role == "applicant" or (actor.role not in {"admin", "secretary"} and case.assigned_member_id != actor.pk):

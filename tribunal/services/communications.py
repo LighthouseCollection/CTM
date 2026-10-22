@@ -77,6 +77,7 @@ def send_message(
         body=body,
         email_timing=email_timing,
         session=session,
+        session_snapshot={"id": str(session.pk), "date": session.date.isoformat(), "reference": session.reference} if session else {},
         file_links=links,
         channel=channel,
     )

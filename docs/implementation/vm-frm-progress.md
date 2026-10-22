@@ -134,3 +134,45 @@ note was incorrect; the route has not changed.
   credentials/callback acceptance, duplicate-refund authorization/allocation,
   receipts/email delivery, remaining identity/report/worker policies and complete
   schema reconciliation remain open. No credential/operational change occurred.
+
+## Planned sessions and testimony
+
+- Migration 0016 adds `agenda_transfer_events` and `testimony_appointment_versions`
+  using the approved table names, plus original message-session snapshots and an
+  explicit outbox discard timestamp. Existing 58 models are preserved (60 total).
+- `POST /api/sessions/{id}/reschedule/` takes `{date,reason,appointments:{id:
+  {starts_at,ends_at,instructions?}}}`. Every active testimony needs explicit new
+  timezone-aware non-overlapping times. It creates a new session and all agenda
+  entries, retains source/attendance snapshots, moves appointments with new
+  invitation versions, preserves responses and removes source agenda/session.
+- Held hearings/completed history, occupied dates and unresolved closed-case agenda
+  entries reject the operation atomically. **Repeat-reschedule limitation:** a
+  retained transfer's destination FK prevents deleting that destination later.
+  This case is explicitly refused pending governance reconciliation of the
+  approved restrictive relationship; history is not deleted or rewritten.
+- Deferred messages retain body/sender/recipients and original session snapshot;
+  only the operational session binding moves under an exact audited transaction
+  context. The pending email still waits for the new selected session to close.
+- `GET /api/appointments/` exposes only the signed-in applicant's invitation,
+  version, response and `can_respond`, without internal agenda/attendance access.
+  Existing response POST rejects stale versions and closed/cancelled invitations.
+  `POST /api/appointments/{id}/cancel/` requires an authorized writer and exact
+  `expected_version`, retains a new cancelled snapshot and privately notifies owner.
+- One-day reminder jobs are version-bound. Superseded jobs are explicitly
+  `discarded_at`, never `delivered_at`; no email success is fabricated. Worker-only
+  predicate functions recheck current invitation and selected-session closure.
+- Forced RLS now covers 37 domain tables, including appointments, responses and
+  immutable transfer/invitation history. DB triggers reject overlap, subject/version
+  takeover and message-body/history rewrites. Full isolated PostgreSQL suite:
+  **265 passed, 1 skipped**, including rollback/reapplication through 0016 and a
+  complete reschedule/own-response path under a non-owner role. No model drift.
+- GitHub PostgreSQL CI passed on finance head `6e690b5`; scheduling CI follows push.
+
+## Newly prioritized owner decision
+
+Governance's [2026-10-21 owner clarification](https://github.com/LighthouseCollection/CTM/blob/main/docs/implementation/reviews/owner-clarifications-2026-10-21.md)
+and issue #9 supersede earlier returned-correction visibility assumptions. F08 /
+AS-F08 requires last-formal-only council reads/bytes/history/search and no early
+correction alerts while returned. The applicant stream reproduced the current
+gap against finance head. This is the next backend priority; no claim of having
+closed F08 is made by the earlier test counts.

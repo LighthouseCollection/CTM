@@ -1,7 +1,9 @@
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import transaction
+from django.db import transaction, connection
 from django.db.models import Max
 from django.utils import timezone
+from zoneinfo import ZoneInfo
+from datetime import datetime
 from tribunal.models import (
     Account,
     Case,
@@ -19,10 +21,13 @@ from tribunal.models import (
     TestimonyAppointment,
     AppointmentResponse,
     Attendance,
+    TestimonyAppointmentVersion,
+    AgendaTransferEvent,
+    Message,
 )
-from tribunal.policy import administrator, staff, writer, open_proceeding
+from tribunal.policy import active, administrator, staff, writer, open_proceeding
 from .common import audit, notify, notify_manager
-from tribunal.db.context import database_settings
+from tribunal.db.context import database_settings, database_actor
 
 
 @transaction.atomic
@@ -369,11 +374,16 @@ def schedule_testimony(actor, agenda_id, party_id, starts_at, ends_at, instructi
         .get(pk=agenda_id)
     )
     writer(actor, agenda.case)
+    if agenda.case.status != "open" and not agenda.case.applications.filter(kind="appeal", status="submitted").exists():
+        raise ValidationError("Closed case has no pending appeal testimony.")
     party = Party.objects.get(pk=party_id, case=agenda.case, account__isnull=False)
     if (
         agenda.session.state != "planned"
+        or not isinstance(starts_at, datetime) or not isinstance(ends_at, datetime)
+        or not timezone.is_aware(starts_at) or not timezone.is_aware(ends_at)
         or starts_at >= ends_at
-        or starts_at.date() != agenda.session.date
+        or starts_at.astimezone(ZoneInfo("America/Los_Angeles")).date() != agenda.session.date
+        or ends_at.astimezone(ZoneInfo("America/Los_Angeles")).date() != agenda.session.date
     ):
         raise ValidationError(
             "Use non-overlapping testimony times on the session date."
@@ -395,29 +405,143 @@ def schedule_testimony(actor, agenda_id, party_id, starts_at, ends_at, instructi
         ends_at=ends_at,
         instructions=instructions,
     )
+    version = snapshot_testimony(actor, appointment)
     notify(
         party.account,
         "testimony_invited",
         appointment,
         case=agenda.case,
-        payload={"starts_at": starts_at.isoformat(), "instructions": instructions},
+        payload={"starts_at": starts_at.isoformat(), "instructions": instructions,
+                 "appointment": str(appointment.pk), "version": appointment.version},
     )
+    queue_testimony_reminder(appointment, version)
     audit(actor, "testimony_scheduled", appointment, agenda.case)
     return appointment
 
 
+def snapshot_testimony(actor, appointment):
+    session = appointment.agenda.session
+    version, _ = TestimonyAppointmentVersion.objects.get_or_create(
+        appointment=appointment, version=appointment.version,
+        defaults={"starts_at": appointment.starts_at, "ends_at": appointment.ends_at,
+                  "instructions": appointment.instructions, "cancelled": appointment.state == "cancelled",
+                  "attendance_location": {"session_id": str(session.pk), "reference": session.reference,
+                                          "date": session.date.isoformat()}, "actor": actor},
+    )
+    return version
+
+
+def queue_testimony_reminder(appointment, version):
+    Outbox.objects.get_or_create(key=f"testimony-reminder:{version.pk}", defaults={
+        "recipient": appointment.party.account, "case": appointment.agenda.case,
+        "kind": "testimony_reminder", "due_at": appointment.starts_at - timezone.timedelta(days=1),
+        "payload": {"appointment": str(appointment.pk), "version": appointment.version},
+    })
+
+
+@transaction.atomic
+def reschedule_session(actor, session_id, new_date, replacement_times, reason):
+    administrator(actor)
+    source = CouncilSession.objects.select_for_update(of=("self",)).get(pk=session_id)
+    if not isinstance(reason, str) or not reason.strip():
+        raise ValidationError("Record the reason for rescheduling.")
+    if source.state != "planned" or source.date == new_date:
+        raise ValidationError("Only a planned session can move to a different date.")
+    if Hearing.objects.filter(agenda__session=source).exists():
+        raise ValidationError("A session with a held hearing is retained history.")
+    if AgendaTransferEvent.objects.filter(to_session=source).exists():
+        raise ValidationError("A prior transfer targets this session; retained transfer history requires reconciliation.")
+    if AgendaItem.objects.filter(carried_from__session=source).exists():
+        raise ValidationError("Retained carryover history prevents deleting this session.")
+    if CouncilSession.objects.filter(date=new_date).exists():
+        raise ValidationError("Another council session already uses this date.")
+    if not isinstance(replacement_times, dict):
+        raise ValidationError("Supply replacement testimony times by appointment identifier.")
+    items = list(source.agenda.select_for_update(of=("self",)).order_by("case_id"))
+    for item in items:
+        item.case = Case.objects.select_for_update(of=("self",)).get(pk=item.case_id)
+        if item.case.status != "open" and not item.case.applications.filter(kind="appeal", status="submitted").exists():
+            raise ValidationError("Resolve a closed case agenda entry before rescheduling.")
+    appointments = list(TestimonyAppointment.objects.select_for_update(of=("self",)).filter(
+        agenda__session=source).select_related("party__account", "agenda__session", "agenda__case").order_by("starts_at", "id"))
+    active_ids = {str(row.pk) for row in appointments if row.state != "cancelled"}
+    if set(replacement_times) != active_ids:
+        raise ValidationError("Provide explicit new times for every active testimony appointment.")
+    spans = []
+    for appointment in appointments:
+        if appointment.state == "cancelled":
+            continue
+        times = replacement_times[str(appointment.pk)]
+        starts, ends = times.get("starts_at"), times.get("ends_at")
+        if (not starts or not ends or not timezone.is_aware(starts) or not timezone.is_aware(ends)
+            or starts >= ends or starts.astimezone(ZoneInfo("America/Los_Angeles")).date() != new_date
+            or ends.astimezone(ZoneInfo("America/Los_Angeles")).date() != new_date):
+            raise ValidationError("Replacement testimony times must be aware and within the new session date.")
+        if any(starts < prior_end and ends > prior_start for prior_start, prior_end in spans):
+            raise ValidationError("Replacement testimony appointments overlap.")
+        spans.append((starts, ends))
+    target = create_session(actor, new_date)
+    snapshot = {"id": str(source.pk), "date": source.date.isoformat(), "reference": source.reference,
+                "attendance": [{"id": str(row.pk), "member_id": str(row.member_id), "present": row.present,
+                                "actor_id": str(row.actor_id), "timestamp": row.created_at.isoformat()}
+                               for row in Attendance.objects.filter(session=source, hearing__isnull=True).order_by("created_at", "id")]}
+    with database_actor(actor), database_settings({"ctm.reschedule_source": str(source.pk), "ctm.reschedule_target": str(target.pk)}):
+        destinations = {}
+        for item in items:
+            destination = AgendaItem.objects.create(session=target, case=item.case, part=item.part,
+                position=item.position, state=item.state, carried_from=item.carried_from)
+            destinations[item.pk] = destination
+            AgendaTransferEvent.objects.create(case=item.case, from_session_snapshot={**snapshot,
+                "agenda_id": str(item.pk), "part": item.part, "position": item.position, "state": item.state},
+                to_session=target, destination_item=destination, reason=reason, actor=actor)
+        for appointment in appointments:
+            snapshot_testimony(actor, appointment)
+            appointment.agenda = destinations[appointment.agenda_id]
+            if appointment.state != "cancelled":
+                times = replacement_times[str(appointment.pk)]
+                appointment.starts_at = times["starts_at"]
+                appointment.ends_at = times["ends_at"]
+                appointment.version += 1
+                appointment.state = "invited"
+                appointment.instructions = times.get("instructions", appointment.instructions)
+            appointment.save()
+            if appointment.state != "cancelled":
+                version = snapshot_testimony(actor, appointment)
+                notify(appointment.party.account, "testimony_rescheduled", version, case=appointment.agenda.case,
+                    payload={"appointment": str(appointment.pk), "version": appointment.version,
+                             "starts_at": appointment.starts_at.isoformat()})
+                queue_testimony_reminder(appointment, version)
+        for message in Message.objects.filter(session=source).select_related("case"):
+            Message.objects.filter(pk=message.pk).update(session=target,
+                session_snapshot=message.session_snapshot or {key: snapshot[key] for key in ["id", "date", "reference"]})
+            audit(actor, "message_session_rescheduled", message, message.case,
+                  metadata={"from_session": str(source.pk), "to_session": str(target.pk)})
+        for event in Outbox.objects.filter(kind="message_session", delivered_at__isnull=True,
+                                            discarded_at__isnull=True, payload__session=str(source.pk)):
+            event.payload = {**event.payload, "session": str(target.pk)}
+            event.save(update_fields=["payload"])
+        Attendance.objects.filter(session=source, hearing__isnull=True).delete()
+        source.agenda.all().delete()
+        source.delete()
+    audit(actor, "session_rescheduled", target, metadata={"from": snapshot, "reason": reason})
+    return target
+
+
 @transaction.atomic
 def respond_testimony(actor, appointment_id, version, response, explanation=""):
+    active(actor)
     appointment = (
         TestimonyAppointment.objects.select_for_update(of=("self",))
-        .select_related("party", "agenda__case")
+        .select_related("party")
         .get(pk=appointment_id)
     )
     if appointment.party.account_id != actor.pk:
         raise PermissionDenied("Not your testimony invitation.")
+    case_id, _, planned = invitation_context(actor, appointment)
     if (
-        version != appointment.version
+        type(version) is not int or version != appointment.version
         or appointment.state == "cancelled"
+        or not planned
         or response not in {"confirm", "reject"}
     ):
         raise ValidationError("Invalid or superseded invitation response.")
@@ -428,5 +552,55 @@ def respond_testimony(actor, appointment_id, version, response, explanation=""):
         response=response,
         explanation=explanation,
     )
-    notify_manager(appointment.agenda.case, "testimony_response", record)
+    notify_manager(Case.objects.get(pk=case_id), "testimony_response", record)
     return record
+
+
+def invitation_context(actor, appointment):
+    if connection.vendor == "postgresql":
+        with database_actor(actor), connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM public.ctm_invitation_context(%s)", [str(appointment.pk)])
+            row = cursor.fetchone()
+        if not row:
+            raise PermissionDenied("Invitation is not accessible.")
+        return row
+    return appointment.party.case_id, appointment.agenda.session.date, appointment.agenda.session.state == "planned"
+
+
+def own_testimony(actor):
+    active(actor)
+    if actor.role != "applicant":
+        raise PermissionDenied("Applicant invitations required.")
+    result = []
+    for appointment in TestimonyAppointment.objects.filter(party__account=actor).select_related("party").order_by("starts_at", "id"):
+        case_id, session_date, planned = invitation_context(actor, appointment)
+        response = AppointmentResponse.objects.filter(appointment=appointment, version=appointment.version).order_by("-created_at", "-id").first()
+        result.append({"id": str(appointment.pk), "case_id": str(case_id), "date": session_date.isoformat(),
+            "starts_at": appointment.starts_at.isoformat(), "ends_at": appointment.ends_at.isoformat(),
+            "instructions": appointment.instructions, "version": appointment.version, "state": appointment.state,
+            "response": response.response if response else None,
+            "can_respond": bool(planned and appointment.state != "cancelled")})
+    return {"items": result}
+
+
+@transaction.atomic
+def cancel_testimony(actor, appointment_id, expected_version):
+    staff(actor)
+    source = TestimonyAppointment.objects.select_related("agenda").get(pk=appointment_id)
+    CouncilSession.objects.select_for_update(of=("self",)).get(pk=source.agenda.session_id)
+    case = Case.objects.select_for_update(of=("self",)).get(pk=source.agenda.case_id)
+    writer(actor, case)
+    appointment = TestimonyAppointment.objects.select_for_update(of=("self",)).select_related("agenda__session", "party__account").get(pk=appointment_id)
+    if type(expected_version) is not int or appointment.version != expected_version:
+        raise ValidationError("Reload the latest testimony invitation before cancelling.")
+    if appointment.agenda.session.state != "planned" or appointment.state == "cancelled":
+        raise ValidationError("This testimony invitation cannot be cancelled.")
+    snapshot_testimony(actor, appointment)
+    appointment.version += 1
+    appointment.state = "cancelled"
+    appointment.save(update_fields=["version", "state"])
+    version = snapshot_testimony(actor, appointment)
+    notify(appointment.party.account, "testimony_cancelled", version, case=case,
+           payload={"appointment": str(appointment.pk), "version": appointment.version})
+    audit(actor, "testimony_cancelled", version, case)
+    return appointment
