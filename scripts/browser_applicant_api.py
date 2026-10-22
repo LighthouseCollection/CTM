@@ -1032,8 +1032,58 @@ try:
         expect(appeal_slot.get_by_role("link",name="Download original",exact=True)).to_be_visible()
         waived=staff.request.post(f"{BASE}/api/applications/{appeal_id}/waiver/",data={},headers={"X-CSRFToken":staff_csrf})
         assert waived.status==201,waived.text()
-        page.get_by_role("button",name="Refresh application status",exact=True).click()
-        page.get_by_role("button",name="Review answers",exact=True).click()
+        appeal_ready=context.request.get(f"{BASE}/api/applications/{appeal_id}/").json()
+        appeal_files=context.request.get(f"{BASE}/api/applications/{appeal_id}/files/").json()
+        appeal_required={(row["category"],row.get("context") or "") for row in appeal_files["requirements"] if row["required"]}
+        appeal_clean_items=[row for row in appeal_files["items"] if row["scan_state"]=="clean"]
+        appeal_clean={(row["category"],row.get("context") or "") for row in appeal_clean_items}
+        assert appeal_ready["status"]=="draft" and appeal_ready["fee"]["status"]=="waived" and appeal_ready["can_submit"]
+        assert appeal_required<=appeal_clean and len(appeal_clean_items)==len(appeal_files["items"])
+        appeal_detail_url=f"{BASE}/api/applications/{appeal_id}/"
+        appeal_files_url=f"{BASE}/api/applications/{appeal_id}/files/"
+        appeal_refresh_responses=[]
+        def record_appeal_refresh(response):
+            if response.url in {appeal_detail_url,appeal_files_url} and response.request.method=="GET":
+                appeal_refresh_responses.append({"url":response.url,"status":response.status})
+        page.on("response",record_appeal_refresh)
+        appeal_trace={"before_refresh":{"application":{"status":appeal_ready["status"],"version":appeal_ready["version"],
+            "fee_status":appeal_ready["fee"]["status"],"can_submit":appeal_ready["can_submit"]},
+            "required_keys":sorted(appeal_required),"clean_keys":sorted(appeal_clean)}}
+        try:
+            with page.expect_response(lambda response:response.url==appeal_detail_url and response.request.method=="GET") as appeal_detail_received, \
+                    page.expect_response(lambda response:response.url==appeal_files_url and response.request.method=="GET") as appeal_files_received:
+                page.get_by_role("button",name="Refresh application status",exact=True).click()
+            refreshed_appeal=appeal_detail_received.value
+            refreshed_appeal_files=appeal_files_received.value
+            refreshed_appeal_payload=refreshed_appeal.json()
+            refreshed_appeal_files_payload=refreshed_appeal_files.json()
+            appeal_trace["reload_responses"]={
+                "application":{"status_code":refreshed_appeal.status,"status":refreshed_appeal_payload.get("status"),
+                    "fee_status":(refreshed_appeal_payload.get("fee") or {}).get("status"),"can_submit":refreshed_appeal_payload.get("can_submit")},
+                "files":{"status_code":refreshed_appeal_files.status,"item_count":len(refreshed_appeal_files_payload.get("items",[]))}}
+            assert refreshed_appeal.status==200 and refreshed_appeal_payload["can_submit"] and refreshed_appeal_payload["fee"]["status"]=="waived"
+            assert refreshed_appeal_files.status==200 and len(refreshed_appeal_files_payload["items"])==len(appeal_files["items"])
+            appeal_review=page.get_by_role("button",name="Review answers",exact=True)
+            expect(appeal_review).to_be_enabled()
+            expect(page.get_by_role("link",name="Download original",exact=True)).to_have_count(len(appeal_files["items"]))
+            appeal_review.click()
+            expect(page.get_by_text("Review your answers. Submission and payment are separate steps.",exact=True)).to_be_visible()
+            expect(page.get_by_label("I have read and accept this declaration.",exact=True)).to_be_enabled()
+        except Exception:
+            appeal_trace["observed_responses"]=appeal_refresh_responses
+            appeal_trace["failure_state"]={
+                "review_buttons":page.get_by_role("button",name="Review answers",exact=True).count(),
+                "edit_buttons":page.get_by_role("button",name="Continue editing",exact=True).count(),
+                "declaration_checkboxes":page.get_by_label("I have read and accept this declaration.",exact=True).count(),
+                "declaration_enabled":page.get_by_label("I have read and accept this declaration.",exact=True).count()==1 and
+                    page.get_by_label("I have read and accept this declaration.",exact=True).is_enabled(),
+                "download_links":page.get_by_role("link",name="Download original",exact=True).count()}
+            (ARTIFACT_ROOT/"appeal-readiness-failure.json").write_text(json.dumps(appeal_trace,indent=2),encoding="utf-8")
+            (ARTIFACT_ROOT/"appeal-readiness-failure.html").write_text(page.content(),encoding="utf-8")
+            page.screenshot(path=str(ARTIFACT_ROOT/"appeal-readiness-failure.png"),full_page=True)
+            raise
+        finally:
+            page.remove_listener("response",record_appeal_refresh)
         page.get_by_label("I have read and accept this declaration.",exact=True).check()
         page.get_by_label("Your full name",exact=False).fill("Synthetic Applicant")
         with page.expect_response(lambda response:response.url==f"{BASE}/api/applications/{appeal_id}/submit/") as appeal_submitted:
