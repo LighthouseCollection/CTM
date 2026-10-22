@@ -128,6 +128,17 @@ test("agenda groups keep part and position order", () => {
   assert.deepEqual([...groups[2]].map((r) => r.id), ["c", "b"]);
 });
 
+test("session assignment metric counts Part 1 agenda rows still awaiting assignment", () => {
+  const agenda = [
+    { id: "a", part: 1, state: "scheduled" },
+    { id: "b", part: 1, state: "assigned" },
+    { id: "c", part: 2, state: "scheduled" },
+  ];
+  assert.equal(C.pendingAssignmentCount(agenda), 1);
+  assert.equal(C.pendingAssignmentCount([...agenda, { id: "d", part: 1, state: "scheduled" }]), 2);
+  assert.equal(C.pendingAssignmentCount(agenda.map((row) => row.id === "a" ? { ...row, state: "assigned" } : row)), 0);
+});
+
 test("server explanations are shown, never replaced by a fake success", () => {
   assert.equal(
     C.serverMessage({ status: 422, data: { messages: ["Reject requires correction instructions."] } }, t),

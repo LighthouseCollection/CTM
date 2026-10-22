@@ -195,6 +195,10 @@
     };
   }
 
+  function pendingAssignmentCount(items) {
+    return (items || []).filter((row) => row.part === 1 && row.state !== "assigned").length;
+  }
+
   // Extract the server's own explanation, never a fabricated one.
   function serverMessage(error, t) {
     const data = error && error.data;
@@ -305,6 +309,10 @@
       reference: "Reference",
       statusLabel: "Status",
       backSessions: "Back to sessions",
+      sessionHeaderDescription: "Manage attendance, case assignments, and hearings for this session.",
+      sessionSummary: "Session summary",
+      casesToAssign: "Cases to assign",
+      scheduledHearings: "Scheduled hearings",
       agenda: "Agenda",
       part1: "Part 1 — New case assignments",
       part2: "Part 2 — Case hearings",
@@ -534,6 +542,10 @@
       reference: "المرجع",
       statusLabel: "الحالة",
       backSessions: "العودة إلى الجلسات",
+      sessionHeaderDescription: "إدارة الحضور وتعيين القضايا وجلسات النظر لهذه الجلسة.",
+      sessionSummary: "ملخص الجلسة",
+      casesToAssign: "قضايا للتعيين",
+      scheduledHearings: "جلسات النظر المجدولة",
       agenda: "جدول الأعمال",
       part1: "الجزء الأول — تعيين القضايا الجديدة",
       part2: "الجزء الثاني — جلسات نظر القضايا",
@@ -1175,7 +1187,7 @@
                 columns: [{ title: t("sessionDate"), field: "date", kind: "name" }, { title: t("statusLabel"), field: "state", render: (row) => t(row.state) }],
               }),
               second: h(P.ReadingPane, { label: t("sessions") },
-                rows.some((row) => row.id === selected) ? h(SessionWorkspace, { key: selected, api, lang, user, sessionId: selected,
+                rows.some((row) => row.id === selected) ? h(SessionWorkspace, { key: selected, api, lang, user, sessionId: selected, compact: true,
                   onCase, onBack: () => select(null), onSession: select, renderAttendance })
                   : h(P.EmptyState, { title: t("sessions") }),
               ),
@@ -1711,7 +1723,7 @@
 
   // renderAttendance({ session, members, attendance, key }) lets the shell keep its
   // existing attendance component while this module supplies fresh data after each action.
-  function SessionWorkspace({ api, lang, user, sessionId, renderAttendance, onCase, onBack, onSession }) {
+  function SessionWorkspace({ api, lang, user, sessionId, renderAttendance, onCase, onBack, onSession, compact = false }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1752,9 +1764,27 @@
     const groups = groupAgenda(data.items);
     const c1 = part1Candidates(data.cases, data.items);
     const c2 = part2Candidates(data.cases, data.items, user);
+    const pendingAssignments = pendingAssignmentCount(data.items);
+    const scheduledHearings = groups[2].filter((row) => row.state === "scheduled").length;
     const presidentRows = assignmentAuthorizers(data.members);
     const recorder = canRecordAssignment(user, data.members);
     const memberRows = assignableMembers(data.members);
+    const sessionIdentity = h(P.Inline, { wrap: true },
+      h(P.Text, { variant: "muted" }, sessionReference(session.date) || ""),
+      h(P.Badge, { tone: planned ? "active" : "neutral" }, t(session.state)),
+    );
+    const sessionMetrics = h(P.Metric.Group, { label: t("sessionSummary") },
+      h(P.Metric, { value: String(pendingAssignments), label: t("casesToAssign") }),
+      h(P.Metric, { value: String(scheduledHearings), label: t("scheduledHearings") }),
+    );
+    const sessionActions = h(P.Stack, { gap: "xs" },
+      session.can_reschedule === true
+        ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }, t("rescheduleAction"))
+        : null,
+      (typeof session.can_close === "boolean" ? session.can_close : manage && planned)
+        ? h(P.Button, { variant: "danger-secondary", disabled: pending, onClick: () => setDialog({ kind: "close" }) }, t("closeSession"))
+        : null,
+    );
 
     async function run(action, success, extra) {
       setPending(true);
@@ -1895,19 +1925,15 @@
       h(P.Inline, null, h(P.Button, { variant: "ghost", onClick: onBack }, t("backSessions"))),
       h(P.RecordPage.Header, {
         title: sessionLabel(session.date, t),
-        meta: h(P.Inline, null,
-          h(P.Text, { variant: "muted" }, sessionReference(session.date) || ""),
-          h(P.Badge, { tone: planned ? "active" : "neutral" }, t(session.state)),
+        description: t("sessionHeaderDescription"),
+        surface: "card",
+        meta: h(P.Stack, { gap: "sm" },
+          sessionIdentity,
+          compact ? sessionMetrics : null,
+          compact ? sessionActions : null,
         ),
+        actions: compact ? null : h(P.Stack, { gap: "sm" }, sessionMetrics, sessionActions),
       }),
-      h(P.Inline, { wrap: true },
-          session.can_reschedule === true
-            ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }, t("rescheduleAction"))
-            : null,
-          (typeof session.can_close === "boolean" ? session.can_close : manage && planned)
-            ? h(P.Button, { variant: "danger-secondary", disabled: pending, onClick: () => setDialog({ kind: "close" }) }, t("closeSession"))
-            : null,
-      ),
       !planned ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
@@ -2444,6 +2470,7 @@
     assignableMembers,
     assignmentProblem,
     groupAgenda,
+    pendingAssignmentCount,
     agendaActions,
     testimonyProblem,
     laIso,

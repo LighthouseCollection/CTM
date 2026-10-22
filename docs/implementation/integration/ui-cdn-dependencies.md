@@ -8,4 +8,4 @@ Governance upgraded the immutable pin to 0.60.1. CTM consumes documented APIs; n
 - **Global peer-section spacing:** current session uses flat heading/table peers and Stack gaps. This is not proof of a global correction after nesting cleanup. CDN still needs acceptance across page/split hosts, densities, RTL and mobile without restoring nested containers.
 - **Account menu localization:** no documented Account strings contract for localized menu labels/trigger was identified. Remains upstream.
 
-Session detail now uses documented RecordPage.Header with default size/surface, meta and actions. CDN documentation: https://design-system.lighthouseway.org/cdn/0.60.1/docs/record-page.md .
+Session detail now uses documented RecordPage.Header with `surface="card"`, description, metadata and actions. The full route places the API-derived summary metrics and capability-gated actions at the action edge; the compact split preview reflows those same CDN components into the header metadata so its title remains readable. CDN documentation: https://design-system.lighthouseway.org/cdn/0.60.1/docs/record-page.md .
