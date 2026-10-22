@@ -2064,7 +2064,6 @@
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t(section === "documents" ? "documentsTitle" : "evidenceTitle")),
       h(P.SplitView, {
-        orientation: "stacked", defaultSize: 320,
         label: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
         firstLabel: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
         first: h(

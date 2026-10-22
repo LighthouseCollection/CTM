@@ -2050,7 +2050,6 @@
       h(P.Text, { variant: "secondary" }, t("auditCount", { n: rows.length })),
       h(window.CTMShell.Workspace, {
         label: t("caseAudit"), rows, empty: t("noAudit"),
-        orientation: "stacked",
         columns: [{ title: t("caseAudit"), field: "label", kind: "name" }, { title: t("recordedBy"), field: "actor" }],
       }, (row) => h(P.Stack, null,
         h(P.Text, { as: "h2", variant: "title" }, row.label),
@@ -2367,7 +2366,6 @@
     );
     return h(window.CTMShell.Workspace, {
       label: t("assessments"), selected, onSelect: select, showDetailWhenEmpty: true,
-        orientation: "stacked",
       rows: [...requests, ...reports].map((row) => ({ ...row, title: row.restricted ? t("restrictedAssessment") : row.title })),
       empty: t("noAssessmentReports"),
       columns: [{ title: t("assessments"), field: "title", kind: "name" }, { title: t("assessmentKind"), field: "kind", render: (row) => row.kind ? t(row.kind) : "" }],
@@ -2590,7 +2588,6 @@
       h(P.Text, { variant: "secondary" }, t("hearingsScope")),
       h(window.CTMShell.Workspace, {
         label: t("hearingsTitle"), rows: state.data.map(({ session, item }) => ({ id: item.id, session, item, date: session.date })),
-        orientation: "stacked",
         empty: t("noHearings"),
         columns: [{ title: t("hearingsTitle"), field: "date", kind: "name" }],
       }, ({ session, item }) => h(P.Stack, null,
@@ -2699,7 +2696,7 @@
       h(P.Text, { as: "p", variant: "secondary" }, t("internalNotesHelp")),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       h(window.CTMShell.Workspace, {
-        label: t("internalNotes"), orientation: "stacked", selected: editing, onSelect: (noteId) => { setEditing(noteId); setText(notes.find((note) => note.note_id === noteId)?.text || ""); setFailure(null); },
+        label: t("internalNotes"), selected: editing, onSelect: (noteId) => { setEditing(noteId); setText(notes.find((note) => note.note_id === noteId)?.text || ""); setFailure(null); },
         rows: notes.map((note) => ({ ...note, id: note.note_id, title: note.author || t("note"), preview: note.text, recorded: base.formatWhen(note.timestamp, lang) })), empty: t("noNotes"),
         columns: [{ title: t("note"), field: "title", kind: "name" }, { title: t("recordedAt"), field: "recorded" }, { title: t("note"), field: "preview", kind: "wrap" }],
       }, (note) => note ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h2", variant: "title" }, note.title), h(P.Text, { variant: "secondary" }, `${t("version")} ${note.version} · ${note.recorded}`), h(P.Text, { as: "p" }, note.text), note.can_edit && canWrite ? h(P.Button, { size: "sm", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); } }, t("editNote")) : null) : null),
@@ -3159,4 +3156,3 @@
     CaseTimeline: base.guarded(CaseTimeline),
   });
 })();
-

@@ -1140,7 +1140,7 @@
             : null,
         );
     return h(window.CTMShell.Workspace, {
-      label: t("communications"), rows: data.messages, selected, onSelect: select, orientation: "stacked",
+      label: t("communications"), rows: data.messages, selected, onSelect: select,
       empty: t("noMessages"), showDetailWhenEmpty: true,
       columns: [{ title: t("communications"), field: "sender", kind: "name" }, { title: t("message"), field: "body", kind: "wrap" }, { title: t("recordedAt"), field: "timestamp" }],
     }, detail);
