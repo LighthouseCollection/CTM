@@ -51,6 +51,11 @@ test("reports separate interview work from completed reports and template compos
   assert.match(councilCase, /onCreated: \(\) => setTab\("interviews"\)/);
 });
 
+test("report maker replaces the former report templates workspace label", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(councilCase, /reportTemplates: "Report Maker"/);
+});
+
 test("report templates are an inline category-to-question workspace", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(councilCase, /label: t\("reportTemplates"\)/);
