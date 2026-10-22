@@ -36,9 +36,9 @@
     );
   const navigationIcon = (id) =>
     id === "search"
-      ? h(P.Icon, { name: "document-search", "aria-hidden": true })
+      ? h(P.Icon, { name: "document_search", "aria-hidden": true })
       : id === "separation"
-      ? h(P.Icon, { name: "person-cancel", "aria-hidden": true })
+      ? h(P.Icon, { name: "person_cancel", "aria-hidden": true })
       : id === "decision"
         ? decisionBalanceIcon()
         : id === "decree"

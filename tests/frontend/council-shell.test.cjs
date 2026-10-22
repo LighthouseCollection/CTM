@@ -22,10 +22,16 @@ test("session layout assets use a current cache version", () => {
   assert.match(shell, /ctm\/council\.js\x27 %\}\?v=[a-z0-9-]+/);
 });
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
-  const order = ["cdn/0.65.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
+  const order = ["cdn/0.67.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
   for (const index of order) assert.ok(index > 0);
   assert.deepEqual([...order].sort((a, b) => a - b), order);
-  assert.doesNotMatch(shell, /cdn\/(?!0\.65\.0)\d+\.\d+\.\d+/);
+  assert.doesNotMatch(shell, /cdn\/(?!0\.67\.0)\d+\.\d+\.\d+/);
+});
+
+test("shell loads the full Material icon stylesheet for requested navigation symbols", () => {
+  assert.match(shell, /cdn\/0\.67\.0\/icons-all\.css/);
+  assert.match(app, /name: "document_search"/);
+  assert.match(app, /name: "person_cancel"/);
 });
 
 test("case workspaces use the CDN contained tab variant", () => {
@@ -176,7 +182,7 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.match(app, /cases: page === "myCases" \? data\.items\.filter\(\(row\) => row\.assigned_member_id === user\.id\) : data\.items/);
   assert.match(app, /\["home", "myCases", "cases", "archived", "past"\]\.includes\(page\)/);
   assert.match(app, /view: page === "myCases" \? "mine" : page === "archived" \? "archived" : "active"/);
-  assert.match(app, /id === "search"\s*\? h\(P\.Icon, \{ name: "document-search"/);
+  assert.match(app, /id === "search"\s*\? h\(P\.Icon, \{ name: "document_search"/);
   assert.match(app, /const appealsReturnIcon = \(\) =>/);
   assert.match(app, /id === "appeals"\s*\? appealsReturnIcon\(\)/);
   assert.match(app, /const casesNavigationItems = \[\s*\{ id: "search", icon: navigationIcon\("search"\), label: t\("search"\) \}/);
@@ -351,7 +357,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(app, /communications: "Email"/);
   assert.match(app, /caseCollaboration: "Email & Notes"/);
   assert.match(app, /items: ["case", "timeline", "parties", "marriage", "separation"]/);
-  assert.match(app, /id === "separation"\s*\? h\(P\.Icon, \{ name: "person-cancel"/);
+  assert.match(app, /id === "separation"\s*\? h\(P\.Icon, \{ name: "person_cancel"/);
   assert.match(app, /page === "separation" && council && councilModule\?\.CaseSeparation/);
   assert.match(app, /items: \["communications", "calls", "notes"\]/);
   assert.match(councilCase, /function CaseSeparation\(\{ api, lang, user, caseId \}\)/);
