@@ -1559,7 +1559,7 @@
     );
   }
 
-  function TranscriptViewer({ api, lang, revisionId, latestVersion, onChanged }) {
+  function TranscriptViewer({ api, lang, revisionId, latestVersion, initialNote, onChanged }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1570,7 +1570,7 @@
     const [editing, setEditing] = R.useState(null);
     const [confirm, setConfirm] = R.useState(false);
     const [busy, setBusy] = R.useState(false);
-    const [note, setNote] = R.useState(null);
+    const [note, setNote] = R.useState(initialNote || null); // a message carried over from the version that was replaced
     if (state.pending && !data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const isEditing = editing === revisionId || (draftKey && base.unsavedDrafts.has(draftKey) && editing !== false);
@@ -1617,8 +1617,9 @@
           },
           onSaved: (row) => {
             setEditing(false);
-            setNote({ tone: "success", text: t("correctionSaved", { version: String(row.version) }) });
-            if (onChanged) onChanged(row.id);
+            const saved = { tone: "success", text: t("correctionSaved", { version: String(row.version) }) };
+            setNote(saved);
+            if (onChanged) onChanged(row.id, saved);
           },
         }),
       );
@@ -1672,6 +1673,7 @@
     const [bump, setBump] = R.useState(0);
     const [state, retry] = base.useLoad(() => api(`/api/reports/${encodeURIComponent(report.id)}/recordings/`), [report.id, refreshKey, bump]);
     const [chosen, setChosen] = R.useState({}); // group key -> revision id
+    const [flash, setFlash] = R.useState({}); // group key -> message shown once on the newly selected version
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const items = (state.data && state.data.items) || [];
@@ -1704,7 +1706,10 @@
                         { label: t("history") },
                         h(P.Select, {
                           value: selected,
-                          onChange: (e) => setChosen((c) => ({ ...c, [key]: e.target.value })),
+                          onChange: (e) => {
+                            setFlash((x) => ({ ...x, [key]: null }));
+                            setChosen((c) => ({ ...c, [key]: e.target.value }));
+                          },
                           options: group.versions.map((v) => ({
                             value: v.id,
                             label: t("versionOption", { version: String(v.version), when: base.formatWhen(v.timestamp, lang), state: t(v.reviewed ? "stateReviewed" : "stateUnreviewed") }),
@@ -1717,8 +1722,10 @@
                         lang,
                         revisionId: selected,
                         latestVersion: group.versions[0].version,
-                        onChanged: (newId) => {
+                        initialNote: flash[key] || null,
+                        onChanged: (newId, message) => {
                           if (newId) setChosen((c) => ({ ...c, [key]: newId }));
+                          if (message) setFlash((x) => ({ ...x, [key]: message }));
                           setBump((b) => b + 1);
                         },
                       }),

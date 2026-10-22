@@ -20,7 +20,23 @@ Original audio is never altered: the uploaded bytes are the captured container a
 
 ## Transcription
 
-Submission calls the existing finalize route, which creates the transcription processing run and outbox job exactly once. There is no read route yet for recordings, processing state, retries or transcript versions, so the **Transcripts** tab states that status is not available and that the original audio is stored. Contract requested on issue #2 as D20 (recordings list with processing state, retry creating a new run, transcript versions with the review gate). The agreed language/version behavior (original, mixed, English and Arabic versions; review before wider visibility; edits preserved) is left to that contract; the UI does not invent it.
+Submission calls the existing finalize route, which creates the transcription processing run and outbox job exactly once. The recorder also sends `duration_ms` (measured length) and `recording_notice: {acknowledged: true}`, which the backend retains. No notice wording is sent, because institutional wording isn't approved.
+
+### Recording status and transcripts (D20)
+
+Contract: backend #7 `docs/implementation/media-read-and-review.md` and `twenty-batch-continuation.md`. The council screens use only these routes.
+
+| Route | Screen |
+|---|---|
+| `GET /api/reports/{id}/recordings/` | **Recording** tab, "Submitted recordings": playback of each original through its authorized `download_url` (none when the original is unsafe), length (`duration_ms`, "Not recorded" if null), size, notice, and processing state. |
+| `POST /api/recordings/{id}/finalize/` | **Request transcription**, only when `can_finalize`. |
+| `POST /api/processing/{run}/retry/ {}` | **Retry transcription**, only when the run failed and `can_retry`. Shows "Attempt N is queued; earlier attempts and text are kept." |
+| same list, `transcripts` metadata | **Transcripts** tab: one panel per language and kind (English/Arabic/mixed; original/translation; other values shown verbatim), with version history (date, reviewed or not). |
+| `GET /api/transcripts/{id}/` | Viewer: text (paragraphs, `dir=auto`), well-formed timed segments, language, kind, version and review state. Unreviewed text carries a notice that only the case manager and administrators can read it. Earlier versions are read-only history. |
+| `POST /api/transcripts/{id}/review/ {}` | **Mark as reviewed** (confirmation; latest version only, `can_review`). |
+| `POST /api/transcripts/{id}/correct/ {expected_version, text, segments: []}` | **Correct text**: creates the next, unreviewed version. Unsaved text is kept across in-app navigation (page memory only) and guarded on reload. If a newer version was saved, the server's 422 is shown, the text is kept and Load latest version is offered. A retry of the same text is replayed by the server. Generated timings are not carried into corrected text. |
+
+Honest states: "Waiting for transcription (attempt N). The transcription service may not be configured on this server yet, so nothing may have been processed. The original audio is kept." A queued job is never shown as success. "No transcript is available to you yet" is shown when processing finished but no version has been released to the reader. Visibility, review authority, retry eligibility and closed-proceeding rules come only from the server (`can_finalize`, `can_retry`, `can_review`, and what the list includes).
 
 ## Report revisions (D19)
 
@@ -88,6 +104,6 @@ Only `/api/files/…` routes are ever used; a listing URL that is not an `/api/f
 
 ## Open dependencies
 
-D19 server-side expected-version check on report revisions (UI done, see above), D20 recordings/transcript read and retry (published in PR #7, UI not yet built), D21 recording category, worker format acceptance, resumable upload, duration/notice detail (issue #2); PDF.js packaging (issue #4). OCR stays with the backend stream; council processing status and retry displays will follow D20.
+Live transcription: no provider or worker is configured, so queued attempts stay queued (backend #2). Remaining D21 items: recording category approval, WebM/MP4 worker format acceptance, and resumable or unlimited upload (500 MB limit). Plenix design-system gaps: the PDF.js CDN assets (see the defect report) and the lack of an audio/microphone icon in 0.58.0 (`triangle-right` and `clock` are used). OCR stays with the backend stream.
 
-Evidence files: [`evidence/d19_backend_acceptance.py`](evidence/d19_backend_acceptance.py) (D19 + C-02 server contract; copy into a backend #7 checkout's `tests/` to rerun), [`evidence/d19-arabic-editor-390px-real-backend.jpg`](evidence/d19-arabic-editor-390px-real-backend.jpg), and C-02 screens [`c02-en-390-conflict-real-backend.jpg`](evidence/c02-en-390-conflict-real-backend.jpg), [`c02-ar-390-conflict-real-backend.jpg`](evidence/c02-ar-390-conflict-real-backend.jpg), [`c02-ar-390-unconfirmed-save-real-backend.jpg`](evidence/c02-ar-390-unconfirmed-save-real-backend.jpg) (synthetic data, restricted `ctm_app` role).
+Evidence files: [`evidence/d19_backend_acceptance.py`](evidence/d19_backend_acceptance.py) (D19 + C-02 server contract; copy into a backend #7 checkout's `tests/` to rerun), [`evidence/d19-arabic-editor-390px-real-backend.jpg`](evidence/d19-arabic-editor-390px-real-backend.jpg), and C-02 screens [`c02-en-390-conflict-real-backend.jpg`](evidence/c02-en-390-conflict-real-backend.jpg), [`c02-ar-390-conflict-real-backend.jpg`](evidence/c02-ar-390-conflict-real-backend.jpg), [`c02-ar-390-unconfirmed-save-real-backend.jpg`](evidence/c02-ar-390-unconfirmed-save-real-backend.jpg) (synthetic data, restricted `ctm_app` role); D20 screens [`d20-en-390-recording-status-real-backend.jpg`](evidence/d20-en-390-recording-status-real-backend.jpg) and [`d20-ar-359-transcripts-real-backend.jpg`](evidence/d20-ar-359-transcripts-real-backend.jpg).

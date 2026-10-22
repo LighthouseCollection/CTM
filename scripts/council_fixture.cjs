@@ -294,6 +294,88 @@ function api(req, res, url, body) {
       "Content-Disposition": url.searchParams.get("view") === "1" ? "inline" : `attachment; filename="${x.name}"` });
     return res.end(data);
   }
+  // D20 (backend #7 media-read-and-review.md): recording status, transcripts, review, correction, retry.
+  if (!state.media) {
+    const t0 = "2026-10-16T18:30:00Z";
+    state.media = {
+      recordings: [
+        { id: "rec-seed-1", report: "rep-int-1", file: "ev-aud", duration_ms: 95000, notice: true, created_at: t0, finalized_at: t0,
+          runs: [{ id: "run-seed-1", attempt: 1, state: "failed" }] },
+        { id: "rec-seed-2", report: "rep-int-1", file: "ev-aud", duration_ms: 61000, notice: true, created_at: t0, finalized_at: t0,
+          runs: [{ id: "run-seed-2", attempt: 1, state: "completed" }] },
+      ],
+      transcripts: [
+        { id: "tr-en-1", recording: "rec-seed-2", run: "run-seed-2", language: "en", kind: "original", version: 1, reviewed: false, timestamp: t0,
+          text: "Synthetic generated transcript, first paragraph.\n\nSecond paragraph of generated text.",
+          segments: [{ start: 0, end: 4.2, text: "Synthetic generated transcript," }, { start: 4.2, end: 7.9, text: "first paragraph." }] },
+        { id: "tr-ar-1", recording: "rec-seed-2", run: "run-seed-2", language: "ar", kind: "translation", version: 1, reviewed: true, timestamp: t0,
+          text: "ترجمة تجريبية مولَّدة لنص المقابلة.", segments: [] },
+      ],
+    };
+  }
+  const mediaWriter = (reportId) => { const r = state.reports.find((x) => x.id === reportId); const c = r && state.cases.find((x) => x.id === r.case); return Boolean(c && c.status === "open" && (admin() || c.assigned === me().id)); };
+  const latestOf = (tr) => Math.max(...state.media.transcripts.filter((x) => x.recording === tr.recording && x.language === tr.language && x.kind === tr.kind).map((x) => x.version));
+  const recordingOf = (id) => state.media.recordings.find((x) => x.id === id);
+  if ((m = p.match(/^\/api\/reports\/([^/]+)\/recordings\/$/))) {
+    if (!pr7) return json(res, 404, { error: "resource_or_input_invalid" });
+    const writable = mediaWriter(m[1]);
+    const items = state.media.recordings.filter((x) => x.report === m[1]).map((x) => {
+      const run = x.runs[x.runs.length - 1];
+      const processing = run ? { run_id: run.id, state: run.state === "completed" ? "succeeded" : run.state, attempt: run.attempt, engine: "", updated_at: null,
+        safe_error: run.state === "failed" ? "Processing failed; the original is retained." : "", can_retry: writable && run.state === "failed" } : null;
+      const transcripts = state.media.transcripts.filter((tr) => tr.recording === x.id && (writable || tr.reviewed))
+        .map((tr) => ({ id: tr.id, kind: tr.kind, language: tr.language, version: tr.version, reviewed: tr.reviewed, actor: null, timestamp: tr.timestamp }));
+      return { id: x.id, file_id: x.file, mime_type: "audio/wav", byte_count: 32044, duration_ms: x.duration_ms ?? null, captured_by: null, recording_notice: {},
+        notice_recorded: x.notice, created_at: x.created_at, finalized_at: x.finalized_at, download_url: `/api/files/${x.file}/`, processing, transcripts,
+        transcripts_next_offset: null, can_finalize: writable && x.notice && !x.finalized_at };
+    });
+    return json(res, 200, { items, next_offset: null });
+  }
+  if ((m = p.match(/^\/api\/transcripts\/([^/]+)\/(review|correct)?\/?$/))) {
+    const tr = state.media.transcripts.find((x) => x.id === m[1]);
+    if (!tr) return json(res, 404, { error: "resource_or_input_invalid" });
+    const writable = mediaWriter(recordingOf(tr.recording).report);
+    if (!writable && !tr.reviewed) return json(res, 403, { error: "forbidden", detail: "This exact transcript version is not released for council reading." });
+    if (m[2] === "review") {
+      if (!writable) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+      if (tr.version !== latestOf(tr)) return json(res, 422, { error: "validation", messages: ["Only the latest transcript version can be reviewed."] });
+      tr.reviewed = true;
+      return json(res, 201, { id: "review-" + tr.id });
+    }
+    if (m[2] === "correct") {
+      if (!writable) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+      if (!Number.isInteger(body.expected_version) || typeof body.text !== "string" || !body.text.trim() || !Array.isArray(body.segments))
+        return json(res, 422, { error: "validation", messages: ["A bound version, nonempty text and bounded segment list are required."] });
+      const latest = state.media.transcripts.find((x) => x.recording === tr.recording && x.language === tr.language && x.kind === tr.kind && x.version === latestOf(tr));
+      if (latest.version !== body.expected_version) {
+        if (latest.version === body.expected_version + 1 && latest.text === body.text) return json(res, 201, { id: latest.id, version: latest.version, reviewed: latest.reviewed });
+        return json(res, 422, { error: "validation", messages: ["A newer transcript version was saved. Reload before correcting."] });
+      }
+      const row = { ...latest, id: `tr-${tr.language}-${latest.version + 1}`, version: latest.version + 1, text: body.text, segments: body.segments, reviewed: false, timestamp: now() };
+      state.media.transcripts.push(row);
+      return json(res, 201, { id: row.id, version: row.version, reviewed: false });
+    }
+    return json(res, 200, { id: tr.id, recording_id: tr.recording, run_id: tr.run, kind: tr.kind, language: tr.language, version: tr.version, text: tr.text,
+      segments: tr.segments, reviewed: tr.reviewed, can_review: writable && tr.version === latestOf(tr), timestamp: tr.timestamp });
+  }
+  if ((m = p.match(/^\/api\/processing\/([^/]+)\/retry\/$/))) {
+    const recording = state.media.recordings.find((x) => x.runs.some((r) => r.id === m[1]));
+    if (!recording) return json(res, 404, { error: "resource_or_input_invalid" });
+    if (!mediaWriter(recording.report)) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    const source = recording.runs.find((r) => r.id === m[1]);
+    const next = recording.runs.find((r) => r.attempt === source.attempt + 1);
+    if (next) return json(res, 201, { id: next.id, attempt: next.attempt, state: next.state });
+    if (source.state !== "failed") return json(res, 422, { error: "validation", messages: ["Only a failed processing attempt can be retried."] });
+    const run = { id: `${source.id}-a${source.attempt + 1}`, attempt: source.attempt + 1, state: "queued" };
+    recording.runs.push(run);
+    return json(res, 201, { id: run.id, attempt: run.attempt, state: run.state });
+  }
+  if (p === "/__transcript_bump/") {
+    const tr = state.media.transcripts.find((x) => x.id === (body.id || "tr-en-1"));
+    const row = { ...tr, id: `tr-${tr.language}-${latestOf(tr) + 1}`, version: latestOf(tr) + 1, text: "Correction saved in another session.", reviewed: false, timestamp: now() };
+    state.media.transcripts.push(row);
+    return json(res, 200, { id: row.id, version: row.version });
+  }
   if (p === "/api/recordings/") {
     const f = state.files.find((x) => x.id === body.file_id);
     if (!f || !String(f.mime).startsWith("video/") && !String(f.mime).startsWith("audio/")) return json(res, 422, { error: "validation", messages: ["Store a technically validated council-only recording first."] });
@@ -303,11 +385,14 @@ function api(req, res, url, body) {
     if (existing) return json(res, 201, { id: existing.id });
     const rec = { id: "rec-" + (state.recordings.length + 1), file: f.id, report: body.report_id, finalized: false };
     state.recordings.push(rec);
+    if (state.media) state.media.recordings.push({ id: rec.id, report: body.report_id, file: "ev-aud", duration_ms: body.duration_ms ?? null, notice: true, created_at: now(), finalized_at: null, runs: [] });
     return json(res, 201, { id: rec.id });
   }
   if ((m = p.match(/^\/api\/recordings\/([^/]+)\/finalize\/$/))) {
     const rec = (state.recordings || []).find((x) => x.id === m[1]);
     rec.finalized = true;
+    const media = state.media && state.media.recordings.find((x) => x.id === rec.id);
+    if (media && !media.finalized_at) { media.finalized_at = now(); media.runs.push({ id: "run-" + rec.id, attempt: 1, state: "queued" }); }
     return json(res, 201, { id: "run-" + rec.id });
   }
   if ((m = p.match(/^\/api\/files\/([^/]+)\/signature\/$/))) {

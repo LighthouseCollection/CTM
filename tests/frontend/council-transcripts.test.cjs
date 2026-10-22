@@ -214,3 +214,25 @@ test("Arabic: status and viewer wording are translated", async () => {
   assert.match(textOf(tree), /التسجيلات المقدَّمة/);
   assert.ok(ui);
 });
+
+test("panel: after a correction the new version is selected and the save is confirmed there (real-backend finding)", async () => {
+  let versions = [{ id: "tr-1", language: "ar", kind: "translation", version: 1, reviewed: false, timestamp: "2026-10-21T18:05:00Z" }];
+  const routes = (url, method) => {
+    if (url.endsWith("/recordings/")) return { items: [rec({ processing: { run_id: "r", state: "succeeded", attempt: 1 }, transcripts: versions })] };
+    if (method === "POST") { versions = [{ ...versions[0], id: "tr-2", version: 2 }, ...versions]; return { id: "tr-2", version: 2, reviewed: false }; }
+    return detail({ id: url.includes("tr-2") ? "tr-2" : "tr-1", version: url.includes("tr-2") ? 2 : 1, language: "ar", kind: "translation" });
+  };
+  const ui = mount("TranscriptsPanel", { report, refreshKey: 0 }, routes);
+  await ui.render();
+  await ui.render();
+  await ui.click("Correct text");
+  type(textareas(ui.tree)[0], "ترجمة مصححة.");
+  await ui.render();
+  const form = find(ui.tree, (n) => n.props && n.props.onSubmit)[0];
+  await form.props.onSubmit({ preventDefault() {} });
+  await settle();
+  await ui.render();
+  await ui.render();
+  assert.equal(byName(ui.tree, "Select")[0].props.value, "tr-2");
+  assert.match(ui.notes(), /Saved as version 2\. It needs review\./);
+});
