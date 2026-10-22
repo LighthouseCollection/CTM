@@ -416,6 +416,7 @@
       myCases: "My cases",
       myCasesCount: "{n} open cases assigned to you",
       noMyCases: "No open cases are assigned to you.",
+      myCasesUnavailable: "The assigned-case list is unavailable. Open Cases to browse the cases returned by the server.",
       open: "Open",
       searchTitle: "Search",
       searchLabel: "Search documents",
@@ -642,6 +643,7 @@
       myCases: "قضاياي",
       myCasesCount: "{n} قضايا مفتوحة معيَّنة لك",
       noMyCases: "لا توجد قضايا مفتوحة معيَّنة لك.",
+      myCasesUnavailable: "قائمة القضايا المعيّنة غير متاحة. افتح القضايا لاستعراض السجلات التي أعادها الخادم.",
       open: "مفتوحة",
       searchTitle: "البحث",
       searchLabel: "البحث في المستندات",
@@ -817,7 +819,7 @@
                 { gap: "sm" },
                 h(P.Badge, { tone: "action-required" }, t("reviewCount", { n: rows.length })),
                 ...rows.slice(0, 5).map((row) =>
-                  h(P.Card, {
+                  h(P.Card, { icon: "doc-text",
                     key: row.id,
                     title: row.case_number || t("unnumbered"),
                     meta: reviewMeta(row, t, lang),
@@ -1039,7 +1041,7 @@
               P.Stack,
               { gap: "sm" },
               ...rows.map((row) =>
-                h(P.Card, {
+                h(P.Card, { icon: "doc-text",
                   key: row.id,
                   title: row.case_number || t("unnumbered"),
                   meta: reviewMeta(row, t, lang),
@@ -1095,18 +1097,20 @@
       t = translator(lang);
     const [state, retry] = useLoad(() => api("/api/sessions/"), [user?.id]);
     const [selected, select] = R.useState(null);
+    const [filters, setFilters] = R.useState({});
     const [date, setDate] = R.useState("");
     const [problem, setProblem] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [created, setCreated] = R.useState(false);
-    const rows = state.data?.items || [];
+    const loaded = state.data?.items || [];
     const today = todayInLosAngeles();
-    const groups = splitSessions(rows, today);
+    const groups = splitSessions(loaded, today);
+    const rows = window.CTMUI.filterSessions([...groups.upcoming, ...groups.past], filters, today);
 
     async function create(event) {
       event.preventDefault();
-      const issue = sessionDateProblem(date, rows);
+      const issue = sessionDateProblem(date, loaded);
       setProblem(issue);
       setCreated(false);
       if (issue) return;
@@ -1128,6 +1132,7 @@
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("sessions")),
+      h(window.CTMUI.SessionFilters, { filters, onChange: setFilters, lang }),
       canManage(user)
         ? h(
             P.Panel,
@@ -1170,7 +1175,7 @@
                 columns: [{ title: t("sessionDate"), field: "date", kind: "name" }, { title: t("statusLabel"), field: "state", render: (row) => t(row.state) }],
               }),
               second: h(P.ReadingPane, { label: t("sessions") },
-                selected ? h(SessionWorkspace, { key: selected, api, lang, user, sessionId: selected,
+                rows.some((row) => row.id === selected) ? h(SessionWorkspace, { key: selected, api, lang, user, sessionId: selected,
                   onCase, onBack: () => select(null), onSession: select, renderAttendance })
                   : h(P.EmptyState, { title: t("sessions") }),
               ),
@@ -1178,7 +1183,7 @@
     );
   }
 
-  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onCase, onOutcome, onTestimony, onCancelTestimony, canAssign }) {
+  function AgendaItemCard({ row, session, caseRow, user, lang, onAssign, onPresent, onCase, onOutcome, onTestimony, onCancelTestimony, canAssign, compact = false }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1203,12 +1208,15 @@
     );
     const titled = row.part === 2 && Array.isArray(row.party_names) && row.party_names.length;
     return h(
-      P.Card,
-      {
+      compact ? P.Stack : P.Card,
+      compact ? { gap: "xs" } : {
+        icon: "calendar",
         title: titled ? hearingTitle(row.party_names, session.date, t) : row.case_number,
         meta: [titled ? isolate(row.case_number) : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`].filter(Boolean).join(" · "),
         actions: h(P.Inline, { gap: "xs", wrap: true }, ...actions),
       },
+      compact ? h(P.Text, { variant: "secondary" }, [titled ? hearingTitle(row.party_names, session.date, t) : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`].filter(Boolean).join(" · ")) : null,
+      compact ? h(P.Inline, { gap: "xs", wrap: true }, ...actions) : null,
       h(
         P.Stack,
         { gap: "xs" },
@@ -1830,13 +1838,20 @@
 
     const part = (n) =>
       h(
-        P.Panel,
-        { icon: "doc-text", key: n, title: t(`part${n}`) },
+        P.Stack,
+        { key: n, gap: "sm" },
+        h(P.Text, { as: "h2", variant: "heading" }, t(`part${n}`)),
         h(
           P.Stack,
           { gap: "sm" },
-          ...groups[n].map((row) =>
-            h(AgendaItemCard, {
+          h(P.DataTable, {
+            label: t(`part${n}`), data: groups[n], index: "id", narrow: "table", mode: "fill",
+            empty: t(`part${n}Empty`),
+            columns: [
+              { title: t("caseNumber"), field: "case_number", kind: "name" },
+              { title: t("statusLabel"), field: "state", render: (row) => t(row.state === "assigned" ? "assigned_state" : row.state) },
+              { title: t("agenda"), field: "id", render: (row) => h(AgendaItemCard, {
+              compact: true,
               key: row.id,
               row,
               session,
@@ -1867,9 +1882,9 @@
                 setFailure(null);
                 setDialog({ kind: "cancelTestimony", appointment });
               },
-            }),
-          ),
-          !groups[n].length ? h(P.EmptyState, { title: t(`part${n}Empty`) }) : null,
+              }) },
+            ],
+          }),
           addControl(n, n === 1 ? c1 : c2),
         ),
       );
@@ -1878,22 +1893,20 @@
       P.Stack,
       { gap: "lg" },
       h(P.Inline, null, h(P.Button, { variant: "ghost", onClick: onBack }, t("backSessions"))),
-      h(
-        P.Inline,
-        { justify: "between", wrap: true },
-        h(P.Text, { as: "h1", variant: "title" }, sessionLabel(session.date, t)),
-        session.can_reschedule === true
-          ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }, t("rescheduleAction"))
-          : null,
-        (typeof session.can_close === "boolean" ? session.can_close : manage && planned)
-          ? h(P.Button, { variant: "danger-secondary", disabled: pending, onClick: () => setDialog({ kind: "close" }) }, t("closeSession"))
-          : null,
-      ),
-      h(
-        P.PropertyList,
-        null,
-        h(P.PropertyList.Item, { label: t("reference"), data: true }, sessionReference(session.date) || ""),
-        h(P.PropertyList.Item, { label: t("statusLabel") }, h(P.Badge, { tone: planned ? "active" : "neutral" }, t(session.state))),
+      h(P.RecordPage.Header, {
+        title: sessionLabel(session.date, t),
+        meta: h(P.Inline, null,
+          h(P.Text, { variant: "muted" }, sessionReference(session.date) || ""),
+          h(P.Badge, { tone: planned ? "active" : "neutral" }, t(session.state)),
+        ),
+      }),
+      h(P.Inline, { wrap: true },
+          session.can_reschedule === true
+            ? h(P.Button, { disabled: pending, onClick: () => setDialog({ kind: "reschedule" }) }, t("rescheduleAction"))
+            : null,
+          (typeof session.can_close === "boolean" ? session.can_close : manage && planned)
+            ? h(P.Button, { variant: "danger-secondary", disabled: pending, onClick: () => setDialog({ kind: "close" }) }, t("closeSession"))
+            : null,
       ),
       !planned ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
@@ -2102,6 +2115,7 @@
       setPending(true);
       setFailure(null);
       select(null);
+      setResult(null);
       try {
         const [data, caseList] = await Promise.all([
           runSearch(api, query.trim(), history),
@@ -2143,7 +2157,8 @@
             firstLabel: t("searchResults"),
             first: h(window.CTMShell.Table, {
               label: t("searchResults"), rows: rows.map((row) => ({ ...row, id: row.file_id })),
-              selected, onSelect: select, empty: t("searchNone"),
+              selected, onSelect: select,
+              empty: t(pending ? "loading" : failure ? "loadFailed" : result === null ? "searchHelp" : "searchNone"),
               columns: [{ title: t("searchResults"), field: "name", kind: "name" }],
             }),
             second: h(
@@ -2180,10 +2195,10 @@
   }
 
   function myCases(cases, user) {
-    return (cases || []).filter((row) => row.status === "open" && row.assigned_member && row.assigned_member === user?.name);
+    return (cases || []).filter((row) => row.status === "open" && user?.id && row.assigned_member_id === user.id);
   }
 
-  function CouncilHome({ api, lang, user, onCase, onSession, onReview, onNotifications }) {
+  function CouncilHome({ api, lang, user, onCase, onSession, onReview, onNotifications, onCases }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -2220,7 +2235,7 @@
               P.Stack,
               { gap: "sm" },
               ...upcoming.slice(0, 3).map((s) =>
-                h(P.Card, { key: s.id, title: sessionLabel(s.date, t), meta: sessionReference(s.date), onOpen: () => onSession(s.id) }),
+                h(P.Card, { icon: "calendar", key: s.id, title: sessionLabel(s.date, t), meta: sessionReference(s.date), onOpen: () => onSession(s.id) }),
               ),
             )
           : h(P.EmptyState, { title: t("noUpcoming") }),
@@ -2260,9 +2275,10 @@
           ? h(
               P.Stack,
               { gap: "sm" },
-              ...mine.map((row) => h(P.Card, { key: row.id, title: row.number, meta: t("open"), onOpen: () => onCase(row.id) })),
+              ...mine.map((row) => h(P.Card, { icon: "folder-open", key: row.id, title: row.number, meta: t("open"), onOpen: () => onCase(row.id) })),
             )
-          : h(P.EmptyState, { title: t("noMyCases") }),
+          : dashboard.my_cases === 0 ? h(P.EmptyState, { title: t("noMyCases") }) : h(P.Notice, { tone: "info" },
+              t("myCasesUnavailable"), onCases ? h(P.Button, { onClick: onCases }, t("casesTitle")) : null),
       ),
     );
   }
@@ -2299,6 +2315,7 @@
             label: t(archived ? "archivedTitle" : "casesTitle"),
             data: rows,
             index: "id",
+            selected: selected ? [selected] : [],
             mode: "fill",
             pageSize: 25,
             headerMenu: false,
@@ -2327,7 +2344,7 @@
       label: t(archived ? "archivedTitle" : "casesTitle"), firstLabel: t("casesTitle"),
       first: h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" }, table),
       second: h(P.ReadingPane, { label: t("casesTitle") },
-        selected ? h(P.Stack, null,
+        rows.some((row) => row.id === selected) ? h(P.Stack, null,
           h(P.Button, { onClick: () => onOpen(selected) }, t("openCase")),
           h(window.CTMCouncil.CaseSummary, { key: selected, api, lang, user, caseId: selected, onNavigate: () => onOpen(selected) }),
         ) : h(P.EmptyState, { title: t("casesTitle") }),

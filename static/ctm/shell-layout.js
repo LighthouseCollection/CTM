@@ -7,15 +7,18 @@
       selected: selected ? [selected] : [], onRowClick: (row) => onSelect(row.id), empty,
     });
   }
-  function Workspace({ label, rows, columns, children, empty, selected, onSelect, showDetailWhenEmpty = false }) {
+  function Workspace({ label, rows, columns, children, empty, selectionPrompt, selected, onSelect, showDetailWhenEmpty = false }) {
     const [own, select] = R.useState(null);
     const id = selected === undefined ? own : selected;
     const chosen = rows.find((row) => row.id === id);
+    const emptyDetail = rows.length
+      ? selectionPrompt || (document.documentElement.lang === "ar" ? "اختر عنصرًا" : "Select an item")
+      : empty || label;
     return h(P.SplitView, {
       label, firstLabel: label,
       first: h(Table, { label, rows, columns, selected: id, onSelect: onSelect || select, empty }),
       second: h(P.ReadingPane, { label: chosen?.title || chosen?.name || label },
-        (chosen || showDetailWhenEmpty) ? (typeof children === "function" ? children(chosen) : children) : h(P.EmptyState, { title: empty || label }),
+        (chosen || showDetailWhenEmpty) ? (typeof children === "function" ? children(chosen) : children) : h(P.EmptyState, { title: emptyDetail }),
       ),
     });
   }

@@ -840,7 +840,7 @@
                   ...row.supplements.map((s) =>
                     h(
                       P.Card,
-                      { key: s.id, title: base.formatWhen(s.timestamp, lang), meta: s.actor },
+                      { icon: "doc-text", key: s.id, title: base.formatWhen(s.timestamp, lang), meta: s.actor },
                       s.text ? h(P.Text, { as: "p" }, s.text) : null,
                       ...(s.manifest || []).map((f) =>
                         h(P.Button, { key: f.id, size: "xs", href: `/api/files/${encodeURIComponent(f.id)}/` }, t("download")),
