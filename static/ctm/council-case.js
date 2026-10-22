@@ -2877,11 +2877,18 @@
   }
 
   // ---------- Case summary ----------
+  function isSubmittedDate(value) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+  }
+
   function summaryDate(value, lang) {
     if (!value) return "—";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium" }).format(date);
+    return new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", {
+      dateStyle: "medium",
+      ...(isSubmittedDate(value) ? { timeZone: "UTC" } : {}),
+    }).format(date);
   }
 
   function summaryFacts(record, requests, versions, audit) {
@@ -2985,7 +2992,7 @@
         { id: `restraining-order-expiration-${index}`, title: t("restrainingOrderExpirationDate"), date: order.expiration_date },
       ]),
     ];
-    for (const applicationDate of applicationDates.filter((item) => item.date))
+    for (const applicationDate of applicationDates.filter((item) => isSubmittedDate(item.date)))
       summaryTimeline.push({
         ...applicationDate,
         time: summaryDate(applicationDate.date, lang),

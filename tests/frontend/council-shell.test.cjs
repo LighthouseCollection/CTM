@@ -166,6 +166,8 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /record\.separation\?\.separation_date/);
   assert.match(councilCase, /record\.separation\?\.civil_divorce\?\.date/);
   assert.match(councilCase, /record\.separation\?\.restraining_orders/);
+  assert.match(councilCase, /function isSubmittedDate\(value\)/);
+  assert.match(councilCase, /timeZone: "UTC"/);
   assert.match(api, /gender=p\.person\.gender if p\.person_id else None/);
 });
 
