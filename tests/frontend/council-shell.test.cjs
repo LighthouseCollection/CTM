@@ -205,6 +205,12 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.doesNotMatch(app, /const casesNavigationItems = \[\s*\{ id: "search"/);
 });
 
+test("home session cards open Tribunal Sessions Current", () => {
+  const home = app.slice(app.indexOf('if (page === "home" && council && councilModule?.CouncilHome)'), app.indexOf('if (page === "medical"', app.indexOf('if (page === "home" && council && councilModule?.CouncilHome)')));
+  assert.match(home, /onSession: \(\) => go\("sessions"\)/);
+  assert.doesNotMatch(home, /onSession: \(id\) => go\("session", id\)/);
+});
+
 test("session lifecycle changes refresh their parent destination list", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /function SessionWorkspace\(\{[^}]*onChanged/);

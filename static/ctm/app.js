@@ -1700,7 +1700,7 @@
           lang,
           user,
           onCase: (id) => openCase(id, { page: "home", labelKey: "backHome" }),
-          onSession: (id) => go("session", id),
+          onSession: () => go("sessions"),
           onReview: () => go("review"),
           onNotifications: () => go("notifications"),
           onCases: () => go("cases"),
