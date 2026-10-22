@@ -270,7 +270,8 @@ function api(req, res, url, body) {
     decree.releases.push({ party_id: body.party_id, action: body.action, actor: me().name, timestamp: now() });
     return json(res, 201, { id: "rel-" + decree.releases.length });
   }
-  if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/))) return json(res, 200, { items: [] });
+  // Council projection of a medical report without a council-scope release.
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/))) return json(res, 200, { items: m[1] === "c-4" ? [{ id: "rep-med-1", restricted: true }] : [] });
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/assignment\/$/))) {
     if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
     const c = state.cases.find((x) => x.id === m[1]);
@@ -287,7 +288,7 @@ function api(req, res, url, body) {
       if (!admin() && c.assigned !== me().id)
         return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
       if (!body.title || !body.party_id) return json(res, 404, { error: "resource_or_input_invalid" });
-      const codes = new Set(["OPEN-01", ...(body.questions || [])]);
+      const codes = ["intake", "interview"].includes(body.kind) ? new Set(["OPEN-01", ...(body.questions || [])]) : new Set();
       const r = {
         id: "rq-" + (state.requests.length + 1), case: c.id, title: body.title, kind: body.kind, state: "draft", instructions: body.instructions,
         questions: state.questions.filter((q) => codes.has(q.code)).map((q) => ({ code: q.code, version: q.version, en: q.wording_en, ar: q.wording_ar })),

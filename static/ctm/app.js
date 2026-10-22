@@ -134,7 +134,7 @@
       hearings: "Hearings",
       evidence: "Evidence",
       documents: "Documents",
-      medical: "Medical & Psychological Reports",
+      medical: "Professional Assessments",
       decree: "Decree",
       decisionVoting: "Decision & Voting",
       appeals: "Appeals",
@@ -298,7 +298,7 @@
       hearings: "مناقشات القضية",
       evidence: "الأدلة",
       documents: "المستندات",
-      medical: "التقارير الطبية والنفسية",
+      medical: "التقييمات المهنية",
       decree: "الشهادة",
       decisionVoting: "القرار والتصويت",
       appeals: "التماسات إعادة النظر",
@@ -1061,7 +1061,7 @@
       else if (
         councilModule &&
         user.portal === "council" &&
-        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search"].includes(page)
+        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search", "medical"].includes(page)
       )
         request = Promise.resolve({});
       else if (page === "sessions") request = api("/api/sessions/");
@@ -1206,6 +1206,7 @@
         "decree",
         "appeals",
         "audit",
+        "medical",
       ].includes(page) && selection;
     const caseGroups = [
       {
@@ -1232,7 +1233,10 @@
         ].map((id) => ({
           id,
           label: t(id),
-          disabled: !["documents", "evidence", "reports"].includes(id),
+          disabled: !(
+            ["documents", "evidence", "reports"].includes(id) ||
+            (id === "medical" && councilModule?.AssessmentsWorkspace)
+          ),
         })),
       },
       {
@@ -1397,6 +1401,8 @@
           renderReports: () =>
             h(ReportReader, { key: selection, rows: data.items, t, lang }),
         });
+      if (page === "medical" && council && councilModule?.AssessmentsWorkspace)
+        return h(councilModule.AssessmentsWorkspace, { key: selection, api, lang, user, caseId: selection });
       if (page === "audit" && council && councilModule?.CaseAudit)
         return h(councilModule.CaseAudit, { key: selection, api, lang, caseId: selection });
       if (page === "appeals" && council && councilModule?.AppealsWorkspace)

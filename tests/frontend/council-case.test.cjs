@@ -214,3 +214,24 @@ test("English and Arabic audit labels cover the same codes", () => {
   const keys = (text) => [...text.matchAll(/^\s+([a-z_]+): "/gm)].map((m) => m[1]).sort();
   assert.deepEqual(keys(ar), keys(en));
 });
+
+test("assessments stay separate and hidden contents stay hidden", () => {
+  const reqs = [{ id: 1, kind: "intake" }, { id: 2, kind: "medical" }, { id: 3, kind: "psychological" }, { id: 4, kind: "interview" }];
+  assert.deepEqual(plain(C.assessmentRequests(reqs).map((r) => r.id)), [2, 3]);
+  const reports = [{ id: "a", kind: "intake" }, { id: "b", restricted: true }, { id: "c", kind: "medical" }];
+  assert.deepEqual(plain(C.assessmentReports(reports).map((r) => r.id)), ["b", "c"]);
+  assert.equal(C.assessmentProblem({ party: "p", kind: "medical", title: "Evaluation" }), null);
+  assert.equal(C.assessmentProblem({ party: "", kind: "medical", title: "x" }), "chooseSubject");
+  assert.equal(C.assessmentProblem({ party: "p", kind: "intake", title: "x" }), "chooseAssessmentKind");
+  assert.equal(C.assessmentProblem({ party: "p", kind: "psychological", title: " " }), "titleRequired");
+});
+
+test("ordinary report reader and requests exclude assessments", () => {
+  const src = fs.readFileSync("static/ctm/app.js", "utf8");
+  assert.match(src, /!\["medical", "psychological"\]\.includes\(row\.kind\) && !row\.restricted/);
+});
+
+test("ordinary Requests tab never lists assessment requests", () => {
+  const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(src, /requests: requests\.items\.filter\(\(row\) => !\["medical", "psychological"\]\.includes\(row\.kind\)\)/);
+});

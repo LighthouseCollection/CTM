@@ -301,6 +301,24 @@
         "Only the assigned case manager, or the administrator or secretary, enters the decision type and grounds.",
       actionFailed: "The action could not be completed. Nothing was changed.",
       back: "Back",
+      assessments: "Professional Assessments",
+      assessmentPrivacy: "Medical and psychological reports are kept separate from ordinary documents. Their contents are shown only when the person's signed release covers the council, and they are never sent to external AI processing.",
+      releaseTextPending: "The institution's signed-release wording has not been approved yet, so applicants cannot sign releases and report contents stay hidden.",
+      assessmentRequests: "Assessment requests",
+      newAssessment: "New assessment request",
+      assessmentKind: "Assessment type",
+      chooseAssessmentKind: "Choose medical or psychological.",
+      assessmentInstructions: "Instructions to the person, including any recommended doctors (optional)",
+      assessmentInstructionsHelp: "Recommended doctors are optional; the person may choose another qualified provider.",
+      assessmentDraftSaved: "The assessment request was saved as a draft.",
+      assessmentSent: "The assessment request was sent.",
+      noAssessments: "No assessment requests yet.",
+      assessmentReports: "Submitted assessments",
+      noAssessmentReports: "No assessments have been submitted.",
+      restrictedAssessment: "Submitted assessment — contents hidden",
+      restrictedAssessmentHelp: "A signed release covering the council is missing or out of scope.",
+      sendAssessmentTitle: "Send this assessment request?",
+      sendAssessmentMessage: "The person is notified privately. A signed release is required before any report contents become visible to the council.",
       caseAudit: "Case Audit",
       searchAudit: "Search audit events",
       auditCount: "{n} events",
@@ -446,6 +464,24 @@
       writerDecision: "يُدخل نوع القرار وأسبابه مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط.",
       actionFailed: "تعذر إتمام الإجراء. لم يتم تغيير أي شيء.",
       back: "رجوع",
+      assessments: "التقييمات المهنية",
+      assessmentPrivacy: "تُحفظ التقارير الطبية والنفسية منفصلة عن المستندات العادية. ولا تُعرض محتوياتها إلا إذا شمل الإذن الموقَّع من صاحبها المجلس، ولا تُرسل أبدًا إلى معالجة خارجية بالذكاء الاصطناعي.",
+      releaseTextPending: "لم تُعتمد بعد صياغة الإذن الموقَّع من الجهة، لذلك لا يمكن لمقدمي الطلبات توقيع الإذن وتبقى محتويات التقارير مخفية.",
+      assessmentRequests: "طلبات التقييم",
+      newAssessment: "طلب تقييم جديد",
+      assessmentKind: "نوع التقييم",
+      chooseAssessmentKind: "اختر طبيًا أو نفسيًا.",
+      assessmentInstructions: "تعليمات للشخص، بما في ذلك الأطباء المقترحون (اختياري)",
+      assessmentInstructionsHelp: "اقتراح الأطباء اختياري؛ ويجوز للشخص اختيار مقدِّم خدمة مؤهل آخر.",
+      assessmentDraftSaved: "تم حفظ طلب التقييم كمسودة.",
+      assessmentSent: "تم إرسال طلب التقييم.",
+      noAssessments: "لا توجد طلبات تقييم بعد.",
+      assessmentReports: "التقييمات المقدَّمة",
+      noAssessmentReports: "لم تُقدَّم أي تقييمات.",
+      restrictedAssessment: "تقييم مقدَّم — المحتويات مخفية",
+      restrictedAssessmentHelp: "الإذن الموقَّع الذي يشمل المجلس غير موجود أو خارج النطاق.",
+      sendAssessmentTitle: "هل تريد إرسال طلب التقييم هذا؟",
+      sendAssessmentMessage: "يُخطَر الشخص بشكل خاص. ويلزم إذن موقَّع قبل أن تظهر أي محتويات للتقرير للمجلس.",
       caseAudit: "سجل تدقيق القضية",
       searchAudit: "البحث في أحداث التدقيق",
       auditCount: "{n} حدث",
@@ -858,7 +894,8 @@
           api("/api/cases/"),
         ]).then(([record, requests, questions, cases]) => ({
           record,
-          requests: requests.items,
+          // Professional Assessments have their own section; never list them with ordinary reports.
+          requests: requests.items.filter((row) => !["medical", "psychological"].includes(row.kind)),
           questions: questions.items,
           caseRow: cases.items.find((row) => row.id === caseId),
         })),
@@ -1656,6 +1693,218 @@
     );
   }
 
+  // ---------- Professional Assessments ----------
+  // Separate from ordinary reports. Contents stay hidden unless the subject's signed,
+  // scoped release covers council; the server enforces this on every read.
+
+  const ASSESSMENT_KINDS = ["medical", "psychological"];
+
+  function assessmentRequests(requests) {
+    return (requests || []).filter((row) => ASSESSMENT_KINDS.includes(row.kind));
+  }
+
+  function assessmentReports(reports) {
+    return (reports || []).filter((row) => row.restricted || ASSESSMENT_KINDS.includes(row.kind));
+  }
+
+  function assessmentProblem(form) {
+    if (!form.party) return "chooseSubject";
+    if (!ASSESSMENT_KINDS.includes(form.kind)) return "chooseAssessmentKind";
+    if (!String(form.title || "").trim()) return "titleRequired";
+    return null;
+  }
+
+  function AssessmentsWorkspace({ api, lang, user, caseId }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = base.useLoad(
+      () =>
+        Promise.all([
+          api(`/api/cases/${encodeURIComponent(caseId)}/`),
+          api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
+          api(`/api/cases/${encodeURIComponent(caseId)}/reports/`),
+        ]).then(([record, requests, reports]) => ({
+          record,
+          requests: assessmentRequests(requests.items),
+          reports: assessmentReports(reports.items),
+        })),
+      [caseId],
+    );
+    const [composing, setComposing] = R.useState(false);
+    const [form, setForm] = R.useState({ party: "", kind: "medical", title: "", instructions: "" });
+    const [problem, setProblem] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const [notice, setNotice] = R.useState(null);
+    const [confirm, setConfirm] = R.useState(null);
+    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const { record, requests, reports } = state.data;
+    const proceeding = openProceeding(record);
+    const canWrite = writerFor(user, null, record) && Boolean(proceeding);
+    const update = (patch) => {
+      setForm((old) => ({ ...old, ...patch }));
+      setProblem(null);
+    };
+    async function create(event) {
+      event.preventDefault();
+      const issue = assessmentProblem(form);
+      setProblem(issue);
+      if (issue) return;
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/cases/${encodeURIComponent(caseId)}/requests/`, {
+          method: "POST",
+          body: JSON.stringify({
+            proceeding_id: proceeding.id,
+            party_id: form.party,
+            kind: form.kind,
+            title: form.title.trim(),
+            instructions: form.instructions.trim(),
+            language: "en",
+            questions: [],
+          }),
+        });
+        setComposing(false);
+        setForm({ party: "", kind: "medical", title: "", instructions: "" });
+        setNotice("assessmentDraftSaved");
+        retry();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    async function send() {
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/requests/${encodeURIComponent(confirm.id)}/send/`, { method: "POST", body: "{}" });
+        setConfirm(null);
+        setNotice("assessmentSent");
+        retry();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    const err = (key) => (problem === key ? t(key) : undefined);
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("assessments")),
+      h(P.Notice, { tone: "info" }, t("assessmentPrivacy")),
+      h(P.Notice, { tone: "warning" }, t("releaseTextPending")),
+      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+      failure && !confirm ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
+      h(
+        P.Panel,
+        {
+          title: t("assessmentRequests"),
+          actions: canWrite && !composing ? h(P.Button, { size: "sm", variant: "primary", onClick: () => setComposing(true) }, t("newAssessment")) : null,
+        },
+        h(
+          P.Stack,
+          { gap: "sm" },
+          composing
+            ? h(
+                P.Form,
+                { onSubmit: create, label: t("newAssessment"), noValidate: true },
+                h(
+                  P.FormSection,
+                  { title: t("newAssessment") },
+                  h(
+                    P.Field,
+                    { label: t("subject"), required: true, error: err("chooseSubject") },
+                    h(P.Select, {
+                      value: form.party,
+                      disabled: pending,
+                      onChange: (e) => update({ party: e.target.value }),
+                      options: [{ value: "", label: t("chooseSubject") }, ...record.parties.filter((p) => p.can_receive).map((p) => ({ value: p.id, label: p.name }))],
+                    }),
+                  ),
+                  h(P.RadioGroup, {
+                    label: t("assessmentKind"),
+                    layout: "row",
+                    value: form.kind,
+                    onChange: (value) => update({ kind: value }),
+                    options: ASSESSMENT_KINDS.map((value) => ({ value, label: t(value), disabled: pending })),
+                  }),
+                  h(P.Field, { label: t("title"), required: true, error: err("titleRequired") }, h(P.Input, { value: form.title, maxLength: 200, disabled: pending, onChange: (e) => update({ title: e.target.value }) })),
+                  h(
+                    P.Field,
+                    { label: t("assessmentInstructions"), description: t("assessmentInstructionsHelp") },
+                    h(P.Textarea, { rows: 4, value: form.instructions, maxLength: 10000, disabled: pending, onChange: (e) => update({ instructions: e.target.value }) }),
+                  ),
+                ),
+                h(
+                  P.FormActions,
+                  { sticky: false },
+                  h(P.Button, { disabled: pending, onClick: () => setComposing(false) }, t("cancel")),
+                  h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveDraft")),
+                ),
+              )
+            : null,
+          ...requests.map((row) =>
+            h(
+              P.Card,
+              {
+                key: row.id,
+                title: row.title,
+                meta: [t(row.kind), row.subject_name, t(row.state)].filter(Boolean).join(" · "),
+                actions:
+                  canWrite && row.state === "draft"
+                    ? h(P.Button, { size: "xs", variant: "primary", onClick: () => setConfirm(row) }, t("send"))
+                    : null,
+              },
+              row.instructions ? h(P.Text, { as: "p", variant: "secondary" }, row.instructions) : null,
+            ),
+          ),
+          !requests.length && !composing ? h(P.EmptyState, { title: t("noAssessments") }) : null,
+          !canWrite ? h(P.Text, { variant: "secondary" }, t(proceeding ? "writerOnly" : "noOpenProceeding")) : null,
+        ),
+      ),
+      h(
+        P.Panel,
+        { title: t("assessmentReports") },
+        reports.length
+          ? h(
+              P.Stack,
+              { gap: "sm" },
+              ...reports.map((row) =>
+                row.restricted
+                  ? h(P.Card, { key: row.id, title: t("restrictedAssessment"), meta: t("restrictedAssessmentHelp") })
+                  : h(
+                      P.Card,
+                      { key: row.id, title: row.title, meta: [t(row.kind), row.subject, row.date].filter(Boolean).join(" · ") },
+                      ...((row.answers && Array.isArray(row.answers.files) ? row.answers.files : []).map((id) =>
+                        h(P.Button, { key: id, size: "xs", href: `/api/files/${encodeURIComponent(id)}/` }, t("download")),
+                      )),
+                    ),
+              ),
+            )
+          : h(P.EmptyState, { title: t("noAssessmentReports") }),
+      ),
+      h(
+        P.ConfirmDialog,
+        {
+          open: Boolean(confirm),
+          title: t("sendAssessmentTitle"),
+          message: t("sendAssessmentMessage"),
+          confirmLabel: t("send"),
+          cancelLabel: t("cancel"),
+          onConfirm: send,
+          onCancel: () => !pending && setConfirm(null),
+        },
+        failure && confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
+      ),
+    );
+  }
+
   Object.assign(window.CTMCouncil, {
     caseWords: words,
     caseTranslator: translator,
@@ -1687,5 +1936,9 @@
     callProblem,
     CaseAudit,
     CallLog,
+    assessmentRequests,
+    assessmentReports,
+    assessmentProblem,
+    AssessmentsWorkspace,
   });
 })();
