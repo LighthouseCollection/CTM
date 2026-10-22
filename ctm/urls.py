@@ -31,6 +31,8 @@ urlpatterns = [
     path("api/system/accounts/<uuid:account_id>/", api.system_account),
     path("api/system/accounts/<uuid:account_id>/status/", api.system_account_status),
     path("api/system/accounts/<uuid:account_id>/status-history/", api.system_account_history),
+    path("api/system/accounts/<uuid:account_id>/memberships/", api.system_account_memberships),
+    path("api/system/accounts/<uuid:account_id>/role-history/", api.system_account_role_history),
     path("api/council/tribunals/", api.tribunals),
     path("api/council/assignment-authorities/", api.assignment_authorities),
     path("api/council/assignment-authorities/<uuid:role_id>/revoke/", api.revoke_assignment_authority),

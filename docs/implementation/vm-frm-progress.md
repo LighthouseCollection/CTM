@@ -1,3 +1,13 @@
+## Council appointment / assignment-role history projection
+
+Completed admin/secretary paginated memberships and role-history for existing
+council accounts, including inactive/ended/future/scoped records. Actual appointing/
+grant/revocation evidence retained; legacy unknown provenance stays unknown. No
+role/permission/provider/schema mutation. Twelve restrictedctm_app regressions;
+full PostgreSQL718 passed/1skip. Adapter99routes/63models/63forced tables, leaf0041.
+See member-history-projection.md and issue #2 for remaining work/publication SHA.
+No merge/server deployment by backend.
+
 ## Tribunal Sessions server continuation
 
 Completed session list offset/limit/next_offset and validated state/date filters;

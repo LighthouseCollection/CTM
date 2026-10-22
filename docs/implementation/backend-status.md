@@ -5,7 +5,7 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **706 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+Validation: **718 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
 reapply through0041. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
@@ -50,7 +50,7 @@ Account directory/detail/status/history APIs, compare-and-save status changes,
 target session revocation, source-bound configured bilingual status notices and
 stable assigned_member_id are implemented.0040 adds the audit index and restricted
 notice proofs;0041 corrects bound returned-petition resubmission with optional or
-corrected DOB. Current adapter:63 domain models,97 routes,63 forced-RLS tables.
+corrected DOB. Current adapter:63 domain models,99 routes,63 forced-RLS tables.
 [Contract and remaining work](account-administration-contract.md).
 
 ## Integrated fix and private draft contract checkpoint
@@ -85,11 +85,20 @@ reachable. Council-only authority remains. No lifecycle semantics or unsupported
 session timing/location/presiding/minutes fields are invented.
 [Contract and remaining field decisions](session-list-continuation.md).
 
+## Council appointment and assignment history continuation
+
+Admin/secretary can page actual memberships and assignment-role history for an
+existing council account, including inactive accounts. Real appointment/grant
+actors and recorded intervals are retained; revocation actor/time are returned
+only from actual audit evidence. Current scope/grant flags do not widen authority.
+No historical appointment or baseline role grant is invented.
+[Projection, provenance and limits](member-history-projection.md).
+
 ## Unfinished
 
 UI's other requested backend contracts remain unfinished: approved own-profile/
 contact/portrait mutations, verified email/provider administration, broader normalized/admin session history, member
-contact/appointment/history projections, formal-source factual discrepancy views,
+contact/portrait editing and broader institutional history, formal-source factual discrepancy views,
 and consumer integration of stored settings beyond account status notices. Pagination and per-family settings
 edit schemas are addressed in these continuations;
 those separate contracts are not claimed complete or all blocked by credentials.

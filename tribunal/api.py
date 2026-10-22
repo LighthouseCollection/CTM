@@ -1978,3 +1978,32 @@ def account_session_revoke(request, handle):
     if body(request):
         raise ValidationError("Session revocation accepts an empty object only.")
     return JsonResponse(revoke_session(request.user, handle, request.session.session_key))
+
+
+@endpoint()
+def system_account_memberships(request, account_id):
+    from tribunal.pagination import page_records
+    from tribunal.services.member_history import membership_data
+    administrator(request.user)
+    account = m.Account.objects.exclude(role="applicant").get(pk=account_id)
+    now = timezone.now()
+    result = page_records(
+        m.StaffMembership.objects.filter(account=account).select_related("tribunal")
+        .order_by("-active_from", "-id"), request, default_limit=50,
+        serialize=lambda row: membership_data(account, row, now),
+    )
+    return JsonResponse({"account_id": str(account.pk), "account_role": account.role,
+                         "account_active": account.is_active, **result})
+
+
+@endpoint()
+def system_account_role_history(request, account_id):
+    from tribunal.pagination import page_records
+    from tribunal.services.member_history import role_history, role_data
+    administrator(request.user)
+    account = m.Account.objects.exclude(role="applicant").get(pk=account_id)
+    now = timezone.now()
+    result = page_records(role_history(account), request, default_limit=50,
+                          serialize=lambda row: role_data(account, row, now))
+    return JsonResponse({"account_id": str(account.pk), "account_role": account.role,
+                         "account_active": account.is_active, **result})
