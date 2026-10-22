@@ -390,6 +390,12 @@ test("Case Audit is the final Case Review navigation item", () => {
   assert.doesNotMatch(app, /\[\{ id: "audit", label: t\("audit"\), icon: navigationIcon\("audit"\) \}\]/);
 });
 
+test("My Account does not link to CTM Settings", () => {
+  const workspaces = fs.readFileSync("static/ctm/ui-workspaces.js", "utf8");
+  assert.doesNotMatch(workspaces, /onSettings/);
+  assert.doesNotMatch(workspaces, /preferences: "Account Settings"/);
+  assert.match(app, /page === "settings" && window\.CTMUI\?\.canAdminister\(user\)/);
+});
 test("CTM Settings opens the complete administration workspace for administrators", () => {
   assert.match(app, /if \(page === "settings" && window\.CTMUI\?\.canAdminister\(user\)\)\s*return h\(window\.CTMUI\.Administration/);
 });

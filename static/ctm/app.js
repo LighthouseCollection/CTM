@@ -1728,7 +1728,7 @@
       if (page === "administration" && window.CTMUI)
         return h(window.CTMUI.Administration, { api, user, lang, onNavigationGuard: registerApplicantGuard, onCase: (id) => openCase(id, { page: "administration", labelKey: "backAdministration" }) });
       if (page === "profile" && window.CTMUI)
-        return h(window.CTMUI.Profile, { api, user, lang, onSettings: () => go("settings"), onUserUpdated: (updated) => setUser((previous) => ({ ...previous, ...updated })) });
+        return h(window.CTMUI.Profile, { api, user, lang, onUserUpdated: (updated) => setUser((previous) => ({ ...previous, ...updated })) });
       if (page === "profile")
         return h(
           P.Stack,

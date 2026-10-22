@@ -8,7 +8,7 @@
     en: {
       profile: "Profile", name: "Name", email: "Signed-in email", role: "Role", portal: "Portal",
       council: "Council", applicant: "Applicant", member: "Council member", president: "President", secretary: "Secretary", admin: "Administrator",
-      preferences: "Account Settings", administration: "CTM Administration", members: "Council members", configuration: "Configuration", audit: "System audit",
+      administration: "CTM Administration", members: "Council members", configuration: "Configuration", audit: "System audit",
       unavailable: "You do not have access to this workspace.", loading: "Loading…", failed: "Unable to load this information.", loadFailed: "Unable to load this information.", retry: "Retry", expired: "Your session has expired. Sign in again.", forbidden: "You do not have access to perform this action.", conflict: "This record changed. Reload and try again.", actionFailed: "Unable to save. Please try again.",
       noRows: "No records to display.", choose: "Select a record", query: "Search loaded records", action: "Action", source: "Record type", actor: "Recorded by", date: "Date and time",
       from: "From date", to: "To date", datesHelp: "Dates use Los Angeles time.", all: "All", reset: "Clear filters", dateOrder: "The end date must be on or after the start date.",
@@ -25,7 +25,7 @@
     ar: {
       profile: "حسابي", name: "الاسم", email: "البريد المستخدم لتسجيل الدخول", role: "الدور", portal: "البوابة",
       council: "المجلس", applicant: "مقدم الطلب", member: "عضو المجلس", president: "الرئيس", secretary: "السكرتير", admin: "المسؤول",
-      preferences: "إعدادات الحساب", administration: "إدارة النظام", members: "أعضاء المجلس", configuration: "إعدادات النظام", audit: "سجل النظام",
+      administration: "إدارة النظام", members: "أعضاء المجلس", configuration: "إعدادات النظام", audit: "سجل النظام",
       unavailable: "ليس لديك صلاحية الوصول إلى هذه الصفحة.", loading: "جارٍ التحميل…", failed: "تعذر تحميل هذه المعلومات.", loadFailed: "تعذر تحميل هذه المعلومات.", retry: "إعادة المحاولة", expired: "انتهت صلاحية الجلسة. سجّل الدخول مجددًا.", forbidden: "ليس لديك صلاحية تنفيذ هذا الإجراء.", conflict: "تغيّر السجل. أعد التحميل ثم حاول مجددًا.", actionFailed: "تعذر الحفظ. حاول مجددًا.",
       noRows: "لا توجد سجلات لعرضها.", choose: "اختر سجلًا", query: "البحث في السجلات المحملة", action: "الإجراء", source: "نوع السجل", actor: "سُجّل بواسطة", date: "التاريخ والوقت",
       from: "من تاريخ", to: "إلى تاريخ", datesHelp: "التواريخ بتوقيت لوس أنجلوس.", all: "الكل", reset: "مسح عوامل التصفية", dateOrder: "يجب ألا يسبق تاريخ النهاية تاريخ البداية.",
@@ -106,7 +106,7 @@
     const P = window.Plenix, h = window.React.createElement, t = translator(lang);
     return h(P.PropertyList, { layout: "stacked" }, ...entries.filter(([, value]) => value !== undefined && value !== null && value !== "").map(([key, value]) => h(P.PropertyList.Item, { key, label: t(key) }, typeof value === "boolean" ? t(value ? "yes" : "no") : ["role", "portal", "ui_language", "notification_language"].includes(key) ? t(String(value)) : String(value))));
   }
-  function Profile({ api, user, lang, onSettings, onUserUpdated }) {
+  function Profile({ api, user, lang, onUserUpdated }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const [form, setForm] = R.useState({ first_name: user.first_name || user.name?.split(" ")[0] || "", last_name: user.last_name || user.name?.split(" ").slice(1).join(" ") || "" });
     const [saving, setSaving] = R.useState(false), [notice, setNotice] = R.useState(null), [failure, setFailure] = R.useState(null);
@@ -154,7 +154,6 @@
       h(P.Panel, { icon: "hdr-bell", title: "Notifications" }, h(P.Stack, { gap: "md" },
         h(P.Text, { variant: "secondary" }, "Choose the language used for notification messages."),
         h(P.Inline, { wrap: true }, ...["en", "ar"].map((value) => h(P.Button, { key: value, selected: user.notification_language === value, disabled: saving, onClick: () => preference("notification_language", value) }, t(value)))),
-        h(P.Button, { variant: "ghost", disabled: saving, onClick: onSettings }, t("preferences")),
       )),
       h(P.Panel, { icon: "activity", title: "Activity Log" },
         state.pending ? h(P.Text, { variant: "secondary" }, t("loading")) : state.error ? h(P.Button, { onClick: retry }, t("retry")) : state.data.activity.length ? h(P.List, { variant: "bullets", items: state.data.activity.map((item) => ({ children: `${item.action} · ${window.CTMCouncil.formatWhen(item.timestamp, lang)}` })) }) : h(P.EmptyState, { title: "No account activity is available yet." }),
