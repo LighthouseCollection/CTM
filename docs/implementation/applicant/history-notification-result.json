@@ -1,0 +1,120 @@
+{
+  "date": "2026-10-21",
+  "batches": [
+    {
+      "batch": 1,
+      "work": "Strict own-history contract",
+      "status": "completed locally"
+    },
+    {
+      "batch": 2,
+      "work": "Version and actor provenance",
+      "status": "completed locally"
+    },
+    {
+      "batch": 3,
+      "work": "Server timestamps",
+      "status": "completed locally"
+    },
+    {
+      "batch": 4,
+      "work": "Absent versus null/false/zero",
+      "status": "completed locally"
+    },
+    {
+      "batch": 5,
+      "work": "Stable repeat row identity",
+      "status": "completed locally"
+    },
+    {
+      "batch": 6,
+      "work": "Repeat order changes",
+      "status": "completed locally"
+    },
+    {
+      "batch": 7,
+      "work": "Unknown field paths",
+      "status": "completed locally"
+    },
+    {
+      "batch": 8,
+      "work": "Current-label provenance",
+      "status": "completed locally"
+    },
+    {
+      "batch": 9,
+      "work": "Changed-field modal and focus handling",
+      "status": "completed locally"
+    },
+    {
+      "batch": 10,
+      "work": "History privacy and dirty-draft preservation",
+      "status": "completed locally"
+    },
+    {
+      "batch": 11,
+      "work": "Strict private notification projection",
+      "status": "completed locally"
+    },
+    {
+      "batch": 12,
+      "work": "Bounded pagination",
+      "status": "completed locally"
+    },
+    {
+      "batch": 13,
+      "work": "Generic metadata without raw payload",
+      "status": "completed locally"
+    },
+    {
+      "batch": 14,
+      "work": "Normal authorized case routing",
+      "status": "completed locally"
+    },
+    {
+      "batch": 15,
+      "work": "Explicit own read action",
+      "status": "completed locally"
+    },
+    {
+      "batch": 16,
+      "work": "Literal acknowledgement validation",
+      "status": "completed locally"
+    },
+    {
+      "batch": 17,
+      "work": "Lost acknowledgement recovery",
+      "status": "completed locally"
+    },
+    {
+      "batch": 18,
+      "work": "Navigation and unload guards",
+      "status": "completed locally"
+    },
+    {
+      "batch": 19,
+      "work": "Arabic mobile and malformed refresh",
+      "status": "completed locally"
+    },
+    {
+      "batch": 20,
+      "work": "Integration evidence and shell proposal",
+      "status": "completed locally"
+    }
+  ],
+  "verification": {
+    "frontend_tests": 92,
+    "api_browser_groups": 74,
+    "history_notification_fixture_groups": 8,
+    "shell_groups": 9,
+    "page_errors": []
+  },
+  "backend_ref": "37d6ed7afb000b8959843e42607d56e156f6a851",
+  "limitations": [
+    "Isolated SQLite and synthetic sessions/content; scanner test policy",
+    "Shared shell remains a governance integration patch",
+    "No PostgreSQL, live provider/payment/email/antivirus or institutional acceptance",
+    "Historical question wording is not supplied by the history endpoint",
+    "No user-facing case export"
+  ]
+}

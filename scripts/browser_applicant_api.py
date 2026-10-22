@@ -177,6 +177,8 @@ try:
         history=context.request.get(f"{BASE}/api/applications/{app_id}/history/").json()["items"]
         assert len(history)==2 and history[0]["answers"]["last_name"]=="Applicant"
         checks.append("Real concurrent save rejects stale editor write and explicit reload preserves immutable prior answer history")
+        from applicant_history_notice_acceptance import history_checks
+        checks.extend(history_checks(browser,page,context,BASE,app_id,cookies,settings,ROOT))
         for name in ("outsider","admin"):
             other=browser.new_context()
             other.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies[name],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
@@ -933,6 +935,8 @@ try:
         checks.extend(run_filing_acceptance(browser,BASE,settings,fixture_db,session_cookie,staff,staff_csrf,errors))
         from applicant_message_acceptance import run as run_message_acceptance
         checks.extend(run_message_acceptance(browser,page,context,staff,BASE,csrf,staff_csrf,current["case_id"],current["case_number"],party_id,cookies["outsider"],settings,fixture_db,ROOT))
+        from applicant_history_notice_acceptance import notification_checks
+        checks.extend(notification_checks(browser,page,context,BASE,str(owner.pk),cookies,settings,fixture_db,ROOT))
         staff.close()
         assert page.locator("[style]").count()==0
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")

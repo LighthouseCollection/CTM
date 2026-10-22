@@ -383,6 +383,10 @@
             { variant: "secondary", disabled:state.saving || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy || projectionPending })
             : button("review", () => setReview(true), {variant:"secondary", disabled:review || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy || projectionPending}),
         ),
+        window.CTMApplicantHistory?h(window.CTMApplicantHistory.History,{
+          applicationId,currentVersion:state.version,currentFields:record.questionnaire.definition.fields,api,lang,
+          disabled:state.saving||filingBusy||actionBusy||uploadBusy||supplementBusy,
+        }):null,
         window.CTMApplicantFiles ? h(window.CTMApplicantFiles.ApplicationFiles, {
           key: "documents", applicationId, answerVersion:state.version, api, lang,
           savedApplication:record,
