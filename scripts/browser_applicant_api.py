@@ -232,6 +232,33 @@ try:
         expect(slot.get_by_role("link",name="Download original",exact=True)).to_be_visible()
         expect(page.get_by_role("button",name="Continue to secure payment",exact=True)).to_be_visible()
         checks.append("Latest synthetic scan event governs actual current-file listing, browser readiness and byte access; pending blocks all three")
+        from tribunal.models import Application,CheckoutIntent
+        fixture_db(lambda:Application.objects.filter(pk=app_id).update(duplicate_hold=True))
+        page.get_by_role("button",name="Refresh application status",exact=True).click()
+        expect(page.get_by_text("Your application is awaiting identity review.",exact=False)).to_be_visible()
+        page.get_by_label("First name",exact=False).fill("Held saved correction")
+        page.get_by_role("button",name="Save draft",exact=True).click()
+        expect(page.get_by_text("Your answers have been saved.",exact=True)).to_be_visible()
+        held=context.request.get(f"{BASE}/api/applications/{app_id}/").json()
+        assert held["can_edit"] and held["duplicate_hold"] and held["answers"]["first_name"]=="Held saved correction"
+        assert not held["can_checkout"] and not held["can_submit"]
+        for action,extra in (("checkout",{"attestation":{"accepted":True,"name":"Synthetic Applicant"}}),
+                             ("submit",{"idempotency_key":"held-"+uuid.uuid4().hex,"attestation":{"accepted":True,"name":"Synthetic Applicant"}})):
+            denied=context.request.post(f"{BASE}/api/applications/{app_id}/{action}/",data={"expected_version":held["version"],**extra},headers={"X-CSRFToken":csrf})
+            assert denied.status==422,denied.text()
+            assert ("not configured" if action=="checkout" else "duplicate") in denied.text().lower(),denied.text()
+        def held_checkout_preparation():
+            from django.core.exceptions import ValidationError
+            from tribunal.services.payments import prepare_checkout
+            try:
+                prepare_checkout(owner,app_id,{"accepted":True,"name":"Synthetic Applicant"},expected_version=held["version"])
+            except ValidationError as error:
+                return "eligibility" in str(error).lower()
+            return False
+        assert fixture_db(held_checkout_preparation)
+        assert fixture_db(lambda:CheckoutIntent.objects.filter(application_id=app_id).count())==0
+        fixture_db(lambda:Application.objects.filter(pk=app_id).update(duplicate_hold=False))
+        checks.append("Synthetic identity hold permits browser draft save but checkout preparation/submit reject; unconfigured provider endpoint cannot charge; no person matching simulated")
         staff=browser.new_context()
         staff.add_cookies([{"name":settings.SESSION_COOKIE_NAME,"value":cookies["admin"],"url":BASE,"httpOnly":True,"sameSite":"Lax"}])
         staff.request.get(BASE+"/api/session/")

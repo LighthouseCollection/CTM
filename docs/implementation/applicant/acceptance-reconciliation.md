@@ -13,7 +13,7 @@ All checks below use isolated synthetic records; no live provider/antivirus clai
 | F09 resubmit | Actual returned instructions, review and browser resubmit reuse original fee/signature. Pending required-file scan rejects resubmit with422 atomically; submission count/fee stay unchanged. Successful resubmit creates a new submission referencing the original attestation, which remains unchanged. No attestation in resubmit payload. Concurrent staff review and complete snapshot linkage remain separate backend acceptance. | Partial |
 | F25 / AS-F25-1 | Staff manifest retains formal file ID after correction, but current listing/download exposes a pending, unsubmitted correction. This probe uses a technically clean replacement, not the full pending-scan AS-F25-1 variant. | Partial; F08 byte boundary fails |
 | F34 / AS-F34-1 | Chrome/errors/notices EN/AR; authored instructions stay unchanged. Applicant case reference and invitation/payment timestamps use bidi isolation. Submitted state no longer prompts new filing. Notification/email localization scenario not claimed. | Partial |
-| F35 duplicate hold | Unit filing eligibility blocks checkout/submit on hold; draft session does not block save based on hold. Exact person matching and real hold lifecycle remain backend acceptance. | Partial |
+| F35 duplicate hold | Actual browser save succeeds with an explicitly set synthetic hold. Projection blocks checkout/submit; submit HTTP422 rejects duplicate hold; real checkout-preparation service rejects eligibility before creating an intent. Checkout HTTP is independently blocked by unconfigured provider. EN/AR notice respects edit permission. Exact person matching and hold assignment/release lifecycle remain backend acceptance. | Partial |
 | F36 lifecycle | Returned UI has no draft-delete/expiry action and no new payment/signature. Expiry worker/shared withdrawal semantics remain backend acceptance. | Partial |
 
 ## Returned-correction privacy probe
@@ -25,7 +25,7 @@ a corrected first name through the browser and uploads a same-context MC correct
 Before resubmission, an authenticated administrator calls actual detail/history,
 case-file listing and file download/range/preview routes. This mode intentionally
 exits unsuccessfully until all eight privacy predicates pass. It is separate from
-the15 passing baseline scenario groups and must not be counted as a pass.
+the16 passing baseline scenario groups and must not be counted as a pass.
 
 Current result: council detail/version/history expose pending answers, case listing
 exposes the pending file and direct/range/preview requests return pending bytes.

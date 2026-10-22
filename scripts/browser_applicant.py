@@ -356,6 +356,20 @@ try:
         assert page.locator("[style]").count()==0
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         checks.append("Submitted records avoid new-filing prompts and case reference remains bidi-isolated in Arabic")
+        app.update(status="draft",can_edit=True,duplicate_hold=True,can_checkout=False,can_submit=False)
+        page.reload(wait_until="networkidle")
+        expect(page.get_by_text("Your application is awaiting identity review. You can save your answers, but payment and submission remain unavailable until the tribunal completes this review.",exact=True)).to_be_visible()
+        page.get_by_label("First name",exact=False).fill("Held draft remains editable")
+        page.get_by_role("button",name="Save draft",exact=True).click()
+        expect(page.get_by_text("Your answers have been saved.",exact=True)).to_be_visible()
+        assert page.get_by_role("button",name="Continue to secure payment",exact=True).count()==0
+        page.get_by_role("button",name="العربية",exact=True).click()
+        expect(page.get_by_text("طلبك بانتظار مراجعة الهوية. يمكنك حفظ إجاباتك، لكن الدفع وتقديم الطلب غير متاحين حتى يكمل المجلس هذه المراجعة.",exact=True)).to_be_visible()
+        checks.append("Identity hold explains blocked filing in EN/AR while draft corrections remain saveable")
+        app["can_edit"]=False
+        page.reload(wait_until="networkidle")
+        expect(page.get_by_text("Your application is awaiting identity review. Payment and submission remain unavailable until the tribunal completes this review.",exact=True)).to_be_visible()
+        assert page.get_by_text("Your application is awaiting identity review. You can save your answers, but payment and submission remain unavailable until the tribunal completes this review.",exact=True).count()==0
         assert not errors, errors
         browser.close()
 finally:
