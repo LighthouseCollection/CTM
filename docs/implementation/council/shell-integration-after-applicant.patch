@@ -1,5 +1,5 @@
 diff --git a/static/ctm/app.js b/static/ctm/app.js
-index b4b4300..2344360 100644
+index b4b4300..8cf6da5 100644
 --- a/static/ctm/app.js
 +++ b/static/ctm/app.js
 @@ -11,6 +11,8 @@
@@ -87,7 +87,24 @@ index b4b4300..2344360 100644
        throw error;
      }
      return response.json();
-@@ -1046,7 +1056,7 @@
+@@ -509,7 +519,7 @@
+   }
+   const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
+   const heading = (value) => text(value, { as: "h1", variant: "title" });
+-  function SessionAttendance({ sessionId, session, members, initial, t }) {
++  function SessionAttendance({ sessionId, session, members, initial, t, onSaved }) {
+     const [records, setRecords] = R.useState(initial),
+       [pending, setPending] = R.useState(false),
+       [failed, setFailed] = R.useState(false);
+@@ -530,6 +540,7 @@
+             present: value === "present",
+           }),
+         });
++        if (onSaved) onSaved();
+       } catch {
+         setRecords(previous);
+         setFailed(true);
+@@ -1046,7 +1057,7 @@
            messages: messages.items,
            sessions: sessions.items,
          }));
@@ -96,7 +113,7 @@ index b4b4300..2344360 100644
          request = Promise.all([
            api(`/api/sessions/${selection}/agenda/`),
            api("/api/council/members/"),
-@@ -1056,6 +1066,12 @@
+@@ -1056,6 +1067,12 @@
            members: members.items,
            attendance: attendance.items,
          }));
@@ -109,7 +126,7 @@ index b4b4300..2344360 100644
        else if (page === "sessions") request = api("/api/sessions/");
        else if (page === "applications") request = api("/api/applications/");
        else if (["home", "cases", "archived", "past"].includes(page)) {
-@@ -1188,11 +1204,29 @@
+@@ -1188,11 +1205,29 @@
      const navItems = council
        ? ["home", "sessions", "cases", "search", "archived", "statistics"]
        : ["home", "applications", "appointments", "past"];
@@ -143,7 +160,7 @@ index b4b4300..2344360 100644
      const caseGroups = [
        {
          heading: t("overview"),
-@@ -1200,7 +1234,11 @@
+@@ -1200,7 +1235,11 @@
            (id) => ({
              id,
              label: t(id === "case" ? "summary" : id),
@@ -156,7 +173,7 @@ index b4b4300..2344360 100644
            }),
          ),
        },
-@@ -1218,15 +1256,24 @@
+@@ -1218,15 +1257,24 @@
          ].map((id) => ({
            id,
            label: t(id),
@@ -185,7 +202,7 @@ index b4b4300..2344360 100644
          })),
        },
      ];
-@@ -1265,6 +1312,14 @@
+@@ -1265,6 +1313,14 @@
                  groups: reviewGroups,
                })
              : null,
@@ -200,7 +217,7 @@ index b4b4300..2344360 100644
          )
        : h(
            P.NavPane,
-@@ -1372,6 +1427,69 @@
+@@ -1372,6 +1428,69 @@
            lang,
            onCase: (id) => go("case", id),
          });
@@ -270,7 +287,7 @@ index b4b4300..2344360 100644
        if (page === "reports")
          return h(ReportReader, { key: selection, rows: data.items, t, lang });
        if (["documents", "evidence"].includes(page))
-@@ -1455,6 +1573,15 @@
+@@ -1455,6 +1574,15 @@
                  onSent: () => reload((n) => n + 1),
                })
              : null,
@@ -286,7 +303,7 @@ index b4b4300..2344360 100644
          );
        if (page === "case")
          return h(
-@@ -1486,6 +1613,50 @@
+@@ -1486,6 +1614,51 @@
              }),
            ),
          );
@@ -324,9 +341,10 @@ index b4b4300..2344360 100644
 +          onCase: (id) => go("case", id),
 +          onBack: () => go("sessions"),
 +          onSession: (id) => go("session", id),
-+          renderAttendance: ({ session, members, attendance, key }) =>
++          renderAttendance: ({ session, members, attendance, key, onSaved }) =>
 +            h(SessionAttendance, {
 +              key,
++              onSaved,
 +              sessionId: selection,
 +              session,
 +              members,
@@ -337,7 +355,7 @@ index b4b4300..2344360 100644
        if (page === "session")
          return h(
            P.Stack,
-@@ -1571,11 +1742,26 @@
+@@ -1571,11 +1744,26 @@
                : h(P.EmptyState, { title: t("noCurrent") }),
          );
        }
