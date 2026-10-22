@@ -508,6 +508,7 @@ test("upcoming session actions live in each row instead of the toolbar", () => {
   assert.match(source, /field: "session_actions"/);
   assert.match(source, /onClick: \(\) => editSession\(row\)/);
   assert.match(source, /onClick: \(\) => setDeleteTarget\(row\)/);
+  assert.match(source, /icon: "trash", variant: "danger-secondary", disabled: pending \|\| row\.state !== "draft"/);
   assert.match(source, /method: "DELETE"/);
   assert.match(source, /P\.ConfirmDialog/);
   assert.match(source, /form: "ctm-session-form"/);

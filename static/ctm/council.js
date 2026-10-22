@@ -1512,7 +1512,7 @@
           { title: t("statusLabel"), field: "state", minWidth: "8rem", pill: false, render: (row) => t(sessionStatusKey(row.state)) },
           ...(mode === "upcoming" && canManage(user) ? [{ title: t("actions"), field: "session_actions", minWidth: "10rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
             h(P.Button, { size: "xs", icon: "pencil", disabled: pending, onClick: () => editSession(row) }, t("editSession")),
-            h(P.Button, { size: "xs", icon: "trash", disabled: pending || row.state !== "draft", onClick: () => setDeleteTarget(row) }, t("deleteSession")),
+            h(P.Button, { size: "xs", icon: "trash", variant: "danger-secondary", disabled: pending || row.state !== "draft", onClick: () => setDeleteTarget(row) }, t("deleteSession")),
           ) }] : []),
         ],
       }),
