@@ -1,5 +1,5 @@
 .ctm-session-header-action {
-  inline-size: 14rem;
+  inline-size: fit-content;
   justify-content: flex-start;
 }
 

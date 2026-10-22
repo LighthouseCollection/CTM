@@ -90,6 +90,8 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(council, /P\.Stack, \{ gap: "xs", align: "end" \},/);
   assert.match(council, /P\.Inline,\s*\{ key: action\.label, justify: "end" \}/);
   assert.match(council, /className: "ctm-session-header-action"/);
+  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  assert.match(css, /\.ctm-session-header-action\s*\{[^}]*inline-size: fit-content/);
   assert.match(council, /icon: "folder-add", label: t\("addAssignmentCase"\)/);
   assert.match(council, /className: "ctm-calendar-add-icon"/);
   assert.match(council, /name: "calendar"/);
