@@ -2743,6 +2743,18 @@
     return edit && typeof edit === "object" && !Array.isArray(edit) ? { ...submitted, ...edit } : submitted;
   }
 
+  // Council cards use the same field grid in read and edit modes. Read controls
+  // intentionally preserve the form layout while preventing direct changes.
+  function CaseReadFields({ P, h, fields, values, className = "" }) {
+    return h("div", { className: `ctm-case-edit-grid ctm-case-read-grid ${className}`.trim() },
+      ...fields.map(([key, label, type = "text"]) => {
+        const value = values[key];
+        const validDate = type === "date" && /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+        return h(P.Field, { key, label }, h(P.Input, { type: validDate ? "date" : "text", value: value === undefined || value === null || value === "" ? "—" : String(value), readOnly: true, tabIndex: -1 }));
+      }),
+    );
+  }
+
   function CaseMarriage({ api, lang, user, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`), [caseId]);
@@ -2787,17 +2799,11 @@
             h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
             failure ? h(P.Notice, { tone: "danger" }, failure) : null,
             h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
-          ) : h(P.PropertyList, { columns: 3 },
-            h(P.PropertyList.Item, { label: t("marriedOutsideCoptic") }, value(marriage.outside_coptic_church)),
-            h(P.PropertyList.Item, { label: t("outsideDenomination") }, value(marriage.outside_denomination)),
-            h(P.PropertyList.Item, { label: t("outsideMarriageDate") }, value(marriage.outside_marriage_date)),
-            h(P.PropertyList.Item, { label: t("churchMarriageDate") }, value(marriage.church_marriage_date)),
-            h(P.PropertyList.Item, { label: t("officiatingPriest") }, value(marriage.officiating_priest)),
-            h(P.PropertyList.Item, { label: t("marriageDuration") }, value(marriageDuration(marriage.church_marriage_date, lang))),
-            h(P.PropertyList.Item, { label: t("churchName") }, value(marriage.church_name)),
-            h(P.PropertyList.Item, { label: t("churchLocation") }, value(marriage.church_location)),
-            h(P.PropertyList.Item, { label: t("diocese") }, value(marriage.diocese)),
-          ),
+          ) : h(CaseReadFields, { P, h, fields: [
+            ["outside_coptic_church", t("marriedOutsideCoptic")], ["outside_denomination", t("outsideDenomination")], ["outside_marriage_date", t("outsideMarriageDate"), "date"],
+            ["church_marriage_date", t("churchMarriageDate"), "date"], ["officiating_priest", t("officiatingPriest")], ["marriage_duration", t("marriageDuration")],
+            ["church_name", t("churchName")], ["church_location", t("churchLocation")], ["diocese", t("diocese")],
+          ], values: { ...marriage, marriage_duration: marriageDuration(marriage.church_marriage_date, lang) } }),
         ),
       ),
     );
@@ -2829,7 +2835,7 @@
         h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
         failure ? h(P.Notice, { tone: "danger" }, failure) : null,
         h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
-      ) : h(P.PropertyList, { columns: 3 }, ...fields.map(([key, label]) => h(P.PropertyList.Item, { key, label }, values[key] || "—"))),
+      ) : h(CaseReadFields, { P, h, fields, values }),
     ));
   }
 
@@ -3075,6 +3081,16 @@
       } catch (error) { setSummaryFailure(base.serverMessage(error, bt)); }
       finally { setSummaryPending(false); }
     };
+    const summaryReadFields = [
+      ["case_number", t("caseNumber")], ["filing_date", t("filingDate")], ["status", bt("statusLabel")], ["assigned_member", t("assignedCouncilMember")],
+      ["applicant", t("applicant")], ["respondent", t("respondent")], ["reason", t("reasonForDivorce")], ["marriage_duration", t("marriageDuration")],
+      ["children", t("children")], ["last_hearing_date", t("lastHearingDate")],
+    ];
+    const summaryReadValues = {
+      case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: record.status === "open" ? t("active") : bt("closed"), assigned_member: manager || bt("unassigned"),
+      applicant: applicant?.name, respondent: respondent?.name, reason: summary.reason, marriage_duration: marriageDuration(record.marriage?.church_marriage_date, lang),
+      children: summary.children?.length ? summary.children.map(childLabel).join(" · ") : t("noChildren"), last_hearing_date: summaryDate(summary.last_hearing_date, lang),
+    };
     return h(
       P.Stack,
       { gap: "lg" },
@@ -3093,18 +3109,7 @@
               summaryFailure ? h(P.Notice, { tone: "danger" }, summaryFailure) : null,
               h(P.FormActions, { sticky: false }, h(P.Button, { disabled: summaryPending, onClick: () => setSummaryEditing(false) }, bt("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: summaryPending, disabled: summaryPending }, "Save")),
             )
-          : h(P.PropertyList, { className: "ctm-case-summary-fields" },
-              h(P.PropertyList.Item, { label: t("caseNumber") }, h(P.Text, { variant: "data" }, record.number)),
-              h(P.PropertyList.Item, { label: t("filingDate") }, summaryDate(summary.filing_date, lang)),
-              h(P.PropertyList.Item, { label: bt("statusLabel") }, h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed"))),
-              h(P.PropertyList.Item, { label: t("assignedCouncilMember") }, manager ? h(P.DataPill, { person: true, className: "ctm-case-summary-person-pill" }, manager) : bt("unassigned")),
-              h(P.PropertyList.Item, { label: t("applicant") }, personPill(applicant)),
-              h(P.PropertyList.Item, { label: t("respondent") }, personPill(respondent)),
-              h(P.PropertyList.Item, { label: t("reasonForDivorce") }, summary.reason || "—"),
-              h(P.PropertyList.Item, { label: t("marriageDuration") }, marriageDuration(record.marriage?.church_marriage_date, lang)),
-              h(P.PropertyList.Item, { label: t("children") }, summary.children?.length ? summary.children.map(childLabel).join(" · ") : t("noChildren")),
-              h(P.PropertyList.Item, { label: t("lastHearingDate") }, summaryDate(summary.last_hearing_date, lang)),
-            ),
+          : h(CaseReadFields, { P, h, fields: summaryReadFields, values: summaryReadValues, className: "ctm-case-summary-fields" }),
       ),
       h(
         P.Panel,

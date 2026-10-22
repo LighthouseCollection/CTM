@@ -141,6 +141,14 @@
   gap: var(--plx-space-md, 1rem);
 }
 
+/* Read mode keeps the field layout, but cannot receive focus or be changed. */
+.ctm-case-read-grid input[readonly] {
+  pointer-events: none;
+  background: var(--plx-color-surface, #fff);
+  color: var(--plx-color-text, #151515);
+  cursor: default;
+}
+
 /* Agenda labels must remain readable in compact density; grow the header row and wrap its title. */
 .ctm-session-agenda-grid .plx-data-grid__grid-col-title-holder,
 .ctm-session-agenda-grid .plx-data-grid__grid-col-title,
