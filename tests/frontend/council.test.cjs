@@ -453,3 +453,14 @@ test("session status names reflect the council lifecycle", () => {
   assert.equal(C.sessionStatusKey("planned"), "sessionStatusInProgress");
   assert.equal(C.sessionStatusKey("closed"), "sessionStatusAdjourned");
 });
+
+
+test("archived session detail separates assigned cases from case hearings", () => {
+  const groups = C.archivedAgendaRows([
+    { id: "assignment", part: 1 },
+    { id: "hearing", part: 2 },
+    { id: "other", part: 3 },
+  ]);
+  assert.deepEqual([...groups.assigned].map((row) => row.id), ["assignment"]);
+  assert.deepEqual([...groups.presented].map((row) => row.id), ["hearing"]);
+});

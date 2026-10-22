@@ -94,6 +94,14 @@
     return "sessionStatusPlanned";
   }
 
+  function archivedAgendaRows(items) {
+    const rows = items || [];
+    return {
+      assigned: rows.filter((row) => row.part === 1),
+      presented: rows.filter((row) => row.part === 2),
+    };
+  }
+
   function sessionDateProblem(value, existing, ignoreId = null) {
     if (!DATE.test(value || "")) return "dateRequired";
     const parsed = new Date(`${value}T00:00:00Z`);
@@ -387,6 +395,8 @@
       adjournEndTime: "Session end time",
       assignedCases: "Cases assigned",
       caseHearings: "Case hearings",
+      casesPresented: "Cases presented",
+      archivedSessionDetails: "Archived session details",
       adjournSessionAction: "Adjourn session",
       addAssignmentCase: "Add a Case to Be Assigned",
       addHearingCase: "Add a Case to Hearings",
@@ -435,6 +445,7 @@
       placed: "The case was added to the agenda.",
       scheduled: "Scheduled",
       heard: "Heard",
+      presented: "Presented",
       presenter_absent: "Presenter absent — awaiting manual placement",
       unpresented: "Not presented",
       time_exhausted: "Time exhausted",
@@ -676,6 +687,8 @@
       adjournEndTime: "وقت انتهاء الجلسة",
       assignedCases: "القضايا المُعيَّنة",
       caseHearings: "جلسات القضايا",
+      casesPresented: "القضايا المعروضة",
+      archivedSessionDetails: "تفاصيل الجلسة المؤرشفة",
       adjournSessionAction: "تأجيل الجلسة",
       addAssignmentCase: "إضافة قضية للتعيين",
       addHearingCase: "إضافة قضية لجلسات النظر",
@@ -724,6 +737,7 @@
       placed: "تمت إضافة القضية إلى جدول الأعمال.",
       scheduled: "مجدولة",
       heard: "تم نظرها",
+      presented: "عُرضت",
       presenter_absent: "المقدِّم غائب — في انتظار الجدولة اليدوية",
       unpresented: "لم تُعرض",
       time_exhausted: "انتهى الوقت",
@@ -1278,6 +1292,10 @@
       [user?.id],
     );
     const [selected, select] = R.useState(null);
+    const [archiveAgendaState] = useLoad(
+      () => selected && mode === "archived" ? api(`/api/sessions/${encodeURIComponent(selected)}/agenda/`) : Promise.resolve({ items: [] }),
+      [selected, mode],
+    );
     const [date, setDate] = R.useState("");
     const [time, setTime] = R.useState("");
     const [presiding, setPresiding] = R.useState("");
@@ -1303,6 +1321,7 @@
     const emptyKey = mode === "upcoming" ? "noUpcomingSessions" : mode === "archived" ? "noArchivedSessions" : "noSessions";
 
     const selectedSession = loaded.find((row) => row.id === selected) || null;
+    const archivedItems = archivedAgendaRows(archiveAgendaState.data?.items);
     const editing = Boolean(selectedSession);
     function editSession(row) {
       select(row.id);
@@ -1425,6 +1444,41 @@
           { title: t("statusLabel"), field: "state", minWidth: "8rem", render: (row) => t(sessionStatusKey(row.state)) },
         ],
       }),
+      mode === "archived" && selectedSession
+        ? h(P.Stack, { gap: "md" },
+            h(P.Text, { as: "h2", variant: "heading" }, t("archivedSessionDetails")),
+            archiveAgendaState.pending ? loadingView(P, h, t) : null,
+            archiveAgendaState.error ? h(P.Notice, { tone: "danger" }, serverMessage(archiveAgendaState.error, t)) : null,
+            !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { title: t("assignedCases") },
+              h(window.CTMShell.Table, {
+                label: t("assignedCases"), rows: archivedItems.assigned, empty: t("part1Empty"), isStatic: true,
+                columns: [
+                  { title: t("caseNumber"), field: "case_number", kind: "name", minWidth: "8rem" },
+                  { title: t("applicant"), field: "applicant_name", minWidth: "10rem" },
+                  { title: t("respondent"), field: "respondent_name", minWidth: "10rem" },
+                  { title: t("reason"), field: "reason", minWidth: "9rem", render: (row) => row.reason || t("notRecorded") },
+                  { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", render: (row) => row.assigned_member_name || t("unassigned") },
+                  { title: t("statusLabel"), field: "state", minWidth: "9rem", render: (row) => t(row.state) },
+                  { title: t("actions"), field: "case_id", minWidth: "6rem", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
+                ],
+              }),
+            ) : null,
+            !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { title: t("casesPresented") },
+              h(window.CTMShell.Table, {
+                label: t("casesPresented"), rows: archivedItems.presented, empty: t("part2Empty"), isStatic: true,
+                columns: [
+                  { title: t("caseNumber"), field: "case_number", kind: "name", minWidth: "8rem" },
+                  { title: t("applicant"), field: "applicant_name", minWidth: "10rem" },
+                  { title: t("respondent"), field: "respondent_name", minWidth: "10rem" },
+                  { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", render: (row) => row.assigned_member_name || t("unassigned") },
+                  { title: t("statusLabel"), field: "state", minWidth: "9rem", render: (row) => t(row.state) },
+                  { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", render: (row) => row.previous_recommendation || t("notRecorded") },
+                  { title: t("actions"), field: "case_id", minWidth: "6rem", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
+                ],
+              }),
+            ) : null,
+          )
+        : null,
     );
   }
 
@@ -2900,6 +2954,7 @@
     sessionLabel,
     sessionReference,
     sessionStatusKey,
+    archivedAgendaRows,
     sessionDateProblem,
     todayInLosAngeles,
     splitSessions,
