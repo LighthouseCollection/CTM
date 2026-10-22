@@ -315,6 +315,17 @@ def attendance_for(actor, session_id, hearing_id=None):
     return {row.member_id: row for row in rows}
 
 
+def attendance_roster_for(actor, session_id, hearing_id=None):
+    """Return the active council roster with any recorded attendance for a hearing."""
+    rows = attendance_for(actor, session_id, hearing_id)
+    members = Account.objects.filter(
+        is_active=True, role__in=("president", "secretary", "member")
+    ).order_by("last_name", "first_name", "pk")
+    rank = {"president": 0, "secretary": 1, "member": 2}
+    members = sorted(members, key=lambda member: (rank[member.role], member.last_name, member.first_name, member.pk))
+    return [(member, rows.get(member.pk)) for member in members]
+
+
 @transaction.atomic
 def record_attendance(actor, session_id, member_id, present, hearing_id=None):
     administrator(actor)

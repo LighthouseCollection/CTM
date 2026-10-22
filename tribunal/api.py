@@ -1215,13 +1215,30 @@ def hear(request, item_id):
 
 @endpoint(("GET", "POST"))
 def attendance(request, session_id):
-    from tribunal.services.council import attendance_for, record_attendance
+    from tribunal.services.council import attendance_for, attendance_roster_for, record_attendance
 
     staff(request.user)
     if request.method == "GET":
-        rows = attendance_for(
-            request.user, session_id, request.GET.get("hearing_id") or None
-        )
+        hearing_id = request.GET.get("hearing_id") or None
+        if hearing_id:
+            roster = attendance_roster_for(request.user, session_id, hearing_id)
+            return JsonResponse(
+                {
+                    "items": [
+                        {
+                            "member_id": str(member.pk),
+                            "member_name": f"{member.first_name} {member.last_name}".strip(),
+                            "member_role": member.role,
+                            "member_active": member.is_active,
+                            "present": row.present if row else None,
+                            "actor_id": str(row.actor_id) if row else None,
+                            "timestamp": row.created_at.isoformat() if row else None,
+                        }
+                        for member, row in roster
+                    ]
+                }
+            )
+        rows = attendance_for(request.user, session_id)
         return JsonResponse(
             {
                 "items": [

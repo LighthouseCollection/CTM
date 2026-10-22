@@ -40,6 +40,20 @@ def test_attendance_projection_preserves_deactivated_members(client, people):
     assert row["present"] is True
 
 
+def test_hearing_attendance_roster_lists_all_active_council_members(client, people):
+    from tribunal.services.council import attendance_roster_for
+
+    session = create_session(people["admin"], date(2030, 1, 2))
+    roster = attendance_roster_for(people["admin"], session.pk)
+
+    assert [member.pk for member, _ in roster] == [
+        people["president"].pk,
+        people["secretary"].pk,
+        people["member"].pk,
+    ]
+    assert all(record is None for _, record in roster)
+
+
 def test_adjournment_closes_session_and_retains_its_timestamp_for_current_view(client, people):
     session = create_session(people["admin"], date(2030, 1, 2))
 

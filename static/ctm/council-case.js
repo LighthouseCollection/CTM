@@ -487,6 +487,9 @@ ${ar}` : en;
       rescheduleHearing: "Reschedule this hearing",
       councilAttendance: "Council attendance",
       councilAttendanceHelp: "Confirm the members who attended this particular hearing.",
+      presiding: "Presiding",
+      councilSecretary: "Secretary",
+      councilMemberRole: "Member",
       outcome: "Outcome",
       decisionMade: "Decision Made — Go to Decision tab",
       recommendationOnly: "Recommendation (no final decision yet)",
@@ -830,6 +833,9 @@ ${ar}` : en;
       rescheduleHearing: "إعادة جدولة هذه الجلسة",
       councilAttendance: "حضور المجلس",
       councilAttendanceHelp: "أكد الأعضاء الذين حضروا هذه الجلسة تحديدًا.",
+      presiding: "الرئاسة",
+      councilSecretary: "أمين السر",
+      councilMemberRole: "عضو",
       outcome: "النتيجة",
       decisionMade: "تم اتخاذ القرار — انتقل إلى علامة القرار",
       recommendationOnly: "توصية (لا يوجد قرار نهائي بعد)",
@@ -2735,8 +2741,10 @@ ${ar}` : en;
       } catch (error) { setFailure(base.serverMessage(error, bt)); }
       finally { setSaving(false); }
     };
-    const attendance = current && attendanceOpen
-      ? h(HearingAttendance, { api, lang, user, sessionId: current.session.id, hearingId, onClose: () => setAttendanceOpen(false) })
+    const attendanceDialog = current && attendanceOpen
+      ? h(P.Dialog, { open: true, size: "lg", title: t("councilAttendance"), description: t("councilAttendanceHelp"), closeLabel: t("cancel"), onClose: () => setAttendanceOpen(false) },
+        h(HearingAttendance, { api, lang, user, sessionId: current.session.id, hearingId })
+      )
       : null;
     const outcome = current ? h(P.Panel, { icon: "document", title: t("outcome") },
       h(P.RadioGroup, { label: t("outcome"), layout: "row", value: outcomeKind, onChange: setOutcomeKind,
@@ -2756,25 +2764,42 @@ ${ar}` : en;
         )),
         h("div", { className: "plx-entity-header__aside" }, h(P.Stack, { gap: "xs", align: "end" },
           h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "calendar", disabled: !current.session.can_reschedule, onClick: () => onSession(current.session.id) }, t("rescheduleHearing")),
-          h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "settings-users", onClick: () => setAttendanceOpen((open) => !open) }, t("councilAttendance")),
+          h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "settings-users", onClick: () => setAttendanceOpen(true) }, t("councilAttendance")),
         )),
       )) : null;
     const currentContent = current ? h(P.Stack, { gap: "lg" },
-      attendance,
       outcome,
     ) : h(P.EmptyState, { title: t("noHearings") });
     const pastContent = past.length ? h(P.Stack, { gap: "md" }, ...past.map((row) => h(P.Panel, { key: row.item.id, icon: "calendar", title: title(row), description: `${bt("councilSession")} ${row.session.date}` }, h(P.Inline, { justify: "end" }, h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open")))))) : h(P.EmptyState, { title: t("noHearings") });
     return h(P.Stack, { gap: "lg" }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
-      items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] }));
+      items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] }), attendanceDialog);
   }
 
-  function HearingAttendance({ api, lang, user, sessionId, hearingId, onClose }) {
+  function HearingAttendance({ api, lang, user, sessionId, hearingId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
     const [state, retry] = base.useLoad(() => hearingId ? api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/?hearing_id=${encodeURIComponent(hearingId)}`) : Promise.resolve({ items: [] }), [sessionId, hearingId]);
     const [saving, setSaving] = R.useState(false), [failure, setFailure] = R.useState(null);
+    const readonly = saving || !hearingId || user?.role === "member";
+    const roleLabel = (role) => t(role === "president" ? "presiding" : role === "secretary" ? "councilSecretary" : "councilMemberRole");
     const record = async (memberId, present) => { setSaving(true); setFailure(null); try { await api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }); retry(); } catch (error) { setFailure(base.serverMessage(error, bt)); } finally { setSaving(false); } };
-    return h(P.Panel, { icon: "settings-users", title: t("councilAttendance"), description: t("councilAttendanceHelp"), actions: h(P.Button, { size: "sm", onClick: onClose }, t("cancel")) },
-      state.pending ? base.loadingView(P, h, t) : state.error ? base.loadFailure(P, h, t, retry, state.error) : h(P.Stack, { gap: "sm" }, ...(state.data.items || []).map((row) => h(P.RadioGroup, { key: row.member_id, label: row.member_name, layout: "row", value: row.present ? "present" : "absent", onChange: (value) => record(row.member_id, value === "present"), options: [{ value: "present", label: bt("presentLabel"), disabled: saving || !hearingId || user?.role === "member" }, { value: "absent", label: bt("absentLabel"), disabled: saving || !hearingId || user?.role === "member" }] })), failure ? h(P.Notice, { tone: "danger" }, failure) : null));
+    return state.pending ? base.loadingView(P, h, t) : state.error ? base.loadFailure(P, h, t, retry, state.error) : h(P.Stack, { gap: "md" },
+      h("div", { className: "ctm-hearing-attendance-table", role: "table", "aria-label": t("councilAttendance") },
+        h("div", { className: "ctm-hearing-attendance-table__header", role: "row" },
+          h("div", { role: "columnheader" }, t("councilMember")),
+          h("div", { role: "columnheader" }, bt("presentLabel")),
+          h("div", { role: "columnheader" }, bt("absentLabel")),
+        ),
+        ...(state.data.items || []).map((row) => h("div", { key: row.member_id, className: "ctm-hearing-attendance-table__row", role: "row" },
+          h("div", { className: "ctm-hearing-attendance-member", role: "cell" },
+            h(P.Text, { as: "div", variant: "strong" }, row.member_name),
+            h(P.Text, { as: "div", variant: "secondary" }, roleLabel(row.member_role)),
+          ),
+          h("label", { className: "ctm-hearing-attendance-choice ctm-hearing-attendance-choice--present", role: "cell" }, h("input", { type: "radio", name: `hearing-${hearingId}-member-${row.member_id}`, checked: row.present === true, disabled: readonly, "aria-label": `${bt("presentLabel")}: ${row.member_name}`, onChange: () => record(row.member_id, true) })),
+          h("label", { className: "ctm-hearing-attendance-choice", role: "cell" }, h("input", { type: "radio", name: `hearing-${hearingId}-member-${row.member_id}`, checked: row.present === false, disabled: readonly, "aria-label": `${bt("absentLabel")}: ${row.member_name}`, onChange: () => record(row.member_id, false) })),
+        )),
+      ),
+      failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+    );
   }
 
   // ---------- Petition and council notes ----------

@@ -471,3 +471,67 @@
 @media (max-width: 560px) {
   .ctm-demo-document-list__item { align-items: flex-start; flex-direction: column; }
 }
+
+/* Per-hearing attendance is recorded in a full council roster modal. */
+.ctm-hearing-attendance-table {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) repeat(2, minmax(6.5rem, 8.5rem));
+  border: 1px solid var(--plx-color-border, #d7dce3);
+  border-radius: var(--plx-radius-md, 8px);
+  overflow: hidden;
+}
+
+.ctm-hearing-attendance-table__header,
+.ctm-hearing-attendance-table__row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.ctm-hearing-attendance-table__header > div,
+.ctm-hearing-attendance-table__row > div,
+.ctm-hearing-attendance-table__row > label {
+  min-block-size: 4.25rem;
+  padding: var(--plx-space-sm, .75rem);
+  border-inline-end: 1px solid var(--plx-color-border, #d7dce3);
+  border-block-end: 1px solid var(--plx-color-border, #d7dce3);
+}
+
+.ctm-hearing-attendance-table__header > div {
+  min-block-size: auto;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+  font-size: .8125rem;
+  background: var(--plx-color-surface-subtle, #f5f7fa);
+}
+
+.ctm-hearing-attendance-member {
+  display: grid;
+  align-content: center;
+  gap: .125rem;
+}
+
+.ctm-hearing-attendance-choice {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.ctm-hearing-attendance-choice input {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  accent-color: var(--plx-color-muted, #9ca3af);
+}
+
+.ctm-hearing-attendance-choice--present input { accent-color: var(--plx-color-success, #15803d); }
+.ctm-hearing-attendance-choice:has(input:disabled) { cursor: default; opacity: .55; }
+.ctm-hearing-attendance-table__row:last-child > div,
+.ctm-hearing-attendance-table__row:last-child > label { border-block-end: 0; }
+
+@media (max-width: 720px) {
+  .ctm-hearing-attendance-table { grid-template-columns: minmax(11rem, 1fr) repeat(2, minmax(4rem, 1fr)); }
+  .ctm-hearing-attendance-table__header > div { font-size: .6875rem; padding-inline: .25rem; }
+  .ctm-hearing-attendance-table__row > div,
+  .ctm-hearing-attendance-table__row > label { padding: .5rem; }
+}
