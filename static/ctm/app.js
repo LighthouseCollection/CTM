@@ -245,6 +245,7 @@
       arabic: "العربية",
       newMessage: "New message",
       message: "Message",
+      date: "Date",
       recipients: "Recipients",
       send: "Send",
       immediate: "Send Immediately",
@@ -452,6 +453,7 @@
       arabic: "العربية",
       newMessage: "رسالة جديدة",
       message: "الرسالة",
+      date: "التاريخ",
       recipients: "المستلمون",
       send: "إرسال",
       immediate: "إرسال فورًا",
@@ -1065,7 +1067,7 @@
     const workspace = h(window.CTMShell.Workspace, {
       label: t("communications"), rows, selected, onSelect: select, empty: t("noMessages"),
       showDetailWhenEmpty: true,
-      columns: [{ title: "From", field: "sender", kind: "name" }, { title: t("message"), field: "body", kind: "wrap" }, { title: t("recordedAt"), field: "timestamp" }],
+      columns: [{ title: "From", field: "sender", kind: "name" }, { title: t("message"), field: "body", kind: "wrap" }, { title: t("date"), field: "timestamp", render: (row) => new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(row.timestamp)) }],
     }, detail);
     return h(R.Fragment, null,
       composing ? h(MessageComposer, { key: `compose-${selection}`, record: data.record, sessions: data.sessions, council, t, onSent: () => { setComposing(false); reload((n) => n + 1); }, onClose: () => setComposing(false) }) : null,

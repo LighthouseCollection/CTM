@@ -22,6 +22,14 @@
   min-inline-size: 10rem;
 }
 
+.ctm-petition-header,
+.ctm-petition-header__party {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--plx-sys-space-inline-sm);
+}
+
 .ctm-spouse-profile-section__heading {
   inline-size: 100%;
   color: var(--plx-sys-color-primary, var(--plx-color-primary));

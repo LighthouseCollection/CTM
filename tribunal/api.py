@@ -110,6 +110,9 @@ def application_data(app, actor):
         status=app.status,
         case_id=str(app.case_id) if app.case_id else None,
         case_number=app.case.number if app.case else None,
+        filing_party_id=str(app.party_id) if app.party_id else None,
+        filing_party_name=app.party.name if app.party_id else None,
+        filing_party_role=("applicant" if app.party.slot == "A" else "respondent") if app.party_id else None,
         version=revision.number if revision else 0,
         answers=revision.answers if revision else {},
         fee={

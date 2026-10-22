@@ -411,6 +411,8 @@ ${ar}` : en;
       noTimeline: "No key events are recorded yet.",
       petitionTitle: "Petition",
       petition: "Petition",
+      applicant: "Applicant",
+      respondent: "Respondent",
       noPetitions: "No submitted petition is available for this case.",
       marriageTitle: "Marriage",
       separation: "Separation",
@@ -752,6 +754,8 @@ ${ar}` : en;
       noTimeline: "لم تُسجَّل أحداث رئيسية بعد.",
       petitionTitle: "الطلب",
       petition: "الطلب",
+      applicant: "مقدم الطلب",
+      respondent: "الطرف الآخر",
       noPetitions: "لا يوجد طلب مقدَّم متاح لهذه القضية.",
       marriageTitle: "الزواج",
       separation: "الانفصال",
@@ -2829,7 +2833,13 @@ ${ar}` : en;
       h(P.Text, { as: "h1", variant: "title" }, t("petitionTitle")),
       ...petitions.map((row) => {
         const answers = petitionAnswers(row.answers);
-        return h(P.Panel, { icon: "doc-text", key: row.id, title: t("petition"), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
+        const filingParty = row.filing_party_name ? h(
+          "span",
+          { className: "ctm-petition-header__party" },
+          h(P.Text, { as: "span", variant: "secondary" }, row.filing_party_name),
+          row.filing_party_role ? h(P.Badge, { tone: row.filing_party_role === "applicant" ? "info" : "waiting" }, t(row.filing_party_role)) : null,
+        ) : null;
+        return h(P.Panel, { icon: "doc-text", key: row.id, title: h("span", { className: "ctm-petition-header" }, h("span", null, t("petition")), filingParty), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
           h(P.Stack, { gap: "sm" },
             answers.length ? h(P.PropertyList, { layout: "stacked" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
           ),
