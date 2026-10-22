@@ -1,3 +1,13 @@
+## Own active-session inventory and revocation
+
+Implemented GET /api/account/sessions/ and POST own handle/revoke with actual
+session validation, opaque actor-bound handles, ownership-before-pagination,
+selected/current revocation and atomic retained actor audit. Eleven focused tests;
+full PostgreSQL690 passed,1 skipped. No migration/grant/provider/RLS change.
+Adapter97routes/63domain models/63forced tables. See own-session-administration.md
+for UI contract, scanning cost and unfinished normalized/provider/admin workflows.
+No merge/deploy; exact pushed SHA and acceptance ledger recorded on issue #2.
+
 ## Private draft read / integrated returned-filing checkpoint
 
 Applicant89072dd reports seven focused physical-login PostgreSQL groups pass on

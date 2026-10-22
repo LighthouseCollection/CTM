@@ -1932,3 +1932,26 @@ def case_files(request, case_id):
     response = JsonResponse(result)
     response["Cache-Control"] = "private, no-store"
     return response
+
+
+@endpoint()
+def account_sessions(request):
+    from tribunal.pagination import page_records
+    from tribunal.services.account_sessions import active_sessions, owned_session, session_handle
+    return JsonResponse(page_records(
+        active_sessions(), request, default_limit=50,
+        visible=lambda row: owned_session(request.user, row),
+        serialize=lambda row: {
+            "handle": session_handle(request.user, row.session_key),
+            "current": row.session_key == request.session.session_key,
+            "expires_at": row.expire_date.isoformat(),
+        },
+    ))
+
+
+@endpoint(("POST",))
+def account_session_revoke(request, handle):
+    from tribunal.services.account_sessions import revoke_session
+    if body(request):
+        raise ValidationError("Session revocation accepts an empty object only.")
+    return JsonResponse(revoke_session(request.user, handle, request.session.session_key))

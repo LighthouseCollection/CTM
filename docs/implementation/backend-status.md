@@ -5,7 +5,7 @@ No merge, deployment, operational migration or credential change is authorized.
 
 ## Completed (implementation; acceptance separate)
 
-Validation: **673 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
+Validation: **690 PostgreSQL passed, 1 skipped**; no model drift; migration rollback/
 reapply through0041. Protected151-table specification and accepted questions unchanged.
 
 - Seven remaining core-table policy reviews implemented in0037, with63/63 current
@@ -50,7 +50,7 @@ Account directory/detail/status/history APIs, compare-and-save status changes,
 target session revocation, source-bound configured bilingual status notices and
 stable assigned_member_id are implemented.0040 adds the audit index and restricted
 notice proofs;0041 corrects bound returned-petition resubmission with optional or
-corrected DOB. Current adapter:63 domain models,95 routes,63 forced-RLS tables.
+corrected DOB. Current adapter:63 domain models,97 routes,63 forced-RLS tables.
 [Contract and remaining work](account-administration-contract.md).
 
 ## Integrated fix and private draft contract checkpoint
@@ -64,10 +64,22 @@ roles and unrelated applicants, identical hidden/absent bodies, list isolation a
 private cache headers. No policy/API/migration change is needed for that oracle.
 [Evidence, contract and B01 evaluation](private-draft-read-contract.md).
 
+## Own session administration continuation
+
+Active accounts can list valid own sessions with opaque handles and explicitly
+revoke one, including the current session. Owner filtering precedes pagination;
+foreign/absent sessions share404; current-session revocation logs out the next
+request. Deletion and actual-actor audit are atomic. No migration or grant change.
+[Wire contract, evidence and adapter limits](own-session-administration.md).
+Microsoft callbackc06b869 is also pushed (679-test checkpoint); hosted checks pass.
+Governance reports it preserved in deployeddccbd63; genuine callback confirmation
+remains separate. Independent QAc54333d reports13/13 and32/32 backendfix checks on
+b3de51e only, not the latest deployed head.
+
 ## Unfinished
 
 UI's other requested backend contracts remain unfinished: approved own-profile/
-contact/portrait mutations, verified email/provider/session administration, member
+contact/portrait mutations, verified email/provider administration, broader normalized/admin session history, member
 contact/appointment/history projections, formal-source factual discrepancy views,
 and consumer integration of stored settings beyond account status notices. Pagination and per-family settings
 edit schemas are addressed in these continuations;
@@ -96,7 +108,8 @@ completes the requested reconciliation/documentation, not those future migration
 
 - Governance reported serial integration of48b80c4 asb3de51e; subsequent backend test/documentation checkpoints still require review.
 - UI binds list continuation; applicant focused physical-login rerun passed onb3de51e.
-  Its broader suite must reconcile the private-draft404 oracle and continue, preserving prior findings.
+  Its broader private-draft404 oracle was reconciled in0828515; the full PG run
+  remains incomplete after an isolated account-query/Docker stall, with prior findings preserved.
 - Independent non-owner/integration/browser acceptance against that successor SHA;
   QA issue #15 preserves existing findings and follows council's unsaved-text fix.
 - Institution accepts schema equivalence, operational readiness and live-service

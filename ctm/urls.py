@@ -7,6 +7,8 @@ urlpatterns = [
     path("accounts/login/", api.shell),
     path("accounts/", include("allauth.urls")),
     path("api/session/", api.session),
+    path("api/account/sessions/", api.account_sessions),
+    path("api/account/sessions/<str:handle>/revoke/", api.account_session_revoke),
     path("api/applications/", api.applications),
     path("api/applications/<uuid:app_id>/", api.application),
     path("api/applications/<uuid:app_id>/closed-case-result/", api.closed_filing_result),
