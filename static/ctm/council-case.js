@@ -444,6 +444,8 @@ ${ar}` : en;
       contact: "Contact",
       editContact: "Edit contact",
       saveContact: "Save contact",
+      editProfile: "Edit profile",
+      saveProfile: "Save profile",
       changePhoto: "Change",
       photoUploadFailed: "The photo could not be uploaded.",
       career: "Career",
@@ -783,6 +785,8 @@ ${ar}` : en;
       contact: "التواصل",
       editContact: "تعديل بيانات التواصل",
       saveContact: "حفظ بيانات التواصل",
+      editProfile: "تعديل الملف الشخصي",
+      saveProfile: "حفظ الملف الشخصي",
       changePhoto: "تغيير",
       photoUploadFailed: "تعذر رفع الصورة.",
       career: "العمل والتعليم",
@@ -2343,6 +2347,72 @@ ${ar}` : en;
     );
   }
 
+  function spouseProfileValues(record, party) {
+    const submitted = party.profile || {};
+    const edited = record.council_edits?.[`profile_${party.id}`]?.value;
+    if (!edited || typeof edited !== "object" || Array.isArray(edited)) return submitted;
+    return {
+      ...submitted,
+      personal: { ...submitted.personal, ...edited.personal },
+      career: { ...submitted.career, ...edited.career },
+      church_affiliation: { ...submitted.church_affiliation, ...edited.church_affiliation },
+    };
+  }
+
+  function SpouseProfileEditor({ api, P, h, t, record, party, profile, onSaved, onCancel }) {
+    const R = window.React;
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const proceeding = openProceeding(record);
+    const groups = [
+      ["personal", t("personalDetails"), [["other_names", t("otherNamesKnownBy")], ["place_of_birth", t("placeOfBirth")], ["nationality", t("nationality")], ["awareness_of_application", t("awarenessOfApplication")]]],
+      ["career", t("career"), [["education", t("education")], ["graduation_year", t("yearOfGraduation")], ["occupation", t("occupation")]]],
+      ["church_affiliation", t("churchAffiliation"), [["denomination", t("denomination")], ["bishop", t("nameOfBishop")], ["diocese", t("diocese")], ["parish", t("parishName")], ["confessor", t("fatherOfConfession")]]],
+    ];
+    const [form, setForm] = R.useState(() => Object.fromEntries(groups.flatMap(([scope,, fields]) => fields.map(([key]) => [`${scope}.${key}`, profile[scope]?.[key] || ""]))));
+    const save = async (event) => {
+      event.preventDefault();
+      setPending(true);
+      setFailure(null);
+      const value = Object.fromEntries(groups.map(([scope,, fields]) => [scope, Object.fromEntries(fields.map(([key]) => [key, String(form[`${scope}.${key}`] || "").trim()]))]));
+      try {
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`, {
+          method: "POST",
+          body: JSON.stringify({ fact_code: `case_card.profile_${party.id}`, value }),
+        });
+        onSaved();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    };
+    return h(
+      P.Form,
+      { onSubmit: save, label: t("editProfile"), noValidate: true },
+      ...groups.map(([scope, title, fields]) => h(
+        P.Stack,
+        { gap: "sm", key: scope },
+        h(P.SectionHeading, { level: 2 }, title),
+        h(
+          "div",
+          { className: "ctm-case-edit-grid" },
+          ...fields.map(([key, label]) => h(
+            P.Field,
+            { key, label },
+            h(P.Input, {
+              value: form[`${scope}.${key}`],
+              disabled: pending,
+              onChange: (event) => setForm((current) => ({ ...current, [`${scope}.${key}`]: event.target.value })),
+            }),
+          )),
+        ),
+      )),
+      failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+      h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: onCancel }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveProfile"))),
+    );
+  }
+
   function SpouseContactSection({ api, P, h, t, user, record, party, onSaved }) {
     const R = window.React;
     const [editing, setEditing] = R.useState(false);
@@ -2496,6 +2566,7 @@ ${ar}` : en;
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     const [expandedParties, setExpandedParties] = R.useState({});
+    const [editingParty, setEditingParty] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const record = state.data;
@@ -2532,8 +2603,15 @@ ${ar}` : en;
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("partiesTitle")),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-      ...record.parties.map((party) =>
-        h(
+      ...record.parties.map((party) => {
+        const profile = spouseProfileValues(record, party);
+        const canEditProfile = writerFor(user, null, record) && openProceeding(record)?.status === "open";
+        const startEditingProfile = (event) => {
+          event.stopPropagation();
+          setEditingParty(party.id);
+          setExpandedParties((current) => ({ ...current, [party.id]: true }));
+        };
+        return h(
           P.Panel,
           {
             icon: h(SpousePhotoUpload, { api, P, h, t, user, record, party, onSaved: retry }),
@@ -2544,40 +2622,43 @@ ${ar}` : en;
             onToggle: (next) => setExpandedParties((current) => ({ ...current, [party.id]: next })),
             onClick: (event) => {
               if (!event.target.closest(".plx-panel__header")) return;
-              if (event.target.closest(".plx-panel__toggle, .ctm-spouse-photo-control__change, .ctm-spouse-photo-control__input")) return;
+              if (event.target.closest(".plx-panel__toggle, .ctm-spouse-photo-control__change, .ctm-spouse-photo-control__input, .ctm-spouse-profile-edit")) return;
               setExpandedParties((current) => ({ ...current, [party.id]: !current[party.id] }));
             },
+            actions: canEditProfile ? h(P.Button, { size: "sm", className: "ctm-spouse-profile-edit", onClick: startEditingProfile }, t("editProfile")) : null,
             strings: { collapse: t("collapse"), expand: t("expand") },
           },
-          h(
-            P.Stack,
-            { gap: "lg" },
-            h(
-              P.Stack,
-              { gap: "section", className: "ctm-spouse-profile-sections" },
-              spouseProfileSection(P, h, t, t("personalDetails"), "person", [
-                ["otherNamesKnownBy", party.profile?.personal?.other_names],
-                ["placeOfBirth", party.profile?.personal?.place_of_birth],
-                ["nationality", party.profile?.personal?.nationality],
-                ["awarenessOfApplication", party.profile?.personal?.awareness_of_application],
-              ]),
-              h(SpouseContactSection, { api, P, h, t, user, record, party, onSaved: retry }),
-              spouseProfileSection(P, h, t, t("career"), "document", [
-                ["education", party.profile?.career?.education],
-                ["yearOfGraduation", party.profile?.career?.graduation_year],
-                ["occupation", party.profile?.career?.occupation],
-              ]),
-              spouseProfileSection(P, h, t, t("churchAffiliation"), "settings-users", [
-                ["denomination", party.profile?.church_affiliation?.denomination],
-                ["nameOfBishop", party.profile?.church_affiliation?.bishop],
-                ["diocese", party.profile?.church_affiliation?.diocese],
-                ["parishName", party.profile?.church_affiliation?.parish],
-                ["fatherOfConfession", party.profile?.church_affiliation?.confessor],
-              ]),
-            ),
-          ),
-        ),
-      ),
+          editingParty === party.id
+            ? h(SpouseProfileEditor, { api, P, h, t, record, party, profile, onSaved: () => { setEditingParty(null); retry(); }, onCancel: () => setEditingParty(null) })
+            : h(
+                P.Stack,
+                { gap: "lg" },
+                h(
+                  P.Stack,
+                  { gap: "section", className: "ctm-spouse-profile-sections" },
+                  spouseProfileSection(P, h, t, t("personalDetails"), "person", [
+                    ["otherNamesKnownBy", profile.personal?.other_names],
+                    ["placeOfBirth", profile.personal?.place_of_birth],
+                    ["nationality", profile.personal?.nationality],
+                    ["awarenessOfApplication", profile.personal?.awareness_of_application],
+                  ], true),
+                  h(SpouseContactSection, { api, P, h, t, user, record, party, onSaved: retry }),
+                  spouseProfileSection(P, h, t, t("career"), "document", [
+                    ["education", profile.career?.education],
+                    ["yearOfGraduation", profile.career?.graduation_year],
+                    ["occupation", profile.career?.occupation],
+                  ], true),
+                  spouseProfileSection(P, h, t, t("churchAffiliation"), "settings-users", [
+                    ["denomination", profile.church_affiliation?.denomination],
+                    ["nameOfBishop", profile.church_affiliation?.bishop],
+                    ["diocese", profile.church_affiliation?.diocese],
+                    ["parishName", profile.church_affiliation?.parish],
+                    ["fatherOfConfession", profile.church_affiliation?.confessor],
+                  ], true),
+                ),
+              ),
+        );
+      }),
       !record.parties.length ? h(P.EmptyState, { title: t("noParties") }) : null,
       manage && record.status === "open" && record.parties.length < 2
         ? open
