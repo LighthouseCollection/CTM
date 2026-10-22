@@ -63,10 +63,11 @@ def test_workflow_demo_is_repeatable_private_and_delivery_free(
     assert not OpenCaseClaim.objects.filter(case__status="closed").exists()
     today = timezone.localdate()
     current = CouncilSession.objects.get(date=today, state="planned")
-    upcoming = CouncilSession.objects.get(date=today + timedelta(days=7), state="planned")
+    upcoming = CouncilSession.objects.get(date=today + timedelta(days=7), state="draft")
     archived = CouncilSession.objects.get(date=today - timedelta(days=14), state="closed")
     for session in (current, upcoming, archived):
         assert session.starts_at and session.presiding_member and session.location
+        assert session.location == "St. George Coptic Orthodox Church, Bellflower, California"
     assert AgendaItem.objects.filter(session=current).exists()
     assert AgendaItem.objects.filter(session=upcoming).exists()
     for source in FileVersion.objects.filter(mime_type="application/pdf"):

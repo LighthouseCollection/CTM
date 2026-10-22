@@ -228,13 +228,13 @@ class Command(BaseCommand):
             existing_upcoming.date if existing_upcoming else today + timedelta(days=7),
             state="draft",
             hour=10,
-            location="St. Mark Coptic Orthodox Church, Los Angeles, California",
+            location="St. George Coptic Orthodox Church, Bellflower, California",
         )
         archived_session = session_at(
             today - timedelta(days=14),
             state="closed",
             hour=10,
-            location="St. Mary Coptic Orthodox Church, Los Angeles, California",
+            location="St. George Coptic Orthodox Church, Bellflower, California",
         )
         # Keep each session workspace populated during live review: Current,
         # Upcoming, and Archived each show at least five fictitious records.
@@ -249,13 +249,13 @@ class Command(BaseCommand):
                 today + timedelta(days=7 * (offset + 1)),
                 state="draft",
                 hour=10,
-                location="St. Mark Coptic Orthodox Church, Los Angeles, California",
+                location="St. George Coptic Orthodox Church, Bellflower, California",
             )
             session_at(
                 today - timedelta(days=14 * (offset + 1)),
                 state="closed",
                 hour=10,
-                location="St. Mary Coptic Orthodox Church, Los Angeles, California",
+                location="St. George Coptic Orthodox Church, Bellflower, California",
             )
 
         def profile_answers(owner):
