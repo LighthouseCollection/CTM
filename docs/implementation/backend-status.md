@@ -1,8 +1,6 @@
-Validation for this test/documentation checkpoint: **10 focused PostgreSQL message tests passed**. Production code is unchanged from4dabc4f (full842passed/1skip); no new full-suite or integration-acceptance claim.
+Current validation: **844 PostgreSQL passed, 1 skipped**; rollback/reapply through0048. Eleven focused message tests and SQLite recipient-authorization contract passed. Known same-case other party403, absent/unrelated422, own-thread send preserved; no new migration/grant/row access.
 
-Message denial contract checkpoint: actualctm_app hidden recipient and nonexistent recipient both422 with identical validation body; no Message/Recipient/Notification/Outbox/Audit or retained-read-receipt mutation. No production behavior/migration change. Governance1e72a47 passed51-message visibility; later fixed403 oracle requires the documented hidden/absent422 contract. Exact broader applicant/QA acceptance remains open.
-
-Current validation: **842 PostgreSQL passed, 1 skipped**; no model drift; rollback/reapply through0048. Eight new physical-role message regressions plus one cross-adapter endpoint contract; SQLite contract separately passed. Exact-successor applicant/QA acceptance remains pending.
+Applicant recipient authorization normalized before RLS-filtered existence lookup: known same-case spouse403, absent/unrelated422, own thread works. Reuses existing applicant case-party metadata; no new row access, migration or grant. Prior equal422 guidance is superseded; see message-sender-projection.md. Exact-successor applicant/QA reruns remain pending.
 
 Private-message pagination correction:0048 removes the hidden sender Account join and adds a bounded message-authorized name-only projection.51intended messages no longer disappear; existing message/recipient/Party/Account policies stay unchanged. See message-sender-projection.md. Exact-successor applicant/QA reruns remain pending; unique UI metadata successor proposal0049after0048.
 

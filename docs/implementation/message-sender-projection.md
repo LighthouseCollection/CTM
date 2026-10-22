@@ -1,3 +1,5 @@
+Current validation: **844 PostgreSQL passed, 1 skipped**; rollback/reapply through0048. Eleven focused message tests and SQLite recipient-authorization contract passed. Known same-case other party403, absent/unrelated422, own-thread send preserved; no new migration/grant/row access.
+
 Current validation: **842 PostgreSQL passed, 1 skipped**; no model drift; rollback/reapply through0048. Eight new physical-role message regressions plus one cross-adapter endpoint contract; SQLite contract separately passed. Exact-successor applicant/QA acceptance remains pending.
 
 # Private messages must not require sender Account visibility
@@ -47,21 +49,34 @@ independently records its SHA. Local backend tests do not establish full applica
 provider or deployment acceptance. No operational migration, merge or deploy by
 backend. Broader backend/content/service dependencies remain in backend-status.md.
 
-## Hidden recipient send contract
+## Applicant recipient authorization
 
-The successor1e72a47494b29c4530b0029316ed21e530cd76ef acceptance run passed the51-message visibility stage, then
-stopped at applicant_message_acceptance.py108 expecting403 for a linked spouse
-sending into the other private thread. This separate response contract is unchanged:
-RLS hides the target Party, so recipient resolution fails with422 and the exact
-body `{"error":"validation","messages":["Recipients must be registered parties of this case."]}`.
-A nonexistent recipient UUID in the same authorized case gives the identical
-response. The later403 branch applies to a foreign party visible to the caller;
-revealing the hidden Party just to reach that branch would weaken concealment.
+Applicant checkpointd43a46a requires known same-case linked spouse sends to return
+403forbidden, and absent recipients422validation on both database adapters.
+The service now checks the minimum case-party IDs/is_self already authorized by
+applicant caseGET before the ordinary RLS-filtered recipient lookup. PostgreSQL
+reuses the existing ctm_applicant_parties(case) projection; no new function, grant,
+row policy or migration. Actor context is server-bound for direct service callers.
+SQLite checks the equivalent known same-case identities. Requested UUIDs are
+canonicalized for this authorization comparison so uppercase/alternate spelling
+cannot bypass it.
 
-A physicalctm_app regression pins hidden-versus-absent422 body equality and checks
-that Message, MessageRecipient, Notification, Outbox and AuditEvent counts, plus
-the original retained read receipt, are unchanged. Applicant must keep all its
-privacy/no-write assertions and use this exact denial oracle, rather than accepting
-arbitrary4xx or changing recipient fixtures. No production API, policy, grant,
-route or migration is changed for this test-oracle reconciliation. Full applicant
-and independent acceptance remain separate from the reported visibility milestone.
+A known other-party ID (including mixed own/other recipients) returns403 with
+errorforbidden and the existing own-private-thread explanation. A nonexistent
+or unrelated-case ID (including mixed own/unknown) remains422 with errorvalidation
+and 'Recipients must be registered parties of this case.' Own-thread sends still
+succeed. No global existence lookup or other Party/Account row access is added.
+The existing registration, account, channel, timing and write checks remain.
+
+Restricted-role regression verifies both response contracts, hidden Party/Account
+rows before/after, unchanged Message/MessageRecipient/Notification/Outbox/AuditEvent
+counts and retained original read receipt for all rejected attempts. A separate
+endpoint contract verifies403/422 and successful own send on PostgreSQL and SQLite.
+Governance/applicant must rerun the exact combined successor; prior integration
+visibility milestones do not establish acceptance of this normalization.
+
+Historical checkpointb79c8c0 accurately captured both hidden and absent recipients
+returning422 because RLS filtered the Party lookup first. That observation and its
+GitHub evidence are preserved, but its proposed equal422 oracle is superseded by
+the explicit cross-adapter contract above. The production fix does not expose the
+hidden Party; it reuses metadata that the same applicant already receives in caseGET.

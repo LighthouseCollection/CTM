@@ -1,3 +1,7 @@
+Current validation: **844 PostgreSQL passed, 1 skipped**; rollback/reapply through0048. Eleven focused message tests and SQLite recipient-authorization contract passed. Known same-case other party403, absent/unrelated422, own-thread send preserved; no new migration/grant/row access.
+
+Applicantd43a46a contract normalization: known other same-case party403 vs absent/unrelated422, using already-authorized case-party IDs before private row lookup. No policy/migration/grant expansion; priorb79c8c0 equal422 guidance is historical/superseded. See message-sender-projection.md.
+
 Validation for this test/documentation checkpoint: **10 focused PostgreSQL message tests passed**. Production code is unchanged from4dabc4f (full842passed/1skip); no new full-suite or integration-acceptance claim.
 
 Message denial contract checkpoint: actualctm_app hidden recipient and nonexistent recipient both422 with identical validation body; no Message/Recipient/Notification/Outbox/Audit or retained-read-receipt mutation. No production behavior/migration change. Governance1e72a47 passed51-message visibility; later fixed403 oracle requires the documented hidden/absent422 contract. Exact broader applicant/QA acceptance remains open.
