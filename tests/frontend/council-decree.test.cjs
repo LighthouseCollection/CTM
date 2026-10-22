@@ -125,3 +125,7 @@ test("F12: later petitions on the closed case join appeals and use their own res
   assert.equal(C.isLaterFiling(rows[2]), false);
   assert.deepEqual(plain(C.awaitingReview([{ kind: "petition", status: "submitted", origin: "closed_case_intake" }, { id: "x", kind: "petition", status: "submitted" }]).map((r) => r.id)), ["x"]);
 });
+
+test("decree and appeals pages are wrapped in an error boundary", () => {
+  for (const name of ["DecreeWorkspace", "AppealsWorkspace"]) assert.match(C[name].displayName || "", /^Guarded\(/, name);
+});

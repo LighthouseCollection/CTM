@@ -330,6 +330,6 @@ test("case summary counts ordinary pending/draft requests and the latest decisio
 });
 
 test("exported council pages are wrapped in an error boundary", () => {
-  for (const name of ["CaseSummary", "DecisionWorkspace", "DecreeWorkspace", "AppealsWorkspace", "SessionWorkspace", "ReviewWorkspace"])
+  for (const name of ["CaseSummary", "DecisionWorkspace", "ReportsWorkspace", "SessionWorkspace", "ReviewWorkspace"])
     assert.match(C[name].displayName || "", /^Guarded\(/, name);
 });
