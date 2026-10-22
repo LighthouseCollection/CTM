@@ -2743,7 +2743,7 @@ ${ar}` : en;
         options: [{ value: "decision", label: t("decisionMade") }, { value: "recommendation", label: t("recommendationOnly") }] }),
       outcomeKind === "decision"
         ? h(P.Inline, { justify: "between" }, h(P.Text, { variant: "secondary" }, t("decisionOutcomeHelp")), h(P.Button, { icon: "open", onClick: onDecision }, t("decisionVoting")))
-        : h(P.Stack, { gap: "md" }, h(P.Textarea, { rows: 6, autoGrow: true, value: recommendation, disabled: saving || !hearingId, onChange: (event) => setRecommendation(event.target.value) }), h(P.Inline, { justify: "end" }, h(P.Button, { variant: "primary", loading: saving, disabled: saving || !hearingId, onClick: saveRecommendation }, t("saveRecommendation")))),
+        : h(P.Stack, { gap: "md" }, h(P.Textarea, { rows: 6, autoGrow: true, value: recommendation, disabled: saving, onChange: (event) => setRecommendation(event.target.value) }), h(P.Inline, { justify: "end" }, h(P.Button, { variant: "primary", loading: saving, disabled: saving || !hearingId, onClick: saveRecommendation }, t("saveRecommendation")))),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, notice) : null,
       failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
     ) : h(P.EmptyState, { title: t("noHearings") });
