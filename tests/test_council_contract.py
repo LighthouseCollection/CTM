@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo
 import json
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.management import call_command
 from tribunal.models import Account, AgendaItem, AgendaTransferEvent, Notification, Party, ReportQuestion, ReportRequest
 from tribunal.services.applications import submit_application, review_application, save_answers
 from tribunal.services.council import (
@@ -279,6 +280,12 @@ def test_report_template_draft_can_target_both_spouses(client, filed, people):
     created = ReportRequest.objects.filter(pk__in=[row["id"] for row in rows])
     assert {str(row.subject_id) for row in created} == {str(filed.party_id), str(second_party.pk)}
     assert created.count() == 2 and all(row.state == "draft" for row in created)
+
+
+def test_seeded_question_bank_has_versioned_arabic_wording():
+    call_command("seed_reference", verbosity=0)
+    question = ReportQuestion.objects.get(code="OPEN-01", version=2)
+    assert question.wording_ar and question.wording_ar != question.wording_en
 
 
 def test_question_taxonomy_preserves_multiple_groups_and_missing_translation(client, people):

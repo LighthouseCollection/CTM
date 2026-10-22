@@ -53,6 +53,13 @@ test("report templates are an inline category-to-question workspace", () => {
   assert.doesNotMatch(councilCase.slice(councilCase.indexOf("function RequestsPanel"), councilCase.indexOf("function ReportsWorkspace")), /h\(P\.Dialog/);
 });
 
+test("report template wording follows the selected request language", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(councilCase, /if \(lang === "ar"\) return ar \|\| en/);
+  assert.match(councilCase, /lang === "en-ar" && ar \? `\$\{en\}\r?\n\$\{ar\}` : en/);
+  assert.match(councilCase, /lang === "en-ar" && ar \? `\$\{en\} \/ \$\{ar\}` : en/);
+});
+
 test("account menu receives localized AppHeader labels and density choices", () => {
   for (const key of ["menu", "myAccount", "settings", "appSettings", "app", "density", "compact", "standard", "comfortable", "signOut"])
     assert.match(app, new RegExp(`${key}:`), key);

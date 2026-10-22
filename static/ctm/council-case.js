@@ -135,8 +135,10 @@
   }
 
   function groupTitle(group, lang) {
+    const en = group.title || group.category;
     const ar = String(group.title_ar || group.category_ar || "").trim();
-    return lang === "ar" && ar ? ar : group.title || group.category;
+    if (lang === "ar") return ar || en;
+    return lang === "en-ar" && ar ? `${en} / ${ar}` : en;
   }
 
   function foundationalCodes(questions) {
@@ -215,9 +217,11 @@
   }
 
   function wording(question, lang) {
-    return lang === "ar" && String(question.ar || question.wording_ar || "").trim()
-      ? question.ar || question.wording_ar
-      : question.en || question.wording_en;
+    const en = question.en || question.wording_en;
+    const ar = String(question.ar || question.wording_ar || "").trim();
+    if (lang === "ar") return ar || en;
+    return lang === "en-ar" && ar ? `${en}
+${ar}` : en;
   }
 
   // ---------- Words ----------
