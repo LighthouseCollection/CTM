@@ -52,6 +52,7 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(council, /P\.Stack, \{ gap: "xs", align: "end" \},/);
   assert.match(council, /P\.Inline,\s*\{ key: action\.label, justify: "end" \}/);
   assert.match(council, /className: "ctm-session-header-action"/);
+  assert.match(council, /className: "ctm-session-agenda-grid"/);
   assert.match(shell, /ctm\/ctm\.css/);
   assert.match(council, /value: "draft", label: t\("sessionStatusDraft"\), icon: "document"/);
   assert.match(council, /value: "adjourned", label: t\("sessionStatusAdjourned"\), icon: "stop"/);

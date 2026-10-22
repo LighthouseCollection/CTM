@@ -1,7 +1,7 @@
 /* Shared integration of the documented Plenix table and split-view components. */
 (() => {
   const R = window.React, P = window.Plenix, h = R.createElement;
-  function Table({ label, rows, columns, selected, onSelect, empty }) {
+  function Table({ label, rows, columns, selected, onSelect, empty, className }) {
     // All CTM tables remain documented DataTable grids.  Session agenda grids
     // do not expose column menus or column resizing, which prevents their
     // grid chrome from creating a needless horizontal scrolling workflow.
@@ -11,6 +11,7 @@
     const common = { label, data: rows, columns: gridColumns, index: "id", narrow: "table", empty };
     return h(P.DataTable, {
       ...common, mode: "fill",
+      className,
       headerMenu: false, rowMenuButton: false,
       selected: selected ? [selected] : [], onRowClick: onSelect ? (row) => onSelect(row.id) : undefined, empty,
     });

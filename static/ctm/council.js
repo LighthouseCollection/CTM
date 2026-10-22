@@ -2147,7 +2147,7 @@
         defaultExpanded: true,
         strings: { collapse: t("collapse"), expand: t("expand") },
       },
-        h(window.CTMShell.Table, { label: title, rows, columns, empty: t(`part${n}Empty`) }),
+        h(window.CTMShell.Table, { className: "ctm-session-agenda-grid", label: title, rows, columns, empty: t(`part${n}Empty`) }),
       );
     };
 
