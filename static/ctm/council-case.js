@@ -329,6 +329,14 @@
         "Only the assigned case manager, or the administrator or secretary, enters the decision type and grounds.",
       actionFailed: "The action could not be completed. Nothing was changed.",
       back: "Back",
+      currentProceeding: "Current proceeding",
+      proceedingInitial: "Initial proceeding",
+      proceedingReconsideration: "Appeal or reconsideration proceeding",
+      whereThingsStand: "Where the case stands",
+      pendingRequests: "Requests awaiting a response",
+      draftRequests: "Draft requests not yet sent",
+      decreeIssuedState: "Decree issued",
+      communicationsLink: "Communications",
       formerMember: "Former council member",
       managerHistory: "Case manager history",
       authorizedBy: "authorized by",
@@ -557,6 +565,14 @@
       writerDecision: "يُدخل نوع القرار وأسبابه مسؤول القضية المعيَّن أو مسؤول المجلس أو السكرتير فقط.",
       actionFailed: "تعذر إتمام الإجراء. لم يتم تغيير أي شيء.",
       back: "رجوع",
+      currentProceeding: "الإجراء الحالي",
+      proceedingInitial: "الإجراء الأول",
+      proceedingReconsideration: "إجراء استئناف أو إعادة نظر",
+      whereThingsStand: "وضع القضية الحالي",
+      pendingRequests: "طلبات في انتظار الرد",
+      draftRequests: "مسودات طلبات لم تُرسل",
+      decreeIssuedState: "صدرت الشهادة",
+      communicationsLink: "المراسلات",
       formerMember: "عضو سابق في المجلس",
       managerHistory: "سجل مسؤولي القضية",
       authorizedBy: "باعتماد",
@@ -1185,7 +1201,7 @@
     const [selected, select] = R.useState(null);
     const [composing, setComposing] = R.useState(false);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, requests, questions, caseRow } = state.data;
     const proceeding = openProceeding(record);
@@ -1631,7 +1647,7 @@
     );
     const [local, setLocal] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, members, caseRow, proceeding, versions } = state.data;
     const readAvailable = versions !== null;
@@ -1831,7 +1847,7 @@
       [caseId],
     );
     const [query, setQuery] = R.useState("");
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const rows = filterAudit(auditRows(state.data.items, state.data.members, lang), query);
     return h(
@@ -1878,7 +1894,7 @@
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, calls } = state.data;
     const canWrite = writerFor(user, null, record) && record.status === "open";
@@ -2023,7 +2039,7 @@
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     const [confirm, setConfirm] = R.useState(null);
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, requests, reports } = state.data;
     const proceeding = openProceeding(record);
@@ -2212,7 +2228,7 @@
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const record = state.data;
     const manage = base.canManage(user);
@@ -2311,7 +2327,7 @@
         }),
       [caseId],
     );
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const bt = base.translator(lang);
     return h(
@@ -2401,7 +2417,7 @@
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { petitions, record, proceeding, notes, findings } = state.data;
     const canWrite = writerFor(user, null, record) && proceeding && proceeding.status === "open";
@@ -2570,7 +2586,7 @@
         ),
       [caseId],
     );
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const rows = timelineRows(state.data.items, lang);
     const history = state.data.history;
@@ -2602,6 +2618,95 @@
     );
   }
 
+  // ---------- Case summary ----------
+  function summaryFacts(record, requests, versions) {
+    const latest = Array.isArray(versions) && versions.length ? [...versions].sort((a, b) => b.number - a.number)[0] : null;
+    return {
+      pendingRequests: (requests || []).filter((r) => r.state === "sent" && !["medical", "psychological"].includes(r.kind)).length,
+      draftRequests: (requests || []).filter((r) => r.state === "draft" && !["medical", "psychological"].includes(r.kind)).length,
+      decision: latest
+        ? { type: latest.type, approved: Boolean(latest.approval), issued: Boolean(latest.decree && latest.decree.issued_at), number: latest.number }
+        : null,
+      openProceeding: openProceeding(record),
+    };
+  }
+
+  function CaseSummary({ api, lang, user, caseId, onNavigate }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = base.useLoad(
+      () =>
+        Promise.all([
+          api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
+          api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
+        ]).then(async ([record, requests]) => {
+          const proceeding = openProceeding(record) || [...(record.proceedings || [])].sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0];
+          let versions = null;
+          if (proceeding) {
+            try {
+              versions = (await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/decision/`)).items || null;
+            } catch (error) {
+              if (error.status !== 405) throw error;
+            }
+          }
+          return { record, facts: summaryFacts(record, requests.items, versions) };
+        }),
+      [caseId],
+    );
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const { record, facts } = state.data;
+    const bt = base.translator(lang);
+    const manager =
+      record.assignment_history && record.assignment_history.length
+        ? record.assignment_history[record.assignment_history.length - 1].member
+        : record.assigned_member || null;
+    const link = (page, label) => h(P.Button, { key: page, size: "sm", onClick: () => onNavigate(page) }, t(label));
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, record.number),
+      h(
+        P.PropertyList,
+        null,
+        h(P.PropertyList.Item, { label: bt("statusLabel") }, h(P.Badge, { tone: record.status === "open" ? "active" : "neutral" }, bt(record.status === "open" ? "open" : "closed"))),
+        h(P.PropertyList.Item, { label: bt("assigned") }, manager || bt("unassigned")),
+        h(P.PropertyList.Item, { label: t("partiesTitle") }, record.parties.map((p) => p.name).join(" · ") || t("noParties")),
+        facts.openProceeding
+          ? h(P.PropertyList.Item, { label: t("currentProceeding") }, t(facts.openProceeding.kind === "initial" ? "proceedingInitial" : "proceedingReconsideration"))
+          : null,
+      ),
+      h(
+        P.Panel,
+        { title: t("whereThingsStand") },
+        h(
+          P.PropertyList,
+          null,
+          h(P.PropertyList.Item, { label: t("pendingRequests") }, String(facts.pendingRequests)),
+          h(P.PropertyList.Item, { label: t("draftRequests") }, String(facts.draftRequests)),
+          h(
+            P.PropertyList.Item,
+            { label: t("decisionVoting") },
+            facts.decision
+              ? `${typeLabel(facts.decision.type)} · ${t("version")} ${facts.decision.number} · ${t(facts.decision.issued ? "decreeIssuedState" : facts.decision.approved ? "approved" : "notApproved")}`
+              : t("noDecision"),
+          ),
+        ),
+      ),
+      h(
+        P.Inline,
+        { wrap: true },
+        link("petition", "petitionTitle"),
+        link("reports", "reports"),
+        link("hearings", "hearingsTitle"),
+        link("decision", "decisionVoting"),
+        link("communications", "communicationsLink"),
+      ),
+    );
+  }
+
   Object.assign(window.CTMCouncil, {
     caseWords: words,
     caseTranslator: translator,
@@ -2629,27 +2734,29 @@
     ordinaryReports,
     writerFor,
     withAssignee,
-    ReportsWorkspace,
-    RequestsPanel,
-    DecisionWorkspace,
+    ReportsWorkspace: base.guarded(ReportsWorkspace),
+    RequestsPanel: base.guarded(RequestsPanel),
+    DecisionWorkspace: base.guarded(DecisionWorkspace),
     auditLabel,
     auditRows,
     filterAudit,
     callProblem,
-    CaseAudit,
-    CallLog,
+    CaseAudit: base.guarded(CaseAudit),
+    CallLog: base.guarded(CallLog),
     assessmentRequests,
     assessmentReports,
     assessmentProblem,
-    AssessmentsWorkspace,
+    AssessmentsWorkspace: base.guarded(AssessmentsWorkspace),
     partyProblem,
-    CaseParties,
-    CaseHearings,
+    CaseParties: base.guarded(CaseParties),
+    CaseHearings: base.guarded(CaseHearings),
     casePetitions,
     latestNotes,
     latestFindings,
-    PetitionWorkspace,
+    PetitionWorkspace: base.guarded(PetitionWorkspace),
     timelineRows,
-    CaseTimeline,
+    summaryFacts,
+    CaseSummary: base.guarded(CaseSummary),
+    CaseTimeline: base.guarded(CaseTimeline),
   });
 })();

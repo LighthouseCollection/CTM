@@ -669,7 +669,7 @@
     );
     const [local, setLocal] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, members, proceeding, versions } = state.data;
     const manage = base.canManage(user);
@@ -947,7 +947,7 @@
     );
     const [selected, select] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { appeals, record, hearings, hearingsKnown } = state.data;
     const chosen = appeals.find((row) => row.id === selected);
@@ -1013,12 +1013,12 @@
     uploadProblem,
     attestationProblem,
     latestProceeding,
-    DecreeWorkspace,
+    DecreeWorkspace: base.guarded(DecreeWorkspace),
     caseAppeals,
     isLaterFiling,
     resultUrl,
     appealResultProblem,
     heardHearings,
-    AppealsWorkspace,
+    AppealsWorkspace: base.guarded(AppealsWorkspace),
   });
 })();

@@ -346,6 +346,16 @@
       sessionClosed: "The council session was closed.",
       closedReadOnly: "This session is closed and read-only.",
       unknownParty: "Unknown spouse",
+      pageFailed: "This page could not be shown. Your saved work is unchanged.",
+      emailDelivery: "Email delivery of this update",
+      sendImmediately: "Send Immediately",
+      sendAfterSession: "Send after council session",
+      chooseSessionForUpdate: "Select the council session",
+      hearingAttendance: "Attendance at this hearing",
+      hearingAttendanceHelp: "Taken from the session attendance when the case was presented. Correct an individual member's presence here.",
+      presentLabel: "Present",
+      absentLabel: "Absent",
+      noHearingAttendance: "No attendance is recorded for this hearing.",
       upcomingSessions: "Upcoming sessions",
       pastSessions: "Past sessions",
       awaitingClose: "Planned date has passed — not yet closed",
@@ -562,6 +572,16 @@
       sessionClosed: "تم إغلاق جلسة المجلس.",
       closedReadOnly: "هذه الجلسة مغلقة ومتاحة للقراءة فقط.",
       unknownParty: "زوج غير معروف",
+      pageFailed: "تعذر عرض هذه الصفحة. لم يتغير عملك المحفوظ.",
+      emailDelivery: "إرسال هذا التحديث بالبريد الإلكتروني",
+      sendImmediately: "إرسال فوري",
+      sendAfterSession: "الإرسال بعد جلسة المجلس",
+      chooseSessionForUpdate: "اختر جلسة المجلس",
+      hearingAttendance: "الحضور في هذه الجلسة",
+      hearingAttendanceHelp: "مأخوذ من حضور جلسة المجلس عند عرض القضية. صحّح حضور أي عضو هنا.",
+      presentLabel: "حاضر",
+      absentLabel: "غائب",
+      noHearingAttendance: "لا يوجد حضور مسجَّل لهذه الجلسة.",
       upcomingSessions: "الجلسات القادمة",
       pastSessions: "الجلسات السابقة",
       awaitingClose: "انقضى الموعد المحدد — لم تُغلق بعد",
@@ -701,6 +721,45 @@
     return [state, () => setTick((n) => n + 1)];
   }
 
+  function loadingView(P, h, t) {
+    return h(P.Inline, { gap: "sm" }, h(P.Spinner, { size: "sm", label: t("loading") }), h(P.Text, null, t("loading")));
+  }
+
+  // Error boundary: a failure inside one council page shows a recoverable message
+  // instead of blanking the whole application.
+  let BoundaryClass = null;
+  function boundaryClass() {
+    if (BoundaryClass) return BoundaryClass;
+    const R = window.React;
+    BoundaryClass = class CouncilBoundary extends R.Component {
+      constructor(props) {
+        super(props);
+        this.state = { error: null };
+      }
+      static getDerivedStateFromError(error) {
+        return { error };
+      }
+      render() {
+        if (!this.state.error) return this.props.children;
+        const P = window.Plenix,
+          h = R.createElement,
+          t = translator(this.props.lang);
+        return h(P.EmptyState, {
+          tone: "error",
+          title: t("pageFailed"),
+          action: h(P.Button, { onClick: () => this.setState({ error: null }) }, t("retry")),
+        });
+      }
+    };
+    return BoundaryClass;
+  }
+
+  function guarded(Component) {
+    const Guarded = (props) => window.React.createElement(boundaryClass(), { lang: props.lang }, window.React.createElement(Component, props));
+    Guarded.displayName = `Guarded(${Component.name})`;
+    return Guarded;
+  }
+
   function loadFailure(P, h, t, retry, error) {
     return h(P.EmptyState, {
       tone: "error",
@@ -744,7 +803,7 @@
           : null,
       },
       state.pending
-        ? h(P.Text, { as: "p" }, t("loading"))
+        ? loadingView(P, h, t)
         : state.error
           ? loadFailure(P, h, t, retry, state.error)
           : rows.length
@@ -967,7 +1026,7 @@
     const rows = awaitingReview(state.data?.items).filter((row) => !done[row.id]);
     const chosen = rows.find((row) => row.id === selected);
     const list = state.pending
-      ? h(P.Text, { as: "p" }, t("loading"))
+      ? loadingView(P, h, t)
       : state.error
         ? loadFailure(P, h, t, retry, state.error)
         : rows.length
@@ -1095,7 +1154,7 @@
           )
         : null,
       state.pending && !state.data
-        ? h(P.Text, { as: "p" }, t("loading"))
+        ? loadingView(P, h, t)
         : state.error
           ? loadFailure(P, h, t, retry, state.error)
           : rows.length
@@ -1194,12 +1253,45 @@
 
   // Hearing outcome: internal text and recommendations are revised silently; only the
   // first record sends the default pending update (plus any message) to applicants.
-  function HearingOutcomeDialog({ api, lang, hearingId, title, onClose, onSaved }) {
+  function HearingOutcomeDialog({ api, lang, user, hearingId, sessionId, title, onClose, onSaved }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [state, retry] = useLoad(() => api(`/api/hearings/${encodeURIComponent(hearingId)}/`), [hearingId]);
+    const [state, retry] = useLoad(
+      () =>
+        Promise.all([
+          api(`/api/hearings/${encodeURIComponent(hearingId)}/`),
+          api("/api/sessions/"),
+          sessionId
+            ? api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/?hearing_id=${encodeURIComponent(hearingId)}`).catch(() => ({ items: null }))
+            : Promise.resolve({ items: null }),
+        ]).then(([hearing, sessions, attendance]) => ({
+          ...hearing,
+          plannedSessions: (sessions.items || []).filter((s) => s.state === "planned"),
+          hearingAttendance: attendance.items,
+        })),
+      [hearingId],
+    );
+    const [timing, setTiming] = R.useState("immediate");
+    const [deferSession, setDeferSession] = R.useState(sessionId || "");
+    const [attendanceFailure, setAttendanceFailure] = R.useState(null);
+    const [attendanceSaving, setAttendanceSaving] = R.useState(false);
+    async function recordPresence(memberId, present) {
+      setAttendanceSaving(true);
+      setAttendanceFailure(null);
+      try {
+        await api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, {
+          method: "POST",
+          body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }),
+        });
+        retry();
+      } catch (error) {
+        setAttendanceFailure(serverMessage(error, t));
+      } finally {
+        setAttendanceSaving(false);
+      }
+    }
     const [form, setForm] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
@@ -1220,6 +1312,11 @@
       try {
         const payload = { internal_text: form.internal_text, recommendations: form.recommendations };
         if (first && form.applicant_message.trim()) payload.applicant_message = form.applicant_message.trim();
+        if (first) {
+          if (timing === "after_session" && !deferSession) throw { data: { detail: t("chooseSessionForUpdate") } };
+          payload.email_timing = timing;
+          if (timing === "after_session") payload.session_id = deferSession;
+        }
         await api(`/api/hearings/${encodeURIComponent(hearingId)}/outcome/`, {
           method: "POST",
           body: JSON.stringify(payload),
@@ -1264,7 +1361,7 @@
         ),
       },
       state.pending && !state.data
-        ? h(P.Text, { as: "p" }, t("loading"))
+        ? loadingView(P, h, t)
         : state.error
           ? loadFailure(P, h, t, retry, state.error)
           : form
@@ -1279,6 +1376,59 @@
                       P.Field,
                       { label: t("applicantMessage"), description: t("applicantMessageHelp") },
                       area("applicant_message", 4, 20000),
+                    )
+                  : null,
+                first
+                  ? h(P.RadioGroup, {
+                      label: t("emailDelivery"),
+                      value: timing,
+                      onChange: setTiming,
+                      options: [
+                        { value: "immediate", label: t("sendImmediately"), disabled: pending },
+                        { value: "after_session", label: t("sendAfterSession"), disabled: pending },
+                      ],
+                    })
+                  : null,
+                first && timing === "after_session"
+                  ? h(
+                      P.Field,
+                      { label: t("chooseSessionForUpdate"), required: true },
+                      h(P.Select, {
+                        value: deferSession,
+                        disabled: pending,
+                        onChange: (e) => setDeferSession(e.target.value),
+                        options: [
+                          { value: "", label: t("chooseSessionForUpdate") },
+                          ...(state.data.plannedSessions || []).map((s) => ({ value: s.id, label: sessionLabel(s.date, t) })),
+                        ],
+                      }),
+                    )
+                  : null,
+                Array.isArray(state.data.hearingAttendance)
+                  ? h(
+                      P.Panel,
+                      { title: t("hearingAttendance"), description: t("hearingAttendanceHelp"), collapsible: true, defaultExpanded: false },
+                      h(
+                        P.Stack,
+                        { gap: "sm" },
+                        ...state.data.hearingAttendance.map((row) =>
+                          canManage(user) && writable
+                            ? h(P.RadioGroup, {
+                                key: row.member_id,
+                                label: row.member_name,
+                                layout: "row",
+                                value: row.present ? "present" : "absent",
+                                onChange: (value) => recordPresence(row.member_id, value === "present"),
+                                options: [
+                                  { value: "present", label: t("presentLabel"), disabled: attendanceSaving },
+                                  { value: "absent", label: t("absentLabel"), disabled: attendanceSaving },
+                                ],
+                              })
+                            : h(P.Text, { key: row.member_id }, `${isolate(row.member_name)}: ${t(row.present ? "presentLabel" : "absentLabel")}`),
+                        ),
+                        !state.data.hearingAttendance.length ? h(P.EmptyState, { title: t("noHearingAttendance") }) : null,
+                        attendanceFailure ? h(P.Notice, { tone: "danger" }, attendanceFailure) : null,
+                      ),
                     )
                   : null,
                 outcomes.length
@@ -1360,7 +1510,7 @@
         ),
       },
       state.pending && !state.data
-        ? h(P.Text, { as: "p" }, t("loading"))
+        ? loadingView(P, h, t)
         : state.error
           ? loadFailure(P, h, t, retry, state.error)
           : h(
@@ -1547,8 +1697,8 @@
                   P.Inline,
                   { key: a.id, wrap: true, align: "end" },
                   h(P.Text, { variant: "strong" }, `${a.party_name} · ${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)}`),
-                  h(P.Field, { label: t("startTime") }, h(P.Input, { type: "time", width: "sm", value: form.times[a.id]?.start || "", disabled: pending, onChange: (e) => setTime(a.id, "start", e.target.value) })),
-                  h(P.Field, { label: t("endTime") }, h(P.Input, { type: "time", width: "sm", value: form.times[a.id]?.end || "", disabled: pending, onChange: (e) => setTime(a.id, "end", e.target.value) })),
+                  h(P.Field, { label: `${t("startTime")} · ${a.party_name}` }, h(P.Input, { type: "time", width: "sm", value: form.times[a.id]?.start || "", disabled: pending, onChange: (e) => setTime(a.id, "start", e.target.value) })),
+                  h(P.Field, { label: `${t("endTime")} · ${a.party_name}` }, h(P.Input, { type: "time", width: "sm", value: form.times[a.id]?.end || "", disabled: pending, onChange: (e) => setTime(a.id, "end", e.target.value) })),
                 ),
               ),
               ["replacementTimes", "endAfterStart", "replacementOverlap"].includes(problem) ? h(P.Notice, { tone: "danger" }, t(problem)) : null,
@@ -1592,7 +1742,7 @@
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
 
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return loadingView(P, h, t);
     if (state.error) return loadFailure(P, h, t, retry, state.error);
     const data = state.data;
     const session = data.session;
@@ -1774,6 +1924,8 @@
         ? h(HearingOutcomeDialog, {
             api,
             lang,
+            user,
+            sessionId,
             hearingId: dialog.row.hearing_id,
             title: hearingTitle(dialog.row.party_names, session.date, t),
             onClose: () => setDialog(null),
@@ -2072,7 +2224,7 @@
         })),
       [user?.id],
     );
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return loadingView(P, h, t);
     if (state.error) return loadFailure(P, h, t, retry, state.error);
     const { dashboard, cases, unread, consideration } = state.data;
     const upcoming = dashboard.upcoming_sessions || [];
@@ -2222,7 +2374,7 @@
       () => Promise.all([api("/api/cases/"), api("/api/sessions/")]).then(([cases, sessions]) => caseStatistics(cases.items, sessions.items)),
       [],
     );
-    if (state.pending && !state.data) return h(P.Text, { as: "p" }, t("loading"));
+    if (state.pending && !state.data) return loadingView(P, h, t);
     if (state.error) return loadFailure(P, h, t, retry, state.error);
     const s = state.data;
     const n = (value) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(value);
@@ -2297,19 +2449,21 @@
     formatWhen,
     useLoad,
     loadFailure,
-    ReviewQueuePanel,
-    ReviewWorkspace,
-    SessionList,
-    SessionWorkspace,
+    loadingView,
+    guarded,
+    ReviewQueuePanel: guarded(ReviewQueuePanel),
+    ReviewWorkspace: guarded(ReviewWorkspace),
+    SessionList: guarded(SessionList),
+    SessionWorkspace: guarded(SessionWorkspace),
     searchProblem,
     runSearch,
-    SearchWorkspace,
+    SearchWorkspace: guarded(SearchWorkspace),
     myCases,
     considerationQueue,
-    CouncilHome,
+    CouncilHome: guarded(CouncilHome),
     caseRows,
-    CasesTable,
+    CasesTable: guarded(CasesTable),
     caseStatistics,
-    StatisticsWorkspace,
+    StatisticsWorkspace: guarded(StatisticsWorkspace),
   };
 })();

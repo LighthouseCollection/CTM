@@ -315,3 +315,21 @@ test("F19: votes of members no longer on the active roster stay counted as forme
   assert.equal(result.rows[1].member.former, true);
   assert.deepEqual(plain(result.counts), { approve: 1, deny: 1, abstain: 0, none: 0 });
 });
+
+test("case summary counts ordinary pending/draft requests and the latest decision state", () => {
+  const record = { proceedings: [{ id: "p", status: "open", kind: "initial" }] };
+  const requests = [
+    { state: "sent", kind: "intake" }, { state: "sent", kind: "medical" }, { state: "draft", kind: "interview" }, { state: "completed", kind: "intake" },
+  ];
+  const versions = [{ number: 1, type: "denied", approval: null }, { number: 2, type: "diss-both", approval: { president: "P" }, decree: { issued_at: "x" } }];
+  const facts = C.summaryFacts(record, requests, versions);
+  assert.equal(facts.pendingRequests, 1);
+  assert.equal(facts.draftRequests, 1);
+  assert.deepEqual(plain(facts.decision), { type: "diss-both", approved: true, issued: true, number: 2 });
+  assert.equal(C.summaryFacts(record, [], null).decision, null);
+});
+
+test("exported council pages are wrapped in an error boundary", () => {
+  for (const name of ["CaseSummary", "DecisionWorkspace", "DecreeWorkspace", "AppealsWorkspace", "SessionWorkspace", "ReviewWorkspace"])
+    assert.match(C[name].displayName || "", /^Guarded\(/, name);
+});
