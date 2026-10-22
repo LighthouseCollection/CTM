@@ -1258,7 +1258,10 @@
         failure ? errorView() : text(t("loading")),
       );
     if (user === null) {
-      const loginHeader = h(P.Center, { maxWidth: "lg" },
+      const loginHeader = h(P.Center, {
+        maxWidth: "lg",
+        className: "plx-u-absolute plx-u-top-0 plx-u-left-0 plx-u-right-0 plx-u-z-raised",
+      },
         h(P.Stack, { inset: "lg" },
               h("header", null,
                 h(P.Inline, { justify: "center", align: "center", wrap: true, gap: "lg" },
@@ -1276,8 +1279,9 @@
               )
         ),
       );
-      return h(P.AppShell, { page: "form", header: loginHeader, strings: { skip: t("skip") } },
-        h(P.PageContent, { className: "plx-u-justify-center" },
+      return h(P.AppShell, { page: "form", strings: { skip: t("skip") } },
+        h(P.PageContent, { className: "plx-u-relative plx-u-justify-center" },
+          loginHeader,
           h(P.Center, { maxWidth: "sm" },
             h(P.Panel, null,
               h(P.Stack, { gap: "lg", inset: "lg" },
