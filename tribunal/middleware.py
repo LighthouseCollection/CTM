@@ -1,6 +1,26 @@
 from django.contrib.auth import logout
 
 
+class DatabaseSessionIdentityMiddleware:
+    """Only a decoded server session can bootstrap the account read for auth.
+
+    AuthenticationMiddleware still verifies the backend/session authentication hash;
+    DatabaseActorMiddleware subsequently replaces this with the authenticated actor.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        import uuid
+        from tribunal.db.context import database_settings
+        try:
+            identifier = str(uuid.UUID(str(request.session.get("_auth_user_id", ""))))
+        except (ValueError, TypeError):
+            identifier = ""
+        with database_settings({"ctm.session_account": identifier}):
+            return self.get_response(request)
+
+
 class ActiveAccountMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response

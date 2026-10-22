@@ -28,16 +28,17 @@ from tribunal.models import (
 from tribunal.policy import active, administrator, staff, writer, open_proceeding
 from .common import audit, notify, notify_manager, lock_key
 from .closed_filings import pending_council_filings
-from tribunal.db.context import database_settings, database_actor
+from tribunal.db.context import database_settings, database_actor, core_operation
 from tribunal.validation import validate_json_value, revision_replay, UNBOUND_VERSION
 
 
 @transaction.atomic
 def assign_case(actor, case_id, member_id, president_id):
-    with database_actor(actor):
+    with database_actor(actor), database_settings({"ctm.assignment_member": str(member_id), "ctm.assignment_president": str(president_id)}):
         return _assign_case(actor, case_id, member_id, president_id)
 
 
+@core_operation("assignment")
 def _assign_case(actor, case_id, member_id, president_id):
     from .staff_roles import assignment_president, assignment_recorder
 

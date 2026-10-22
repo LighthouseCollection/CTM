@@ -15,9 +15,11 @@ from tribunal.models import (
 from tribunal.policy import active
 from .common import audit
 from .files import private_path
+from tribunal.db.context import core_operation
 
 
 @transaction.atomic
+@core_operation("retention")
 def remove_draft(actor, app_id, expired=False, *, expected_version=None):
     if actor:
         active(actor)
@@ -52,6 +54,13 @@ def remove_draft(actor, app_id, expired=False, *, expected_version=None):
 
 def process_drafts(now=None):
     now = now or timezone.now()
+    from django.db import connection
+    if connection.vendor == 'postgresql':
+        import json
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT public.ctm_process_retention(%s)", [now])
+            result = cursor.fetchone()[0]
+        return json.loads(result) if isinstance(result,str) else result
     result = {"warned": 0, "expired": 0, "held": 0}
     ids = list(
         Application.objects.filter(

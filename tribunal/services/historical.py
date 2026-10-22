@@ -1,3 +1,4 @@
+from tribunal.db.context import core_operation
 from datetime import datetime
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -56,6 +57,7 @@ def stage(actor, payload, workspace_id=None, *, expected_version=UNBOUND_VERSION
 
 
 @transaction.atomic
+@core_operation("historical")
 def publish(actor, workspace_id, *, expected_version=UNBOUND_VERSION):
     administrator(actor)
     if actor.role != "admin":

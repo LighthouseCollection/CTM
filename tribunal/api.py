@@ -477,6 +477,16 @@ def case_detail(request, case_id):
     from tribunal.projections import case_capabilities
     case = case_for(request.user, case_id)
     parties = case.parties.all()
+    party_data = [encoded(p, name=p.name, is_self=p.account_id == request.user.pk,
+        can_receive=p.account_id is not None, reference=p.reference if p.account_id == request.user.pk or request.user.is_staff else None)
+        for p in parties]
+    from django.db import connection
+    if request.user.role == "applicant" and connection.vendor == "postgresql":
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT public.ctm_applicant_parties(%s)", [str(case.pk)])
+            party_data = cursor.fetchone()[0]
+        if isinstance(party_data, str):
+            party_data = json.loads(party_data)
     response = JsonResponse(
         encoded(
             case,
@@ -485,18 +495,7 @@ def case_detail(request, case_id):
             **case_capabilities(case, request.user),
             can_message=request.user.role in {"applicant", "admin", "secretary"}
             or case.assigned_member_id == request.user.pk,
-            parties=[
-                encoded(
-                    p,
-                    name=p.name,
-                    is_self=p.account_id == request.user.pk,
-                    can_receive=p.account_id is not None,
-                    reference=p.reference
-                    if p.account_id == request.user.pk or request.user.is_staff
-                    else None,
-                )
-                for p in parties
-            ],
+            parties=party_data,
             proceedings=[
                 encoded(p, kind=p.kind, status=p.status, sequence=p.sequence)
                 for p in case.proceedings.all()

@@ -1,5 +1,25 @@
 # VM-FRM backend progress
 
+## Core policy and grant completion (current delivery)
+
+Final PostgreSQL: **566 passed,1 skipped**; no model drift; rollback/reapply
+through0038. **63 models,91 routes,63 forced-RLS tables**.
+
+Seven core reviews are implemented in migrations0036–0038. All63 current domain
+tables now FORCE RLS; the reviewed existing-role app/worker grant plan is tested
+under the actual role names. This supersedes the seven-open-review statements in
+historical sections below. It does not assert151-table semantic equivalence.
+
+Current status, acceptance dependencies and publication ledger:
+[backend-status.md](backend-status.md). Policy contracts and test scope:
+[core-policy-completion.md](core-policy-completion.md). Actual schema gaps and
+required migrations: [schema-gap-review.md](schema-gap-review.md); all151 tables'
+field/type/relationship inventory: [schema-field-gap-inventory.json](schema-field-gap-inventory.json).
+Live-service dependencies are separate in [live-service-dependencies.md](live-service-dependencies.md).
+
+No operational migration, credential changes, merge or deployment.
+
+
 ## Next twenty worker reliability/readiness batches
 
 All20 implemented: positive backend email acknowledgement, verified/valid

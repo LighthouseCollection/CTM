@@ -11,6 +11,7 @@ from tribunal.policy import administrator
 from tribunal.validation import VersionConflict
 from .common import audit
 from .files import private_path
+from tribunal.db.context import core_operation
 
 
 def enqueue_cleanup(key):
@@ -72,6 +73,7 @@ def queue_status(actor, *, state=None, offset=0):
 
 
 @transaction.atomic
+@core_operation("queue_retry")
 def retry_delivery(actor, identifier, expected_attempts):
     administrator(actor)
     if type(expected_attempts) is not int or expected_attempts < 1:

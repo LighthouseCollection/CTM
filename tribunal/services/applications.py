@@ -1,3 +1,4 @@
+from tribunal.db.context import core_operation
 from datetime import date
 from zoneinfo import ZoneInfo
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -289,6 +290,7 @@ def validate_petition(answers):
 
 
 @transaction.atomic
+@core_operation("filing")
 def submit_application(
     actor, app_id, idempotency_key, attestation=None, *, expected_version=None, paid_intent_id=None
 ):

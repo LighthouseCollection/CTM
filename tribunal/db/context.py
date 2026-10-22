@@ -5,6 +5,27 @@ import hashlib
 import uuid
 from django.db import connection, transaction
 from django.conf import settings
+from functools import wraps
+from inspect import signature
+
+
+def core_operation(name, target_arg=1):
+    """Scope a named server mutation; never populated from browser role claims."""
+    def decorate(command):
+        parameter = list(signature(command).parameters)[target_arg]
+        @wraps(command)
+        def run(*args, **kwargs):
+            values = signature(command).bind_partial(*args, **kwargs).arguments
+            target = values.get(parameter, "")
+            context = {"ctm.core_operation": name, "ctm.core_target": str(getattr(target, "pk", target))}
+            if name == "close":
+                context["ctm.close_reason"] = str(values.get("reason", ""))
+            if name == "filing":
+                context["ctm.filing_created_case"] = ""
+            with database_settings(context):
+                return command(*args, **kwargs)
+        return run
+    return decorate
 
 
 @contextmanager

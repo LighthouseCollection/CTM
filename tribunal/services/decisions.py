@@ -1,3 +1,4 @@
+from tribunal.db.context import core_operation
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Max
@@ -162,6 +163,7 @@ def approve_decision(actor, decision_id, president_id=None):
     return approval
 
 
+@core_operation("close")
 def close_case(actor, case, reason, notify_parties=True):
     now = timezone.now()
     case.status = "closed"
@@ -287,6 +289,7 @@ def release_decree(actor, decree_id, party_id, action="release"):
 
 
 @transaction.atomic
+@core_operation("withdraw")
 def withdraw_application(actor, application_id, *, expected_version=None):
     app = application_for(actor, application_id)
     app = (

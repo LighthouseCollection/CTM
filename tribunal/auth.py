@@ -3,6 +3,24 @@ from django.conf import settings
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from .models import Account, Person
+import json
+import uuid
+from contextlib import contextmanager
+from tribunal.db.context import database_settings
+
+
+@contextmanager
+def provider_identity(sociallogin):
+    provider = sociallogin.account.provider
+    if provider not in {"microsoft", "google", "apple"}:
+        raise PermissionDenied("Unsupported identity provider.")
+    if provider == "microsoft" and (not settings.MICROSOFT_TENANT_ID or
+            settings.MICROSOFT_TENANT_ID.lower() in {"common", "organizations", "consumers"}):
+        raise PermissionDenied("A specific council tenant is required.")
+    emails = [email.email.lower() for email in getattr(sociallogin, "email_addresses", []) if email.verified]
+    with database_settings({"ctm.provider": provider, "ctm.provider_subject": str(sociallogin.account.uid),
+                            "ctm.provider_emails": json.dumps(emails)}):
+        yield
 
 
 class ProviderOnlyAdapter(DefaultAccountAdapter):
@@ -11,10 +29,24 @@ class ProviderOnlyAdapter(DefaultAccountAdapter):
 
 
 class AccountAdapter(DefaultSocialAccountAdapter):
+    def new_user(self, request, sociallogin):
+        # allauth invokes lookup after its provider adapter has validated the
+        # response. Scope that instance's lookup; never authorize by URL claims.
+        lookup = sociallogin.lookup
+        def scoped_lookup():
+            with provider_identity(sociallogin):
+                return lookup()
+        sociallogin.lookup = scoped_lookup
+        return super().new_user(request, sociallogin)
+
     def is_open_for_signup(self, request, sociallogin):
         return sociallogin.account.provider in {"google", "apple"}
 
     def pre_social_login(self, request, sociallogin):
+        with provider_identity(sociallogin):
+            return self._pre_social_login(request, sociallogin)
+
+    def _pre_social_login(self, request, sociallogin):
         provider = sociallogin.account.provider
         if provider == "microsoft":
             tenant = settings.MICROSOFT_TENANT_ID
@@ -71,8 +103,9 @@ class AccountAdapter(DefaultSocialAccountAdapter):
         user = sociallogin.user
         user.role = "applicant"
         user.email_verified = any(x.verified for x in sociallogin.email_addresses)
-        user.person = Person.objects.create(
-            first_name=user.first_name, last_name=user.last_name
-        )
-        user.set_unusable_password()
-        return super().save_user(request, sociallogin, form)
+        person_id = uuid.uuid4()
+        with provider_identity(sociallogin), database_settings({"ctm.registration_account": str(user.pk),
+                "ctm.registration_person": str(person_id), "ctm.registration_email": user.email.lower()}):
+            user.person = Person.objects.create(id=person_id, first_name=user.first_name, last_name=user.last_name)
+            user.set_unusable_password()
+            return super().save_user(request, sociallogin, form)
