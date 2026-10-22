@@ -323,3 +323,8 @@
     var(--plx-color-positive-surface, #e6f6eb),
     var(--plx-color-positive-surface-strong, #c6ebd1));
 }
+
+/* Neutral table pills use the tokenized off-white surface instead of a disabled gray. */
+.plx-data-grid .plx-data-pill {
+  background-color: var(--plx-sys-color-surface-subtle, #f8fafc);
+}

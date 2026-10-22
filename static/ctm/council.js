@@ -1226,7 +1226,6 @@
       h = R.createElement,
       t = translator(lang);
     const [state, retry] = useLoad(() => api(REVIEW_URL), [user?.id]);
-    const [selected, select] = R.useState(null);
     const [done, setDone] = R.useState({});
     const [notice, setNotice] = R.useState(null);
     const rows = awaitingReview(state.data?.items).filter((row) => !done[row.id]);
@@ -1279,8 +1278,7 @@
                 onCase,
                 onDone: (id, outcome) => {
                   setDone((old) => ({ ...old, [id]: outcome }));
-                  select(null);
-                  setNotice(outcome);
+                              setNotice(outcome);
                 },
               })
             : null,
@@ -1298,7 +1296,6 @@
       () => Promise.all([api("/api/sessions/"), api("/api/council/members/")]).then(([sessions, members]) => ({ sessions, members })),
       [user?.id],
     );
-    const [selected, select] = R.useState(null);
     const [archiveAgendaState] = useLoad(
       () => selected && mode === "archived" ? api(`/api/sessions/${encodeURIComponent(selected)}/agenda/`) : Promise.resolve({ items: [] }),
       [selected, mode],
@@ -1342,7 +1339,6 @@
       setFormOpen(true);
     }
     function resetSessionForm() {
-      select(null);
       setDate("");
       setTime("");
       setPresiding(defaultPresiding?.id || "");
@@ -2637,7 +2633,6 @@
     const [failure, setFailure] = R.useState(null);
     const [result, setResult] = R.useState(null);
     const [cases, setCases] = R.useState({});
-    const [selected, select] = R.useState(null);
     async function run(event) {
       event.preventDefault();
       const issue = searchProblem(query);
@@ -2645,7 +2640,6 @@
       if (issue) return;
       setPending(true);
       setFailure(null);
-      select(null);
       setResult(null);
       try {
         const [data, caseList] = await Promise.all([
@@ -2661,8 +2655,11 @@
         setPending(false);
       }
     }
-    const rows = result || [];
-    const chosen = rows.find((row) => row.file_id === selected);
+    const rows = (result || []).map((row) => ({
+      ...row,
+      id: row.file_id,
+      case_number: cases[row.case_id] || "—",
+    }));
     return h(
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
@@ -2683,35 +2680,16 @@
         h(P.Checkbox, { label: t("searchHistory"), checked: history, disabled: pending, onChange: (e) => setHistory(e.target.checked) }),
       ),
       failure ? h(P.Notice, { tone: "warning" }, failure) : null,
-      h(P.SplitView, {
-            label: t("searchResults"),
-            firstLabel: t("searchResults"),
-            first: h(window.CTMShell.Table, {
-              label: t("searchResults"), rows: rows.map((row) => ({ ...row, id: row.file_id })),
-              selected, onSelect: select,
-              empty: t(pending ? "loading" : failure ? "loadFailed" : "searchNone"),
-              columns: [{ title: t("searchResults"), field: "name", kind: "name" }],
-            }),
-            second: h(
-              P.ReadingPane,
-              { label: chosen ? chosen.name : t("searchChoose"), empty: h(P.EmptyState, { title: t("searchChoose") }) },
-              chosen
-                ? h(
-                    P.Stack,
-                    { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
-                    h(P.Text, { variant: "data" }, chosen.name),
-                    cases[chosen.case_id] ? h(P.Text, { variant: "secondary" }, cases[chosen.case_id]) : null,
-                    chosen.snippet ? h(P.Panel, { icon: "doc-text", title: t("searchExcerpt") }, h(P.Text, { as: "p" }, chosen.snippet)) : h(P.Text, { variant: "secondary" }, t("searchNoExcerpt")),
-                    h(
-                      P.Inline,
-                      { wrap: true },
-                      h(P.Button, { onClick: () => onCase(chosen.case_id) }, t("openCase")),
-                      h(P.Button, { href: `/api/files/${encodeURIComponent(chosen.file_id)}/` }, t("download")),
-                    ),
-                  )
-                : null,
-            ),
-          }),
+      h(window.CTMShell.Table, {
+        label: t("searchResults"),
+        rows,
+        empty: t(pending ? "loading" : failure ? "loadFailed" : "searchNone"),
+        columns: [
+          { title: t("searchResults"), field: "name", kind: "name", minWidth: "16rem" },
+          { title: t("caseNumber"), field: "case_number", kind: "data", minWidth: "10rem" },
+          { title: t("actions"), field: "open_action", kind: "actions", pill: false, minWidth: "6rem", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
+        ],
+      }),
     );
   }
 
