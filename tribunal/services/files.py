@@ -155,6 +155,7 @@ def upload(
     context="",
     visibility="own",
     request_id=None,
+    expected_request_version=None,
 ):
     active(actor)
     if not category or not category.replace("_", "").isalnum() or len(category) > 30:
@@ -166,17 +167,23 @@ def upload(
     if request_id:
         from tribunal.models import ReportRequest
 
-        request = ReportRequest.objects.select_related(
-            "subject", "proceeding__case"
-        ).get(pk=request_id)
+        from .reports import lock_request
+        from .request_contracts import own_request, check_request_version
+
+        request = lock_request(request_id)
         if actor.role == "applicant":
-            if request.subject.account_id != actor.pk:
-                raise PermissionDenied("Not your report request.")
+            own_request(actor, request)
+            check_request_version(request, expected_request_version)
         else:
             writer(actor, request.case)
         open_proceeding(request.proceeding)
         if request.state != "sent":
             raise ValidationError("Report request is not accepting uploads.")
+        if category == "CONSENT":
+            if request.kind not in {"medical", "psychological"}:
+                raise ValidationError("Consent files belong to assessment requests.")
+            if MedicalRelease.objects.filter(request=request).exists():
+                raise ValidationError("The signed disclosure original is retained.")
         case = request.case
         proceeding = request.proceeding
         owner = request.subject.account
@@ -319,6 +326,31 @@ def application_file_listing(actor, app_id):
     revision = app.revisions.filter(number=app.current_version).first()
     return {"can_upload": can_upload, "items": items,
             "requirements": document_requirements(app, revision.answers if revision else {})}
+
+
+def request_file_listing(actor, request_id):
+    from tribunal.models import ReportRequest
+    from .request_contracts import own_request, request_version, request_open
+
+    request = ReportRequest.objects.select_related("case", "proceeding", "subject").get(pk=request_id)
+    own_request(actor, request)
+    items = []
+    for attachment in Attachment.objects.filter(report_request=request, owner=actor,
+            case=request.case, proceeding=request.proceeding).exclude(visibility="council").order_by("created_at", "id"):
+        file = attachment.versions.order_by("-number").first()
+        if not file:
+            continue
+        event = file.technical_events.filter(task="scan").order_by("-created_at", "-id").first()
+        state = event.result if event and event.result in {"clean", "pending", "rejected"} else "pending"
+        row = {"id": str(file.pk), "attachment_id": str(attachment.pk),
+               "category": attachment.category, "purpose": "consent" if attachment.category == "CONSENT" else "report",
+               "name": display_filename(file), "version": file.number, "scan_state": state}
+        if state == "clean":
+            authorized_file(actor, file.pk)
+            row["download_url"] = f"/api/files/{file.pk}/"
+        items.append(row)
+    return {"request_id": str(request.pk), "proceeding_id": str(request.proceeding_id),
+            "request_version": request_version(request), "can_upload": request_open(request), "items": items}
 
 
 def authorized_file(actor, file_id, *, require_safe=True):

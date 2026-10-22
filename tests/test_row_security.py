@@ -72,6 +72,11 @@ def runtime():
             "ctm_council_result_update(jsonb)",
             "ctm_reconsideration_readable(jsonb)",
             "ctm_reconsideration_writable(text,jsonb)",
+            "ctm_request_readable(jsonb)",
+            "ctm_request_writable(jsonb,text)",
+            "ctm_report_root_readable(jsonb)",
+            "ctm_report_root_writable(jsonb)",
+            "ctm_request_source_writable(text,jsonb)",
         ]:
             cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO {ROLE}")
         cursor.execute(
@@ -670,7 +675,7 @@ def test_rls_migration_can_be_reversed_and_reapplied():
             )
             assert cursor.fetchone()[0] == 0
     finally:
-        MigrationExecutor(connection).migrate([("tribunal", "0022_application_origin_and_more")])
+        MigrationExecutor(connection).migrate([("tribunal", "0023_request_privacy")])
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM pg_class WHERE relname='tribunal_application' AND relrowsecurity AND relforcerowsecurity"
@@ -840,8 +845,8 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 47
-        assert "tribunal_reportrequest" in report["checks"]["unreviewed_domain_tables"]
+        assert report["checks"]["forced_rls_table_count"] == 49
+        assert "tribunal_reportrequest" not in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
 
@@ -1235,8 +1240,8 @@ def test_assessment_parent_scope_is_enforced_for_raw_database_writes(runtime, re
     with pytest.raises(DatabaseError), runtime(people["admin"]):
         ReportRequest.objects.filter(pk=assessment.pk).update(kind="interview")
     ordinary = create_request(people["admin"], app.proceeding_id, app.party_id, "interview", "Interview", [])
-    with pytest.raises(DatabaseError), runtime(people["admin"]):
-        Report.objects.filter(pk=parent.pk).update(request=ordinary)
+    with runtime(people["admin"]):
+        assert Report.objects.filter(pk=parent.pk).update(request=ordinary) == 0
     with runtime(people["admin"]):
         followup = create_request(people["admin"], app.proceeding_id, app.party_id, "psychological", "Permitted", [], parent_id=parent.pk)
         assert followup.parent_report_id == parent.pk
@@ -1506,6 +1511,7 @@ def test_own_released_decree_projection_obeys_recipient_rls(runtime, ready_appli
     decree = issue_decree(people["admin"], decision.pk, file.pk, people["president"].pk)
     with runtime(app.owner):
         assert released_decrees(app.case, app.owner) == []
+
     with runtime(people["secretary"]):
         release_decree(people["secretary"], decree.pk, app.party_id)
     with runtime(app.owner):
@@ -1515,3 +1521,85 @@ def test_own_released_decree_projection_obeys_recipient_rls(runtime, ready_appli
         release_decree(people["secretary"], decree.pk, app.party_id, "withdraw")
     with runtime(app.owner):
         assert released_decrees(app.case, app.owner) == []
+
+
+def test_request_privacy_raw_closure_and_subject_scope(runtime, ready_application, people):
+    from tests.test_own_requests import sent
+    from tribunal.models import ReportRequest, Party
+    from tribunal.services.reports import create_request
+    from tribunal.services.decisions import close_case
+    app = ready_application
+    submit_application(app.owner, app.pk, "request-rls", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    row = sent(app, people)
+    draft = create_request(people["admin"], app.proceeding_id, app.party_id, "intake", "Unsent private", [])
+    interview = sent(app, people, "interview")
+    spouse = Account.objects.create_user(email="request-spouse@example.test", email_verified=True)
+    Party.objects.create(case=app.case, account=spouse, person=spouse.person, slot="B")
+    with runtime(app.owner):
+        assert list(ReportRequest.objects.values_list("pk", flat=True)) == [row.pk]
+    with runtime(spouse):
+        assert not ReportRequest.objects.exists()
+    with runtime():
+        assert not ReportRequest.objects.exists()
+    with runtime(people["admin"]):
+        close_case(people["admin"], app.case, "synthetic_close")
+    with runtime(app.owner):
+        assert list(ReportRequest.objects.values_list("pk", flat=True)) == [row.pk]
+    with runtime(people["member"]):
+        assert set(ReportRequest.objects.values_list("pk", flat=True)) == {row.pk, draft.pk, interview.pk}
+
+
+def test_own_request_completion_and_consent_under_runtime_role(runtime, ready_application, people):
+    from tests.test_own_requests import sent, consent, sign
+    from tribunal.services.reports import complete_request
+    from tribunal.services.request_contracts import own_request_data, request_version
+    from tribunal.services.files import request_file_listing
+    from tribunal.models import Report, ReportRevision
+    from django.db import DatabaseError
+    app = ready_application
+    submit_application(app.owner, app.pk, "consent-rls", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    row = sent(app, people, "medical")
+    signature = consent(app, row)
+    with runtime(app.owner):
+        release = sign(app, row, signature)
+        assert own_request_data(row, app.owner)["signed_releases"][0]["id"] == str(release.pk)
+        assert request_file_listing(app.owner, row.pk)["items"][0]["purpose"] == "consent"
+    ordinary = sent(app, people)
+    with runtime(app.owner):
+        report = complete_request(app.owner, ordinary.pk, {"text": "Own immutable response"}, expected_version=request_version(ordinary))
+        assert complete_request(app.owner, ordinary.pk, {"text": "Own immutable response"}).pk == report.pk
+        assert Report.objects.get(pk=report.pk).author_id == app.owner.pk
+    with pytest.raises(DatabaseError), runtime(app.owner):
+        ReportRevision.objects.create(report=report, number=2, actor=app.owner, answers={"text": "overwrite"})
+    with pytest.raises(DatabaseError), runtime(app.owner):
+        MedicalRelease.objects.create(request=row, subject=app.owner, signature=signature,
+            declaration=release.declaration, scope={"council": True})
+    with pytest.raises(DatabaseError), runtime(people["admin"]):
+        from tribunal.models import ReportRequest
+        ReportRequest.objects.filter(pk=ordinary.pk).update(instructions="rewrite sent request")
+    with runtime(people["admin"]):
+        assert Report.objects.filter(pk=report.pk).update(author=people["admin"]) == 0
+    with pytest.raises(DatabaseError), transaction.atomic():
+        Report.objects.filter(pk=report.pk).update(author=people["admin"])
+
+
+def test_external_request_read_save_submit_under_runtime_role(runtime, ready_application, people, client):
+    from tribunal.services.reports import create_request, send_request
+    from tribunal.models import ReportRequest, Report
+    app = ready_application
+    submit_application(app.owner, app.pk, "external-request-rls", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    with runtime(people["admin"]):
+        row = create_request(people["admin"], app.proceeding_id, app.party_id, "external_priest", "External testimony", [])
+        token = send_request(people["admin"], row.pk)
+    url = f"/external/reports/{row.pk}/"
+    with runtime():
+        assert client.get(url, HTTP_AUTHORIZATION="Bearer invalid").status_code == 403
+        assert client.get(url, HTTP_AUTHORIZATION=f"Bearer {token}").status_code == 200
+        assert client.post(url, {"action": "save", "answers": {"text": "Saved"}}, content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {token}").status_code == 200
+        response = client.post(url, {"answers": {"text": "Final"}}, content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {token}")
+        assert response.status_code == 201
+        assert client.get(url, HTTP_AUTHORIZATION=f"Bearer {token}").status_code == 403
+        assert not ReportRequest.objects.exists() and not Report.objects.exists()

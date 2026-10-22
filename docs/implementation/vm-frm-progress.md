@@ -1,5 +1,39 @@
 # VM-FRM backend progress
 
+## Ten consecutive requested-report batches
+
+Completed consecutively for the user's ten-batch request. Contracts are in
+[own-request-contract.md](own-request-contract.md).
+
+1. Closed-case privacy: never-sent requests stay private in API and raw RLS;
+   closure cancels drafts separately while retaining sent request history.
+2. Own request capabilities and opaque request/proceeding/content identity;
+   applicant HTTP completion rejects absent/stale fingerprints.
+3. Exact published medical-release definition/version with both declaration
+   languages; absent/incomplete definitions fail closed without invented text.
+4. Explicit acceptance and exact boolean council recipient scope, bound server-side
+   to request/proceeding/assessment purpose; no unsupported scope broadening.
+5. Separate safe latest CONSENT original, signature format checks, retained signed
+   originals, matching-sign retry and own signed-scope recovery projection.
+6. Owner-only request file list with latest originals, consent/report purposes,
+   honest scan states and safe links; no other-subject/history disclosure.
+7. Locked request uploads with fingerprint checks and staff/external exclusion;
+   completed/closed uploads and signed-consent replacement rejected.
+8. Response shape/required-question checks and exact contextual latest safe report
+   originals; consent cannot masquerade as assessment evidence.
+9. Exact response retry returns original receipt, including after later closure;
+   changed retries fail. Concurrent submit/sign retries create one retained record;
+   closure-winning contention rejects a new response.
+10. Migration0023: request/report forced RLS, immutable sent content/provenance,
+    restrictive source insert policies and capability-scoped external draft/submit.
+    Actor/subject/author isolation is tested with a real non-owner runtime role.
+
+Full isolated PostgreSQL validation: **348 passed, 1 skipped**, including migration
+rollback/reapply. **49 forced-RLS tables**, **63 domain models /151 target**, **80
+routes**. Fourteen domain-table policy reviews and broader identity/schema/provider
+acceptance remain. Applicant/council browser integration is independent evidence.
+No operational migrations, credentials, merge or deployment.
+
 Issue: https://github.com/LighthouseCollection/CTM/issues/2
 
 ## First slice: applicant filing contract

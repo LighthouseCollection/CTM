@@ -14,7 +14,6 @@ from tribunal.models import (
     ReportRevision,
     FileVersion,
     MedicalRelease,
-    QuestionnaireVersion,
     Recording,
     ProcessingRun,
     TranscriptRevision,
@@ -23,6 +22,19 @@ from tribunal.models import (
 from tribunal.policy import active, staff, writer, open_proceeding
 from .common import audit, notify, notify_manager
 from .applications import safe_file
+from .request_contracts import (ASSESSMENTS, own_request, check_request_version,
+                               release_definition)
+
+
+_UNBOUND = object()
+
+
+def lock_request(request_id):
+    # Match closure's proceeding lock before taking the individual request lock.
+    proceeding_id = ReportRequest.objects.values_list("proceeding_id", flat=True).get(pk=request_id)
+    Proceeding.objects.select_for_update(of=("self",)).get(pk=proceeding_id)
+    return ReportRequest.objects.select_for_update(of=("self",)).select_related(
+        "case", "proceeding__case", "subject__account").get(pk=request_id)
 
 
 @transaction.atomic
@@ -114,21 +126,19 @@ def create_request(
 
 @transaction.atomic
 def send_request(actor, request_id, external_name="", external_email=""):
-    request = (
-        ReportRequest.objects.select_for_update(of=("self",))
-        .select_related("case", "proceeding", "subject__account")
-        .get(pk=request_id)
-    )
+    request = lock_request(request_id)
     writer(actor, request.case)
     open_proceeding(request.proceeding)
     if request.state not in {"draft", "sent"}:
         raise ValidationError("Completed/cancelled request cannot be sent.")
+    if request.state == "sent" and request.kind != "external_priest":
+        return request
     for question in request.questions:
         for language in (["en", "ar"] if request.language == "both" else [request.language]):
             if not str(question.get(language, "")).strip():
                 raise ValidationError("Approved question wording is missing for the selected language.")
     request.state = "sent"
-    request.sent_at = timezone.now()
+    request.sent_at = request.sent_at or timezone.now()
     token = None
     if request.kind == "external_priest":
         token = secrets.token_urlsafe(32)
@@ -167,7 +177,7 @@ def external_request(request_id, token):
 
 @transaction.atomic
 def complete_external(request_id, token, answers):
-    ReportRequest.objects.select_for_update(of=("self",)).get(pk=request_id)
+    lock_request(request_id)
     request = external_request(request_id, token)
     if not isinstance(answers, dict) or not answers:
         raise ValidationError("Provide written testimony or a finalized recording.")
@@ -182,46 +192,61 @@ def complete_external(request_id, token, answers):
 
 
 @transaction.atomic
-def complete_request(actor, request_id, answers, observations="", completion_date=None):
-    request = (
-        ReportRequest.objects.select_for_update(of=("self",))
-        .select_related("case", "proceeding", "subject")
-        .get(pk=request_id)
-    )
+def complete_request(actor, request_id, answers, observations="", completion_date=None,
+                     *, expected_version=_UNBOUND):
+    request = lock_request(request_id)
     active(actor)
-    open_proceeding(request.proceeding)
-    if request.state != "sent" or request.kind == "external_priest":
-        raise ValidationError("Request is not awaiting this response.")
     if actor.role == "applicant":
-        if request.kind == "interview":
-            raise PermissionDenied("Council records an in-person interview.")
-        if request.subject.account_id != actor.pk:
-            raise PermissionDenied("Not your request.")
+        own_request(actor, request)
         if observations:
             raise PermissionDenied(
                 "Applicant cannot author internal council observations."
             )
     else:
         writer(actor, request.case)
+    if expected_version is not _UNBOUND:
+        check_request_version(request, expected_version)
+    if not isinstance(answers, dict) or not answers:
+        raise ValidationError("Provide a response object.")
+    # An exact retry returns the original receipt, even after later closure.
+    if request.state == "completed":
+        report = Report.objects.filter(request=request, author=actor).first()
+        original = report.revisions.filter(number=1).first() if report else None
+        if (original and original.answers == answers and original.observations == observations
+                and (completion_date is None or completion_date == report.completion_date)):
+            return report
+        raise ValidationError("A different response has already been submitted.")
+    open_proceeding(request.proceeding)
+    if request.state != "sent" or request.kind == "external_priest":
+        raise ValidationError("Request is not awaiting this response.")
+    for question in request.questions:
+        value = answers.get(question["code"])
+        if value is None or (isinstance(value, str) and not value.strip()) or value == []:
+            raise ValidationError("Answer every requested question.")
     if request.kind in {"medical", "psychological"}:
         if not MedicalRelease.objects.filter(
-            request=request, subject=request.subject.account
+            request=request, subject=request.subject.account, scope__council=True
         ).exists():
             raise ValidationError("A signed scoped disclosure release is required.")
         file_ids = answers.get("files", [])
         if not file_ids:
             raise ValidationError("Upload the completed assessment report.")
-        for file_id in file_ids:
-            file = FileVersion.objects.select_related("attachment").get(pk=file_id)
-            if (
-                file.attachment.case_id != request.case_id
-                or file.attachment.owner_id != request.subject.account_id
-                or file.attachment.visibility != "medical"
-                or file.attachment.report_request_id != request.pk
-            ):
-                raise PermissionDenied("Medical report file has wrong owner or scope.")
-            if not safe_file(file):
-                raise ValidationError("Await technical file validation.")
+    file_ids = answers.get("files", [])
+    if not isinstance(file_ids, list) or len(file_ids) != len(set(map(str, file_ids))):
+        raise ValidationError("Provide distinct file identifiers as a list.")
+    for file_id in file_ids:
+        file = FileVersion.objects.select_related("attachment").get(pk=file_id)
+        if (
+            file.attachment.case_id != request.case_id
+            or file.attachment.proceeding_id != request.proceeding_id
+            or file.attachment.owner_id != request.subject.account_id
+            or file.attachment.report_request_id != request.pk
+            or file.attachment.category == "CONSENT"
+            or file.attachment.visibility != ("medical" if request.kind in ASSESSMENTS else "own")
+        ):
+            raise PermissionDenied("Report file has wrong owner, purpose or scope.")
+        if not safe_file(file) or file.attachment.versions.order_by("-number").first().pk != file.pk:
+            raise ValidationError("Await technical file validation.")
     report = Report.objects.create(
         request=request,
         author=actor,
@@ -264,13 +289,26 @@ def revise_report(actor, report_id, answers, observations=""):
 
 
 @transaction.atomic
-def sign_medical_release(actor, request_id, file_id, scope):
-    request = ReportRequest.objects.select_related(
-        "subject__account", "proceeding"
-    ).get(pk=request_id)
-    if request.subject.account_id != actor.pk:
-        raise PermissionDenied("Only the report subject can sign their release.")
+def sign_medical_release(actor, request_id, file_id, scope, *, expected_version=_UNBOUND,
+                         declaration_id=None, accepted=False):
+    request = lock_request(request_id)
+    own_request(actor, request)
+    if expected_version is not _UNBOUND:
+        check_request_version(request, expected_version)
+    if request.kind not in ASSESSMENTS or request.state != "sent":
+        raise ValidationError("This request is not awaiting a disclosure release.")
     open_proceeding(request.proceeding)
+    if not isinstance(scope, dict) or scope != {"council": True} or scope.get("council") is not True or accepted is not True:
+        raise ValidationError("Explicit acceptance and exact council recipient scope are required.")
+    definition = release_definition()
+    if not definition or str(definition.pk) != str(declaration_id):
+        raise ValidationError("Reload the approved bilingual disclosure declaration.")
+    existing = MedicalRelease.objects.filter(request=request, subject=actor).order_by("-signed_at", "-id").first()
+    if existing:
+        if existing.signature_id == file_id or str(existing.signature_id) == str(file_id):
+            if existing.declaration_id == definition.pk and existing.scope.get("council") is True:
+                return existing
+        raise ValidationError("A signed release is already retained for this request.")
     file = (
         FileVersion.objects.select_for_update(of=("self",))
         .select_related("attachment")
@@ -279,31 +317,24 @@ def sign_medical_release(actor, request_id, file_id, scope):
     if (
         file.attachment.owner_id != actor.pk
         or file.attachment.case_id != request.case_id
+        or file.attachment.proceeding_id != request.proceeding_id
         or file.attachment.report_request_id != request.pk
+        or file.attachment.category != "CONSENT"
+        or file.attachment.visibility != "medical"
+        or file.mime_type not in {"application/pdf", "image/png", "image/jpeg"}
+        or file.attachment.versions.order_by("-number").first().pk != file.pk
         or not safe_file(file)
     ):
         raise ValidationError(
             "A safe signature file from this subject/case is required."
-        )
-    definition = (
-        QuestionnaireVersion.objects.filter(purpose="medical_release", published=True)
-        .order_by("-number")
-        .first()
-    )
-    if (
-        not definition
-        or not definition.declaration_en.strip()
-        or not scope.get("council")
-    ):
-        raise ValidationError(
-            "Approved scoped disclosure text and recipient authorization are required."
         )
     release = MedicalRelease.objects.create(
         request=request,
         subject=actor,
         declaration=definition,
         signature=file,
-        scope=scope,
+        scope={"council": True, "purpose": request.kind, "request_id": str(request.pk),
+               "proceeding_id": str(request.proceeding_id)},
     )
     audit(actor, "medical_release_signed", release, request.case)
     return release

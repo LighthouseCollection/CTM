@@ -807,6 +807,7 @@ def upload(request):
         request.POST.get("context", ""),
         request.POST.get("visibility", "own"),
         request.POST.get("request_id"),
+        expected_request_version=request.POST.get("expected_request_version"),
     )
     return JsonResponse(
         encoded(
@@ -833,6 +834,13 @@ def download(request, file_id):
     from tribunal.file_delivery import deliver_file
 
     return deliver_file(request, file_id)
+
+
+@endpoint()
+def request_files(request, request_id):
+    from tribunal.services.files import request_file_listing
+
+    return JsonResponse(request_file_listing(request.user, request_id))
 
 
 @endpoint()
@@ -877,12 +885,14 @@ def report_questions(request):
 @endpoint(("GET", "POST"))
 def report_requests(request, case_id):
     from tribunal.projections import release_metadata
+    from tribunal.services.request_contracts import own_request_data
     case = case_for(request.user, case_id)
     if request.method == "GET":
         qs = m.ReportRequest.objects.filter(case=case)
         if request.user.role == "applicant":
             qs = (
                 qs.filter(subject__account=request.user)
+                .filter(sent_at__isnull=False)
                 .exclude(kind__in=["external_priest", "interview"])
                 .exclude(state="draft")
             )
@@ -904,6 +914,7 @@ def report_requests(request, case_id):
                         parent_report_id=str(x.parent_report_id) if x.parent_report_id else None,
                         author=f"{x.author.first_name} {x.author.last_name}".strip(),
                         **release_metadata(x, request.user),
+                        **(own_request_data(x, request.user) if request.user.role == "applicant" else {}),
                     )
                     for x in qs.order_by("-created_at")
                 ]
@@ -953,6 +964,8 @@ def complete_report_request(request, request_id):
     from tribunal.services.reports import complete_request
 
     data = body(request)
+    concurrency = ({"expected_version": data.get("expected_version")}
+                   if request.user.role == "applicant" or "expected_version" in data else {})
     return JsonResponse(
         encoded(
             complete_request(
@@ -960,6 +973,7 @@ def complete_report_request(request, request_id):
                 request_id,
                 data.get("answers", {}),
                 data.get("observations", ""),
+                **concurrency,
             )
         ),
         status=201,
@@ -1015,7 +1029,9 @@ def medical_release(request, request_id):
     return JsonResponse(
         encoded(
             sign_medical_release(
-                request.user, request_id, data["file_id"], data["scope"]
+                request.user, request_id, data["file_id"], data["scope"],
+                expected_version=data.get("expected_version"),
+                declaration_id=data.get("declaration_id"), accepted=data.get("accepted"),
             )
         ),
         status=201,
@@ -1236,15 +1252,16 @@ def system_audit(request):
 
 @csrf_exempt
 def external_report(request, request_id):
-    from tribunal.services.reports import external_request, complete_external
+    from tribunal.services.reports import external_request, complete_external, lock_request
+    from tribunal.db.context import database_external
     from django.db import transaction
 
     token = request.headers.get("Authorization", "").removeprefix("Bearer ")
     if request.method not in {"GET", "POST"}:
         return JsonResponse({"error": "method_not_allowed"}, status=405)
     try:
-        with transaction.atomic():
-            m.ReportRequest.objects.select_for_update().get(pk=request_id)
+        with transaction.atomic(), database_external(request_id, token):
+            lock_request(request_id)
             source = external_request(request_id, token)
             if request.method == "GET":
                 response = JsonResponse(

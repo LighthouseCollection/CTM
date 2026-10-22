@@ -172,6 +172,10 @@
     "handler": "medical_release"
   },
   {
+    "route": "api/requests/<uuid:request_id>/files/",
+    "handler": "request_files"
+  },
+  {
     "route": "api/cases/<uuid:case_id>/reports/",
     "handler": "reports"
   },

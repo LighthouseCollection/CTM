@@ -46,6 +46,7 @@ urlpatterns = [
     path("api/requests/<uuid:request_id>/send/", api.send_report_request),
     path("api/requests/<uuid:request_id>/complete/", api.complete_report_request),
     path("api/requests/<uuid:request_id>/release/", api.medical_release),
+    path("api/requests/<uuid:request_id>/files/", api.request_files),
     path("api/cases/<uuid:case_id>/reports/", api.reports),
     path("api/proceedings/<uuid:proceeding_id>/notes/", api.notes),
     path("api/proceedings/<uuid:proceeding_id>/decision/", api.decision),

@@ -161,7 +161,8 @@ def close_case(actor, case, reason, notify_parties=True):
     OpenCaseClaim.objects.filter(case=case).delete()
     from tribunal.models import ReportRequest
 
-    ReportRequest.objects.filter(case=case, state__in=["draft", "sent"]).update(
+    ReportRequest.objects.filter(case=case, state="draft").update(state="cancelled")
+    ReportRequest.objects.filter(case=case, state="sent").update(
         state="closed"
     )
     audit(actor, reason, case, case)
