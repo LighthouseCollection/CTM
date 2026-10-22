@@ -381,6 +381,7 @@
         ),
         window.CTMApplicantFiles ? h(window.CTMApplicantFiles.ApplicationFiles, {
           key: "documents", applicationId, answerVersion:state.version, api, lang,
+          savedApplication:record,
           disabled: state.dirty || state.saving || filingBusy || filingLocked || projectionPending,
           onBusyChange: setUploadBusy, onChanged: documentsChanged,
           onReadyChange: documentsReadinessChanged,

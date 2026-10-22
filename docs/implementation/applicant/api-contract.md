@@ -104,7 +104,12 @@ with unique attachment IDs; no prior versions or council/private sources.
 Only technically clean items may supply `download_url: /api/files/{id}/`; the frontend
 also checks exact item ID/path before rendering a link. Pending, rejected and unknown
 states never count as safe required documents. Server still enforces every byte read.
-Current originals outside current requirements remain visible separately.
+Current originals outside current requirements remain visible separately. For RO slots,
+the frontend may show saved court/case-number values under their bound bilingual
+field labels. These captions require matching application ID and saved answer
+version, unique saved order IDs and exact requirement context. They never change
+transport identity or infer a context from list position; missing/untranslated or
+ambiguous source context omits the caption.
 
 Multipart fields: `application_id`, `category`, `context`, `visibility:"own"`, `file`;
 same-context correction also carries `attachment_id`. The UI rejects ambiguous or

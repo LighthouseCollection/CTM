@@ -7,7 +7,7 @@ All checks below use isolated synthetic records; no live provider/antivirus clai
 
 | Finding | Current evidence | Status |
 | --- | --- | --- |
-| F03 repeats | Renderer preserves record IDs/opaque fields and creates UUIDs for new records; browser/API persistence covered. Full approved repeat labels and nested backend validation remain dependencies. | Partial |
+| F03 repeats | Renderer preserves record IDs/opaque fields and creates UUIDs for new records. Real browser/API scenario saves two orders with distinct UUIDs; each requires its own safe copy, one copy cannot satisfy both, and cross-context replacement returns403 without changing either original. Upload slots show matching saved court/case number using bound bilingual labels and exact saved version. Full approved repeat labels and nested backend validation remain dependencies. | Partial |
 | F04 own current files | Actual browser upload/list/download/replacement; old bytes retained, owner old-version download denied; latest pending scan event blocks current download and checkout. Earlier404 report is stale. | Addressed within isolated API/browser scope |
 | F08 / AS-F08-1 | Direct-owner D1 requires last formal submission only to council until resubmission. Opt-in real HTTP probe below fails7/8 predicates. | Verified current backend gap |
 | F09 resubmit | Actual returned instructions, review and browser resubmit reuse original fee/signature. Pending required-file scan rejects resubmit with422 atomically; submission count/fee stay unchanged. Successful resubmit creates a new submission referencing the original attestation, which remains unchanged. No attestation in resubmit payload. Concurrent staff review and complete snapshot linkage remain separate backend acceptance. | Partial |
@@ -25,7 +25,7 @@ a corrected first name through the browser and uploads a same-context MC correct
 Before resubmission, an authenticated administrator calls actual detail/history,
 case-file listing and file download/range/preview routes. This mode intentionally
 exits unsuccessfully until all eight privacy predicates pass. It is separate from
-the20 passing baseline scenario groups and must not be counted as a pass.
+the21 passing baseline scenario groups and must not be counted as a pass.
 
 Current result: council detail/version/history expose pending answers, case listing
 exposes the pending file and direct/range/preview requests return pending bytes.

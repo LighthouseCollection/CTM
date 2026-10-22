@@ -7,6 +7,20 @@ if (fs.existsSync(path)) vm.runInNewContext(fs.readFileSync(path,'utf8'), contex
 const F = context.window.CTMApplicantFiles || {};
 const req = () => ({category:'RO',context:'order-a',label_en:'Order copy',label_ar:'نسخة الأمر',required:true});
 
+test('saved order captions bind approved labels and values to unique saved IDs',()=>{
+  const app={answers:{restraining_orders:[{id:'order-a',court:'Court A',number:'A-1'}]},
+    questionnaire:{definition:{fields:[{code:'restraining_orders',item_fields:[
+      {code:'court',label_en:'Court',label_ar:'المحكمة'},
+      {code:'number',label_en:'Case number',label_ar:'رقم القضية'}]}]}}};
+  const details=F.savedOrderDetails(app);
+  assert.equal(details[0].context,'order-a');assert.equal(details[0].fields[0].value,'Court A');
+  assert.equal(details[0].fields[1].label_ar,'رقم القضية');
+  app.answers.restraining_orders.push({...app.answers.restraining_orders[0],court:'Wrong ambiguous court'});
+  assert.equal(F.savedOrderDetails(app).length,0);
+  app.answers.restraining_orders.pop();delete app.questionnaire.definition.fields[0].item_fields[0].label_ar;
+  assert.equal(F.savedOrderDetails(app)[0].fields.length,1);
+});
+
 test('context requirements need approved labels and per-order identity', () => {
   assert.equal(F.validRequirement(req()), true);
   for (const mutate of [r=>r.context='',r=>delete r.label_ar,r=>r.category='UNKNOWN']) {

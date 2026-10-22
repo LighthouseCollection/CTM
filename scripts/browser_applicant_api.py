@@ -72,6 +72,11 @@ fields.append({"code":"children","type":"list","label_en":"Children","label_ar":
      "choice_labels":{"unknown":{"label_en":"Unknown","label_ar":"غير معروف"}}},
     {"code":"lives_with","type":"choice","label_en":"Child lives with","label_ar":"إقامة الطفل مع","choices":["unknown"],
      "choice_labels":{"unknown":{"label_en":"Unknown","label_ar":"غير معروف"}}}]})
+fields.append({"code":"restraining_orders","type":"list","label_en":"Restraining orders","label_ar":"الأوامر التقييدية","item_fields":[
+    {"code":"court","type":"text","label_en":"Order court","label_ar":"محكمة الأمر"},
+    {"code":"number","type":"text","label_en":"Order case number","label_ar":"رقم قضية الأمر"},
+    {"code":"status","type":"choice","label_en":"Order status","label_ar":"حالة الأمر","choices":["active"],
+     "choice_labels":{"active":{"label_en":"Active","label_ar":"ساري"}}}]})
 QuestionnaireVersion.objects.create(purpose="petition",number=1,published=True,
     definition={"fields":fields,"required_document_categories":["CMC"]},
     declaration_en="Synthetic test declaration only",declaration_ar="إقرار تجريبي للاختبار فقط")
@@ -123,7 +128,7 @@ try:
         page.get_by_label("Marriage date",exact=False).fill("2010-01-01")
         page.get_by_label("Abuse",exact=True).check()
         page.get_by_role("textbox",name="Statement",exact=False).fill("Synthetic applicant statement")
-        page.get_by_role("button",name="Add another entry",exact=True).click()
+        page.get_by_role("region",name="Children",exact=True).get_by_role("button",name="Add another entry",exact=True).click()
         page.get_by_label("Child gender",exact=True).select_option("unknown")
         page.get_by_label("Child lives with",exact=True).select_option("unknown")
         page.get_by_role("button",name="Save draft",exact=True).click()
@@ -232,6 +237,51 @@ try:
         expect(slot.get_by_role("link",name="Download original",exact=True)).to_be_visible()
         expect(page.get_by_role("button",name="Continue to secure payment",exact=True)).to_be_visible()
         checks.append("Latest synthetic scan event governs actual current-file listing, browser readiness and byte access; pending blocks all three")
+        orders=page.get_by_role("region",name="Restraining orders",exact=True)
+        for index in range(2):
+            orders.get_by_role("button",name="Add another entry",exact=True).click()
+            orders.get_by_label("Order court",exact=True).nth(index).fill(f"Synthetic court {index+1}")
+            orders.get_by_label("Order case number",exact=True).nth(index).fill(f"ORDER-{index+1}")
+            orders.get_by_label("Order status",exact=True).nth(index).select_option("active")
+        page.get_by_role("button",name="Save draft",exact=True).click()
+        expect(page.get_by_text("Your answers have been saved.",exact=True)).to_be_visible()
+        saved_orders=context.request.get(f"{BASE}/api/applications/{app_id}/").json()["answers"]["restraining_orders"]
+        contexts=[order["id"] for order in saved_orders]
+        assert len(set(contexts))==2 and all(len(identifier)==36 for identifier in contexts)
+        order_requirements=context.request.get(f"{BASE}/api/applications/{app_id}/files/").json()["requirements"]
+        order_requirements=[r for r in order_requirements if r["category"]=="RO"]
+        assert [r["context"] for r in order_requirements]==contexts and all(r["required"] for r in order_requirements)
+        ro_files=[]
+        for index,requirement_row in enumerate(order_requirements):
+            order_slot=page.get_by_role("region",name=requirement_row["label_en"],exact=True).nth(index)
+            expect(order_slot.get_by_text(f"Order court: Synthetic court {index+1}",exact=True)).to_be_visible()
+            expect(order_slot.get_by_text(f"Order case number: ORDER-{index+1}",exact=True)).to_be_visible()
+            order_slot.locator('input[type="file"]').set_input_files({"name":f"order-{index+1}.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.7 synthetic-order-copy"})
+            with page.expect_response(lambda response:response.url==BASE+"/api/files/" and response.request.method=="POST") as order_received:
+                order_slot.get_by_role("button",name="Upload original",exact=True).click()
+            assert order_received.value.status==201,order_received.value.text()
+            ro_files.append(order_received.value.json()["id"])
+            expect(order_slot.get_by_role("link",name="Download original",exact=True)).to_be_visible()
+            assert context.request.get(f"{BASE}/api/applications/{app_id}/").json()["can_checkout"] is (index==1)
+        listing=context.request.get(f"{BASE}/api/applications/{app_id}/files/").json()
+        originals=[next(item for item in listing["items"] if item["id"]==file_id) for file_id in ro_files]
+        assert [item["context"] for item in originals]==contexts
+        cross=context.request.post(BASE+"/api/files/",headers={"X-CSRFToken":csrf},multipart={
+            "application_id":app_id,"category":"RO","context":contexts[1],"visibility":"own","attachment_id":originals[0]["attachment_id"],
+            "file":{"name":"wrong-context.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.7 cross-context-attempt"}})
+        assert cross.status==403,cross.text()
+        unchanged=context.request.get(f"{BASE}/api/applications/{app_id}/files/").json()["items"]
+        assert all(any(item["id"]==original["id"] and item["context"]==original["context"] for item in unchanged) for original in originals)
+        page.get_by_role("button",name="العربية",exact=True).click()
+        arabic_slot=page.get_by_role("region",name=order_requirements[0]["label_ar"],exact=True).nth(0)
+        expect(arabic_slot.get_by_text("محكمة الأمر: Synthetic court 1",exact=True)).to_be_visible()
+        expect(arabic_slot.get_by_text("رقم قضية الأمر: ORDER-1",exact=True)).to_be_visible()
+        page.set_viewport_size({"width":390,"height":1000})
+        assert page.locator("[style]").count()==0 and page.evaluate("document.documentElement.scrollWidth<=innerWidth")
+        page.set_viewport_size({"width":1280,"height":1000})
+        page.get_by_role("button",name="English",exact=True).click()
+        checks.append("Real repeated orders keep distinct saved IDs; each needs its own safe copy, and cross-context replacement403 preserves both originals")
+        csrf=next(cookie["value"] for cookie in context.cookies() if cookie["name"]=="csrftoken")
         from tribunal.models import Application,CheckoutIntent
         fixture_db(lambda:Application.objects.filter(pk=app_id).update(duplicate_hold=True))
         page.get_by_role("button",name="Refresh application status",exact=True).click()

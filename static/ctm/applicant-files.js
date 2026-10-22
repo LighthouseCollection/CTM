@@ -2,6 +2,18 @@
 (() => {
   "use strict";
   const categories = new Set(["MC","CMC","CDD","PHOTO","SPOUSE_PHOTO","PET","RO"]);
+  function savedOrderDetails(application) {
+    const rows=application?.answers?.restraining_orders;
+    const definitions=application?.questionnaire?.definition?.fields;
+    const definition=Array.isArray(definitions)?definitions.find(field=>field?.code==="restraining_orders"):null;
+    if(!Array.isArray(rows)||!Array.isArray(definition?.item_fields))return [];
+    if(rows.some(row=>!row||typeof row.id!=="string"||!row.id.trim())||
+      new Set(rows.map(row=>row.id)).size!==rows.length)return [];
+    const fields=definition.item_fields.filter(field=>["court","number"].includes(field?.code)&&
+      [field.label_en,field.label_ar].every(value=>typeof value==="string"&&!!value.trim()));
+    return rows.map(row=>({context:row.id,fields:fields.filter(field=>typeof row[field.code]==="string"&&!!row[field.code].trim())
+      .map(field=>({label_en:field.label_en,label_ar:field.label_ar,value:row[field.code]}))}));
+  }
   const validRequirement = r => !!r && categories.has(r.category) && typeof r.context === "string" &&
     (r.category !== "RO" || !!r.context.trim()) &&
     typeof r.required === "boolean" && [r.label_en,r.label_ar].every(s => typeof s === "string" && !!s.trim());
@@ -64,9 +76,11 @@
       savedContext:"رفع الملفات متوقف أثناء تعديل الإجابات أو تنفيذ إجراء لتقديم الطلب.", additional:"أصول إضافية مرفوعة",
     },
   };
-  function ApplicationFiles({applicationId, answerVersion, api, lang="en", disabled=false, onBusyChange, onChanged, onReadyChange, onProjectionRefresh}) {
+  function ApplicationFiles({applicationId, answerVersion, savedApplication, api, lang="en", disabled=false, onBusyChange, onChanged, onReadyChange, onProjectionRefresh}) {
     const R=window.React, P=window.Plenix, h=R.createElement;
     const t=k=>words[lang === "ar" ? "ar" : "en"][k];
+    const orderDetails=savedApplication?.id===applicationId&&savedApplication.version===answerVersion
+      ? savedOrderDetails(savedApplication) : [];
     const [data,setData]=R.useState(null), [error,setError]=R.useState(null);
     const [busy,setBusy]=R.useState(false), [locked,setLocked]=R.useState(false);
     const [revision,reload]=R.useState(0), [received,setReceived]=R.useState(false);
@@ -121,6 +135,9 @@
         const controlsDisabled=busy||disabled||locked||needsRefresh||data.can_upload!==true;
         return h(P.Panel,{key,title:requirement[lang==="ar"?"label_ar":"label_en"],
           description:t(requirement.required?"required":"optional")},h(P.Stack,null,
+          ...(requirement.category==="RO" ? (orderDetails.find(order=>order.context===requirement.context)?.fields||[]) : [])
+            .map((field,index)=>h(P.Text,{key:index},`${field[lang==="ar"?"label_ar":"label_en"]}: `,
+              h("bdi",{dir:"auto"},field.value))),
           !rows.length?h(P.Text,null,t("missing")):null,
           ...rows.map(renderRow),
           data.can_upload===true?h(P.Stack,null,
@@ -133,5 +150,5 @@
       }),
       additional.length?h(P.Panel,{title:t("additional")},h(P.Stack,null,...additional.map(renderRow))):null));
   }
-  window.CTMApplicantFiles={validRequirement,validListing,downloadURL,uploadFile,ApplicationFiles};
+  window.CTMApplicantFiles={savedOrderDetails,validRequirement,validListing,downloadURL,uploadFile,ApplicationFiles};
 })();
