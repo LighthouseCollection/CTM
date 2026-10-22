@@ -2352,12 +2352,13 @@
     if (!fields.length) return null;
     return h(
       P.Stack,
-      { gap: "sm", key: title },
+      { gap: "sm", key: title, className: "ctm-spouse-profile-section" },
       h(
         P.Inline,
-        { gap: "xs", align: "center" },
+        { gap: "sm", align: "center", className: "ctm-spouse-profile-section__heading" },
         h(P.Icon, { name: icon, label: title }),
-        h(P.Text, { as: "h2", variant: "heading" }, title),
+        h(P.SectionHeading, { level: 2 }, title),
+        h(P.Divider, { className: "ctm-spouse-profile-section__divider" }),
       ),
       h(
         P.PropertyList,
@@ -2389,7 +2390,6 @@
     return h(
       P.Inline,
       { gap: "md", align: "center", className: "ctm-spouse-identity" },
-      spousePhoto(P, h, party),
       h(
         P.Inline,
         { gap: "lg", align: "start", className: "ctm-spouse-identity__facts" },
@@ -2455,7 +2455,7 @@
         h(
           P.Panel,
           {
-            icon: "person",
+            icon: spousePhoto(P, h, party),
             key: party.id,
             title: party.name,
             collapsible: true,
@@ -2467,8 +2467,8 @@
             { gap: "lg" },
             spouseIdentity(P, h, t, party),
             h(
-              P.Columns,
-              { count: 2, gap: "lg", collapseBelow: "wide", className: "ctm-spouse-profile-columns" },
+              P.Stack,
+              { gap: "section", className: "ctm-spouse-profile-sections" },
               spouseProfileSection(P, h, t, t("personalDetails"), "person", [
                 ["otherNamesKnownBy", party.profile?.personal?.other_names],
                 ["placeOfBirth", party.profile?.personal?.place_of_birth],

@@ -16,3 +16,12 @@
 .ctm-spouse-identity__fact {
   min-inline-size: 8rem;
 }
+
+.ctm-spouse-profile-section__heading {
+  inline-size: 100%;
+}
+
+.ctm-spouse-profile-section__divider {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}

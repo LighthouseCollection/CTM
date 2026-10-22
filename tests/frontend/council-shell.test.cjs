@@ -107,11 +107,19 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /t\("personalDetails"\)/);
   assert.match(councilCase, /t\("churchAffiliation"\)/);
   assert.match(councilCase, /party\.photo_url/);
+  assert.match(councilCase, /icon: spousePhoto\(P, h, party\)/);
   assert.match(councilCase, /collapsible: true/);
   assert.match(councilCase, /profile\?\.contact/);
   assert.match(councilCase, /t\("personalDetails"\), "person", \[/);
   assert.doesNotMatch(councilCase, /t\("personalDetails"\), "user", \[/);
-  assert.match(councilCase, /P\.Columns,\s*\{ count: 2, gap: "lg", collapseBelow: "wide", className: "ctm-spouse-profile-columns" \}/);
+  assert.match(councilCase, /P\.SectionHeading, \{ level: 2 \}/);
+  assert.match(councilCase, /P\.Divider, \{ className: "ctm-spouse-profile-section__divider" \}/);
+  assert.doesNotMatch(councilCase, /ctm-spouse-profile-columns/);
+  const personal = councilCase.indexOf('t("personalDetails")');
+  const contact = councilCase.indexOf('t("contact")');
+  const career = councilCase.indexOf('t("career")');
+  const church = councilCase.indexOf('t("churchAffiliation")');
+  assert.ok(personal < contact && contact < career && career < church, "spouse profile sections stay in the requested vertical order");
   assert.match(councilCase, /manage && record\.status === "open" && record\.parties\.length < 2/);
 });
 
