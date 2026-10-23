@@ -89,6 +89,12 @@
     return "sessionStatusPlanned";
   }
 
+  function sessionStatusTone(state) {
+    if (state === "planned") return "active";
+    if (state === "closed") return "neutral";
+    return "waiting";
+  }
+
   function agendaDisplayStatus(row) {
     if (row?.state === "heard") return "closed";
     if (row?.part === 1 && !row?.assigned_member_id) return "toBeAssigned";
@@ -1384,6 +1390,11 @@
     const today = todayInLosAngeles();
     const buckets = sessionBuckets(loaded, today);
     const rows = buckets[mode] || [];
+    const tableRows = rows.map((row) => ({
+      ...row,
+      session_time: formatTime(row.starts_at, lang) || t("timeNotRecorded"),
+      adjourned_time: formatTime(row.adjourned_at, lang) || t("timeNotRecorded"),
+    }));
     const titleKey = mode === "upcoming" ? "sessionsUpcoming" : mode === "archived" ? "sessionsArchived" : "sessions";
     const emptyKey = mode === "upcoming" ? "noUpcomingSessions" : mode === "archived" ? "noArchivedSessions" : "noSessions";
 
@@ -1522,16 +1533,16 @@
           )
         : null,
       h(window.CTMShell.Table, {
-        label: t(titleKey), rows, selected, onSelect: select, empty: t(emptyKey), isStatic: true,
+        label: t(titleKey), rows: tableRows, selected, onSelect: select, empty: t(emptyKey), isStatic: true,
         columns: [
           { title: t("sessionDate"), field: "date", kind: "name", minWidth: "8rem" },
-          { title: t("sessionTime"), field: "starts_at", minWidth: "8rem", pill: false, render: (row) => formatTime(row.starts_at, lang) || t("timeNotRecorded") },
+          { title: t("sessionTime"), field: "session_time", minWidth: "8rem" },
           ...(mode === "archived" ? [
-            { title: t("adjournEndTime"), field: "adjourned_at", minWidth: "8rem", pill: false, render: (row) => formatTime(row.adjourned_at, lang) || t("timeNotRecorded") },
-            { title: t("assignedCases"), field: "assigned_case_count", minWidth: "8rem", pill: false, render: (row) => String(row.assigned_case_count ?? 0) },
-            { title: t("caseHearings"), field: "hearing_case_count", minWidth: "8rem", pill: false, render: (row) => String(row.hearing_case_count ?? 0) },
+            { title: t("adjournEndTime"), field: "adjourned_time", minWidth: "8rem" },
+            { title: t("assignedCases"), field: "assigned_case_count", minWidth: "8rem" },
+            { title: t("caseHearings"), field: "hearing_case_count", minWidth: "8rem" },
           ] : []),
-          { title: t("statusLabel"), field: "state", minWidth: "8rem", pill: false, render: (row) => t(sessionStatusKey(row.state)) },
+          { title: t("statusLabel"), field: "state", minWidth: "8rem", pill: false, render: (row) => h(P.Badge, { tone: sessionStatusTone(row.state) }, t(sessionStatusKey(row.state))) },
           ...(mode === "upcoming" && canManage(user) ? [{ title: t("actions"), field: "session_actions", minWidth: "10rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
             h(P.Button, { size: "xs", icon: "pencil", disabled: pending, onClick: () => editSession(row) }, t("editSession")),
             h(P.Button, { size: "xs", icon: "trash", variant: "danger-secondary", disabled: pending || row.state !== "draft", onClick: () => setDeleteTarget(row) }, t("deleteSession")),

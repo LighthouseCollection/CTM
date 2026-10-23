@@ -322,9 +322,9 @@
       { value: "reasons", label: "Canonical Reasons", content: jsonCard("canonical_reasons", "Canonical Reasons", "Configure canonical reasons, colors, and availability.", { reasons: [] }) },
     ];
     return h(P.Stack, { gap: "md" }, notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, notice) : null, failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null, h(P.Tabs, { variant: "contained", label: "Tribunal configuration", value: tab, onChange: setTab, items: tabs }), tab === "diocese" ? null : null, mobileCard);
-  }  function Administration({ api, user, lang, onNavigationGuard, onCase }) {
+  }  function Administration({ api, user, lang, onNavigationGuard, onCase, initialSection = "members", onSectionChange }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), base = window.CTMCouncil;
-    const [section, setSection] = R.useState("members"), [filters, setFilters] = R.useState({}), [notice, setNotice] = R.useState(false);
+    const [section, setSection] = R.useState(initialSection), [filters, setFilters] = R.useState({}), [notice, setNotice] = R.useState(false);
     const sectionGuard = R.useRef(null);
     const registerGuard = R.useCallback((guard) => { sectionGuard.current = guard; onNavigationGuard?.(guard); }, [onNavigationGuard]);
     const allowed = canAdminister(user);
@@ -349,7 +349,7 @@
         : h(window.CTMShell.Workspace, { key: section, label: t(section), rows: filtered, columns, empty: t("noRows"), selectionPrompt: t("choose") }, detail);
     const switchTab = (key) => {
       if (key === section) return;
-      const move = () => { setSection(key); setFilters({}); setNotice(false); };
+      const move = () => { setSection(key); setFilters({}); setNotice(false); onSectionChange?.(key); };
       if (sectionGuard.current) sectionGuard.current(move); else move();
     };
     const memberContent = h(R.Fragment, null,

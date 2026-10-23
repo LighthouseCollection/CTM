@@ -1,4 +1,4 @@
-/* CTM uses documented Plenix 0.61.0 CDN exports. No component assets are bundled. */
+/* CTM uses documented Plenix 0.68.0 CDN exports. No component assets are bundled. */
 (() => {
   "use strict";
   const root = document.getElementById("ctm-root");
@@ -11,6 +11,7 @@
     P = window.Plenix,
     h = R.createElement;
   const config = JSON.parse(document.getElementById("ctm-config").textContent);
+  const routes = window.CTMRoutes || null;
   // Separately loaded council workspace module (static/ctm/council.js), if present.
   const councilModule = window.CTMCouncil || null;
   const navigationIcons = {
@@ -1066,6 +1067,7 @@
   }
 
   function App() {
+    const initialRoute = routes?.parse(window.location.pathname) || { page: "home", selection: null };
     const [lang, setLang] = R.useState(() => {
       try {
         return localStorage.getItem("ctm-language") === "ar" ? "ar" : "en";
@@ -1074,8 +1076,8 @@
       }
     });
     const [user, setUser] = R.useState(undefined),
-      [page, setPage] = R.useState("home");
-    const [selection, setSelection] = R.useState(null),
+      [page, setPage] = R.useState(() => initialRoute.page);
+    const [selection, setSelection] = R.useState(() => initialRoute.selection),
       [data, setData] = R.useState(null);
     const [failure, setFailure] = R.useState(false),
       [revision, reload] = R.useState(0);
@@ -1087,6 +1089,21 @@
     const applicantGuard = R.useRef(null);
     const registerApplicantGuard = R.useCallback((guard) => {
       applicantGuard.current = guard;
+    }, []);
+    R.useEffect(() => {
+      if (!routes) return undefined;
+      const restore = () => {
+        const route = routes.parse(window.location.pathname);
+        const next = route || { page: "home", selection: null };
+        if (!route) window.history.replaceState(null, "", "/");
+        setData(null);
+        setFailure(false);
+        setPage(next.page);
+        setSelection(next.selection);
+      };
+      if (!routes.parse(window.location.pathname)) window.history.replaceState(null, "", "/");
+      window.addEventListener("popstate", restore);
+      return () => window.removeEventListener("popstate", restore);
     }, []);
     const t = (key) => words[lang][key] || words[lang].unknown;
     R.useEffect(() => {
@@ -1197,6 +1214,9 @@
     const go = (id, selected = null, guarded = false) => {
       if (id === page && selected === selection) return;
       const move = () => {
+        const pathname = routes?.routeFor(id, selected);
+        if (pathname && pathname !== window.location.pathname)
+          window.history.pushState(null, "", pathname);
         setData(null);
         setFailure(false);
         setPage(id);
@@ -1726,7 +1746,7 @@
           t,
         });
       if (page === "administration" && window.CTMUI)
-        return h(window.CTMUI.Administration, { api, user, lang, onNavigationGuard: registerApplicantGuard, onCase: (id) => openCase(id, { page: "administration", labelKey: "backAdministration" }) });
+        return h(window.CTMUI.Administration, { key: selection || "members", api, user, lang, initialSection: selection || "members", onSectionChange: (section) => go("settings", section, true), onNavigationGuard: registerApplicantGuard, onCase: (id) => openCase(id, { page: "administration", labelKey: "backAdministration" }) });
       if (page === "profile" && window.CTMUI)
         return h(window.CTMUI.Profile, { api, user, lang, onUserUpdated: (updated) => setUser((previous) => ({ ...previous, ...updated })) });
       if (page === "profile")
@@ -1738,7 +1758,7 @@
           text(t(user.portal)),
         );
       if (page === "settings" && window.CTMUI?.canAdminister(user))
-        return h(window.CTMUI.Administration, { api, user, lang, onNavigationGuard: registerApplicantGuard, onCase: (id) => openCase(id, { page: "settings", labelKey: "settings" }) });
+        return h(window.CTMUI.Administration, { key: selection || "members", api, user, lang, initialSection: selection || "members", onSectionChange: (section) => go("settings", section, true), onNavigationGuard: registerApplicantGuard, onCase: (id) => openCase(id, { page: "settings", labelKey: "settings" }) });
       if (page === "settings")
         return h(
           P.Stack,
