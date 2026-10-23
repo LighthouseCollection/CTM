@@ -59,6 +59,12 @@ def test_f15_revocation_expiry_and_other_tribunal_do_not_authorize(filed, people
     assert not assignment_president(actor)
 
 
+def test_assignment_uses_active_president_when_not_supplied(filed, people, institution):
+    record = assign_case(people["admin"], filed.case_id, people["member"].pk)
+    assert record.member_id == people["member"].pk
+    assert record.president_id == people["president"].pk
+
+
 def test_f15_no_implicit_decree_approval_power(filed, people, institution):
     from tribunal.services.decisions import record_decision, approve_decision
     actor = people["admin"]

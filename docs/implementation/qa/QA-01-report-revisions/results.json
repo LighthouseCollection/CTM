@@ -1,0 +1,302 @@
+{
+  "work_order": "https://github.com/LighthouseCollection/CTM/issues/15",
+  "result": "PASS",
+  "final_run": "run4",
+  "runs": {
+    "run1": {
+      "label": "Pinned at start of work order",
+      "main": "b38e70a15b85c0c28f98515ddcd73f5c48ebdf05",
+      "backend_pr7": "db6dfa3493daa70520669ed14fd9a7331a5d385b",
+      "council_pr6": "e4d2fb334b88bb5d91208d08158f00b4650d8bc0",
+      "shell_patch": "docs/implementation/council/shell-integration.patch @ e4d2fb3",
+      "local_assembly_commit": "40feef6 (local only, not pushed)",
+      "checks": {
+        "api_db": {
+          "pass": 59,
+          "fail": 6
+        },
+        "browser": {
+          "pass": 30,
+          "fail": 4,
+          "error": 0
+        }
+      },
+      "evidence": "evidence/run1/"
+    },
+    "run2": {
+      "label": "Re-run after upstream heads moved during run 1 (new report revision contract)",
+      "main": "b38e70a15b85c0c28f98515ddcd73f5c48ebdf05",
+      "backend_pr7": "bb3e48b3e31844997c12e6234550a8ed1e5d07f5",
+      "council_pr6": "65fa3893758ab298beee8aa921a544a8cd489ebc",
+      "shell_patch": "docs/implementation/council/shell-integration.patch @ 65fa389",
+      "local_assembly_commit": "4ee49be (local only, not pushed)",
+      "checks": {
+        "api_db": {
+          "pass": 65,
+          "fail": 2
+        },
+        "browser": {
+          "pass": 24,
+          "fail": 3,
+          "error": 2
+        }
+      },
+      "evidence": "evidence/run2/"
+    },
+    "run3": {
+      "label": "Exact governance combined candidate (council S10/C-02 fixes)",
+      "combined_commit": "0b10a61220f29feeefd89f4779138c2f78d85b04",
+      "contains": {
+        "backend_pr7": "9b7abce",
+        "council_pr6": "be9f738 (incl. 6937d54, 87f094f)",
+        "plenix": "0.60.1"
+      },
+      "assembly": "none (exact unmodified #16 commit)",
+      "grants": "migration 0038_runtime_grants only",
+      "checks": {
+        "api_db": {
+          "pass": 66,
+          "fail": 1
+        },
+        "browser": {
+          "pass": 35,
+          "fail": 0,
+          "error": 0
+        },
+        "returned_correction_prefix_control": {
+          "pass": 29,
+          "fail": 3
+        }
+      },
+      "evidence": "evidence/run3/"
+    },
+    "run4": {
+      "label": "Post-fix governance handoff (backend 48b80c4 returned-correction RLS fix, migrations 0040/0041)",
+      "combined_commit": "b3de51e203c814f1260ba5046e1d35e67d486657",
+      "contains": {
+        "backend_pr7": "48b80c4",
+        "council_pr6": "be9f738",
+        "ui": "f5677e8",
+        "plenix": "0.60.1"
+      },
+      "assembly": "none (exact unmodified #16 commit)",
+      "grants": "migration 0038_runtime_grants only",
+      "checks": {
+        "api_db": {
+          "pass": 66,
+          "fail": 1
+        },
+        "browser": {
+          "pass": 35,
+          "fail": 0,
+          "error": 0
+        },
+        "returned_correction": {
+          "pass": 32,
+          "fail": 0
+        }
+      },
+      "evidence": "evidence/run4/"
+    }
+  },
+  "environment": {
+    "machine": "Desktop-R, Windows 11 Pro",
+    "python": "3.12.11 via uv 0.8.12 (uv.lock, --frozen)",
+    "node": "22.23.1",
+    "browser": "Playwright 1.64.0 Chromium, real Plenix CDN 0.58.0",
+    "database": "Disposable PostgreSQL 16 containers on 127.0.0.1 with data on tmpfs; runs 3-4 use a fresh database name per stage (no DROP DATABASE)",
+    "http_runtime_role": "ctm_app: LOGIN NOSUPERUSER NOBYPASSRLS NOINHERIT. Runs 1-2: QA fixture table grants; runs 3-4: grants from migration 0038_runtime_grants only (58/60 tribunal tables forced RLS)",
+    "migration_role": "qa_owner (database owner, non-superuser)",
+    "authentication": "Test-issued Django sessions for synthetic users (force_login). Not Microsoft/Google/Apple provider acceptance.",
+    "external_services": "Email: locmem backend. Stripe/transcription: no credentials. Celery: eager."
+  },
+  "scenarios": [
+    {
+      "id": "QA-01-S1",
+      "title": "Revise only when can_revise is true; newest answers/observations load",
+      "expected": "Author sees Revise only with literal can_revise:true; non-authors (member, secretary, admin, president) and applicant/secretary-authored reports show none; newest version content shown",
+      "actual": "API: can_revise true only for author on open own report; false for 4 other roles, applicant intake and secretary-authored report. UI: Revise shown/hidden accordingly with explanation; v2 content loaded.",
+      "status": "PASS",
+      "run1": "PASS",
+      "role": "member (author), member, secretary, admin, president, applicant",
+      "tests": "harness/api_scenarios.py S1; harness/browser_scenarios.py s1_visibility",
+      "evidence": "evidence/run4/api-results.json; evidence/run4/screens/s1-*.png",
+      "run2": "PASS",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-S2",
+      "title": "Successful edit persists through API and reload, one attributed version, prior values/files/non-text answers preserved",
+      "expected": "Saving from the council editor appends one attributed version over the real API; reload shows it; earlier versions, files and non-text answers retained",
+      "actual": "Run 4 (b3de51e): UI save appends one attributed version over the real API; reload/history correct; non-text answers kept; server refuses bodies without expected_version (422). Run 2 FAIL (council editor lacked expected_version) fixed in council be9f738.",
+      "status": "PASS",
+      "run1": "PASS",
+      "role": "member (assigned author)",
+      "tests": "api_scenarios.py S2 (incl. 'council editor request body'); browser_scenarios.py s2_edit_persist",
+      "evidence": "evidence/run4/api-results.json; evidence/run4/screens/s2-editor-filled.png; evidence/run1/screens/s2-*.png",
+      "run2": "FAIL",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-S3",
+      "title": "Unchanged save creates no unnecessary revision",
+      "expected": "No new version for an unchanged save",
+      "actual": "UI: 'Nothing has changed' notice, zero POSTs, no version (both runs). Server: an identical body with the current expected_version is still appended as a new version (observation; the editor prevents it).",
+      "status": "PASS",
+      "run1": "PASS",
+      "role": "member (assigned author)",
+      "tests": "browser_scenarios.py s3_unchanged; api_scenarios.py S3",
+      "evidence": "evidence/run4/screens/s3-unchanged.png",
+      "run2": "PASS",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-S4",
+      "title": "Other council member and non-author admin/secretary cannot revise; forged HTTP fails; read is not write",
+      "expected": "403 for every non-author forged POST, no version created, GET still allowed",
+      "actual": "Run 2: all forged POSTs (member x2, secretary, admin, president, manager on secretary report) 403, unauthenticated/no-CSRF 403, no version, secretary GET 200; 0/16 denials as 404. Run 1: denied but 15/16 returned 404 resource_or_input_invalid (RLS hid the FOR UPDATE row) — fixed by bb3e48b's proceeding lock.",
+      "status": "PASS",
+      "run1": "PASS (denial) / FAIL (status semantics)",
+      "role": "member, secretary, admin, president, anonymous",
+      "tests": "api_scenarios.py S4; owner_control.py",
+      "evidence": "evidence/run4/api-results.json; evidence/run1/owner-role-control.json",
+      "run2": "PASS",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-S5",
+      "title": "Applicant/external original protected; applicant cannot call council revision endpoints",
+      "expected": "Council cannot rewrite applicant intake; applicant POST/GET on revision routes denied; applicant list leaks nothing",
+      "actual": "Manager/secretary/admin 403 on applicant intake; applicant 403 on own intake and council report revision routes and on council history GET; applicant list shows only own intake without can_revise/observations. External-priest reports not exercised (no external capability flow in QA-01 fixtures).",
+      "status": "PASS",
+      "run1": "PASS",
+      "role": "applicant, member, secretary, admin",
+      "tests": "api_scenarios.py S5",
+      "evidence": "evidence/run4/api-results.json",
+      "run2": "PASS",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-S6",
+      "title": "Closed case/proceeding denies writes; reopening does not unlock old proceeding",
+      "expected": "422 read-only for closed case and for original proceeding after reopening",
+      "actual": "Closed case: author and admin denied (422), can_revise false. Reopened (appeal-acceptance state): original-proceeding report can_revise false, write denied 422. DB trigger 'Closed proceedings are read only' also blocks raw INSERT.",
+      "status": "PASS",
+      "run1": "PASS",
+      "role": "member (author), admin",
+      "tests": "api_scenarios.py S6, S12",
+      "evidence": "evidence/run4/api-results.json",
+      "run2": "PASS",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-S7",
+      "title": "Reassignment does not let new manager rewrite; follow-up is its own report",
+      "expected": "Original author (no longer assigned) and new manager both denied; follow-up created as new linked report",
+      "actual": "Both 403 with can_revise false; new manager created/sent/completed a follow-up interview: separate report, parent_report_id = original, version 1, can_revise true for its author; original untouched.",
+      "status": "PASS",
+      "run1": "PASS",
+      "role": "member (original author), member (new manager), secretary (recorded assignment), president (authorized)",
+      "tests": "api_scenarios.py S7",
+      "evidence": "evidence/run4/api-results.json",
+      "run2": "PASS",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-S8",
+      "title": "403 / server error / lost acknowledgement: text survives, no false success, no silent duplicate or overwrite",
+      "expected": "Text kept, no success notice, retry does not duplicate",
+      "actual": "Run 4: simulated 500 -> 'server did not confirm' with text kept and no false success; lost acknowledgement -> server committed once, 'Try again' resends the identical body and is confirmed as the existing version (no duplicate); simulated 403 and real mid-edit reassignment 403 shown as denial with Save hidden. Server: identical retry returns same receipt; different body on old base 409.",
+      "status": "PASS",
+      "run1": "FAIL",
+      "role": "member (assigned author; reassigned away mid-edit)",
+      "tests": "api_scenarios.py S8; browser_scenarios.py s8_failures (500/403/lost-ack are simulated by Playwright interception and labelled; mid-edit reassignment is a real server denial)",
+      "evidence": "evidence/run4/screens/s8-*.png; evidence/run1/screens/s8-*.png",
+      "run2": "FAIL",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-S9",
+      "title": "Two sessions save conflicting changes: server concurrency with real parallel requests",
+      "expected": "Server rejects the stale writer",
+      "actual": "Run 4: real parallel POSTs [201, 409]; stale expected_version 409; browser: stale second session warned, near-simultaneous saves -> one version, no double success.",
+      "status": "PASS",
+      "run1": "FAIL",
+      "role": "member (author, two sessions)",
+      "tests": "api_scenarios.py S9; browser_scenarios.py s9_two_sessions",
+      "evidence": "evidence/run4/api-results.json; evidence/run1/screens/s9-*.png",
+      "run2": "PASS",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-S10",
+      "title": "Navigation/refresh warning preserves or handles unsaved narrative",
+      "expected": "Unsaved narrative warned or preserved on refresh and on in-app navigation",
+      "actual": "Run 4: refresh warns (beforeunload); sidebar navigation away and back restores the unsaved narrative with a notice. Runs 1-2 FAIL fixed in council 6937d54/87f094f.",
+      "status": "PASS",
+      "run1": "FAIL",
+      "role": "member (assigned author)",
+      "tests": "browser_scenarios.py s10_unsaved",
+      "evidence": "evidence/run4/screens/s10-*.png",
+      "run2": "FAIL",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-S11",
+      "title": "EN/AR, RTL, narrow viewport",
+      "expected": "Actual screens, correct author/history labels, no unauthorized controls or clipped fields",
+      "actual": "EN 390, AR 1280, AR 390: dir correct, Arabic author/revise labels, 0 overflow, 0 inline styles, textareas unclipped, no page errors; non-author in Arabic sees no Revise. Run 1 showed English punctuation mirrored inside RTL; fixed in 65fa389 (dir=auto + isolates).",
+      "status": "PASS",
+      "run1": "PASS (minor bidi observation)",
+      "role": "member (author), member (non-author)",
+      "tests": "browser_scenarios.py s11_language_layout",
+      "evidence": "evidence/run4/screens/s11-*.png",
+      "run2": "PASS",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-S12",
+      "title": "Role/scoping under non-owner PostgreSQL runtime role with audit/version evidence",
+      "expected": "HTTP runs as non-owner, RLS enforced below the API, history immutable, audit for each version",
+      "actual": "Server connected as ctm_app (rolsuper=false, rolbypassrls=false). Raw SQL as ctm_app: no actor context sees 0 revisions; unassigned member and applicant INSERT denied by RLS; closed/old-proceeding INSERT denied by trigger; in-place UPDATE denied ('historical records cannot be overwritten'); author INSERT positive control allowed (rolled back). Every appended version has a report_revised audit event.",
+      "status": "PASS",
+      "run1": "PASS",
+      "role": "database runtime ctm_app",
+      "tests": "harness/bootstrap_db.py grant; api_scenarios.py S12",
+      "evidence": "evidence/run4/database-roles.json; evidence/run4/api-results.json",
+      "run2": "PASS",
+      "run3": "PASS",
+      "run4": "PASS"
+    },
+    {
+      "id": "QA-01-RC",
+      "title": "Returned correction resubmission with optional spouse DOB absent (governance run-4 handoff; backend #2 fix 48b80c4/0041)",
+      "expected": "Save, submit, replay, admin return, correction, resubmit without new signature/fee, replay; first submission frozen; party reference and case identity preserved; cross-applicant and member denials",
+      "actual": "Run 4 (b3de51e): 32/32 for applicant without spouse DOB and applicant with spouse DOB. Negative control on pre-fix 0b10a61: resubmission without spouse DOB returns HTTP 500 and the filing stays returned (29/32); with spouse DOB it passes.",
+      "status": "PASS",
+      "run3": "FAIL (pre-fix control)",
+      "run4": "PASS",
+      "role": "applicant x2, admin, member, other applicant",
+      "tests": "harness/returned_setup.py (owner, setup only); harness/returned_scenarios.py (HTTP as ctm_app)",
+      "evidence": "evidence/run4/returned-results.json; evidence/run3/returned-results-prefix-control.json"
+    }
+  ],
+  "summary": {
+    "pass": 13,
+    "fail": 0,
+    "blocked": 0,
+    "not_run": 0,
+    "note": "12 QA-01 scenarios plus the returned-correction handoff check (RC), run 4"
+  }
+}

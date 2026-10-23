@@ -4,12 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CTM</title>
-  <script src="https://design-system.lighthouseway.org/cdn/0.60.1/theme-boot.js"></script>
-  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.60.1/fonts.css">
-  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.60.1/plenix.css">
-  <script defer src="https://design-system.lighthouseway.org/cdn/0.60.1/vendor/react.production.min.js"></script>
-  <script defer src="https://design-system.lighthouseway.org/cdn/0.60.1/vendor/react-dom.production.min.js"></script>
-  <script defer src="https://design-system.lighthouseway.org/cdn/0.60.1/plenix.js"></script>
+  <script src="https://design-system.lighthouseway.org/cdn/0.68.0/theme-boot.js"></script>
+  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.68.0/fonts.css">
+  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.68.0/plenix.css">
+  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.68.0/icons-all.css">
+  <script defer src="https://design-system.lighthouseway.org/cdn/0.68.0/vendor/react.production.min.js"></script>
+  <script defer src="https://design-system.lighthouseway.org/cdn/0.68.0/vendor/react-dom.production.min.js"></script>
+  <script defer src="https://design-system.lighthouseway.org/cdn/0.68.0/plenix.js"></script>
   <script defer src="{% static 'ctm/applicant-files.js' %}"></script>
   <script defer src="{% static 'ctm/applicant-filing.js' %}"></script>
   <script defer src="{% static 'ctm/applicant-appointments.js' %}"></script>
@@ -22,18 +23,20 @@
   <script defer src="{% static 'ctm/applicant-lifecycle.js' %}"></script>
   <script defer src="{% static 'ctm/applicant-requests.js' %}"></script>
   <script defer src="{% static 'ctm/applicant-decrees.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'ctm/ctm.css' %}?v=new-applications-review-20261022">
   <script defer src="{% static 'ctm/applicant-supplements.js' %}"></script>
   <script defer src="{% static 'ctm/applicant-history.js' %}"></script>
   <script defer src="{% static 'ctm/applicant-notifications.js' %}"></script>
   <script defer src="{% static 'ctm/applicant.js' %}"></script>
-  <script defer src="{% static 'ctm/shell-layout.js' %}"></script>
-  <script defer src="{% static 'ctm/council.js' %}"></script>
-  <script defer src="{% static 'ctm/council-case.js' %}"></script>
-  <script defer src="{% static 'ctm/council-decree.js' %}"></script>
-  <script defer src="{% static 'ctm/council-media.js' %}"></script>
+  <script defer src="{% static 'ctm/shell-layout.js' %}?v=cdn068-native-pills"></script>
+    <script defer src="{% static 'ctm/council.js' %}?v=client-routing-native-pills-20261023"></script>
+    <script defer src="{% static 'ctm/council-case.js' %}?v=new-applications-review-20261022"></script>
+  <script defer src="{% static 'ctm/council-decree.js' %}?v=president-wording-20261022"></script>
+  <script defer src="{% static 'ctm/council-media.js' %}?v=reports-persons-065"></script>
   <script defer src="{% static 'ctm/historical-entry.js' %}"></script>
-  <script defer src="{% static 'ctm/ui-workspaces.js' %}"></script>
-  <script defer src="{% static 'ctm/app.js' %}?v=cdn-header-brand-20261021"></script>
+  <script defer src="{% static 'ctm/ui-workspaces.js' %}?v=client-routing-settings-20261023"></script>
+  <script defer src="{% static 'ctm/routes.js' %}?v=client-routing-20261023"></script>
+  <script defer src="{% static 'ctm/app.js' %}?v=client-routing-native-pills-20261023"></script>
 </head>
 <body>
   {{ boot|json_script:"ctm-config" }}
@@ -41,3 +44,4 @@
   <noscript>Enable JavaScript to use CTM. يرجى تفعيل جافاسكريبت لاستخدام النظام.</noscript>
 </body>
 </html>
+

@@ -1,0 +1,624 @@
+.ctm-session-header-action {
+  inline-size: 10.5rem;
+  justify-content: flex-start;
+}
+
+
+.ctm-spouse-header {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--plx-sys-space-inline-md);
+}
+
+.ctm-spouse-header__fact {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--plx-sys-space-stack-2xs);
+  min-inline-size: 8rem;
+}
+
+.ctm-spouse-header__name {
+  min-inline-size: 10rem;
+}
+
+.ctm-petition-header {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--plx-sys-space-stack-2xs);
+}
+
+.ctm-petition-header__party {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--plx-sys-space-inline-sm);
+}
+
+.ctm-petition-header__name {
+  font-size: inherit;
+}
+
+.ctm-spouse-profile-section {
+  --ctm-spouse-section-accent: var(--plx-ref-color-orange-700, #9a4d00);
+}
+
+.ctm-spouse-profile-section__heading {
+  inline-size: 100%;
+  color: var(--ctm-spouse-section-accent);
+}
+
+.ctm-spouse-profile-section__heading .plx-icon,
+.ctm-spouse-profile-section__heading .plx-section-heading {
+  color: inherit;
+}
+
+.ctm-spouse-profile-section__edit {
+  color: var(--plx-sys-color-primary, var(--plx-color-primary));
+}
+
+.ctm-spouse-profile-section .plx-property-list__label,
+.ctm-spouse-profile-section .plx-property-list__label-text {
+  color: var(--plx-ref-color-blue-650);
+}
+
+.ctm-spouse-profile-section__divider {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  block-size: 0;
+  border: 0;
+  border-block-start: 1px solid var(--ctm-spouse-section-accent);
+  background: transparent;
+}
+
+
+
+/* The CDN lacks a scale glyph, so Decision uses a semantic balance icon. */
+.ctm-decision-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ctm-decree-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Profile details use evenly balanced columns, separated by a quiet structural rule. */
+.ctm-spouse-profile-section--two-columns .plx-property-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: var(--plx-sys-space-inline-2xl);
+  row-gap: var(--plx-sys-space-stack-lg);
+  position: relative;
+}
+
+.ctm-spouse-profile-section--two-columns .plx-property-list::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 50%;
+  inline-size: var(--plx-sys-border-width-hairline);
+  background: var(--plx-sys-color-border-subtle);
+  pointer-events: none;
+}
+
+.ctm-spouse-profile-section--two-columns .plx-property-list__item {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--plx-sys-space-stack-2xs);
+  min-inline-size: 0;
+}
+
+/* xl avatars are 48px; the case profile photograph needs 10px more on each side. */
+.ctm-spouse-photo {
+  inline-size: 68px;
+  block-size: 68px;
+}
+
+.ctm-spouse-photo .plx-avatar__image {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.ctm-spouse-photo-control {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--plx-sys-space-stack-2xs);
+}
+
+.ctm-spouse-photo-control__input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ctm-spouse-photo-control__change {
+  color: var(--plx-sys-color-text-primary);
+  font-size: var(--plx-comp-badge-sm-font-size);
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ctm-spouse-photo-control__input:focus-visible + .ctm-spouse-photo-control__change {
+  outline: var(--plx-sys-border-width-focus) solid var(--plx-sys-color-focus);
+  outline-offset: var(--plx-sys-space-stack-2xs);
+}
+
+.ctm-spouse-photo-control__input:disabled + .ctm-spouse-photo-control__change {
+  cursor: wait;
+}
+
+.ctm-spouse-photo-control__error {
+  max-inline-size: 10rem;
+  color: var(--plx-sys-color-text-danger);
+  font-size: var(--plx-sys-font-size-caption);
+  text-align: center;
+}
+
+@media (max-width: 42rem) {
+  .ctm-spouse-profile-section--two-columns .plx-property-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ctm-spouse-profile-section--two-columns .plx-property-list::after {
+    display: none;
+  }
+}
+
+/* Summary participants remain content-sized even if an older cached script requests fill. */
+.ctm-case-summary-person-pill {
+  display: inline-flex !important;
+  inline-size: fit-content !important;
+  width: auto !important;
+}
+
+
+/* Case summary reads in two balanced columns and returns to one on narrow panes. */
+.ctm-case-summary-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--plx-sys-space-inline-2xl);
+  row-gap: var(--plx-sys-space-stack-lg);
+}
+
+.ctm-case-summary-fields .plx-property-list__item {
+  grid-column: auto;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--plx-sys-space-stack-2xs);
+  align-items: start;
+}
+
+@media (max-width: 48rem) {
+  .ctm-case-summary-fields { grid-template-columns: 1fr; }
+}
+/* Card edit forms keep related fields readable without relying on a CDN layout primitive. */
+.ctm-case-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--plx-space-md, 1rem);
+}
+
+/* Read mode keeps the field layout, but cannot receive focus or be changed. */
+.ctm-case-read-grid input[readonly] {
+  pointer-events: none;
+  background: var(--plx-color-surface, #fff);
+  color: var(--plx-color-text, #151515);
+  cursor: default;
+}
+
+/* Card-local editing actions remain on the card surface. */
+#ctm-root .plx-panel .plx-form-actions {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+@media (max-width: 820px) {
+  .ctm-case-edit-grid { grid-template-columns: 1fr; }
+}
+
+
+/* New and editable tribunal sessions use the same compact responsive form rhythm. */
+.ctm-session-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--plx-space-md, 1rem);
+}
+
+.ctm-session-form .plx-form-actions {
+  background: transparent;
+}
+
+@media (max-width: 820px) {
+  .ctm-session-form-grid { grid-template-columns: 1fr; }
+}
+
+
+/* A calendar action needs an explicit add affordance; the CDN does not expose a calendar-add glyph. */
+.ctm-calendar-add-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+.ctm-calendar-add-icon > .plx-icon:last-child {
+  position: absolute;
+  inset-inline-end: -0.22rem;
+  inset-block-end: -0.18rem;
+  padding: 0.04rem;
+  border-radius: 999px;
+  background: var(--plx-color-surface, #fff);
+}
+
+/* Report recipients are selected independently so a joint report is intentional. */
+.ctm-report-party-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--plx-sys-space-stack-sm, 0.75rem);
+}
+
+.ctm-report-party-card {
+  min-inline-size: 0;
+  padding: var(--plx-sys-space-stack-sm, 0.75rem);
+  border: var(--plx-sys-border-width-hairline, 1px) solid var(--plx-sys-color-border-subtle, #d4d8df);
+  border-radius: var(--plx-sys-radius-md, 0.5rem);
+  background: var(--plx-sys-color-surface-default, #fff);
+}
+
+.ctm-report-party-card.is-selected {
+  border-color: var(--plx-sys-color-border-interactive, #1769e0);
+  background: var(--plx-sys-color-surface-selected, #edf4ff);
+}
+
+.ctm-report-party-card .plx-check {
+  inline-size: 100%;
+}
+
+@media (max-width: 42rem) {
+  .ctm-report-party-cards { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Arabic report questions are an RTL reading surface, independent of the portal shell language. */
+.ctm-report-question-language--rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.ctm-report-question-language--rtl .plx-check,
+.ctm-report-question-language--rtl .plx-check__text,
+.ctm-report-question-language--rtl .plx-fieldset__legend {
+  direction: rtl;
+  text-align: right;
+}
+/* Council-vote record: member identity, one decision per row, and live totals. */
+.ctm-council-vote-table {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) repeat(3, minmax(5.5rem, 7.5rem));
+  border: 1px solid var(--plx-color-border, #d7dce3);
+  border-radius: var(--plx-radius-md, 8px);
+  overflow: hidden;
+}
+
+.ctm-council-vote-table__header,
+.ctm-council-vote-table__row,
+.ctm-council-vote-table__summary {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.ctm-council-vote-table__header > div,
+.ctm-council-vote-table__row > div,
+.ctm-council-vote-table__row > label,
+.ctm-council-vote-table__summary > div {
+  min-block-size: 3.75rem;
+  padding: var(--plx-space-sm, 0.75rem);
+  border-inline-end: 1px solid var(--plx-color-border, #d7dce3);
+  border-block-end: 1px solid var(--plx-color-border, #d7dce3);
+}
+
+.ctm-council-vote-table__header > div {
+  min-block-size: auto;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+  font-size: .8125rem;
+  background: var(--plx-color-surface-subtle, #f5f7fa);
+}
+
+.ctm-council-vote-member {
+  display: flex;
+  align-items: center;
+  gap: var(--plx-space-sm, 0.75rem);
+}
+
+.ctm-council-vote-choice {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.ctm-council-vote-choice input {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  accent-color: var(--plx-color-primary, #2563eb);
+}
+
+.ctm-council-vote-choice:has(input:disabled) {
+  cursor: default;
+  opacity: .55;
+}
+
+.ctm-council-vote-table__summary {
+  background: var(--plx-color-surface-subtle, #f5f7fa);
+}
+
+.ctm-council-vote-table__summary > div {
+  display: flex;
+  align-items: center;
+  border-block-end: 0;
+}
+
+.ctm-council-vote-table__summary > div:first-child {
+  grid-column: 1 / 3;
+}
+
+.ctm-vote-total::before {
+  content: "";
+  display: inline-block;
+  inline-size: .625rem;
+  block-size: .625rem;
+  margin-inline-end: .5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ctm-vote-total--approve { color: #15803d; }
+.ctm-vote-total--deny { color: #b91c1c; }
+.ctm-vote-total--abstain { color: #9a7b43; }
+
+@media (max-width: 720px) {
+  .ctm-council-vote-table { grid-template-columns: minmax(12rem, 1fr) repeat(3, minmax(3.75rem, 1fr)); }
+  .ctm-council-vote-table__header > div { font-size: .6875rem; padding-inline: .25rem; }
+  .ctm-council-vote-table__row > div,
+  .ctm-council-vote-table__row > label { padding: .5rem; }
+}
+/* The decree editor follows the decision-specific template selected by the current decision. */
+.ctm-decree-template {
+  display: grid;
+  gap: var(--plx-space-md, 1rem);
+  margin-block-start: var(--plx-space-md, 1rem);
+}
+
+.ctm-decree-template .plx-panel {
+  background: var(--plx-color-surface-subtle, #f8fafc);
+}
+
+
+/* Current hearings are visually marked as in progress in the shared entity header. */
+.ctm-hearing-header .plx-entity-header__tile[data-plx-media-hue="green"] {
+  background: linear-gradient(135deg,
+    var(--plx-color-positive-surface, #e6f6eb),
+    var(--plx-color-positive-surface-strong, #c6ebd1));
+}
+
+/* Neutral table pills use the tokenized off-white surface instead of a disabled gray. */
+.plx-data-grid .plx-data-pill:not([data-plx-category]),
+.plx-data-grid .plx-data-pill[data-plx-category="grey"] {
+  background-color: var(--plx-sys-color-surface-subtle, #f8fafc);
+}
+
+/* Awaiting-review acceptance is distinct from the normal primary action. */
+.ctm-application-review__accept.plx-button--primary {
+  background: var(--plx-sys-color-success, #16803b);
+  border-color: var(--plx-sys-color-success, #16803b);
+}
+.ctm-application-review__accept.plx-button--primary:hover {
+  background: var(--plx-sys-color-success-strong, #126b31);
+  border-color: var(--plx-sys-color-success-strong, #126b31);
+}
+
+/* Demo-only evidence supplied for the CTM walkthrough. */
+.ctm-demo-evidence-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--plx-space-sm, .75rem);
+}
+
+.ctm-demo-evidence-gallery__item {
+  display: block;
+  min-inline-size: 0;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--plx-sys-color-surface, #fff);
+  border: 1px solid var(--plx-sys-color-border, #d7dce4);
+  border-radius: var(--plx-radius-md, .5rem);
+}
+
+.ctm-demo-evidence-gallery__item:focus-visible {
+  outline: 2px solid var(--plx-sys-color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.ctm-demo-evidence-gallery__item img {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform .15s ease;
+}
+
+.ctm-demo-evidence-gallery__item:hover img { transform: scale(1.03); }
+
+/* Demo-only documents supplied for the CTM walkthrough. */
+.ctm-demo-document-list {
+  display: grid;
+  gap: var(--plx-space-sm, .75rem);
+}
+
+.ctm-demo-document-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--plx-space-md, 1rem);
+  padding: var(--plx-space-sm, .75rem);
+  background: var(--plx-sys-color-surface-subtle, #f8fafc);
+  border: 1px solid var(--plx-sys-color-border, #d7dce4);
+  border-radius: var(--plx-radius-md, .5rem);
+}
+
+.ctm-demo-document-list__type {
+  margin-block-start: .125rem;
+  color: var(--plx-sys-color-text-muted, #5f6b7a);
+  font-size: var(--plx-font-size-sm, .875rem);
+}
+
+@media (max-width: 560px) {
+  .ctm-demo-document-list__item { align-items: flex-start; flex-direction: column; }
+}
+
+/* Per-hearing attendance is recorded in a full council roster modal. */
+.ctm-hearing-attendance-table {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) repeat(2, minmax(6.5rem, 8.5rem));
+  border: 1px solid var(--plx-color-border, #d7dce3);
+  border-radius: var(--plx-radius-md, 8px);
+  overflow: hidden;
+}
+
+.ctm-hearing-attendance-table__header,
+.ctm-hearing-attendance-table__row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.ctm-hearing-attendance-table__header > div,
+.ctm-hearing-attendance-table__row > div,
+.ctm-hearing-attendance-table__row > label {
+  min-block-size: 4.25rem;
+  padding: var(--plx-space-sm, .75rem);
+  border-inline-end: 1px solid var(--plx-color-border, #d7dce3);
+  border-block-end: 1px solid var(--plx-color-border, #d7dce3);
+}
+
+.ctm-hearing-attendance-table__header > div {
+  min-block-size: auto;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+  font-size: .8125rem;
+  background: var(--plx-color-surface-subtle, #f5f7fa);
+}
+
+.ctm-hearing-attendance-member {
+  display: grid;
+  align-content: center;
+  gap: .125rem;
+}
+
+.ctm-hearing-attendance-choice {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.ctm-hearing-attendance-choice input {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  accent-color: var(--plx-color-muted, #9ca3af);
+}
+
+.ctm-hearing-attendance-choice--present input { accent-color: var(--plx-color-success, #15803d); }
+.ctm-hearing-attendance-choice:has(input:disabled) { cursor: default; opacity: .55; }
+.ctm-hearing-attendance-table__row:last-child > div,
+.ctm-hearing-attendance-table__row:last-child > label { border-block-end: 0; }
+
+@media (max-width: 720px) {
+  .ctm-hearing-attendance-table { grid-template-columns: minmax(11rem, 1fr) repeat(2, minmax(4rem, 1fr)); }
+  .ctm-hearing-attendance-table__header > div { font-size: .6875rem; padding-inline: .25rem; }
+  .ctm-hearing-attendance-table__row > div,
+  .ctm-hearing-attendance-table__row > label { padding: .5rem; }
+}
+
+
+.ctm-demo-file-preview { max-inline-size: 100%; max-block-size: 36rem; object-fit: contain; }
+
+.ctm-past-hearings-table { display: grid; grid-template-columns: minmax(14rem, 1fr) minmax(10rem, .5fr) minmax(6rem, auto); border: 1px solid var(--plx-color-border, #d7dce3); border-radius: var(--plx-radius-md, 8px); overflow: hidden; }
+.ctm-past-hearings-table__header, .ctm-past-hearings-table__row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; }
+.ctm-past-hearings-table__header > div, .ctm-past-hearings-table__row > div { display: flex; align-items: center; min-block-size: 3rem; padding: var(--plx-space-sm, .75rem); border-inline-end: 1px solid var(--plx-color-border, #d7dce3); border-block-end: 1px solid var(--plx-color-border, #d7dce3); }
+.ctm-past-hearings-table__header > div { min-block-size: auto; font-weight: 700; text-transform: uppercase; letter-spacing: .035em; font-size: .8125rem; background: var(--plx-color-surface-subtle, #f5f7fa); }
+.ctm-past-hearings-table__row:last-child > div { border-block-end: 0; }
+
+.ctm-case-timeline {
+  border: 1px solid var(--plx-color-border, #d7dce3);
+  border-radius: var(--plx-radius-md, 8px);
+  overflow: hidden;
+}
+
+.ctm-case-timeline__year-group {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  border-block-end: 1px solid var(--plx-color-border, #d7dce3);
+}
+
+.ctm-case-timeline__year-group:last-child { border-block-end: 0; }
+
+.ctm-case-timeline__year {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--plx-space-md, 1rem);
+  border-inline-end: 1px solid var(--plx-color-border, #d7dce3);
+  color: var(--plx-sys-color-text-secondary, #596579);
+  font-size: 1.1rem;
+  letter-spacing: .04em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.ctm-case-timeline__events { min-inline-size: 0; }
+
+.ctm-case-timeline__event {
+  display: grid;
+  grid-template-columns: 4.5rem 2.125rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--plx-space-sm, .75rem);
+  min-block-size: 5.25rem;
+  padding: var(--plx-space-md, 1rem);
+  border-block-end: 1px solid var(--plx-color-border, #d7dce3);
+}
+
+.ctm-case-timeline__event:last-child { border-block-end: 0; }
+.ctm-case-timeline__date { color: var(--plx-sys-color-text-secondary, #596579); font-weight: 700; font-size: .8125rem; text-align: end; }
+.ctm-case-timeline__marker { inline-size: 1.5rem; block-size: 1.5rem; border-radius: 50%; background: var(--plx-ref-color-blue-650, #1769aa); box-shadow: 0 0 0 1px var(--plx-ref-color-blue-650, #1769aa); }
+.ctm-case-timeline__event--marriage .ctm-case-timeline__marker { background: var(--plx-ref-color-orange-700, #9a4d00); box-shadow: 0 0 0 1px var(--plx-ref-color-orange-700, #9a4d00); }
+.ctm-case-timeline__body { min-inline-size: 0; }
+.ctm-case-timeline__body .plx-text { margin: 0; }
+
+@media (max-width: 640px) {
+  .ctm-case-timeline__year-group { grid-template-columns: 3.25rem minmax(0, 1fr); }
+  .ctm-case-timeline__event { grid-template-columns: 3.5rem 1.75rem minmax(0, 1fr); gap: var(--plx-space-xs, .5rem); padding: var(--plx-space-sm, .75rem); }
+  .ctm-case-timeline__event > .plx-badge { grid-column: 3; justify-self: start; }
+  .ctm-case-timeline__marker { inline-size: 1.25rem; block-size: 1.25rem; }
+}
+
+.ctm-account-hero { display: flex; align-items: center; gap: var(--plx-space-md, 1rem); padding: var(--plx-space-lg, 1.5rem); border: 1px solid var(--plx-color-border, #d7dce3); border-radius: var(--plx-radius-md, 8px); background: var(--plx-color-surface, #fff); }
+.ctm-account-hero__avatar { display: inline-flex; align-items: center; justify-content: center; inline-size: 4rem; block-size: 4rem; border-radius: var(--plx-radius-md, 8px); background: var(--plx-ref-color-blue-650, #1769aa); color: #fff; font-weight: 700; font-size: 1.125rem; }
+.ctm-account-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--plx-space-md, 1rem); }
+@media (max-width: 720px) { .ctm-account-grid { grid-template-columns: 1fr; } }

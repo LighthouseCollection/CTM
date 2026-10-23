@@ -24,6 +24,17 @@ class Command(BaseCommand):
                     "guidance": q["conditional_guidance"],
                 },
             )
+            ReportQuestion.objects.get_or_create(
+                code=q["code"],
+                version=2,
+                defaults={
+                    "category": q["category"],
+                    "wording_en": q["wording_en"],
+                    "wording_ar": q["wording_ar"],
+                    "foundational": q["foundational"],
+                    "guidance": q["conditional_guidance"],
+                },
+            )
         fields = [
             {"code": k, "type": t, "required": True}
             for k, t in [
@@ -63,6 +74,6 @@ class Command(BaseCommand):
         )
         self.stdout.write(
             self.style.SUCCESS(
-                f"Loaded {len(bank)} exact English questions; form definitions remain unpublished pending declaration/content validation."
+                f"Loaded {len(bank)} English and Arabic question versions; form definitions remain unpublished pending declaration/content validation."
             )
         )

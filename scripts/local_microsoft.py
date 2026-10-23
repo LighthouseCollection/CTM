@@ -81,6 +81,7 @@ from django.contrib.staticfiles.handlers import StaticFilesHandler
 from django.core.wsgi import get_wsgi_application
 
 call_command("migrate", verbosity=0)
+call_command("seed_reference", verbosity=0)
 from tribunal.models import Account
 
 if not Account.objects.filter(role="admin").exists():

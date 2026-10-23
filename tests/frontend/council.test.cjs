@@ -60,6 +60,23 @@ test("session naming follows the contract", () => {
   );
 });
 
+test("an adjourned session immediately moves to Archived", () => {
+  const rows = [
+    { id: "active", state: "planned", date: "2026-10-22" },
+    { id: "adjourned", state: "closed", date: "2026-10-22", adjourned_at: "2026-10-22T19:30:00-07:00" },
+    { id: "archived", state: "closed", date: "2026-10-21", adjourned_at: "2026-10-21T19:30:00-07:00" },
+  ];
+  const today = C.sessionBuckets(rows, "2026-10-22");
+  assert.deepEqual([...today.current].map((row) => row.id), ["active"]);
+  assert.deepEqual([...today.archived].map((row) => row.id), ["adjourned", "archived"]);
+});
+
+test("missing session metadata stays missing instead of becoming an epoch date", () => {
+  assert.equal(C.formatSessionStart(null, "en"), null);
+  assert.equal(C.formatSessionStart("", "ar"), null);
+  assert.match(C.formatSessionStart("2030-01-02T10:00:00-08:00", "en"), /2030/);
+});
+
 test("one session per date and real calendar dates only", () => {
   const existing = [{ date: "2026-11-01" }];
   assert.equal(C.sessionDateProblem("2026-11-02", existing), null);
@@ -105,6 +122,12 @@ test("Part 2 offers assigned open cases; members see only their own", () => {
   assert.deepEqual([...C.part2Candidates(cases, [{ case_id: "c1" }], member)].map((c) => c.id), []);
 });
 
+test("session placement choices use the parties' names while retaining the case ID as their value", () => {
+  assert.equal(C.casePlacementLabel({ number: "20261020-02", party_names: ["Mickey Mouse", "Minnie Mouse"] }), "Mickey Mouse | Minnie Mouse");
+  assert.equal(C.casePlacementLabel({ number: "20261020-02", party_names: ["Mickey Mouse"] }), "Mickey Mouse");
+  assert.equal(C.casePlacementLabel({ number: "20261020-02", party_names: [] }), "20261020-02");
+});
+
 test("assignment requires a council member and an authorizing President", () => {
   const members = [
     { id: "m1", role: "member" },
@@ -126,6 +149,17 @@ test("agenda groups keep part and position order", () => {
   ]);
   assert.deepEqual([...groups[1]].map((r) => r.id), ["a"]);
   assert.deepEqual([...groups[2]].map((r) => r.id), ["c", "b"]);
+});
+
+test("session assignment metric counts Part 1 agenda rows still awaiting assignment", () => {
+  const agenda = [
+    { id: "a", part: 1, state: "scheduled" },
+    { id: "b", part: 1, state: "assigned" },
+    { id: "c", part: 2, state: "scheduled" },
+  ];
+  assert.equal(C.pendingAssignmentCount(agenda), 1);
+  assert.equal(C.pendingAssignmentCount([...agenda, { id: "d", part: 1, state: "scheduled" }]), 2);
+  assert.equal(C.pendingAssignmentCount(agenda.map((row) => row.id === "a" ? { ...row, state: "assigned" } : row)), 0);
 });
 
 test("server explanations are shown, never replaced by a fake success", () => {
@@ -255,6 +289,10 @@ test("cases table filters open or archived cases by number or manager", () => {
   assert.deepEqual([...C.caseRows(cases, true, "")].map((c) => c.id), ["3"]);
   assert.deepEqual([...C.caseRows(cases, false, "mark")].map((c) => c.id), ["1"]);
   assert.deepEqual([...C.caseRows(cases, false, "-02")].map((c) => c.id), ["2"]);
+  assert.deepEqual([...C.caseRows(cases, false, "", true)].map((c) => c.id), ["1", "2", "3"]);
+  assert.match(source, /showClosedCases: "Show closed cases"/);
+  assert.match(source, /view === "active"/);
+  assert.match(source, /caseClosedDate/);
 });
 
 test("statistics are plain counts, flagged partial at the list limit, never rates", () => {
@@ -275,6 +313,7 @@ test("statistics are plain counts, flagged partial at the list limit, never rate
   assert.equal(C.caseStatistics(Array(100).fill({ status: "open" }), []).partial, true);
   const src = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.doesNotMatch(src.slice(src.indexOf("function caseStatistics"), src.indexOf("function StatisticsWorkspace")), /\/|percent|rate/i);
+  assert.doesNotMatch(src.slice(src.indexOf("function StatisticsWorkspace"), src.indexOf("window.CTMCouncil")), /statsScope/);
 });
 
 test("Los Angeles times carry the right daylight-saving offset", () => {
@@ -344,6 +383,7 @@ test("F15: assignment authorizers and recorders follow server flags; one person 
   assert.equal(C.assignmentProblem("m", "a", flagged), null);
   // President approval list is unchanged by the assignment flags.
   assert.deepEqual([...C.presidents(flagged)].map((m) => m.id), ["p"]);
+  assert.deepEqual([...C.assignableMembers(flagged)].map((m) => m.id), ["m", "p"]);
   const part1 = { part: 1, state: "scheduled" };
   assert.equal(C.agendaActions(part1, { state: "planned", can_manage: false }, { id: "p", role: "president" }, null, { canRecordAssignment: true }).assign, true);
   assert.equal(C.agendaActions(part1, { state: "planned", can_manage: true }, admin, null, { canRecordAssignment: false }).assign, false);
@@ -380,6 +420,21 @@ test("sessions split into upcoming (soonest first) and past (latest first)", () 
   assert.match(C.todayInLosAngeles(new Date("2026-10-22T05:00:00Z")), /^2026-10-21$/);
 });
 
+test("sessions are separated into current, upcoming, and archived destinations", () => {
+  const rows = [
+    { id: "future-near", date: "2026-11-05", state: "planned" },
+    { id: "archived-old", date: "2026-10-01", state: "closed" },
+    { id: "current-old", date: "2026-10-15", state: "planned" },
+    { id: "future-far", date: "2026-12-03", state: "planned" },
+    { id: "current-today", date: "2026-10-21", state: "planned" },
+    { id: "archived-new", date: "2026-10-20", state: "closed" },
+  ];
+  const buckets = C.sessionBuckets(rows, "2026-10-21");
+  assert.deepEqual(buckets.current.map((row) => row.id), ["current-today", "current-old"]);
+  assert.deepEqual(buckets.upcoming.map((row) => row.id), ["future-near", "future-far"]);
+  assert.deepEqual(buckets.archived.map((row) => row.id), ["archived-new", "archived-old"]);
+});
+
 test("every notification kind the backend sends has EN and AR labels in the shell", () => {
   const app = fs.readFileSync("static/ctm/app.js", "utf8");
   const kinds = ["report_requested", "report_received", "file_uploaded", "answer_changed", "applicant_message", "case_message", "assignment_changed",
@@ -387,4 +442,28 @@ test("every notification kind the backend sends has EN and AR labels in the shel
     "testimony_invited", "testimony_rescheduled", "testimony_cancelled", "closed_intake_submitted", "application_accepted", "application_returned",
     "appeal_accept", "appeal_decline", "decree_issued", "petition_denied", "petitions_withdrawn", "payment_finance_review", "paid_filing_review"];
   for (const kind of kinds) assert.equal((app.match(new RegExp("event_" + kind + ":", "g")) || []).length, 2, kind);
+});
+
+
+test("adjournment requires an editable end time and sends it to the session endpoint", () => {
+  assert.match(source, /label: t\("adjournEndTime"\)/);
+  assert.match(source, /JSON\.stringify\(\{ adjourned: true, ended_at:/);
+});
+
+
+test("session status names reflect the council lifecycle", () => {
+  assert.equal(C.sessionStatusKey("draft"), "sessionStatusPlanned");
+  assert.equal(C.sessionStatusKey("planned"), "sessionStatusInProgress");
+  assert.equal(C.sessionStatusKey("closed"), "sessionStatusAdjourned");
+});
+
+
+test("archived session detail separates assigned cases from case hearings", () => {
+  const groups = C.archivedAgendaRows([
+    { id: "assignment", part: 1 },
+    { id: "hearing", part: 2 },
+    { id: "other", part: 3 },
+  ]);
+  assert.deepEqual([...groups.assigned].map((row) => row.id), ["assignment"]);
+  assert.deepEqual([...groups.presented].map((row) => row.id), ["hearing"]);
 });

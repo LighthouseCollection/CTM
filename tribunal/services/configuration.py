@@ -54,6 +54,12 @@ def save_setting(actor, key, value, *, expected_version=_UNBOUND, schema_version
         "email_templates",
         "document_categories",
         "recommended_doctors",
+        "diocese_settings",
+        "document_templates",
+        "decision_outcomes",
+        "workflow_stages",
+        "canonical_reasons",
+        "mobile_settings",
     }:
         raise ValidationError("Unsupported setting key.")
     validate_json_value(value, maximum=100_000)

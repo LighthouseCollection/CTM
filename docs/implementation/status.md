@@ -299,3 +299,28 @@ User callback encountered a connection failure because the foreground local serv
 ## Microsoft callback verified - 2026-10-21
 
 Genuine Microsoft OAuth for frraphaelmaher@lacopts.org now completes into the council portal on localhost18844. An actual callback exposed AttributeError in allauth default user display: the email-only Account has no username field. Set ACCOUNT_USER_MODEL_USERNAME_FIELD=None. A new regression reproduces the actual logged-in template failure before the fix and passes afterward; the related subset passes12 tests. Browser verified the authenticated name Fr. Raphael Maher, Council portal navigation and Home. This verifies local provider callback acceptance only, not the undeployed public route. Added sanitized server exception frame diagnostics to the local tool (no tokens, query strings or exception values).
+
+## Council session archive record-of-truth — 2026-10-22
+
+The council-session archive is database-backed. The archived-session list reads
+`CouncilSession` records through `GET /api/sessions/`; its case-assignment and
+hearing totals are aggregates of related `AgendaItem` rows. Selecting a session
+reads `GET /api/sessions/{id}/agenda/`, which uses that same session identifier
+to retrieve its agenda, then derives the displayed case, party, case-manager,
+status, grounds, hearing, and recommendation values from the linked `Case`,
+`Party`, `Account`, `Application`, `Hearing`, and `HearingOutcome` records.
+The browser has no hard-coded session dates, people, counts, or agenda rows.
+A session marked Adjourned is complete and immediately appears in Archived; its
+linked agenda rows remain available through the selected archived-session record.
+
+Session creation, placement, assignment, presentation, adjournment, and outcome
+updates are service commands that persist to those records and write their
+existing audit events. The archive is therefore a read model over the tribunal
+record, rather than a separate editable copy.
+
+The `localhost:18844` Microsoft-review environment is an isolated SQLite review
+database. When populated with `seed_workflow_demo`, its names and cases are
+synthetic fixtures, as documented in `demo-scenarios.md`; they are not
+operational tribunal data. The same API and projection path reads production
+records only after the application is deployed against its operational database.
+No production database data is loaded into the local review environment.

@@ -57,6 +57,12 @@ def schemas():
             'specialty':{'type':'string','enum':['medical','psychological','both']},
             'contact':text(2000),'active':{'type':'boolean'}},
             ['id','name','specialty','contact','active']),unique_by='id')},['doctors']),
+        'diocese_settings':record({'diocese_name':text(300),'system_email':text(254,format='email'),'case_id_prefix':{'type':'string','minLength':0,'maxLength':50},'default_session_day':{'type':'string','enum':['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']},'session_location':text(1000),'presiding_bishop':text(300),'tribunal_secretary':text(300)},['diocese_name','system_email','case_id_prefix','default_session_day','session_location','presiding_bishop','tribunal_secretary']),
+        'document_templates':record({'templates':collection(record({'title':text(300),'category':text(100),'body':text(20000),'active':{'type':'boolean'}},['title','category','body','active']),unique_by='title')},['templates']),
+        'decision_outcomes':record({'outcomes':collection(record({'category':text(100),'label':text(300),'description':text(2000),'rationale':{'type':'boolean'},'active':{'type':'boolean'}},['category','label','description','rationale','active']),unique_by='label')},['outcomes']),
+        'workflow_stages':record({'stages':collection(record({'name':text(200),'color':{'type':'string','pattern':r'^#[0-9A-Fa-f]{6}$','minLength':7,'maxLength':7},'active':{'type':'boolean'}},['name','color','active']),unique_by='name')},['stages']),
+        'canonical_reasons':record({'reasons':collection(record({'name':text(200),'color':{'type':'string','pattern':r'^#[0-9A-Fa-f]{6}$','minLength':7,'maxLength':7},'active':{'type':'boolean'}},['name','color','active']),unique_by='name')},['reasons']),
+        'mobile_settings':record({'system_available_mobile':{'type':'boolean'}},['system_available_mobile']),
     }
 
 
@@ -124,6 +130,13 @@ def validate_setting_value(key, value, *, schema_version=SCHEMA_VERSION):
 
 
 def schema_descriptors(current_versions):
+    consumers={
+        'email_templates':['account_status_email'],
+        'document_categories':['filing_document_labels'],
+        'tribunal_contact':['authenticated_tribunal_contact'],
+        'recommended_doctors':['council_case_recommended_doctors'],
+    }
     return {key:{'schema_version':SCHEMA_VERSION,'value_schema':value,
         'current_version':current_versions.get(key,0), 'expected_version_required':True,
-        'activation_supported':False,'runtime_consumers':(['account_status_email'] if key=='email_templates' else []),'max_json_bytes':100_000,'max_json_depth':20} for key,value in schemas().items()}
+        'activation_supported':False,'runtime_consumers':consumers.get(key,[]),
+        'max_json_bytes':100_000,'max_json_depth':20} for key,value in schemas().items()}

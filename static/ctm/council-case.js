@@ -91,7 +91,7 @@
   }
 
   function councilRoster(members) {
-    return (members || []).filter((row) => row.role !== "applicant");
+    return (members || []).filter((row) => ["president", "secretary", "member"].includes(row.role));
   }
 
   function canRecordFor(user) {
@@ -135,8 +135,10 @@
   }
 
   function groupTitle(group, lang) {
+    const en = group.title || group.category;
     const ar = String(group.title_ar || group.category_ar || "").trim();
-    return lang === "ar" && ar ? ar : group.title || group.category;
+    if (lang === "ar") return ar || en;
+    return lang === "en-ar" && ar ? `${en} / ${ar}` : en;
   }
 
   function foundationalCodes(questions) {
@@ -154,19 +156,6 @@
     return all.filter((q) => codes.has(q.code) && !String(q.wording_ar || "").trim()).map((q) => q.code);
   }
 
-  // Templates usable to pre-fill a request: active, with question codes (newer servers).
-  function usableTemplates(templates) {
-    return (templates || []).filter((tpl) => !tpl.retired && Array.isArray(tpl.questions) && tpl.questions.length);
-  }
-
-  // Selected codes from a template, excluding foundational questions (always included)
-  // and codes no longer published.
-  function templateSelection(template, questions) {
-    const published = new Set((questions || []).map((q) => q.code));
-    const foundational = new Set(foundationalCodes(questions));
-    return [...new Set((template?.questions || []).map((q) => q.code))].filter((code) => published.has(code) && !foundational.has(code));
-  }
-
   function requestProblem(form, questions) {
     if (!form.party) return "chooseSubject";
     if (form.kind && !["intake", "interview"].includes(form.kind)) return "chooseMethod";
@@ -176,10 +165,11 @@
     return null;
   }
 
-  function requestPayload(form, proceedingId) {
+  function requestPayload(form, proceedingId, parties) {
+    const partyIds = form.party === "both" ? parties.map((party) => party.id) : [];
     return {
       proceeding_id: proceedingId,
-      party_id: form.party,
+      ...(partyIds.length ? { party_ids: partyIds } : { party_id: form.party }),
       kind: form.kind === "interview" ? "interview" : "intake",
       title: form.title.trim(),
       language: form.language,
@@ -214,9 +204,11 @@
   }
 
   function wording(question, lang) {
-    return lang === "ar" && String(question.ar || question.wording_ar || "").trim()
-      ? question.ar || question.wording_ar
-      : question.en || question.wording_en;
+    const en = question.en || question.wording_en;
+    const ar = String(question.ar || question.wording_ar || "").trim();
+    if (lang === "ar") return ar || en;
+    return lang === "en-ar" && ar ? `${en}
+${ar}` : en;
   }
 
   // ---------- Words ----------
@@ -225,7 +217,13 @@
     en: {
       reports: "Reports",
       completedReports: "Completed reports",
+      interviewReports: "Reports for Interview",
+      noInterviewReports: "No reports are waiting for an interview.",
       requests: "Requests",
+      reportTemplates: "Report Maker",
+      questionCategories: "Question categories",
+      questionSelection: "Questions in this report",
+      bothSpouses: "Both spouses",
       newRequest: "New request",
       noRequests: "No report requests yet.",
       chooseRequest: "Select a request",
@@ -262,6 +260,7 @@
       selectedCount: "{n} selected in addition to the foundational questions",
       instructions: "Instructions to the applicant (optional)",
       saveDraft: "Save draft request",
+      saveReport: "Save as a Report",
       draftSaved: "The draft request was saved. Review the questions before continuing.",
       frozenNotice:
         "These are the exact questions saved with this request. Sending or starting it freezes their wording and order.",
@@ -277,7 +276,6 @@
       arabicPending: "Approved Arabic wording pending",
       answerReadOnly: "Responses appear under Completed reports once submitted.",
       decisionVoting: "Decision & Voting",
-      noDecision: "No decision has been recorded in this view yet.",
       readUnavailable:
         "Saved decision versions, votes and approvals cannot be displayed here yet. A version recorded on this page can be voted on and approved while the page stays open.",
       votedOn: "What is being voted on",
@@ -301,6 +299,13 @@
       typeLabelNotice: "Approved Arabic decision-type labels are not yet supplied; the approved English label is shown.",
       deferralNotice: "To defer for further investigation, record it in the hearing recommendations. Deferral is not voted on or approved as a decision.",
       votes: "Council votes",
+      councilVote: "Council vote",
+      councilVoteDescription: "Record each council member's vote before proceeding to the decision.",
+      voteRecord: "Vote record",
+      councilMember: "Council member",
+      recordVotesContinue: "Record votes & continue",
+      saveVoteDraft: "Save draft",
+      voteDraftSaved: "The current vote entries were saved.",
       rosterNotice: "Every council member is listed, regardless of attendance.",
       approve: "Approve",
       deny: "Deny",
@@ -313,7 +318,7 @@
       voteRecorded: "The vote was recorded.",
       tallyLine: "Approve {approve} · Deny {deny} · Abstain {abstain} · Not voted {none}",
       sessionVotesNotice: "Only votes recorded on this page are shown. Votes recorded elsewhere are saved but not yet displayed here.",
-      approval: "Presidential approval",
+      approval: "President's approval",
       approveDecision: "Approve decision",
       recordApproval: "Record President's approval",
       approvalTitle: "Record final approval of this version?",
@@ -333,6 +338,39 @@
       proceedingInitial: "Initial proceeding",
       proceedingReconsideration: "Appeal or reconsideration proceeding",
       whereThingsStand: "Where the case stands",
+      caseSummary: "Case Summary",
+      acceptApplication: "Accept",
+      declineApplication: "Decline",
+      acceptApplicationTitle: "Accept application?",
+      acceptApplicationMessage: "The applicant will be notified that the application was accepted.",
+      declineApplicationTitle: "Decline application",
+      declineApplicationHelp: "Explain why the application is being declined. This reason will be emailed to the applicant.",
+      declineReason: "Reason for decline",
+      declineReasonRequired: "Enter a reason for declining this application.",
+      caseNumber: "Case Number",
+      filingDate: "Filing Date",
+      pending: "Pending",
+      inProgress: "In progress",
+      active: "Active",
+      applicant: "Applicant",
+      respondent: "Respondent",
+      reasonForDivorce: "Reason Seeking Divorce",
+      assignedCouncilMember: "Assigned Council Member",
+      lastHearingDate: "Last Hearing Date",
+      children: "Children",
+      noChildren: "No children recorded",
+      keyDates: "Key Dates",
+      decreeIssued: "Decree Issued",
+      councilReviewDecision: "Council Review & Decision",
+      recommendationPending: "Recommendation Pending",
+      awaitingCouncilReview: "Awaiting council review and decision.",
+      awaitingRecommendation: "Awaiting recommendation from {member}.",
+      current: "Current",
+      upcoming: "Upcoming",
+      caseFiled: "Case Filed",
+      caseFiledDescription: "Application received and logged.",
+      caseAssigned: "Assigned to Council Member",
+      hearing: "Hearing",
       pendingRequests: "Requests awaiting a response",
       draftRequests: "Draft requests not yet sent",
       decreeIssuedState: "Decree issued",
@@ -369,12 +407,35 @@
       findingsHelp: "The council's own findings. They never change what either spouse submitted.",
       noFindings: "No findings have been recorded.",
       timelineTitle: "Timeline",
-      timelineHelp: "Key case events, oldest first. Every recorded action is listed in Case Audit.",
-      noTimeline: "No key events are recorded yet.",
+      timelineHelp: "Key case and marriage events in one dated history. Every recorded action is listed in Case Audit.",
+      noTimeline: "No timeline events are recorded yet.",
+      timelineAll: "All",
+      timelineCase: "Case",
+      timelineMarriage: "Marriage",
+      churchMarriageEvent: "Church marriage",
+      outsideMarriageEvent: "Marriage outside Coptic Church",
+      separationEvent: "Separation",
+      civilDivorceEvent: "Civil divorce",
       petitionTitle: "Petition",
-      petitionReadOnly: "Each spouse's formal submission is shown as submitted. Council notes below are separate and never change it.",
       petition: "Petition",
+      applicant: "Applicant",
+      respondent: "Respondent",
       noPetitions: "No submitted petition is available for this case.",
+      marriageTitle: "Marriage",
+      separation: "Separation",
+      churchMarriage: "Church Marriage",
+      marriedOutsideCoptic: "Were You Married Outside the Coptic Orthodox Church?",
+      outsideDenomination: "Religious Denomination Officiating",
+      outsideMarriageDate: "Date of Marriage Outside Coptic Church",
+      churchMarriageDate: "Date of Church Marriage",
+      dateOfSeparation: "Date of Separation",
+      dateOfCivilDivorce: "Date of Civil Divorce",
+      dateOfRestrainingOrder: "Date of Restraining Order",
+      restrainingOrderExpirationDate: "Restraining Order Expiration Date",
+      officiatingPriest: "Officiating Priest",
+      marriageDuration: "Marriage Duration",
+      churchName: "Church Name",
+      churchLocation: "Church Address / Location",
       internalNotes: "Internal notes",
       internalNotesHelp: "Council only. Never shown to applicants.",
       note: "Note",
@@ -384,10 +445,37 @@
       noteSaved: "The note was saved.",
       noteRequired: "Write the note before saving.",
       partiesTitle: "Spouses",
-      ctmReference: "CTM reference",
+      ctmId: "CTM ID#",
       portalAccount: "Portal account",
       registered: "Registered",
       notRegistered: "Not registered",
+      personalDetails: "Personal Details",
+      contact: "Contact",
+      editContact: "Edit contact",
+      saveContact: "Save contact",
+      editProfile: "Edit profile",
+      saveProfile: "Save profile",
+      changePhoto: "Change",
+      photoUploadFailed: "The photo could not be uploaded.",
+      career: "Career",
+      churchAffiliation: "Church Affiliation",
+      otherNamesKnownBy: "Other Names Known By",
+      placeOfBirth: "Place of Birth",
+      nationality: "Nationality",
+      awarenessOfApplication: "Awareness of Application",
+      address: "Address",
+      mobileNumber: "Mobile Number",
+      emailAddress: "Email Address",
+      immigrationStatus: "Immigration Status",
+      residingWith: "Residing With",
+      education: "Education",
+      yearOfGraduation: "Year of Graduation",
+      occupation: "Occupation",
+      denomination: "Denomination",
+      nameOfBishop: "Name of Bishop",
+      diocese: "Diocese",
+      parishName: "Parish Name",
+      fatherOfConfession: "Father of Confession",
       noParties: "No spouses are recorded.",
       addParty: "Add the other spouse",
       addPartyHelp: "Record the other spouse by name and email. They are linked automatically after registering with a matching verified email. No account is created for them and no invitation acceptance is needed.",
@@ -401,6 +489,23 @@
       hearingsTitle: "Hearings",
       hearingsScope: "Agenda appearances of this case in recent council sessions.",
       noHearings: "This case has not been placed on a council session agenda.",
+      currentHearing: "Current Hearing: {date}",
+      pastHearings: "Past hearings",
+      caseLabel: "Case",
+      actions: "Actions",
+      rescheduleHearing: "Reschedule this hearing",
+      councilAttendance: "Council attendance",
+      councilAttendanceHelp: "Confirm the members who attended this particular hearing.",
+      presiding: "Presiding",
+      councilSecretary: "Secretary",
+      councilMemberRole: "Member",
+      outcome: "Outcome",
+      decisionMade: "Decision Made — Go to Decision tab",
+      recommendationOnly: "Recommendation (no final decision yet)",
+      decisionOutcomeHelp: "Go to the Decision tab to document the final outcome.",
+      recommendationRequired: "Enter a recommendation before saving.",
+      saveRecommendation: "Save Recommendation",
+      recommendationSaved: "Recommendation saved.",
       assessments: "Professional Assessments",
       assessmentPrivacy: "Medical and psychological reports are kept separate from ordinary documents. Their contents are shown only when the person's signed release covers the council, and they are never sent to external AI processing.",
       releaseTextPending: "The institution's signed-release wording has not been approved yet, so applicants cannot sign releases and report contents stay hidden.",
@@ -472,7 +577,13 @@
     ar: {
       reports: "التقارير",
       completedReports: "التقارير المكتملة",
+      interviewReports: "تقارير للمقابلة",
+      noInterviewReports: "لا توجد تقارير بانتظار المقابلة.",
       requests: "الطلبات",
+      reportTemplates: "منشئ التقارير",
+      questionCategories: "فئات الأسئلة",
+      questionSelection: "أسئلة هذا التقرير",
+      bothSpouses: "كلا الزوجين",
       newRequest: "طلب جديد",
       noRequests: "لا توجد طلبات تقارير بعد.",
       chooseRequest: "اختر طلبًا",
@@ -509,6 +620,7 @@
       selectedCount: "تم تحديد {n} بالإضافة إلى الأسئلة الأساسية",
       instructions: "تعليمات لمقدم الطلب (اختياري)",
       saveDraft: "حفظ مسودة الطلب",
+      saveReport: "حفظ كتقرير",
       draftSaved: "تم حفظ مسودة الطلب. راجع الأسئلة قبل المتابعة.",
       frozenNotice: "هذه هي الأسئلة المحفوظة بالضبط مع هذا الطلب. يؤدي إرساله أو بدؤه إلى تثبيت صياغتها وترتيبها.",
       send: "إرسال إلى مقدم الطلب",
@@ -521,7 +633,6 @@
       arabicPending: "الصياغة العربية المعتمدة قيد الانتظار",
       answerReadOnly: "تظهر الردود ضمن التقارير المكتملة بعد تقديمها.",
       decisionVoting: "القرار والتصويت",
-      noDecision: "لم يُسجَّل قرار في هذه الصفحة بعد.",
       readUnavailable:
         "لا يمكن عرض إصدارات القرار المحفوظة والأصوات والاعتمادات هنا بعد. يمكن التصويت على الإصدار المسجَّل في هذه الصفحة واعتماده ما دامت الصفحة مفتوحة.",
       votedOn: "موضوع التصويت",
@@ -545,6 +656,13 @@
       typeLabelNotice: "لم تُتَح بعد التسميات العربية المعتمدة لأنواع القرار؛ تُعرض التسمية الإنجليزية المعتمدة.",
       deferralNotice: "لتأجيل القرار لمزيد من التحقيق، سجّل ذلك في توصيات الجلسة. لا يُصوَّت على التأجيل ولا يُعتمد كقرار.",
       votes: "أصوات أعضاء المجلس",
+      councilVote: "تصويت المجلس",
+      councilVoteDescription: "سجّل صوت كل عضو في المجلس قبل متابعة القرار.",
+      voteRecord: "سجل التصويت",
+      councilMember: "عضو المجلس",
+      recordVotesContinue: "سجّل الأصوات وتابع",
+      saveVoteDraft: "حفظ المسودة",
+      voteDraftSaved: "تم حفظ إدخالات التصويت الحالية.",
       rosterNotice: "يُدرج جميع أعضاء المجلس بغض النظر عن الحضور.",
       approve: "موافقة",
       deny: "رفض",
@@ -575,6 +693,39 @@
       proceedingInitial: "الإجراء الأول",
       proceedingReconsideration: "إجراء استئناف أو إعادة نظر",
       whereThingsStand: "وضع القضية الحالي",
+      caseSummary: "ملخص القضية",
+      acceptApplication: "قبول",
+      declineApplication: "رفض",
+      acceptApplicationTitle: "قبول الطلب؟",
+      acceptApplicationMessage: "سيتم إبلاغ مقدم الطلب بقبول الطلب.",
+      declineApplicationTitle: "رفض الطلب",
+      declineApplicationHelp: "اشرح سبب رفض الطلب. سيتم إرسال هذا السبب عبر البريد الإلكتروني إلى مقدم الطلب.",
+      declineReason: "سبب الرفض",
+      declineReasonRequired: "أدخل سبب رفض هذا الطلب.",
+      caseNumber: "رقم القضية",
+      filingDate: "تاريخ التقديم",
+      pending: "قيد الانتظار",
+      inProgress: "قيد التنفيذ",
+      active: "نشطة",
+      applicant: "مقدم الطلب",
+      respondent: "الطرف الآخر",
+      reasonForDivorce: "سبب طلب الطلاق",
+      assignedCouncilMember: "عضو المجلس المكلّف",
+      lastHearingDate: "تاريخ آخر جلسة",
+      children: "الأبناء",
+      noChildren: "لا يوجد أبناء مسجلون",
+      keyDates: "التواريخ المهمة",
+      decreeIssued: "صدور المرسوم",
+      councilReviewDecision: "مراجعة المجلس والقرار",
+      recommendationPending: "التوصية قيد الانتظار",
+      awaitingCouncilReview: "بانتظار مراجعة المجلس والقرار.",
+      awaitingRecommendation: "بانتظار توصية من {member}.",
+      current: "الحالي",
+      upcoming: "قادم",
+      caseFiled: "تم تقديم القضية",
+      caseFiledDescription: "تم استلام الطلب وتسجيله.",
+      caseAssigned: "تم التعيين لعضو المجلس",
+      hearing: "جلسة استماع",
       pendingRequests: "طلبات في انتظار الرد",
       draftRequests: "مسودات طلبات لم تُرسل",
       decreeIssuedState: "صدرت الشهادة",
@@ -613,10 +764,33 @@
       timelineTitle: "التسلسل الزمني",
       timelineHelp: "الأحداث الرئيسية للقضية من الأقدم إلى الأحدث. وتُعرض جميع الإجراءات المسجلة في سجل تدقيق القضية.",
       noTimeline: "لم تُسجَّل أحداث رئيسية بعد.",
+      timelineAll: "الكل",
+      timelineCase: "القضية",
+      timelineMarriage: "الزواج",
+      churchMarriageEvent: "الزواج الكنسي",
+      outsideMarriageEvent: "الزواج خارج الكنيسة القبطية",
+      separationEvent: "الانفصال",
+      civilDivorceEvent: "الطلاق المدني",
       petitionTitle: "الطلب",
-      petitionReadOnly: "يُعرض ما قدّمه كل من الزوجين كما قُدِّم. وملاحظات المجلس أدناه منفصلة ولا تغيّره أبدًا.",
       petition: "الطلب",
+      applicant: "مقدم الطلب",
+      respondent: "الطرف الآخر",
       noPetitions: "لا يوجد طلب مقدَّم متاح لهذه القضية.",
+      marriageTitle: "الزواج",
+      separation: "الانفصال",
+      churchMarriage: "الزواج الكنسي",
+      marriedOutsideCoptic: "هل تم الزواج خارج الكنيسة القبطية الأرثوذكسية؟",
+      outsideDenomination: "الطائفة الدينية التي أجرت الزواج",
+      outsideMarriageDate: "تاريخ الزواج خارج الكنيسة القبطية",
+      churchMarriageDate: "تاريخ الزواج الكنسي",
+      dateOfSeparation: "تاريخ الانفصال",
+      dateOfCivilDivorce: "تاريخ الطلاق المدني",
+      dateOfRestrainingOrder: "تاريخ أمر التقييد",
+      restrainingOrderExpirationDate: "تاريخ انتهاء أمر التقييد",
+      officiatingPriest: "الكاهن الذي أجرى الزواج",
+      marriageDuration: "مدة الزواج",
+      churchName: "اسم الكنيسة",
+      churchLocation: "عنوان / موقع الكنيسة",
       internalNotes: "ملاحظات داخلية",
       internalNotesHelp: "للمجلس فقط. لا تُعرض أبدًا على مقدمي الطلبات.",
       note: "ملاحظة",
@@ -626,10 +800,37 @@
       noteSaved: "تم حفظ الملاحظة.",
       noteRequired: "اكتب الملاحظة قبل الحفظ.",
       partiesTitle: "الزوجان",
-      ctmReference: "مرجع النظام",
+      ctmId: "معرّف CTM#",
       portalAccount: "حساب البوابة",
       registered: "مسجَّل",
       notRegistered: "غير مسجَّل",
+      personalDetails: "البيانات الشخصية",
+      contact: "التواصل",
+      editContact: "تعديل بيانات التواصل",
+      saveContact: "حفظ بيانات التواصل",
+      editProfile: "تعديل الملف الشخصي",
+      saveProfile: "حفظ الملف الشخصي",
+      changePhoto: "تغيير",
+      photoUploadFailed: "تعذر رفع الصورة.",
+      career: "العمل والتعليم",
+      churchAffiliation: "الانتماء الكنسي",
+      otherNamesKnownBy: "أسماء أخرى معروفة بها",
+      placeOfBirth: "مكان الميلاد",
+      nationality: "الجنسية",
+      awarenessOfApplication: "العلم بالطلب",
+      address: "العنوان",
+      mobileNumber: "رقم الجوال",
+      emailAddress: "البريد الإلكتروني",
+      immigrationStatus: "حالة الهجرة",
+      residingWith: "الإقامة مع",
+      education: "التعليم",
+      yearOfGraduation: "سنة التخرج",
+      occupation: "المهنة",
+      denomination: "الطائفة",
+      nameOfBishop: "اسم الأسقف",
+      diocese: "الإيبارشية",
+      parishName: "اسم الكنيسة",
+      fatherOfConfession: "أب الاعتراف",
       noParties: "لا يوجد زوجان مسجلان.",
       addParty: "إضافة الزوج الآخر",
       addPartyHelp: "سجّل الزوج الآخر بالاسم والبريد الإلكتروني. ويُربط تلقائيًا بعد تسجيله ببريد إلكتروني مطابق ومُتحقَّق منه. لا يُنشأ له حساب ولا يلزم قبول دعوة.",
@@ -643,6 +844,23 @@
       hearingsTitle: "الجلسات",
       hearingsScope: "ظهور هذه القضية في جداول أعمال جلسات المجلس الأخيرة.",
       noHearings: "لم تُدرج هذه القضية في جدول أعمال أي جلسة مجلس.",
+      currentHearing: "الجلسة الحالية: {date}",
+      pastHearings: "الجلسات السابقة",
+      caseLabel: "القضية",
+      actions: "الإجراءات",
+      rescheduleHearing: "إعادة جدولة هذه الجلسة",
+      councilAttendance: "حضور المجلس",
+      councilAttendanceHelp: "أكد الأعضاء الذين حضروا هذه الجلسة تحديدًا.",
+      presiding: "الرئاسة",
+      councilSecretary: "أمين السر",
+      councilMemberRole: "عضو",
+      outcome: "النتيجة",
+      decisionMade: "تم اتخاذ القرار — انتقل إلى علامة القرار",
+      recommendationOnly: "توصية (لا يوجد قرار نهائي بعد)",
+      decisionOutcomeHelp: "انتقل إلى علامة القرار لتوثيق النتيجة النهائية.",
+      recommendationRequired: "أدخل توصية قبل الحفظ.",
+      saveRecommendation: "حفظ التوصية",
+      recommendationSaved: "تم حفظ التوصية.",
       assessments: "التقييمات المهنية",
       assessmentPrivacy: "تُحفظ التقارير الطبية والنفسية منفصلة عن المستندات العادية. ولا تُعرض محتوياتها إلا إذا شمل الإذن الموقَّع من صاحبها المجلس، ولا تُرسل أبدًا إلى معالجة خارجية بالذكاء الاصطناعي.",
       releaseTextPending: "لم تُعتمد بعد صياغة الإذن الموقَّع من الجهة، لذلك لا يمكن لمقدمي الطلبات توقيع الإذن وتبقى محتويات التقارير مخفية.",
@@ -744,116 +962,50 @@
 
   // ---------- Report requests ----------
 
-  function TemplateTools({ api, lang, templates, questions, selected, onUse, onChanged }) {
-    const R = window.React,
-      P = window.Plenix,
-      h = R.createElement,
-      t = translator(lang);
-    const usable = usableTemplates(templates);
-    const [choice, setChoice] = R.useState("");
-    const [title, setTitle] = R.useState("");
-    const [pending, setPending] = R.useState(false);
-    const [failure, setFailure] = R.useState(null);
-    const [notice, setNotice] = R.useState(null);
-    async function act(fn, key) {
-      setPending(true);
-      setFailure(null);
-      setNotice(null);
-      try {
-        await fn();
-        setNotice(key);
-        onChanged();
-        return true;
-      } catch (error) {
-        setFailure(base.serverMessage(error, t));
-        return false;
-      } finally {
-        setPending(false);
-      }
-    }
-    const save = () => {
-      if (!title.trim()) {
-        setFailure(t("templateTitleRequired"));
-        return;
-      }
-      act(() => api("/api/templates/", { method: "POST", body: JSON.stringify({ title: title.trim(), questions: selected }) }), "templateSaved").then((ok) => ok && setTitle(""));
+  function ReportPartySelector({ P, h, t, parties, kind, interviewReady, value, disabled, error, onChange }) {
+    const eligible = (parties || []).filter((party) => party.can_receive || (kind === "interview" && interviewReady));
+    const selected = value === "both" ? eligible.map((party) => party.id) : value ? [value] : [];
+    const changeSelection = (partyId, checked) => {
+      const next = checked ? [...new Set([...selected, partyId])] : selected.filter((id) => id !== partyId);
+      onChange(next.length === eligible.length && eligible.length > 1 ? "both" : next[0] || "");
     };
-    const supportsQuestions = (templates || []).every((tpl) => Array.isArray(tpl.questions));
     return h(
-      P.Panel,
-      { icon: "doc-text", title: t("templates"), description: t("templatesHelp"), collapsible: true, defaultExpanded: false },
+      P.Field,
+      { label: t("subject"), required: true, error },
       h(
-        P.Stack,
-        { gap: "md" },
-        supportsQuestions && usable.length
-          ? h(
-              P.Inline,
-              { wrap: true, align: "end" },
-              h(
-                P.Field,
-                { label: t("startFromTemplate") },
-                h(P.Select, {
-                  value: choice,
-                  disabled: pending,
-                  onChange: (e) => setChoice(e.target.value),
-                  options: [
-                    { value: "", label: t("chooseTemplate") },
-                    ...usable.map((tpl) => ({ value: tpl.id, label: `${tpl.title}${tpl.shared ? " · " + t("sharedTemplate") : ""}` })),
-                  ],
-                }),
-              ),
-              h(
-                P.Button,
-                {
-                  disabled: pending || !choice,
-                  onClick: () => {
-                    onUse(templateSelection(usable.find((tpl) => tpl.id === choice), questions));
-                    setNotice("templateApplied");
-                  },
-                },
-                t("useTemplate"),
-              ),
-            )
-          : null,
-        h(
-          P.Inline,
-          { wrap: true, align: "end" },
-          h(P.Field, { label: t("templateTitle") }, h(P.Input, { value: title, maxLength: 200, disabled: pending, onChange: (e) => setTitle(e.target.value) })),
-          h(P.Button, { disabled: pending || !selected.length, onClick: save }, t("saveAsTemplate")),
-        ),
-        ...(templates || [])
-          .filter((tpl) => !tpl.retired && (tpl.can_publish || tpl.can_retire))
-          .map((tpl) =>
-            h(
-              P.Inline,
-              { key: tpl.id, justify: "between", wrap: true },
-              h(P.Text, null, `${tpl.title}${tpl.shared ? " · " + t("sharedTemplate") : " · " + t("personalTemplate")}`),
-              h(
+        "div",
+        { className: "ctm-report-party-cards", role: "group", "aria-label": t("subject") },
+        ...eligible.map((party) => {
+          const checked = selected.includes(party.id);
+          return h(
+            "div",
+            { key: party.id, className: `ctm-report-party-card${checked ? " is-selected" : ""}` },
+            h(P.Checkbox, {
+              checked,
+              disabled,
+              onChange: (event) => changeSelection(party.id, event.target.checked),
+              label: h(
                 P.Inline,
-                { gap: "xs" },
-                tpl.can_publish
-                  ? h(P.Button, { size: "xs", disabled: pending, onClick: () => act(() => api(`/api/templates/${encodeURIComponent(tpl.id)}/publish/`, { method: "POST", body: "{}" }), "templatePublished") }, t("publishTemplate"))
-                  : null,
-                tpl.can_retire
-                  ? h(P.Button, { size: "xs", variant: "danger-secondary", disabled: pending, onClick: () => act(() => api(`/api/templates/${encodeURIComponent(tpl.id)}/retire/`, { method: "POST", body: "{}" }), "templateRetired") }, t("retireTemplate"))
-                  : null,
+                { gap: "sm", align: "center" },
+                h(P.Avatar, { src: party.photo_url || undefined, name: party.name, size: "lg", label: party.name }),
+                h(P.Text, { as: "span", variant: "strong" }, party.name),
               ),
-            ),
-          ),
-        notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+            }),
+          );
+        }),
       ),
     );
   }
 
-  function RequestComposer({ api, lang, record, questions, reports, templates, onTemplatesChanged, onSaved, onCancel }) {
+  function RequestComposer({ api, lang, record, questions, reports, onSaved, onCancel }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
     const proceeding = openProceeding(record);
     const [form, setForm] = R.useState({
-      kind: "intake",
+      // Applicant delivery is not available yet, so reports begin as an internal interview.
+      kind: "interview",
       party: "",
       title: "",
       language: "en",
@@ -867,6 +1019,9 @@
     const taxonomy = hasTaxonomy(questions);
     const [view, setView] = R.useState("category");
     const groups = view === "topic" && taxonomy ? topicGroupView(questions) : questionGroups(questions);
+    const categoryGroups = questionGroups(questions);
+    const [activeCategory, setActiveCategory] = R.useState(() => categoryGroups[0]?.category || "");
+    const activeQuestions = categoryGroups.find((group) => group.category === activeCategory)?.questions || [];
     // The in-person interview path is offered only by servers that no longer notify
     // the applicant when an interview starts (shipped with the question taxonomy).
     const interviewReady = taxonomy;
@@ -884,9 +1039,9 @@
       try {
         const created = await api(`/api/cases/${encodeURIComponent(record.id)}/requests/`, {
           method: "POST",
-          body: JSON.stringify(requestPayload(form, proceeding.id)),
+          body: JSON.stringify(requestPayload(form, proceeding.id, record.parties)),
         });
-        onSaved(created.id);
+        onSaved(created.items ? created.items.map((item) => item.id) : created.id);
       } catch (error) {
         setFailure(base.serverMessage(error, t));
       } finally {
@@ -900,30 +1055,22 @@
       h(
         P.FormSection,
         { title: t("newRequest") },
-        h(
-          P.Field,
-          { label: t("subject"), required: true, error: err("chooseSubject") },
-          h(P.Select, {
-            value: form.party,
-            disabled: pending,
-            onChange: (e) => update({ party: e.target.value }),
-            options: [
-              { value: "", label: t("chooseSubject") },
-              ...record.parties
-                .filter((p) => p.can_receive || (form.kind === "interview" && interviewReady))
-                .map((p) => ({ value: p.id, label: p.name })),
-            ],
-          }),
-        ),
+        h(ReportPartySelector, {
+          P, h, t, parties: record.parties, kind: form.kind, interviewReady,
+          value: form.party, disabled: pending, error: err("chooseSubject"),
+          onChange: (party) => update({ party }),
+        }),
         h(P.RadioGroup, {
           label: t("method"),
           value: form.kind,
-          onChange: (value) => update({ kind: value }),
+          onChange: (value) => update({ kind: value, party: "" }),
           options: [
-            { value: "intake", label: t("methodApplicant"), disabled: pending },
+            // Applicant delivery is deliberately visible but unavailable until the
+            // applicant delivery workflow is ready for release.
+            { value: "intake", label: t("methodApplicant"), disabled: true },
             interviewReady
-              ? { value: "interview", label: t("methodInterview"), description: t("interviewHelp"), disabled: pending }
-              : { value: "interview", label: t("methodInterview"), description: t("interviewBlocked"), disabled: true },
+              ? { value: "interview", label: t("methodInterview"), disabled: pending }
+              : { value: "interview", label: t("methodInterview"), disabled: true },
           ],
         }),
         h(
@@ -960,76 +1107,37 @@
             )
           : null,
       ),
-      h(
-        P.FormSection,
-        { title: t("questions"), description: t("selectedCount", { n: form.selected.length }) },
-        h(TemplateTools, {
-          api,
-          lang,
-          templates,
-          questions,
-          selected: form.selected,
-          onUse: (codes) => update({ selected: codes }),
-          onChanged: onTemplatesChanged || (() => {}),
-        }),
-        taxonomy
-          ? h(P.RadioGroup, {
-              label: t("questionView"),
-              layout: "row",
-              value: view,
-              onChange: setView,
-              options: [
-                { value: "category", label: t("byCategory") },
-                { value: "topic", label: t("byTopicGroup") },
-              ],
-            })
-          : null,
-        ...groups.map((group) =>
-          h(
-            P.Fieldset,
-            { key: group.id || group.category, legend: groupTitle(group, lang) },
-            ...group.questions.map((q) =>
-              h(P.Checkbox, {
-                key: q.code,
-                label: `${q.code} — ${wording(q, lang)}`,
-                description: q.foundational
-                  ? t("foundational")
-                  : lang === "ar" && !String(q.wording_ar || "").trim()
-                    ? t("arabicPending")
-                    : undefined,
-                checked: q.foundational || form.selected.includes(q.code),
-                disabled: pending || q.foundational,
-                onChange: (e) =>
-                  update({
-                    selected: e.target.checked
-                      ? [...form.selected, q.code]
-                      : form.selected.filter((code) => code !== q.code),
-                  }),
-              }),
-            ),
-          ),
+      h(P.SplitView, {
+        label: t("reportTemplates"),
+        firstLabel: t("questionCategories"),
+        first: h(P.Panel, { title: t("questionCategories") }, h("div", {
+          className: `ctm-report-question-language${form.language === "ar" ? " ctm-report-question-language--rtl" : ""}`,
+          dir: form.language === "ar" ? "rtl" : undefined,
+        }, h(P.NavList, {
+          label: t("questionCategories"), value: activeCategory, onSelect: setActiveCategory,
+          items: categoryGroups.map((group) => ({ id: group.category, label: groupTitle(group, form.language), count: group.questions.length })),
+        }))),
+        second: h(P.FormSection, { title: t("questionSelection"), description: t("selectedCount", { n: form.selected.length }) },
+          h("div", {
+            className: `ctm-report-question-language${form.language === "ar" ? " ctm-report-question-language--rtl" : ""}`,
+            dir: form.language === "ar" ? "rtl" : undefined,
+          }, h(P.Fieldset, { legend: groupTitle(categoryGroups.find((group) => group.category === activeCategory) || {}, form.language) },
+            ...activeQuestions.map((q) => h(P.Checkbox, {
+              key: q.code, label: wording(q, form.language),
+              description: q.foundational ? t("foundational") : form.language === "ar" && !String(q.wording_ar || "").trim() ? t("arabicPending") : undefined,
+              checked: q.foundational || form.selected.includes(q.code), disabled: pending || q.foundational,
+              onChange: (e) => update({ selected: e.target.checked ? [...form.selected, q.code] : form.selected.filter((code) => code !== q.code) }),
+            })),
+          )),
         ),
-        form.kind === "interview"
-          ? null
-          : h(
-          P.Field,
-          { label: t("instructions") },
-          h(P.Textarea, {
-            rows: 4,
-            value: form.instructions,
-            maxLength: 10000,
-            disabled: pending,
-            onChange: (e) => update({ instructions: e.target.value }),
-          }),
-        ),
-      ),
+      }),
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,
       problem === "chooseLanguage" ? h(P.Notice, { tone: "danger" }, t(problem)) : null,
       h(
         P.FormActions,
         { sticky: false },
         h(P.Button, { disabled: pending, onClick: onCancel }, t("cancel")),
-        h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveDraft")),
+        h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveReport")),
       ),
     );
   }
@@ -1190,7 +1298,6 @@
         request.sent_at ? h(P.PropertyList.Item, { label: t(interview ? "startedAt" : "sentAt"), data: true }, base.formatWhen(request.sent_at, lang)) : null,
         request.parent_report_id ? h(P.PropertyList.Item, { label: t("parent") }, t("followUpYes")) : null,
       ),
-      h(P.Notice, { tone: "info" }, t(request.state === "draft" ? "frozenNotice" : "answerReadOnly")),
       h(
         P.Panel,
         { icon: "doc-text", title: t("questions") },
@@ -1235,104 +1342,46 @@
     );
   }
 
-  function RequestsPanel({ api, lang, user, caseId, reports }) {
-    const R = window.React,
-      P = window.Plenix,
-      h = R.createElement,
-      t = translator(lang);
-    const [state, retry] = base.useLoad(
-      () =>
-        Promise.all([
-          api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
-          api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
-          api("/api/report-questions/"),
-          api("/api/cases/"),
-          api("/api/templates/"),
-        ]).then(([record, requests, questions, cases, templates]) => ({
-          record,
-          templates: templates.items || [],
-          // Professional Assessments have their own section; never list them with ordinary reports.
-          requests: requests.items.filter((row) => !["medical", "psychological"].includes(row.kind)),
-          questions: questions.items,
-          caseRow: cases.items.find((row) => row.id === caseId),
-        })),
-      [caseId],
-    );
+  function RequestsPanel({ api, lang, user, caseId, reports, mode = "templates", onCreated }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const interviewOnly = mode === "interviews";
+    const panelTitle = interviewOnly ? t("interviewReports") : t("reportTemplates");
+    const [state, retry] = base.useLoad(() => Promise.all([
+      api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
+      api(`/api/cases/${encodeURIComponent(caseId)}/requests/`), api("/api/report-questions/"),
+      api("/api/cases/"),
+    ]).then(([record, requests, questions, cases]) => ({
+      record,
+      requests: requests.items.filter((row) => !["medical", "psychological"].includes(row.kind)),
+      questions: questions.items, caseRow: cases.items.find((row) => row.id === caseId),
+    })), [caseId]);
     const [selected, select] = R.useState(null);
-    const [composing, setComposing] = R.useState(false);
+    const [editing, setEditing] = R.useState(!interviewOnly);
     const [notice, setNotice] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const { record, requests, questions, caseRow } = state.data;
+    const { record, questions, caseRow } = state.data;
+    const requests = state.data.requests.filter((row) => interviewOnly ? row.kind === "interview" : row.kind !== "interview");
     const proceeding = openProceeding(record);
     const canWrite = writerFor(user, caseRow, record) && Boolean(proceeding);
     const chosen = requests.find((row) => row.id === selected);
-    const list = h(
-      P.Stack,
-      { gap: "sm" },
-      canWrite
-        ? h(P.Inline, null, h(P.Button, { variant: "primary", size: "sm", onClick: () => { setComposing(true); select(null); setNotice(null); } }, t("newRequest")))
-        : h(P.Notice, { tone: "info" }, t(proceeding ? "writerOnly" : "noOpenProceeding")),
-      ...requests.map((row) =>
-        h(P.Card, { icon: "doc-text",
-          key: row.id,
-          title: row.title,
-          meta: [t(row.kind), base.isolate(row.subject_name), t(row.state)].filter(Boolean).join(" · "),
-          selected: row.id === selected,
-          onOpen: () => {
-            setComposing(false);
-            setNotice(null);
-            select(row.id);
-          },
-        }),
-      ),
-      !requests.length ? h(P.EmptyState, { title: t("noRequests") }) : null,
-    );
-    const detail = composing
-      ? h(RequestComposer, {
-          api,
-          lang,
-          record,
-          questions,
-          templates: state.data.templates,
-          onTemplatesChanged: retry,
-          reports: reports || [],
-          onCancel: () => setComposing(false),
-          onSaved: (id) => {
-            setComposing(false);
-            setNotice("draftSaved");
-            select(id);
-            retry();
-          },
-        })
-      : chosen
-        ? h(RequestDetail, {
-            key: chosen.id,
-            api,
-            lang,
-            request: chosen,
-            canWrite,
-            onSent: (key) => {
-              setNotice(key || "sentNotice");
-              retry();
-            },
-          })
-        : null;
-    return h(
-      P.Stack,
-      { gap: "md" },
+    const drafts = h(P.Stack, { gap: "sm" }, ...requests.map((row) => h(P.Card, {
+      icon: "doc-text", key: row.id, title: row.title,
+      meta: [t(row.kind), base.isolate(row.subject_name), t(row.state)].filter(Boolean).join(" · "),
+      selected: row.id === selected, onOpen: () => { setEditing(false); setNotice(null); select(row.id); },
+    })), !requests.length ? h(P.EmptyState, { title: t(interviewOnly ? "noInterviewReports" : "noRequests") }) : null);
+    const editor = h(RequestComposer, {
+      api, lang, record, questions, reports: reports || [],
+      onCancel: () => setEditing(false),
+      onSaved: (result) => { const id = Array.isArray(result) ? result[0] : result; setEditing(false); setNotice("draftSaved"); select(id); retry(); onCreated?.(id); },
+    });
+    return h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
+      h(P.Toolbar, { label: panelTitle }, !interviewOnly && canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => { setEditing(true); setNotice(null); } }, t("newRequest")) : null),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-      h(P.SplitView, {
-        label: t("requests"),
-        firstLabel: t("requests"),
-        first: list,
-        second: h(
-          P.ReadingPane,
-          {
-            label: composing ? t("newRequest") : chosen?.title || t("chooseRequest"),
-            empty: h(P.EmptyState, { title: t("chooseRequest") }),
-          },
-          detail,
+      !interviewOnly && editing ? editor : h(P.SplitView, {
+        label: panelTitle, firstLabel: t("requests"), first: drafts,
+        second: h(P.ReadingPane, { label: chosen?.title || t("chooseRequest"), empty: h(P.EmptyState, { title: t("chooseRequest") }) },
+          chosen ? h(RequestDetail, { key: chosen.id, api, lang, request: chosen, canWrite, onSent: (key) => { setNotice(key || "sentNotice"); retry(); } }) : null,
         ),
       }),
     );
@@ -1345,18 +1394,17 @@
       h = R.createElement,
       t = translator(lang);
     const [tab, setTab] = R.useState("reports");
-    return h(R.Fragment, null,
-      h(P.Tabs, {
-        label: t("reports"), value: tab, onChange: setTab,
-        items: [
-          { value: "reports", label: t("completedReports") },
-          { value: "requests", label: t("requests") },
-        ],
-      }),
-      tab === "reports"
-        ? base.ReportsReader ? h(base.ReportsReader, { api, lang, user, caseId, reports }) : renderReports()
-        : h(RequestsPanel, { api, lang, user, caseId, reports }),
-    );
+    const completedReports = base.ReportsReader ? h(base.ReportsReader, { api, lang, user, caseId, reports }) : renderReports();
+    const requests = h(RequestsPanel, { api, lang, user, caseId, reports, onCreated: () => setTab("interviews") });
+    const interviewReports = h(RequestsPanel, { api, lang, user, caseId, reports, mode: "interviews" });
+    return h(P.Tabs, {
+      variant: "contained", label: t("reports"), value: tab, onChange: setTab,
+      items: [
+        { value: "reports", label: t("completedReports"), content: completedReports },
+        { value: "interviews", label: t("interviewReports"), content: interviewReports },
+        { value: "requests", label: t("reportTemplates"), content: requests },
+      ],
+    });
   }
 
   // ---------- Decision & Voting ----------
@@ -1402,7 +1450,7 @@
       { onSubmit: save, label: t(revising ? "reviseDecision" : "recordDecision"), noValidate: true },
       h(
         P.FormSection,
-        { title: t(revising ? "reviseDecision" : "recordDecision"), description: revising ? t("revisionNotice") : undefined },
+        { description: revising ? t("revisionNotice") : undefined },
         h(
           P.Field,
           { label: t("decisionType"), required: true, error: err("chooseType") },
@@ -1413,7 +1461,6 @@
             options: [{ value: "", label: t("chooseType") }, ...DECISION_TYPES.map((row) => ({ value: row.code, label: row.label }))],
           }),
         ),
-        h(P.Text, { variant: "secondary" }, t("deferralNotice")),
         lang === "ar" ? h(P.Notice, { tone: "info" }, t("typeLabelNotice")) : null,
         h(
           P.Field,
@@ -1468,7 +1515,95 @@
     );
   }
 
-  function DecisionVersion({ api, lang, user, record, decision, members, readAvailable, onChange }) {
+  function CouncilVoteRecord({ api, lang, user, decision, members, readAvailable, onChange }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const roster = councilRoster(members);
+    const { rows, counts } = tally(decision.votes, roster);
+    const manage = canRecordFor(user);
+    const canVote = decision.can_vote !== false;
+    const initialChoices = () => Object.fromEntries(rows.map((row) => [row.member.id, row.vote?.choice || ""]));
+    const [choices, setChoices] = R.useState(initialChoices);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const [notice, setNotice] = R.useState(null);
+
+    R.useEffect(() => setChoices(initialChoices()), [decision.id, decision.votes]);
+    const changes = rows.filter((row) => choices[row.member.id] && choices[row.member.id] !== (row.vote?.choice || ""));
+
+    async function saveVotes(continueAfter) {
+      if (!changes.length) return;
+      setPending(true);
+      setFailure(null);
+      setNotice(null);
+      try {
+        let votes = [...(decision.votes || [])];
+        for (const row of changes) {
+          const body = manage ? { choice: choices[row.member.id], member_id: row.member.id } : { choice: choices[row.member.id] };
+          await api(`/api/decisions/${encodeURIComponent(decision.id)}/vote/`, { method: "POST", body: JSON.stringify(body) });
+          votes = [...votes.filter((vote) => vote.member_id !== row.member.id), { member_id: row.member.id, choice: choices[row.member.id], actor_id: user.id }];
+        }
+        onChange({ ...decision, votes }, true);
+        setNotice(continueAfter ? "voteRecorded" : "voteDraftSaved");
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+
+    return h(
+      P.Panel,
+      { icon: "check-square", title: t("councilVote"), description: t("councilVoteDescription") },
+      h(
+        "div",
+        { className: "ctm-council-vote-table", role: "table", "aria-label": t("voteRecord") },
+        h("div", { className: "ctm-council-vote-table__header", role: "row" },
+          h("div", { role: "columnheader" }, t("councilMember")),
+          ...VOTES.map((choice) => h("div", { key: choice, role: "columnheader" }, t(choice))),
+        ),
+        ...rows.map((row) => {
+          const canEditRow = canVote && !pending && (manage || row.member.id === user.id);
+          return h("div", { key: row.member.id, className: "ctm-council-vote-table__row", role: "row" },
+            h("div", { className: "ctm-council-vote-member", role: "cell" },
+              h(P.Avatar, { name: row.member.name || row.member.id, size: "md" }),
+              h("div", null,
+                h(P.Text, { as: "div", variant: "strong" }, row.member.name || row.member.id),
+                h(P.Text, { as: "div", variant: "secondary" }, row.member.former ? t("formerMember") : t(row.member.role || "member")),
+              ),
+            ),
+            ...VOTES.map((choice) => h("label", { key: choice, className: "ctm-council-vote-choice", role: "cell" },
+              h("input", {
+                type: "radio",
+                name: `decision-${decision.id}-member-${row.member.id}`,
+                value: choice,
+                checked: choices[row.member.id] === choice,
+                disabled: !canEditRow,
+                "aria-label": `${t(choice)}: ${row.member.name || row.member.id}`,
+                onChange: () => setChoices((old) => ({ ...old, [row.member.id]: choice })),
+              }),
+            )),
+          );
+        }),
+        h("div", { className: "ctm-council-vote-table__summary", role: "row" },
+          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--approve" }, `${t("approve")}: ${counts.approve}`)),
+          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--deny" }, `${t("deny")}: ${counts.deny}`)),
+          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--abstain" }, `${t("abstain")}: ${counts.abstain}`)),
+        ),
+      ),
+      !readAvailable ? h(P.Notice, { tone: "warning" }, t("sessionVotesNotice")) : null,
+      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+      failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
+      canVote ? h(P.FormActions, { sticky: false },
+        h(P.Button, { disabled: pending || !changes.length, onClick: () => saveVotes(false) }, t("saveVoteDraft")),
+        h(P.Button, { variant: "primary", loading: pending, disabled: pending || !changes.length, onClick: () => saveVotes(true) }, t("recordVotesContinue")),
+      ) : null,
+    );
+  }
+
+  function DecisionVersion({ api, lang, user, record, decision, members, readAvailable, onChange, showVoting = true, showApproval = true }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1563,7 +1698,8 @@
       ),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !confirm ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
-      h(
+      showVoting
+        ? h(
         P.Panel,
         { icon: "doc-text", title: t("votes"), description: t("rosterNotice") },
         h(
@@ -1614,8 +1750,10 @@
                 h(P.Button, { disabled: pending || !vote, loading: pending && Boolean(vote), onClick: submitVote }, t("recordVote")),
               ),
         ),
-      ),
-      h(
+      )
+        : null,
+      showApproval
+        ? h(
         P.Panel,
         { icon: "doc-text", title: t("approval") },
         decision.approval
@@ -1658,7 +1796,8 @@
                 ),
               )
             : h(P.Text, { as: "p", variant: "secondary" }, t("notApproved")),
-      ),
+      )
+        : null,
       h(
         P.ConfirmDialog,
         {
@@ -1717,10 +1856,10 @@
     const current = local || (latestSaved ? { votes: [], approval: null, ...latestSaved } : null);
     const earlier = readAvailable ? [...versions].sort((a, b) => b.number - a.number).slice(1) : [];
     const canWrite = writerFor(user, caseRow, record) && Boolean(proceeding);
+    const updateDecision = (next, saved) => (readAvailable && saved ? retry() : setLocal(next));
     const detail = h(
       P.Stack,
       { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("decisionVoting")),
       noticeKey ? h(P.Notice, { tone: "info" }, t(noticeKey)) : null,
       !proceeding ? h(P.Notice, { tone: "info" }, t("noOpenProceeding")) : null,
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
@@ -1734,10 +1873,11 @@
             decision: current,
             members,
             readAvailable,
-            // With the server read available, reload the saved record after each action.
-            onChange: (next, saved) => (readAvailable && saved ? retry() : setLocal(next)),
+            showVoting: false,
+            showApproval: false,
+            onChange: updateDecision,
           })
-        : h(P.EmptyState, { title: t("noDecision") }),
+        : null,
       earlier.length
         ? h(
             P.Panel,
@@ -1750,7 +1890,7 @@
             }),
           )
         : null,
-      proceeding
+      proceeding && !current
         ? canWrite
           ? h(DecisionForm, {
               api,
@@ -1769,11 +1909,23 @@
           : h(P.Notice, { tone: "info" }, t("writerDecision"))
         : null,
     );
-    return h(window.CTMShell.Workspace, {
-      label: t("decisionVoting"), rows: current ? [{ ...current, title: t("decisionVoting") }] : proceeding ? [{ id: proceeding.id, title: t("recordDecision") }] : [],
-      showDetailWhenEmpty: true, empty: t("noDecision"),
-      columns: [{ title: t("decisionVoting"), field: "title", kind: "name" }, { title: t("version"), field: "number" }],
-    }, detail);
+    return h(
+      P.Stack,
+      { gap: "lg", className: "ctm-decision-voting-workspace" },
+      h(P.Panel, { icon: "doc-text", title: t("decisionVoting") }, detail),
+      current
+        ? h(CouncilVoteRecord, {
+            key: `vote-${current.id}`,
+            api,
+            lang,
+            user,
+            decision: current,
+            members,
+            readAvailable,
+            onChange: updateDecision,
+          })
+        : null,
+    );
 
   }
 
@@ -1784,6 +1936,7 @@
       agenda_placed: "Placed on a council session agenda",
       session_created: "Council session created",
       session_closed: "Council session closed",
+      session_returned_to_planned: "Council session returned to Planned",
       agenda_carryover_already_placed: "Carryover skipped: already on the next agenda",
       answers_saved: "Application answers saved",
       appeal_accept: "Appeal accepted",
@@ -1826,6 +1979,7 @@
       agenda_placed: "أُدرجت في جدول أعمال جلسة المجلس",
       session_created: "أُنشئت جلسة المجلس",
       session_closed: "أُغلقت جلسة المجلس",
+      session_returned_to_planned: "أُعيدت جلسة المجلس إلى مخططة",
       agenda_carryover_already_placed: "لم تُنقل: مُدرجة بالفعل في جدول الجلسة التالية",
       answers_saved: "حُفظت إجابات الطلب",
       appeal_accept: "قُبل الاستئناف",
@@ -1941,121 +2095,59 @@
   }
 
   function CallLog({ api, lang, user, caseId }) {
-    const R = window.React,
-      P = window.Plenix,
-      h = R.createElement,
-      t = translator(lang);
-    const [state, retry] = base.useLoad(
-      () =>
-        Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)), api(`/api/cases/${encodeURIComponent(caseId)}/calls/`)]).then(
-          ([record, calls]) => ({ record, calls: calls.items }),
-        ),
-      [caseId],
-    );
-    const [form, setForm] = R.useState({ party: "", occurred: "", outcome: "", notes: "" });
-    const [problem, setProblem] = R.useState(null);
-    const [pending, setPending] = R.useState(false);
-    const [failure, setFailure] = R.useState(null);
-    const [notice, setNotice] = R.useState(null);
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [state, retry] = base.useLoad(() => Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)), api(`/api/cases/${encodeURIComponent(caseId)}/calls/`)]).then(([record, calls]) => ({ record, calls: calls.items })), [caseId]);
+    const [selected, select] = R.useState(null), [tab, setTab] = R.useState("received"), [composing, setComposing] = R.useState(false);
+    const [form, setForm] = R.useState({ party: "", occurred: "", direction: "sent", outcome: "", notes: "" });
+    const [problem, setProblem] = R.useState(null), [pending, setPending] = R.useState(false), [failure, setFailure] = R.useState(null), [notice, setNotice] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, calls } = state.data;
     const canWrite = writerFor(user, null, record) && record.status === "open";
     const partyName = (id) => record.parties.find((p) => p.id === id)?.name || "";
-    const update = (patch) => {
-      setForm((old) => ({ ...old, ...patch }));
-      setProblem(null);
-    };
+    const rows = calls.filter((call) => (call.direction || "sent") === tab).map((call) => ({ ...call, id: call.id, person: partyName(call.party_id), occurred: base.formatWhen(call.occurred_at, lang) }));
+    const update = (patch) => { setForm((old) => ({ ...old, ...patch })); setProblem(null); };
     async function save(event) {
-      event.preventDefault();
-      const issue = callProblem(form);
-      setProblem(issue);
-      if (issue) return;
-      setPending(true);
-      setFailure(null);
+      event.preventDefault(); const issue = callProblem(form); setProblem(issue); if (issue) return;
+      setPending(true); setFailure(null);
       try {
-        await api(`/api/cases/${encodeURIComponent(caseId)}/calls/`, {
-          method: "POST",
-          body: JSON.stringify({
-            party_id: form.party,
-            // Browser-local wall time converted to an absolute instant with offset.
-            occurred_at: new Date(form.occurred).toISOString(),
-            outcome: form.outcome.trim(),
-            notes: form.notes.trim(),
-          }),
-        });
-        setForm({ party: "", occurred: "", outcome: "", notes: "" });
-        setNotice("callRecorded");
-        retry();
-      } catch (error) {
-        setFailure(base.serverMessage(error, t));
-      } finally {
-        setPending(false);
-      }
+        await api(`/api/cases/${encodeURIComponent(caseId)}/calls/`, { method: "POST", body: JSON.stringify({ party_id: form.party, occurred_at: new Date(form.occurred).toISOString(), direction: form.direction, outcome: form.outcome.trim(), notes: form.notes.trim() }) });
+        setForm({ party: "", occurred: "", direction: "sent", outcome: "", notes: "" }); setComposing(false); setNotice("callRecorded"); retry();
+      } catch (error) { setFailure(base.serverMessage(error, t)); } finally { setPending(false); }
     }
     const err = (key) => (problem === key ? t(key) : undefined);
-    return h(
-      P.Panel,
-      { icon: "doc-text", title: t("callLog"), description: t("callLogHelp") },
-      h(
-        P.Stack,
-        { gap: "md" },
+    const callDialog = composing ? h(P.Dialog, { open: true, title: t("recordCall"), size: "lg", onClose: () => !pending && setComposing(false) },
+      h(P.Form, { onSubmit: save, label: t("recordCall"), noValidate: true },
+        h(P.FormSection, { title: t("recordCall") },
+          h(P.Field, { label: t("callParty"), required: true, error: err("chooseCallParty") }, h(P.Select, { value: form.party, disabled: pending, onChange: (e) => update({ party: e.target.value }), options: [{ value: "", label: t("chooseCallParty") }, ...record.parties.map((p) => ({ value: p.id, label: p.name }))] })),
+          h(P.RadioGroup, { label: "Direction", layout: "row", value: form.direction, onChange: (direction) => update({ direction }), options: [{ value: "received", label: "Received" }, { value: "sent", label: "Sent" }] }),
+          h(P.Field, { label: t("callTime"), required: true, error: err("callTimeRequired") || err("callTimeFuture") }, h(P.Input, { type: "datetime-local", width: "md", value: form.occurred, disabled: pending, onChange: (e) => update({ occurred: e.target.value }) })),
+          h(P.Field, { label: t("callOutcome"), required: true, error: err("callOutcomeRequired") }, h(P.Input, { value: form.outcome, maxLength: 500, disabled: pending, onChange: (e) => update({ outcome: e.target.value }) })),
+          h(P.Field, { label: t("callNotes") }, h(P.Textarea, { rows: 4, value: form.notes, maxLength: 10000, disabled: pending, onChange: (e) => update({ notes: e.target.value }) })),
+        ),
+        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+        h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setComposing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("recordCall"))),
+      ),
+    ) : null;
+    const workspace = h(window.CTMShell.Workspace, {
+      label: t("callLog"), rows, selected, onSelect: select, empty: t("noCalls"), showDetailWhenEmpty: true,
+      columns: [{ title: t("callParty"), field: "person", kind: "name" }, { title: t("callOutcome"), field: "outcome" }, { title: t("callTime"), field: "occurred" }],
+    }, (call) => call ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, call.person), h(P.Text, { variant: "secondary" }, call.occurred), h(P.Text, { as: "p", variant: "strong" }, call.outcome), call.notes ? h(P.Text, { as: "p" }, call.notes) : null) : h(P.EmptyState, { title: t("noCalls") }));
+    return h(R.Fragment, null, callDialog,
+      h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
+        h(P.Toolbar, { label: t("callLog") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => setComposing(true) }, "New Call") : null),
         notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-        calls.length
-          ? h(
-              P.Stack,
-              { gap: "sm" },
-              ...calls.map((call) =>
-                h(
-                  P.Card,
-                  { icon: "message", key: call.id, title: `${base.isolate(partyName(call.party_id))} · ${base.formatWhen(call.occurred_at, lang)}`, meta: `${t("recordedAt")}: ${base.formatWhen(call.recorded_at, lang)}` },
-                  h(P.Text, { as: "p", variant: "strong" }, call.outcome),
-                  call.notes ? h(P.Text, { as: "p" }, call.notes) : null,
-                ),
-              ),
-            )
-          : h(P.EmptyState, { title: t("noCalls") }),
-        canWrite
-          ? h(
-              P.Form,
-              { onSubmit: save, label: t("recordCall"), noValidate: true },
-              h(
-                P.FormSection,
-                { title: t("recordCall") },
-                h(
-                  P.Field,
-                  { label: t("callParty"), required: true, error: err("chooseCallParty") },
-                  h(P.Select, {
-                    value: form.party,
-                    disabled: pending,
-                    onChange: (e) => update({ party: e.target.value }),
-                    options: [{ value: "", label: t("chooseCallParty") }, ...record.parties.map((p) => ({ value: p.id, label: p.name }))],
-                  }),
-                ),
-                h(
-                  P.Field,
-                  { label: t("callTime"), required: true, error: err("callTimeRequired") || err("callTimeFuture") },
-                  h(P.Input, { type: "datetime-local", width: "md", value: form.occurred, disabled: pending, onChange: (e) => update({ occurred: e.target.value }) }),
-                ),
-                h(
-                  P.Field,
-                  { label: t("callOutcome"), required: true, error: err("callOutcomeRequired") },
-                  h(P.Input, { value: form.outcome, maxLength: 500, disabled: pending, onChange: (e) => update({ outcome: e.target.value }) }),
-                ),
-                h(
-                  P.Field,
-                  { label: t("callNotes") },
-                  h(P.Textarea, { rows: 3, value: form.notes, maxLength: 10000, disabled: pending, onChange: (e) => update({ notes: e.target.value }) }),
-                ),
-              ),
-              failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-              h(P.FormActions, { sticky: false }, h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("recordCall"))),
-            )
-          : null,
+        h(P.Tabs, {
+          variant: "contained", label: t("callLog"), value: tab,
+          onChange: (value) => { setTab(value); select(null); },
+          items: [
+            { value: "received", label: "Received", content: workspace },
+            { value: "sent", label: "Sent", content: workspace },
+          ],
+        }),
       ),
     );
   }
-
   // ---------- Professional Assessments ----------
   // Separate from ordinary reports. Contents stay hidden unless the subject's signed,
   // scoped release covers council; the server enforces this on every read.
@@ -2157,9 +2249,23 @@
       }
     }
     const err = (key) => (problem === key ? t(key) : undefined);
+    const requestDialog = composing
+      ? h(P.Dialog, { open: true, title: t("newAssessment"), size: "lg", onClose: () => !pending && setComposing(false) },
+          h(P.Form, { onSubmit: create, label: t("newAssessment"), noValidate: true },
+            h(P.FormSection, { title: t("newAssessment") },
+              h(P.Field, { label: t("subject"), required: true, error: err("chooseSubject") }, h(P.Select, { value: form.party, disabled: pending, onChange: (e) => update({ party: e.target.value }), options: [{ value: "", label: t("chooseSubject") }, ...record.parties.filter((p) => p.can_receive).map((p) => ({ value: p.id, label: p.name }))] })),
+              h(P.RadioGroup, { label: t("assessmentKind"), layout: "row", value: form.kind, onChange: (value) => update({ kind: value }), options: ASSESSMENT_KINDS.map((value) => ({ value, label: t(value), disabled: pending })) }),
+              h(P.Field, { label: t("title"), required: true, error: err("titleRequired") }, h(P.Input, { value: form.title, maxLength: 200, disabled: pending, onChange: (e) => update({ title: e.target.value }) })),
+              h(P.Field, { label: t("assessmentInstructions"), description: t("assessmentInstructionsHelp") }, h(P.Textarea, { rows: 4, value: form.instructions, maxLength: 10000, disabled: pending, onChange: (e) => update({ instructions: e.target.value }) })),
+            ),
+            h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setComposing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveDraft"))),
+          ),
+        )
+      : null;
     const detail = h(
       P.Stack,
       { gap: "lg" },
+      h(P.Toolbar, { label: t("assessments") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => setComposing(true) }, t("newAssessment")) : null),
       h(P.Text, { as: "h1", variant: "title" }, t("assessments")),
       h(P.Notice, { tone: "info" }, t("assessmentPrivacy")),
       h(P.Notice, { tone: "warning" }, t("releaseTextPending")),
@@ -2169,50 +2275,11 @@
         P.Panel,
         { icon: "lock",
           title: t("assessmentRequests"),
-          actions: canWrite && !composing ? h(P.Button, { size: "sm", variant: "primary", onClick: () => setComposing(true) }, t("newAssessment")) : null,
+          actions: null,
         },
         h(
           P.Stack,
           { gap: "sm" },
-          composing
-            ? h(
-                P.Form,
-                { onSubmit: create, label: t("newAssessment"), noValidate: true },
-                h(
-                  P.FormSection,
-                  { title: t("newAssessment") },
-                  h(
-                    P.Field,
-                    { label: t("subject"), required: true, error: err("chooseSubject") },
-                    h(P.Select, {
-                      value: form.party,
-                      disabled: pending,
-                      onChange: (e) => update({ party: e.target.value }),
-                      options: [{ value: "", label: t("chooseSubject") }, ...record.parties.filter((p) => p.can_receive).map((p) => ({ value: p.id, label: p.name }))],
-                    }),
-                  ),
-                  h(P.RadioGroup, {
-                    label: t("assessmentKind"),
-                    layout: "row",
-                    value: form.kind,
-                    onChange: (value) => update({ kind: value }),
-                    options: ASSESSMENT_KINDS.map((value) => ({ value, label: t(value), disabled: pending })),
-                  }),
-                  h(P.Field, { label: t("title"), required: true, error: err("titleRequired") }, h(P.Input, { value: form.title, maxLength: 200, disabled: pending, onChange: (e) => update({ title: e.target.value }) })),
-                  h(
-                    P.Field,
-                    { label: t("assessmentInstructions"), description: t("assessmentInstructionsHelp") },
-                    h(P.Textarea, { rows: 4, value: form.instructions, maxLength: 10000, disabled: pending, onChange: (e) => update({ instructions: e.target.value }) }),
-                  ),
-                ),
-                h(
-                  P.FormActions,
-                  { sticky: false },
-                  h(P.Button, { disabled: pending, onClick: () => setComposing(false) }, t("cancel")),
-                  h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveDraft")),
-                ),
-              )
-            : null,
           ...requests.filter((row) => row.id === selected).map((row) =>
             h(
               P.Card,
@@ -2228,7 +2295,7 @@
               row.instructions ? h(P.Text, { as: "p", variant: "secondary" }, row.instructions) : null,
             ),
           ),
-          !requests.length && !composing ? h(P.EmptyState, { title: t("noAssessments") }) : null,
+          !requests.length ? h(P.EmptyState, { title: t("noAssessments") }) : null,
           !canWrite ? h(P.Text, { variant: "secondary" }, t(proceeding ? "writerOnly" : "noOpenProceeding")) : null,
         ),
       ),
@@ -2272,7 +2339,7 @@
       rows: [...requests, ...reports].map((row) => ({ ...row, title: row.restricted ? t("restrictedAssessment") : row.title })),
       empty: t("noAssessmentReports"),
       columns: [{ title: t("assessments"), field: "title", kind: "name" }, { title: t("assessmentKind"), field: "kind", render: (row) => row.kind ? t(row.kind) : "" }],
-    }, detail);
+    }, detail, requestDialog);
 
   }
 
@@ -2287,6 +2354,232 @@
     return null;
   }
 
+  function spouseProfileSection(P, h, t, title, icon, values, twoColumns = false) {
+    const fields = values.filter(([, value]) => value);
+    if (!fields.length) return null;
+    return h(
+      P.Stack,
+      { gap: "sm", key: title, className: `ctm-spouse-profile-section${twoColumns ? " ctm-spouse-profile-section--two-columns" : ""}` },
+      h(
+        P.Inline,
+        { gap: "sm", align: "center", className: "ctm-spouse-profile-section__heading" },
+        h(P.Icon, { name: icon, label: title }),
+        h(P.SectionHeading, { level: 2 }, title),
+        h(P.Divider, { className: "ctm-spouse-profile-section__divider" }),
+      ),
+      h(
+        P.PropertyList,
+        { layout: "stacked" },
+        ...fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value)),
+      ),
+    );
+  }
+
+  function spouseProfileValues(record, party) {
+    const submitted = party.profile || {};
+    const edited = record.council_edits?.[`profile_${party.id}`]?.value;
+    if (!edited || typeof edited !== "object" || Array.isArray(edited)) return submitted;
+    return {
+      ...submitted,
+      personal: { ...submitted.personal, ...edited.personal },
+      career: { ...submitted.career, ...edited.career },
+      church_affiliation: { ...submitted.church_affiliation, ...edited.church_affiliation },
+    };
+  }
+
+  function SpouseProfileEditor({ api, P, h, t, record, party, profile, onSaved, onCancel }) {
+    const R = window.React;
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const proceeding = openProceeding(record);
+    const groups = [
+      ["personal", t("personalDetails"), [["other_names", t("otherNamesKnownBy")], ["place_of_birth", t("placeOfBirth")], ["nationality", t("nationality")], ["awareness_of_application", t("awarenessOfApplication")]]],
+      ["career", t("career"), [["education", t("education")], ["graduation_year", t("yearOfGraduation")], ["occupation", t("occupation")]]],
+      ["church_affiliation", t("churchAffiliation"), [["denomination", t("denomination")], ["bishop", t("nameOfBishop")], ["diocese", t("diocese")], ["parish", t("parishName")], ["confessor", t("fatherOfConfession")]]],
+    ];
+    const [form, setForm] = R.useState(() => Object.fromEntries(groups.flatMap(([scope,, fields]) => fields.map(([key]) => [`${scope}.${key}`, profile[scope]?.[key] || ""]))));
+    const save = async (event) => {
+      event.preventDefault();
+      setPending(true);
+      setFailure(null);
+      const value = Object.fromEntries(groups.map(([scope,, fields]) => [scope, Object.fromEntries(fields.map(([key]) => [key, String(form[`${scope}.${key}`] || "").trim()]))]));
+      try {
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`, {
+          method: "POST",
+          body: JSON.stringify({ fact_code: `case_card.profile_${party.id}`, value }),
+        });
+        onSaved();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    };
+    return h(
+      P.Form,
+      { onSubmit: save, label: t("editProfile"), noValidate: true },
+      ...groups.map(([scope, title, fields]) => h(
+        P.Stack,
+        { gap: "sm", key: scope },
+        h(P.SectionHeading, { level: 2 }, title),
+        h(
+          "div",
+          { className: "ctm-case-edit-grid" },
+          ...fields.map(([key, label]) => h(
+            P.Field,
+            { key, label },
+            h(P.Input, {
+              value: form[`${scope}.${key}`],
+              disabled: pending,
+              onChange: (event) => setForm((current) => ({ ...current, [`${scope}.${key}`]: event.target.value })),
+            }),
+          )),
+        ),
+      )),
+      failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+      h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: onCancel }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveProfile"))),
+    );
+  }
+
+  function SpouseContactSection({ api, P, h, t, user, record, party, onSaved }) {
+    const R = window.React;
+    const [editing, setEditing] = R.useState(false);
+    const [form, setForm] = R.useState({});
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const proceeding = openProceeding(record);
+    const canWrite = writerFor(user, null, record) && proceeding?.status === "open";
+    const submitted = party.profile?.contact || {};
+    const edited = record.council_edits?.[`contact_${party.id}`]?.value;
+    const values = edited && typeof edited === "object" && !Array.isArray(edited) ? { ...submitted, ...edited } : submitted;
+    const fields = [
+      ["address", t("address")],
+      ["mobile", t("mobileNumber")],
+      ["email", t("emailAddress"), "email"],
+      ["immigration_status", t("immigrationStatus")],
+      ["residing_with", t("residingWith")],
+    ];
+    const startEditing = () => {
+      setForm(Object.fromEntries(fields.map(([key]) => [key, values[key] || ""])));
+      setFailure(null);
+      setEditing(true);
+    };
+    const save = async (event) => {
+      event.preventDefault();
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`, {
+          method: "POST",
+          body: JSON.stringify({ fact_code: `case_card.contact_${party.id}`, value: form }),
+        });
+        setEditing(false);
+        onSaved();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    };
+    return h(
+      P.Stack,
+      { gap: "sm", className: "ctm-spouse-profile-section ctm-spouse-profile-section--two-columns" },
+      h(
+        P.Inline,
+        { gap: "sm", align: "center", className: "ctm-spouse-profile-section__heading" },
+        h(P.Icon, { name: "message", label: t("contact") }),
+        h(P.SectionHeading, { level: 2 }, t("contact")),
+        h(P.Divider, { className: "ctm-spouse-profile-section__divider" }),
+      ),
+      editing
+        ? h(
+            P.Form,
+            { onSubmit: save, label: t("contact"), noValidate: true },
+            h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+            failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+            h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveContact"))),
+          )
+        : h(P.PropertyList, { layout: "stacked" }, ...fields.map(([key, label]) => h(P.PropertyList.Item, { key, label }, values[key] || "—"))),
+    );
+  }
+
+  function spousePhoto(P, h, party) {
+    // Avatar preserves the intended photograph and falls back to initials when a
+    // submitted file is unavailable; it never renders an error message in the card.
+    return h(P.Avatar, {
+      src: party.photo_url || undefined,
+      name: party.name,
+      size: "xl",
+      label: party.name,
+      className: "ctm-spouse-photo",
+    });
+  }
+
+  function SpousePhotoUpload({ api, P, h, t, user, record, party, onSaved }) {
+    const R = window.React;
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const canWrite = writerFor(user, null, record);
+    const upload = async (event) => {
+      const file = event.target.files?.[0];
+      if (!file || !canWrite || pending) return;
+      setPending(true);
+      setFailure(null);
+      try {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("category", "CASE_PHOTO");
+        form.append("context", party.id);
+        form.append("case_id", record.id);
+        form.append("visibility", "council");
+        await api("/api/files/", { method: "POST", body: form });
+        event.target.value = "";
+        onSaved();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t) || t("photoUploadFailed"));
+      } finally {
+        setPending(false);
+      }
+    };
+    if (!canWrite) return spousePhoto(P, h, party);
+    const inputId = `ctm-photo-upload-${party.id}`;
+    return h(
+      "span",
+      { className: "ctm-spouse-photo-control" },
+      spousePhoto(P, h, party),
+      h("input", {
+        id: inputId,
+        className: "ctm-spouse-photo-control__input",
+        type: "file",
+        accept: "image/jpeg,image/png,image/gif,image/webp",
+        disabled: pending,
+        onChange: upload,
+      }),
+      h("label", { htmlFor: inputId, className: "ctm-spouse-photo-control__change" }, pending ? "…" : t("changePhoto")),
+      failure ? h("span", { className: "ctm-spouse-photo-control__error", role: "alert" }, failure) : null,
+    );
+  }
+
+  function spouseHeaderTitle(P, h, t, party) {
+    const fact = (label, value, data) => h(
+      "span",
+      { className: "ctm-spouse-header__fact" },
+      h(P.Text, { as: "span", variant: "caption" }, label),
+      data ? h(P.Text, { as: "span", variant: "data" }, value) : value,
+    );
+    return h(
+      "span",
+      { className: "ctm-spouse-header" },
+      h(P.Text, { as: "span", variant: "strong", className: "ctm-spouse-header__name" }, party.name),
+      party.reference ? fact(t("ctmId"), party.reference, true) : null,
+      fact(
+        t("portalAccount"),
+        h(P.Badge, { tone: party.can_receive ? "success" : "waiting" }, t(party.can_receive ? "registered" : "notRegistered")),
+        false,
+      ),
+    );
+  }
+
   function CaseParties({ api, lang, user, caseId }) {
     const R = window.React,
       P = window.Plenix,
@@ -2299,6 +2592,8 @@
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
+    const [expandedParties, setExpandedParties] = R.useState({});
+    const [editingParty, setEditingParty] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const record = state.data;
@@ -2335,24 +2630,64 @@
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("partiesTitle")),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-      ...record.parties.map((party) =>
-        h(
+      ...record.parties.map((party) => {
+        const profile = spouseProfileValues(record, party);
+        const canEditProfile = writerFor(user, null, record) && openProceeding(record)?.status === "open";
+        const startEditingProfile = (event) => {
+          event.stopPropagation();
+          setEditingParty(party.id);
+          setExpandedParties((current) => ({ ...current, [party.id]: true }));
+        };
+        return h(
           P.Panel,
-          { icon: "doc-text", key: party.id, title: party.name },
-          h(
-            P.PropertyList,
-            null,
-            party.reference ? h(P.PropertyList.Item, { label: t("ctmReference"), data: true }, party.reference) : null,
-            h(
-              P.PropertyList.Item,
-              { label: t("portalAccount") },
-              h(P.Badge, { tone: party.can_receive ? "success" : "waiting" }, t(party.can_receive ? "registered" : "notRegistered")),
-            ),
-          ),
-        ),
-      ),
+          {
+            icon: h(SpousePhotoUpload, { api, P, h, t, user, record, party, onSaved: retry }),
+            key: party.id,
+            title: spouseHeaderTitle(P, h, t, party),
+            collapsible: true,
+            expanded: Boolean(expandedParties[party.id]),
+            onToggle: (next) => setExpandedParties((current) => ({ ...current, [party.id]: next })),
+            onClick: (event) => {
+              if (!event.target.closest(".plx-panel__header")) return;
+              if (event.target.closest(".plx-panel__toggle, .ctm-spouse-photo-control__change, .ctm-spouse-photo-control__input, .ctm-spouse-profile-edit")) return;
+              setExpandedParties((current) => ({ ...current, [party.id]: !current[party.id] }));
+            },
+            actions: canEditProfile ? h(P.Button, { size: "sm", className: "ctm-spouse-profile-edit", onClick: startEditingProfile }, t("editProfile")) : null,
+            strings: { collapse: t("collapse"), expand: t("expand") },
+          },
+          editingParty === party.id
+            ? h(SpouseProfileEditor, { api, P, h, t, record, party, profile, onSaved: () => { setEditingParty(null); retry(); }, onCancel: () => setEditingParty(null) })
+            : h(
+                P.Stack,
+                { gap: "lg" },
+                h(
+                  P.Stack,
+                  { gap: "section", className: "ctm-spouse-profile-sections" },
+                  spouseProfileSection(P, h, t, t("personalDetails"), "person", [
+                    ["otherNamesKnownBy", profile.personal?.other_names],
+                    ["placeOfBirth", profile.personal?.place_of_birth],
+                    ["nationality", profile.personal?.nationality],
+                    ["awarenessOfApplication", profile.personal?.awareness_of_application],
+                  ], true),
+                  h(SpouseContactSection, { api, P, h, t, user, record, party, onSaved: retry }),
+                  spouseProfileSection(P, h, t, t("career"), "document", [
+                    ["education", profile.career?.education],
+                    ["yearOfGraduation", profile.career?.graduation_year],
+                    ["occupation", profile.career?.occupation],
+                  ], true),
+                  spouseProfileSection(P, h, t, t("churchAffiliation"), "settings-users", [
+                    ["denomination", profile.church_affiliation?.denomination],
+                    ["nameOfBishop", profile.church_affiliation?.bishop],
+                    ["diocese", profile.church_affiliation?.diocese],
+                    ["parishName", profile.church_affiliation?.parish],
+                    ["fatherOfConfession", profile.church_affiliation?.confessor],
+                  ], true),
+                ),
+              ),
+        );
+      }),
       !record.parties.length ? h(P.EmptyState, { title: t("noParties") }) : null,
-      manage && record.status === "open"
+      manage && record.status === "open" && record.parties.length < 2
         ? open
           ? h(
               P.Form,
@@ -2377,54 +2712,145 @@
     );
   }
 
-  function CaseHearings({ api, lang, caseId, onSession }) {
+  function CaseHearings({ api, lang, user, caseId, onSession, onDecision }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
-      t = translator(lang);
+      t = translator(lang),
+      bt = base.translator(lang);
+    const [tab, setTab] = R.useState("current");
+    const [attendanceOpen, setAttendanceOpen] = R.useState(false);
+    const [outcomeKind, setOutcomeKind] = R.useState("recommendation");
+    const [recommendation, setRecommendation] = R.useState("");
+    const [saving, setSaving] = R.useState(false);
+    const [notice, setNotice] = R.useState(null);
+    const [failure, setFailure] = R.useState(null);
     const [state, retry] = base.useLoad(
       () =>
         api("/api/sessions/").then(async (sessions) => {
-          const recent = (sessions.items || []).slice(0, 24);
-          const agendas = await Promise.all(
-            recent.map((session) =>
-              api(`/api/sessions/${encodeURIComponent(session.id)}/agenda/`).then((data) => ({ session, items: data.items })),
-            ),
-          );
+          const recent = (sessions.items || []).slice(0, 100);
+          const agendas = await Promise.all(recent.map((session) =>
+            api(`/api/sessions/${encodeURIComponent(session.id)}/agenda/`).then((data) => ({ session, items: data.items }))));
           const rows = [];
           for (const { session, items } of agendas)
-            for (const item of items || []) if (item.case_id === caseId) rows.push({ session, item });
+            for (const item of items || []) if (item.case_id === caseId && item.part === 2) rows.push({ session, item });
           return rows.sort((a, b) => b.session.date.localeCompare(a.session.date));
         }),
       [caseId],
     );
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const bt = base.translator(lang);
-    return h(
-      P.Stack,
-      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
-      h(P.Text, { as: "h1", variant: "title" }, t("hearingsTitle")),
-      h(P.Text, { variant: "secondary" }, t("hearingsScope")),
-      h(window.CTMShell.Workspace, {
-        label: t("hearingsTitle"), rows: state.data.map(({ session, item }) => ({ id: item.id, session, item, date: session.date })),
-        empty: t("noHearings"),
-        columns: [{ title: t("hearingsTitle"), field: "date", kind: "name" }],
-      }, ({ session, item }) => h(P.Stack, null,
-        h(P.Text, { as: "h2", variant: "title" },
-          item.part === 2 && item.party_names?.length ? base.hearingTitle(item.party_names, session.date, bt) : base.sessionLabel(session.date, bt)),
-        h(P.Text, null, `${bt(item.part === 1 ? "part1" : "part2")} · ${bt(item.state === "assigned" ? "assigned_state" : item.state)}`),
-        h(P.Button, { onClick: () => onSession(session.id) }, base.sessionLabel(session.date, bt)),
+    const rows = state.data || [];
+    const current = rows.find(({ session, item }) => session.state !== "closed" && item.state !== "heard") || rows[0] || null;
+    const past = rows.filter((row) => row !== current);
+    const title = (row) => {
+      const names = row.item.party_names || [];
+      return names.length >= 2 ? `${base.isolate(names[0])} vs. ${base.isolate(names[1])}` : base.hearingTitle(names, row.session.date, bt);
+    };
+    const hearingId = current?.item?.hearing_id;
+    const saveRecommendation = async () => {
+      if (!String(recommendation).trim()) { setFailure(t("recommendationRequired")); return; }
+      if (!hearingId) { setFailure(bt("outcomeDependency")); return; }
+      setSaving(true); setFailure(null);
+      try {
+        await api(`/api/hearings/${encodeURIComponent(hearingId)}/outcome/`, { method: "POST", body: JSON.stringify({ internal_text: "", recommendations: recommendation.trim() }) });
+        setNotice(t("recommendationSaved"));
+      } catch (error) { setFailure(base.serverMessage(error, bt)); }
+      finally { setSaving(false); }
+    };
+    const attendanceDialog = current && attendanceOpen
+      ? h(P.Dialog, { open: true, size: "lg", title: t("councilAttendance"), description: t("councilAttendanceHelp"), closeLabel: t("cancel"), onClose: () => setAttendanceOpen(false) },
+        h(HearingAttendance, { api, lang, user, sessionId: current.session.id, hearingId })
+      )
+      : null;
+    const outcome = current ? h(P.Panel, { icon: "document", title: t("outcome") },
+      h(P.RadioGroup, { label: t("outcome"), layout: "row", value: outcomeKind, onChange: setOutcomeKind,
+        options: [{ value: "decision", label: t("decisionMade") }, { value: "recommendation", label: t("recommendationOnly") }] }),
+      outcomeKind === "decision"
+        ? h(P.Inline, { justify: "between" }, h(P.Text, { variant: "secondary" }, t("decisionOutcomeHelp")), h(P.Button, { icon: "open", onClick: onDecision }, t("decisionVoting")))
+        : h(P.Stack, { gap: "md" }, h(P.Textarea, { rows: 6, autoGrow: true, value: recommendation, disabled: saving, onChange: (event) => setRecommendation(event.target.value) }), h(P.Inline, { justify: "end" }, h(P.Button, { variant: "primary", loading: saving, disabled: saving || !hearingId, onClick: saveRecommendation }, t("saveRecommendation")))),
+      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, notice) : null,
+      failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
+    ) : h(P.EmptyState, { title: t("noHearings") });
+    const currentHeader = current ? h("header", { className: "plx-entity-header ctm-hearing-header" }, h("div", { className: "plx-entity-header__layout" },
+        h("div", { className: "plx-entity-header__main" }, h("div", { className: "plx-entity-header__lead" },
+          h("div", { className: "plx-entity-header__heading" },
+            h("span", { className: "plx-entity-header__media" }, h("span", { className: "plx-entity-header__tile", "data-plx-media-hue": "green", "aria-hidden": true }, h(P.Icon, { name: "calendar", size: "lg" }))),
+            h("div", { className: "plx-entity-header__text" }, h("h1", { className: "plx-entity-header__title" }, title(current)), h("p", { className: "plx-entity-header__subtitle" }, `${bt("councilSession")} ${current.session.date}`)),
+          ),
+        )),
+        h("div", { className: "plx-entity-header__aside" }, h(P.Stack, { gap: "xs", align: "end" },
+          h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "calendar", onClick: () => onSession(current.session.id) }, t("rescheduleHearing")),
+          h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "settings-users", onClick: () => setAttendanceOpen(true) }, t("councilAttendance")),
+        )),
+      )) : null;
+    const currentContent = current ? h(P.Stack, { gap: "lg" },
+      outcome,
+    ) : h(P.EmptyState, { title: t("noHearings") });
+    const pastContent = past.length ? h("div", { className: "ctm-past-hearings-table", role: "table", "aria-label": t("pastHearings") },
+      h("div", { className: "ctm-past-hearings-table__header", role: "row" }, h("div", { role: "columnheader" }, t("caseLabel")), h("div", { role: "columnheader" }, bt("councilSession")), h("div", { role: "columnheader" }, t("actions"))),
+      ...past.map((row) => h("div", { key: row.item.id, className: "ctm-past-hearings-table__row", role: "row" },
+        h("div", { role: "cell" }, title(row)),
+        h("div", { role: "cell" }, row.session.date),
+        h("div", { role: "cell" }, h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open"))),
       )),
+    ) : h(P.EmptyState, { title: t("noHearings") });
+    return h(P.Stack, { gap: "lg" }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
+      items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] }), attendanceDialog);
+  }
+
+  function HearingAttendance({ api, lang, user, sessionId, hearingId }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
+    const [state, retry] = base.useLoad(() => hearingId ? api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/?hearing_id=${encodeURIComponent(hearingId)}`) : Promise.resolve({ items: [] }), [sessionId, hearingId]);
+    const [saving, setSaving] = R.useState(false), [failure, setFailure] = R.useState(null);
+    const readonly = saving || !hearingId || user?.role === "member";
+    const roleLabel = (role) => t(role === "president" ? "presiding" : role === "secretary" ? "councilSecretary" : "councilMemberRole");
+    const record = async (memberId, present) => { setSaving(true); setFailure(null); try { await api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }); retry(); } catch (error) { setFailure(base.serverMessage(error, bt)); } finally { setSaving(false); } };
+    return state.pending ? base.loadingView(P, h, t) : state.error ? base.loadFailure(P, h, t, retry, state.error) : h(P.Stack, { gap: "md" },
+      h("div", { className: "ctm-hearing-attendance-table", role: "table", "aria-label": t("councilAttendance") },
+        h("div", { className: "ctm-hearing-attendance-table__header", role: "row" },
+          h("div", { role: "columnheader" }, t("councilMember")),
+          h("div", { role: "columnheader" }, bt("presentLabel")),
+          h("div", { role: "columnheader" }, bt("absentLabel")),
+        ),
+        ...(state.data.items || []).map((row) => h("div", { key: row.member_id, className: "ctm-hearing-attendance-table__row", role: "row" },
+          h("div", { className: "ctm-hearing-attendance-member", role: "cell" },
+            h(P.Text, { as: "div", variant: "strong" }, row.member_name),
+            h(P.Text, { as: "div", variant: "secondary" }, roleLabel(row.member_role)),
+          ),
+          h("label", { className: "ctm-hearing-attendance-choice ctm-hearing-attendance-choice--present", role: "cell" }, h("input", { type: "radio", name: `hearing-${hearingId}-member-${row.member_id}`, checked: row.present === true, disabled: readonly, "aria-label": `${bt("presentLabel")}: ${row.member_name}`, onChange: () => record(row.member_id, true) })),
+          h("label", { className: "ctm-hearing-attendance-choice", role: "cell" }, h("input", { type: "radio", name: `hearing-${hearingId}-member-${row.member_id}`, checked: row.present === false, disabled: readonly, "aria-label": `${bt("absentLabel")}: ${row.member_name}`, onChange: () => record(row.member_id, false) })),
+        )),
+      ),
+      failure ? h(P.Notice, { tone: "danger" }, failure) : null,
     );
   }
 
-  // ---------- Petition and internal notes ----------
-  // Each spouse's formal submission is shown read-only. Council notes are a separate,
-  // council-only record and never change what either spouse submitted.
+  // ---------- Petition and council notes ----------
+  // Formal petitions preserve only petition material. Identity and application profile
+  // details are presented in Spouses from the immutable case-detail projection.
+
+  const PETITION_PROFILE_CODES = new Set([
+    "first_name", "last_name", "birth_date", "gender", "marriage_date",
+    "spouse_name", "spouse_birth_date", "spouse_gender",
+    "other_names", "aliases", "birth_country", "place_of_birth", "nationality",
+    "aware_of_application", "awareness_of_application", "address", "mobile", "mobile_number",
+    "email", "email_address", "immigration_status", "residing_with", "education",
+    "graduation_year", "year_of_graduation", "occupation", "denomination", "bishop",
+    "name_of_bishop", "diocese", "parish", "parish_name", "confessor", "father_of_confession",
+    "married_outside_coptic_church", "outside_coptic_church", "religious_denomination_officiating",
+    "outside_denomination", "date_of_marriage_outside_coptic_church", "outside_marriage_date",
+    "church_marriage_date", "officiating_priest", "marriage_officiant", "church_name",
+    "marriage_church_name", "church_location", "church_address", "marriage_church_location",
+    "marriage_diocese", "church_diocese",
+  ]);
 
   function casePetitions(items, caseId) {
     return (items || []).filter((row) => row && row.kind === "petition" && row.case_id === caseId);
+  }
+
+  function petitionAnswers(answers) {
+    return Object.entries(answers || {}).filter(([code]) => !PETITION_PROFILE_CODES.has(code) && !code.startsWith("spouse_"));
   }
 
   // Latest revision of each note, newest note first by first appearance order.
@@ -2446,157 +2872,207 @@
     return [...byCode.values()].sort((a, b) => String(a.fact_code).localeCompare(String(b.fact_code)));
   }
 
-  function PetitionWorkspace({ api, lang, user, caseId }) {
-    const R = window.React,
-      P = window.Plenix,
-      h = R.createElement,
-      t = translator(lang);
-    const bt = base.translator(lang);
-    const [state, retry] = base.useLoad(
-      () =>
-        Promise.all([api("/api/applications/"), api(`/api/cases/${encodeURIComponent(caseId)}/`)]).then(async ([apps, record]) => {
-          const proceeding = openProceeding(record) || [...(record.proceedings || [])].sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0] || null;
-          const notes = proceeding ? await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`) : { items: [] };
-          let findings = null;
-          if (proceeding) {
-            try {
-              findings = latestFindings((await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`)).items);
-            } catch (error) {
-              // Older servers have no findings read (405); findings are then not shown.
-              if (error.status !== 405) throw error;
-            }
-          }
-          return { petitions: casePetitions(apps.items, caseId), record, proceeding, notes: latestNotes(notes.items), findings };
-        }),
-      [caseId],
+  function PetitionWorkspace({ api, lang, caseId }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
+    const [state, retry] = base.useLoad(() => api("/api/applications/").then((apps) => ({ petitions: casePetitions(apps.items, caseId) })), [caseId]);
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const { petitions } = state.data;
+    return h(P.Stack, { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("petitionTitle")),
+      ...petitions.map((row) => {
+        const answers = petitionAnswers(row.answers);
+        const filingParty = row.filing_party_name ? h(
+          "span",
+          { className: "ctm-petition-header__party" },
+          h(P.Text, { as: "span", variant: "strong", className: "ctm-petition-header__name" }, row.filing_party_name),
+          row.filing_party_role ? h(P.Badge, { tone: row.filing_party_role === "applicant" ? "info" : "waiting" }, t(row.filing_party_role)) : null,
+        ) : null;
+        return h(P.Panel, { icon: "doc-text", key: row.id, title: h("span", { className: "ctm-petition-header" }, h("span", { className: "ctm-petition-header__title" }, t("petition")), filingParty), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
+          h(P.Stack, { gap: "sm" },
+            answers.length ? h(P.PropertyList, { layout: "stacked" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
+          ),
+        );
+      }),
+      !petitions.length ? h(P.EmptyState, { title: t("noPetitions") }) : null,
     );
+  }
+
+  function CaseNotesWorkspace({ api, lang, user, caseId }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`).then(async (record) => {
+      const proceeding = openProceeding(record) || [...(record.proceedings || [])].sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0] || null;
+      const notes = proceeding ? await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`) : { items: [] };
+      return { record, proceeding, notes: latestNotes(notes.items) };
+    }), [caseId]);
     const [text, setText] = R.useState("");
+    const [selected, select] = R.useState(null);
     const [editing, setEditing] = R.useState(null);
+    const [composing, setComposing] = R.useState(false);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const { petitions, record, proceeding, notes, findings } = state.data;
+    const { record, proceeding, notes } = state.data;
     const canWrite = writerFor(user, null, record) && proceeding && proceeding.status === "open";
     async function save(event) {
       event.preventDefault();
-      if (!text.trim()) {
-        setFailure(t("noteRequired"));
-        return;
-      }
-      setPending(true);
-      setFailure(null);
+      if (!text.trim()) { setFailure(t("noteRequired")); return; }
+      setPending(true); setFailure(null);
       try {
-        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`, {
-          method: "POST",
-          body: JSON.stringify(editing ? { text: text.trim(), note_id: editing } : { text: text.trim() }),
-        });
-        setText("");
-        setEditing(null);
-        setNotice("noteSaved");
-        retry();
-      } catch (error) {
-        setFailure(base.serverMessage(error, t));
-      } finally {
-        setPending(false);
-      }
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/notes/`, { method: "POST", body: JSON.stringify(editing ? { text: text.trim(), note_id: editing } : { text: text.trim() }) });
+        setText(""); setEditing(null); setComposing(false); setNotice("noteSaved"); retry();
+      } catch (error) { setFailure(base.serverMessage(error, t)); }
+      finally { setPending(false); }
     }
-    return h(
-      P.Stack,
-      { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("petitionTitle")),
-      h(P.Notice, { tone: "info" }, t("petitionReadOnly")),
-      ...petitions.map((row) => {
-        const answers = Object.entries(row.answers || {});
-        const labelled = answers.every(([code]) => base.fieldLabel(row, code, lang));
-        return h(
-          P.Panel,
-          { icon: "doc-text",
-            key: row.id,
-            title: row.applicant_name || t("petition"),
-            description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "),
-            collapsible: true,
-          },
-          h(
-            P.Stack,
-            { gap: "sm" },
-            !labelled ? h(P.Notice, { tone: "info" }, bt("codesNotice")) : null,
-            answers.length
-              ? h(
-                  P.PropertyList,
-                  { layout: "stacked" },
-                  ...answers.map(([code, value]) =>
-                    h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)),
-                  ),
-                )
-              : h(P.EmptyState, { title: bt("noAnswers") }),
-          ),
-        );
+    const noteDialog = composing ? h(P.Dialog, { open: true, title: t(editing ? "editingNote" : "addNote"), size: "lg", onClose: () => !pending && setComposing(false) },
+      h(P.Form, { onSubmit: save, label: t(editing ? "editingNote" : "addNote"), noValidate: true },
+        h(P.Field, { label: t(editing ? "editingNote" : "addNote"), description: editing ? t("editNoteHelp") : undefined }, h(P.Textarea, { rows: 5, autoGrow: true, value: text, maxLength: 50000, disabled: pending, onChange: (e) => { setText(e.target.value); setFailure(null); } })),
+        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+        h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setComposing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t(editing ? "saveRevision" : "saveNote"))),
+      ),
+    ) : null;
+    return h(R.Fragment, null, noteDialog,
+      h(P.Stack, { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
+        h(P.Toolbar, { label: t("internalNotes") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => { setEditing(null); setText(""); setFailure(null); setComposing(true); } }, t("addNote")) : null),
+        h(P.Text, { as: "p", variant: "secondary" }, t("internalNotesHelp")),
+        notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+        h(window.CTMShell.Workspace, {
+          label: t("internalNotes"), selected, onSelect: select,
+          rows: notes.map((note) => ({ ...note, id: note.note_id, title: note.author || t("note"), preview: note.text, recorded: base.formatWhen(note.timestamp, lang) })), empty: t("noNotes"),
+          columns: [{ title: t("note"), field: "title", kind: "name" }, { title: t("recordedAt"), field: "recorded" }, { title: t("note"), field: "preview", kind: "wrap" }],
+        }, (note) => note ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h2", variant: "title" }, note.title), h(P.Text, { variant: "secondary" }, `${t("version")} ${note.version} · ${note.recorded}`), h(P.Text, { as: "p" }, note.text), note.can_edit && canWrite ? h(P.Button, { size: "sm", icon: "edit", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); setComposing(true); } }, t("editNote")) : null) : h(P.EmptyState, { title: t("noNotes") })),
+      ),
+    );
+  }
+  function marriageDuration(dateValue, lang) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateValue || ""))) return null;
+    const start = new Date(`${dateValue}T00:00:00`), today = new Date();
+    let months = (today.getFullYear() - start.getFullYear()) * 12 + today.getMonth() - start.getMonth();
+    if (today.getDate() < start.getDate()) months -= 1;
+    if (months < 0) return null;
+    const years = Math.floor(months / 12), remainder = months % 12;
+    return lang === "ar" ? `${years} سنة و${remainder} شهر` : `${years} years, ${remainder} months`;
+  }
+
+  function councilCardValues(record, scope, submitted) {
+    const edit = record.council_edits?.[scope]?.value;
+    return edit && typeof edit === "object" && !Array.isArray(edit) ? { ...submitted, ...edit } : submitted;
+  }
+
+  // Council cards use the same field grid in read and edit modes. Read controls
+  // intentionally preserve the form layout while preventing direct changes.
+  function CaseReadFields({ P, h, fields, values, className = "" }) {
+    return h("div", { className: `ctm-case-edit-grid ctm-case-read-grid ${className}`.trim() },
+      ...fields.map(([key, label, type = "text"]) => {
+        const value = values[key];
+        const validDate = type === "date" && /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+        return h(P.Field, { key, label }, h(P.Input, { type: validDate ? "date" : "text", value: value === undefined || value === null || value === "" ? "—" : String(value), readOnly: true, tabIndex: -1 }));
       }),
-      !petitions.length ? h(P.EmptyState, { title: t("noPetitions") }) : null,
-      findings
-        ? h(
-            P.Panel,
-            { icon: "doc-text", title: t("findingsTitle"), description: t("findingsHelp") },
-            findings.length
-              ? h(
-                  P.PropertyList,
-                  { layout: "stacked" },
-                  ...findings.map((f) =>
-                    h(
-                      P.PropertyList.Item,
-                      { key: f.fact_code, label: f.fact_code, description: `${f.actor} · ${base.formatWhen(f.timestamp, lang)} · ${t("version")} ${f.version}` },
-                      typeof f.value === "string" ? f.value : JSON.stringify(f.value),
-                    ),
-                  ),
-                )
-              : h(P.EmptyState, { title: t("noFindings") }),
-          )
-        : null,
-      h(
-        P.Panel,
-        { icon: "doc-text", title: t("internalNotes"), description: t("internalNotesHelp") },
-        h(
-          P.Stack,
-          { gap: "md" },
-          notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-          notes.length
-            ? h(
-                P.Stack,
-                { gap: "sm" },
-                ...notes.map((note) =>
-                  h(
-                    P.Card,
-                    { icon: "doc-text",
-                      key: note.note_id,
-                      title: note.author ? `${note.author} · ${base.formatWhen(note.timestamp, lang)}` : t("note"),
-                      meta: `${t("version")} ${note.version}`,
-                      actions: note.can_edit && canWrite
-                        ? h(P.Button, { size: "xs", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); } }, t("editNote"))
-                        : null,
-                    },
-                    h(P.Text, { as: "p" }, note.text),
-                  ),
-                ),
-              )
-            : h(P.EmptyState, { title: t("noNotes") }),
-          canWrite
-            ? h(
-                P.Form,
-                { onSubmit: save, label: t("addNote"), noValidate: true },
-                h(P.Field, { label: t(editing ? "editingNote" : "addNote"), description: editing ? t("editNoteHelp") : undefined }, h(P.Textarea, { rows: 4, autoGrow: true, value: text, maxLength: 50000, disabled: pending, onChange: (e) => { setText(e.target.value); setFailure(null); } })),
-                failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-                h(
-                  P.FormActions,
-                  { sticky: false },
-                  editing ? h(P.Button, { disabled: pending, onClick: () => { setEditing(null); setText(""); } }, t("cancel")) : null,
-                  h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t(editing ? "saveRevision" : "saveNote")),
-                ),
-              )
-            : null,
+    );
+  }
+
+  function CaseMarriage({ api, lang, user, caseId }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`), [caseId]);
+    const [editing, setEditing] = R.useState(false);
+    const [form, setForm] = R.useState({});
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const record = state.data;
+    const marriage = councilCardValues(record, "marriage", record.marriage || {}), value = (item) => item || "—";
+    const proceeding = openProceeding(record);
+    const canWrite = writerFor(user, null, record) && proceeding?.status === "open";
+    const fields = [
+      ["outside_coptic_church", t("marriedOutsideCoptic"), "text"],
+      ["outside_denomination", t("outsideDenomination"), "text"],
+      ["outside_marriage_date", t("outsideMarriageDate"), "date"],
+      ["church_marriage_date", t("churchMarriageDate"), "date"],
+      ["officiating_priest", t("officiatingPriest"), "text"],
+      ["church_name", t("churchName"), "text"],
+      ["church_location", t("churchLocation"), "text"],
+      ["diocese", t("diocese"), "text"],
+    ];
+    const startEditing = () => { setForm(Object.fromEntries(fields.map(([key]) => [key, marriage[key] || ""]))); setFailure(null); setEditing(true); };
+    const save = async (event) => {
+      event.preventDefault();
+      setPending(true); setFailure(null);
+      try {
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`, {
+          method: "POST", body: JSON.stringify({ fact_code: "case_card.marriage", value: form }),
+        });
+        setEditing(false); retry();
+      } catch (error) { setFailure(base.serverMessage(error, t)); }
+      finally { setPending(false); }
+    };
+    return h(P.Stack, { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("marriageTitle")),
+      h(P.Panel, { icon: "settings-users", title: t("churchMarriage"), actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, "Edit") : null },
+        h(P.Stack, { gap: "md" },
+          editing ? h(P.Form, { onSubmit: save, label: t("churchMarriage"), noValidate: true },
+            h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+            failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+            h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
+          ) : h(CaseReadFields, { P, h, fields: [
+            ["outside_coptic_church", t("marriedOutsideCoptic")], ["outside_denomination", t("outsideDenomination")], ["outside_marriage_date", t("outsideMarriageDate"), "date"],
+            ["church_marriage_date", t("churchMarriageDate"), "date"], ["officiating_priest", t("officiatingPriest")], ["marriage_duration", t("marriageDuration")],
+            ["church_name", t("churchName")], ["church_location", t("churchLocation")], ["diocese", t("diocese")],
+          ], values: { ...marriage, marriage_duration: marriageDuration(marriage.church_marriage_date, lang) } }),
         ),
       ),
+    );
+  }
+
+  function CouncilEditablePanel({ api, P, h, t, user, record, scope, title, icon, fields, values, onSaved }) {
+    const R = window.React;
+    const [editing, setEditing] = R.useState(false);
+    const [form, setForm] = R.useState({});
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const proceeding = openProceeding(record);
+    const canWrite = writerFor(user, null, record) && proceeding?.status === "open";
+    const startEditing = () => { setForm(Object.fromEntries(fields.map(([key]) => [key, values[key] || ""]))); setFailure(null); setEditing(true); };
+    const save = async (event) => {
+      event.preventDefault();
+      setPending(true); setFailure(null);
+      try {
+        await api(`/api/proceedings/${encodeURIComponent(proceeding.id)}/findings/`, {
+          method: "POST", body: JSON.stringify({ fact_code: `case_card.${scope}`, value: form }),
+        });
+        setEditing(false); onSaved();
+      } catch (error) { setFailure(base.serverMessage(error, t)); }
+      finally { setPending(false); }
+    };
+    return h(P.Panel, { title, icon, actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, "Edit") : null }, h(P.Stack, { gap: "md" },
+      editing ? h(P.Form, { onSubmit: save, label: title, noValidate: true },
+        h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+        h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
+      ) : h(CaseReadFields, { P, h, fields, values }),
+    ));
+  }
+
+  function CaseSeparation({ api, lang, user, caseId }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`), [caseId]);
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    const record = state.data, separation = record.separation || {};
+    const initiator = separation.initiated_by;
+    const initiatorValue = initiator?.party ? `${initiator.party.name} (${initiator.party.slot === "A" ? "Applicant" : "Spouse"})` : initiator?.value;
+    const details = councilCardValues(record, "separation_details", { marital_status: separation.marital_status, separation_date: separation.separation_date, initiated_by: initiatorValue, reason: separation.reason });
+    const civil = councilCardValues(record, "civil_divorce", separation.civil_divorce || {});
+    const reconciliation = councilCardValues(record, "reconciliation", separation.reconciliation || {});
+    const order = councilCardValues(record, "restraining_order", separation.restraining_orders?.[0] || {});
+    return h(P.Stack, { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("separation")),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "separation_details", title: "Separation Details", icon: "move", values: details, fields: [["marital_status", "Current Marital Status"], ["separation_date", "Date of Separation", "date"], ["initiated_by", "Initiated By"], ["reason", "Reason for Divorce"]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "civil_divorce", title: "Civil Divorce", icon: "document", values: civil, fields: [["filed", "Civil Divorce Filed?"], ["date", "Date of Civil Divorce", "date"], ["court", "Name of Court"], ["location", "Court Street Address / Location"], ["case_number", "Civil Case Number"], ["status", "Civil Divorce Status"]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "restraining_order", title: "Restraining Order", icon: "link", values: order, fields: [["filed", "Restraining Order Filed?"], ["date", "Date of Restraining Order", "date"], ["expiration_date", "Restraining Order Expiration Date", "date"], ["name_listed", "Name Listed on Order"], ["court", "Name of Court"], ["case_number", "Restraining Order Case Number"], ["status", "Restraining Order Status"]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "reconciliation", title: "Reconciliation", icon: "settings-users", values: reconciliation, fields: [["attempted", "Clergy Counseling / Reconciliation Attempted?"], ["previously_applied", "Previously Applied for Ecclesiastical Marriage Permit?"], ["when", "When Did You Previously Apply?"], ["where", "Where Did You Previously Apply?"], ["outcome", "Decision Outcome"]] }),
     );
   }
 
@@ -2632,74 +3108,176 @@
       .map((row) => ({ id: row.id, timestamp: row.timestamp, label: auditLabel(row.action, lang) }));
   }
 
+  function timelineEvents(items, record, lang) {
+    const t = translator(lang);
+    const caseEvents = timelineRows(items, lang).map((row) => ({ ...row, category: "case" }));
+    const marriageEvents = [
+      ["church-marriage", record?.marriage?.church_marriage_date, "churchMarriageEvent"],
+      ["outside-marriage", record?.marriage?.outside_marriage_date, "outsideMarriageEvent"],
+      ["separation", record?.separation?.separation_date, "separationEvent"],
+      ["civil-divorce", record?.separation?.civil_divorce?.date, "civilDivorceEvent"],
+    ].filter(([, timestamp]) => isSubmittedDate(timestamp)).map(([id, timestamp, labelKey]) => ({ id, timestamp, label: t(labelKey), category: "marriage" }));
+    return [...caseEvents, ...marriageEvents].sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
+  }
+
+  function timelineDateParts(timestamp, lang) {
+    const source = String(timestamp || "");
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(source) ? new Date(`${source}T12:00:00Z`) : new Date(source);
+    if (Number.isNaN(date.getTime())) return { year: "—", date: source || "—" };
+    return {
+      year: new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { year: "numeric" }).format(date),
+      date: new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { month: "short", day: "numeric" }).format(date),
+    };
+  }
+
   function CaseTimeline({ api, lang, caseId }) {
-    const R = window.React,
-      P = window.Plenix,
-      h = R.createElement,
-      t = translator(lang);
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [tab, setTab] = R.useState("all");
     const [state, retry] = base.useLoad(
-      () =>
-        Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/audit/`), api(`/api/cases/${encodeURIComponent(caseId)}/`)]).then(
-          ([audit, record]) => ({ items: audit.items, history: record.assignment_history || null }),
-        ),
+      () => Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/audit/`), api(`/api/cases/${encodeURIComponent(caseId)}/`)]).then(([audit, record]) => ({ items: audit.items, record })),
       [caseId],
     );
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const rows = timelineRows(state.data.items, lang);
-    const history = state.data.history;
-    return h(
-      P.Stack,
-      { gap: "lg" },
+    const events = timelineEvents(state.data.items, state.data.record, lang);
+    const visible = tab === "all" ? events : events.filter((event) => event.category === tab);
+    const groups = visible.slice().reverse().reduce((all, event) => {
+      const parts = timelineDateParts(event.timestamp, lang), item = { ...event, ...parts };
+      const group = all.find((entry) => entry.year === parts.year);
+      if (group) group.items.push(item); else all.push({ year: parts.year, items: [item] });
+      return all;
+    }, []);
+    const content = visible.length ? h("div", { className: "ctm-case-timeline", role: "list" }, ...groups.map((group) => h("section", { key: group.year, className: "ctm-case-timeline__year-group" },
+      h("h2", { className: "ctm-case-timeline__year" }, group.year),
+      h("div", { className: "ctm-case-timeline__events" }, ...group.items.map((event) => h("article", { key: event.id, className: `ctm-case-timeline__event ctm-case-timeline__event--${event.category}`, role: "listitem" },
+        h("time", { className: "ctm-case-timeline__date", dateTime: event.timestamp }, event.date),
+        h("span", { className: "ctm-case-timeline__marker", "aria-hidden": true }),
+        h("div", { className: "ctm-case-timeline__body" }, h(P.Text, { as: "h3", variant: "strong" }, event.label)),
+        h(P.Badge, { tone: event.category === "case" ? "active" : "neutral", size: "sm" }, t(event.category === "case" ? "timelineCase" : "timelineMarriage")),
+      ))),
+    ))) : h(P.EmptyState, { title: t("noTimeline") });
+    return h(P.Stack, { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("timelineTitle")),
       h(P.Text, { variant: "secondary" }, t("timelineHelp")),
-      rows.length
-        ? h(P.List, {
-            variant: "bullets",
-            items: rows.map((row) => ({ children: `${base.formatWhen(row.timestamp, lang)} — ${row.label}` })),
-          })
-        : h(P.EmptyState, { title: t("noTimeline") }),
-      history
-        ? h(
-            P.Panel,
-            { icon: "doc-text", title: t("managerHistory") },
-            history.length
-              ? h(P.List, {
-                  variant: "bullets",
-                  items: history.map((row) => ({
-                    children: `${base.formatWhen(row.timestamp, lang)} — ${base.isolate(row.member)} · ${t("authorizedBy")} ${base.isolate(row.president)} · ${t("recordedByInline")} ${base.isolate(row.actor)}`,
-                  })),
-                })
-              : h(P.EmptyState, { title: t("noManagerHistory") }),
-          )
-        : null,
+      h(P.Tabs, { variant: "contained", label: t("timelineTitle"), value: tab, onChange: setTab,
+        items: [
+          { value: "all", label: t("timelineAll"), content },
+          { value: "case", label: t("timelineCase"), content },
+          { value: "marriage", label: t("timelineMarriage"), content },
+        ],
+      }),
     );
   }
 
   // ---------- Case summary ----------
-  function summaryFacts(record, requests, versions) {
+  function isSubmittedDate(value) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+  }
+
+  function summaryDate(value, lang) {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", {
+      dateStyle: "medium",
+      ...(isSubmittedDate(value) ? { timeZone: "UTC" } : {}),
+    }).format(date);
+  }
+
+  function summaryFacts(record, requests, versions, audit) {
     const latest = Array.isArray(versions) && versions.length ? [...versions].sort((a, b) => b.number - a.number)[0] : null;
     return {
       pendingRequests: (requests || []).filter((r) => r.state === "sent" && !["medical", "psychological"].includes(r.kind)).length,
       draftRequests: (requests || []).filter((r) => r.state === "draft" && !["medical", "psychological"].includes(r.kind)).length,
+      audit: audit || [],
       decision: latest
-        ? { type: latest.type, approved: Boolean(latest.approval), issued: Boolean(latest.decree && latest.decree.issued_at), number: latest.number }
+        ? { type: latest.type, approved: Boolean(latest.approval), issued: Boolean(latest.decree && latest.decree.issued_at), issuedAt: latest.decree?.issued_at || null, number: latest.number }
         : null,
       openProceeding: openProceeding(record),
     };
   }
 
-  function CaseSummary({ api, lang, user, caseId, onNavigate }) {
+  function ApplicationReviewActions({ api, lang, applicationId, onDone }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
+    const [mode, setMode] = R.useState(null);
+    const [reason, setReason] = R.useState("");
+    const [failure, setFailure] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+
+    async function submit(result) {
+      if (result === "reject" && !reason.trim()) return;
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/applications/${encodeURIComponent(applicationId)}/review/`, {
+          method: "POST",
+          body: JSON.stringify({ result, instructions: result === "reject" ? reason.trim() : "" }),
+        });
+        setMode(null);
+        onDone?.();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+
+    return h(
+      R.Fragment,
+      null,
+      h(P.Inline, { justify: "end", wrap: true, className: "ctm-application-review" },
+        h(P.Button, { className: "ctm-application-review__accept", variant: "primary", disabled: pending, onClick: () => setMode("accept") }, t("acceptApplication")),
+        h(P.Button, { variant: "danger", disabled: pending, onClick: () => setMode("reject") }, t("declineApplication")),
+      ),
+      h(P.ConfirmDialog, {
+        open: mode === "accept",
+        title: t("acceptApplicationTitle"),
+        message: t("acceptApplicationMessage"),
+        confirmLabel: t("acceptApplication"),
+        cancelLabel: base.translator(lang)("cancel"),
+        onConfirm: () => !pending && submit("accept"),
+        onCancel: () => !pending && setMode(null),
+      }, failure && mode === "accept" ? h(P.Notice, { tone: "danger" }, failure) : null),
+      h(P.Dialog, {
+        open: mode === "reject",
+        title: t("declineApplicationTitle"),
+        description: t("declineApplicationHelp"),
+        closeLabel: base.translator(lang)("cancel"),
+        onClose: () => !pending && setMode(null),
+        footer: h(P.Inline, { justify: "end" },
+          h(P.Button, { disabled: pending, onClick: () => setMode(null) }, base.translator(lang)("cancel")),
+          h(P.Button, { variant: "danger", loading: pending, disabled: pending || !reason.trim(), onClick: () => submit("reject") }, t("declineApplication")),
+        ),
+      },
+        h(P.Field, { label: t("declineReason"), required: true },
+          h(P.Textarea, { rows: 6, value: reason, maxLength: 10000, disabled: pending, onChange: (event) => { setReason(event.target.value); setFailure(null); } }),
+        ),
+        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+      ),
+    );
+  }
+
+  function CaseSummary({ api, lang, user, caseId, reviewApplicationId }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [summaryEditing, setSummaryEditing] = R.useState(false);
+    const [summaryForm, setSummaryForm] = R.useState(null);
+    const [summaryPending, setSummaryPending] = R.useState(false);
+    const [summaryFailure, setSummaryFailure] = R.useState(null);
+    const [reviewComplete, setReviewComplete] = R.useState(false);
     const [state, retry] = base.useLoad(
       () =>
-        Promise.all([
-          api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)),
-          api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
-        ]).then(async ([record, requests]) => {
+        api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)).then(async (record) => {
+          const [requests, members, audit] = await Promise.all([
+            api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
+            record.can_assign ? api("/api/council/members/") : Promise.resolve({ items: [] }),
+            api(`/api/cases/${encodeURIComponent(caseId)}/audit/`),
+          ]);
           const proceeding = openProceeding(record) || [...(record.proceedings || [])].sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0];
           let versions = null;
           if (proceeding) {
@@ -2709,58 +3287,129 @@
               if (error.status !== 405) throw error;
             }
           }
-          return { record, facts: summaryFacts(record, requests.items, versions) };
+          return { record, members: members.items, facts: summaryFacts(record, requests.items, versions, audit.items) };
         }),
       [caseId],
     );
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const { record, facts } = state.data;
+    const { record, members, facts } = state.data;
     const bt = base.translator(lang);
     const manager =
       record.assignment_history && record.assignment_history.length
         ? record.assignment_history[record.assignment_history.length - 1].member
         : record.assigned_member || null;
-    const link = (page, label) => h(P.Button, { key: page, size: "sm", onClick: () => onNavigate(page) }, t(label));
+    const eligibleMembers = base.assignableMembers(members);
+    const submittedSummary = record.summary || {};
+    const summary = councilCardValues(record, "summary", submittedSummary);
+    const applicant = record.parties.find((party) => party.slot === "A") || record.parties[0] || null;
+    const respondent = record.parties.find((party) => party.slot === "B") || record.parties[1] || null;
+    const personPill = (party) => {
+      if (!party) return "—";
+      const gender = party.gender === "M" ? "male" : party.gender === "F" ? "female" : undefined;
+      return gender ? h(P.DataPill, { gender, className: "ctm-case-summary-person-pill" }, party.name) : h(P.DataPill, { person: true, className: "ctm-case-summary-person-pill" }, party.name);
+    };
+    const latestAudit = (action) => [...facts.audit].filter((row) => row.action === action).sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)))[0];
+    const summaryTimeline = [];
+    const timelineBadge = (tone, label) => h(P.Badge, { tone, size: "sm" }, label);
+    summaryTimeline.push({
+      id: "decree", title: t("decreeIssued"), time: facts.decision?.issued ? summaryDate(facts.decision.issuedAt, lang) : t("pending"),
+      badge: timelineBadge(facts.decision?.issued ? "success" : "neutral", facts.decision?.issued ? t("completed") : t("upcoming")),
+    });
+    summaryTimeline.push({
+      id: "decision", title: t("councilReviewDecision"), time: facts.decision?.approved ? t("approved") : t("pending"),
+      description: facts.decision?.approved ? null : t("awaitingCouncilReview"),
+      badge: timelineBadge(facts.decision?.approved ? "success" : "neutral", facts.decision?.approved ? t("completed") : t("upcoming")),
+    });
+    if (record.status === "open") summaryTimeline.push({
+      id: "recommendation", title: t("recommendationPending"), time: t("inProgress"),
+      description: manager ? t("awaitingRecommendation", { member: manager }) : bt("unassigned"),
+      badge: timelineBadge("success", t("current")),
+    });
+    const hearing = latestAudit("case_heard");
+    if (hearing) summaryTimeline.push({
+      id: `hearing-${hearing.id}`, title: t("hearing"), time: summaryDate(hearing.timestamp, lang), description: auditLabel(hearing.action, lang), badge: timelineBadge("active", t("completed")),
+    });
+    const assigned = latestAudit("case_assigned");
+    if (assigned) summaryTimeline.push({
+      id: `assigned-${assigned.id}`, title: t("caseAssigned"), time: summaryDate(assigned.timestamp, lang),
+      description: manager || null,
+      badge: timelineBadge("active", t("completed")),
+    });
+    const filed = latestAudit("application_submitted");
+    if (summary.filing_date) summaryTimeline.push({
+      id: "filed", title: t("caseFiled"), time: summaryDate(filed?.timestamp || summary.filing_date, lang), description: t("caseFiledDescription"), badge: timelineBadge("active", t("completed")),
+    });
+    const applicationDates = [
+      { id: "church-marriage", title: t("churchMarriageDate"), date: record.marriage?.church_marriage_date },
+      { id: "outside-marriage", title: t("outsideMarriageDate"), date: record.marriage?.outside_marriage_date },
+      { id: "separation", title: t("dateOfSeparation"), date: record.separation?.separation_date },
+      { id: "civil-divorce", title: t("dateOfCivilDivorce"), date: record.separation?.civil_divorce?.date },
+      ...(record.separation?.restraining_orders || []).flatMap((order, index) => [
+        { id: `restraining-order-${index}`, title: t("dateOfRestrainingOrder"), date: order.date },
+        { id: `restraining-order-expiration-${index}`, title: t("restrainingOrderExpirationDate"), date: order.expiration_date },
+      ]),
+    ];
+    for (const applicationDate of applicationDates.filter((item) => isSubmittedDate(item.date)))
+      summaryTimeline.push({
+        ...applicationDate,
+        time: summaryDate(applicationDate.date, lang),
+        badge: timelineBadge("active", t("completed")),
+      });
+    const canEditSummary = writerFor(user, null, record) && openProceeding(record)?.status === "open";
+    const childLabel = (child) => typeof child === "string" ? child : child?.name || "—";
+    const childrenText = (children) => (children || []).map(childLabel).filter((value) => value && value !== "—").join("\n");
+    const startSummaryEdit = () => {
+      setSummaryFailure(null);
+      setSummaryForm({ reason: summary.reason || "", children: childrenText(summary.children), memberId: eligibleMembers.find((member) => member.name === manager)?.id || "" });
+      setSummaryEditing(true);
+    };
+    const saveSummary = async (event) => {
+      event.preventDefault();
+      const nextMemberId = summaryForm.memberId;
+      const currentMemberId = eligibleMembers.find((member) => member.name === manager)?.id || "";
+      setSummaryPending(true); setSummaryFailure(null);
+      try {
+        if (nextMemberId && nextMemberId !== currentMemberId) await api(`/api/cases/${encodeURIComponent(caseId)}/assignment/`, { method: "POST", body: JSON.stringify({ member_id: nextMemberId }) });
+        await api(`/api/proceedings/${encodeURIComponent(openProceeding(record).id)}/findings/`, { method: "POST", body: JSON.stringify({ fact_code: "case_card.summary", value: { reason: summaryForm.reason.trim(), children: summaryForm.children.split(/\r?\n/).map((name) => name.trim()).filter(Boolean).map((name) => ({ name })) } }) });
+        setSummaryEditing(false); retry();
+      } catch (error) { setSummaryFailure(base.serverMessage(error, bt)); }
+      finally { setSummaryPending(false); }
+    };
+    const summaryReadFields = [
+      ["case_number", t("caseNumber")], ["filing_date", t("filingDate")], ["status", bt("statusLabel")], ["assigned_member", t("assignedCouncilMember")],
+      ["applicant", t("applicant")], ["respondent", t("respondent")], ["reason", t("reasonForDivorce")], ["marriage_duration", t("marriageDuration")],
+      ["children", t("children")], ["last_hearing_date", t("lastHearingDate")],
+    ];
+    const summaryReadValues = {
+      case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: record.status === "open" ? t("active") : bt("closed"), assigned_member: manager || bt("unassigned"),
+      applicant: applicant?.name, respondent: respondent?.name, reason: summary.reason, marriage_duration: marriageDuration(record.marriage?.church_marriage_date, lang),
+      children: summary.children?.length ? summary.children.map(childLabel).join(" · ") : t("noChildren"), last_hearing_date: summaryDate(summary.last_hearing_date, lang),
+    };
     return h(
       P.Stack,
       { gap: "lg" },
+      reviewApplicationId && !reviewComplete ? h(ApplicationReviewActions, { api, lang, applicationId: reviewApplicationId, onDone: () => { setReviewComplete(true); retry(); } }) : null,
       h(P.Text, { as: "h1", variant: "title" }, record.number),
       h(
-        P.PropertyList,
-        null,
-        h(P.PropertyList.Item, { label: bt("statusLabel") }, h(P.Badge, { tone: record.status === "open" ? "active" : "neutral" }, bt(record.status === "open" ? "open" : "closed"))),
-        h(P.PropertyList.Item, { label: bt("assigned") }, manager || bt("unassigned")),
-        h(P.PropertyList.Item, { label: t("partiesTitle") }, record.parties.map((p) => p.name).join(" · ") || t("noParties")),
-        facts.openProceeding
-          ? h(P.PropertyList.Item, { label: t("currentProceeding") }, t(facts.openProceeding.kind === "initial" ? "proceedingInitial" : "proceedingReconsideration"))
-          : null,
+        P.Panel,
+        { icon: "document", title: t("caseSummary"), actions: canEditSummary && !summaryEditing ? h(P.Button, { size: "sm", onClick: startSummaryEdit }, "Edit") : null },
+        summaryEditing
+          ? h(P.Form, { onSubmit: saveSummary, label: t("caseSummary"), noValidate: true },
+              h("div", { className: "ctm-case-edit-grid" },
+                h(P.Field, { label: t("reasonForDivorce") }, h(P.Input, { value: summaryForm.reason, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, reason: event.target.value })) })),
+                h(P.Field, { label: t("assignedCouncilMember") }, h(P.Select, { value: summaryForm.memberId, disabled: summaryPending || !record.can_assign, onChange: (event) => setSummaryForm((old) => ({ ...old, memberId: event.target.value })), options: [{ value: "", label: bt("unassigned") }, ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id }))] })),
+              ),
+              h(P.Field, { label: t("children"), description: "One child per line. Submitted child details remain with the application." }, h(P.Textarea, { rows: 4, value: summaryForm.children, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, children: event.target.value })) })),
+              summaryFailure ? h(P.Notice, { tone: "danger" }, summaryFailure) : null,
+              h(P.FormActions, { sticky: false }, h(P.Button, { disabled: summaryPending, onClick: () => setSummaryEditing(false) }, bt("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: summaryPending, disabled: summaryPending }, "Save")),
+            )
+          : h(CaseReadFields, { P, h, fields: summaryReadFields, values: summaryReadValues, className: "ctm-case-summary-fields" }),
       ),
       h(
         P.Panel,
-        { icon: "info", title: t("whereThingsStand") },
-        h(
-          P.PropertyList,
-          null,
-          h(P.PropertyList.Item, { label: t("pendingRequests") }, String(facts.pendingRequests)),
-          h(P.PropertyList.Item, { label: t("draftRequests") }, String(facts.draftRequests)),
-          h(
-            P.PropertyList.Item,
-            { label: t("decisionVoting") },
-            facts.decision
-              ? `${typeLabel(facts.decision.type)} · ${t("version")} ${facts.decision.number} · ${t(facts.decision.issued ? "decreeIssuedState" : facts.decision.approved ? "approved" : "notApproved")}`
-              : t("noDecision"),
-          ),
-        ),
-      ),
-      h(
-        P.Inline,
-        { wrap: true },
-        link("petition", "petitionTitle"),
-        link("reports", "reports"),
-        link("hearings", "hearingsTitle"),
-        link("decision", "decisionVoting"),
-        link("communications", "communicationsLink"),
+        { icon: "calendar", title: t("keyDates") },
+        h(P.Timeline, { label: t("keyDates"), items: summaryTimeline }),
       ),
     );
   }
@@ -2787,8 +3436,6 @@
     foundationalCodes,
     missingArabic,
     requestProblem,
-    usableTemplates,
-    templateSelection,
     requestPayload,
     openProceeding,
     ordinaryReports,
@@ -2811,10 +3458,16 @@
     CaseParties: base.guarded(CaseParties),
     CaseHearings: base.guarded(CaseHearings),
     casePetitions,
+    petitionAnswers,
     latestNotes,
     latestFindings,
     PetitionWorkspace: base.guarded(PetitionWorkspace),
+    CaseNotesWorkspace: base.guarded(CaseNotesWorkspace),
+    marriageDuration,
+    CaseMarriage: base.guarded(CaseMarriage),
+    CaseSeparation: base.guarded(CaseSeparation),
     timelineRows,
+    timelineEvents,
     summaryFacts,
     CaseSummary: base.guarded(CaseSummary),
     CaseTimeline: base.guarded(CaseTimeline),

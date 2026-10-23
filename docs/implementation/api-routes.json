@@ -240,6 +240,14 @@
     "handler": "settings_endpoint"
   },
   {
+    "route": "api/runtime/tribunal-contact/",
+    "handler": "runtime_tribunal_contact"
+  },
+  {
+    "route": "api/cases/<uuid:case_id>/recommended-doctors/",
+    "handler": "runtime_recommended_doctors"
+  },
+  {
     "route": "api/templates/",
     "handler": "templates"
   },

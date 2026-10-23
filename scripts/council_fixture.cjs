@@ -535,8 +535,10 @@ function api(req, res, url, body) {
     return json(res, 201, { id: "rel-" + decree.releases.length });
   }
   // Council projection of a medical report without a council-scope release.
-  if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/)))
-    return json(res, 200, { items: m[1] === "c-4" ? [{ id: "rep-med-1", restricted: true }, ...state.reports.map(reportRow)] : [] });
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/))) {
+    const external = (state.externalReports || []).filter((x) => x.case === m[1]).map(({ case: _c, ...row }) => row);
+    return json(res, 200, { items: m[1] === "c-4" ? [{ id: "rep-med-1", restricted: true }, ...state.reports.map(reportRow), ...external] : external });
+  }
   if (p === "/__revise_fail/") { state.reviseFail = body.mode || null; return json(res, 200, { mode: state.reviseFail }); }
   if (p === "/__revise_bump/") {
     const list = state.revisions[body.report || "rep-int-1"];
@@ -600,7 +602,17 @@ function api(req, res, url, body) {
       return json(res, 201, { id: r.id });
     }
     const rows = state.requests.filter((r) => r.case === c.id).map((r) => {
-      if (pr7) return ["medical", "psychological"].includes(r.kind) ? { ...r, release_status: "none", release_scope: null } : r;
+      const { token: _t, expires_at: _e, saved_response: _d, ...safe } = r; // never project the capability
+      if (pr7 && r.kind === "external_priest") {
+        // Backend c377706 council link projection; flags follow writer authority and an open case.
+        const writable = (admin() || c.assigned === me().id) && c.status === "open";
+        const state = r.state === "completed" || r.state === "cancelled" ? r.state : c.status !== "open" ? "closed"
+          : r.state === "draft" ? "not_issued" : r.token && r.expires_at ? (Date.now() < r.expires_at ? "active" : "expired") : "unavailable";
+        const unfinished = r.state === "draft" || r.state === "sent";
+        return { ...safe, request_version: 1, external_link: { priest_name: r.external_name || "", expires_at: r.expires_at ? new Date(r.expires_at).toISOString() : null, state,
+          can_issue: writable && unfinished && r.state === "draft", can_reissue: writable && unfinished && r.state === "sent", can_cancel: writable && unfinished } };
+      }
+      if (pr7) return ["medical", "psychological"].includes(r.kind) ? { ...safe, release_status: "none", release_scope: null } : { ...safe, request_version: 1 };
       const { subject_party_id, subject_name, language, created_at, sent_at, parent_report_id, author, ...old } = r;
       return old;
     });
@@ -608,9 +620,42 @@ function api(req, res, url, body) {
   }
   if ((m = p.match(/^\/api\/requests\/([^/]+)\/send\/$/))) {
     const r = state.requests.find((x) => x.id === m[1]);
+    if (!["draft", "sent"].includes(r.state)) return json(res, 422, { error: "validation", messages: ["Completed/cancelled request cannot be sent."] });
     r.state = "sent";
-    r.sent_at = now();
-    return json(res, 200, { id: r.id, token: null });
+    r.sent_at = r.sent_at || now();
+    if (r.kind !== "external_priest") return json(res, 200, { id: r.id, token: null });
+    r.token = "tok-" + Math.random().toString(36).slice(2, 12);
+    r.expires_at = Date.now() + (state.linkTtlMs ?? 30 * 24 * 3600 * 1000);
+    r.external_name = body.external_name || "";
+    r.external_email = body.external_email || "";
+    return json(res, 200, { id: r.id, token: r.token });
+  }
+  if ((m = p.match(/^\/external\/reports\/([^/]+)\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    const token = String(req.headers.authorization || "").replace(/^Bearer /, "");
+    const ok = r && r.kind === "external_priest" && r.state === "sent" && r.token && token === r.token && Date.now() < r.expires_at;
+    res.setHeader("Referrer-Policy", "no-referrer");
+    if (!ok) return json(res, 403, { error: "link_unavailable" });
+    const c = state.cases.find((x) => x.id === r.case);
+    if (req.method === "GET")
+      return json(res, 200, { id: r.id, title: r.title, case_number: c.number, subject: r.subject_name, instructions: r.instructions, language: r.language, draft: r.saved_response || {} });
+    if (body.action === "save") { r.saved_response = body.answers || {}; return json(res, 200, { saved: true }); }
+    if (!body.answers || !Object.keys(body.answers).length) return json(res, 403, { error: "link_unavailable" });
+    r.state = "completed";
+    r.saved_response = {};
+    const report = { id: "rep-ext-" + r.id, report: true };
+    state.externalReports = state.externalReports || [];
+    state.externalReports.push({ id: report.id, title: r.title, kind: "external_priest", subject: r.subject_name, date: now().slice(0, 10), parent_report_id: null,
+      questions: [], answers: body.answers, observations: null, version: 1, method: "external", author: null, author_id: null, submitted_at: now(), can_revise: false, case: r.case });
+    return json(res, 201, { submitted: true, report_id: report.id });
+  }
+  if (p === "/__link_ttl/") { state.linkTtlMs = body.ms; return json(res, 200, { ms: body.ms }); }
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/cancel\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    if (r.state === "cancelled") return json(res, 200, { id: r.id });
+    if (!["draft", "sent"].includes(r.state)) return json(res, 422, { error: "validation", messages: ["Only an unfinished request can be cancelled."] });
+    r.state = "cancelled";
+    return json(res, 200, { id: r.id });
   }
   if ((m = p.match(/^\/api\/requests\/([^/]+)\/complete\/$/))) {
     const r = state.requests.find((x) => x.id === m[1]);
@@ -763,12 +808,12 @@ http
       if (!file.startsWith(path.join(root, "static"))) return json(res, 404, {});
       return fs.readFile(file, (err, data) => {
         if (err) return json(res, 404, {});
-        const contentTypes = { ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg" };
+        const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg" };
         res.writeHead(200, { "Content-Type": contentTypes[path.extname(file).toLowerCase()] || "application/octet-stream" });
         res.end(data);
       });
     }
-    if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/__")) {
+    if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/__") || url.pathname.startsWith("/external/")) {
       let raw = "";
       req.on("data", (c) => (raw += c));
       req.on("end", () => {

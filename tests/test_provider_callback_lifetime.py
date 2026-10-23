@@ -25,7 +25,24 @@ def validated_callback(request):
     return complete_social_login(request, login)
 
 
-urlpatterns = [path("_test/validated-callback/", validated_callback), path("", include("ctm.urls"))]
+def email_bootstrap_callback(request):
+    app = SocialApp(provider="microsoft", client_id="synthetic-client", secret="synthetic-secret")
+    login = SocialLogin(
+        user=Account(email="admin@lacopts.org", first_name="Admin", last_name="User"),
+        account=SocialAccount(provider="microsoft", uid="email-bootstrap-subject"),
+        provider=MicrosoftGraphProvider(request, app=app),
+        email_addresses=[EmailAddress(email="admin@lacopts.org", verified=True, primary=True)],
+    )
+    login.user = AccountAdapter(request).new_user(request, login)
+    login.state = {"process": "login"}
+    return complete_social_login(request, login)
+
+
+urlpatterns = [
+    path("_test/validated-callback/", validated_callback),
+    path("_test/email-bootstrap-callback/", email_bootstrap_callback),
+    path("", include("ctm.urls")),
+]
 
 
 def test_restricted_microsoft_callback_completes_first_and_existing_login(granted_roles, people, client, settings):
@@ -51,6 +68,26 @@ def test_restricted_microsoft_callback_completes_first_and_existing_login(grante
     admin.refresh_from_db()
     assert admin.email_verified and admin.last_login is not None
     assert SocialAccount.objects.filter(user=admin, provider="microsoft").count() == 1
+
+
+def test_verified_enrolled_council_email_binds_microsoft_identity_on_first_login(granted_roles, people, client, settings):
+    settings.ROOT_URLCONF = __name__
+    settings.MICROSOFT_TENANT_ID = "specific-synthetic-tenant"
+    settings.SOCIALACCOUNT_PROVIDERS = {"microsoft": {"APP": {"client_id": "synthetic-client", "secret": "synthetic-secret"}}}
+    admin = people["admin"]
+    admin.email = "admin@lacopts.org"
+    admin.microsoft_subject = ""
+    admin.email_verified = False
+    admin.save(update_fields=["email", "microsoft_subject", "email_verified"])
+
+    with granted_roles("ctm_app", session=True):
+        response = client.get("/_test/email-bootstrap-callback/")
+        assert response.status_code == 302, response.content
+        assert client.session["_auth_user_id"] == str(admin.pk)
+    admin.refresh_from_db()
+    assert admin.microsoft_subject == "email-bootstrap-subject"
+    assert admin.email_verified
+    assert SocialAccount.objects.filter(user=admin, provider="microsoft", uid="email-bootstrap-subject").count() == 1
 
 
 @pytest.mark.parametrize("rejection", ["unbound_subject", "inactive", "applicant", "generic_tenant"])

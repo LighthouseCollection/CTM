@@ -8,6 +8,8 @@
     return action==="withdraw"&&app.can_withdraw===true&&["petition","appeal"].includes(app.kind)&&
       ["submitted","returned","accepted"].includes(app.status);
   }
+  const actionScope=app=>JSON.stringify([app?.id,app?.version,app?.status,
+    app?.can_delete_draft===true,app?.can_withdraw===true]);
   function createActionSession(app,api,changed=()=>{}) {
     const state={busy:false,locked:false,error:null,received:false};
     return {state,async send(action,confirmed){
@@ -39,7 +41,8 @@
     const [,render]=R.useReducer(n=>n+1,0),[selected,select]=R.useState(null);
     const session=R.useMemo(()=>createActionSession(application,api,render),[application.id,application.version,
       application.status,application.can_delete_draft,application.can_withdraw,api]),state=session.state;
-    R.useEffect(()=>{select(null);},[application]);
+    const scope=actionScope(application);
+    R.useEffect(()=>{select(null);},[scope,lang]);
     R.useEffect(()=>{onBusyChange?.(state.busy);return()=>onBusyChange?.(false);},[state.busy,onBusyChange]);
     R.useEffect(()=>{onLockChange?.(state.locked);return()=>onLockChange?.(false);},[state.locked,onLockChange]);
     if(!available(application,"delete")&&!available(application,"withdraw"))return null;
@@ -47,12 +50,12 @@
       state.error?h(P.Notice,{tone:"warning",role:"alert"},t(state.error)):null,
       state.received?h(P.Notice,{role:"status"},t("received")):null,
       selected?h(P.Notice,{tone:"warning",role:"alert"},h(P.Stack,null,t(selected==="delete"?"deleteHelp":"withdrawHelp"),
-        h(P.Inline,{wrap:true},h(P.Button,{disabled:disabled||state.locked,onClick:()=>session.send(selected,true)},t(state.busy?"busy":"confirm")),
+        h(P.Inline,{wrap:true},h(P.Button,{variant:selected==="delete"?"danger-secondary":undefined,disabled:disabled||state.locked,onClick:()=>session.send(selected,true)},t(state.busy?"busy":"confirm")),
           h(P.Button,{variant:"secondary",disabled:state.busy,onClick:()=>select(null)},t("cancel"))))):null,
       !selected?h(P.Inline,{wrap:true},...["delete","withdraw"].filter(action=>available(application,action)).map(action=>
-        h(P.Button,{key:action,disabled:disabled||state.locked,onClick:()=>select(action)},t(action)))):null,
+        h(P.Button,{key:action,variant:action==="delete"?"danger-secondary":undefined,disabled:disabled||state.locked,onClick:()=>select(action)},t(action)))):null,
       state.locked&&!state.busy?h(P.Button,{onClick:onRefresh,disabled:disabled},t("refresh")):null
     ));
   }
-  window.CTMApplicantLifecycle={available,createActionSession,Actions};
+  window.CTMApplicantLifecycle={available,actionScope,createActionSession,Actions};
 })();

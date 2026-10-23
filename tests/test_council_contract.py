@@ -1,11 +1,14 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
+import json
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
-from tribunal.models import Account, AgendaItem, Notification, ReportQuestion
-from tribunal.services.applications import submit_application, review_application
+from django.core.management import call_command
+from tribunal.models import Account, AgendaItem, AgendaTransferEvent, CouncilSession, Notification, Party, ReportQuestion, ReportRequest
+from tribunal.services.applications import submit_application, review_application, save_answers
 from tribunal.services.council import (
     assign_case, create_session, place_agenda, record_attendance, hear_case,
-    save_hearing_outcome, close_session,
+    save_hearing_outcome, close_session, delete_draft_session, transfer_agenda_item, update_session,
 )
 from tribunal.services.decisions import record_decision, cast_vote, approve_decision
 from tribunal.services.reports import create_request, send_request, complete_request
@@ -40,6 +43,7 @@ def test_review_queue_has_frozen_manifest_labels_and_authority(client, filed, pe
     login(client, people["secretary"])
     data = client.get("/api/applications/?state=awaiting_review").json()["items"][0]
     assert data["applicant_name"] == "John Smith" and data["can_review"]
+    assert {"respondent_name", "assigned_to", "applicant_gender", "respondent_gender"} <= data.keys()
     assert data["submitted_at"] and data["submitted_version"] == 1
     assert data["questionnaire"]["id"] == str(app.questionnaire_id)
     assert len(data["manifest"]) == 4 and all(x["scan_state"] == "clean" for x in data["manifest"])
@@ -63,6 +67,113 @@ def test_assignment_part_one_is_completed_without_carryover(filed, people):
     close_session(people["admin"], session.pk)
     item.refresh_from_db()
     assert item.state == "assigned" and not following.agenda.exists()
+
+
+def test_session_workspace_projects_saved_header_and_assignment_facts(client, filed, people):
+    app = filed
+    Party.objects.create(case=app.case, slot="B", name="Mary Smith")
+    starts_at = datetime(2030, 1, 2, 10, 0, tzinfo=ZoneInfo("America/Los_Angeles"))
+    session = create_session(
+        people["admin"],
+        date(2030, 1, 2),
+        starts_at=starts_at,
+        presiding_member=people["president"],
+        location="St. George Coptic Orthodox Church, Bellflower, California",
+    )
+    place_agenda(people["admin"], session.pk, app.case_id, part=1)
+    login(client, people["secretary"])
+
+    data = client.get(f"/api/sessions/{session.pk}/agenda/").json()
+    assert data["session"] == {
+        **data["session"],
+        "reference": "CS20300102",
+        "starts_at": starts_at.isoformat(),
+        "presiding_member_id": str(people["president"].pk),
+        "presiding_member_name": "president Test",
+        "location": "St. George Coptic Orthodox Church, Bellflower, California",
+    }
+    row = data["items"][0]
+    assert row["applicant_name"] == "John Smith"
+    assert row["respondent_name"] == "Mary Smith"
+    assert row["applicant_gender"] == "M"
+    assert row["respondent_gender"] is None
+    assert row["reason"] == "infidelity"
+    assert row["married_years"] == 19
+    assert row["submitted_at"] == app.submitted_at.isoformat()
+    assert row["assignment_status"] == "unassigned"
+    assert row["previous_recommendation"] is None
+
+
+def test_case_listing_exposes_party_names_for_session_placement_choices(client, filed, people):
+    Party.objects.create(case=filed.case, slot="B", name="Mary Smith")
+    login(client, people["secretary"])
+    row = next(row for row in client.get("/api/cases/").json()["items"] if row["id"] == str(filed.case_id))
+    assert row["party_names"] == ["John Smith", "Mary Smith"]
+    assert "applicant_gender" in row and "respondent_gender" in row
+    assert row["respondent_gender"] is None
+    assert {"applicant_name", "respondent_name", "reason", "closed_at"} <= row.keys()
+
+
+def test_session_agenda_keeps_gender_pills_when_a_party_uses_its_linked_account_person(client, filed, people):
+    party = Party.objects.get(case=filed.case, account=filed.owner)
+    party.person = None
+    party.save(update_fields=["person"])
+    session = create_session(people["admin"], date(2030, 1, 2))
+    place_agenda(people["admin"], session.pk, filed.case_id, part=1)
+    login(client, people["secretary"])
+
+    row = client.get(f"/api/sessions/{session.pk}/agenda/").json()["items"][0]
+    assert row["applicant_gender"] == filed.owner.person.gender == "M"
+
+
+def test_session_workspace_exposes_the_last_recorded_hearing_recommendation(client, hearing, filed, people):
+    save_hearing_outcome(people["member"], hearing.pk, "Private notes", "Proceed with reconciliation")
+    following = create_session(people["admin"], date(2030, 1, 9))
+    place_agenda(people["member"], following.pk, filed.case_id, part=2)
+    login(client, people["secretary"])
+
+    row = client.get(f"/api/sessions/{following.pk}/agenda/").json()["items"][0]
+    assert row["previous_recommendation"] == "Proceed with reconciliation"
+
+
+def test_session_create_api_persists_workspace_metadata(client, people):
+    login(client, people["admin"])
+    starts_at = "2030-01-02T10:00:00-08:00"
+    response = client.post(
+        "/api/sessions/",
+        data=json.dumps({
+            "date": "2030-01-02",
+            "starts_at": starts_at,
+            "presiding_member_id": str(people["president"].pk),
+            "location": "St. George Coptic Orthodox Church, Bellflower, California",
+        }),
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+    assert response.json()["state"] == "draft"
+    assert response.json()["can_activate"] is True
+    assert response.json() == {
+        **response.json(),
+        "reference": "CS20300102",
+        "starts_at": starts_at,
+        "presiding_member_id": str(people["president"].pk),
+        "presiding_member_name": "president Test",
+        "location": "St. George Coptic Orthodox Church, Bellflower, California",
+    }
+
+
+def test_session_agenda_hides_returned_private_correction(client, filed, people):
+    app = filed
+    review_application(people["secretary"], app.pk, "reject", "Correct the filing.")
+    visible = app.revisions.get(number=app.current_version).answers
+    save_answers(app.owner, app.pk, {**visible, "grounds": ["PRIVATE CORRECTION"]}, app.current_version)
+    session = create_session(people["admin"], date(2030, 1, 2))
+    place_agenda(people["admin"], session.pk, app.case_id, part=1)
+    login(client, people["secretary"])
+
+    row = client.get(f"/api/sessions/{session.pk}/agenda/").json()["items"][0]
+    assert row["reason"] == "infidelity"
+    assert "PRIVATE CORRECTION" not in row["reason"]
 
 
 def test_agenda_capabilities_match_presenter_attendance_and_hearing_state(client, filed, people):
@@ -149,7 +260,41 @@ def test_manager_interview_does_not_notify_applicant_or_accept_applicant_complet
     data = client.get(f"/api/cases/{app.case_id}/requests/").json()["items"][0]
     assert data["subject_party_id"] == str(app.party_id) and data["subject_name"] == "John Smith"
     assert data["language"] == "en" and data["author"] == "admin Test"
+    completed = client.get(f"/api/cases/{app.case_id}/reports/").json()["items"][0]
+    assert completed["completed_by"] == "admin Test"
+    assert completed["intake_by"] == "admin Test"
     assert data["sent_at"] and data["created_at"] and data["parent_report_id"] is None
+
+
+def test_report_template_draft_can_target_both_spouses(client, filed, people):
+    second_party = Party.objects.create(case=filed.case, slot="B", name="Mary Smith")
+    login(client, people["admin"])
+    response = client.post(
+        f"/api/cases/{filed.case_id}/requests/",
+        {
+            "proceeding_id": str(filed.proceeding_id),
+            "party_ids": [str(filed.party_id), str(second_party.pk)],
+            "kind": "interview",
+            "title": "Pre-interview draft",
+            "questions": [],
+            "language": "en",
+        },
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+    rows = response.json()["items"]
+    created = ReportRequest.objects.filter(pk__in=[row["id"] for row in rows])
+    assert {str(row.subject_id) for row in created} == {str(filed.party_id), str(second_party.pk)}
+    assert created.count() == 2 and all(row.state == "draft" for row in created)
+
+
+def test_seeded_question_bank_has_versioned_arabic_wording(client, people):
+    call_command("seed_reference", verbosity=0)
+    question = ReportQuestion.objects.get(code="OPEN-01", version=2)
+    assert question.wording_ar and question.wording_ar != question.wording_en
+    login(client, people["admin"])
+    row = next(item for item in client.get("/api/report-questions/").json()["items"] if item["code"] == "OPEN-01" and item["version"] == 2)
+    assert row["wording_ar"] == question.wording_ar and row["category_ar"] == "الأسئلة الأساسية"
 
 
 def test_question_taxonomy_preserves_multiple_groups_and_missing_translation(client, people):
@@ -410,3 +555,108 @@ def test_f20_concurrent_outcome_revision_does_not_repeat_first_message(hearing, 
     assert HearingOutcome.objects.filter(hearing=hearing).count() == 2
     assert Message.objects.filter(case=filed.case).count() == 1
     assert Message.objects.get(case=filed.case).email_timing == "after_session"
+
+
+def test_active_session_agenda_requires_an_audited_override_to_move(filed, people):
+    app = filed
+    assign_case(people["admin"], app.case_id, people["member"].pk, people["president"].pk)
+    active_session = create_session(people["admin"], date(2030, 2, 2))
+    next_session = create_session(people["admin"], date(2030, 2, 9), state="draft")
+    source = place_agenda(people["member"], active_session.pk, app.case_id)
+
+    with pytest.raises(ValidationError, match="tied to an in-session agenda"):
+        place_agenda(people["member"], next_session.pk, app.case_id)
+
+    destination = transfer_agenda_item(
+        people["member"], source.pk, next_session.pk, "The council ran out of time."
+    )
+    source.refresh_from_db()
+    assert source.state == "transferred"
+    assert destination.session_id == next_session.pk
+    assert destination.carried_from_id == source.pk
+    transfer = AgendaTransferEvent.objects.get(destination_item=destination)
+    assert transfer.case_id == app.case_id
+    assert transfer.reason == "The council ran out of time."
+
+
+def test_draft_session_agenda_can_move_to_a_later_open_session(filed, people):
+    app = filed
+    source_session = create_session(people["admin"], date(2030, 2, 2), state="draft")
+    target_session = create_session(people["admin"], date(2030, 2, 9), state="draft")
+    source = place_agenda(people["member"], source_session.pk, app.case_id)
+
+    destination = transfer_agenda_item(
+        people["member"], source.pk, target_session.pk, "Move to the later planned session."
+    )
+
+    assert destination.session_id == target_session.pk
+
+
+def test_session_metadata_can_be_edited_before_a_hearing(filed, people):
+    session = create_session(people["admin"], date(2030, 2, 2), location="Original location")
+    updated = update_session(
+        people["secretary"], session.pk, date(2030, 2, 9),
+        starts_at=datetime(2030, 2, 9, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
+        presiding_member=people["president"], location="St. Mark Coptic Orthodox Church",
+    )
+    assert updated.date == date(2030, 2, 9)
+    assert updated.presiding_member_id == people["president"].pk
+    assert updated.location == "St. Mark Coptic Orthodox Church"
+
+
+def test_moving_an_in_progress_session_to_a_future_date_returns_it_to_draft(
+    filed, people, monkeypatch
+):
+    session = create_session(people["admin"], date(2030, 2, 2), location="Original location")
+    monkeypatch.setattr("tribunal.services.council.timezone.localdate", lambda: date(2030, 2, 1))
+    updated = update_session(
+        people["secretary"], session.pk, date(2030, 2, 9),
+        starts_at=datetime(2030, 2, 9, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
+        presiding_member=people["president"], location="Rescheduled location",
+    )
+    assert updated.state == "draft"
+
+
+def test_admin_only_account_cannot_be_a_council_voter(filed, people):
+    decision = record_decision(people["admin"], filed.proceeding_id, "denied", "Recorded grounds", {})
+    with pytest.raises(PermissionDenied):
+        cast_vote(people["admin"], decision.pk, "approve")
+    recorded = cast_vote(people["admin"], decision.pk, "approve", people["member"].pk)
+    assert recorded.member_id == people["member"].pk
+    assert recorded.actor_id == people["admin"].pk
+
+
+def test_session_date_can_be_corrected_after_a_held_hearing(hearing, people):
+    session = hearing.agenda.session
+    updated = update_session(
+        people["secretary"], session.pk, date(2030, 1, 9),
+        starts_at=datetime(2030, 1, 9, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
+        presiding_member=people["president"], location="Corrected hearing location",
+    )
+    assert updated.date == date(2030, 1, 9)
+    hearing.refresh_from_db()
+    assert hearing.agenda.session_id == updated.pk
+
+
+def test_council_member_roster_excludes_administrators(client, people):
+    login(client, people["admin"])
+    rows = client.get("/api/members/").json()["items"]
+    assert {row["role"] for row in rows} <= {"president", "secretary", "member"}
+    assert all(row["email"] if "email" in row else True for row in rows)
+    assert str(people["admin"].pk) not in {row["id"] for row in rows}
+
+
+def test_administrator_can_delete_an_unassigned_draft_session(people):
+    session = create_session(people["admin"], date(2030, 5, 2), state="draft")
+
+    delete_draft_session(people["admin"], session.pk)
+
+    assert not CouncilSession.objects.filter(pk=session.pk).exists()
+
+
+def test_draft_session_with_agenda_is_retained(people, filed):
+    session = create_session(people["admin"], date(2030, 5, 2), state="draft")
+    place_agenda(people["member"], session.pk, filed.case_id)
+
+    with pytest.raises(ValidationError, match="agenda"):
+        delete_draft_session(people["admin"], session.pk)

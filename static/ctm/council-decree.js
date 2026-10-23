@@ -67,6 +67,27 @@
     return rows.sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0] || null;
   }
 
+  // The recorded decision type selects the decree wording. The grounds and any
+  // imposed conditions remain part of the same exact decision version.
+  function decreeTemplateFor(decision) {
+    const type = decision?.type || "";
+    if (type.startsWith("diss-"))
+      return {
+        kind: "dissolution",
+        title: "Dissolution of ecclesiastical marriage",
+        statement: "The Tribunal grants the petition for dissolution of the ecclesiastical marriage.",
+        canonical: "The Tribunal issues this decree under the canonical authority applicable to the recorded grounds.",
+      };
+    if (type.startsWith("null-"))
+      return {
+        kind: "nullity",
+        title: "Declaration of nullity",
+        statement: "The Tribunal declares the marriage invalid from its inception and grants the recorded permission to remarry.",
+        canonical: "The Tribunal issues this declaration under the canonical authority applicable to the recorded grounds.",
+      };
+    return { kind: "decision", title: "Decision decree", statement: "The Tribunal records the decision stated below.", canonical: "The canonical basis follows the recorded decision grounds." };
+  }
+
   // ---------- Words ----------
 
   const words = {
@@ -74,9 +95,12 @@
       decree: "Decree",
       adminOnly: "Only the administrator or secretary prepares, issues and releases the decree. You can follow its status here.",
       readMissing: "The decision record cannot be read from this server yet, so the decree cannot be prepared here.",
+      decreeProtocolTitle: "A decree follows a formal, documented decision.",
+      decreeProtocolMessage: "Record the decision, council votes, and the President's approval in Decision & Voting before preparing a decree.",
+      goDecisionVoting: "Go to Decision & Voting",
       noDecision: "No decision has been recorded yet.",
       notCurrent: "The decision shown is not the current version.",
-      needsApproval: "The current decision version needs presidential approval before a decree can be prepared.",
+      needsApproval: "The current decision version needs the President's approval before a decree can be prepared.",
       deniedNoCertificate: "Petition Denied closes the case with an official decision notice. No decree certificate is issued.",
       deferredNoCertificate: "A deferred decision does not issue a decree certificate.",
       templateNotice:
@@ -191,6 +215,9 @@
       decree: "الشهادة",
       adminOnly: "يُعِدّ مسؤول المجلس أو السكرتير الشهادة ويُصدرها ويتيحها فقط. يمكنك متابعة حالتها هنا.",
       readMissing: "لا يمكن قراءة سجل القرار من هذا الخادم بعد، لذلك لا يمكن إعداد الشهادة هنا.",
+      decreeProtocolTitle: "تتبع الشهادة قرارًا رسميًا موثقًا.",
+      decreeProtocolMessage: "سجّل القرار وأصوات المجلس واعتماد الرئيس في صفحة القرار والتصويت قبل إعداد الشهادة.",
+      goDecisionVoting: "الانتقال إلى القرار والتصويت",
       noDecision: "لم يُسجَّل قرار بعد.",
       notCurrent: "القرار المعروض ليس الإصدار الحالي.",
       needsApproval: "يحتاج الإصدار الحالي من القرار إلى اعتماد الرئيس قبل إعداد الشهادة.",
@@ -422,6 +449,32 @@
     );
   }
 
+  function DecreeTemplateDraft({ decision, record }) {
+    const P = window.Plenix, h = window.React.createElement;
+    const template = decreeTemplateFor(decision);
+    const parties = record.parties || [];
+    const applicant = parties.find((party) => party.role === "applicant")?.name || parties[0]?.name || "";
+    const respondent = parties.find((party) => party.role === "respondent")?.name || parties[1]?.name || "";
+    const sections = [
+      ["Preamble", `The Clerical Tribunal of the Coptic Orthodox Diocese of Los Angeles, having examined the petition of ${applicant} concerning ${respondent}, issues the following decree.`],
+      ["Findings of fact", decision.grounds || "No grounds were recorded."],
+      ["Canonical basis", template.canonical],
+      ["Decree statement", template.statement],
+      ["Conditions & directives", decision.conditions || "No additional conditions were recorded."],
+    ];
+    return h(
+      P.Panel,
+      { icon: "doc-text", title: template.title, description: "Selected from the recorded decision type." },
+      h(P.PropertyList, null,
+        h(P.PropertyList.Item, { label: "Decision type" }, base.typeLabel(decision.type)),
+        h(P.PropertyList.Item, { label: "Template" }, template.title),
+      ),
+      h("div", { className: "ctm-decree-template" },
+        ...sections.map(([title, body]) => h(P.Panel, { key: title, title }, h(P.Text, { as: "p" }, body))),
+      ),
+    );
+  }
+
   function DecreePreparation({ api, lang, record, decision, proceeding, members, onIssued }) {
     const R = window.React,
       P = window.Plenix,
@@ -535,7 +588,7 @@
       body = h(
         P.Stack,
         { gap: "md" },
-        h(P.Notice, { tone: "info" }, t("templateNotice")),
+        h(DecreeTemplateDraft, { decision, record }),
         h(P.RadioGroup, {
           label: t("certificateLanguage"),
           value: work.language,
@@ -643,7 +696,17 @@
     );
   }
 
-  function DecreeWorkspace({ api, lang, user, caseId }) {
+  function DecreeProtocolGuide({ lang, onGoDecision }) {
+    const P = window.Plenix, h = window.React.createElement, t = translator(lang);
+    return h(
+      P.Panel,
+      { icon: "doc-text", title: t("decree") },
+      h(P.Text, { as: "h2", variant: "heading" }, t("decreeProtocolTitle")),
+      h(P.Text, { as: "p", variant: "secondary" }, t("decreeProtocolMessage")),
+      h(P.Inline, null, h(P.Button, { variant: "primary", onClick: onGoDecision }, t("goDecisionVoting"))),
+    );
+  }
+  function DecreeWorkspace({ api, lang, user, caseId, onGoDecision }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -670,7 +733,7 @@
     const [local, setLocal] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
-    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    if (state.error) return h(DecreeProtocolGuide, { lang, onGoDecision });
     const { record, members, proceeding, versions } = state.data;
     const manage = base.canManage(user);
     const current = versions && versions.length ? [...versions].sort((a, b) => b.number - a.number)[0] : null;
@@ -682,6 +745,7 @@
       content = h(IssuedDecree, { api, lang, manage, decree, decision: current, record, onChange: setLocal });
     else if (record.status === "closed" && current && !eligibility)
       content = h(P.Notice, { tone: "info" }, t("unknownIssued"));
+    else if (eligibility === "noDecision") content = h(DecreeProtocolGuide, { lang, onGoDecision });
     else if (eligibility) content = h(P.EmptyState, { title: t(eligibility) });
     else if (!manage) content = h(P.Notice, { tone: "info" }, t("adminOnly"));
     else
@@ -718,11 +782,7 @@
       !manage && decree ? h(P.Notice, { tone: "info" }, t("adminOnly")) : null,
       content,
     );
-    return h(window.CTMShell.Workspace, {
-      label: t("decree"), rows: decree ? [{ ...decree, title: decree.reference || t("decree") }] : current ? [{ id: current.id, title: t("approvedDecision") }] : [],
-      showDetailWhenEmpty: true, empty: t("decree"),
-      columns: [{ title: t("decree"), field: "title", kind: "name" }],
-    }, detail);
+    return h(P.Stack, { gap: "lg", className: "ctm-decree-workspace" }, detail);
 
   }
 
@@ -1000,6 +1060,8 @@
     decreeTranslator: translator,
     decreeEligibility,
     decreeReference,
+    decreeTemplateFor,
+    DecreeTemplateDraft,
     entitledParties,
     releaseStatus,
     decreeStep,

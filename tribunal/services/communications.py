@@ -45,6 +45,27 @@ def send_message(
         raise ValidationError("Choose supported communication and timing values.")
     if actor.role == "applicant" and (email_timing != "immediate" or channel != "portal"):
         raise PermissionDenied("Applicant messages use the immediate private portal thread.")
+    if actor.role == "applicant":
+        # The case projection already discloses these minimum party identities.
+        # Reject a known other thread before RLS hides its Party row on lookup.
+        import json
+        import uuid
+        from django.db import connection
+        from tribunal.db.context import database_actor
+        try:
+            requested = {str(uuid.UUID(str(value))) for value in party_ids}
+        except (ValueError, TypeError, AttributeError):
+            raise ValidationError("Recipients must be registered parties of this case.")
+        if connection.vendor == 'postgresql':
+            with database_actor(actor), connection.cursor() as cursor:
+                cursor.execute('SELECT public.ctm_applicant_parties(%s)', [case.pk])
+                known = cursor.fetchone()[0]
+            known = json.loads(known) if isinstance(known, str) else known
+            foreign = {row['id'] for row in known if not row['is_self']}
+        else:
+            foreign = {str(pk) for pk in Party.objects.filter(case=case).exclude(account=actor).values_list('pk', flat=True)}
+        if requested & foreign:
+            raise PermissionDenied("Applicants can only use their own private communication thread.")
     parties = list(
         Party.objects.filter(case=case, pk__in=party_ids).select_related("account")
     )
@@ -155,11 +176,13 @@ def message_receipts(actor, message):
 
 
 @transaction.atomic
-def log_call(actor, case_id, party_id, occurred_at, outcome, notes=""):
+def log_call(actor, case_id, party_id, occurred_at, outcome, notes="", direction="sent"):
     from tribunal.models import CallRecord
 
     case = case_for(actor, case_id, write=True)
     party = Party.objects.get(pk=party_id, case=case)
+    if direction not in {"sent", "received"}:
+        raise ValidationError("Call direction must be sent or received.")
     if (not isinstance(outcome, str) or not outcome.strip() or len(outcome) > 150
             or not isinstance(notes, str) or len(notes) > 100000 or not timezone.is_aware(occurred_at)):
         raise ValidationError(
@@ -170,6 +193,7 @@ def log_call(actor, case_id, party_id, occurred_at, outcome, notes=""):
         party=party,
         actor=actor,
         occurred_at=occurred_at,
+        direction=direction,
         outcome=outcome,
         notes=notes,
     )

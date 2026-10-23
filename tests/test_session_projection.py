@@ -1,6 +1,7 @@
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 import pytest
-from tribunal.services.council import create_session
+from tribunal.services.council import create_session, place_agenda, set_session_adjourned
 
 pytestmark = pytest.mark.django_db
 
@@ -37,3 +38,53 @@ def test_attendance_projection_preserves_deactivated_members(client, people):
     assert row["member_name"] == "member Test"
     assert row["member_active"] is False
     assert row["present"] is True
+
+
+def test_hearing_attendance_roster_lists_all_active_council_members(client, people):
+    from tribunal.services.council import attendance_roster_for
+
+    session = create_session(people["admin"], date(2030, 1, 2))
+    roster = attendance_roster_for(people["admin"], session.pk)
+
+    assert [member.pk for member, _ in roster] == [
+        people["president"].pk,
+        people["secretary"].pk,
+        people["member"].pk,
+    ]
+    assert all(record is None for _, record in roster)
+
+
+def test_adjournment_closes_session_and_retains_its_timestamp_for_current_view(client, people):
+    session = create_session(people["admin"], date(2030, 1, 2))
+
+    ended_at = datetime(2030, 1, 2, 12, 15, tzinfo=ZoneInfo("America/Los_Angeles"))
+    result = set_session_adjourned(people["admin"], session.pk, True, ended_at)
+
+    result.refresh_from_db()
+    assert result.state == "closed"
+    assert result.closed_at is not None
+    assert result.adjourned_at == ended_at
+    client.force_login(people["admin"], backend="allauth.account.auth_backends.AuthenticationBackend")
+    row = next(item for item in client.get("/api/sessions/").json()["items"] if item["id"] == str(session.pk))
+    assert row["state"] == "closed"
+    assert row["adjourned_at"] == ended_at.astimezone(ZoneInfo("UTC")).isoformat()
+
+
+def test_session_listing_projects_assigned_and_hearing_case_counts(client, people, ready_application):
+    from tribunal.services.applications import submit_application
+
+    submit_application(ready_application.owner, ready_application.pk, "session-counts", {"accepted": True, "name": "Applicant Test"})
+    ready_application.refresh_from_db()
+    session = create_session(people["admin"], date(2030, 1, 2))
+    place_agenda(people["admin"], session.pk, ready_application.case_id, part=1)
+
+    client.force_login(people["admin"], backend="allauth.account.auth_backends.AuthenticationBackend")
+    row = next(item for item in client.get("/api/sessions/").json()["items"] if item["id"] == str(session.pk))
+
+    assert row["assigned_case_count"] == 1
+    assert row["hearing_case_count"] == 0
+    agenda = client.get(f"/api/sessions/{session.pk}/agenda/").json()
+    assert agenda["session"]["id"] == str(session.pk)
+    assert [(item["case_id"], item["part"]) for item in agenda["items"]] == [
+        (str(ready_application.case_id), 1)
+    ]

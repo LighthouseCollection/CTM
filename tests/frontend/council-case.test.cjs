@@ -20,6 +20,16 @@ test("case module extends the council namespace", () => {
     assert.equal(typeof C[name], "function");
 });
 
+test("an unassigned open case offers the council-member picker without a president field", () => {
+  assert.match(source, /api\("\/api\/council\/members\/"\)/);
+  assert.match(source, /record\.can_assign \? api\("\/api\/council\/members\/"\)/);
+  assert.match(source, /base\.assignableMembers\(members\)/);
+  assert.match(source, /P\.Select,/);
+  assert.match(source, /api\(`\/api\/cases\/\$\{encodeURIComponent\(caseId\)\}\/assignment\/`,/);
+  assert.match(source, /body: JSON\.stringify\(\{ member_id: nextMemberId \}\)/);
+  assert.doesNotMatch(source, /summaryForm\.presidentId/);
+});
+
 test("decision catalog matches the server types and exact prototype labels", () => {
   const prototype = JSON.parse(
     fs.readFileSync("docs/architecture/build-spec/prototype-decision-types.json", "utf8"),
@@ -95,7 +105,7 @@ test("tally lists the whole roster and counts only the latest vote per member", 
   assert.equal(result.rows.length, 3);
   assert.deepEqual(plain(result.counts), { approve: 1, deny: 0, abstain: 1, none: 1 });
   assert.equal(result.rows[2].vote, null);
-  assert.deepEqual(plain(C.councilRoster([{ id: "x", role: "applicant" }, ...roster]).map((r) => r.id)), ["m1", "m2", "m3"]);
+  assert.deepEqual(plain(C.councilRoster([{ id: "x", role: "applicant" }, { id: "admin-only", role: "admin" }, ...roster]).map((r) => r.id)), ["m1", "m2", "m3"]);
 });
 
 const bank = [
@@ -271,6 +281,22 @@ test("timeline keeps milestones only, oldest first, with readable labels", () =>
   assert.deepEqual(plain(rows.map((r) => r.label)), ["Application submitted", "Decree issued"]);
 });
 
+test("timeline groups case milestones and marriage facts into dated display events", () => {
+  const events = C.timelineEvents(
+    [{ id: "filed", action: "application_submitted", timestamp: "2026-01-15T12:00:00Z" }],
+    {
+      marriage: { church_marriage_date: "2010-06-12" },
+      separation: { separation_date: "2024-11-03", civil_divorce: { date: "2025-01-06" } },
+    },
+    "en",
+  );
+  assert.deepEqual(plain(events.map((event) => [event.category, event.label, event.timestamp])), [
+    ["marriage", "Church marriage", "2010-06-12"],
+    ["marriage", "Separation", "2024-11-03"],
+    ["marriage", "Civil divorce", "2025-01-06"],
+    ["case", "Application submitted", "2026-01-15T12:00:00Z"],
+  ]);
+});
 test("follow-up parents exclude assessments even when readable by council", () => {
   const reports = [{ id: "a", kind: "intake" }, { id: "b", kind: "medical", restricted: false }, { id: "c", restricted: true }, { id: "d", kind: "psychological" }];
   assert.deepEqual(plain(C.ordinaryReports(reports).map((r) => r.id)), ["a"]);
@@ -297,17 +323,6 @@ test("findings show the latest revision per fact, sorted by code", () => {
   assert.deepEqual(plain(rows.map((r) => `${r.fact_code}:${r.value}`)), ["A:a", "B:new"]);
 });
 
-test("templates pre-fill only published, non-foundational codes and skip retired ones", () => {
-  const templates = [
-    { id: "t1", retired: false, questions: [{ code: "OPEN-01" }, { code: "DM-01" }, { code: "GONE-9" }, { code: "DM-01" }] },
-    { id: "t2", retired: true, questions: [{ code: "DM-02" }] },
-    { id: "t3", retired: false, questions: [] },
-    { id: "t4", retired: false },
-  ];
-  assert.deepEqual(plain(C.usableTemplates(templates).map((t) => t.id)), ["t1"]);
-  assert.deepEqual(plain(C.templateSelection(templates[0], bank)), ["DM-01"]);
-});
-
 test("F19: votes of members no longer on the active roster stay counted as former members", () => {
   const roster = [{ id: "m1", name: "A", role: "member" }];
   const result = C.tally([{ member_id: "m1", choice: "approve" }, { member_id: "gone", choice: "deny" }], roster);
@@ -325,11 +340,54 @@ test("case summary counts ordinary pending/draft requests and the latest decisio
   const facts = C.summaryFacts(record, requests, versions);
   assert.equal(facts.pendingRequests, 1);
   assert.equal(facts.draftRequests, 1);
-  assert.deepEqual(plain(facts.decision), { type: "diss-both", approved: true, issued: true, number: 2 });
+  assert.deepEqual(plain(facts.decision), { type: "diss-both", approved: true, issued: true, issuedAt: "x", number: 2 });
   assert.equal(C.summaryFacts(record, [], null).decision, null);
+});
+
+test("case summary leaves case-section navigation to the secondary pane", () => {
+  const source = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const start = source.indexOf("function CaseSummary(");
+  const end = source.indexOf("  Object.assign(window.CTMCouncil", start);
+  const summary = source.slice(start, end);
+  assert.doesNotMatch(summary, /const link = \(page, label\)/);
+  assert.doesNotMatch(summary, /link\("petition", "petitionTitle"\)/);
+  assert.doesNotMatch(summary, /link\("reports", "reports"\)/);
+  assert.doesNotMatch(summary, /link\("hearings", "hearingsTitle"\)/);
+  assert.doesNotMatch(summary, /link\("decision", "decisionVoting"\)/);
+  assert.doesNotMatch(summary, /link\("communications", "communicationsLink"\)/);
+});
+
+test("petition is limited to submitted petition material and notes have their own workspace", () => {
+  const source = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const petitionStart = source.indexOf("function PetitionWorkspace(");
+  const notesStart = source.indexOf("function CaseNotesWorkspace(");
+  const petition = source.slice(petitionStart, notesStart);
+  assert.ok(notesStart > petitionStart);
+  assert.doesNotMatch(petition, /\/findings\//);
+  assert.doesNotMatch(petition, /\/notes\//);
+  assert.doesNotMatch(petition, /internalNotes/);
+  assert.match(source, /CaseNotesWorkspace: base\.guarded\(CaseNotesWorkspace\)/);
 });
 
 test("exported council pages are wrapped in an error boundary", () => {
   for (const name of ["CaseSummary", "DecisionWorkspace", "ReportsWorkspace", "SessionWorkspace", "ReviewWorkspace"])
     assert.match(C[name].displayName || "", /^Guarded\(/, name);
+});
+
+test("case workspaces use the vertical side-by-side record layout", () => {
+  const layout = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
+  const media = fs.readFileSync("static/ctm/council-media.js", "utf8");
+  assert.match(layout, /orientation = "side-by-side"/);
+  const filesStart = media.indexOf("function CaseFilesWorkspace(");
+  const files = media.slice(filesStart, media.indexOf("  Object.assign(window.CTMCouncil", filesStart));
+  assert.doesNotMatch(files, /orientation:\s*"stacked"/);
+});
+
+test("professional assessments use a request dialog instead of a side-pane form", () => {
+  const start = source.indexOf("function AssessmentsWorkspace(");
+  const end = source.indexOf("  // ---------- Parties and case hearings", start);
+  const workspace = source.slice(start, end);
+  assert.match(workspace, /P\.Toolbar/);
+  assert.match(workspace, /P\.Dialog/);
+  assert.doesNotMatch(workspace, /orientation:\s*"stacked"/);
 });

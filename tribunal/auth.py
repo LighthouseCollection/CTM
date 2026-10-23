@@ -60,16 +60,36 @@ class AccountAdapter(DefaultSocialAccountAdapter):
                 raise PermissionDenied(
                     "Configure the specific council Microsoft tenant before enabling login."
                 )
+            verified = [
+                email.email.lower()
+                for email in sociallogin.email_addresses
+                if email.verified
+            ]
             if sociallogin.is_existing:
                 user = sociallogin.user
             else:
-                user = (
-                    Account.objects.filter(
-                        microsoft_subject=sociallogin.account.uid, is_active=True
+                # A previously bound Microsoft object is always authoritative.
+                # For an enrolled council account without a binding, allow exactly
+                # one first sign-in only when Microsoft has verified that account's
+                # pre-existing, active council email.  This supports the approved
+                # lacopts.org roster without granting access by domain alone.
+                user = Account.objects.filter(
+                    microsoft_subject=sociallogin.account.uid
+                ).first()
+                if user is None:
+                    user = (
+                        Account.objects.filter(
+                            email__in=verified,
+                            email__iendswith="@lacopts.org",
+                            is_active=True,
+                            microsoft_subject="",
+                        )
+                        .exclude(role="applicant")
+                        .first()
                     )
-                    .exclude(role="applicant")
-                    .first()
-                )
+                    if user is not None:
+                        user.microsoft_subject = sociallogin.account.uid
+                        user.save(update_fields=["microsoft_subject"])
             if (
                 not user
                 or not user.is_active
@@ -78,7 +98,7 @@ class AccountAdapter(DefaultSocialAccountAdapter):
                 or user.microsoft_subject != sociallogin.account.uid
             ):
                 raise PermissionDenied(
-                    "Council Microsoft object identity must be preauthorized by admin."
+                    "Council Microsoft identity must match an active enrolled council email."
                 )
             if not sociallogin.is_existing:
                 sociallogin.connect(request, user)

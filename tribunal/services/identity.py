@@ -21,35 +21,35 @@ from tribunal.db.context import database_settings
 @core_operation("preferences")
 def save_preferences(actor, values):
     active(actor)
-    allowed = {"ui_language", "notification_language"}
-    if (
-        not values
-        or set(values) - allowed
-        or any(
-            not isinstance(value, str) or value not in {"en", "ar"}
-            for value in values.values()
-        )
-    ):
-        raise ValidationError(
-            "Choose English or Arabic for the supported language preferences."
-        )
-    user = Account.objects.select_for_update().get(pk=actor.pk)
+    allowed = {"ui_language", "notification_language", "first_name", "last_name"}
+    if not values or set(values) - allowed:
+        raise ValidationError("Choose supported account settings only.")
+    languages = {"ui_language", "notification_language"}
+    if any(not isinstance(values[key], str) or values[key] not in {"en", "ar"} for key in languages & values.keys()):
+        raise ValidationError("Choose English or Arabic for the supported language preferences.")
+    names = {"first_name", "last_name"}
+    if any(not isinstance(values[key], str) or not values[key].strip() or len(values[key].strip()) > 150 for key in names & values.keys()):
+        raise ValidationError("Enter a first and last name up to 150 characters.")
+    user = Account.objects.select_for_update().select_related("person").get(pk=actor.pk)
     active(user)
-    before = {field: getattr(user, field) for field in allowed}
-    changed = [field for field, value in values.items() if before[field] != value]
-    for field in changed:
-        setattr(user, field, values[field])
+    changed = []
+    before = {}
+    for field, value in values.items():
+        value = value.strip() if field in names else value
+        if getattr(user, field) != value:
+            before[field] = getattr(user, field)
+            setattr(user, field, value)
+            changed.append(field)
     if changed:
         user.save(update_fields=changed)
-        audit(
-            actor,
-            "account_preferences_changed",
-            user,
-            metadata={
-                "before": before,
-                "after": {field: getattr(user, field) for field in allowed},
-            },
-        )
+        if user.person and names & set(changed):
+            person_changes = [field for field in names & set(changed) if getattr(user.person, field) != getattr(user, field)]
+            for field in person_changes:
+                setattr(user.person, field, getattr(user, field))
+            if person_changes:
+                user.person.save(update_fields=person_changes)
+        action = "account_profile_changed" if names & set(changed) else "account_preferences_changed"
+        audit(actor, action, user, metadata={"before": before, "after": {field: getattr(user, field) for field in changed}})
     return user
 
 

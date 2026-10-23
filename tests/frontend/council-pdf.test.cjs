@@ -1,4 +1,4 @@
-// C-04 (#3): embedded PDF viewer on Plenix 0.60.1's documented DocumentViewer API, protected route, EN/AR failures,
+// C-04 (#3): embedded PDF viewer on Plenix 0.61.0's documented DocumentViewer API, protected route, EN/AR failures,
 // browser fallback kept, nothing cached in persistent browser storage.
 const { test } = require("node:test");
 const assert = require("node:assert/strict");

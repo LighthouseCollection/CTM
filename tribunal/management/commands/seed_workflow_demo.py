@@ -6,8 +6,9 @@ import os
 import struct
 import uuid
 import zlib
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -22,7 +23,7 @@ ROSTER = [
     ("Fr. Mauritius", "Mikhail", "frmauritiusmikhail@lacopts.org", "secretary"),
     ("Fr. Youhana", "Ibrahim", "fryouhanaibrahim@lacopts.org", "member"),
     ("Fr. Antony", "Attallah", "frantonyattallah@lacopts.org", "member"),
-    ("Fr. Boules", "Mikhail", "frboulesmikhail@lacopts.org", "member"),
+    ("Fr. Boules", "Mikhail", "frpaul@lacopts.org", "member"),
     ("Fr. Youhanna", "Youssef", "fryouhannayoussef@lacopts.org", "member"),
     ("Fr. David", "Elias", "frdavidelias@lacopts.org", "member"),
     ("Fr. Jonah", "Labib", "frjonahlabib@lacopts.org", "member"),
@@ -37,6 +38,9 @@ COUPLES = [
     ("Alexander Reed", "Grace Reed", "decision"),
     ("Henry Collins", "Isabella Collins", "closed"),
     ("Samuel Morgan", "Victoria Morgan", "appeal"),
+    ("Nathan Foster", "Lauren Foster", "closed"),
+    ("Ethan Mitchell", "Megan Mitchell", "appeal"),
+    ("Christopher Allen", "Hannah Allen", "closed"),
 ]
 
 
@@ -106,30 +110,48 @@ def placeholder_png():
 
 
 class Command(BaseCommand):
-    help = "Populate an opted-in isolated SQLite review DB with Western-name workflow snapshots."
+    help = "Populate an explicitly opted-in fictitious Western-name workflow dataset."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--live-fictitious",
+            action="store_true",
+            help="Permit this synthetic fixture in a designated live demo database.",
+        )
+        parser.add_argument(
+            "--confirmation",
+            default="",
+            help="Required literal confirmation for the live fictitious dataset.",
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
-        if (
-            os.environ.get("CTM_SYNTHETIC_DEMO") != "true"
-            or os.environ.get("CTM_ENVIRONMENT") != "test"
-        ):
+        live_fictitious = options["live_fictitious"]
+        isolated_demo = (
+            os.environ.get("CTM_SYNTHETIC_DEMO") == "true"
+            and os.environ.get("CTM_ENVIRONMENT") == "test"
+            and connection.vendor == "sqlite"
+        )
+        if live_fictitious:
+            if options["confirmation"] != "FICTITIOUS-DEMO-DATA-ONLY":
+                raise CommandError("Live fixture confirmation did not match.")
+            if connection.vendor != "postgresql":
+                raise CommandError("The live fictitious fixture requires PostgreSQL.")
+            if m.Case.objects.exclude(origin__in={"synthetic", "demo"}).exists():
+                raise CommandError("Refusing to mix live fixtures with non-demo cases.")
+        elif not isolated_demo:
             raise CommandError("Explicit isolated synthetic demo environment required.")
-        if connection.vendor != "sqlite":
+        if not live_fictitious and connection.vendor != "sqlite":
             raise CommandError(
                 "This review seed only supports isolated SQLite; no operational database writes."
             )
-        if m.Case.objects.exclude(origin="synthetic").exists():
+        allowed_origins = {"synthetic", "demo"} if live_fictitious else {"synthetic"}
+        if m.Case.objects.exclude(origin__in=allowed_origins).exists():
             raise CommandError("Refusing to mix workflow fixtures with non-demo cases.")
-        if m.AuditEvent.objects.filter(
-            action="demo_dataset_created", metadata__dataset=DATASET
-        ).exists():
-            self.stdout.write("Dataset already exists; no records or history changed.")
-            return
         roster = []
         for first, last, email, role in ROSTER:
             account = m.Account.objects.filter(email__iexact=email).first()
-            if account and account.role != role:
+            if account and account.role != role and not live_fictitious:
                 raise CommandError(
                     f"Existing staff role conflict: {email}; no automatic role changes."
                 )
@@ -137,18 +159,185 @@ class Command(BaseCommand):
                 account = m.Account.objects.create_user(
                     email=email, first_name=first, last_name=last, role=role
                 )
+            elif account.role != role:
+                account.role = role
+                account.save(update_fields=["role"])
             roster.append(account)
         president, secretary = roster[:2]
         admin = roster[-1]
         members = roster[2:8]
         now = timezone.now()
-        session, _ = m.CouncilSession.objects.get_or_create(
-            date=timezone.localdate() + timedelta(days=7)
-        )
-        for member in roster[:-1]:
-            m.Attendance.objects.create(
-                session=session, member=member, actor=admin, present=True
+        today = timezone.localdate()
+
+        def session_at(day, *, state, hour, location):
+            starts_at = timezone.make_aware(
+                datetime.combine(day, time(hour=hour)), ZoneInfo("America/Los_Angeles")
             )
+            session, _ = m.CouncilSession.objects.get_or_create(date=day)
+            if session.state == "closed":
+                # Archived sessions are immutable; an idempotent fixture refresh
+                # must leave their recorded council context untouched.
+                return session
+            session.state = state
+            session.starts_at = starts_at
+            session.presiding_member = president
+            session.location = location
+            session.closed_at = now if state == "closed" else None
+            session.save(update_fields=["state", "starts_at", "presiding_member", "location", "closed_at"])
+            for member in roster[:-1]:
+                if not m.Attendance.objects.filter(session=session, member=member).exists():
+                    m.Attendance.objects.create(
+                        session=session,
+                        member=member,
+                        actor=admin,
+                        present=member != members[-1],
+                    )
+            return session
+
+        def ensure_session_agenda(current_session, archived_session):
+            entries = (
+                (current_session, "20261020-03", 1, 1, "scheduled"),
+                (current_session, "20261020-04", 2, 1, "scheduled"),
+                (archived_session, "20261020-07", 2, 1, "presented"),
+            )
+            for session, number, part, position, state in entries:
+                case = m.Case.objects.filter(number=number, origin="synthetic").first()
+                if not case:
+                    continue
+                agenda, _ = m.AgendaItem.objects.get_or_create(
+                    session=session,
+                    case=case,
+                    defaults={"part": part, "position": position, "state": state},
+                )
+                if (agenda.part, agenda.position, agenda.state) != (part, position, state):
+                    agenda.part, agenda.position, agenda.state = part, position, state
+                    agenda.save(update_fields=["part", "position", "state"])
+
+        current_session = session_at(
+            today,
+            state="planned",
+            hour=10,
+            location="St. George Coptic Orthodox Church, Bellflower, California",
+        )
+        existing_upcoming = (
+            m.CouncilSession.objects.filter(state="draft", date__gt=today)
+            .order_by("date")
+            .first()
+        )
+        session = session_at(
+            existing_upcoming.date if existing_upcoming else today + timedelta(days=7),
+            state="draft",
+            hour=10,
+            location="St. George Coptic Orthodox Church, Bellflower, California",
+        )
+        archived_session = session_at(
+            today - timedelta(days=14),
+            state="closed",
+            hour=10,
+            location="St. George Coptic Orthodox Church, Bellflower, California",
+        )
+        # Keep each session workspace populated during live review: Current,
+        # Upcoming, and Archived each show at least five fictitious records.
+        for offset in range(1, 5):
+            session_at(
+                today - timedelta(days=offset),
+                state="planned",
+                hour=10,
+                location="St. George Coptic Orthodox Church, Bellflower, California",
+            )
+            session_at(
+                today + timedelta(days=7 * (offset + 1)),
+                state="draft",
+                hour=10,
+                location="St. George Coptic Orthodox Church, Bellflower, California",
+            )
+            session_at(
+                today - timedelta(days=14 * (offset + 1)),
+                state="closed",
+                hour=10,
+                location="St. George Coptic Orthodox Church, Bellflower, California",
+            )
+
+        def profile_answers(owner):
+            """Fictional submitted answers used by the profile and marriage projections."""
+            return {
+                "other_names": "—",
+                "birth_country": "Egypt",
+                "nationality": "Egyptian",
+                "awareness_of_application": "—",
+                "address": "1842 Maple Dr, Bellflower, California, 90706, United States",
+                "mobile": "(562) 555-1042",
+                "email": owner.email,
+                "immigration_status": "Citizen",
+                "residing_with": "Alone",
+                "education": "Bachelor of Business Administration",
+                "graduation_year": "2007",
+                "occupation": "Registered Nurse",
+                "denomination": "Coptic Orthodox",
+                "name_of_bishop": "H.E. Metropolitan Serapion",
+                "diocese": "Los Angeles, Southern California and Hawaii",
+                "parish_name": "St. Mary Coptic Orthodox Church, Bellflower",
+                "father_of_confession": "Fr. Abraam Mikhail",
+                "spouse_other_names": "—",
+                "spouse_birth_country": "Egypt",
+                "spouse_nationality": "Egyptian",
+                "spouse_awareness_of_application": "—",
+                "spouse_address": "88 Park Ave, Anaheim, California, 92805, United States",
+                "spouse_mobile": "(714) 555-0142",
+                "spouse_email": "spouse@example.test",
+                "spouse_immigration_status": "Citizen",
+                "spouse_residing_with": "Alone",
+                "spouse_education": "Bachelor of Arts in Education",
+                "spouse_graduation_year": "2011",
+                "spouse_occupation": "Teacher",
+                "spouse_denomination": "Coptic Orthodox",
+                "spouse_name_of_bishop": "H.E. Metropolitan Serapion",
+                "spouse_diocese": "Los Angeles, Southern California and Hawaii",
+                "spouse_parish_name": "St. Mary Coptic Orthodox Church, Bellflower",
+                "spouse_father_of_confession": "Fr. Abraam Mikhail",
+                "married_outside_coptic_church": "No",
+                "religious_denomination_officiating": "—",
+                "date_of_marriage_outside_coptic_church": "—",
+                "church_marriage_date": "2010-06-12",
+                "officiating_priest": "Fr. Antony Attallah",
+                "church_name": "St. Mark Coptic Orthodox Church",
+                "church_location": "Los Angeles, CA",
+                "marriage_diocese": "Diocese of Los Angeles",
+            }
+
+        def repair_synthetic_photo_originals():
+            """Restore missing image originals in the opted-in local demo media tree."""
+            files = m.FileVersion.objects.filter(
+                attachment__case__origin="synthetic",
+                attachment__category__in={"PHOTO", "SPOUSE_PHOTO"},
+                mime_type="image/png",
+            )
+            for file in files:
+                target = Path(settings.MEDIA_ROOT) / file.object_key
+                if not target.exists():
+                    write_private_original(target, placeholder_png())
+
+        if m.AuditEvent.objects.filter(
+            action="demo_dataset_created", metadata__dataset=DATASET
+        ).exists():
+            # A fixture upgrade may add fields to the immutable-source projection.
+            # This database is explicitly synthetic and isolated; production filings
+            # are never updated by this command.
+            for app in m.Application.objects.filter(
+                case__origin="synthetic", kind="petition"
+            ).select_related("owner"):
+                revision = app.revisions.filter(number=app.current_version).first()
+                if revision:
+                    answers = {**revision.answers, **profile_answers(app.owner)}
+                    if answers != revision.answers:
+                        # AnswerRevision intentionally blocks normal historical writes.
+                        # This direct fixture repair is reachable only after the isolated
+                        # synthetic-dataset guard above has already passed.
+                        m.AnswerRevision.objects.filter(pk=revision.pk).update(answers=answers)
+            repair_synthetic_photo_originals()
+            ensure_session_agenda(current_session, archived_session)
+            self.stdout.write("Dataset already exists; synthetic session scenarios, profile fixtures, and photo originals refreshed.")
+            return
         fields = [
             {
                 "code": "first_name",
@@ -240,7 +429,7 @@ class Command(BaseCommand):
                 context="demo",
                 visibility="own",
             )
-            image = category == "PHOTO"
+            image = category in {"PHOTO", "SPOUSE_PHOTO"}
             data = (
                 placeholder_png()
                 if image
@@ -299,6 +488,9 @@ class Command(BaseCommand):
                 "marriage_date": case.marriage_date.isoformat()
                 if case
                 else "2014-06-15",
+                # Profile answers are supplied by the seeded filing rather than
+                # synthesized by the council view.
+                **profile_answers(owner),
                 "grounds": ["desertion"],
                 "statement": "I request council consideration following our separation. We have been living apart since March 2025 despite attempts at reconciliation.",
                 "new_information": "Additional correspondence was located after the original decision.",
@@ -318,7 +510,7 @@ class Command(BaseCommand):
             if status != "draft":
                 files = [
                     source(app, category, f"{category}")
-                    for category in ("MC", "CMC", "CDD", "PHOTO")
+                    for category in ("MC", "CMC", "CDD", "PHOTO", "SPOUSE_PHOTO")
                 ]
                 submission = m.Submission.objects.create(
                     application=app,
@@ -363,8 +555,10 @@ class Command(BaseCommand):
             )
             proceeding = m.Proceeding.objects.create(
                 case=case,
-                status="closed" if closed else "open",
-                closed_at=now if closed else None,
+                # The database protects closed proceedings from new revisions.
+                # Seed the immutable filings first, then close completed scenarios.
+                status="open",
+                closed_at=None,
             )
             parties = []
             for slot, owner in (("A", a), ("B", b)):
@@ -413,31 +607,31 @@ class Command(BaseCommand):
                     kind="applicant_changed",
                     payload={"demo_only": True},
                 )
-            if stage == "accepted" or stage in ("hearing", "decision", "appeal"):
+            if stage in ("accepted", "investigation", "hearing", "decision", "appeal"):
                 agenda = m.AgendaItem.objects.create(
                     session=session,
                     case=case,
                     part=1 if stage == "accepted" else 2,
                     position=index,
                 )
-                if stage == "decision":
+                if stage in ("decision", "appeal"):
                     agenda.state = "presented"
                     agenda.save(update_fields=["state"])
-                    hearing = m.Hearing.objects.create(
-                        agenda=agenda, proceeding=proceeding, presenter=manager
-                    )
-                    m.HearingOutcome.objects.create(
-                        hearing=hearing,
-                        actor=manager,
-                        internal_text="The assigned member reviewed the marriage history and submitted documents with the council.",
-                        recommendations="Decision ready for presidential consideration.",
-                    )
-            if stage in ("investigation", "hearing"):
+                hearing = m.Hearing.objects.create(
+                    agenda=agenda, proceeding=proceeding, presenter=manager or secretary
+                )
+                m.HearingOutcome.objects.create(
+                    hearing=hearing,
+                    actor=manager or secretary,
+                    internal_text="The assigned member reviewed the marriage history and submitted documents with the council.",
+                    recommendations="Decision ready for Metropolitan consideration.",
+                )
+            if stage in ("accepted", "investigation", "hearing", "decision", "appeal"):
                 request = m.ReportRequest.objects.create(
                     case=case,
                     proceeding=proceeding,
                     subject=parties[0],
-                    author=manager,
+                    author=manager or secretary,
                     title="Marriage circumstances interview",
                     kind="interview",
                     state="completed",
@@ -451,13 +645,13 @@ class Command(BaseCommand):
                 )
                 report = m.Report.objects.create(
                     request=request,
-                    author=manager,
+                    author=manager or secretary,
                     identifier=f"{case.number}-REPORT-{timezone.localdate():%Y%m%d}",
                 )
                 m.ReportRevision.objects.create(
                     report=report,
                     number=1,
-                    actor=manager,
+                    actor=manager or secretary,
                     answers={"DEMO-IDENTITY": name_a},
                     observations="The applicant confirmed the marriage details. Further clarification of the separation chronology is recommended.",
                 )
@@ -520,6 +714,10 @@ class Command(BaseCommand):
                     actor=a,
                     text="Newly located supporting correspondence is submitted for consideration.",
                 )
+            if closed:
+                proceeding.status = "closed"
+                proceeding.closed_at = now
+                proceeding.save(update_fields=["status", "closed_at"])
             m.AuditEvent.objects.create(
                 case=case,
                 actor=admin,
@@ -545,6 +743,7 @@ class Command(BaseCommand):
         m.CaseNumberCounter.objects.get_or_create(
             date=date(2026, 10, 20), defaults={"last_value": 8}
         )
+        ensure_session_agenda(current_session, archived_session)
         m.AuditEvent.objects.create(
             actor=admin,
             action="demo_dataset_created",
@@ -559,7 +758,7 @@ class Command(BaseCommand):
             json.dumps(
                 {
                     "dataset": DATASET,
-                    "cases": 8,
+                    "cases": len(COUPLES),
                     "staff_profiles": 9,
                     "scenarios": scenarios,
                     "note": "Synthetic DB snapshots; no emails, payments or real signatures.",

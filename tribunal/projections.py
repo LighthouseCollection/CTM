@@ -4,6 +4,8 @@ from tribunal import models as m
 from functools import lru_cache
 from pathlib import Path
 import json
+import re
+from zoneinfo import ZoneInfo
 from django.db import connection
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from tribunal.services.closed_filings import CLOSED_INTAKE, council_filing, pending_council_filings
@@ -35,11 +37,30 @@ def template_data(template, actor):
 
 @lru_cache(maxsize=1)
 def question_taxonomy():
-    return json.loads((Path(__file__).parent / "reference/question-taxonomy.json").read_text())["questions"]
+    return json.loads((Path(__file__).parent / "reference/question-taxonomy.json").read_text(encoding="utf-8"))["questions"]
 
 
 def name(account):
     return f"{account.first_name} {account.last_name}".strip()
+
+
+_LEGACY_PRESIDENTIAL_WORDING = re.compile(r"\bpresidential\b", re.IGNORECASE)
+
+
+def council_display_text(value):
+    """Keep immutable history intact while removing retired terminology from council UI."""
+    return _LEGACY_PRESIDENTIAL_WORDING.sub("Metropolitan", value) if value else value
+
+
+_LEGACY_DEMO_SESSION_LOCATIONS = {
+    "St. Mark Coptic Orthodox Church, Los Angeles, California",
+    "St. Mary Coptic Orthodox Church, Los Angeles, California",
+}
+_DEMO_SESSION_LOCATION = "St. George Coptic Orthodox Church, Bellflower, California"
+
+
+def session_display_location(value):
+    return _DEMO_SESSION_LOCATION if value in _LEGACY_DEMO_SESSION_LOCATIONS else value
 
 
 def questionnaire_data(questionnaire):
@@ -61,8 +82,17 @@ def staff_application_data(app, actor):
             manifest.append({"file_id": file_id, "category": entry.get("category"),
                              "name": entry.get("name"), "scan_state": scan.result if scan else "pending"})
     reviews = m.CompletenessReview.objects.filter(submission__application=app).select_related("actor").order_by("created_at", "id")
+    parties = list(app.case.parties.select_related("person", "account__person").order_by("slot", "id")) if app.case_id else []
+    applicant = app.party if app.party_id else (parties[0] if parties else None)
+    respondent = next((party for party in parties if not applicant or party.pk != applicant.pk), None)
+    applicant_person = applicant.person if applicant and applicant.person_id else getattr(app.owner, "person", None)
+    respondent_person = respondent.person if respondent and respondent.person_id else (respondent.account.person if respondent and respondent.account_id and respondent.account.person_id else None)
     result = {
         "applicant_name": app.party.name if app.party_id else name(app.owner),
+        "respondent_name": respondent.name if respondent else None,
+        "applicant_gender": applicant_person.gender if applicant_person else None,
+        "respondent_gender": respondent_person.gender if respondent_person else None,
+        "assigned_to": name(app.case.assigned_member) if app.case_id and app.case.assigned_member_id else None,
         "submitted_at": app.submitted_at.isoformat() if app.submitted_at else None,
         "submitted_version": latest.revision.number if latest else None,
         "questionnaire": questionnaire_data(latest.revision.questionnaire if latest else app.questionnaire),
@@ -150,12 +180,36 @@ def released_decrees(case, actor):
 
 
 def session_capabilities(session, actor):
-    administrative = actor.role in {"admin", "secretary"} and session.state == "planned"
+    administrative = actor.role in {"admin", "secretary"} and session.state in {"draft", "planned"}
     can_reschedule = bool(administrative and not m.Hearing.objects.filter(agenda__session=session).exists()
                           and not m.AgendaTransferEvent.objects.filter(to_session=session).exists()
                           and not m.AgendaItem.objects.filter(carried_from__session=session).exists())
-    return {"can_manage": administrative, "can_close": administrative,
-            "can_reschedule": can_reschedule, "can_record_attendance": administrative}
+    return {"can_manage": administrative, "can_close": bool(administrative and session.state == "planned"),
+            "can_activate": bool(administrative and session.state == "draft"),
+            "can_reschedule": can_reschedule,
+            "can_record_attendance": bool(administrative and session.state == "planned")}
+
+
+def session_data(session, actor):
+    assigned_case_count = getattr(session, "assigned_case_count", None)
+    hearing_case_count = getattr(session, "hearing_case_count", None)
+    if assigned_case_count is None:
+        assigned_case_count = session.agenda.filter(part=1).count()
+    if hearing_case_count is None:
+        hearing_case_count = session.agenda.filter(part=2).count()
+    return {
+        "date": session.date.isoformat(),
+        "reference": session.reference,
+        "starts_at": session.starts_at.astimezone(ZoneInfo("America/Los_Angeles")).isoformat() if session.starts_at else None,
+        "presiding_member_id": str(session.presiding_member_id) if session.presiding_member_id else None,
+        "presiding_member_name": name(session.presiding_member) if session.presiding_member_id else None,
+        "location": session_display_location(session.location) or None,
+        "adjourned_at": session.adjourned_at.isoformat() if session.adjourned_at else None,
+        "assigned_case_count": assigned_case_count,
+        "hearing_case_count": hearing_case_count,
+        "state": session.state,
+        **session_capabilities(session, actor),
+    }
 
 
 def hearing_writable(hearing, actor):
@@ -170,8 +224,49 @@ def hearing_writable(hearing, actor):
 
 
 def agenda_item_data(item, actor, attendance):
+    from tribunal.services.filing_privacy import revision_visible
+
     case = item.case
+    application = (
+        case.applications.filter(kind="petition", submitted_at__isnull=False)
+        .select_related("party", "owner__person")
+        .order_by("-submitted_at", "-id")
+        .first()
+    )
+    revision = application.revisions.filter(number=application.current_version).first() if application else None
+    if application and actor.pk != application.owner_id and (revision is None or not revision_visible(revision)):
+        formal = application.submissions.select_related("revision").order_by("-created_at", "-id").first()
+        revision = formal.revision if formal else None
+    grounds = revision.answers.get("grounds") if revision else None
+    reason = ", ".join(str(value) for value in grounds) if isinstance(grounds, list) else str(grounds or "")
+    parties = list(case.parties.select_related("person", "account__person").order_by("slot"))
+    applicant_party = application.party if application and application.party_id else (
+        next((party for party in parties if party.slot == "A"), parties[0] if parties else None)
+    )
+    applicant_name = (applicant_party.name if applicant_party else "") or (name(application.owner) if application else "")
+    respondent = next((party for party in parties if party.pk != applicant_party.pk), None) if applicant_party else None
+    applicant_gender = (
+        applicant_party.person.gender
+        if applicant_party and applicant_party.person_id
+        else application.owner.person.gender if application and application.owner.person_id else None
+    )
+    respondent_gender = (
+        respondent.person.gender
+        if respondent and respondent.person_id
+        else respondent.account.person.gender if respondent and respondent.account_id and respondent.account.person_id else None
+    )
+    married_years = None
+    if case.marriage_date:
+        married_years = item.session.date.year - case.marriage_date.year - (
+            (item.session.date.month, item.session.date.day) < (case.marriage_date.month, case.marriage_date.day)
+        )
     hearing = m.Hearing.objects.filter(agenda=item).select_related("proceeding", "agenda__case").first()
+    previous_outcome = (
+        m.HearingOutcome.objects.filter(hearing__agenda__case=case)
+        .exclude(hearing__agenda=item)
+        .order_by("-created_at", "-id")
+        .first()
+    )
     presenter = attendance.get(actor.pk)
     can_present = bool(case.assigned_member_id == actor.pk and item.part == 2
                        and item.state == "scheduled" and item.session.state == "planned"
@@ -187,12 +282,23 @@ def agenda_item_data(item, actor, attendance):
                           "version": appointment.version, "state": appointment.state,
                           "response": response.response if response else None})
     return {"id": str(item.pk), "case_id": str(case.pk), "case_number": case.number,
-            "part": item.part, "state": item.state,
+            "part": item.part, "position": item.position, "state": item.state,
             "hearing_id": str(hearing.pk) if hearing else None,
             "assigned_member_id": str(case.assigned_member_id) if case.assigned_member_id else None,
             "assigned_member_name": name(case.assigned_member) if case.assigned_member_id else None,
+            "previous_recommendation": council_display_text(previous_outcome.recommendations) if previous_outcome else None,
             "party_names": list(case.parties.order_by("slot").values_list("name", flat=True)),
+            "applicant_name": applicant_name or None,
+            "applicant_gender": applicant_gender,
+            "respondent_name": respondent.name if respondent else None,
+            "respondent_gender": respondent_gender,
+            "reason": reason or None,
+            "married_years": married_years,
+            "submitted_at": application.submitted_at.isoformat() if application and application.submitted_at else None,
+            "assignment_status": "assigned" if case.assigned_member_id else "unassigned",
             "can_present": can_present,
+            "can_transfer": bool(item.session.state in {"draft", "planned"} and item.state in {"scheduled", "time_exhausted"}
+                                 and (actor.role in {"admin", "secretary"} or case.assigned_member_id == actor.pk)),
             "can_record_outcome": bool(hearing and hearing_writable(hearing, actor)),
             "testimony": testimony}
 
@@ -203,7 +309,7 @@ def hearing_data(hearing, actor):
             "presenter_id": str(hearing.presenter_id),
             "can_record_outcome": hearing_writable(hearing, actor),
             "outcomes": [{"id": str(row.pk), "internal_text": row.internal_text,
-                          "recommendations": row.recommendations, "actor": name(row.actor),
+                          "recommendations": council_display_text(row.recommendations), "actor": name(row.actor),
                           "actor_id": str(row.actor_id), "timestamp": row.created_at.isoformat()}
                          for row in m.HearingOutcome.objects.filter(hearing=hearing).select_related("actor").order_by("created_at", "id")]}
 

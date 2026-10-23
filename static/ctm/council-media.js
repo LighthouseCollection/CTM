@@ -228,6 +228,9 @@
       notInterview: "Recordings are used for interviews conducted by the case manager.",
       beforeUnload: "A recording is in progress.",
       reportsList: "Completed reports",
+      completedBy: "Report completed by",
+      completedDate: "Completed date",
+      intakeBy: "Intake by",
       noReports: "No completed reports are available.",
       chooseReport: "Select a report",
       reportFor: "Report for",
@@ -275,6 +278,7 @@
       discardRevisionTitle: "Discard unsaved changes?",
       discardRevisionMessage: "The text you typed in this revision will be removed. Nothing has been saved.",
       keepEditing: "Keep editing",
+      priestTestimony: "Written testimony",
       recordingsTitle: "Submitted recordings",
       noRecordings: "No recording has been submitted for this report.",
       recordingItem: "Recording {n}",
@@ -338,7 +342,14 @@
       method_written: "Entered in CTM",
       method_external: "External source link",
       evidenceTitle: "Evidence",
+      demoEvidenceTitle: "Demo evidence images",
+      demoEvidenceHint: "Demo-only images supplied for the case review walkthrough.",
+      demoEvidenceImage: "Open demo evidence image {number}",
       documentsTitle: "Documents",
+      demoDocumentsTitle: "Demo documents",
+      demoDocumentsHint: "Demo-only documents supplied for the case review walkthrough.",
+      openDocument: "Open document",
+      downloadDocument: "Download document",
       olderVersions: "Include older versions",
       noFiles: "No technically cleared files are available in this section.",
       chooseFile: "Select a file",
@@ -432,6 +443,9 @@
       notInterview: "تُستخدم التسجيلات للمقابلات التي يجريها مسؤول القضية.",
       beforeUnload: "يوجد تسجيل قيد التنفيذ.",
       reportsList: "التقارير المكتملة",
+      completedBy: "أكمل التقرير",
+      completedDate: "تاريخ الإكمال",
+      intakeBy: "استلام بواسطة",
       noReports: "لا توجد تقارير مكتملة.",
       chooseReport: "اختر تقريرًا",
       reportFor: "التقرير بخصوص",
@@ -479,6 +493,7 @@
       discardRevisionTitle: "هل تريد تجاهل التغييرات غير المحفوظة؟",
       discardRevisionMessage: "سيُحذف النص الذي كتبته في هذا التعديل. لم يُحفظ أي شيء.",
       keepEditing: "متابعة التعديل",
+      priestTestimony: "الشهادة المكتوبة",
       recordingsTitle: "التسجيلات المقدَّمة",
       noRecordings: "لم يُقدَّم أي تسجيل لهذا التقرير.",
       recordingItem: "التسجيل {n}",
@@ -542,7 +557,14 @@
       method_written: "أُدخل في النظام",
       method_external: "رابط مصدر خارجي",
       evidenceTitle: "الأدلة",
+      demoEvidenceTitle: "صور أدلة تجريبية",
+      demoEvidenceHint: "صور تجريبية مضافة لشرح مراجعة القضية فقط.",
+      demoEvidenceImage: "فتح صورة الدليل التجريبي {number}",
       documentsTitle: "المستندات",
+      demoDocumentsTitle: "مستندات تجريبية",
+      demoDocumentsHint: "مستندات تجريبية مضافة لشرح مراجعة القضية فقط.",
+      openDocument: "فتح المستند",
+      downloadDocument: "تنزيل المستند",
       olderVersions: "تضمين الإصدارات السابقة",
       noFiles: "لا توجد ملفات اجتازت فحص الأمان في هذا القسم.",
       chooseFile: "اختر ملفًا",
@@ -1855,7 +1877,7 @@
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,
       ...answerEntries(report, shown.answers).map(([code, answer]) => {
         const question = (report.questions || []).find((q) => q.code === code);
-        const label = question ? `${code} — ${base.isolate((lang === "ar" && question.ar) || question.en || code)}` : code === "files" ? t("response") : code;
+        const label = question ? `${code} — ${base.isolate((lang === "ar" && question.ar) || question.en || code)}` : code === "files" ? t("response") : code === "testimony" ? t("priestTestimony") : code;
         return h(P.Panel, { icon: "document", key: code, title: label }, h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
       }),
       shown.observations ? h(P.Panel, { icon: "document", title: t("observations") }, h(P.Text, { as: "p", dir: "auto" }, shown.observations)) : null,
@@ -1881,6 +1903,7 @@
         )
       : h(P.EmptyState, { title: t("notInterview") });
     return h(P.Tabs, {
+      variant: "contained",
       label: report.title,
       value: tab,
       onChange: setTab,
@@ -1914,7 +1937,11 @@
       firstLabel: t("reportsList"),
       first: h(window.CTMShell.Table, {
         label: t("reportsList"), rows, selected, onSelect: select, empty: t("noReports"),
-        columns: [{ title: t("reportsList"), field: "title", kind: "name" }, { title: t("version"), field: "version", type: "number" }],
+        columns: [
+          { title: t("completedBy"), field: "completed_by", type: "person", render: row => row.completed_by || row.author || "—" },
+          { title: t("completedDate"), field: "date", type: "date" },
+          { title: t("intakeBy"), field: "intake_by", type: "person", render: row => row.intake_by || "—" },
+        ],
       }),
       second: h(
         P.ReadingPane,
@@ -1937,7 +1964,7 @@
 
   // ---------- Evidence and documents ----------
 
-  // Embedded PDF (Plenix 0.60.1 DocumentViewer; PDF.js from the CDN vendor folder via vendorBase()). The document is
+  // Embedded PDF (Plenix 0.61.0 DocumentViewer; PDF.js from the CDN vendor folder via vendorBase()). The document is
   // fetched from the protected /api/files/{id}/?view=1 route with the session; the server sends private, no-store.
   // Nothing is written to browser storage. A page already drawn stays on screen until the viewer closes: withdrawing
   // access stops later loads, it cannot erase what was already shown or downloaded.
@@ -2056,9 +2083,30 @@
       }
     }
     const visible = sectionFiles(rows, section);
-    const chosen = visible.find((row) => row.id === selected);
+    const demoRows = section === "evidence"
+      ? [
+          { id: "demo-evidence-01", name: "demo-evidence-01.png", version: "—", demoSrc: "/static/ctm/demo-evidence/demo-evidence-01.png", demoType: "image" },
+          { id: "demo-evidence-02", name: "demo-evidence-02.png", version: "—", demoSrc: "/static/ctm/demo-evidence/demo-evidence-02.png", demoType: "image" },
+          { id: "demo-evidence-03", name: "demo-evidence-03.png", version: "—", demoSrc: "/static/ctm/demo-evidence/demo-evidence-03.png", demoType: "image" },
+          { id: "demo-evidence-04", name: "demo-evidence-04.png", version: "—", demoSrc: "/static/ctm/demo-evidence/demo-evidence-04.png", demoType: "image" },
+        ]
+      : [
+          { id: "demo-document-pdf", name: "PDF Test.pdf", version: "—", demoSrc: "/static/ctm/demo-documents/PDF-Test.pdf", demoType: "document" },
+          { id: "demo-document-word", name: "MSWORD TEST.docx", version: "—", demoSrc: "/static/ctm/demo-documents/MSWORD-TEST.docx", demoType: "document" },
+        ];
+    const tableRows = [...demoRows, ...visible];
+    const chosen = tableRows.find((row) => row.id === selected);
     const images = visible.filter((row) => viewerKind(row) === "image" && fileUrls(row).inline);
     const viewerItems = images.map((row) => ({ src: fileUrls(row).inline, alt: row.name, title: row.name, meta: [row.category, formatBytes(row.byte_count, lang)] }));
+    const demoPreview = chosen?.demoSrc
+      ? h(P.Stack, { gap: "md" },
+          chosen.demoType === "image" ? h("img", { className: "ctm-demo-file-preview", src: chosen.demoSrc, alt: chosen.name }) : h(P.Text, null, chosen.name),
+          h(P.Inline, null,
+            h(P.Button, { href: chosen.demoSrc, target: "_blank", rel: "noreferrer" }, t("openDocument")),
+            h("a", { className: "plx-button plx-button--secondary", href: chosen.demoSrc, download: chosen.name }, t("downloadDocument")),
+          ),
+        )
+      : null;
     return h(
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
@@ -2072,40 +2120,22 @@
           h(P.Checkbox, { label: t("olderVersions"), checked: history, onChange: (e) => setHistory(e.target.checked) }),
           h(window.CTMShell.Table, {
             label: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
-            rows: visible, selected, onSelect: select, empty: t("noFiles"),
-            columns: [{ title: t(section === "documents" ? "documentsTitle" : "evidenceTitle"), field: "name", kind: "name" }, { title: t("version"), field: "version", type: "number" }],
+            rows: tableRows, selected, onSelect: select, empty: t("noFiles"),
+            columns: [{ title: t(section === "documents" ? "documentsTitle" : "evidenceTitle"), field: "name", kind: "name" }, { title: t("version"), field: "version" }],
           }),
           pending ? base.loadingView(P, h, t) : null,
-          !pending && !visible.length && !failure ? h(P.EmptyState, { title: t("noFiles") }) : null,
           failure ? base.loadFailure(P, h, t, () => setReload((n) => n + 1), failure) : null,
           next !== null ? h(P.Button, { size: "sm", disabled: pending, onClick: more }, t("more")) : null,
         ),
         second: h(
           P.ReadingPane,
           { label: chosen ? chosen.name : t("chooseFile"), empty: h(P.EmptyState, { title: t("chooseFile") }) },
-          chosen
-            ? h(FilePreview, {
-                key: chosen.id,
-                file: chosen,
-                lang,
-                images,
-                onFullScreen: () => setViewerIndex(Math.max(0, images.findIndex((row) => row.id === chosen.id))),
-              })
-            : null,
+          chosen ? (demoPreview || h(FilePreview, { key: chosen.id, file: chosen, lang, images, onFullScreen: () => setViewerIndex(Math.max(0, images.findIndex((row) => row.id === chosen.id))) })) : null,
         ),
       }),
-      viewerIndex !== null
-        ? h(P.MediaViewer, {
-            open: true,
-            items: viewerItems,
-            index: viewerIndex,
-            onIndexChange: setViewerIndex,
-            onClose: () => setViewerIndex(null),
-            label: t("viewerLabel"),
-            strings: { label: t("viewerLabel"), close: t("closePreview"), previous: t("previous"), next: t("next"), counter: t("counter") },
-          })
-        : null,
+      viewerIndex !== null ? h(P.MediaViewer, { open: true, items: viewerItems, index: viewerIndex, onIndexChange: setViewerIndex, onClose: () => setViewerIndex(null), label: t("viewerLabel"), strings: { label: t("viewerLabel"), close: t("closePreview"), previous: t("previous"), next: t("next"), counter: t("counter") } }) : null,
     );
+
   }
 
   Object.assign(window.CTMCouncil, {

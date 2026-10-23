@@ -1,5 +1,19 @@
 # Remaining applicant work
 
+## Full PostgreSQL applicant acceptance (2026-10-22)
+
+Exact governance successor `f315dc7cddfbfe63b0ec419a431446556fb41c63`
+passes the full fresh-clone PostgreSQL applicant run: 75/75 checks, plus 7/7
+focused regressions, with no browser page errors. The physical `ctm_app` role was
+restricted and all 63 inspected domain tables had forced RLS. Applicant implementation
+and integrated PostgreSQL acceptance are complete within this synthetic scope.
+
+Remaining work depends on approved bilingual institutional content and validation,
+genuine Google/Apple authentication, live external services, independent QA on the
+exact successor, and governance merge/deployment decisions. The sections below are
+historical checkpoints and failure evidence. [Report](postgres-full-acceptance-report.md)
+| [Download JSON](postgres-full-acceptance-result.json).
+
 ## Private-resource oracle and local Docker blocker
 
 Foreign application detail/history/files/payments and foreign original range access match nonexistent resources with exact `404` bodies under restricted RLS. The broader rerun passed those corrected assertions, then the local unblocked account-query stall recurred and owned-container stop failed. Full-suite acceptance remains incomplete; no further local container may start until governance recovery. [Report](postgres-private-oracle-report.md) | [Stall JSON](postgres-private-oracle-stall.json).

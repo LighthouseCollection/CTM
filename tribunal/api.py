@@ -7,10 +7,12 @@ from pathlib import Path
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError, ObjectDoesNotExist
 from django.db import IntegrityError
-from django.http import JsonResponse, HttpResponse
+from django.db.models import Count, Q
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.vary import vary_on_headers
 from django.utils import timezone
 from django.shortcuts import render
 from tribunal import models as m
@@ -108,6 +110,9 @@ def application_data(app, actor):
         status=app.status,
         case_id=str(app.case_id) if app.case_id else None,
         case_number=app.case.number if app.case else None,
+        filing_party_id=str(app.party_id) if app.party_id else None,
+        filing_party_name=app.party.name if app.party_id else None,
+        filing_party_role=("applicant" if app.party.slot == "A" else "respondent") if app.party_id else None,
         version=revision.number if revision else 0,
         answers=revision.answers if revision else {},
         fee={
@@ -449,6 +454,36 @@ def retry_payment(request, intent_id):
     return JsonResponse({"submitted": result is not None, "submission_id": str(result.pk) if result else None})
 
 
+def _case_list_data(case):
+    """Project the case-list fields from the case and its submitted filing."""
+    parties = sorted(case.parties.all(), key=lambda party: party.slot)
+    filings = [
+        application for application in case.applications.all()
+        if application.kind == "petition" and application.submitted_at is not None
+    ]
+    filing = max(filings, key=lambda application: (application.submitted_at, application.id), default=None)
+    applicant = filing.party if filing and filing.party_id else (parties[0] if parties else None)
+    respondent = next((party for party in parties if not applicant or party.pk != applicant.pk), None)
+    revision = next((row for row in filing.revisions.all() if row.number == filing.current_version), None) if filing else None
+    grounds = (revision.answers.get("grounds") or revision.answers.get("reason") or []) if revision else []
+    if isinstance(grounds, str):
+        grounds = [grounds]
+    def party_gender(party):
+        if not party:
+            return None
+        person_id = party.person_id or m.Account.objects.filter(pk=party.account_id).values_list("person_id", flat=True).first()
+        return m.Person.objects.filter(pk=person_id).values_list("gender", flat=True).first() or None
+    return {
+        "applicant_gender": party_gender(applicant),
+        "respondent_gender": party_gender(respondent),
+        "applicant_name": applicant.name if applicant else None,
+        "respondent_name": respondent.name if respondent else None,
+        "reason": "; ".join(str(value) for value in grounds if value) or None,
+        "closed_at": case.closed_at.isoformat() if case.closed_at else None,
+        "party_names": [party.name for party in parties],
+    }
+
+
 @endpoint()
 def cases(request):
     from tribunal.pagination import page_records
@@ -456,23 +491,333 @@ def cases(request):
     if request.user.role == "applicant":
         qs = qs.filter(parties__account=request.user).distinct()
     return JsonResponse(page_records(
-        qs.select_related("assigned_member").order_by("-created_at", "-id"), request,
+        qs.select_related("assigned_member").prefetch_related(
+            "parties", "applications__party", "applications__revisions"
+        ).order_by("-created_at", "-id"), request,
         default_limit=100,
-        serialize=lambda c: encoded(c, number=c.number, status=c.status,
+        serialize=lambda c: encoded(
+            c, number=c.number, status=c.status,
             assigned_member_id=str(c.assigned_member_id) if c.assigned_member_id else None,
             assigned_member=f"{c.assigned_member.first_name} {c.assigned_member.last_name}".strip()
-            if c.assigned_member else None),
+            if c.assigned_member else None,
+            **_case_list_data(c),
+        ),
     ))
 
 
-@endpoint()
+def _profile_value(answers, *keys):
+    """Return the submitted scalar value for the first populated answer key."""
+    for key in keys:
+        value = answers.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+        if isinstance(value, (int, float)):
+            return str(value)
+    return None
+
+
+def _profile_address(answers, prefix=""):
+    value = answers.get(f"{prefix}address")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    if isinstance(value, dict):
+        parts = [
+            value.get("street"), value.get("city"), value.get("region") or value.get("state"),
+            value.get("postal") or value.get("postal_code") or value.get("zip"), value.get("country"),
+        ]
+        return ", ".join(str(part).strip() for part in parts if str(part or "").strip()) or None
+    return None
+
+
+def _submitted_party_profile(answers, prefix=""):
+    """Project only the approved spouse-card fields from one immutable filing revision."""
+    key = lambda *names: _profile_value(answers, *(f"{prefix}{name}" for name in names))
+    return {
+        "personal": {
+            "other_names": key("other_names", "aliases"),
+            "place_of_birth": key("birth_country", "place_of_birth"),
+            "nationality": key("nationality"),
+            "awareness_of_application": key("aware_of_application", "awareness_of_application"),
+        },
+        "contact": {
+            "address": _profile_address(answers, prefix),
+            "mobile": key("mobile", "mobile_number"),
+            "email": key("email", "email_address"),
+            "immigration_status": key("immigration_status"),
+            "residing_with": key("residing_with"),
+        },
+        "career": {
+            "education": key("education"),
+            "graduation_year": key("graduation_year", "year_of_graduation"),
+            "occupation": key("occupation"),
+        },
+        "church_affiliation": {
+            "denomination": key("denomination"),
+            "bishop": key("bishop", "name_of_bishop"),
+            "diocese": key("diocese"),
+            "parish": key("parish", "parish_name"),
+            "confessor": key("confessor", "father_of_confession"),
+        },
+    }
+
+
+def _applicant_submission_source(application):
+    """A minimal, non-PII reference to the immutable applicant filing revision."""
+    if not application or not application.submitted_at:
+        return None
+    return {
+        "kind": "applicant_submission",
+        "application_id": str(application.pk),
+        "revision": application.current_version,
+        "submitted_at": application.submitted_at.isoformat(),
+    }
+
+
+def _submitted_marriage(answers):
+    """Project marriage facts only from the accepted applicant filing."""
+    value = lambda *keys: _profile_value(answers, *keys)
+    return {
+        "outside_coptic_church": value("married_outside_coptic_church", "outside_coptic_church"),
+        "outside_denomination": value("religious_denomination_officiating", "outside_denomination"),
+        "outside_marriage_date": value("date_of_marriage_outside_coptic_church", "outside_marriage_date"),
+        "church_marriage_date": value("church_marriage_date", "marriage_date"),
+        "officiating_priest": value("officiating_priest", "marriage_officiant"),
+        "church_name": value("church_name", "marriage_church_name"),
+        "church_location": value("church_location", "church_address", "marriage_church_location"),
+        "diocese": value("marriage_diocese", "church_diocese", "diocese"),
+    }
+
+
+def _separation_value(answers, *keys):
+    """Read a submitted separation field by its stable code or legacy alias."""
+    expanded = []
+    for key in keys:
+        expanded.extend((key, key.replace(".", "_")))
+    return _profile_value(answers, *expanded)
+
+
+def _submitted_separation(answers, application, case):
+    """Project applicant assertions; never infer legal or relationship facts."""
+    source_party = application.party if application and application.party_id else None
+    other_party = next((party for party in case.parties.all() if not source_party or party.pk != source_party.pk), None)
+    initiated = _separation_value(answers, "separation.initiated_by", "initiated_by")
+    subject = source_party if initiated == "self" else other_party if initiated == "spouse" else None
+    orders = answers.get("restraining_orders") if isinstance(answers.get("restraining_orders"), list) else []
+    return {
+        "marital_status": _separation_value(answers, "separation.marital_status", "marital_status"),
+        "separation_date": _separation_value(answers, "separation.date", "separation_date", "date_of_separation"),
+        "initiated_by": {
+            "value": initiated,
+            "party": {"name": subject.name, "gender": subject.person.gender if subject and subject.person_id else None, "slot": subject.slot} if subject else None,
+        } if initiated else None,
+        "reason": _separation_value(answers, "grounds", "reason"),
+        "civil_divorce": {
+            "filed": _separation_value(answers, "civil_divorce.filed", "civil_divorce_filed"),
+            "date": _separation_value(answers, "civil_divorce.date", "civil_divorce_date", "date_of_civil_divorce"),
+            "court": _separation_value(answers, "civil_divorce.court", "court_name"),
+            "location": _separation_value(answers, "civil_divorce.location", "court_location", "court_address"),
+            "case_number": _separation_value(answers, "civil_divorce.case_number", "civil_case_number", "court_case_number"),
+            "status": _separation_value(answers, "civil_divorce.status", "civil_divorce_status"),
+        },
+        "restraining_orders": [{
+            "filed": _profile_value(order, "filed", "restraining_order_filed"),
+            "date": _profile_value(order, "date", "restraining_order_date"),
+            "expiration_date": _profile_value(order, "expiration_date", "expires_at"),
+            "name_listed": _profile_value(order, "name_listed", "protected_person"),
+            "court": _profile_value(order, "court", "court_name"),
+            "case_number": _profile_value(order, "case_number", "number"),
+            "status": _profile_value(order, "status"),
+        } for order in orders if isinstance(order, dict)],
+        "reconciliation": {
+            "attempted": _separation_value(answers, "counseling.attempted", "reconciliation_attempted", "counseling_attempted"),
+            "previously_applied": _separation_value(answers, "prior_application.applied", "previously_applied", "previously_applied_for_ecclesiastical_permit"),
+            "when": _separation_value(answers, "prior_application.when", "previous_application_date"),
+            "where": _separation_value(answers, "prior_application.where", "previous_application_where"),
+            "outcome": _separation_value(answers, "prior_application.outcome", "previous_application_outcome"),
+        },
+        "source": _applicant_submission_source(application),
+    }
+
+
+def _summary_child(value):
+    """Return a readable child record without discarding submitted child facts."""
+    if isinstance(value, str):
+        name = value.strip()
+        return {"name": name} if name else None
+    if not isinstance(value, dict):
+        return None
+    first_name = str(value.get("first_name") or value.get("firstName") or "").strip()
+    last_name = str(value.get("last_name") or value.get("lastName") or "").strip()
+    submitted_name = str(value.get("name") or "").strip()
+    name = " ".join(part for part in (first_name, last_name) if part) or submitted_name
+    if not name:
+        return None
+    return {
+        "name": name,
+        "date_of_birth": value.get("dob") or value.get("date_of_birth"),
+        "gender": value.get("gender"),
+        "lives_with": value.get("lives_with") or value.get("resides_with"),
+    }
+
+
+def _case_summary(case, application):
+    """Case-summary values come only from a filing or a recorded council hearing."""
+    answers = _submitted_answers(application)
+    grounds = answers.get("grounds") or answers.get("reason") or []
+    if isinstance(grounds, str):
+        grounds = [grounds]
+    children = answers.get("children") or []
+    if isinstance(children, str):
+        children = [children]
+    last_hearing = (
+        m.Hearing.objects.filter(agenda__case=case)
+        .select_related("agenda__session")
+        .order_by("-agenda__session__starts_at", "-created_at", "-id")
+        .first()
+    )
+    filing_source = _applicant_submission_source(application)
+    hearing_source = (
+        {"kind": "council_record", "record_type": "hearing", "record_id": str(last_hearing.pk)}
+        if last_hearing else None
+    )
+    return {
+        "filing_date": filing_source["submitted_at"] if filing_source else None,
+        "reason": "; ".join(str(value) for value in grounds if value),
+        "children": [child for child in (_summary_child(value) for value in children) if child],
+        "last_hearing_date": last_hearing.agenda.session.starts_at.isoformat() if last_hearing and last_hearing.agenda.session.starts_at else None,
+        "sources": {
+            "filing_date": filing_source,
+            "reason": filing_source,
+            "children": filing_source,
+            "last_hearing_date": hearing_source,
+        },
+    }
+
+
+def _application_photo_url(application, category):
+    if not application:
+        return None
+    attachment = application.attachments.filter(category=category).order_by("-created_at", "-id").first()
+    if not attachment:
+        return None
+    photo = attachment.versions.filter(scan_state="clean").order_by("-number").first()
+    return f"/api/files/{photo.pk}/?view=1" if photo else None
+
+
+def _council_party_photo_url(case, party):
+    """Return the latest approved council-only portrait for one case party."""
+    attachment = (
+        case.attachment_set.filter(
+            category="CASE_PHOTO", context=str(party.pk), visibility="council"
+        )
+        .order_by("-created_at", "-id")
+        .first()
+    )
+    if not attachment:
+        return None
+    photo = attachment.versions.filter(scan_state="clean").order_by("-number").first()
+    return f"/api/files/{photo.pk}/?view=1" if photo else None
+
+
+def _submitted_answers(application):
+    if not application:
+        return {}
+    revision = next(
+        (row for row in application.revisions.all() if row.number == application.current_version),
+        None,
+    )
+    return revision.answers if revision else {}
+
+
+def _council_party_profiles(case, parties):
+    """Keep case-detail cards tied to the immutable submitted application answers."""
+    applications = list(
+        m.Application.objects.filter(
+            case=case, kind="petition", submitted_at__isnull=False
+        ).prefetch_related("revisions", "attachments__versions").order_by("created_at", "id")
+    )
+    by_party_id = {app.party_id: app for app in applications if app.party_id}
+
+    result = {}
+    for party in parties:
+        direct = by_party_id.get(party.pk)
+        source = direct or next((app for app in applications if app.party_id != party.pk), None)
+        if direct:
+            answers, prefix, photo_category = _submitted_answers(direct), "", "PHOTO"
+        else:
+            answers, prefix, photo_category = _submitted_answers(source), "spouse_", "SPOUSE_PHOTO"
+        profile_application = direct or source
+        result[party.pk] = {
+            "profile": _submitted_party_profile(answers, prefix),
+            "photo_url": _council_party_photo_url(case, party)
+            or _application_photo_url(profile_application, photo_category),
+            "profile_source": _applicant_submission_source(profile_application),
+        }
+    return result
+
+
+def _council_case_edits(case):
+    """Return the latest council-owned supplement for each editable case card.
+
+    A submitted application is an immutable applicant record.  Council edits are
+    therefore stored as versioned findings and projected separately, with their
+    author and timestamp retained for the card that displays them.
+    """
+    proceeding = case.proceedings.filter(status="open").order_by("-sequence", "-id").first()
+    if not proceeding:
+        return {}
+    latest = {}
+    rows = (
+        m.FindingRevision.objects.filter(
+            proceeding=proceeding, fact_code__startswith="case_card."
+        )
+        .select_related("actor")
+        .order_by("fact_code", "-number", "-id")
+    )
+    for row in rows:
+        scope = row.fact_code.removeprefix("case_card.")
+        if scope and scope not in latest:
+            latest[scope] = {
+                "value": row.value,
+                "source": {
+                    "kind": "council_record",
+                    "record_type": "finding",
+                    "record_id": str(row.pk),
+                    "version": row.number,
+                    "actor": f"{row.actor.first_name} {row.actor.last_name}".strip(),
+                    "recorded_at": row.created_at.isoformat(),
+                },
+            }
+    return latest
+
+
+@endpoint(("GET", "DELETE"))
 def case_detail(request, case_id):
+    if request.method == "DELETE":
+        from tribunal.services.admin_purge import purge_case
+        purge_case(request.user, case_id)
+        return JsonResponse({}, status=204)
     from tribunal.projections import case_capabilities
     case = case_for(request.user, case_id)
-    parties = case.parties.all()
-    party_data = [encoded(p, name=p.name, is_self=p.account_id == request.user.pk,
-        can_receive=p.account_id is not None, reference=p.reference if p.account_id == request.user.pk or request.user.is_staff else None)
-        for p in parties]
+    parties = list(case.parties.select_related("person").all().order_by("slot", "id"))
+    council_profiles = _council_party_profiles(case, parties) if request.user.role != "applicant" else {}
+    marriage_application = (
+        m.Application.objects.filter(case=case, kind="petition", submitted_at__isnull=False)
+        .prefetch_related("revisions")
+        .select_related("party__person")
+        .order_by("created_at", "id")
+        .first()
+    )
+    party_data = [encoded(
+        p,
+        name=p.name,
+        slot=p.slot,
+        gender=p.person.gender if p.person_id else None,
+        is_self=p.account_id == request.user.pk,
+        can_receive=p.account_id is not None,
+        reference=p.reference if p.account_id == request.user.pk or request.user.role != "applicant" else None,
+        **council_profiles.get(p.pk, {}),
+    ) for p in parties]
     from django.db import connection
     if request.user.role == "applicant" and connection.vendor == "postgresql":
         with connection.cursor() as cursor:
@@ -489,10 +834,15 @@ def case_detail(request, case_id):
             can_message=request.user.role in {"applicant", "admin", "secretary"}
             or case.assigned_member_id == request.user.pk,
             parties=party_data,
+            marriage=_submitted_marriage(_submitted_answers(marriage_application)),
+            marriage_source=_applicant_submission_source(marriage_application),
+            separation=_submitted_separation(_submitted_answers(marriage_application), marriage_application, case),
+            summary=_case_summary(case, marriage_application),
             proceedings=[
                 encoded(p, kind=p.kind, status=p.status, sequence=p.sequence)
                 for p in case.proceedings.all()
             ],
+            **({"council_edits": _council_case_edits(case)} if request.user.role != "applicant" else {}),
         )
     )
 
@@ -507,7 +857,7 @@ def assign(request, case_id):
     data = body(request)
     return JsonResponse(
         encoded(
-            assign_case(request.user, case_id, data["member_id"], data["president_id"])
+            assign_case(request.user, case_id, data["member_id"], data.get("president_id"))
         ),
         status=201,
     )
@@ -525,9 +875,9 @@ def members(request):
                         president=x.role == "president", active=x.is_active,
                         can_authorize_assignment=assignment_president(x),
                         can_record_assignment=assignment_recorder(x))
-                for x in m.Account.objects.filter(is_active=True).exclude(
-                    role="applicant"
-                )
+                for x in m.Account.objects.filter(
+                    is_active=True, role__in=["president", "secretary", "member"]
+                ).order_by("created_at")
             ]
         }
     )
@@ -555,6 +905,30 @@ def system_accounts(request):
     active_admins=m.Account.objects.filter(role='admin',is_active=True).count()
     return JsonResponse(page_records(qs.order_by('-created_at','-id'),request,
         default_limit=100,serialize=lambda row:account_data(request.user,row,active_admin_count=active_admins)))
+
+
+@endpoint(("GET", "POST"))
+def system_members(request):
+    from tribunal.services.member_administration import create_member, member_data, member_queryset
+    from tribunal.services.staff_roles import existing_admin
+    existing_admin(request.user)
+    if request.method == 'GET':
+        from tribunal.pagination import page_records
+        return JsonResponse(page_records(member_queryset().order_by('-created_at', '-id'), request,
+            default_limit=100, serialize=lambda account: member_data(request.user, account)))
+    account, membership, grant = create_member(request.user, body(request))
+    return JsonResponse({**member_data(request.user, account),
+                         'membership_id': str(membership.pk), 'enrollment_role_id': str(grant.pk)}, status=201)
+
+
+@endpoint(("GET", "POST"))
+def system_member(request, account_id):
+    from tribunal.services.member_administration import edit_member, member_data, COUNCIL_ROLES
+    from tribunal.services.staff_roles import existing_admin
+    existing_admin(request.user)
+    account = (edit_member(request.user, account_id, body(request)) if request.method == 'POST'
+               else m.Account.objects.get(pk=account_id, role__in=COUNCIL_ROLES))
+    return JsonResponse(member_data(request.user, account))
 
 
 @endpoint()
@@ -649,45 +1023,86 @@ def enroll(request):
 
 @endpoint(("GET", "POST"))
 def sessions(request):
-    from tribunal.projections import session_capabilities
+    from tribunal.projections import session_data
     staff(request.user)
     if request.method == "GET":
-        return JsonResponse(
-            {
-                "items": [
-                    encoded(
-                        x, date=x.date.isoformat(), reference=x.reference, state=x.state,
-                        **session_capabilities(x, request.user)
-                    )
-                    for x in m.CouncilSession.objects.order_by("-date")[:100]
-                ]
-            }
+        from tribunal.pagination import page_records
+        qs = m.CouncilSession.objects.select_related("presiding_member").annotate(
+            assigned_case_count=Count("agenda", filter=Q(agenda__part=1)),
+            hearing_case_count=Count("agenda", filter=Q(agenda__part=2)),
         )
+        filters = {}
+        for key in ("state", "date_from", "date_to"):
+            if key not in request.GET:
+                continue
+            raw = request.GET.get(key)
+            if len(request.GET.getlist(key)) != 1 or not raw:
+                raise ValidationError(f"Provide one nonempty {key} filter.")
+            if key == "state":
+                if raw not in {"draft", "planned", "closed"}:
+                    raise ValidationError("state must be draft, planned, or closed.")
+                qs = qs.filter(state=raw)
+            else:
+                try:
+                    parsed = date.fromisoformat(raw)
+                    if parsed.isoformat() != raw:
+                        raise ValueError
+                except ValueError:
+                    raise ValidationError(f"{key} must be a YYYY-MM-DD date.")
+                filters[key] = parsed
+        if filters.get("date_from", date.min) > filters.get("date_to", date.max):
+            raise ValidationError("date_from must not follow date_to.")
+        if "date_from" in filters:
+            qs = qs.filter(date__gte=filters["date_from"])
+        if "date_to" in filters:
+            qs = qs.filter(date__lte=filters["date_to"])
+        return JsonResponse(page_records(
+            qs.order_by("-date", "-id"), request, default_limit=100,
+            serialize=lambda x: encoded(x, **session_data(x, request.user)),
+        ))
     from tribunal.services.council import create_session
 
-    return JsonResponse(
-        encoded(
-            create_session(request.user, date.fromisoformat(body(request)["date"]))
-        ),
-        status=201,
+    data = body(request)
+    # The active president is configured centrally; session payloads cannot override it.
+    starts_at = datetime.fromisoformat(data["starts_at"]) if data.get("starts_at") else None
+    session = create_session(
+        request.user,
+        date.fromisoformat(data["date"]),
+        starts_at=starts_at,
+        location=data.get("location", ""),
+        state="draft",
     )
+    return JsonResponse(encoded(session, **session_data(session, request.user)), status=201)
+
+
+@endpoint(("PATCH", "DELETE"))
+def update_session(request, session_id):
+    from tribunal.projections import session_data
+    if request.method == "DELETE":
+        from tribunal.services.council import delete_draft_session
+        delete_draft_session(request.user, session_id)
+        return JsonResponse({}, status=204)
+    from tribunal.services.council import update_session as command
+
+    data = body(request)
+    session = command(
+        request.user, session_id, date.fromisoformat(data["date"]),
+        starts_at=datetime.fromisoformat(data["starts_at"]),
+        location=data.get("location", ""),
+    )
+    return JsonResponse(encoded(session, **session_data(session, request.user)))
 
 
 @endpoint(("GET", "POST"))
 def agenda(request, session_id):
-    from tribunal.projections import agenda_item_data, session_capabilities
+    from tribunal.projections import agenda_item_data, session_data
     from tribunal.services.council import attendance_for
     staff(request.user)
     if request.method == "GET":
-        session = m.CouncilSession.objects.get(pk=session_id)
+        session = m.CouncilSession.objects.select_related("presiding_member").get(pk=session_id)
         return JsonResponse(
             {
-                "session": encoded(
-                    session,
-                    date=session.date.isoformat(),
-                    state=session.state,
-                    **session_capabilities(session, request.user),
-                ),
+                "session": encoded(session, **session_data(session, request.user)),
                 "items": [
                     agenda_item_data(x, request.user, attendance_for(request.user, session.pk))
                     for x in m.AgendaItem.objects.filter(session_id=session_id)
@@ -708,10 +1123,64 @@ def agenda(request, session_id):
 
 
 @endpoint(("POST",))
+def transfer_agenda(request, item_id):
+    from tribunal.projections import agenda_item_data
+    from tribunal.services.council import attendance_for, transfer_agenda_item
+
+    data = body(request)
+    target_session_id = data.get("target_session_id")
+    if not target_session_id:
+        raise ValidationError("A destination tribunal session is required.")
+    item = transfer_agenda_item(request.user, item_id, target_session_id, data.get("reason", ""))
+    return JsonResponse(
+        encoded(item, **agenda_item_data(item, request.user, attendance_for(request.user, item.session_id))),
+        status=201,
+    )
+
+
+@endpoint(("POST",))
 def close_session(request, session_id):
     from tribunal.services.council import close_session as command
 
     return JsonResponse(encoded(command(request.user, session_id)))
+
+
+@endpoint(("POST",))
+def activate_session(request, session_id):
+    from tribunal.projections import session_data
+    from tribunal.services.council import activate_session as command
+
+    session = command(request.user, session_id)
+    return JsonResponse(encoded(session, **session_data(session, request.user)))
+
+
+@endpoint(("POST",))
+def return_session_to_planned(request, session_id):
+    from tribunal.projections import session_data
+    from tribunal.services.council import return_session_to_planned as command
+
+    session = command(request.user, session_id)
+    return JsonResponse(encoded(session, **session_data(session, request.user)))
+
+
+@endpoint(("POST",))
+def adjourn_session(request, session_id):
+    from tribunal.projections import session_data
+    from tribunal.services.council import set_session_adjourned
+
+    data = body(request)
+    adjourned = data.get("adjourned")
+    ended_at_text = data.get("ended_at")
+    if not isinstance(adjourned, bool):
+        raise ValidationError("Adjourned must be true or false.")
+    if not isinstance(ended_at_text, str):
+        raise ValidationError("Session end time is required.")
+    try:
+        ended_at = datetime.fromisoformat(ended_at_text)
+    except ValueError as error:
+        raise ValidationError("Session end time must be a valid timestamp.") from error
+    session = set_session_adjourned(request.user, session_id, adjourned, ended_at)
+    return JsonResponse(encoded(session, **session_data(session, request.user)))
 
 
 @endpoint(("POST",))
@@ -746,13 +1215,30 @@ def hear(request, item_id):
 
 @endpoint(("GET", "POST"))
 def attendance(request, session_id):
-    from tribunal.services.council import attendance_for, record_attendance
+    from tribunal.services.council import attendance_for, attendance_roster_for, record_attendance
 
     staff(request.user)
     if request.method == "GET":
-        rows = attendance_for(
-            request.user, session_id, request.GET.get("hearing_id") or None
-        )
+        hearing_id = request.GET.get("hearing_id") or None
+        if hearing_id:
+            roster = attendance_roster_for(request.user, session_id, hearing_id)
+            return JsonResponse(
+                {
+                    "items": [
+                        {
+                            "member_id": str(member.pk),
+                            "member_name": f"{member.first_name} {member.last_name}".strip(),
+                            "member_role": member.role,
+                            "member_active": member.is_active,
+                            "present": row.present if row else None,
+                            "actor_id": str(row.actor_id) if row else None,
+                            "timestamp": row.created_at.isoformat() if row else None,
+                        }
+                        for member, row in roster
+                    ]
+                }
+            )
+        rows = attendance_for(request.user, session_id)
         return JsonResponse(
             {
                 "items": [
@@ -788,14 +1274,16 @@ def messages(request, case_id):
         offset = int(request.GET.get("offset", 0))
         if not 0 <= offset <= 2**63-52:
             raise ValidationError("Message offset is outside the supported range.")
-        rows = list(messages_for(request.user, case_id).select_related("sender").order_by("created_at", "id")[offset:offset+51])
+        rows = list(messages_for(request.user, case_id).order_by("created_at", "id")[offset:offset+51])
+        from tribunal.services.message_projection import message_sender_names
+        sender_names = message_sender_names(rows[:50])
         return JsonResponse(
             {
                 "items": [
                     encoded(
                         x,
                         body=x.body,
-                        sender=f"{x.sender.first_name} {x.sender.last_name}".strip(),
+                        sender=sender_names.get(str(x.pk)),
                         channel=x.channel,
                         timestamp=x.created_at.isoformat(),
                         file_links=x.file_links,
@@ -972,6 +1460,10 @@ def report_requests(request, case_id):
                 .exclude(kind__in=["external_priest", "interview"])
                 .exclude(state="draft")
             )
+        from tribunal.services.request_projection import request_author_names, external_link_metadata
+        projection_time = timezone.now()
+        rows = list(qs.select_related("subject", "case", "proceeding").order_by("-created_at", "-id"))
+        author_names = request_author_names(rows)
         return JsonResponse(
             {
                 "items": [
@@ -988,35 +1480,43 @@ def report_requests(request, case_id):
                         created_at=x.created_at.isoformat(),
                         sent_at=x.sent_at.isoformat() if x.sent_at else None,
                         parent_report_id=str(x.parent_report_id) if x.parent_report_id else None,
-                        author=f"{x.author.first_name} {x.author.last_name}".strip(),
+                        author=author_names.get(str(x.pk)),
                         **release_metadata(x, request.user),
-                        **({"request_version": request_version(x)}
+                        **({"request_version": request_version(x),
+                            **external_link_metadata(x, request.user, now=projection_time)}
                             if request.user.role != "applicant" else {}),
                         **(own_request_data(x, request.user) if request.user.role == "applicant" else {}),
                     )
-                    for x in qs.order_by("-created_at")
+                    for x in rows
                 ]
             }
         )
     from tribunal.services.reports import create_request
 
     data = body(request)
-    return JsonResponse(
-        encoded(
-            create_request(
-                request.user,
-                data["proceeding_id"],
-                data["party_id"],
-                data["kind"],
-                data["title"],
-                data.get("questions", []),
-                data.get("instructions", ""),
-                data.get("language", "en"),
-                data.get("parent_id"),
-            )
-        ),
-        status=201,
-    )
+    party_ids = data.get("party_ids")
+    if party_ids is not None:
+        if not isinstance(party_ids, list) or not party_ids or len(party_ids) > 2:
+            raise ValidationError("Provide one or two distinct report recipients.")
+        if "party_id" in data or len({str(value) for value in party_ids}) != len(party_ids):
+            raise ValidationError("Provide distinct report recipients.")
+        from django.db import transaction
+
+        with transaction.atomic():
+            created = [
+                create_request(
+                    request.user, data["proceeding_id"], party_id, data["kind"], data["title"],
+                    data.get("questions", []), data.get("instructions", ""),
+                    data.get("language", "en"), data.get("parent_id"),
+                )
+                for party_id in party_ids
+            ]
+        return JsonResponse({"items": [encoded(row) for row in created]}, status=201)
+    return JsonResponse(encoded(create_request(
+        request.user, data["proceeding_id"], data["party_id"], data["kind"], data["title"],
+        data.get("questions", []), data.get("instructions", ""), data.get("language", "en"),
+        data.get("parent_id"),
+    )), status=201)
 
 
 @endpoint(("POST",))
@@ -1034,6 +1534,20 @@ def send_report_request(request, request_id):
         {"id": str(request_id), "token": value if isinstance(value, str) else None}
     )
     response["Cache-Control"] = "no-store"
+    return response
+
+
+@endpoint()
+def print_priest_request(request, request_id):
+    from tribunal.services.priest_print import printable_priest_request
+    response = render(request, 'tribunal/priest_request_print.html',
+                      printable_priest_request(request.user, request_id))
+    response['Cache-Control'] = 'no-store'
+    response['Referrer-Policy'] = 'no-referrer'
+    response['X-Content-Type-Options'] = 'nosniff'
+    response['Content-Security-Policy'] = (
+        "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; "
+        "base-uri 'none'; form-action 'none'")
     return response
 
 
@@ -1095,10 +1609,12 @@ def reports(request, case_id):
                 observations=revision.observations
                 if revision and request.user.is_staff
                 else None,
-                **({"author_id": str(report.author_id) if report.author_id else None,
+                **({"completed_by": (f"{report.author.first_name} {report.author.last_name}".strip() if report.author else report.request.external_name or None),
+                    "intake_by": (f"{report.author.first_name} {report.author.last_name}".strip() if report.author and report.author.role in {"admin", "secretary", "president", "member"} else None),
+                    "author_id": str(report.author_id) if report.author_id else None,
                     "author": f"{report.author.first_name} {report.author.last_name}".strip() if report.author else None,
                     "submitted_at": report.created_at.isoformat(), "method": report.method,
-                    "can_revise": bool(report.author_id == request.user.pk and report.author
+                    "can_revise": bool(report.method not in {"paper", "recording"} and report.author_id == request.user.pk and report.author
                         and report.author.role != "applicant" and report.request.proceeding.status == "open"
                         and report.request.case.status == "open" and (request.user.role in {"admin", "secretary"}
                             or report.request.case.assigned_member_id == request.user.pk))}
@@ -1329,11 +1845,19 @@ def system_audit(request):
 
 
 @csrf_exempt
+@vary_on_headers("Accept", "Authorization")
 def external_report(request, request_id):
     from tribunal.services.reports import external_request, complete_external, lock_request
     from tribunal.db.context import database_external
     from django.db import transaction
 
+    # Browser navigation carries the capability only in its fragment. The existing
+    # council page removes it before fetching this route with a Bearer header.
+    # Do not inspect request existence or redirect query/header credentials.
+    if (request.method == "GET" and "Authorization" not in request.headers
+            and request.get_preferred_type(["application/json", "text/html"]) == "text/html"):
+        from django.templatetags.static import static
+        return HttpResponseRedirect(static("ctm/external-report.html"))
     token = request.headers.get("Authorization", "").removeprefix("Bearer ")
     if request.method not in {"GET", "POST"}:
         return JsonResponse({"error": "method_not_allowed"}, status=405)
@@ -1418,6 +1942,30 @@ def settings_endpoint(request):
     return JsonResponse(encoded(row, version=row.number, schema_version=1), status=201)
 
 
+@endpoint()
+def runtime_tribunal_contact(request):
+    from tribunal.services.runtime_settings import tribunal_contact
+
+    response = JsonResponse(tribunal_contact(request.user))
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
+@endpoint()
+def runtime_recommended_doctors(request, case_id):
+    from tribunal.services.runtime_settings import recommended_doctors
+
+    staff(request.user)
+    specialties = request.GET.getlist("specialty")
+    if len(specialties) != 1 or set(request.GET) != {"specialty"}:
+        raise ValidationError("Provide one specialty query parameter.")
+    response = JsonResponse(
+        recommended_doctors(request.user, case_id, specialties[0])
+    )
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
 @endpoint(("GET", "POST"))
 def templates(request):
     from tribunal.projections import template_data
@@ -1476,11 +2024,26 @@ def account_settings(request):
         user = save_preferences(request.user, body(request))
     return JsonResponse(
         {
+            "name": f"{user.first_name} {user.last_name}".strip(),
+            "first_name": user.first_name,
+            "last_name": user.last_name,
             "ui_language": user.ui_language,
             "notification_language": user.notification_language,
             "email": user.email,
+            "role": user.role,
+            "portal": "applicant" if user.role == "applicant" else "council",
         }
     )
+
+
+@endpoint()
+def account_activity(request):
+    from tribunal.pagination import page_records
+    return JsonResponse(page_records(
+        m.AuditEvent.objects.filter(actor=request.user).order_by("-created_at", "-id"), request,
+        default_limit=20,
+        serialize=lambda row: encoded(row, action=row.action.replace("_", " "), timestamp=row.created_at.isoformat()),
+    ))
 
 
 @endpoint(("POST",))
@@ -1577,6 +2140,7 @@ def calls(request, case_id):
                         x,
                         party_id=str(x.party_id),
                         occurred_at=x.occurred_at.isoformat(),
+                        direction=x.direction,
                         recorded_at=x.created_at.isoformat(),
                         outcome=x.outcome,
                         notes=x.notes,
@@ -1600,6 +2164,7 @@ def calls(request, case_id):
                 datetime.fromisoformat(data["occurred_at"]),
                 data["outcome"],
                 data.get("notes", ""),
+                data.get("direction", "sent"),
             )
         ),
         status=201,
@@ -1933,3 +2498,77 @@ def case_files(request, case_id):
     response = JsonResponse(result)
     response["Cache-Control"] = "private, no-store"
     return response
+
+
+@endpoint()
+def account_sessions(request):
+    from tribunal.pagination import page_records
+    from tribunal.services.account_sessions import active_sessions, owned_session, session_handle
+    return JsonResponse(page_records(
+        active_sessions(), request, default_limit=50,
+        visible=lambda row: owned_session(request.user, row),
+        serialize=lambda row: {
+            "handle": session_handle(request.user, row.session_key),
+            "current": row.session_key == request.session.session_key,
+            "expires_at": row.expire_date.isoformat(),
+        },
+    ))
+
+
+@endpoint(("POST",))
+def account_session_revoke(request, handle):
+    from tribunal.services.account_sessions import revoke_session
+    if body(request):
+        raise ValidationError("Session revocation accepts an empty object only.")
+    return JsonResponse(revoke_session(request.user, handle, request.session.session_key))
+
+
+@endpoint()
+def system_account_memberships(request, account_id):
+    from tribunal.pagination import page_records
+    from tribunal.services.member_history import membership_data
+    administrator(request.user)
+    account = m.Account.objects.exclude(role="applicant").get(pk=account_id)
+    now = timezone.now()
+    result = page_records(
+        m.StaffMembership.objects.filter(account=account).select_related("tribunal")
+        .order_by("-active_from", "-id"), request, default_limit=50,
+        serialize=lambda row: membership_data(account, row, now),
+    )
+    return JsonResponse({"account_id": str(account.pk), "account_role": account.role,
+                         "account_active": account.is_active, **result})
+
+
+@endpoint()
+def system_account_role_history(request, account_id):
+    from tribunal.pagination import page_records
+    from tribunal.services.member_history import role_history, role_data
+    administrator(request.user)
+    account = m.Account.objects.exclude(role="applicant").get(pk=account_id)
+    now = timezone.now()
+    result = page_records(role_history(account), request, default_limit=50,
+                          serialize=lambda row: role_data(account, row, now))
+    return JsonResponse({"account_id": str(account.pk), "account_role": account.role,
+                         "account_active": account.is_active, **result})
+
+
+@csrf_exempt
+@vary_on_headers("Authorization")
+def external_report_status(request, request_id):
+    from tribunal.services.reports import external_status_receipt
+    if request.method != 'GET':
+        return JsonResponse({'error':'method_not_allowed'}, status=405)
+    authorization = request.headers.get('Authorization','')
+    token = authorization[len('Bearer '):] if authorization.startswith('Bearer ') else ''
+    try:
+        return JsonResponse(external_status_receipt(request_id, token))
+    except (PermissionDenied, ValidationError, ObjectDoesNotExist):
+        return JsonResponse({'error':'link_unavailable'}, status=403)
+
+
+@endpoint(("POST",))
+def complete_paper_report_request(request, request_id):
+    from tribunal.services.reports import complete_external_paper
+    data = body(request)
+    return JsonResponse(encoded(complete_external_paper(request.user, request_id,
+        data.get('file_id'), data.get('completion_date'), expected_version=data.get('expected_version'))), status=201)

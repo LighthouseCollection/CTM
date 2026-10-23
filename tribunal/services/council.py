@@ -33,9 +33,20 @@ from tribunal.validation import validate_json_value, revision_replay, UNBOUND_VE
 
 
 @transaction.atomic
-def assign_case(actor, case_id, member_id, president_id):
-    with database_actor(actor), database_settings({"ctm.assignment_member": str(member_id), "ctm.assignment_president": str(president_id)}):
-        return _assign_case(actor, case_id, member_id, president_id)
+def assign_case(actor, case_id, member_id, president_id=None):
+    """Assign a case under the configured active president when none is selected."""
+    with database_actor(actor):
+        if president_id is None:
+            president_id = (
+                Account.objects.filter(is_active=True, role="president")
+                .order_by("created_at", "pk")
+                .values_list("pk", flat=True)
+                .first()
+            )
+            if president_id is None:
+                raise ValidationError("An active president must authorize the assignment.")
+        with database_settings({"ctm.assignment_member": str(member_id), "ctm.assignment_president": str(president_id)}):
+            return _assign_case(actor, case_id, member_id, president_id)
 
 
 @core_operation("assignment")
@@ -53,6 +64,8 @@ def _assign_case(actor, case_id, member_id, president_id):
     if not assignment_president(president):
         raise PermissionDenied("An active president must authorize the assignment.")
     staff(member)
+    if member.role == "president":
+        raise ValidationError("The council president cannot be assigned as a case manager.")
     previous = case.assigned_member
     case.assigned_member = member
     case.save(update_fields=["assigned_member"])
@@ -171,11 +184,121 @@ def validate_finding_sources(actor, proceeding, sources):
                 raise PermissionDenied("Citation source belongs to another proceeding.")
 
 
+def configured_president():
+    president = (
+        Account.objects.filter(is_active=True, role="president")
+        .order_by("created_at", "pk")
+        .first()
+    )
+    if president is None:
+        raise ValidationError("Configure an active president before creating or editing a council session.")
+    return president
+
+
 @transaction.atomic
-def create_session(actor, session_date):
+def create_session(actor, session_date, *, starts_at=None, presiding_member=None, location="", state="planned"):
     administrator(actor)
-    session = CouncilSession.objects.create(date=session_date)
+    if starts_at is not None:
+        if not timezone.is_aware(starts_at):
+            raise ValidationError("Session start time must include a UTC offset.")
+        if starts_at.astimezone(ZoneInfo("America/Los_Angeles")).date() != session_date:
+            raise ValidationError("Session start time must fall on the session date in Los Angeles.")
+    # Session presidings are defined by CTM's active president configuration,
+    # never selected in an individual session form.
+    presiding_member = configured_president()
+    location = str(location or "").strip()
+    if len(location) > 300:
+        raise ValidationError("Session location is too long.")
+    if state not in {"draft", "planned"}:
+        raise ValidationError("A new session must be draft or in session.")
+    session = CouncilSession.objects.create(
+        date=session_date,
+        starts_at=starts_at,
+        presiding_member=presiding_member,
+        location=location,
+        state=state,
+    )
     audit(actor, "session_created", session)
+    return session
+
+
+@transaction.atomic
+def delete_draft_session(actor, session_id):
+    """Remove an unassigned draft session before it becomes a tribunal record."""
+    administrator(actor)
+    session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    if session.state != "draft":
+        raise ValidationError("Only a draft session can be deleted.")
+    if AgendaItem.objects.filter(session=session).exists():
+        raise ValidationError("A session with agenda items is retained and cannot be deleted.")
+    if Attendance.objects.filter(session=session).exists():
+        raise ValidationError("A session with attendance history cannot be deleted.")
+    if Message.objects.filter(session=session).exists() or AgendaTransferEvent.objects.filter(to_session=session).exists():
+        raise ValidationError("A session with retained history cannot be deleted.")
+    with database_actor(actor), database_settings({"ctm.delete_draft_session": str(session.pk)}):
+        session.delete()
+
+
+@transaction.atomic
+def update_session(actor, session_id, session_date, *, starts_at=None, presiding_member=None, location=""):
+    administrator(actor)
+    session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    if session.state not in {"draft", "planned"}:
+        raise ValidationError("Closed sessions cannot be edited.")
+    if CouncilSession.objects.exclude(pk=session.pk).filter(date=session_date).exists():
+        raise ValidationError("A council session already exists on that date.")
+    if starts_at is None or not timezone.is_aware(starts_at):
+        raise ValidationError("Session start time must include a UTC offset.")
+    if starts_at.astimezone(ZoneInfo("America/Los_Angeles")).date() != session_date:
+        raise ValidationError("Session start time must fall on the session date in Los Angeles.")
+    # Session presidings are defined by CTM's active president configuration,
+    # never selected in an individual session form.
+    presiding_member = configured_president()
+    location = str(location or "").strip()
+    if not location or len(location) > 300:
+        raise ValidationError("Session location is required and must be at most 300 characters.")
+    session.date = session_date
+    session.starts_at = starts_at
+    session.presiding_member = presiding_member
+    session.location = location
+    # A rescheduled in-progress session becomes a draft when moved into the
+    # future. Upcoming sessions must never be presented as in progress.
+    if session.state == "planned" and session_date > timezone.localdate():
+        session.state = "draft"
+        session.save(update_fields=["date", "starts_at", "presiding_member", "location", "state"])
+    else:
+        session.save(update_fields=["date", "starts_at", "presiding_member", "location"])
+    audit(actor, "session_updated", session)
+    return session
+
+
+@transaction.atomic
+def activate_session(actor, session_id):
+    """Make a prepared draft session the official in-session record."""
+    administrator(actor)
+    session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    if session.state == "planned":
+        return session
+    if session.state != "draft":
+        raise ValidationError("Only a draft tribunal session can be activated.")
+    session.state = "planned"
+    session.save(update_fields=["state"])
+    audit(actor, "session_activated", session)
+    return session
+
+
+@transaction.atomic
+def return_session_to_planned(actor, session_id):
+    """Return an in-progress session to Planned before it is adjourned."""
+    administrator(actor)
+    session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    if session.state == "draft":
+        return session
+    if session.state != "planned":
+        raise ValidationError("Only an in-progress tribunal session can return to Planned.")
+    session.state = "draft"
+    session.save(update_fields=["state"])
+    audit(actor, "session_returned_to_planned", session)
     return session
 
 
@@ -190,6 +313,17 @@ def attendance_for(actor, session_id, hearing_id=None):
         .order_by("created_at", "pk")
     )
     return {row.member_id: row for row in rows}
+
+
+def attendance_roster_for(actor, session_id, hearing_id=None):
+    """Return the active council roster with any recorded attendance for a hearing."""
+    rows = attendance_for(actor, session_id, hearing_id)
+    members = Account.objects.filter(
+        is_active=True, role__in=("president", "secretary", "member")
+    ).order_by("last_name", "first_name", "pk")
+    rank = {"president": 0, "secretary": 1, "member": 2}
+    members = sorted(members, key=lambda member: (rank[member.role], member.last_name, member.first_name, member.pk))
+    return [(member, rows.get(member.pk)) for member in members]
 
 
 @transaction.atomic
@@ -238,13 +372,18 @@ def place_agenda(actor, session_id, case_id, part=2):
         administrator(actor)
     else:
         writer(actor, case)
-    if session.state != "planned":
+    if session.state not in {"draft", "planned"}:
         raise ValidationError("Invalid session/agenda part.")
     if (
         case.status == "closed"
         and not pending_council_filings(case).exists()
     ):
         raise ValidationError("Closed case has no pending appeal to hear.")
+    active_agenda = AgendaItem.objects.select_for_update(of=("self",)).filter(
+        case=case, session__state="planned", state__in={"scheduled", "time_exhausted"}
+    ).exclude(session=session).first()
+    if active_agenda:
+        raise ValidationError("Case is tied to an in-session agenda. Use the documented transfer override.")
     position = (session.agenda.aggregate(n=Max("position"))["n"] or 0) + 1
     item, created = AgendaItem.objects.get_or_create(
         session=session, case=case, defaults={"part": part, "position": position}
@@ -256,6 +395,47 @@ def place_agenda(actor, session_id, case_id, part=2):
     if created:
         audit(actor, "agenda_placed", item, case)
     return item
+
+
+@transaction.atomic
+def transfer_agenda_item(actor, item_id, target_session_id, reason):
+    """Move an open agenda item to a later session through an audited override."""
+    if not isinstance(reason, str) or not reason.strip():
+        raise ValidationError("A reason is required to move a case to another session.")
+    source = (
+        AgendaItem.objects.select_for_update(of=("self",))
+        .select_related("case", "session")
+        .get(pk=item_id)
+    )
+    case = Case.objects.select_for_update(of=("self",)).get(pk=source.case_id)
+    writer(actor, case)
+    target = CouncilSession.objects.select_for_update(of=("self",)).get(pk=target_session_id)
+    if source.session.state not in {"draft", "planned"} or source.state not in {"scheduled", "time_exhausted"}:
+        raise ValidationError("Only a scheduled case in an open tribunal session can be moved.")
+    if target.pk == source.session_id or target.state not in {"draft", "planned"} or target.date <= source.session.date:
+        raise ValidationError("Choose a later open tribunal session.")
+    if AgendaItem.objects.filter(session=target, case=case).exists():
+        raise ValidationError("The case is already on the selected session agenda.")
+    position = (target.agenda.aggregate(n=Max("position"))["n"] or 0) + 1
+    destination = AgendaItem.objects.create(
+        session=target, case=case, part=source.part, position=position, carried_from=source
+    )
+    source_state = source.state
+    source.state = "transferred"
+    source.save(update_fields=["state"])
+    event = AgendaTransferEvent.objects.create(
+        case=case,
+        from_session_snapshot={
+            "session_id": str(source.session_id), "reference": source.session.reference,
+            "agenda_id": str(source.pk), "part": source.part, "state": source_state,
+        },
+        to_session=target, destination_item=destination, reason=reason.strip(), actor=actor,
+    )
+    audit(actor, "agenda_transferred", event, case, metadata={
+        "source_agenda_id": str(source.pk), "destination_agenda_id": str(destination.pk),
+        "source_session_id": str(source.session_id), "target_session_id": str(target.pk),
+    })
+    return destination
 
 
 @transaction.atomic
@@ -314,6 +494,33 @@ def close_session(actor, session_id):
         payload__session=str(session.pk),
     ).update(due_at=timezone.now())
     audit(actor, "session_closed", session)
+    return session
+
+
+@transaction.atomic
+def set_session_adjourned(actor, session_id, adjourned, ended_at):
+    """Adjourn an in-session council session at its recorded local end time."""
+    staff(actor)
+    if actor.role not in {"admin", "secretary"}:
+        raise PermissionDenied("Only the tribunal administrator or secretary can adjourn a session.")
+    if not isinstance(ended_at, datetime) or not timezone.is_aware(ended_at):
+        raise ValidationError("Session end time must include a time zone.")
+    session = CouncilSession.objects.select_for_update().get(pk=session_id)
+    local_end = ended_at.astimezone(ZoneInfo("America/Los_Angeles"))
+    if local_end.date() != session.date:
+        raise ValidationError("Session end time must fall on the session date.")
+    if session.starts_at and ended_at <= session.starts_at:
+        raise ValidationError("Session end time must be after the session start time.")
+    if not adjourned:
+        raise ValidationError("An adjourned session remains closed; open its record to take notes.")
+    if session.state != "planned":
+        raise ValidationError("Only an in-session tribunal session can be adjourned.")
+    # Keep all normal close-side effects (agenda completion, carryovers, and
+    # queued communication release) in the established command.
+    session = close_session(actor, session_id)
+    session.adjourned_at = ended_at
+    session.save(update_fields=["adjourned_at"])
+    audit(actor, "session_adjourned", session)
     return session
 
 
@@ -532,7 +739,17 @@ def reschedule_session(actor, session_id, new_date, replacement_times, reason):
         if any(starts < prior_end and ends > prior_start for prior_start, prior_end in spans):
             raise ValidationError("Replacement testimony appointments overlap.")
         spans.append((starts, ends))
-    target = create_session(actor, new_date)
+    starts_at = None
+    if source.starts_at:
+        local = source.starts_at.astimezone(ZoneInfo("America/Los_Angeles"))
+        starts_at = datetime.combine(new_date, local.timetz())
+    target = create_session(
+        actor,
+        new_date,
+        starts_at=starts_at,
+        presiding_member=source.presiding_member,
+        location=source.location,
+    )
     snapshot = {"id": str(source.pk), "date": source.date.isoformat(), "reference": source.reference,
                 "attendance": [{"id": str(row.pk), "member_id": str(row.member_id), "present": row.present,
                                 "actor_id": str(row.actor_id), "timestamp": row.created_at.isoformat()}

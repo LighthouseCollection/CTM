@@ -33,6 +33,7 @@ def validate_category(category, mime):
     allowed = {
         "PHOTO": images,
         "SPOUSE_PHOTO": images,
+        "CASE_PHOTO": images,
         "MC": documents,
         "CMC": documents,
         "CDD": documents,
@@ -186,10 +187,11 @@ def upload(
                 raise ValidationError("The signed disclosure original is retained.")
         case = request.case
         proceeding = request.proceeding
-        owner = request.subject.account
-        visibility = (
-            "medical" if request.kind in {"medical", "psychological"} else "own"
-        )
+        if request.kind in {"external_priest", "interview"}:
+            owner, visibility = None, "council"
+        else:
+            owner = request.subject.account
+            visibility = "medical" if request.kind in {"medical", "psychological"} else "own"
     elif app_id:
         app = application_for(actor, app_id)
         from tribunal.models import Application, Case
@@ -324,8 +326,10 @@ def application_file_listing(actor, app_id):
             item["download_url"] = f"/api/files/{file.pk}/"
         items.append(item)
     revision = app.revisions.filter(number=app.current_version).first()
+    from .document_labels import filing_requirement_labels
+    requirements = document_requirements(app, revision.answers if revision else {})
     return {"can_upload": can_upload, "items": items,
-            "requirements": document_requirements(app, revision.answers if revision else {})}
+            "requirements": filing_requirement_labels(actor, requirements)}
 
 
 def request_file_listing(actor, request_id):
@@ -359,6 +363,11 @@ def authorized_file(actor, file_id, *, require_safe=True):
         "attachment__application", "attachment__case"
     ).get(pk=file_id)
     attachment = file.attachment
+    if actor.role == "applicant" and attachment.report_request_id:
+        from tribunal.models import ReportRequest
+        source = ReportRequest.objects.filter(pk=attachment.report_request_id).values("kind").first()
+        if source is None or source["kind"] in {"external_priest", "interview"}:
+            raise PermissionDenied("Request attachment is council-only.")
     if require_safe and not safe_file(file):
         raise PermissionDenied("File has not passed technical validation.")
     if actor.role == "applicant":

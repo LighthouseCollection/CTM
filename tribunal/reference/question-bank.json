@@ -14,7 +14,8 @@
           "Which name appears on the relevant marriage or identity record?"
         ],
         "avoidReuse": "Administrative identity verification, not substantive questioning."
-      }
+      },
+      "wording_ar": "يرجى ذكر اسمك الكامل واسم زوجتك بالكامل."
     },
     {
       "code": "BASIS-01",
@@ -30,7 +31,8 @@
           "Which part of that account do you personally know?"
         ],
         "avoidReuse": "Route detailed facts to the appropriate substantive family."
-      }
+      },
+      "wording_ar": "ماذا تطلب من المجلس أن يقرر؟ حدد بإيجاز الحقائق الرئيسية التي تدعم طلبك؛ سيتم تناول التفاصيل في الأقسام ذات الصلة."
     },
     {
       "code": "BKG-02",
@@ -43,7 +45,8 @@
         "trigger": "No routine follow-up.",
         "prompts": [],
         "avoidReuse": "Keep as a brief timeline outline; use DEC, PRS, DBT or CON for details."
-      }
+      },
+      "wording_ar": "كيف تطورت علاقتكما منذ اللقاء الأول حتى الخطوبة؟ إعطاء لمحة موجزة عن الأحداث الرئيسية؛ قم بوصف المشكلات التي تمت تغطيتها في الأقسام اللاحقة هناك بدلاً من تكرارها هنا."
     },
     {
       "code": "BKG-03",
@@ -58,7 +61,8 @@
           "What specific circumstance has not yet been covered, and when did it occur?"
         ],
         "avoidReuse": "Do not repeat already documented courtship events."
-      }
+      },
+      "wording_ar": "هل كانت هناك أي ظروف أخرى أثناء فترة الخطوبة أو الخطوبة ذات صلة بطلبك لم يتم تناولها في الأقسام اللاحقة؟ إذا كان الأمر كذلك، وصف لهم."
     },
     {
       "code": "DEC-01",
@@ -74,7 +78,8 @@
           "Was there a particular event that changed your decision?"
         ],
         "avoidReuse": "Pressure belongs in PRS; doubts in DBT; promises in DEC-03."
-      }
+      },
+      "wording_ar": "كيف نشأ قرار الزواج وما هي أسبابك في ذلك الوقت؟"
     },
     {
       "code": "DEC-02",
@@ -89,7 +94,8 @@
           "What did you understand was expected of you, and how did you come to that understanding?"
         ],
         "avoidReuse": "Use CHD, INT-02 and MON-01 for topic-specific expectations."
-      }
+      },
+      "wording_ar": "قبل الزواج، ماذا ستكون مسؤولياتك في الحياة الزوجية؟ قم بوصف أي توقعات أو اتفاقيات ذات صلة لم يتم تناولها في الأسئلة المتعلقة بالأطفال أو الحياة الحميمة أو الأمور المالية."
     },
     {
       "code": "DEC-03",
@@ -105,7 +111,8 @@
           "Was that expressed before the decision to marry, and what response followed?"
         ],
         "avoidReuse": "Do not reproduce CON questions unless misrepresentation or concealment is alleged."
-      }
+      },
+      "wording_ar": "بصرف النظر عن الأمور التي تمت مناقشتها أو تناولها بالفعل في الأسئلة المتعلقة بالأطفال أو الحياة الحميمة أو الأمور المالية، هل كان هناك أي وعد أو اتفاق أو شرط محدد آخر مهم لقرارك بالزواج؟ ماذا قيل ومن قال ومتى وكيف استجاب الشخص الآخر؟ إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "DEC-04",
@@ -120,7 +127,8 @@
           "What was your understanding at the time, and what later fact differed?"
         ],
         "avoidReuse": "Collect detailed alleged concealment under CON; use topic-specific section otherwise."
-      }
+      },
+      "wording_ar": "بصرف النظر عن الأمور التي تمت مناقشتها بالفعل، هل تعلمت لاحقًا أي شيء يختلف عن فهمك عندما قررت الزواج؟ حدد الفرق بإيجاز ومتى تعلمته. إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "PRS-01",
@@ -133,7 +141,8 @@
         "trigger": "No separate prompt needed: screening question.",
         "prompts": [],
         "avoidReuse": "If yes, use PRS-02–04."
-      }
+      },
+      "wording_ar": "هل أثر أي ضغط أو تهديد أو أي ظرف آخر على قرارك بالزواج؟"
     },
     {
       "code": "PRS-02",
@@ -149,7 +158,8 @@
           "What consequence, if any, was communicated if you refused or postponed the marriage?"
         ],
         "avoidReuse": "Dates already in the original question; do not ask again if supplied."
-      }
+      },
+      "wording_ar": "إذا كان الأمر كذلك، حدد المصدر ووصف ما حدث ومتى. إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "PRS-03",
@@ -165,7 +175,8 @@
           "Did you communicate a wish to refuse or postpone? What was said and how did the other person respond?"
         ],
         "avoidReuse": "Do not assume the person was unable to consent."
-      }
+      },
+      "wording_ar": "كيف أثر ذلك الضغط أو التهديد أو الظرف على قرارك، وماذا تواصلت بشأنه حينها؟"
     },
     {
       "code": "PRS-04",
@@ -180,7 +191,8 @@
           "Was your concern communicated or recorded at the time? If so, where is that account documented?"
         ],
         "avoidReuse": "Use existing evidence links; no compulsory corroboration threshold."
-      }
+      },
+      "wording_ar": "ما هي المعلومات أو الأدلة من ذلك الوقت التي تدعم حسابك؟ تحديد أي شيء مادي لا يزال غير مؤكد."
     },
     {
       "code": "DBT-01",
@@ -193,7 +205,8 @@
         "trigger": "No routine follow-up.",
         "prompts": [],
         "avoidReuse": "Use DBT-02 and DBT-03 where a relevant doubt is reported."
-      }
+      },
+      "wording_ar": "ما هي الشكوك أو المخاوف الجدية، إن وجدت، التي كانت لديك قبل الزفاف؟ إذا تم وصفها بالفعل، فحددها دون تكرار الحساب."
     },
     {
       "code": "DBT-02",
@@ -208,7 +221,8 @@
           "What did you communicate, to whom, and what response did you receive?"
         ],
         "avoidReuse": "Avoid repeating PRS-03 where the same exchange is already documented."
-      }
+      },
+      "wording_ar": "هل ناقشت تلك الشكوك أو المخاوف؟ حدد ما قلته ولمن وما هو الرد أو الإجراء الذي أعقب ذلك، إلى الحد الذي لم يتم شرحه بالفعل."
     },
     {
       "code": "DBT-03",
@@ -223,7 +237,8 @@
           "What changed, if anything, between expressing the concern and proceeding with the wedding?"
         ],
         "avoidReuse": "Do not imply that proceeding proves free consent."
-      }
+      },
+      "wording_ar": "ونظراً لتلك الشكوك أو المخاوف، ما الذي دفعك إلى المضي قدماً في حفل الزفاف في ذلك الوقت؟"
     },
     {
       "code": "CON-01",
@@ -236,7 +251,8 @@
         "trigger": "No routine follow-up: screening and allegation identification.",
         "prompts": [],
         "avoidReuse": "If yes, use CON-02–05; do not presume a falsehood occurred."
-      }
+      },
+      "wording_ar": "قبل الزواج، هل تعتقدين أن شخصًا ما قدم لك معلومات كاذبة أو حجب حقيقة مهمة، بما في ذلك المعلومات المالية؟ إذا كان الأمر كذلك، حدد الحقيقة والشخص المعني."
     },
     {
       "code": "CON-02",
@@ -252,7 +268,8 @@
           "What specifically was asked or discussed about the undisclosed subject before marriage?"
         ],
         "avoidReuse": "Do not demand an exact quote if memory is approximate."
-      }
+      },
+      "wording_ar": "ما الذي قيل لك على وجه التحديد ومن ومتى؟ وإذا لم يتم الكشف عن الحقيقة، فما الذي تم طرحه أو مناقشته حول هذا الموضوع، إن كان هناك أي شيء؟ قم بتضمين أي بيان مالي أو اتفاقية ذات صلة. إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "CON-03",
@@ -268,7 +285,8 @@
           "What do you believe you would have decided if you had known the alleged fact at the time?"
         ],
         "avoidReuse": "Do not let a retrospective answer substitute for contemporaneous knowledge."
-      }
+      },
+      "wording_ar": "ما هو اعتقادك في هذا الأمر عندما قررت الزواج، وما سبب أهميته في قرارك؟"
     },
     {
       "code": "CON-04",
@@ -284,7 +302,8 @@
           "Does that information show the circumstance existed before marriage or only later?"
         ],
         "avoidReuse": "Use TIM for occurrence versus discovery if already recorded."
-      }
+      },
+      "wording_ar": "ما الذي تعلمته لاحقًا ويختلف عن فهمك السابق، ومتى وكيف تعلمته؟ إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "CON-05",
@@ -300,7 +319,8 @@
           "Is there contextual information that could affect its interpretation?"
         ],
         "avoidReuse": "Use exact existing EVD references; do not require new uploads."
-      }
+      },
+      "wording_ar": "ما هي الأدلة التي تدعم هذه الرواية، وما الذي لا يزال غير مؤكد أو محل خلاف؟ حدد كل عنصر داعم واشرح الحقيقة التي يدعمها، دون إعادة تحديد العناصر المسجلة بالفعل."
     },
     {
       "code": "WED-01",
@@ -313,7 +333,8 @@
         "trigger": "No routine follow-up: screening question.",
         "prompts": [],
         "avoidReuse": "If yes, use WED-02–03."
-      }
+      },
+      "wording_ar": "بصرف النظر عن الظروف التي سبق وصفها، هل أثر أي شيء قبل حفل الزفاف مباشرة أو أثناءه على رغبتك أو قدرتك على المضي قدمًا؟"
     },
     {
       "code": "WED-02",
@@ -328,7 +349,8 @@
           "What happened immediately before or during the ceremony that affected your willingness or ability to proceed?"
         ],
         "avoidReuse": "Refer back to PRS if the same pressure event was fully described."
-      }
+      },
+      "wording_ar": "إذا كان الأمر كذلك، قم بوصف ما حدث ومتى حدث وما تتذكره مباشرة. إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "WED-03",
@@ -343,7 +365,8 @@
           "What was said at the time, to whom, and what response followed?"
         ],
         "avoidReuse": "Do not repeat an earlier recorded conversation."
-      }
+      },
+      "wording_ar": "هل تمت مناقشة الظروف في ذلك الوقت؟ وإذا كان الأمر كذلك فماذا قيل وعلى لسان من؟ ما هي المعلومات الأخرى التي تدعم حسابك؟"
     },
     {
       "code": "INT-01",
@@ -359,7 +382,8 @@
           "Was the difficulty present from the beginning of marriage or did it arise later?"
         ],
         "avoidReuse": "Do not demand explicit sexual detail; avoid diagnosis; clinical records belong under MED with releases."
-      }
+      },
+      "wording_ar": "هل هناك صعوبة زوجية حميمة محددة تريدين توضيحها؟ إذا كان الأمر كذلك، وصف ذلك. متى بدأت، إذا كنت تعرفها، ومتى علمت بها لأول مرة؟ إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "INT-03",
@@ -374,7 +398,8 @@
           "Which particular event or fact concerning the intimate difficulty do you ask the Council to consider?"
         ],
         "avoidReuse": "Do not turn this into compatibility or marital-counseling questions."
-      }
+      },
+      "wording_ar": "كيف ترتبط هذه الصعوبة المحددة بطلبك؟ قم بتضمين الحقائق الإضافية اللازمة لشرح هذا الارتباط فقط."
     },
     {
       "code": "TIM-01",
@@ -387,7 +412,8 @@
         "trigger": "No routine follow-up: overview only.",
         "prompts": [],
         "avoidReuse": "Use exact event references and specific family timelines."
-      }
+      },
+      "wording_ar": "باختصار، متى ظهرت الصعوبات الأساسية لأول مرة، وأيها كانت واضحة قبل الزواج؟ إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "TIM-02",
@@ -402,7 +428,8 @@
           "Which date refers to the event, and which refers to when you learned about it?"
         ],
         "avoidReuse": "Do not repeat dates already clarified in INF, CON, ADD or other sections."
-      }
+      },
+      "wording_ar": "هل هناك أي اختلافات مهمة بين وقت حدوث تلك الصعوبات ووقت إدراكك لها والتي لم يتم شرحها بالفعل؟ إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "INF-01",
@@ -419,7 +446,8 @@
           "Does any part of the alleged conduct predate the church marriage? On what basis?"
         ],
         "avoidReuse": "Use INF-02 for discovery, INF-03 for source of knowledge, INF-04 for evidence. An admission report is not automatically a proven fact."
-      }
+      },
+      "wording_ar": "قم بوصف العلاقة الغرامية أو الزنا التي تبلغ عنها، بما في ذلك الإجراءات أو الاتصالات المحددة. من المتورط، ومتى وأين حدث ذلك، إذا كان معروفًا؟ إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "INF-02",
@@ -435,7 +463,8 @@
           "Does the date you gave refer to discovery or to the alleged conduct itself?"
         ],
         "avoidReuse": "Use TIM if chronology is already resolved."
-      }
+      },
+      "wording_ar": "متى وكيف علمت لأول مرة عن العلاقة الغرامية أو الزنا المبلغ عنها؟ إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "INF-03",
@@ -450,7 +479,8 @@
           "For that particular fact, what did you observe yourself, what did another person report, and what is your own inference?"
         ],
         "avoidReuse": "Do not ask the applicant to retell the whole INF-01 narrative."
-      }
+      },
+      "wording_ar": "ما هي أجزاء حسابك التي مررت بها أو لاحظتها شخصيًا، والتي جاءت من مصدر آخر، وما هو تفسيرك أو شكوكك؟ وضح فقط ما هو غير واضح بالفعل."
     },
     {
       "code": "INF-04",
@@ -466,7 +496,8 @@
           "What does it show directly, and what are you concluding from it?"
         ],
         "avoidReuse": "Use existing EVD source/version reference; avoid demanding duplicate files or assuming authenticity."
-      }
+      },
+      "wording_ar": "ما هي الأدلة المحددة التي تدعم حسابك؟ حدد كل عنصر داعم واشرح الحقيقة التي يدعمها، باستخدام المراجع الموجودة للعناصر المسجلة بالفعل."
     },
     {
       "code": "ABU-01",
@@ -482,7 +513,8 @@
           "For repeated behavior, which events can you place approximately in time?"
         ],
         "avoidReuse": "Safety first; do not press for graphic detail or create unsafe joint questioning."
-      }
+      },
+      "wording_ar": "قم بوصف الإساءة التي تبلغ عنها. ماذا حدث ومن شارك ومتى وأين حدث ذلك؟ هل كانت حادثة واحدة أم سلوكًا متكررًا؟ إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "ABU-02",
@@ -497,7 +529,8 @@
           "Which actions did you personally experience or observe, and what came from another person?"
         ],
         "avoidReuse": "Skip where ABU-01 already separates sources."
-      }
+      },
+      "wording_ar": "ما هي أجزاء حسابك التي واجهتها أو لاحظتها بشكل مباشر، وما الذي تعلمته من شخص آخر؟ وضح فقط ما هو غير واضح بالفعل."
     },
     {
       "code": "ABU-03",
@@ -512,7 +545,8 @@
           "What particular change or event followed the reported conduct that is relevant to the petition?"
         ],
         "avoidReuse": "Do not require emotional or therapeutic narrative beyond relevant factual effects."
-      }
+      },
+      "wording_ar": "ما هو تأثير الإساءة المبلغ عنها على الحياة الزوجية أو قرار الانفصال؟"
     },
     {
       "code": "ABU-04",
@@ -528,7 +562,8 @@
           "Does any current order affect safe contact or disclosure?"
         ],
         "avoidReuse": "Respect protective orders and restricted records; existing evidence references only."
-      }
+      },
+      "wording_ar": "هل هناك أوامر أو تقارير أو أدلة أخرى من المحكمة ترغب في تحديدها؟ اشرح الحقيقة التي يدعمها كل عنصر، باستخدام المراجع الموجودة للعناصر المسجلة بالفعل."
     },
     {
       "code": "ADD-01",
@@ -544,7 +579,8 @@
           "Which of those did you observe directly?"
         ],
         "avoidReuse": "Do not diagnose substance-use or behavioral disorders."
-      }
+      },
+      "wording_ar": "قم بوصف السلوك أو النمط الذي تشير إليه على أنه إدمان، بدلًا من وصفه فقط."
     },
     {
       "code": "ADD-02",
@@ -559,7 +595,8 @@
           "Which events indicate when the behavior occurred, as opposed to when you learned of it?"
         ],
         "avoidReuse": "TIM shared dates if already established."
-      }
+      },
+      "wording_ar": "متى بدأ ذلك السلوك أو النمط، إذا كان معروفا، وكيف تطور؟ متى وكيف علمت به لأول مرة؟ إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "ADD-03",
@@ -574,7 +611,8 @@
           "What particular events affecting married life are you referring to?"
         ],
         "avoidReuse": "Avoid general relationship-counseling topics."
-      }
+      },
+      "wording_ar": "وكيف أثرت على الحياة الزوجية؟"
     },
     {
       "code": "ADD-04",
@@ -590,7 +628,8 @@
           "Does a relevant professional record exist that can be handled through the authorized MED process?"
         ],
         "avoidReuse": "No blanket medical records or diagnosis inference."
-      }
+      },
+      "wording_ar": "ما هي المساعدة المطلوبة، إذا كانت معروفة؟ ما هي الملاحظات أو الأدلة الإضافية التي تدعم حسابك والتي لم يتم وصفها بالفعل؟"
     },
     {
       "code": "FTH-01",
@@ -603,7 +642,8 @@
         "trigger": "No routine follow-up.",
         "prompts": [],
         "avoidReuse": "Use FTH-02 for relevant change; check documentary records if actually material."
-      }
+      },
+      "wording_ar": "ما هو الانتماء الديني لكل طرف قبل أن تعرفوا بعضكم البعض، على حد علمكم؟"
     },
     {
       "code": "FTH-02",
@@ -619,7 +659,8 @@
           "When did that declaration or action occur?"
         ],
         "avoidReuse": "Do not equate reduced attendance or disagreement with a proven change of faith."
-      }
+      },
+      "wording_ar": "ما هو التغيير في كنيستك أو كنيستك أو زوجتك أو عقيدتك أو ممارساتك الدينية المتعلقة بطلبك؟ متى حدث ذلك؟ إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "FTH-03",
@@ -634,7 +675,8 @@
           "Which part did you observe or hear yourself, and what was reported by someone else?"
         ],
         "avoidReuse": "Avoid repeating FTH-02."
-      }
+      },
+      "wording_ar": "ما هي أجزاء روايتك لهذا التغيير التي تعرفها بشكل مباشر، وما هي الأجزاء التي أخبرك بها شخص آخر؟ وضح فقط ما هو غير واضح بالفعل."
     },
     {
       "code": "FTH-04",
@@ -650,7 +692,8 @@
           "What specific existing item supports the reported fact?"
         ],
         "avoidReuse": "Distinguish consequences from doctrinal conclusions."
-      }
+      },
+      "wording_ar": "كيف أثر التغيير على الحياة الزوجية، وما هي المعلومات التي تدعم هذا الرأي؟"
     },
     {
       "code": "MON-03",
@@ -666,7 +709,8 @@
           "What was agreed or communicated at the time?"
         ],
         "avoidReuse": "Financial falsehood or omission belongs under CON; do not require full financial history."
-      }
+      },
+      "wording_ar": "قم بوصف قرار مالي محدد أو خلاف يتعلق بهذا الالتماس ولم تتم تغطيته بالفعل. من شارك ومتى حدث وماذا حدث؟ حدد أي معلومات داعمة وأي شيء مادي لا يزال غير مؤكد أو متنازع عليه. إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "SEP-01",
@@ -679,7 +723,8 @@
         "trigger": "No routine follow-up.",
         "prompts": [],
         "avoidReuse": "Use ABD-01 for circumstances and dates of final separation."
-      }
+      },
+      "wording_ar": "هل كانت هناك حالات فصل مؤقتة ذات صلة قبل الفصل النهائي؟ إذا كان الأمر كذلك، حدد كل فترة لفترة وجيزة. إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "ABD-01",
@@ -695,7 +740,8 @@
           "Was the absence agreed, temporary, or understood differently by either party at the time?"
         ],
         "avoidReuse": "Do not repeat SEP-01 temporary periods."
-      }
+      },
+      "wording_ar": "متى بدأ الانفصال النهائي أو الغياب المرتبط به، وما هي الظروف التي مررت بها أو لاحظتها شخصيًا؟ بالنسبة لأي فصل مؤقت تم تحديده أعلاه، قم بوصف الظروف الإضافية ذات الصلة بطلبك فقط. إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "ABD-02",
@@ -711,7 +757,8 @@
           "Was this based on personal receipt, communication, or another source?"
         ],
         "avoidReuse": "Use MON only if a distinct financial issue matters; avoid creating a financial disclosure demand."
-      }
+      },
+      "wording_ar": "ما هي الاتصالات أو الاتصالات أو الدعم ذات الصلة التي استمرت أثناء الانفصال أو الغياب، إن وجدت؟"
     },
     {
       "code": "ABD-03",
@@ -726,7 +773,8 @@
           "What attempts were made to establish or resume contact, on what dates, and what response followed?"
         ],
         "avoidReuse": "Reconciliation attempts aimed at restoring the relationship belong under REC-01."
-      }
+      },
+      "wording_ar": "وبصرف النظر عن الاتصال أو الدعم الذي سبق وصفه، ما هي المحاولات التي تمت لإعادة التواصل بعد الانفصال أو الغياب، وماذا حدث؟"
     },
     {
       "code": "REC-01",
@@ -741,7 +789,8 @@
           "What was proposed or attempted, who participated, and what response or outcome followed?"
         ],
         "avoidReuse": "Document past facts only; never use as an instruction to reconcile or to initiate contact."
-      }
+      },
+      "wording_ar": "ما هي المحاولات ذات الصلة للتوفيق أو استعادة العلاقة، سواء قبل الانفصال أو بعده؟ من شارك ومتى حدثت المحاولات وماذا كانت النتيجة؟ لا تكرر التفاصيل المقدمة بالفعل. إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "MED-01",
@@ -754,7 +803,8 @@
         "trigger": "No routine follow-up: relevant evaluation screening only.",
         "prompts": [],
         "avoidReuse": "Do not solicit broad medical history; no disclosure without signed, scoped release."
-      }
+      },
+      "wording_ar": "على حد علمك، هل تلقيت أنت أو زوجتك تقييمًا طبيًا أو نفسيًا أو نفسيًا أو علاجًا أو أي مساعدة مهنية أخرى ذات صلة مباشرة بالمسألة التي تتم مناقشتها؟ من المقبول ألا نعرف."
     },
     {
       "code": "MED-02",
@@ -770,7 +820,8 @@
           "Are you describing a documented professional conclusion or your understanding of it?"
         ],
         "avoidReuse": "Request/report are distinct from signed release; never infer diagnosis or consent."
-      }
+      },
+      "wording_ar": "إذا كان الأمر كذلك، حدد نوع التقييم أو العلاج أو المساعدة ومتى حدث وصلته بالزواج. قدم فقط التفاصيل التي لم يتم تسجيلها بالفعل في مكان آخر. إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "MED-03",
@@ -785,7 +836,8 @@
           "Did you see the professional report yourself, hear an account of it, or infer it from conduct?"
         ],
         "avoidReuse": "Do not expose the other applicant’s protected information. No external medical-document AI processing."
-      }
+      },
+      "wording_ar": "ما هي أجزاء روايتك عن هذا التقييم أو العلاج أو المساعدة التي تعرفها شخصيًا، والتي أخبرك بها شخص آخر، وما هو غير المعروف بالنسبة لك؟ وضح فقط ما هو غير واضح بالفعل."
     },
     {
       "code": "CHD-01",
@@ -800,7 +852,8 @@
           "What was each person’s stated understanding about having children, and when was it discussed?"
         ],
         "avoidReuse": "If alleged false or withheld representation, move detailed inquiry to CON."
-      }
+      },
+      "wording_ar": "قبل الزواج، ما الذي ناقشتموه أو اتفقتم عليه بشأن إنجاب الأطفال؟"
     },
     {
       "code": "INT-02",
@@ -815,7 +868,8 @@
           "Was a specific expectation or agreement communicated before marriage? What was said?"
         ],
         "avoidReuse": "No graphic questioning; use CON for alleged concealment."
-      }
+      },
+      "wording_ar": "قبل الزواج، ما الذي ناقشته أو فهمته أنت وزوجك عن الحياة الزوجية الحميمة؟"
     },
     {
       "code": "MON-01",
@@ -830,7 +884,8 @@
           "What specific responsibilities or arrangement were discussed, and when?"
         ],
         "avoidReuse": "Alleged misleading statement or omission belongs under CON."
-      }
+      },
+      "wording_ar": "قبل الزواج، ما الذي ناقشتموه أو اتفقتم عليه بشأن العمل والدخل والديون والمسؤوليات المالية؟"
     },
     {
       "code": "CHD-02",
@@ -845,7 +900,8 @@
           "What did each person actually communicate about whether or when to have children?"
         ],
         "avoidReuse": "Do not duplicate CHD-01 premarital agreement."
-      }
+      },
+      "wording_ar": "هل كانت هناك أي اختلافات حول ما إذا كان سيتم إنجاب الأطفال أو متى يجب أن يتم وصفهم بالفعل؟ إذا كان الأمر كذلك، فماذا تواصل كل واحد منكم، ومتى؟ إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "CHD-03",
@@ -861,7 +917,8 @@
           "What event or statement supports that distinction?"
         ],
         "avoidReuse": "Use CON for detailed alleged deception; TIM for dates already recorded."
-      }
+      },
+      "wording_ar": "بعد الزواج، هل تغيرت خطط أي من الشخصين بشأن الأطفال، أم أنك علمت أن خطة سابقة تختلف عما كنت قد فهمته؟ اشرح ما حدث، ومتى وكيف أصبح معروفًا، وما الذي تم توصيله. لا تكرر التفاصيل المقدمة بالفعل. إعطاء التواريخ المحددة حيثما كانت معروفة؛ وإلا فقل هل التاريخ تقريبي أم غير معروف."
     },
     {
       "code": "CHD-04",
@@ -877,7 +934,8 @@
           "Does an existing order restrict contact, questioning, or sharing information?"
         ],
         "avoidReuse": "Avoid interviewing children or requesting unrelated children’s private details."
-      }
+      },
+      "wording_ar": "إذا كان الأمر ذا صلة بهذا الالتماس، قم بوصف مسؤولية أبوية محددة أو الخلاف وما حدث."
     },
     {
       "code": "CHD-05",
@@ -892,7 +950,8 @@
           "Which particular statement or event does that record support?"
         ],
         "avoidReuse": "Reuse EVD reference and protect children’s personal information."
-      }
+      },
+      "wording_ar": "ما هي الحقائق أو المستندات التي تدعم الرواية المتعلقة بالأطفال أو الأبوة والأمومة؟ حدد فقط المعلومات الداعمة التي لم يتم تسجيلها بالفعل، أو اشرح أي حقيقة إضافية يدعمها عنصر موجود. لا تقم بتضمين معلومات خاصة لا علاقة لها بالأطفال."
     }
   ]
 }
