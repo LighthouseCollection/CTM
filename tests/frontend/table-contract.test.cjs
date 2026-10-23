@@ -28,11 +28,10 @@ test("workspaces retain native keyboard row opening and selection", () => {
   assert.equal(result.props.density,"compact");
   assert.equal(result.props.typeIcons,false);
 });
-test("custom cells retain documented column sizing and are not double wrapped", () => {
-  const render=()=>"action";
-  const result=mount({label:"Actions",rows:[],columns:[{field:"action",render,minWidth:"12rem"}]});
-  assert.equal(result.props.columns[0].render({}).type,"DataPill");
-  assert.equal(result.props.columns[0].render({}).props.size,"md");
+test("rich custom cells retain sizing and are not wrapped", () => {
+  const render=()=>({type:"Button"});
+  const result=mount({label:"Actions",rows:[{id:"one"}],columns:[{field:"action",render,minWidth:"12rem"}]});
+  assert.equal(result.props.columns[0].render({}).type,"Button");
   assert.equal(result.props.columns[0].pill,false);
   assert.equal(result.props.columns[0].minWidth,"12rem");
 });
@@ -47,14 +46,29 @@ test("action columns stay bounded without disabling their resize handles", () =>
   assert.equal(column.render({}).type,"Button");
 });
 
-test("person cells use recorded gender with a neutral unknown fallback", () => {
-  const result=mount({label:"People",rows:[],columns:[{field:"applicant",type:"person"}]});
-  const column=result.props.columns[0];
-  assert.equal(column.render({applicant:"Emma",applicant_gender:"F"}).props.gender,"female");
-  assert.equal(column.render({applicant:"Alex"}).props.gender,undefined);
+test("native person cells retain recorded gender and safe missing names", () => {
+ const result=mount({label:"People",rows:[{id:"1",applicant:"Emma",applicant_gender:"F"},{id:"2",applicant:{gender:"M",name:""}},{id:"3",applicant:"Alex"}],columns:[{field:"applicant",type:"person"}]});
+ const field=result.props.columns[0].field;
+ assert.equal(result.props.data[0][field].gender,"female");
+ assert.equal(result.props.data[1][field].name,"—");
+ assert.equal(result.props.data[2][field].gender,undefined);
 });
 
-test("person cells with missing names show a neutral placeholder without rendering an object",()=>{
-  const result=mount({label:"People",rows:[],columns:[{field:"applicant",type:"person"}]});
-  assert.deepEqual(Array.from(result.props.columns[0].render({applicant:{gender:"M",name:""}}).children),["—"]);
+ test("068 projects scalar and gender cells through native pills without mutating source records",()=>{
+  const rows=[{id:"one",applicant:"Emma",applicant_gender:"F",total:0}];
+  const grid=mount({label:"People",rows,columns:[{field:"applicant",type:"person"},{field:"total",type:"number",render:r=>r.total}]});
+  assert.equal(grid.props.uniformPillWidths,true);
+  assert.equal(grid.props.columns[0].render,undefined);
+  assert.equal(grid.props.data[0][grid.props.columns[0].field].gender,"female");
+  assert.equal(grid.props.columns[1].render,undefined);
+  assert.equal(grid.props.data[0][grid.props.columns[1].field],0);
+  assert.equal(rows[0].applicant,"Emma");
+});
+
+test("formatted scalar cells retain domain ordering",()=>{
+ const rows=[{id:"early",starts_at:"2026-10-22T09:00:00Z"},{id:"late",starts_at:"2026-10-22T14:00:00Z"}];
+ const result=mount({label:"Times",rows,columns:[{field:"starts_at",type:"date",render:r=>r.id==="early"?"9:00 AM":"2:00 PM"}]});
+ const c=result.props.columns[0];
+ assert.equal(typeof c.sorter,"function");
+ assert.ok(c.sorter("9:00 AM","2:00 PM",rows[0],rows[1],c.field,"asc")<0);
 });

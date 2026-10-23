@@ -2268,7 +2268,7 @@
           P.Stack,
           { gap: "sm" },
           h(P.DataGrid, {
-            density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
+            density: "compact", cells: "pill", uniformPillWidths: true, typeIcons: false, wrapHeaders: false,
             label: t(`part${n}`), data: groups[n], index: "id", narrow: "table", mode: "fill", isStatic: true,
             empty: t(`part${n}Empty`),
             columns: [
@@ -2968,7 +2968,7 @@
         !archived ? h(P.Checkbox, { label: t("showClosedCases"), checked: includeClosed, onChange: (event) => setIncludeClosed(event.target.checked) }) : null,
       ),
       h(P.DataGrid, {
-        density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
+        density: "compact", cells: "pill", uniformPillWidths: true, typeIcons: false, wrapHeaders: false,
         label: title || t(archived ? "archivedTitle" : "casesTitle"), data: rows, index: "id",
         mode: "pages", pageSize: 25, headerMenu: true, rowMenuButton: false, narrow: "table",
         keyColumns: columns.map((column) => column.field), columns,

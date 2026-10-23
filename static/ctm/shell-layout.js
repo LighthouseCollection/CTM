@@ -4,40 +4,55 @@
   function Table({ label, rows, columns, selected, onSelect, empty, className, isStatic = true }) {
     // Every CTM collection keeps native grid controls, including read-only records.
     // Read-only data must not disable column resizing, sorting or header menus.
-    const gridColumns = (columns || []).map((column) => {
+    let gridRows = rows;
+    const gridColumns = (columns || []).map((column, index) => {
       const render = column.render;
       const isAction = column.kind === "actions" || /^(open_action|actions?)$/.test(column.field);
       const type = column.type || (/^(applicant|respondent|manager|.*_name)$/.test(column.field) ? "person"
         : /^(.*_count|count|total|position|married_years)$/.test(column.field) ? "number" : "text");
-      const personRender = (record, value) => {
-        const person = value && typeof value === "object" ? value : null;
-        const rawGender = person?.gender || record[column.field + "_gender"];
-        const gender = rawGender === "M" || rawGender === "male" ? "male" : rawGender === "F" || rawGender === "female" ? "female" : undefined;
-        return h(P.DataPill, { size: "md", ...(gender ? { gender } : { person: true }) }, person ? person.name || "—" : value || "—");
-      };
+      const values = render && !isAction ? rows.map(record => render(record)) : null;
+      const scalar = values && values.every(value => value == null || ["string", "number", "boolean"].includes(typeof value));
+      const native = !isAction && (scalar || (!render && type === "person"));
+      let projected = {};
+      if (native) {
+        // Keep domain fields intact for callbacks and richer neighboring cells.
+        const field = "__ctm_display_" + index;
+        gridRows = gridRows.map((record, rowIndex) => {
+          let value = scalar ? values[rowIndex] : record[column.field];
+          if (type === "person") {
+            const person = value && typeof value === "object" ? value : null;
+            const raw = person?.gender || record[column.field + "_gender"];
+            value = { name: person ? person.name || "—" : value || "—",
+              gender: raw === "M" || raw === "male" ? "male" : raw === "F" || raw === "female" ? "female" : undefined };
+          }
+          return { ...record, [field]: value };
+        });
+        projected = { field, render: undefined, pill: column.pill === false ? false : column.pill,
+          sorter: (a, b, left, right, _field, direction) => {
+            const rawA = left[column.field], rawB = right[column.field];
+            if (typeof column.sorter === "function") return column.sorter(rawA, rawB, left, right, column.field, direction);
+            if (type === "number" || column.sorter === "number") return Number(rawA ?? 0) - Number(rawB ?? 0);
+            if (type === "date" || column.sorter === "date") {
+              const dateA = Date.parse(rawA), dateB = Date.parse(rawB);
+              return (Number.isNaN(dateA) ? 0 : dateA) - (Number.isNaN(dateB) ? 0 : dateB);
+            }
+            const text = value => value && typeof value === "object" ? value.name || value.label || "" : String(value ?? "");
+            return new Intl.Collator(undefined, { numeric: true }).compare(text(rawA), text(rawB));
+          } };
+      }
       return {
-        ...column, type,
-        ...(type === "person" && !render ? { pill: false, render: (record) => personRender(record, record[column.field]) } : {}),
+        ...column, type, ...projected,
         ...(isAction ? { kind: "center", maxWidth: column.maxWidth || "--plx-ref-size-240px", headerSort: false, groupable: false } : {}),
         ...(/^(status|state)$/.test(column.field) ? { maxWidth: column.maxWidth || "--plx-ref-size-240px" } : {}),
         ...(/^(code|number|case_number|case_code)$/.test(column.field) ? { kind: "data" } : {}),
-        ...(render ? { pill: false, render: (record) => {
-          const value = render(record);
-          if (value === null || value === undefined || value === "" || typeof value === "object") return value;
-          if (type === "person") return personRender(record, value);
-          return h(P.DataPill, {
-            size: "md", person: type === "person",
-            data: column.kind === "data" || type === "number" || type === "date",
-            ...(type === "date" ? { icon: "calendar" } : {}),
-          }, value);
-        } } : {}),
+        ...(render && !native ? { pill: false, render } : {}),
         headerSort: !isAction && column.headerSort !== false,
         resizable: column.resizable !== false,
       };
     });
     const common = {
-      label, data: rows, columns: gridColumns, index: "id", className,
-      density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
+      label, data: gridRows, columns: gridColumns, index: "id", className,
+      density: "compact", cells: "pill", uniformPillWidths: true, typeIcons: false, wrapHeaders: false,
       narrow: "table", empty,
     };
     return h(P.DataGrid, {
