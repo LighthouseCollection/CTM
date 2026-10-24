@@ -68,7 +68,14 @@ A priest who knows the marriage writes a free-form report through a private link
 
 ## Testing
 
-- `tests/frontend/external-report.test.cjs` (13), `tests/frontend/council-external.test.cjs` (21) , `tests/frontend/council-paper.test.cjs` (12) and `tests/frontend/council-recording-completion.test.cjs` (8).
+- `tests/frontend/external-report.test.cjs` (13), `tests/frontend/council-external.test.cjs` (21), `tests/frontend/council-paper.test.cjs` (12) and `tests/frontend/council-recording-completion.test.cjs` (8).
 - The fixture (`scripts/council_fixture.cjs --contract=pr7`) models the send token, reissue, cancel, capability route, and print routes (`POST /__pdf_mode/ {mode: "unavailable"|"too_long"}` switches the PDF reply), paper upload, file status (clean on the second check; `POST /__paper_scan/ {state: "rejected"}`), paper completion, the paper original download, AUDIO case-original upload, recording completion (queued processing) and playback.
 - Actual-backend results are in the #3 report.
+- **Print, paper and recording, actual backend (2026-10-24):** local-only check of branch `433f742` (which already contains backend `fcf03a2`) on an isolated PostgreSQL, web server as the restricted `ctm_app` role, synthetic data only.
+  - Print view `200` with title and instructions and no link or token; `print.pdf` `503 pdf_unavailable` (WeasyPrint isn't installed locally) and the panel showed the browser-print advice. The renderer-present PDF download is fixture-tested only.
+  - Paper: upload stored with owner NULL, council visibility, bound to the request; scan pending → a synthetic clean scan event stood in for the scanner → recorded; request completed; the report showed in Completed reports with the PDF rendered through the protected route.
+  - Recording: AUDIO upload stored as a case original (no request); browser-measured 2000 ms sent; server kept the acknowledgement, the member as recorder, finalized recording and one queued transcription run; playback and the queued status shown.
+  - The applicant was refused both originals (`403`).
+  - Not verified: real virus scanning, a configured PDF renderer, transcription, Arabic and phone-width visual layout on these panels (Arabic is unit-tested).
+  - Seen on the way (not council code): `ctm/urls.py` sends client paths to `api.shell` with `client_path`, which `shell()` doesn't accept, so a deep link such as `/cases/{id}/reports` returns a server error under Django; entering at `/` works. Reported on #4.
 - Evidence: `evidence/c05-ar-390-priest-page-real-backend.jpg`, `evidence/c05-ar-390-link-inactive-real-backend.jpg`, `evidence/c05-ar-390-link-expired-projection-real-backend.jpg` (synthetic data).
