@@ -172,6 +172,7 @@ test("recorded report: player through the authorized route, recorder and date, n
   assert.doesNotMatch(text, /\["fv-r1"\]/);
   const player = byName(answers, "MediaPlayer")[0];
   assert.equal(player.props.src, "/api/files/fv-r1/");
+  assert.equal(player.props.kind, "video", "video-capable playback also supports audio originals");
   assert.match(text, /cannot be revised/);
   assert.equal(items[1].content.type.name, "RecordingStatusList", "recording list only; no capture recorder for a completed recorded response");
   assert.equal(byName(items[2].content, "EmptyState").length, 0, "transcripts tab is not 'not an interview'");

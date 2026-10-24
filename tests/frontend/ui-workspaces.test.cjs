@@ -53,3 +53,9 @@ test('historical adapter preserves retained identifiers and unknown payload data
   assert.equal(H.validPayload({number:55,parties:[]}),false);
   assert.equal(H.validPayload(retained),true);
 });
+
+test('member enrollment uses the explicit membership endpoint', () => {
+  const source = fs.readFileSync('static/ctm/ui-workspaces.js', 'utf8');
+  assert.doesNotMatch(source, /api\("\/api\/council\/enroll\//);
+  assert.match(source, /api\("\/api\/system\/members\/", \{ method: "POST"/);
+});

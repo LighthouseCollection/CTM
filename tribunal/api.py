@@ -214,7 +214,7 @@ def health(request):
 
 @require_GET
 @ensure_csrf_cookie
-def shell(request):
+def shell(request, client_path=None):
     providers = []
     for name in ("microsoft", "google", "apple"):
         config = settings.SOCIALACCOUNT_PROVIDERS.get(name, {})

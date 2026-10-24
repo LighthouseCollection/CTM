@@ -327,6 +327,7 @@
   const words = {
     en: {
       councilSession: "Council Session",
+      councilMember: "Council member",
       reviewQueue: "Applications awaiting completeness review",
       reviewQueueEmpty: "No applications are awaiting completeness review.",
       reviewOpen: "Review applications",
@@ -638,6 +639,7 @@
     },
     ar: {
       councilSession: "جلسة المجلس",
+      councilMember: "عضو المجلس",
       reviewQueue: "طلبات في انتظار مراجعة الاستيفاء",
       reviewQueueEmpty: "لا توجد طلبات في انتظار مراجعة الاستيفاء.",
       reviewOpen: "مراجعة الطلبات",

@@ -302,10 +302,10 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /t\("personalDetails"\)/);
   assert.match(councilCase, /t\("churchAffiliation"\)/);
   assert.match(councilCase, /party\.photo_url/);
-  assert.match(councilCase, /icon: spousePhoto\(P, h, party\)/);
+  assert.match(councilCase, /icon: h\(SpousePhotoUpload, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
   assert.match(councilCase, /function spouseHeaderTitle/);
   assert.match(councilCase, /title: spouseHeaderTitle\(P, h, t, party\)/);
-  assert.match(councilCase, /collapsible: true,\s*defaultExpanded: false/);
+  assert.match(councilCase, /collapsible: true,\s*expanded: Boolean\(expandedParties\[party\.id\]\)/);
   assert.doesNotMatch(councilCase, /spouseIdentity\(P, h, t, party\)/);
   assert.match(councilCase, /collapsible: true/);
   assert.match(councilCase, /profile\?\.contact/);

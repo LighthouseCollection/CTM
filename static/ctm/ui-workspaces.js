@@ -210,7 +210,7 @@
       if (issue) return;
       setPending(true); setFailure(null);
       try {
-        await api("/api/council/enroll/", { method: "POST", body: JSON.stringify({ ...form, first_name: form.first_name.trim(), last_name: form.last_name.trim(), email: form.email.trim() }) });
+        await api("/api/system/members/", { method: "POST", body: JSON.stringify({ ...form, first_name: form.first_name.trim(), last_name: form.last_name.trim(), email: form.email.trim() }) });
         setForm({ first_name: "", last_name: "", email: "", role: "member" }); onAdded();
       } catch (error) { setFailure(window.CTMCouncil.serverMessage(error, t)); }
       finally { setPending(false); }

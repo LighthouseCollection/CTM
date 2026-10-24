@@ -2035,6 +2035,7 @@
 
   // A council-recorded priest response keeps only the recording's file id in its answers: play it through the
   // authorized file route (byte ranges) and offer the download. No transcript is implied.
+  // A video-capable player preserves video frames and also plays audio-only originals.
   function recordedOriginal(id, report, lang) {
     const R = window.React,
       P = window.Plenix,
@@ -2044,7 +2045,7 @@
     return h(
       P.Stack,
       { gap: "sm", key: id },
-      h(P.MediaPlayer, { key: id, src: url, kind: "audio", label: t("recordedOriginalName", { title: report.title || "" }), strings: mediaStrings(t) }),
+      h(P.MediaPlayer, { key: id, src: url, kind: "video", label: t("recordedOriginalName", { title: report.title || "" }), strings: mediaStrings(t) }),
       h(P.Inline, null, h(P.Button, { size: "sm", href: url }, t("download"))),
     );
   }

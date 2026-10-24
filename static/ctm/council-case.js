@@ -483,8 +483,6 @@ ${ar}` : en;
       civilDivorceEvent: "Civil divorce",
       petitionTitle: "Petition",
       petition: "Petition",
-      applicant: "Applicant",
-      respondent: "Respondent",
       noPetitions: "No submitted petition is available for this case.",
       marriageTitle: "Marriage",
       separation: "Separation",
@@ -951,8 +949,6 @@ ${ar}` : en;
       civilDivorceEvent: "الطلاق المدني",
       petitionTitle: "الطلب",
       petition: "الطلب",
-      applicant: "مقدم الطلب",
-      respondent: "الطرف الآخر",
       noPetitions: "لا يوجد طلب مقدَّم متاح لهذه القضية.",
       marriageTitle: "الزواج",
       separation: "الانفصال",
@@ -1590,21 +1586,21 @@ ${ar}` : en;
       let response;
       try {
         response = await window.fetch(`/api/requests/${encodeURIComponent(request.id)}/print.pdf`, { credentials: "same-origin", cache: "no-store" });
+        const type = (response.headers && response.headers.get && response.headers.get("Content-Type")) || "";
+        if (!response.ok || !type.startsWith("application/pdf")) return setPdf({ problem: pdfProblem(response.ok ? 503 : response.status) });
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = window.document.createElement("a");
+        a.href = url;
+        a.download = `priest-request-${request.id}.pdf`;
+        window.document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+        return setPdf({ done: true });
       } catch {
         return setPdf({ problem: pdfProblem(0) });
       }
-      const type = (response.headers && response.headers.get && response.headers.get("Content-Type")) || "";
-      if (!response.ok || !type.startsWith("application/pdf")) return setPdf({ problem: pdfProblem(response.ok ? 503 : response.status) });
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = window.document.createElement("a");
-      a.href = url;
-      a.download = `priest-request-${request.id}.pdf`;
-      window.document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.setTimeout(() => window.URL.revokeObjectURL(url), 10000);
-      return setPdf({ done: true });
     }
     async function issue() {
       setConfirm(null);

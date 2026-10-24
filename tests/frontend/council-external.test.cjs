@@ -257,3 +257,11 @@ test("print: Arabic wording", () => {
   assert.ok(buttons(ui.tree, "فتح الطلب القابل للطباعة")[0]);
   assert.ok(buttons(ui.tree, "تنزيل ملف PDF")[0]);
 });
+
+test("print: interrupted response body clears busy state and permits retry", async () => {
+  const w = pdfWindow(() => ({ ...reply(200, "application/pdf"), blob: async () => { throw new Error("interrupted"); } }));
+  const ui = panel(draft, () => ({}), w.window);
+  await ui.click("Download PDF");
+  assert.equal(w.downloads.length, 0);
+  assert.equal(Boolean(buttons(ui.tree, "Download PDF")[0].props.disabled), false);
+});
