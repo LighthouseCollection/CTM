@@ -30,7 +30,7 @@ def save_preferences(actor, values):
     names = {"first_name", "last_name"}
     if any(not isinstance(values[key], str) or not values[key].strip() or len(values[key].strip()) > 150 for key in names & values.keys()):
         raise ValidationError("Enter a first and last name up to 150 characters.")
-    user = Account.objects.select_for_update().select_related("person").get(pk=actor.pk)
+    user = Account.objects.select_for_update(of=("self",)).select_related("person").get(pk=actor.pk)
     active(user)
     changed = []
     before = {}
