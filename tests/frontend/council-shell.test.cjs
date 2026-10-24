@@ -67,7 +67,8 @@ test("reports separate interview work from completed reports and template compos
   assert.match(councilCase, /value: "interviews", label: t\("interviewReports"\), content: interviewReports/);
   assert.match(councilCase, /mode: "interviews"/);
   assert.match(councilCase, /interviewOnly \? row\.kind === "interview" : row\.kind !== "interview"/);
-  assert.match(councilCase, /onCreated: \(\) => setTab\("interviews"\)/);
+  // A new interview opens its interview tab; an external priest request (C-05) stays in Report Maker for its link.
+  assert.match(councilCase, /onCreated: \(id, note\) => \{ if \(note !== "externalDraftSaved"\) setTab\("interviews"\); \}/);
 });
 
 test("report maker replaces the former report templates workspace label", () => {

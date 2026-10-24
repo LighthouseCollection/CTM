@@ -156,8 +156,52 @@
     return all.filter((q) => codes.has(q.code) && !String(q.wording_ar || "").trim()).map((q) => q.code);
   }
 
+  // External priest report (C-05): free-form testimony from a named priest; no question list.
+  const EXTERNAL = "external_priest";
+  const priestTitle = (name) => `Report by Fr. ${String(name || "").trim()}`;
+  const priestFromTitle = (title) => String(title || "").replace(/^Report by Fr\.\s*/, "").trim();
+  // The private link carries the token in the URL fragment, which browsers never send to the server,
+  // proxies or referrers. The static boot page reads it, removes it from the address bar and calls the
+  // capability-protected JSON route with a Bearer header.
+  // Link status and controls. Servers with the council link projection (backend c377706) send
+  // external_link {priest_name, expires_at, state, can_issue, can_reissue, can_cancel}; its flags already
+  // include writer authority and open case/proceeding. Older servers: derive from the request state.
+  function linkControls(request, canWrite) {
+    const link = request && request.external_link;
+    if (link && typeof link === "object")
+      return {
+        projected: true,
+        state: String(link.state || "unavailable"),
+        priestName: link.priest_name || "",
+        expiresAt: link.expires_at || null,
+        issue: link.can_issue === true,
+        reissue: link.can_reissue === true,
+        cancel: link.can_cancel === true,
+      };
+    const state = request.state === "draft" ? "not_issued" : request.state === "sent" ? null : request.state;
+    return {
+      projected: false,
+      state,
+      priestName: "",
+      expiresAt: null,
+      issue: Boolean(canWrite) && request.state === "draft",
+      reissue: Boolean(canWrite) && request.state === "sent",
+      cancel: Boolean(canWrite) && request.state === "sent",
+    };
+  }
+
+  function priestLink(origin, requestId, token) {
+    return `${origin}/static/ctm/external-report.html#r=${encodeURIComponent(requestId)}&t=${encodeURIComponent(token)}`;
+  }
+
   function requestProblem(form, questions) {
     if (!form.party) return "chooseSubject";
+    if (form.kind === EXTERNAL) {
+      if (form.party === "both") return "chooseOneSpouse"; // a priest report names one spouse
+      if (!String(form.priest || "").trim()) return "priestRequired";
+      if (!LANGUAGES.includes(form.language)) return "chooseLanguage";
+      return null;
+    }
     if (form.kind && !["intake", "interview"].includes(form.kind)) return "chooseMethod";
     if (!String(form.title || "").trim()) return "titleRequired";
     if (!LANGUAGES.includes(form.language)) return "chooseLanguage";
@@ -166,6 +210,17 @@
   }
 
   function requestPayload(form, proceedingId, parties) {
+    if (form.kind === EXTERNAL)
+      return {
+        proceeding_id: proceedingId,
+        party_id: form.party,
+        kind: EXTERNAL,
+        title: priestTitle(form.priest),
+        language: form.language,
+        instructions: String(form.instructions || "").trim(),
+        questions: [],
+        parent_id: form.parent || null,
+      };
     const partyIds = form.party === "both" ? parties.map((party) => party.id) : [];
     return {
       proceeding_id: proceedingId,
@@ -554,6 +609,55 @@ ${ar}` : en;
       startInterviewMessage: "The question list is frozen. The applicant is not notified.",
       interviewStarted: "The interview was started. Record the answers when ready.",
       recordInterview: "Record interview answers",
+      externalHelp: "A priest who knows the marriage writes a free-form report through a private link. No council account is created.",
+      priestName: "Priest's name",
+      priestNameHelp: "The report is titled “Report by Fr. [name]”.",
+      priestRequired: "Enter the priest's name.",
+      externalInstructionsHelp: "Shown to the priest. Name only what the priest needs to know; no internal notes.",
+      externalNoQuestions: "The priest writes a free-form report. No question list is sent.",
+      externalLinkTitle: "Private link for the priest",
+      externalLinkHelp: "The link opens only this request. It expires 30 days after it is issued, stops working when a new link is issued, the request is cancelled or the report is submitted, and gives no access to the case or other reports.",
+      linkShownOnce: "Copy this link now. For privacy it is shown only once and is not stored here.",
+      privateLink: "Private link",
+      copyLink: "Copy link",
+      linkCopied: "Copied",
+      copyFailed: "The link could not be copied. Select it and copy it manually.",
+      linkNotEmailed: "This server does not email the link. Send it to the priest privately, never in case messages or notes.",
+      linkNotReturned: "The server did not return a link. Nothing was sent.",
+      priestEmail: "Priest's email (for the record)",
+      priestEmailHelp: "Stored with the request. It is not used to send anything.",
+      issueLink: "Issue private link",
+      reissueLink: "Issue a new link",
+      issueTitle: "Issue a private link?",
+      issueMessage: "A link valid for 30 days is created. It is shown once so you can send it privately.",
+      reissueTitle: "Issue a new link?",
+      reissueMessage: "The earlier link stops working immediately. The new link is valid for 30 days.",
+      cancelExternal: "Cancel request",
+      cancelExternalTitle: "Cancel this priest report request?",
+      cancelExternalMessage: "The private link stops working. A written draft the priest saved is not submitted.",
+      keepRequest: "Keep request",
+      externalCompleted: "The priest's report was submitted. It appears under Completed reports.",
+      externalClosed: "This request is closed. The link no longer works.",
+      externalIssued: "Private link issued. Copy it before leaving this page.",
+      externalCancelled: "Request cancelled. The private link no longer works.",
+      externalSubject: "Spouse named in the request",
+      externalSubjectHelp: "The priest sees this name and the case number only.",
+      priestInstructions: "Instructions to the priest (optional)",
+      externalDraftSaved: "Draft saved. Issue the private link when you are ready.",
+      linkState: "Link",
+      link_not_issued: "Not issued",
+      link_active: "Active",
+      link_expired: "Expired",
+      link_completed: "Report submitted",
+      link_cancelled: "Cancelled",
+      link_closed: "Closed",
+      link_unavailable: "Unavailable",
+      linkExpiresOn: "Expires",
+      linkExpiredOn: "Expired on",
+      linkExpiredHint: "This link has expired. Issue a new link if the priest still needs to respond.",
+      linkExpiredNoAuthority: "This link has expired. The assigned case manager can issue a new link.",
+      linkUnavailableHint: "This link cannot be used. Issue a new link if the priest still needs to respond.",
+      chooseOneSpouse: "A priest report names one spouse. Select only one.",
       interviewRestored: "Your unsaved interview answers were restored. Save them or discard them.",
       interviewUnsaved: "Interview answers have not been saved.",
       interviewDiscardTitle: "Discard unsaved interview answers?",
@@ -909,6 +1013,55 @@ ${ar}` : en;
       startInterviewMessage: "يتم تثبيت قائمة الأسئلة. ولا يتم إخطار مقدم الطلب.",
       interviewStarted: "بدأت المقابلة. سجّل الإجابات عندما تكون جاهزًا.",
       recordInterview: "تسجيل إجابات المقابلة",
+      externalHelp: "يكتب كاهن يعرف الزواج تقريرًا حرًّا عبر رابط خاص. ولا يُنشأ له حساب في المجلس.",
+      priestName: "اسم الكاهن",
+      priestNameHelp: "يكون عنوان التقرير «Report by Fr. [الاسم]».",
+      priestRequired: "أدخل اسم الكاهن.",
+      externalInstructionsHelp: "تُعرض على الكاهن. اذكر فقط ما يحتاج الكاهن إلى معرفته؛ ولا ملاحظات داخلية.",
+      externalNoQuestions: "يكتب الكاهن تقريرًا حرًّا. ولا تُرسل قائمة أسئلة.",
+      externalLinkTitle: "الرابط الخاص بالكاهن",
+      externalLinkHelp: "يفتح الرابط هذا الطلب فقط. وتنتهي صلاحيته بعد 30 يومًا من إصداره، ويتوقف عند إصدار رابط جديد أو إلغاء الطلب أو تقديم التقرير، ولا يمنح أي اطلاع على القضية أو التقارير الأخرى.",
+      linkShownOnce: "انسخ هذا الرابط الآن. حفاظًا على الخصوصية لا يُعرض إلا مرة واحدة ولا يُحفظ هنا.",
+      privateLink: "الرابط الخاص",
+      copyLink: "نسخ الرابط",
+      linkCopied: "تم النسخ",
+      copyFailed: "تعذر نسخ الرابط. حدّده وانسخه يدويًا.",
+      linkNotEmailed: "لا يرسل هذا الخادم الرابط بالبريد الإلكتروني. أرسله إلى الكاهن بشكل خاص، ولا تضعه أبدًا في رسائل القضية أو ملاحظاتها.",
+      linkNotReturned: "لم يُرجع الخادم رابطًا. لم يُرسل شيء.",
+      priestEmail: "البريد الإلكتروني للكاهن (للسجل)",
+      priestEmailHelp: "يُحفظ مع الطلب. ولا يُستخدم لإرسال أي شيء.",
+      issueLink: "إصدار رابط خاص",
+      reissueLink: "إصدار رابط جديد",
+      issueTitle: "هل تريد إصدار رابط خاص؟",
+      issueMessage: "يُنشأ رابط صالح لمدة 30 يومًا. ويُعرض مرة واحدة لتتمكن من إرساله بشكل خاص.",
+      reissueTitle: "هل تريد إصدار رابط جديد؟",
+      reissueMessage: "يتوقف الرابط السابق فورًا. ويكون الرابط الجديد صالحًا لمدة 30 يومًا.",
+      cancelExternal: "إلغاء الطلب",
+      cancelExternalTitle: "هل تريد إلغاء طلب تقرير الكاهن هذا؟",
+      cancelExternalMessage: "يتوقف الرابط الخاص. ولا تُقدَّم أي مسودة مكتوبة حفظها الكاهن.",
+      keepRequest: "الإبقاء على الطلب",
+      externalCompleted: "قدّم الكاهن تقريره. ويظهر ضمن التقارير المكتملة.",
+      externalClosed: "هذا الطلب مغلق. ولم يعد الرابط يعمل.",
+      externalIssued: "صدر الرابط الخاص. انسخه قبل مغادرة هذه الصفحة.",
+      externalCancelled: "أُلغي الطلب. ولم يعد الرابط الخاص يعمل.",
+      externalSubject: "الزوج/الزوجة المذكور في الطلب",
+      externalSubjectHelp: "لا يرى الكاهن إلا هذا الاسم ورقم القضية.",
+      priestInstructions: "تعليمات للكاهن (اختياري)",
+      externalDraftSaved: "حُفظت المسودة. أصدر الرابط الخاص عندما تكون جاهزًا.",
+      linkState: "الرابط",
+      link_not_issued: "لم يصدر",
+      link_active: "نشط",
+      link_expired: "منتهي الصلاحية",
+      link_completed: "قُدّم التقرير",
+      link_cancelled: "ملغى",
+      link_closed: "مغلق",
+      link_unavailable: "غير متاح",
+      linkExpiresOn: "تنتهي صلاحيته",
+      linkExpiredOn: "انتهت صلاحيته في",
+      linkExpiredHint: "انتهت صلاحية هذا الرابط. أصدر رابطًا جديدًا إذا كان الكاهن لا يزال بحاجة إلى الرد.",
+      linkExpiredNoAuthority: "انتهت صلاحية هذا الرابط. ويمكن لمسؤول القضية المعيَّن إصدار رابط جديد.",
+      linkUnavailableHint: "لا يمكن استخدام هذا الرابط. أصدر رابطًا جديدًا إذا كان الكاهن لا يزال بحاجة إلى الرد.",
+      chooseOneSpouse: "يذكر تقرير الكاهن زوجًا واحدًا فقط. اختر واحدًا.",
       interviewRestored: "تمت استعادة إجابات المقابلة غير المحفوظة. احفظها أو تجاهلها.",
       interviewUnsaved: "لم تُحفظ إجابات المقابلة.",
       interviewDiscardTitle: "هل تريد تجاهل إجابات المقابلة غير المحفوظة؟",
@@ -963,7 +1116,7 @@ ${ar}` : en;
   // ---------- Report requests ----------
 
   function ReportPartySelector({ P, h, t, parties, kind, interviewReady, value, disabled, error, onChange }) {
-    const eligible = (parties || []).filter((party) => party.can_receive || (kind === "interview" && interviewReady));
+    const eligible = (parties || []).filter((party) => party.can_receive || (kind === "interview" && interviewReady) || kind === EXTERNAL);
     const selected = value === "both" ? eligible.map((party) => party.id) : value ? [value] : [];
     const changeSelection = (partyId, checked) => {
       const next = checked ? [...new Set([...selected, partyId])] : selected.filter((id) => id !== partyId);
@@ -971,7 +1124,9 @@ ${ar}` : en;
     };
     return h(
       P.Field,
-      { label: t("subject"), required: true, error },
+      kind === EXTERNAL
+        ? { label: t("externalSubject"), description: t("externalSubjectHelp"), required: true, error }
+        : { label: t("subject"), required: true, error },
       h(
         "div",
         { className: "ctm-report-party-cards", role: "group", "aria-label": t("subject") },
@@ -1012,6 +1167,7 @@ ${ar}` : en;
       instructions: "",
       selected: [],
       parent: "",
+      priest: "",
     });
     const [problem, setProblem] = R.useState(null);
     const [pending, setPending] = R.useState(false);
@@ -1041,7 +1197,7 @@ ${ar}` : en;
           method: "POST",
           body: JSON.stringify(requestPayload(form, proceeding.id, record.parties)),
         });
-        onSaved(created.items ? created.items.map((item) => item.id) : created.id);
+        onSaved(created.items ? created.items.map((item) => item.id) : created.id, form.kind === EXTERNAL ? "externalDraftSaved" : undefined);
       } catch (error) {
         setFailure(base.serverMessage(error, t));
       } finally {
@@ -1071,18 +1227,33 @@ ${ar}` : en;
             interviewReady
               ? { value: "interview", label: t("methodInterview"), disabled: pending }
               : { value: "interview", label: t("methodInterview"), disabled: true },
+            { value: EXTERNAL, label: t("external_priest"), description: t("externalHelp"), disabled: pending },
           ],
         }),
-        h(
-          P.Field,
-          { label: t("title"), required: true, error: err("titleRequired") },
-          h(P.Input, {
-            value: form.title,
-            maxLength: 200,
-            disabled: pending,
-            onChange: (e) => update({ title: e.target.value }),
-          }),
-        ),
+        form.kind === EXTERNAL
+          ? h(
+              P.Field,
+              { label: t("priestName"), description: t("priestNameHelp"), required: true, error: err("priestRequired") },
+              h(P.Input, { value: form.priest, maxLength: 180, disabled: pending, onChange: (e) => update({ priest: e.target.value }) }),
+            )
+          : h(
+              P.Field,
+              { label: t("title"), required: true, error: err("titleRequired") },
+              h(P.Input, {
+                value: form.title,
+                maxLength: 200,
+                disabled: pending,
+                onChange: (e) => update({ title: e.target.value }),
+              }),
+            ),
+        form.kind === EXTERNAL
+          ? h(
+              P.Field,
+              { label: t("priestInstructions"), description: t("externalInstructionsHelp") },
+              h(P.Textarea, { rows: 3, autoGrow: true, value: form.instructions, maxLength: 5000, disabled: pending, onChange: (e) => update({ instructions: e.target.value }) }),
+            )
+          : null,
+        problem === "chooseOneSpouse" ? h(P.Notice, { tone: "warning" }, t("chooseOneSpouse")) : null,
         h(P.RadioGroup, {
           label: t("language"),
           value: form.language,
@@ -1107,7 +1278,7 @@ ${ar}` : en;
             )
           : null,
       ),
-      h(P.SplitView, {
+      form.kind === EXTERNAL ? h(P.Notice, { tone: "info" }, t("externalNoQuestions")) : h(P.SplitView, {
         label: t("reportTemplates"),
         firstLabel: t("questionCategories"),
         first: h(P.Panel, { title: t("questionCategories") }, h("div", {
@@ -1258,6 +1429,157 @@ ${ar}` : en;
     );
   }
 
+  function ExternalLinkPanel({ api, lang, request, canWrite, onChanged }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const controls = linkControls(request, canWrite);
+    const [name, setName] = R.useState(() => controls.priestName || priestFromTitle(request.title));
+    const [email, setEmail] = R.useState("");
+    const [link, setLink] = R.useState(null); // shown once, kept in memory only
+    const [confirm, setConfirm] = R.useState(null); // "issue" | "reissue" | "cancel"
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const [copied, setCopied] = R.useState(false);
+    async function issue() {
+      setConfirm(null);
+      setFailure(null);
+      if (!name.trim()) return setFailure(t("priestRequired"));
+      setPending(true);
+      try {
+        const out = await api(`/api/requests/${encodeURIComponent(request.id)}/send/`, {
+          method: "POST",
+          body: JSON.stringify({ external_name: name.trim(), external_email: email.trim() }),
+        });
+        if (!out || !out.token) throw Object.assign(new Error("no link"), { data: { detail: t("linkNotReturned") } });
+        setLink(priestLink(window.location.origin, request.id, out.token));
+        setCopied(false);
+        onChanged(null);
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+      return undefined;
+    }
+    async function cancelRequest() {
+      setConfirm(null);
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/requests/${encodeURIComponent(request.id)}/cancel/`, {
+          method: "POST",
+          body: JSON.stringify({ expected_version: request.request_version }),
+        });
+        setLink(null);
+        onChanged("externalCancelled");
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    async function copy() {
+      try {
+        await window.navigator.clipboard.writeText(link);
+        setCopied(true);
+      } catch {
+        setCopied(false);
+        setFailure(t("copyFailed"));
+      }
+    }
+    return h(
+      P.Panel,
+      { icon: "link", title: t("externalLinkTitle") },
+      h(
+        P.Stack,
+        { gap: "md" },
+        h(P.Text, { variant: "secondary" }, t("externalLinkHelp")),
+        controls.projected
+          ? h(
+              P.PropertyList,
+              null,
+              controls.priestName ? h(P.PropertyList.Item, { label: t("priestName") }, base.isolate(controls.priestName)) : null,
+              h(
+                P.PropertyList.Item,
+                { label: t("linkState") },
+                h(
+                  P.Badge,
+                  { tone: { active: "active", completed: "success", expired: "warning", cancelled: "neutral", closed: "neutral", unavailable: "danger" }[controls.state] || "neutral" },
+                  t(`link_${controls.state}`),
+                ),
+              ),
+              controls.expiresAt && (controls.state === "active" || controls.state === "expired")
+                ? h(P.PropertyList.Item, { label: t(controls.state === "expired" ? "linkExpiredOn" : "linkExpiresOn"), data: true }, base.formatWhen(controls.expiresAt, lang))
+                : null,
+            )
+          : null,
+        controls.state === "expired" ? h(P.Notice, { tone: "warning" }, t(controls.reissue ? "linkExpiredHint" : "linkExpiredNoAuthority")) : null,
+        controls.state === "unavailable" ? h(P.Notice, { tone: "warning" }, t("linkUnavailableHint")) : null,
+        link
+          ? h(
+              P.Stack,
+              { gap: "sm" },
+              h(P.Notice, { tone: "warning" }, t("linkShownOnce")),
+              h(P.Field, { label: t("privateLink") }, h(P.Input, { value: link, readOnly: true, dir: "ltr" })),
+              h(P.Inline, { wrap: true }, h(P.Button, { size: "sm", variant: "primary", onClick: copy }, t(copied ? "linkCopied" : "copyLink"))),
+              h(P.Text, { variant: "secondary" }, t("linkNotEmailed")),
+            )
+          : null,
+        controls.issue || controls.reissue || controls.cancel
+          ? h(
+              P.Stack,
+              { gap: "sm" },
+              h(P.Field, { label: t("priestName"), required: true }, h(P.Input, { value: name, maxLength: 180, disabled: pending, onChange: (e) => setName(e.target.value) })),
+              h(
+                P.Field,
+                { label: t("priestEmail"), description: t("priestEmailHelp") },
+                h(P.Input, { type: "email", value: email, maxLength: 254, disabled: pending, dir: "ltr", onChange: (e) => setEmail(e.target.value) }),
+              ),
+              h(
+                P.Inline,
+                { wrap: true },
+                controls.issue || controls.reissue
+                  ? h(
+                      P.Button,
+                      { variant: "primary", loading: pending, disabled: pending, onClick: () => setConfirm(controls.reissue ? "reissue" : "issue") },
+                      t(controls.reissue ? "reissueLink" : "issueLink"),
+                    )
+                  : null,
+                controls.cancel
+                  ? h(P.Button, { disabled: pending, onClick: () => setConfirm("cancel") }, t("cancelExternal"))
+                  : null,
+              ),
+            )
+          : null,
+        ["completed", "cancelled", "closed"].includes(controls.state)
+          ? h(P.Notice, { tone: "info" }, t(controls.state === "completed" ? "externalCompleted" : "externalClosed"))
+          : null,
+        failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+      ),
+      h(P.ConfirmDialog, {
+        open: confirm === "issue" || confirm === "reissue",
+        title: t(confirm === "reissue" ? "reissueTitle" : "issueTitle"),
+        message: t(confirm === "reissue" ? "reissueMessage" : "issueMessage"),
+        confirmLabel: t(confirm === "reissue" ? "reissueLink" : "issueLink"),
+        cancelLabel: t("cancel"),
+        onConfirm: issue,
+        onCancel: () => setConfirm(null),
+      }),
+      h(P.ConfirmDialog, {
+        open: confirm === "cancel",
+        title: t("cancelExternalTitle"),
+        message: t("cancelExternalMessage"),
+        confirmLabel: t("cancelExternal"),
+        cancelLabel: t("keepRequest"),
+        destructive: true,
+        onConfirm: cancelRequest,
+        onCancel: () => setConfirm(null),
+      }),
+    );
+  }
+
   function RequestDetail({ api, lang, request, canWrite, onSent }) {
     const R = window.React,
       P = window.Plenix,
@@ -1269,6 +1591,7 @@ ${ar}` : en;
     // Reopen the answer form when typed answers were left by in-app navigation.
     const [recording, setRecording] = R.useState(() => base.unsavedDrafts.has(interviewDraftKey(request)));
     const interview = request.kind === "interview";
+    const external = request.kind === EXTERNAL;
     async function send() {
       setPending(true);
       setFailure(null);
@@ -1298,15 +1621,18 @@ ${ar}` : en;
         request.sent_at ? h(P.PropertyList.Item, { label: t(interview ? "startedAt" : "sentAt"), data: true }, base.formatWhen(request.sent_at, lang)) : null,
         request.parent_report_id ? h(P.PropertyList.Item, { label: t("parent") }, t("followUpYes")) : null,
       ),
-      h(
-        P.Panel,
-        { icon: "doc-text", title: t("questions") },
-        h(P.List, {
-          ordered: "decimal",
-          items: (request.questions || []).map((q) => ({ children: `${q.code} — ${wording(q, lang)}` })),
-        }),
-      ),
-      request.instructions ? h(P.Panel, { icon: "doc-text", title: t("instructions") }, h(P.Text, { as: "p" }, request.instructions)) : null,
+      external
+        ? h(P.Notice, { tone: "info" }, t("externalNoQuestions"))
+        : h(
+            P.Panel,
+            { icon: "doc-text", title: t("questions") },
+            h(P.List, {
+              ordered: "decimal",
+              items: (request.questions || []).map((q) => ({ children: `${q.code} — ${wording(q, lang)}` })),
+            }),
+          ),
+      request.instructions ? h(P.Panel, { icon: "doc-text", title: t(external ? "priestInstructions" : "instructions") }, h(P.Text, { as: "p", dir: "auto" }, request.instructions)) : null,
+      external ? h(ExternalLinkPanel, { api, lang, request, canWrite, onChanged: (note) => onSent(note || "externalIssued", { stay: true }) }) : null,
       failure && !confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
       request.state === "draft" && canWrite && (request.kind === "intake" || interview)
         ? h(P.Inline, null, h(P.Button, { variant: "primary", onClick: () => setConfirm(true) }, t(interview ? "startInterview" : "send")))
@@ -1373,7 +1699,7 @@ ${ar}` : en;
     const editor = h(RequestComposer, {
       api, lang, record, questions, reports: reports || [],
       onCancel: () => setEditing(false),
-      onSaved: (result) => { const id = Array.isArray(result) ? result[0] : result; setEditing(false); setNotice("draftSaved"); select(id); retry(); onCreated?.(id); },
+      onSaved: (result, note) => { const id = Array.isArray(result) ? result[0] : result; setEditing(false); setNotice(note || "draftSaved"); select(id); retry(); onCreated?.(id, note); },
     });
     return h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Toolbar, { label: panelTitle }, !interviewOnly && canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => { setEditing(true); setNotice(null); } }, t("newRequest")) : null),
@@ -1395,7 +1721,8 @@ ${ar}` : en;
       t = translator(lang);
     const [tab, setTab] = R.useState("reports");
     const completedReports = base.ReportsReader ? h(base.ReportsReader, { api, lang, user, caseId, reports }) : renderReports();
-    const requests = h(RequestsPanel, { api, lang, user, caseId, reports, onCreated: () => setTab("interviews") });
+    // A new interview opens its interview tab; an external priest request stays here, where its private link is issued.
+    const requests = h(RequestsPanel, { api, lang, user, caseId, reports, onCreated: (id, note) => { if (note !== "externalDraftSaved") setTab("interviews"); } });
     const interviewReports = h(RequestsPanel, { api, lang, user, caseId, reports, mode: "interviews" });
     return h(P.Tabs, {
       variant: "contained", label: t("reports"), value: tab, onChange: setTab,
@@ -3418,6 +3745,11 @@ ${ar}` : en;
     caseWords: words,
     caseTranslator: translator,
     InterviewForm, // exported for the unsaved-text regression test
+    ExternalLinkPanel,
+    priestLink,
+    priestTitle,
+    priestFromTitle,
+    linkControls,
     RequestDetail,
     DECISION_TYPES,
     typeLabel,

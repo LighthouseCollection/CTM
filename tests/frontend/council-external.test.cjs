@@ -164,3 +164,14 @@ test("expiry is shown only for an active or expired link (real-backend finding)"
   const active = panel(projected({ state: "active", expires_at: "2026-11-21T08:00:00Z" }), () => ({}));
   assert.match(active.text(), /Expires/);
 });
+
+test("a priest report names one spouse: 'both spouses' is rejected and the payload sends a single party_id", () => {
+  const C = load(harness());
+  const form = { kind: "external_priest", party: "both", priest: "Synthetic Priest", language: "en", instructions: "", selected: [], parent: "" };
+  assert.equal(C.requestProblem(form, []), "chooseOneSpouse");
+  form.party = "p-1";
+  const payload = JSON.parse(JSON.stringify(C.requestPayload(form, "proc-1", [{ id: "p-1" }, { id: "p-2" }])));
+  assert.equal(payload.party_id, "p-1");
+  assert.equal("party_ids" in payload, false);
+  assert.ok(C.caseWords.en.chooseOneSpouse && C.caseWords.ar.chooseOneSpouse);
+});
