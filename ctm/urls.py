@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from tribunal import api
 from tribunal import priest_pdf_api
 from tribunal import priest_recording_api
@@ -119,5 +119,5 @@ urlpatterns = [
     path("api/system/delivery/<uuid:event_id>/retry/", api.delivery_retry),
     path("api/historical/<uuid:workspace_id>/", api.historical_detail),
     path("api/historical/<uuid:workspace_id>/publish/", api.historical_publish),
-    path("<path:client_path>", api.shell),
+    re_path(r"^(?P<client_path>(?:cases|sessions|applications|appointments|notifications|search|reports|account|settings)(?:/.*)?)$", api.shell),
 ]
