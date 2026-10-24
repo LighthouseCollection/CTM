@@ -341,6 +341,13 @@
       reportMethod: "Method",
       method_written: "Entered in CTM",
       method_external: "External source link",
+      method_paper: "Paper original recorded by the council",
+      paperRecordedBy: "Recorded by",
+      paperReceivedOn: "Paper received",
+      paperOriginal: "Paper original",
+      paperOriginalHelp: "The scanned paper as the priest returned it. It has not been transcribed.",
+      paperOriginalName: "Paper original — {title}",
+      paperNotRevisable: "A paper response is kept as received and cannot be revised. Use a follow-up request for anything further.",
       evidenceTitle: "Evidence",
       demoEvidenceTitle: "Demo evidence images",
       demoEvidenceHint: "Demo-only images supplied for the case review walkthrough.",
@@ -556,6 +563,13 @@
       reportMethod: "الطريقة",
       method_written: "أُدخل في النظام",
       method_external: "رابط مصدر خارجي",
+      method_paper: "أصل ورقي سجّله المجلس",
+      paperRecordedBy: "سجّله",
+      paperReceivedOn: "تاريخ استلام الورقة",
+      paperOriginal: "الأصل الورقي",
+      paperOriginalHelp: "النسخة الممسوحة ضوئيًا من الورقة كما أعادها الكاهن. ولم يُنسخ نصها.",
+      paperOriginalName: "الأصل الورقي — {title}",
+      paperNotRevisable: "يُحفظ الرد الورقي كما استُلم ولا يمكن تعديله. استخدم طلب متابعة لأي إضافة.",
       evidenceTitle: "الأدلة",
       demoEvidenceTitle: "صور أدلة تجريبية",
       demoEvidenceHint: "صور تجريبية مضافة لشرح مراجعة القضية فقط.",
@@ -1827,6 +1841,7 @@
     const access = revisionAccess(report);
     const latestShown = !history || version === history[0]?.version;
     const methodLabel = report.method ? t(`method_${report.method}`) : null;
+    const paper = report.method === "paper";
     const answers = editing
       ? h(ReportRevisionEditor, {
           api,
@@ -1851,7 +1866,8 @@
         null,
         h(P.PropertyList.Item, { label: t("reportFor") }, report.subject || ""),
         h(P.PropertyList.Item, { label: t("version") }, String(shown.version ?? report.version ?? "")),
-        report.author ? h(P.PropertyList.Item, { label: t("reportAuthor") }, base.isolate(report.author)) : null,
+        report.author ? h(P.PropertyList.Item, { label: t(paper ? "paperRecordedBy" : "reportAuthor") }, base.isolate(report.author)) : null,
+        paper && report.date ? h(P.PropertyList.Item, { label: t("paperReceivedOn"), data: true }, report.date) : null,
         report.submitted_at ? h(P.PropertyList.Item, { label: t("reportSubmitted"), data: true }, base.formatWhen(report.submitted_at, lang)) : null,
         methodLabel ? h(P.PropertyList.Item, { label: t("reportMethod") }, methodLabel.startsWith("method_") ? report.method : methodLabel) : null,
       ),
@@ -1876,13 +1892,19 @@
         : h(P.Inline, null, h(P.Button, { size: "sm", onClick: loadHistory }, t("loadHistory"))),
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,
       ...answerEntries(report, shown.answers).map(([code, answer]) => {
+        if (paper && code === "files" && Array.isArray(answer))
+          return h(
+            P.Panel,
+            { icon: "document", key: code, title: t("paperOriginal") },
+            h(P.Stack, { gap: "md" }, h(P.Text, { variant: "secondary" }, t("paperOriginalHelp")), ...answer.map((id) => paperOriginal(String(id), report, lang))),
+          );
         const question = (report.questions || []).find((q) => q.code === code);
         const label = question ? `${code} — ${base.isolate((lang === "ar" && question.ar) || question.en || code)}` : code === "files" ? t("response") : code === "testimony" ? t("priestTestimony") : code;
         return h(P.Panel, { icon: "document", key: code, title: label }, h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
       }),
       shown.observations ? h(P.Panel, { icon: "document", title: t("observations") }, h(P.Text, { as: "p", dir: "auto" }, shown.observations)) : null,
       access === "unknown" ? h(P.Text, { variant: "secondary" }, t("revisionPending")) : null,
-      access === "denied" ? h(P.Text, { variant: "secondary" }, t("revisionNotAllowed")) : null,
+      access === "denied" ? h(P.Text, { variant: "secondary" }, t(paper ? "paperNotRevisable" : "revisionNotAllowed")) : null,
     );
     const interview = report.kind === "interview";
     const recording = interview
@@ -1915,7 +1937,7 @@
     });
   }
 
-  function ReportsReader({ api, lang, user, caseId, reports }) {
+  function ReportsReader({ api, lang, user, caseId, reports, refreshKey }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1929,6 +1951,9 @@
         .then((data) => setFresh(data.items || []))
         .catch(() => {});
     }
+    R.useEffect(() => {
+      if (refreshKey) reloadReports();
+    }, [refreshKey]);
     const chosen = rows.find((row) => row.id === selected);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
@@ -1968,6 +1993,23 @@
   // fetched from the protected /api/files/{id}/?view=1 route with the session; the server sends private, no-store.
   // Nothing is written to browser storage. A page already drawn stays on screen until the viewer closes: withdrawing
   // access stops later loads, it cannot erase what was already shown or downloaded.
+  // A paper report's answers carry only the retained original's file id (backend 746e5a4): view it inline through the
+  // protected file route and offer the authorized download. Nothing is cached in browser storage.
+  function paperOriginal(id, report, lang) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const url = `/api/files/${encodeURIComponent(id)}/`;
+    const file = { id, name: t("paperOriginalName", { title: report.title || "" }) };
+    return h(
+      P.Stack,
+      { gap: "sm", key: id },
+      h(PdfPreview, { key: id, file, lang, inline: `${url}?view=1` }),
+      h(P.Inline, null, h(P.Button, { size: "sm", href: url }, t("download"))),
+    );
+  }
+
   function PdfPreview({ file, lang, inline }) {
     const R = window.React,
       P = window.Plenix,
@@ -2159,6 +2201,7 @@
     TranscriptsPanel,
     TranscriptViewer,
     PdfPreview,
+    paperOriginal,
     FilePreview,
     pdfStrings,
     answerEntries,

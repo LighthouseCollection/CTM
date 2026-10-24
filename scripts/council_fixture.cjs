@@ -275,6 +275,46 @@ function api(req, res, url, body) {
     })) : [];
     return json(res, 200, { items: [...evidence, ...uploaded], next_offset: null });
   }
+  if (p === "/api/files/" && body.request_id && body.category === "REPORT") {
+    // Backend 6fe7d51/746e5a4: a council writer uploads a priest paper bound to a sent request; owner NULL,
+    // council visibility. The scan starts pending; GET /status/ reports clean on the second check
+    // (POST /__paper_scan/ {state:"rejected"} makes the next upload fail its check).
+    const r = state.requests.find((x) => x.id === body.request_id);
+    const c = r && state.cases.find((x) => x.id === r.case);
+    if (!c || (!admin() && c.assigned !== me().id)) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    if (r.state !== "sent") return json(res, 422, { error: "validation", messages: ["Report request is not accepting uploads."] });
+    const f = { id: "f-" + (state.files.length + 1), case: c.id, request: r.id, category: "REPORT", name: "paper-original.pdf", mime: "application/pdf",
+      scan_state: state.paperScan === "rejected" ? "rejected" : "pending", checks: 0 };
+    state.files.push(f);
+    return json(res, 201, { id: f.id, name: f.name, scan_state: f.scan_state, sha256: "synthetic" });
+  }
+  if ((m = p.match(/^\/api\/files\/([^/]+)\/status\/$/))) {
+    const f = state.files.find((x) => x.id === m[1]);
+    if (!f) return json(res, 404, { error: "not_found" });
+    if (f.scan_state === "pending" && ++f.checks >= 2) f.scan_state = "clean";
+    return json(res, 200, { id: f.id, scan_state: f.scan_state, can_download: f.scan_state === "clean" });
+  }
+  if ((m = p.match(/^\/api\/files\/([^/]+)\/$/)) && state.files.some((x) => x.id === m[1] && x.category === "REPORT")) {
+    const x = state.files.find((y) => y.id === m[1]);
+    if (x.scan_state !== "clean") return json(res, 403, { error: "forbidden" });
+    res.writeHead(200, { "Content-Type": "application/pdf", "Content-Length": MINI_PDF.length, "Cache-Control": "private, no-store",
+      "Content-Disposition": url.searchParams.get("view") === "1" ? "inline" : `attachment; filename="${x.name}"` });
+    return res.end(MINI_PDF);
+  }
+  if (p === "/__paper_scan/") { state.paperScan = body.state || null; return json(res, 200, { state: state.paperScan }); }
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/paper-completion\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    const f = state.files.find((x) => x.id === body.file_id);
+    if (!r || r.kind !== "external_priest" || r.state !== "sent") return json(res, 422, { error: "validation", messages: ["Request is not awaiting this paper response."] });
+    if (!f || f.request !== r.id) return json(res, 403, { error: "forbidden", detail: "Paper original must be a council-only PDF bound to this request." });
+    if (f.scan_state !== "clean") return json(res, 422, { error: "validation", messages: ["Await validation of the current paper original."] });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.completion_date || "")) return json(res, 422, { error: "validation", messages: ["Provide the received date as YYYY-MM-DD, no later than today."] });
+    r.state = "completed";
+    state.externalReports = state.externalReports || [];
+    state.externalReports.push({ id: "rep-paper-" + r.id, title: r.title, kind: "external_priest", subject: r.subject_name, date: body.completion_date, parent_report_id: null,
+      questions: [], answers: { files: [f.id] }, observations: null, version: 1, method: "paper", author: me().name, author_id: me().id, submitted_at: now(), can_revise: false, case: r.case });
+    return json(res, 201, { id: "rep-paper-" + r.id });
+  }
   if (p === "/api/files/") {
     const c = state.cases.find((x) => x.id === body.case_id);
     if (!admin() && (!c || c.assigned !== me().id)) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
@@ -837,7 +877,7 @@ http
         let body = {};
         if ((req.headers["content-type"] || "").startsWith("multipart/form-data")) {
           // Loose multipart read of the text fields only; file bytes are ignored.
-          for (const field of ["case_id", "category", "visibility"]) {
+          for (const field of ["case_id", "category", "visibility", "request_id"]) {
             const hit = raw.match(new RegExp(`name="${field}"\\r\\n\\r\\n([^\\r]*)`));
             if (hit) body[field] = hit[1];
           }

@@ -619,6 +619,36 @@ ${ar}` : en;
       startInterviewMessage: "The question list is frozen. The applicant is not notified.",
       interviewStarted: "The interview was started. Record the answers when ready.",
       recordInterview: "Record interview answers",
+      paperTitle: "Paper response",
+      chooseFile: "Choose the PDF file.",
+      pdfOnly: "Only a PDF file can be used.",
+      paperHelp: "If the priest returned the report on paper, upload the scanned original here to complete the request. The scan is kept as the report; it is not transcribed.",
+      paperStart: "Record a paper response",
+      paperFile: "Scanned paper original (PDF)",
+      paperFileHelp: "Council only. The spouses cannot see it.",
+      paperTooLarge: "The PDF must be 25 MB or smaller.",
+      paperReceived: "Date received",
+      paperReceivedHelp: "The date the council received the paper. It cannot be later than today.",
+      receivedRequired: "Enter the date the paper was received.",
+      receivedFuture: "The received date cannot be later than today.",
+      paperConfirm: "This PDF is the priest's paper response as it was received.",
+      confirmPaper: "Confirm that the PDF is the priest's paper response.",
+      paperUpload: "Upload paper original",
+      paperCheck: "Check again",
+      paperRecord: "Record paper response",
+      paperCheckState: "File check",
+      scan_pending: "Checking",
+      scan_clean: "Passed",
+      scan_rejected: "Rejected",
+      paperChecking: "The file is being checked. The response can be recorded once the check passes.",
+      paperStillChecking: "The file is still being checked. Try again shortly.",
+      paperRejected: "The file failed the check and cannot be used. Upload another scan.",
+      paperChooseAnother: "Use a different file",
+      paperRetained: "The uploaded file stays on record with this request even if another file is used.",
+      paperNoFile: "The server did not confirm the upload. Nothing was recorded.",
+      paperConfirmTitle: "Record the paper response?",
+      paperConfirmMessage: "The request will be completed and its private link will stop working. The paper original cannot be replaced afterwards; a correction needs a separate follow-up request.",
+      paperRecorded: "The paper response was recorded and the request is complete.",
       printTitle: "Printed request",
       printHelp: "For a priest who prefers paper. It contains the saved title, instructions and names with blank lines to write on; no link, token or answers.",
       printOpen: "Open printable request",
@@ -1034,6 +1064,36 @@ ${ar}` : en;
       startInterviewMessage: "يتم تثبيت قائمة الأسئلة. ولا يتم إخطار مقدم الطلب.",
       interviewStarted: "بدأت المقابلة. سجّل الإجابات عندما تكون جاهزًا.",
       recordInterview: "تسجيل إجابات المقابلة",
+      paperTitle: "الرد الورقي",
+      chooseFile: "اختر ملف PDF.",
+      pdfOnly: "لا يمكن استخدام غير ملف PDF.",
+      paperHelp: "إذا أعاد الكاهن التقرير على الورق، فارفع النسخة الممسوحة ضوئيًا من الأصل هنا لإكمال الطلب. تُحفظ النسخة الممسوحة بوصفها التقرير، ولا يُنسخ نصها.",
+      paperStart: "تسجيل رد ورقي",
+      paperFile: "الأصل الورقي الممسوح ضوئيًا (PDF)",
+      paperFileHelp: "للمجلس فقط. ولا يراه الزوجان.",
+      paperTooLarge: "يجب ألا يتجاوز حجم ملف PDF ‏25 ميغابايت.",
+      paperReceived: "تاريخ الاستلام",
+      paperReceivedHelp: "التاريخ الذي استلم فيه المجلس الورقة. ولا يجوز أن يكون بعد اليوم.",
+      receivedRequired: "أدخل تاريخ استلام الورقة.",
+      receivedFuture: "لا يجوز أن يكون تاريخ الاستلام بعد اليوم.",
+      paperConfirm: "ملف PDF هذا هو الرد الورقي للكاهن كما استُلم.",
+      confirmPaper: "أكّد أن ملف PDF هو الرد الورقي للكاهن.",
+      paperUpload: "رفع الأصل الورقي",
+      paperCheck: "التحقق مجددًا",
+      paperRecord: "تسجيل الرد الورقي",
+      paperCheckState: "فحص الملف",
+      scan_pending: "قيد الفحص",
+      scan_clean: "اجتاز الفحص",
+      scan_rejected: "مرفوض",
+      paperChecking: "الملف قيد الفحص. يمكن تسجيل الرد بعد اجتياز الفحص.",
+      paperStillChecking: "ما زال الملف قيد الفحص. حاول مجددًا بعد قليل.",
+      paperRejected: "لم يجتز الملف الفحص ولا يمكن استخدامه. ارفع نسخة ممسوحة أخرى.",
+      paperChooseAnother: "استخدام ملف آخر",
+      paperRetained: "يبقى الملف المرفوع محفوظًا مع هذا الطلب حتى لو استُخدم ملف آخر.",
+      paperNoFile: "لم يؤكد الخادم الرفع. ولم يُسجَّل شيء.",
+      paperConfirmTitle: "تسجيل الرد الورقي؟",
+      paperConfirmMessage: "سيكتمل الطلب ويتوقف رابطه الخاص عن العمل. ولا يمكن استبدال الأصل الورقي بعد ذلك؛ ويتطلب التصحيح طلب متابعة منفصلًا.",
+      paperRecorded: "سُجّل الرد الورقي واكتمل الطلب.",
       printTitle: "الطلب المطبوع",
       printHelp: "للكاهن الذي يفضّل الورق. ويتضمن العنوان والتعليمات والأسماء المحفوظة مع أسطر فارغة للكتابة؛ ولا يتضمن رابطًا أو رمزًا أو إجابات.",
       printOpen: "فتح الطلب القابل للطباعة",
@@ -1654,6 +1714,180 @@ ${ar}` : en;
     );
   }
 
+  // Paper response (backend 746e5a4): the council uploads the priest's returned paper as a council-only PDF bound
+  // to the request (category REPORT), waits for the file check, then records it with the received date. The
+  // uploaded file's id is kept in page memory only, so in-app navigation does not lose a file awaiting its check.
+  const paperUploads = new Map();
+  const PAPER_LIMIT = 25 * 1024 * 1024;
+  function paperProblem(form, today) {
+    if (!form.fileId) {
+      if (!form.chosen) return "chooseFile";
+      const pdf = form.chosen.type === "application/pdf" || /\.pdf$/i.test(form.chosen.name || "");
+      if (!pdf) return "pdfOnly";
+      if (form.chosen.size > PAPER_LIMIT) return "paperTooLarge";
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.date || "")) return "receivedRequired";
+    if (form.date > today) return "receivedFuture";
+    if (form.confirmed !== true) return "confirmPaper";
+    return null;
+  }
+  function paperAllowed(request, canWrite) {
+    if (!request || request.kind !== EXTERNAL || request.state !== "sent" || !canWrite) return false;
+    const controls = linkControls(request, canWrite);
+    return !controls.projected || controls.cancel;
+  }
+
+  function PaperCompletionPanel({ api, lang, request, canWrite, onRecorded }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const today = base.todayInLosAngeles();
+    const kept = paperUploads.get(request.id);
+    const [form, setForm] = R.useState(() => kept || { chosen: null, fileId: null, fileName: "", scan: null, date: "", confirmed: false });
+    const [open, setOpen] = R.useState(Boolean(kept));
+    const [problem, setProblem] = R.useState(null);
+    const [failure, setFailure] = R.useState(null);
+    const [notice, setNotice] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+    const [confirm, setConfirm] = R.useState(false);
+    if (!paperAllowed(request, canWrite)) return null;
+    const update = (patch) => {
+      setForm((old) => {
+        const next = { ...old, ...patch };
+        if (next.fileId) paperUploads.set(request.id, { ...next, chosen: null });
+        return next;
+      });
+      setProblem(null);
+    };
+    const err = (code) => (problem === code ? t(code) : null);
+    async function run(fn) {
+      setPending(true);
+      setFailure(null);
+      setNotice(null);
+      try {
+        await fn();
+      } catch (error) {
+        setFailure(base.serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    // Upload, then use the scan state the server reports; never assume the file is clean.
+    const upload = () =>
+      run(async () => {
+        const body = new window.FormData();
+        body.append("file", form.chosen);
+        body.append("category", "REPORT");
+        body.append("request_id", request.id);
+        body.append("visibility", "council");
+        const stored = await api("/api/files/", { method: "POST", body });
+        if (!stored || !stored.id) throw { data: { detail: t("paperNoFile") } };
+        update({ fileId: stored.id, fileName: stored.name || form.chosen.name, scan: stored.scan_state || "pending", chosen: null });
+        return stored;
+      });
+    const recheck = () =>
+      run(async () => {
+        const status = await api(`/api/files/${encodeURIComponent(form.fileId)}/status/`);
+        const scan = ["clean", "pending", "rejected"].includes(status && status.scan_state) ? status.scan_state : "pending";
+        update({ scan });
+        if (scan === "pending") setNotice("paperStillChecking");
+      });
+    const start = () => {
+      const issue = paperProblem(form, today);
+      setProblem(issue);
+      if (issue) return;
+      if (!form.fileId) upload();
+      else if (form.scan === "clean") setConfirm(true);
+      else recheck();
+    };
+    const record = () =>
+      run(async () => {
+        await api(`/api/requests/${encodeURIComponent(request.id)}/paper-completion/`, {
+          method: "POST",
+          body: JSON.stringify({ file_id: form.fileId, completion_date: form.date, expected_version: request.request_version }),
+        });
+        paperUploads.delete(request.id);
+        setConfirm(false);
+        onRecorded("paperRecorded");
+      });
+    const discard = () => {
+      // The uploaded original stays retained on the server; only this form forgets it.
+      paperUploads.delete(request.id);
+      setForm({ chosen: null, fileId: null, fileName: "", scan: null, date: form.date, confirmed: false });
+      setProblem(null);
+      setFailure(null);
+      setNotice(null);
+    };
+    if (!open)
+      return h(
+        P.Panel,
+        { icon: "doc-text", title: t("paperTitle") },
+        h(P.Stack, { gap: "sm" }, h(P.Text, { variant: "secondary" }, t("paperHelp")), h(P.Inline, null, h(P.Button, { size: "sm", onClick: () => setOpen(true) }, t("paperStart")))),
+      );
+    const action = !form.fileId ? "paperUpload" : form.scan === "clean" ? "paperRecord" : "paperCheck";
+    return h(
+      P.Panel,
+      { icon: "doc-text", title: t("paperTitle") },
+      h(
+        P.Stack,
+        { gap: "md" },
+        h(P.Text, { variant: "secondary" }, t("paperHelp")),
+        form.fileId
+          ? h(
+              P.PropertyList,
+              null,
+              h(P.PropertyList.Item, { label: t("paperFile") }, base.isolate(form.fileName)),
+              h(P.PropertyList.Item, { label: t("paperCheckState") }, h(P.Badge, { tone: form.scan === "clean" ? "success" : form.scan === "rejected" ? "danger" : "neutral" }, t("scan_" + form.scan))),
+            )
+          : h(
+              P.Field,
+              { label: t("paperFile"), description: t("paperFileHelp"), required: true, error: err("chooseFile") || err("pdfOnly") || err("paperTooLarge") },
+              h(P.FileInput, { accept: ".pdf,application/pdf", disabled: pending, onChange: (files) => update({ chosen: files && files[0] ? files[0] : null }) }),
+            ),
+        form.scan === "pending" ? h(P.Notice, { tone: "info" }, t("paperChecking")) : null,
+        form.scan === "rejected" ? h(P.Notice, { tone: "danger" }, t("paperRejected")) : null,
+        h(
+          P.Field,
+          { label: t("paperReceived"), description: t("paperReceivedHelp"), required: true, error: err("receivedRequired") || err("receivedFuture") },
+          h(P.Input, { type: "date", width: "sm", max: today, value: form.date, disabled: pending, onChange: (e) => update({ date: e.target.value }) }),
+        ),
+        h(P.Checkbox, {
+          label: t("paperConfirm"),
+          checked: form.confirmed === true,
+          disabled: pending,
+          onChange: (e) => update({ confirmed: e.target.checked }),
+        }),
+        problem === "confirmPaper" ? h(P.Notice, { tone: "warning" }, t("confirmPaper")) : null,
+        notice ? h(P.Text, { variant: "secondary" }, t(notice)) : null,
+        failure && !confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
+        h(
+          P.Inline,
+          { wrap: true },
+          form.scan === "rejected"
+            ? h(P.Button, { variant: "primary", disabled: pending, onClick: discard }, t("paperChooseAnother"))
+            : h(P.Button, { variant: "primary", loading: pending, disabled: pending, onClick: start }, t(action)),
+          form.fileId && form.scan !== "rejected" ? h(P.Button, { disabled: pending, onClick: discard }, t("paperChooseAnother")) : null,
+          !form.fileId ? h(P.Button, { disabled: pending, onClick: () => setOpen(false) }, t("cancel")) : null,
+        ),
+        form.fileId ? h(P.Text, { variant: "secondary" }, t("paperRetained")) : null,
+        h(
+          P.ConfirmDialog,
+          {
+            open: confirm,
+            title: t("paperConfirmTitle"),
+            message: t("paperConfirmMessage"),
+            confirmLabel: t("paperRecord"),
+            cancelLabel: t("cancel"),
+            onConfirm: record,
+            onCancel: () => !pending && setConfirm(false),
+          },
+          failure && confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
+        ),
+      ),
+    );
+  }
+
   function RequestDetail({ api, lang, request, canWrite, onSent }) {
     const R = window.React,
       P = window.Plenix,
@@ -1707,6 +1941,7 @@ ${ar}` : en;
           ),
       request.instructions ? h(P.Panel, { icon: "doc-text", title: t(external ? "priestInstructions" : "instructions") }, h(P.Text, { as: "p", dir: "auto" }, request.instructions)) : null,
       external ? h(ExternalLinkPanel, { api, lang, request, canWrite, onChanged: (note) => onSent(note || "externalIssued", { stay: true }) }) : null,
+      external ? h(PaperCompletionPanel, { api, lang, request, canWrite, onRecorded: (note) => onSent(note, { stay: true }) }) : null,
       failure && !confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
       request.state === "draft" && canWrite && (request.kind === "intake" || interview)
         ? h(P.Inline, null, h(P.Button, { variant: "primary", onClick: () => setConfirm(true) }, t(interview ? "startInterview" : "send")))
@@ -1742,7 +1977,7 @@ ${ar}` : en;
     );
   }
 
-  function RequestsPanel({ api, lang, user, caseId, reports, mode = "templates", onCreated }) {
+  function RequestsPanel({ api, lang, user, caseId, reports, mode = "templates", onCreated, onCompleted }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const interviewOnly = mode === "interviews";
     const panelTitle = interviewOnly ? t("interviewReports") : t("reportTemplates");
@@ -1781,7 +2016,7 @@ ${ar}` : en;
       !interviewOnly && editing ? editor : h(P.SplitView, {
         label: panelTitle, firstLabel: t("requests"), first: drafts,
         second: h(P.ReadingPane, { label: chosen?.title || t("chooseRequest"), empty: h(P.EmptyState, { title: t("chooseRequest") }) },
-          chosen ? h(RequestDetail, { key: chosen.id, api, lang, request: chosen, canWrite, onSent: (key) => { setNotice(key || "sentNotice"); retry(); } }) : null,
+          chosen ? h(RequestDetail, { key: chosen.id, api, lang, request: chosen, canWrite, onSent: (key) => { setNotice(key || "sentNotice"); retry(); if (key === "paperRecorded" || key === "interviewRecorded") onCompleted?.(); } }) : null,
         ),
       }),
     );
@@ -1794,10 +2029,13 @@ ${ar}` : en;
       h = R.createElement,
       t = translator(lang);
     const [tab, setTab] = R.useState("reports");
-    const completedReports = base.ReportsReader ? h(base.ReportsReader, { api, lang, user, caseId, reports }) : renderReports();
+    // Recording a response here completes a report: Completed reports reloads its list from the server.
+    const [completedKey, setCompletedKey] = R.useState(0);
+    const onCompleted = () => setCompletedKey((k) => k + 1);
+    const completedReports = base.ReportsReader ? h(base.ReportsReader, { api, lang, user, caseId, reports, refreshKey: completedKey }) : renderReports();
     // A new interview opens its interview tab; an external priest request stays here, where its private link is issued.
-    const requests = h(RequestsPanel, { api, lang, user, caseId, reports, onCreated: (id, note) => { if (note !== "externalDraftSaved") setTab("interviews"); } });
-    const interviewReports = h(RequestsPanel, { api, lang, user, caseId, reports, mode: "interviews" });
+    const requests = h(RequestsPanel, { api, lang, user, caseId, reports, onCompleted, onCreated: (id, note) => { if (note !== "externalDraftSaved") setTab("interviews"); } });
+    const interviewReports = h(RequestsPanel, { api, lang, user, caseId, reports, mode: "interviews", onCompleted });
     return h(P.Tabs, {
       variant: "contained", label: t("reports"), value: tab, onChange: setTab,
       items: [
@@ -3825,6 +4063,9 @@ ${ar}` : en;
     priestFromTitle,
     linkControls,
     pdfProblem,
+    PaperCompletionPanel,
+    paperProblem,
+    paperAllowed,
     RequestDetail,
     DECISION_TYPES,
     typeLabel,
