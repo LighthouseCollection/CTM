@@ -45,7 +45,7 @@ test("the CTM shell restores the browser route and listens to Back and Forward",
   assert.match(app, /window\.CTMRoutes/);
   assert.match(app, /window\.addEventListener\("popstate"/);
   assert.match(app, /history\.pushState/);
-  assert.match(urls, /path\("<path:client_path>", api\.shell\)/);
+  assert.match(urls, /re_path\(r"\^\(\?P<client_path>/);
 });
 
 test("Tribunal Session data uses native pills and its state uses a semantic badge", () => {
