@@ -1,0 +1,69 @@
+[
+  {
+    "actor": "wilson",
+    "report": "a_main",
+    "status": 403,
+    "body": {
+      "error": "forbidden",
+      "detail": "Only the assigned case manager can perform this action."
+    }
+  },
+  {
+    "actor": "miller",
+    "report": "a_main",
+    "status": 403,
+    "body": {
+      "error": "forbidden",
+      "detail": "Only the original authorized council author can revise this report."
+    }
+  },
+  {
+    "actor": "thompson",
+    "report": "a_intake",
+    "status": 403,
+    "body": {
+      "error": "forbidden",
+      "detail": "Only the original authorized council author can revise this report."
+    }
+  },
+  {
+    "actor": "wilson",
+    "report": "d_main",
+    "status": 422,
+    "body": {
+      "error": "validation",
+      "messages": [
+        "The original closed proceeding is read-only."
+      ]
+    }
+  },
+  {
+    "actor": "wilson",
+    "report": "b_old",
+    "status": 422,
+    "body": {
+      "error": "validation",
+      "messages": [
+        "The original closed proceeding is read-only."
+      ]
+    }
+  },
+  {
+    "actor": "thompson",
+    "report": "c_main",
+    "status": 403,
+    "body": {
+      "error": "forbidden",
+      "detail": "Only the assigned case manager can perform this action."
+    }
+  },
+  {
+    "actor": "collins",
+    "report": "c_main",
+    "status": 403,
+    "body": {
+      "error": "forbidden",
+      "detail": "Only the original authorized council author can revise this report."
+    }
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "source_commit": "4611b4c542c72c3bb143e2b9dd80c737a72fc8c8",
+  "module_sha256": "537ee808f457f5017eb0d2f5ba034dcc07ed544c11e04d16313e4a0d9d4791f5",
+  "passed": 8,
+  "checks": [
+    "Failed save retains all five locally edited repeat families; Arabic390px/language switch preserves values without styles or overflow and performs no automatic retry",
+    "children: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+    "restraining_orders: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+    "prior_applications: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+    "prior_marriages: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+    "counseling_priests: edit/add persists current UUID and opaque originals, leaves untouched row/fields exact and allocates a distinct UUID for new row",
+    "Arabic review/remove/save/reload across all five families retains surviving UUIDs and exact unmapped source values; no object coercion",
+    "Missing nested Arabic label blocks form editing without inventing wording or mutating saved snapshots"
+  ],
+  "page_errors": [],
+  "scope": "Five-family synthetic UI fixtures with pinned Plenix0.58.0; not approved content, document evidence or backend validation acceptance",
+  "families": [
+    "children",
+    "restraining_orders",
+    "prior_applications",
+    "prior_marriages",
+    "counseling_priests"
+  ]
+}

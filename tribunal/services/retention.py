@@ -15,13 +15,17 @@ from tribunal.models import (
 from tribunal.policy import active
 from .common import audit
 from .files import private_path
+from tribunal.db.context import core_operation
 
 
 @transaction.atomic
-def remove_draft(actor, app_id, expired=False):
+@core_operation("retention")
+def remove_draft(actor, app_id, expired=False, *, expected_version=None):
     if actor:
         active(actor)
     app = Application.objects.select_for_update(of=("self",)).get(pk=app_id)
+    from .applications import check_filing_version
+    check_filing_version(app, expected_version)
     if actor and app.owner_id != actor.pk:
         raise PermissionDenied("Only the draft owner can delete it.")
     if app.submitted_at or app.status != "draft":
@@ -40,25 +44,23 @@ def remove_draft(actor, app_id, expired=False):
     app.save(update_fields=["status", "current_version"])
     audit(actor, "draft_" + app.status, app)
 
-    def clean_bytes():
-        for key in keys:
-            try:
-                private_path(key).unlink(missing_ok=True)
-            except OSError:
-                Outbox.objects.get_or_create(
-                    key=f"cleanup:{key}",
-                    defaults={
-                        "kind": "private_orphan_cleanup",
-                        "payload": {"object_key": key},
-                    },
-                )
-
-    transaction.on_commit(clean_bytes)
+    # Journal cleanup in the same transaction as deletion. A crash after commit
+    # must not lose the only record of the orphaned original.
+    from .queue import enqueue_cleanup
+    for key in keys:
+        enqueue_cleanup(key)
     return app
 
 
 def process_drafts(now=None):
     now = now or timezone.now()
+    from django.db import connection
+    if connection.vendor == 'postgresql':
+        import json
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT public.ctm_process_retention(%s)", [now])
+            result = cursor.fetchone()[0]
+        return json.loads(result) if isinstance(result,str) else result
     result = {"warned": 0, "expired": 0, "held": 0}
     ids = list(
         Application.objects.filter(
@@ -95,7 +97,7 @@ def process_drafts(now=None):
                         defaults={
                             "recipient": app.owner,
                             "kind": "draft_expiring",
-                            "payload": {"expires_at": deadline.isoformat()},
+                            "payload": {"expires_at": deadline.isoformat(), "application": str(app.pk)},
                         },
                     )
                     result["warned"] += 1

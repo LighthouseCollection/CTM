@@ -1,8 +1,11 @@
+from datetime import timedelta
+
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db import connection
-from tribunal.models import Account, Case, FileVersion, OpenCaseClaim, Outbox
+from django.utils import timezone
+from tribunal.models import Account, AgendaItem, Case, CouncilSession, FileVersion, OpenCaseClaim, Outbox
 
 
 @pytest.mark.django_db
@@ -27,7 +30,7 @@ def test_workflow_demo_is_repeatable_private_and_delivery_free(
     count = Case.objects.count()
     file_count = FileVersion.objects.count()
     call_command("seed_workflow_demo")
-    assert Case.objects.count() == count == 8
+    assert Case.objects.count() == count == 11
     assert FileVersion.objects.count() == file_count
     assert Account.objects.filter(
         role="president", email="bishopserapion@lacopts.org"
@@ -39,10 +42,34 @@ def test_workflow_demo_is_repeatable_private_and_delivery_free(
     assert all(not a.has_usable_password() for a in Account.objects.all())
     assert not Account.objects.exclude(microsoft_subject="").exists()
     assert not Outbox.objects.exists()
+    # Returned review still exposes the exact formally submitted original to council.
+    from tribunal.models import Application
+    from tribunal.services.files import authorized_file
+
+    returned = Application.objects.filter(status="returned").first()
+    accepted = Application.objects.filter(status="accepted", kind="petition").first()
+    answers = accepted.revisions.get(number=accepted.current_version).answers
+    assert answers["church_marriage_date"] == "2010-06-12"
+    assert answers["church_name"] == "St. Mark Coptic Orthodox Church"
+    assert answers["married_outside_coptic_church"] == "No"
+    assert answers["spouse_occupation"] == "Teacher"
+    original = FileVersion.objects.filter(attachment__application=returned).first()
+    reviewer = Account.objects.get(email="frraphaelmaher@lacopts.org")
+    assert original is not None
+    assert authorized_file(reviewer, original.pk).pk == original.pk
     from tribunal.models import ReportRequest
 
     assert all(request.questions[0]["en"] for request in ReportRequest.objects.all())
     assert not OpenCaseClaim.objects.filter(case__status="closed").exists()
+    today = timezone.localdate()
+    current = CouncilSession.objects.get(date=today, state="planned")
+    upcoming = CouncilSession.objects.get(date=today + timedelta(days=7), state="draft")
+    archived = CouncilSession.objects.get(date=today - timedelta(days=14), state="closed")
+    for session in (current, upcoming, archived):
+        assert session.starts_at and session.presiding_member and session.location
+        assert session.location == "St. George Coptic Orthodox Church, Bellflower, California"
+    assert AgendaItem.objects.filter(session=current).exists()
+    assert AgendaItem.objects.filter(session=upcoming).exists()
     for source in FileVersion.objects.filter(mime_type="application/pdf"):
         data = (tmp_path / source.object_key).read_bytes()
         assert data.startswith(b"%PDF-") and b"xref" in data

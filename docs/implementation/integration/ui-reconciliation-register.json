@@ -1,0 +1,413 @@
+{
+  "base_commit": "104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc",
+  "scope": "45-screen documented gap register plus limited synthetic UI regression; not complete parity acceptance",
+  "source": "screen-map.json (B01 historical map; metadata not a claim about successor tests)",
+  "screens": [
+    {
+      "portal": "Shared",
+      "screen": "Sign-in",
+      "module": "app.js + allauth",
+      "documented_gap": "Live Google/Apple and production Microsoft acceptance; full identity/role reconciliation",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Home/current work",
+      "module": "app.js",
+      "documented_gap": "Full approved dashboard/action completeness",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Application questionnaire",
+      "module": "applicant.js",
+      "documented_gap": "Full approved bilingual form content and exact prototype field mapping",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Application documents",
+      "module": "applicant-files.js",
+      "documented_gap": "Live ClamAV/storage and large resumable uploads",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Review/declaration/submission",
+      "module": "applicant-filing.js",
+      "documented_gap": "Institutional declaration approval and live payment callbacks",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Returned corrections",
+      "module": "applicant.js + filing",
+      "documented_gap": "Full field-history presentation acceptance",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Payment history/checkout recovery",
+      "module": "applicant-payments.js + recovery",
+      "documented_gap": "Real Stripe receipts/refunds/reversals and delivery acceptance",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Draft deletion/withdrawal",
+      "module": "applicant-lifecycle.js",
+      "documented_gap": "Combined institutional workflow acceptance",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Communications",
+      "module": "applicant-messages.js",
+      "documented_gap": "Actual SMTP/inbound reply/attachment-return integration",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Testimony appointments",
+      "module": "applicant-appointments.js",
+      "documented_gap": "Live invitation/reminder delivery and devices",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Requests/intake responses",
+      "module": "applicant-requests.js + responses",
+      "documented_gap": "Full approved templates and actual mail delivery",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Professional release/assessment response",
+      "module": "applicant-assessments.js",
+      "documented_gap": "Institution-approved signed release wording and live scan acceptance",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Appeal filing/additions",
+      "module": "applicant-appeals.js + supplements",
+      "documented_gap": "Full real later-petition and council disposition journey",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Applicant",
+      "screen": "Past cases/released certificates",
+      "module": "applicant-decrees.js + app.js",
+      "documented_gap": "Actual signed institutional certificates and full access/revocation acceptance",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Shared",
+      "screen": "Notifications",
+      "module": "app.js",
+      "documented_gap": "Live delivery/template/language completeness",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Home dashboard",
+      "module": "council.js CouncilHome",
+      "documented_gap": "Outstanding requests, fuller session context/prior summary, workload/recent submissions and visual acceptance",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Cases",
+      "module": "council.js CasesTable",
+      "documented_gap": "Spouse/factual columns, operational tabs, advanced filters and server pagination",
+      "current_ui_verification": "Synthetic table/detail structure checked; content/workflow acceptance remains open",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Archived",
+      "module": "council.js CasesTable",
+      "documented_gap": "Richer outcome/closure columns and complete pagination",
+      "current_ui_verification": "Synthetic table/detail structure checked; content/workflow acceptance remains open",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Completeness review",
+      "module": "council.js ReviewWorkspace",
+      "documented_gap": "Full combined reviewer/applicant visual acceptance",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Tribunal Sessions/agenda",
+      "module": "council.js SessionList/Workspace",
+      "documented_gap": "Session metadata, richer historical filters, complete summary/minutes decisions",
+      "current_ui_verification": "Synthetic table/detail structure checked; content/workflow acceptance remains open",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Case Summary",
+      "module": "council-case.js CaseSummary",
+      "documented_gap": "Filing/grounds/marriage/children/last hearing/key-date factual summary",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Timeline",
+      "module": "council-case.js CaseTimeline",
+      "documented_gap": "Marriage/family chronology, factual dates and filters",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Spouses",
+      "module": "council-case.js CaseParties",
+      "documented_gap": "Rich sourced personal facts, children and accepted shared-fact discrepancy projection",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Marriage",
+      "module": "None",
+      "documented_gap": "Full shared-fact view, discrepancy flags and contextual documents",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Separation",
+      "module": "None",
+      "documented_gap": "Full separation/civil divorce/repeated orders/prior-records and discrepancy view",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Petition/notes/findings",
+      "module": "council-case.js PetitionWorkspace",
+      "documented_gap": "Approved fact-code finding creation and full contextual evidence",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Reports/intake/templates",
+      "module": "council-case.js + council-media.js",
+      "documented_gap": "Full report metadata and external priest workflow; broader author/reassignment UI acceptance",
+      "current_ui_verification": "Synthetic case-section split bounds/no page overflow/no browser errors, EN/AR at 390/1253; selection exercised for reports, evidence, documents and audit. Not full content/action acceptance.",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Recording/transcripts",
+      "module": "council-media.js",
+      "documented_gap": "D20 status/review/retry UI wiring, real worker, server streaming, device/long-audio acceptance",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Hearings",
+      "module": "council-case.js + council.js",
+      "documented_gap": "Combined real full session/decision journey and metadata",
+      "current_ui_verification": "Synthetic case-section split bounds/no page overflow/no browser errors, EN/AR at 390/1253; selection exercised for reports, evidence, documents and audit. Not full content/action acceptance.",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Evidence/Documents",
+      "module": "council-media.js",
+      "documented_gap": "CDN embedded PDF repair; live safe-file range/playback/OCR acceptance; missing factual-page contexts",
+      "current_ui_verification": "Synthetic case-section split bounds/no page overflow/no browser errors, EN/AR at 390/1253; selection exercised for reports, evidence, documents and audit. Not full content/action acceptance.",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Professional Assessments",
+      "module": "council-case.js AssessmentsWorkspace",
+      "documented_gap": "Approved signed release text, recommendations workflow and real acceptance",
+      "current_ui_verification": "Synthetic case-section split bounds/no page overflow/no browser errors, EN/AR at 390/1253; selection exercised for reports, evidence, documents and audit. Not full content/action acceptance.",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Decision & Voting",
+      "module": "council-case.js DecisionWorkspace",
+      "documented_gap": "Full combined decision approval journey and approved Arabic labels",
+      "current_ui_verification": "Synthetic case-section split bounds/no page overflow/no browser errors, EN/AR at 390/1253; selection exercised for reports, evidence, documents and audit. Not full content/action acceptance.",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Decree",
+      "module": "council-decree.js",
+      "documented_gap": "Approved type-specific templates and certificate authoring/generation",
+      "current_ui_verification": "Synthetic case-section split bounds/no page overflow/no browser errors, EN/AR at 390/1253; selection exercised for reports, evidence, documents and audit. Not full content/action acceptance.",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Appeals/later petitions",
+      "module": "council-decree.js AppealsWorkspace",
+      "documented_gap": "Combined actual two-spouse reopening/decree cycle acceptance",
+      "current_ui_verification": "Synthetic case-section split bounds/no page overflow/no browser errors, EN/AR at 390/1253; selection exercised for reports, evidence, documents and audit. Not full content/action acceptance.",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Communications/calls",
+      "module": "app.js + council-case.js CallLog",
+      "documented_gap": "Inbound/live email, full subject/contact/duration mapping",
+      "current_ui_verification": "Synthetic case-section split bounds/no page overflow/no browser errors, EN/AR at 390/1253; selection exercised for reports, evidence, documents and audit. Not full content/action acceptance.",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Case Audit",
+      "module": "council-case.js CaseAudit",
+      "documented_gap": "Structured filters, full pagination and target context",
+      "current_ui_verification": "Synthetic case-section split bounds/no page overflow/no browser errors, EN/AR at 390/1253; selection exercised for reports, evidence, documents and audit. Not full content/action acceptance.",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Search",
+      "module": "council.js SearchWorkspace",
+      "documented_gap": "Unified case/person/session results and advanced filters; live index acceptance",
+      "current_ui_verification": "Synthetic initial/loading/result/empty/failure states and Enter result selection, EN/AR at 390/1253; no page overflow. Live index and complete filter parity not accepted.",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Statistics and Reports",
+      "module": "council.js StatisticsWorkspace",
+      "documented_gap": "Complete server metrics/periods/charts; max100 limitation",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Council",
+      "screen": "Member profile/history",
+      "module": "None",
+      "documented_gap": "Member details/current/past assignment workspace",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Shared",
+      "screen": "My Profile",
+      "module": "app.js",
+      "documented_gap": "Editable profile/contact/photo relationship and own activity",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "Shared",
+      "screen": "Account Settings",
+      "module": "app.js",
+      "documented_gap": "Consolidated account fields, provider email/security/session workflow",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "System",
+      "screen": "CTM Settings/account management",
+      "module": "None",
+      "documented_gap": "Consolidated admin/settings screens, roles/lifecycle/photo/secrets inventory",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "System",
+      "screen": "System Audit/security history",
+      "module": "None",
+      "documented_gap": "Complete system audit/login/session management UI",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "System",
+      "screen": "Historical case entry",
+      "module": "None",
+      "documented_gap": "Authorized historical entry form, missing-data workflow, retained identifiers",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    },
+    {
+      "portal": "External",
+      "screen": "Priest report capability page",
+      "module": "None",
+      "documented_gap": "External page/delivery and actual acceptance",
+      "current_ui_verification": "Not interactively reviewed in this UI slice",
+      "dependency_status": "Requires per-control source/API review; no backend blocker inferred from absent UI",
+      "acceptance": "unfinished"
+    }
+  ],
+  "superseded_by": "ui-full-reconciliation.json"
+}

@@ -1,0 +1,359 @@
+{
+  "id": "CTM-B01",
+  "captured_at_utc": "2026-10-22T04:48:38.841924+00:00",
+  "captured_at_los_angeles": "2026-10-21T21:48:38.841924-07:00",
+  "purpose": "Pinned integration and latest-stream checkpoint, not release or complete-feature assertion",
+  "integration_commit": "35e02f7ab8cece9ffdffa200472d95b46cbfc43f",
+  "integration_tag": "baseline/integration-20261021-2145",
+  "integration_inputs": {
+    "backend": "37d6ed7afb000b8959843e42607d56e156f6a851",
+    "applicant": "2ae4541651e89589ca1bb554c1d3e1a67443c760",
+    "council": "65fa3893758ab298beee8aa921a544a8cd489ebc"
+  },
+  "main_commit": "b38e70a15b85c0c28f98515ddcd73f5c48ebdf05",
+  "pull_requests": [
+    {
+      "headRefName": "governance/integration-20261021",
+      "headRefOid": "35e02f7ab8cece9ffdffa200472d95b46cbfc43f",
+      "isDraft": true,
+      "mergedAt": null,
+      "number": 16,
+      "state": "OPEN",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-22T04:36:01Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/LighthouseCollection/CTM/actions/runs/39723057104/job/119640686602",
+          "name": "postgres",
+          "startedAt": "2026-10-22T04:33:42Z",
+          "status": "COMPLETED",
+          "workflowName": "CTM backend validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-22T04:36:12Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/LighthouseCollection/CTM/actions/runs/39723051694/job/119640668939",
+          "name": "postgres",
+          "startedAt": "2026-10-22T04:33:39Z",
+          "status": "COMPLETED",
+          "workflowName": "CTM backend validation"
+        }
+      ],
+      "title": "Integrate applicant council and backend with screen-by-screen coverage"
+    },
+    {
+      "headRefName": "governance/prototype-coverage-audit",
+      "headRefOid": "08da00b91b723a9a085417d39e07a4ed95792003",
+      "isDraft": true,
+      "mergedAt": null,
+      "number": 13,
+      "state": "OPEN",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-22T03:27:15Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/LighthouseCollection/CTM/actions/runs/39716757735/job/119620586401",
+          "name": "postgres",
+          "startedAt": "2026-10-22T03:25:36Z",
+          "status": "COMPLETED",
+          "workflowName": "CTM backend validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-22T03:27:14Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/LighthouseCollection/CTM/actions/runs/39716754270/job/119620574726",
+          "name": "postgres",
+          "startedAt": "2026-10-22T03:25:34Z",
+          "status": "COMPLETED",
+          "workflowName": "CTM backend validation"
+        }
+      ],
+      "title": "Governance: council prototype page and schema coverage audit"
+    },
+    {
+      "headRefName": "work/vm-frm-backend",
+      "headRefOid": "1ce1259ba4c5339af816e1c06ef6f684c79c5ec3",
+      "isDraft": true,
+      "mergedAt": null,
+      "number": 7,
+      "state": "OPEN",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-22T04:40:34Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/LighthouseCollection/CTM/actions/runs/39723456299/job/119641957334",
+          "name": "postgres",
+          "startedAt": "2026-10-22T04:38:04Z",
+          "status": "COMPLETED",
+          "workflowName": "CTM backend validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-22T04:40:30Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/LighthouseCollection/CTM/actions/runs/39723452682/job/119641945925",
+          "name": "postgres",
+          "startedAt": "2026-10-22T04:38:01Z",
+          "status": "COMPLETED",
+          "workflowName": "CTM backend validation"
+        }
+      ],
+      "title": "VM-FRM: filing privacy, reconsideration, council and payment contracts"
+    },
+    {
+      "headRefName": "work/claude-council",
+      "headRefOid": "65fa3893758ab298beee8aa921a544a8cd489ebc",
+      "isDraft": true,
+      "mergedAt": null,
+      "number": 6,
+      "state": "OPEN",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-22T04:13:03Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/LighthouseCollection/CTM/actions/runs/39720980651/job/119634088287",
+          "name": "postgres",
+          "startedAt": "2026-10-22T04:11:29Z",
+          "status": "COMPLETED",
+          "workflowName": "CTM backend validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-22T04:13:10Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/LighthouseCollection/CTM/actions/runs/39720978434/job/119634080870",
+          "name": "postgres",
+          "startedAt": "2026-10-22T04:11:27Z",
+          "status": "COMPLETED",
+          "workflowName": "CTM backend validation"
+        }
+      ],
+      "title": "Council workspace: review, sessions, reports, decision, decree, appeals and case pages"
+    },
+    {
+      "headRefName": "work/desktop-r-applicant",
+      "headRefOid": "34314d8c59dd6e6a72f0126e174b4e288da4e6d0",
+      "isDraft": true,
+      "mergedAt": null,
+      "number": 5,
+      "state": "OPEN",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-22T04:34:15Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/LighthouseCollection/CTM/actions/runs/39722957704/job/119640377684",
+          "name": "postgres",
+          "startedAt": "2026-10-22T04:32:38Z",
+          "status": "COMPLETED",
+          "workflowName": "CTM backend validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-22T04:34:18Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/LighthouseCollection/CTM/actions/runs/39722953925/job/119640366133",
+          "name": "postgres",
+          "startedAt": "2026-10-22T04:32:37Z",
+          "status": "COMPLETED",
+          "workflowName": "CTM backend validation"
+        }
+      ],
+      "title": "Applicant filing, appeals, contextual documents, payment history and invitations"
+    }
+  ],
+  "issues": [
+    {
+      "number": 15,
+      "state": "OPEN",
+      "title": "Claude QA work order QA-01: actual-backend report revision acceptance"
+    },
+    {
+      "number": 14,
+      "state": "OPEN",
+      "title": "Prototype reconciliation: 33 council pages, missing workflows UI and schema mappings"
+    },
+    {
+      "number": 12,
+      "state": "OPEN",
+      "title": "Perplexity acceptance: institutional content and visible sample wording"
+    },
+    {
+      "number": 11,
+      "state": "OPEN",
+      "title": "Perplexity acceptance: named parties, joint withdrawal and appeal-like later filings"
+    },
+    {
+      "number": 10,
+      "state": "OPEN",
+      "title": "Perplexity acceptance: sessions, report links and professional assessment scope"
+    },
+    {
+      "number": 9,
+      "state": "OPEN",
+      "title": "Perplexity acceptance: returned filing privacy, repeats and submission snapshots"
+    },
+    {
+      "number": 8,
+      "state": "OPEN",
+      "title": "Perplexity acceptance: identity, finance and cross-surface security"
+    },
+    {
+      "number": 4,
+      "state": "OPEN",
+      "title": "Governance: CTM functional demo integration tracker"
+    },
+    {
+      "number": 3,
+      "state": "OPEN",
+      "title": "Claude: council workspace workflows"
+    },
+    {
+      "number": 2,
+      "state": "OPEN",
+      "title": "VM-FRM: backend, security and integration"
+    },
+    {
+      "number": 1,
+      "state": "OPEN",
+      "title": "Desktop-R: applicant portal workflow"
+    }
+  ],
+  "live_worktree_uncommitted": [
+    {
+      "status": " M",
+      "path": "static/ctm/app.js",
+      "sha256": "2e25b70d6e086064cfeacb2c66b7c17e3df3557064938a72be90ed68fe4c6ee7"
+    },
+    {
+      "status": " M",
+      "path": "static/ctm/council-case.js",
+      "sha256": "02806465c0ca6bbe064a8714ff91866404e918e0608db6af51ff041763446dcb"
+    },
+    {
+      "status": " M",
+      "path": "static/ctm/council-decree.js",
+      "sha256": "1dae338944408da2bb759f485402f5955b9d3b88e6f0f88a5c76fb91eb2c7b87"
+    },
+    {
+      "status": " M",
+      "path": "static/ctm/council-media.js",
+      "sha256": "6ba748c53bb105622fcb2b64987e2f046dc082423e5a64d8e8145f9d8261a007"
+    },
+    {
+      "status": " M",
+      "path": "static/ctm/council.js",
+      "sha256": "59f5378cd224e19cb6d77fef37335cebb93ed1b87e03851d5d89f43328ae75b2"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_account_preferences.py",
+      "sha256": "410074abfc001c6b3f29534505ff2213af9d0a9d48333ea816a97381dd2fd0fc"
+    },
+    {
+      "status": " M",
+      "path": "tribunal/api.py",
+      "sha256": "7ae1715a407a2e7dd6965bb0dec3c577bba04aa8fc2eaa303d157cccfe9fd705"
+    },
+    {
+      "status": " M",
+      "path": "tribunal/templates/tribunal/shell.html",
+      "sha256": "6db1179b15da26d37173e490252755489c13974960c16753c519107759770e82"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/integration/split-view-regression.md",
+      "sha256": "617e5662c5a32275d6aa766a2a01b443372e11d60b976111f80060794bfb24ac"
+    },
+    {
+      "status": "??",
+      "path": "scripts/browser_header_account.py",
+      "sha256": "709cd5096ba8184060f05fbbae3bc947fa4b8deeacd458a37d3c99327cbae5c0"
+    },
+    {
+      "status": "??",
+      "path": "scripts/browser_navigation.py",
+      "sha256": "09fa4861403c70f6ea7cd3110ae42af099294436d6aaafc6806d0191743828e2"
+    },
+    {
+      "status": "??",
+      "path": "scripts/browser_split_workspaces.py",
+      "sha256": "a2ef597624a027a3adf4e104866ff589d072daab918f3281150f822f00bf83ec"
+    },
+    {
+      "status": "??",
+      "path": "static/ctm/shell-layout.js",
+      "sha256": "879fb75ed815000b63926dbd015ca10c29bcfa5c96a9e58160d7b179092da3ce"
+    },
+    {
+      "status": "??",
+      "path": "static/ctm/tribunal-logo-cropped.svg",
+      "sha256": "7609b08dfd082a62c7c988c5b77e2905320cfddf9ec88b524a0361eb159c4afd"
+    }
+  ],
+  "integration_missing_published_commits": {
+    "backend": 2,
+    "applicant": 1,
+    "council": 0
+  },
+  "local_preview": {
+    "url": "http://localhost:18844/",
+    "checkout": "D:\\Documents\\Projects\\Projects_Applications\\CTM-Integration",
+    "note": "Running working tree includes active UI edits beyond pinned commit; not an immutable release preview"
+  },
+  "public_probe": {
+    "url": "https://ctm.lighthouseway.org/",
+    "HTTP": 502,
+    "production_deployment_confirmed": false
+  },
+  "verification": {
+    "integration": {
+      "postgres": {
+        "passed": 490,
+        "skipped": 2
+      },
+      "extra_shipped_js_postgres_revision_test": 1,
+      "frontend": 180,
+      "actual_Django_SQLite_browser_groups": 66,
+      "council_read_screens": 18,
+      "seed_sqlite": 3,
+      "hosted_CI": "Both pass at35e02f7; frontend, PG, structural validation, image, private-volume and production-HTTP/static checks"
+    },
+    "backend_latest": {
+      "source": "worker report + green hosted checks at1ce1259",
+      "postgres_passed": 556,
+      "skipped": 1,
+      "models": 63,
+      "routes": 91,
+      "forced_RLS_tables": 56,
+      "core_policy_reviews_remaining": 7
+    },
+    "applicant_latest": {
+      "source": "committed history-notification report at34314d8",
+      "frontend": 92,
+      "actual_Django_SQLite_browser_groups": 74,
+      "backend_tested": "37d6ed7",
+      "scope": "synthetic sessions, controlled scan/payment; not live provider acceptance"
+    },
+    "independent_QA": {
+      "issue": 15,
+      "run1": "89 checks passed,10 failed on older db6dfa3/e4d2fb3",
+      "run2": "In progress on newer pinned heads; no final evidence PR yet",
+      "warning": "Old-run failures are not automatically current confirmed blockers"
+    },
+    "local_image_build": "FAILED BuildKit EOF after shared Docker engine restart; hosted CI image build passed"
+  },
+  "prohibited_claims": [
+    "No PR is merged into main",
+    "Published is not integrated",
+    "Test counts do not add into percent completion",
+    "Passing fixture/API checks do not establish live provider or general UI acceptance",
+    "All151-table semantics are not yet implemented/reconciled"
+  ]
+}

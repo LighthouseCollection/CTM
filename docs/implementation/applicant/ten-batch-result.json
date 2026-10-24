@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-21",
+  "backend_sha": "480a246118cce8c4ac338c32c71c79cde74816d2",
+  "scope": "local applicant integration; synthetic records and isolated SQLite",
+  "batches": [
+    {
+      "number": 1,
+      "task": "Closure privacy",
+      "result": "completed locally",
+      "evidence": "Never-sent drafts excluded after actual closure; sent closed rows retained."
+    },
+    {
+      "number": 2,
+      "task": "Own request identity",
+      "result": "completed locally",
+      "evidence": "Opaque fingerprint, proceeding and explicit capabilities validated."
+    },
+    {
+      "number": 3,
+      "task": "Intake responses",
+      "result": "completed locally",
+      "evidence": "Bound answers reviewed and submitted without internal observations."
+    },
+    {
+      "number": 4,
+      "task": "Receipt recovery",
+      "result": "completed locally",
+      "evidence": "Exact replay reuses receipt, including after closure; changed replay rejected."
+    },
+    {
+      "number": 5,
+      "task": "Published declaration",
+      "result": "completed locally",
+      "evidence": "Exact supplied bilingual version displayed and explicitly accepted."
+    },
+    {
+      "number": 6,
+      "task": "Scoped originals",
+      "result": "completed locally",
+      "evidence": "Request-bound uploads, clean-only exact links and distinct report evidence."
+    },
+    {
+      "number": 7,
+      "task": "Consent binding",
+      "result": "completed locally",
+      "evidence": "Signature original, declaration and council/request/proceeding scope retained."
+    },
+    {
+      "number": 8,
+      "task": "Assessment response",
+      "result": "completed locally",
+      "evidence": "Signed-scope-gated report submission and immutable original receipt."
+    },
+    {
+      "number": 9,
+      "task": "Interruption/privacy",
+      "result": "completed locally",
+      "evidence": "Dirty evidence survives refresh; upload blocks pending discard; denied reads clear private links."
+    },
+    {
+      "number": 10,
+      "task": "Integration/evidence",
+      "result": "completed locally",
+      "evidence": "Proposed shared shell patch, consolidated report and sanitized JSON."
+    }
+  ],
+  "checks": {
+    "frontend_tests": 66,
+    "real_api_browser_groups": 42,
+    "assessment_interruption_groups": 5,
+    "next_batch_groups": 9,
+    "shell_groups": 9,
+    "request_reader_groups": 4
+  },
+  "remaining": [
+    "Own supplement history and can_supplement",
+    "Original checkout resume snapshot",
+    "Lifecycle action capabilities/version enforcement",
+    "Complete institution-approved bilingual forms",
+    "Serial shared-shell integration",
+    "PostgreSQL and live service/issuance acceptance"
+  ]
+}

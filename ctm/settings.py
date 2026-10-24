@@ -41,6 +41,7 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    "tribunal.middleware.DatabaseSessionIdentityMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "tribunal.middleware.ActiveAccountMiddleware",
     "tribunal.middleware.DatabaseActorMiddleware",
@@ -171,4 +172,5 @@ STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 CLAMAV_HOST = os.environ.get("CLAMAV_HOST", "")
 CLAMAV_PORT = int(os.environ.get("CLAMAV_PORT", "3310"))
 CTM_SCAN_REQUIRED = True
-PLENIX_BASE = "https://design-system.lighthouseway.org/cdn/0.58.0/"
+CTM_TRIBUNAL_ID = os.environ.get("CTM_TRIBUNAL_ID", "")
+PLENIX_BASE = "https://design-system.lighthouseway.org/cdn/0.68.0/"

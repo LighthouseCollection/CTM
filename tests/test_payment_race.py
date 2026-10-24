@@ -5,8 +5,8 @@ from tribunal.services.payments import prepare_checkout, process_paid_checkout
 pytestmark = pytest.mark.django_db
 
 
-def test_signed_payment_can_arrive_before_checkout_response_saved(ready_application):
-    app = ready_application
+def test_signed_payment_can_arrive_before_checkout_response_saved(unpaid_application):
+    app = unpaid_application
     FeeObligation.objects.filter(application=app).update(status="due", waived_by=None)
     intent = prepare_checkout(
         app.owner, app.pk, {"accepted": True, "name": "John Smith"}

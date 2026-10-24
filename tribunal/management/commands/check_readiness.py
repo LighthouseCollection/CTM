@@ -14,30 +14,8 @@ class Command(BaseCommand):
         if connection.vendor != "postgresql":
             blockers.append("PostgreSQL is required")
         else:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user"
-                )
-                privileged = cursor.fetchone()
-                if privileged and any(privileged):
-                    blockers.append(
-                        "Runtime DB role must not be superuser or bypass RLS"
-                    )
-                cursor.execute(
-                    "SELECT relname FROM pg_class WHERE relnamespace='public'::regnamespace AND relname LIKE 'tribunal_%%' AND relkind='r' AND (NOT relrowsecurity OR NOT relforcerowsecurity)"
-                )
-                missing = [row[0] for row in cursor.fetchall()]
-                if missing:
-                    blockers.append(
-                        f"Forced row-level security is not installed on {len(missing)} domain tables"
-                    )
-                cursor.execute(
-                    "SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relname LIKE 'tribunal_%%' AND relkind='r' AND relowner=(SELECT oid FROM pg_roles WHERE rolname=current_user)"
-                )
-                if cursor.fetchone()[0]:
-                    blockers.append(
-                        "Runtime DB role owns domain tables; use separate migration ownership"
-                    )
+            from tribunal.services.readiness import database_readiness
+            blockers.extend(database_readiness()["blockers"])
         if not settings.MICROSOFT_TENANT_ID:
             blockers.append("Council Microsoft tenant/provider setup incomplete")
         for provider in ["microsoft", "google", "apple"]:

@@ -1,0 +1,463 @@
+diff --git a/static/ctm/app.js b/static/ctm/app.js
+index e531407..954495f 100644
+--- a/static/ctm/app.js
++++ b/static/ctm/app.js
+@@ -11,6 +11,8 @@
+     P = window.Plenix,
+     h = R.createElement;
+   const config = JSON.parse(document.getElementById("ctm-config").textContent);
++  // Separately loaded council workspace module (static/ctm/council.js), if present.
++  const councilModule = window.CTMCouncil || null;
+   const words = {
+     en: {
+       event_report_requested: "A report has been requested.",
+@@ -28,6 +30,18 @@
+       event_appeal_added: "New appeal information was added.",
+       event_testimony_response: "A testimony invitation received a response.",
+       event_testimony_invited: "You have a testimony invitation.",
++      event_testimony_rescheduled: "Your testimony appointment was rescheduled.",
++      event_testimony_cancelled: "Your testimony appointment was cancelled.",
++      event_closed_intake_submitted: "A later petition on a closed case awaits council consideration.",
++      event_application_accepted: "Your application was accepted for council review.",
++      event_application_returned: "Your application was returned for correction.",
++      event_appeal_accept: "The appeal was accepted.",
++      event_appeal_decline: "The appeal was declined.",
++      event_decree_issued: "A decision was issued and the case is closed.",
++      event_petition_denied: "The petition was denied and the case is closed.",
++      event_petitions_withdrawn: "The petitions were withdrawn and the case is closed.",
++      event_payment_finance_review: "A payment needs finance review.",
++      event_paid_filing_review: "A paid filing needs review before it can be finalized.",
+       tribunal: "Church Tribunal",
+       signIn: "Sign in to CTM",
+       welcome: "Access your application or council workspace securely.",
+@@ -127,15 +141,16 @@
+       assessment: "Case Review",
+       decision: "Decision",
+       timeline: "Timeline",
+-      parties: "Parties",
++      parties: "Spouses",
+       marriage: "Marriage",
+       separation: "Separation",
+       reports: "Reports",
+       hearings: "Hearings",
+       evidence: "Evidence",
+       documents: "Documents",
+-      medical: "Medical & Psychological Reports",
++      medical: "Professional Assessments",
+       decree: "Decree",
++      decisionVoting: "Decision & Voting",
+       appeals: "Appeals",
+       audit: "Case Audit",
+       backCases: "Back to cases",
+@@ -154,7 +169,7 @@
+       unpresented: "Not presented",
+       planned: "Planned",
+       status: "Status",
+-      members: "Parties",
++      members: "Spouses",
+       view: "Open",
+       profile: "Profile",
+       council: "Council portal",
+@@ -195,6 +210,18 @@
+       event_appeal_added: "أضيفت معلومات جديدة إلى الاستئناف.",
+       event_testimony_response: "تم الرد على دعوة الإدلاء بالشهادة.",
+       event_testimony_invited: "لديك دعوة للإدلاء بالشهادة.",
++      event_testimony_rescheduled: "تمت إعادة جدولة موعد إدلائك بالشهادة.",
++      event_testimony_cancelled: "تم إلغاء موعد إدلائك بالشهادة.",
++      event_closed_intake_submitted: "يوجد طلب لاحق على قضية مغلقة في انتظار نظر المجلس.",
++      event_application_accepted: "تم قبول طلبك لعرضه على المجلس.",
++      event_application_returned: "أُعيد طلبك للتصحيح.",
++      event_appeal_accept: "تم قبول الاستئناف.",
++      event_appeal_decline: "تم رفض الاستئناف.",
++      event_decree_issued: "صدر قرار وأُغلقت القضية.",
++      event_petition_denied: "رُفض الطلب وأُغلقت القضية.",
++      event_petitions_withdrawn: "سُحبت الطلبات وأُغلقت القضية.",
++      event_payment_finance_review: "توجد دفعة تحتاج إلى مراجعة مالية.",
++      event_paid_filing_review: "يوجد طلب مدفوع يحتاج إلى مراجعة قبل إتمامه.",
+       attendance: "حضور أعضاء المجلس",
+       present: "حاضر",
+       absent: "غائب",
+@@ -292,15 +319,16 @@
+       assessment: "دراسة القضية",
+       decision: "القرار",
+       timeline: "التسلسل الزمني",
+-      parties: "أطراف القضية",
++      parties: "الزوجان",
+       marriage: "الزواج",
+       separation: "الانفصال",
+       reports: "التقارير",
+       hearings: "مناقشات القضية",
+       evidence: "الأدلة",
+       documents: "المستندات",
+-      medical: "التقارير الطبية والنفسية",
++      medical: "التقييمات المهنية",
+       decree: "الشهادة",
++      decisionVoting: "القرار والتصويت",
+       appeals: "التماسات إعادة النظر",
+       audit: "سجل القضية",
+       backCases: "العودة إلى القضايا",
+@@ -319,7 +347,7 @@
+       unpresented: "لم تُناقش",
+       planned: "محددة",
+       status: "الحالة",
+-      members: "أطراف القضية",
++      members: "الزوجان",
+       view: "فتح",
+       profile: "الملف الشخصي",
+       council: "بوابة المجلس",
+@@ -369,6 +397,7 @@
+     const response = await fetch(url, {
+       ...options,
+       credentials: "same-origin",
++      // FormData sets its own multipart boundary; JSON bodies keep the JSON type.
+       headers: {
+         Accept: "application/json",
+         ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+@@ -384,6 +413,11 @@
+     if (!response.ok) {
+       const error = new Error("request_failed");
+       error.status = response.status;
++      try {
++        error.data = await response.json();
++      } catch {
++        error.data = null;
++      }
+       throw error;
+     }
+     return response.json();
+@@ -509,7 +543,7 @@
+   }
+   const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
+   const heading = (value) => text(value, { as: "h1", variant: "title" });
+-  function SessionAttendance({ sessionId, session, members, initial, t }) {
++  function SessionAttendance({ sessionId, session, members, initial, t, onSaved }) {
+     const [records, setRecords] = R.useState(initial),
+       [pending, setPending] = R.useState(false),
+       [failed, setFailed] = R.useState(false);
+@@ -530,6 +564,7 @@
+             present: value === "present",
+           }),
+         });
++        if (onSaved) onSaved();
+       } catch {
+         setRecords(previous);
+         setFailed(true);
+@@ -1046,7 +1081,7 @@
+           messages: messages.items,
+           sessions: sessions.items,
+         }));
+-      else if (page === "session" && selection)
++      else if (page === "session" && selection && !(councilModule && user.portal === "council"))
+         request = Promise.all([
+           api(`/api/sessions/${selection}/agenda/`),
+           api("/api/council/members/"),
+@@ -1056,6 +1091,12 @@
+           members: members.items,
+           attendance: attendance.items,
+         }));
++      else if (
++        councilModule &&
++        user.portal === "council" &&
++        ["review", "sessions", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings", "petition", "timeline", "statistics"].includes(page)
++      )
++        request = Promise.resolve({});
+       else if (page === "sessions") request = api("/api/sessions/");
+       else if (page === "applications") request = api("/api/applications/");
+       else if (["home", "cases", "archived", "past"].includes(page)) {
+@@ -1188,11 +1229,29 @@
+     const navItems = council
+       ? ["home", "sessions", "cases", "search", "archived", "statistics"]
+       : ["home", "applications", "appointments", "past"];
+-    const unavailable = new Set(["search", "statistics"]);
++    const unavailable = new Set(
++      [
++        ...(councilModule?.SearchWorkspace ? [] : ["search"]),
++        ...(councilModule?.StatisticsWorkspace ? [] : ["statistics"]),
++      ],
++    );
+     const caseContext =
+-      ["case", "communications", "documents", "evidence", "reports"].includes(
+-        page,
+-      ) && selection;
++      [
++        "case",
++        "communications",
++        "documents",
++        "evidence",
++        "reports",
++        "decision",
++        "decree",
++        "appeals",
++        "audit",
++        "medical",
++        "parties",
++        "hearings",
++        "petition",
++        "timeline",
++      ].includes(page) && selection;
+     const caseGroups = [
+       {
+         heading: t("overview"),
+@@ -1200,7 +1259,11 @@
+           (id) => ({
+             id,
+             label: t(id === "case" ? "summary" : id),
+-            disabled: id !== "case",
++            disabled: !(
++              id === "case" ||
++              (id === "parties" && councilModule?.CaseParties && council) ||
++              (id === "timeline" && councilModule?.CaseTimeline && council)
++            ),
+           }),
+         ),
+       },
+@@ -1218,15 +1281,24 @@
+         ].map((id) => ({
+           id,
+           label: t(id),
+-          disabled: !["documents", "evidence", "reports"].includes(id),
++          disabled: !(
++            ["documents", "evidence", "reports"].includes(id) ||
++            (id === "petition" && councilModule?.PetitionWorkspace) ||
++            (id === "medical" && councilModule?.AssessmentsWorkspace) ||
++            (id === "hearings" && councilModule?.CaseHearings)
++          ),
+         })),
+       },
+       {
+         heading: t("decision"),
+-        items: ["decree", "appeals"].map((id) => ({
++        items: ["decision", "decree", "appeals"].map((id) => ({
+           id,
+-          label: t(id),
+-          disabled: true,
++          label: t(id === "decision" ? "decisionVoting" : id),
++          disabled: !(
++            (id === "decision" && councilModule?.DecisionWorkspace) ||
++            (id === "decree" && councilModule?.DecreeWorkspace) ||
++            (id === "appeals" && councilModule?.AppealsWorkspace)
++          ),
+         })),
+       },
+     ];
+@@ -1265,6 +1337,14 @@
+                 groups: reviewGroups,
+               })
+             : null,
++          council && councilModule?.CaseAudit
++            ? h(P.NavList, {
++                label: t("audit"),
++                value: page,
++                onSelect: (id) => go(id, selection),
++                items: [{ id: "audit", label: t("audit") }],
++              })
++            : null,
+         )
+       : h(
+           P.NavPane,
+@@ -1376,8 +1456,88 @@
+           lang,
+           onCase: (id) => go("case", id),
+         });
++      if (page === "reports" && council && councilModule?.ReportsWorkspace)
++        return h(councilModule.ReportsWorkspace, {
++          key: selection,
++          api,
++          lang,
++          user,
++          caseId: selection,
++          reports: data.items,
++          renderReports: () =>
++            h(ReportReader, { key: selection, rows: data.items, t, lang }),
++        });
++      if (page === "case" && council && councilModule?.CaseSummary)
++        return h(councilModule.CaseSummary, {
++          key: selection,
++          api,
++          lang,
++          user,
++          caseId: selection,
++          onNavigate: (id) => go(id, selection),
++        });
++      if (page === "timeline" && council && councilModule?.CaseTimeline)
++        return h(councilModule.CaseTimeline, { key: selection, api, lang, caseId: selection });
++      if (page === "petition" && council && councilModule?.PetitionWorkspace)
++        return h(councilModule.PetitionWorkspace, { key: selection, api, lang, user, caseId: selection });
++      if (page === "parties" && council && councilModule?.CaseParties)
++        return h(councilModule.CaseParties, { key: selection, api, lang, user, caseId: selection });
++      if (page === "hearings" && council && councilModule?.CaseHearings)
++        return h(councilModule.CaseHearings, {
++          key: selection,
++          api,
++          lang,
++          caseId: selection,
++          onSession: (id) => go("session", id),
++        });
++      if (page === "home" && council && councilModule?.CouncilHome)
++        return h(councilModule.CouncilHome, {
++          api,
++          lang,
++          user,
++          onCase: (id) => go("case", id),
++          onSession: (id) => go("session", id),
++          onReview: () => go("review"),
++          onNotifications: () => go("notifications"),
++        });
++      if (page === "medical" && council && councilModule?.AssessmentsWorkspace)
++        return h(councilModule.AssessmentsWorkspace, { key: selection, api, lang, user, caseId: selection });
++      if (page === "audit" && council && councilModule?.CaseAudit)
++        return h(councilModule.CaseAudit, { key: selection, api, lang, caseId: selection });
++      if (page === "appeals" && council && councilModule?.AppealsWorkspace)
++        return h(councilModule.AppealsWorkspace, {
++          key: selection,
++          api,
++          lang,
++          user,
++          caseId: selection,
++        });
++      if (page === "decree" && council && councilModule?.DecreeWorkspace)
++        return h(councilModule.DecreeWorkspace, {
++          key: selection,
++          api,
++          lang,
++          user,
++          caseId: selection,
++        });
++      if (page === "decision" && council && councilModule?.DecisionWorkspace)
++        return h(councilModule.DecisionWorkspace, {
++          key: selection,
++          api,
++          lang,
++          user,
++          caseId: selection,
++        });
+       if (page === "reports")
+         return h(ReportReader, { key: selection, rows: data.items, t, lang });
++      if (["documents", "evidence"].includes(page) && council && councilModule?.CaseFilesWorkspace)
++        return h(councilModule.CaseFilesWorkspace, {
++          key: `${selection}-${page}`,
++          api,
++          lang,
++          caseId: selection,
++          section: page,
++        });
+       if (["documents", "evidence"].includes(page))
+         return h(CaseFiles, {
+           key: `${selection}-${page}`,
+@@ -1459,6 +1619,15 @@
+                 onSent: () => reload((n) => n + 1),
+               })
+             : null,
++          council && councilModule?.CallLog
++            ? h(councilModule.CallLog, {
++                key: `calls-${selection}`,
++                api,
++                lang,
++                user,
++                caseId: selection,
++              })
++            : null,
+         );
+       if (page === "case")
+         return h(
+@@ -1500,6 +1669,51 @@
+             }),
+           ),
+         );
++      if (councilModule?.StatisticsWorkspace && council && page === "statistics")
++        return h(councilModule.StatisticsWorkspace, { api, lang });
++      if (councilModule?.SearchWorkspace && council && page === "search")
++        return h(councilModule.SearchWorkspace, {
++          api,
++          lang,
++          user,
++          onCase: (id) => go("case", id),
++        });
++      if (councilModule && council && page === "review")
++        return h(councilModule.ReviewWorkspace, {
++          api,
++          lang,
++          user,
++          onCase: (id) => go("documents", id),
++          onBack: () => go("home"),
++        });
++      if (councilModule && council && page === "sessions")
++        return h(councilModule.SessionList, {
++          api,
++          lang,
++          user,
++          onOpen: (id) => go("session", id),
++        });
++      if (councilModule && council && page === "session")
++        return h(councilModule.SessionWorkspace, {
++          key: selection,
++          api,
++          lang,
++          user,
++          sessionId: selection,
++          onCase: (id) => go("case", id),
++          onBack: () => go("sessions"),
++          onSession: (id) => go("session", id),
++          renderAttendance: ({ session, members, attendance, key, onSaved }) =>
++            h(SessionAttendance, {
++              key,
++              onSaved,
++              sessionId: selection,
++              session,
++              members,
++              initial: attendance,
++              t,
++            }),
++        });
+       if (page === "session")
+         return h(
+           P.Stack,
+@@ -1585,11 +1799,26 @@
+               : h(P.EmptyState, { title: t("noCurrent") }),
+         );
+       }
++      if (council && councilModule?.CasesTable && ["cases", "archived"].includes(page))
++        return h(councilModule.CasesTable, {
++          cases: data.items,
++          archived: page === "archived",
++          lang,
++          onOpen: (id) => go("case", id),
++        });
+       if (["home", "cases", "archived", "past"].includes(page))
+         return h(
+           P.Stack,
+           null,
+           heading(t(page)),
++          councilModule && council && page === "home"
++            ? h(councilModule.ReviewQueuePanel, {
++                api,
++                lang,
++                user,
++                onOpen: () => go("review"),
++              })
++            : null,
+           caseList(
+             data.items.filter((row) =>
+               ["archived", "past"].includes(page)
+diff --git a/tribunal/templates/tribunal/shell.html b/tribunal/templates/tribunal/shell.html
+index 58ff2bc..eae58fd 100644
+--- a/tribunal/templates/tribunal/shell.html
++++ b/tribunal/templates/tribunal/shell.html
+@@ -26,6 +26,17 @@
+   <script defer src="{% static 'ctm/applicant-decrees.js' %}"></script>
+   <script defer src="{% static 'ctm/applicant-supplements.js' %}"></script>
+   <script defer src="{% static 'ctm/applicant.js' %}"></script>
++  <script src="https://design-system.lighthouseway.org/cdn/0.60.1/theme-boot.js"></script>
++  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.60.1/fonts.css">
++  <link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.60.1/plenix.css">
++  <script defer src="https://design-system.lighthouseway.org/cdn/0.60.1/vendor/react.production.min.js"></script>
++  <script defer src="https://design-system.lighthouseway.org/cdn/0.60.1/vendor/react-dom.production.min.js"></script>
++  <script defer src="https://design-system.lighthouseway.org/cdn/0.60.1/plenix.js"></script>
++  <script defer src="{% static 'ctm/shell-layout.js' %}"></script>
++  <script defer src="{% static 'ctm/council.js' %}"></script>
++  <script defer src="{% static 'ctm/council-case.js' %}"></script>
++  <script defer src="{% static 'ctm/council-decree.js' %}"></script>
++  <script defer src="{% static 'ctm/council-media.js' %}"></script>
+   <script defer src="{% static 'ctm/app.js' %}"></script>
+ </head>
+ <body>

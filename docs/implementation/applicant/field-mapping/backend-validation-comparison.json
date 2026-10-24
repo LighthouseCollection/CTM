@@ -1,0 +1,331 @@
+{
+  "scope": "Direct actual validator functions from pinned source, not publication/database/live acceptance; rejection cases have otherwise-valid UUIDs to avoid masking field validation",
+  "baseline": "104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc",
+  "current": "ff8571720ae1940034832bfbb69ddf9503f94c0e",
+  "runs": {
+    "104e4fd06c6cde1ae4cdb76ba5f9ab47b8d336fc": {
+      "checks": [
+        {
+          "id": "nested-required",
+          "expected": "rejected",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": "children[0].name",
+          "outcome_matches": false,
+          "location_matches": false
+        },
+        {
+          "id": "nested-date",
+          "expected": "rejected",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": "children[0].birth_date",
+          "outcome_matches": false,
+          "location_matches": false
+        },
+        {
+          "id": "nested-choice",
+          "expected": "rejected",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": "children[0].gender",
+          "outcome_matches": false,
+          "location_matches": false
+        },
+        {
+          "id": "nested-boolean",
+          "expected": "rejected",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": "children[0].confirmed",
+          "outcome_matches": false,
+          "location_matches": false
+        },
+        {
+          "id": "repeat-object-shape",
+          "expected": "rejected",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": "Repeat rows must be objects",
+          "outcome_matches": false,
+          "location_matches": false
+        },
+        {
+          "id": "duplicate-repeat-id",
+          "expected": "rejected",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": "distinct stable UUIDs",
+          "outcome_matches": false,
+          "location_matches": false
+        },
+        {
+          "id": "case-normalized-duplicate-id",
+          "expected": "rejected",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": "distinct stable UUIDs",
+          "outcome_matches": false,
+          "location_matches": false
+        },
+        {
+          "id": "missing-repeat-id",
+          "expected": "rejected",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": "distinct stable UUIDs",
+          "outcome_matches": false,
+          "location_matches": false
+        },
+        {
+          "id": "textarea-type",
+          "expected": "rejected",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": "statement",
+          "outcome_matches": false,
+          "location_matches": false
+        },
+        {
+          "id": "primitive-list-choice",
+          "expected": "rejected",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": "grounds",
+          "outcome_matches": false,
+          "location_matches": false
+        },
+        {
+          "id": "top-level-date",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Invalid date: date",
+          "expected_location": "date",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "top-level-required",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Required answer missing: name",
+          "expected_location": "name",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "top-level-boolean",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Invalid boolean: flag",
+          "expected_location": "flag",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "valid-configured-unknown",
+          "expected": "accepted",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": null,
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "valid-textarea",
+          "expected": "accepted",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": null,
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "row-local-hidden-required",
+          "expected": "accepted",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": null,
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "row-local-shown-required",
+          "expected": "rejected",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": "rows[0].details",
+          "outcome_matches": false,
+          "location_matches": false
+        }
+      ],
+      "outcomes_matching": 6,
+      "total": 17,
+      "publisher_type_vocabulary_includes_textarea": false,
+      "validation_sha256": "2a4cadead2f65c51374fc5231fe5c0751f6c9615367a5efddd84f193f7b5c079",
+      "configuration_sha256": "fbf0bb7b0914f13c50913b8ea406e0fd27a60fbbcab0734fa03e3cddfda6bf85"
+    },
+    "ff8571720ae1940034832bfbb69ddf9503f94c0e": {
+      "checks": [
+        {
+          "id": "nested-required",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Required answer missing: children[0].name",
+          "expected_location": "children[0].name",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "nested-date",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Invalid date: children[0].birth_date",
+          "expected_location": "children[0].birth_date",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "nested-choice",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Invalid choice: children[0].gender",
+          "expected_location": "children[0].gender",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "nested-boolean",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Invalid boolean: children[0].confirmed",
+          "expected_location": "children[0].confirmed",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "repeat-object-shape",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Repeat rows must be objects: children[0]",
+          "expected_location": "Repeat rows must be objects",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "duplicate-repeat-id",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Repeat rows require distinct stable UUIDs: children[1]",
+          "expected_location": "distinct stable UUIDs",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "case-normalized-duplicate-id",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Repeat rows require distinct stable UUIDs: children[1]",
+          "expected_location": "distinct stable UUIDs",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "missing-repeat-id",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Repeat rows require distinct stable UUIDs: children[0]",
+          "expected_location": "distinct stable UUIDs",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "textarea-type",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Invalid answer type: statement",
+          "expected_location": "statement",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "primitive-list-choice",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Invalid list choice: grounds",
+          "expected_location": "grounds",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "top-level-date",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Invalid date: date",
+          "expected_location": "date",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "top-level-required",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Required answer missing: name",
+          "expected_location": "name",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "top-level-boolean",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Invalid boolean: flag",
+          "expected_location": "flag",
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "valid-configured-unknown",
+          "expected": "accepted",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": null,
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "valid-textarea",
+          "expected": "accepted",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": null,
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "row-local-hidden-required",
+          "expected": "accepted",
+          "actual": "accepted",
+          "error": null,
+          "expected_location": null,
+          "outcome_matches": true,
+          "location_matches": true
+        },
+        {
+          "id": "row-local-shown-required",
+          "expected": "rejected",
+          "actual": "rejected",
+          "error": "Required answer missing: rows[0].details",
+          "expected_location": "rows[0].details",
+          "outcome_matches": true,
+          "location_matches": true
+        }
+      ],
+      "outcomes_matching": 17,
+      "total": 17,
+      "publisher_type_vocabulary_includes_textarea": true,
+      "validation_sha256": "d5d53516d7bd8bc088c67d4f50994661da670d8cf1eaced89900b50cffb268d9",
+      "configuration_sha256": "05f0da11c0962ac4f0d4d46534faffe2c999c0ef0f27c522ebd6de31f4ec6066"
+    }
+  }
+}

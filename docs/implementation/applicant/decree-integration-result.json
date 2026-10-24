@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "backend_sha": "444bad8a14535a6911b53c554c1fd9b80831dd72",
+  "scope": "Actual own release read/browser integration with isolated SQLite and synthetic DEC original; not real signing/issuance",
+  "checks": {
+    "own_active_release_read": true,
+    "exact_pdf_action": true,
+    "bilingual_metadata_and_arabic_mobile": true,
+    "linked_spouse_isolated_from_release_and_bytes": true,
+    "withdrawal_refresh_removes_release_link": true,
+    "retained_full_range_preview_head_urls_denied_after_withdrawal": true,
+    "case_and_pdf_no_store": true
+  },
+  "frontend_tests_passed": 59,
+  "real_api_preceding_scenario_groups_passed": 35,
+  "full_acceptance": "blocked_by_unsent_request_closure_disclosure"
+}

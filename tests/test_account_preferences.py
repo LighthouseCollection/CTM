@@ -57,6 +57,22 @@ def test_preferences_reject_unknown_fields_and_invalid_languages(
     assert not AuditEvent.objects.filter(action="account_preferences_changed").exists()
 
 
+def test_account_owner_can_update_own_profile_name_and_receives_an_audit_entry(client, people):
+    user = people["member"]
+    sign_in(client, user)
+    response = client.post(
+        "/api/account/settings/",
+        {"first_name": "Updated", "last_name": "Member"},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    user.refresh_from_db()
+    assert (user.first_name, user.last_name) == ("Updated", "Member")
+    assert response.json()["name"] == "Updated Member"
+    event = AuditEvent.objects.get(action="account_profile_changed")
+    assert event.actor_id == user.pk
+
+
 def test_unchanged_preference_does_not_add_history(client, people):
     sign_in(client, people["member"])
     assert (
@@ -68,3 +84,11 @@ def test_unchanged_preference_does_not_add_history(client, people):
         == 200
     )
     assert not AuditEvent.objects.filter(action="account_preferences_changed").exists()
+
+
+def test_session_exposes_signed_in_email_for_header(client, people):
+    user = people["member"]
+    sign_in(client, user)
+    response = client.get("/api/session/")
+    assert response.status_code == 200
+    assert response.json()["email"] == user.email

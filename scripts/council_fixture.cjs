@@ -1,0 +1,927 @@
+/* Synthetic council contract fixture for browser checks on machines without
+   Python. Serves the real shell assets (pinned Plenix CDN, council modules,
+   app.js) with an in-memory stub of the council endpoints. It is NOT a
+   real-API, provider-login or database test and contains no real case data.
+
+   Usage: node scripts/council_fixture.cjs [port] [role] [--contract=main|pr7]
+   role: secretary (default) | member | president
+   --contract=pr7 adds the council projections proposed in backend PR #7
+   (review projection, agenda capabilities, hearing read, decision read,
+   question taxonomy, request metadata, interview boundary, D19 report
+   authorship and can_revise). Report revisions are stateful; POST
+   /__revise_fail/ {mode:"403"|"500"|"lostack"} fails the next revision save
+   ("lostack" stores it, then drops the connection) and
+   /__revise_bump/ {report} adds a concurrent revision by another actor. */
+const http = require("node:http");
+const fs = require("node:fs");
+const path = require("node:path");
+
+const root = path.resolve(__dirname, "..");
+const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const pr7 = process.argv.includes("--contract=pr7");
+// --decree-read adds a decree object to decision rows (requested dependency D12).
+const decreeRead = process.argv.includes("--decree-read");
+const port = Number(args[0] || 18850);
+let role = args[1] || "secretary";
+
+const people = {
+  secretary: { id: "u-sec", name: "Synthetic Secretary", role: "secretary" },
+  member: { id: "u-mem", name: "Fr. Synthetic Member", role: "member" },
+  president: { id: "u-pre", name: "Synthetic President", role: "president" },
+};
+const nameOf = (id) => Object.values(people).find((p) => p.id === id)?.name || null;
+const now = () => new Date().toISOString();
+const state = {
+  reports: [
+    { id: "rep-int-1", title: "In-person interview", kind: "interview", subject: "Synthetic Applicant", date: "2026-10-16", case: "c-4",
+      parent_report_id: null, questions: [{ code: "DM-01", en: "Synthetic question one?", ar: "سؤال تجريبي أول؟" }, { code: "DM-03", en: "Synthetic question three?", ar: "سؤال تجريبي ثالث؟" }],
+      author_id: "u-mem", author: "Fr. Synthetic Member", author_role: "member", submitted_at: "2026-10-16T18:00:00Z", method: "written" },
+    { id: "rep-int-2", title: "Applicant intake", kind: "intake", subject: "Synthetic Spouse", date: "2026-10-12", case: "c-4",
+      parent_report_id: null, questions: [{ code: "DM-02", en: "Synthetic question two?", ar: "" }],
+      author_id: "u-app", author: "Synthetic Spouse", author_role: "applicant", submitted_at: "2026-10-12T17:00:00Z", method: "written" },
+  ],
+  revisions: {
+    "rep-int-1": [{ id: "rv-1", version: 1, answers: { "DM-01": "Synthetic answer.", files: ["f-synthetic"] }, observations: "Synthetic council observation.", actor: "Fr. Synthetic Member", timestamp: "2026-10-16T18:00:00Z" }],
+    "rep-int-2": [{ id: "rv-1", version: 1, answers: { "DM-02": "Spouse answer." }, observations: "", actor: "Synthetic Spouse", timestamp: "2026-10-12T17:00:00Z" }],
+  },
+  reviseFail: null,
+  applications: [
+    {
+      id: "a-1", kind: "petition", status: "submitted", case_id: "c-1", case_number: "20261020-01", version: 2,
+      answers: { first_name_en: "Test", last_name_en: "Applicant", grounds: ["desertion"] },
+      fee: { amount_minor: 25000, currency: "usd", status: "paid" },
+    },
+    {
+      id: "a-2", kind: "petition", status: "submitted", case_id: "c-2", case_number: "20261020-02", version: 1,
+      answers: {}, fee: { amount_minor: 25000, currency: "usd", status: "waived" },
+    },
+    { id: "a-3", kind: "petition", status: "accepted", case_id: "c-3", case_number: "20261019-01", version: 1, answers: {}, fee: null },
+    {
+      id: "a-5", kind: "appeal", status: "submitted", case_id: "c-5", case_number: "20260901-01", version: 1,
+      answers: { statement: "Synthetic appeal statement.", new_information: "Synthetic new information." },
+      fee: { amount_minor: 25000, currency: "usd", status: "paid" },
+    },
+    {
+      id: "a-6", kind: "petition", origin: "closed_case_intake", status: "submitted", case_id: "c-5", case_number: "20260901-01", version: 1,
+      answers: { new_information: "Synthetic new information from the spouse who had not filed." },
+      fee: { amount_minor: 25000, currency: "usd", status: "paid" },
+    },
+  ],
+  reviews: [],
+  cases: [
+    { id: "c-1", number: "20261020-01", status: "open", assigned: null },
+    { id: "c-2", number: "20261020-02", status: "open", assigned: null },
+    { id: "c-3", number: "20261019-01", status: "open", assigned: null },
+    { id: "c-4", number: "20261001-01", status: "open", assigned: "u-mem" },
+    { id: "c-5", number: "20260901-01", status: "closed", assigned: "u-mem" },
+  ],
+  sessions: [
+    { id: "s-1", date: "2026-11-05", reference: "CS20261105", state: "planned" },
+    { id: "s-0", date: "2026-10-08", reference: "CS20261008", state: "closed" },
+  ],
+  agenda: [{ id: "i-s-0c-5", session: "s-0", case_id: "c-5", part: 2, state: "heard", position: 1 }],
+  attendance: [],
+  hearings: [{ id: "h-appeal", agenda: "i-s-0c-5", case_id: "c-5", state: "held", presenter_id: "u-mem" }],
+  outcomes: [],
+  testimony: [],
+  posts: [],
+  requests: [],
+  decisions: [],
+  votes: [],
+  approvals: [],
+  files: [],
+  attestations: [],
+  decrees: [],
+  questions: [
+    { id: "q1", code: "OPEN-01", version: 1, category: "Foundational questions", wording_en: "Please state your full name and your spouse’s full name.", wording_ar: "", foundational: true, guidance: {} },
+    { id: "q2", code: "DM-01", version: 1, category: "Decision to marry", wording_en: "Synthetic question one?", wording_ar: "", foundational: false, guidance: {} },
+    { id: "q3", code: "DM-02", version: 1, category: "Decision to marry", wording_en: "Synthetic question two?", wording_ar: "", foundational: false, guidance: {} },
+  ],
+};
+const taxonomy = {
+  "OPEN-01": { category_id: "QC01", category_ar: null, topic_groups: [{ id: "TG01", title: "Foundation", title_ar: null }] },
+  "DM-01": { category_id: "QC05", category_ar: null, topic_groups: [{ id: "TG02", title: "Common guided interview", title_ar: null }, { id: "TG03", title: "Annulment-related factual inquiry", title_ar: null }] },
+  "DM-02": { category_id: "QC05", category_ar: null, topic_groups: [{ id: "TG02", title: "Common guided interview", title_ar: null }] },
+};
+const parties = (c) => [
+  { id: "pa-" + c.id, name: "Synthetic Applicant", is_self: false, can_receive: true, reference: null },
+  { id: "pb-" + c.id, name: "Synthetic Spouse", is_self: false, can_receive: true, reference: null },
+];
+// Synthetic evidence bytes generated in memory (no real case material).
+function wavTone(seconds = 2, hz = 440, rate = 8000) {
+  const samples = seconds * rate;
+  const buf = Buffer.alloc(44 + samples * 2);
+  buf.write("RIFF", 0); buf.writeUInt32LE(36 + samples * 2, 4); buf.write("WAVE", 8); buf.write("fmt ", 12);
+  buf.writeUInt32LE(16, 16); buf.writeUInt16LE(1, 20); buf.writeUInt16LE(1, 22); buf.writeUInt32LE(rate, 24);
+  buf.writeUInt32LE(rate * 2, 28); buf.writeUInt16LE(2, 32); buf.writeUInt16LE(16, 34); buf.write("data", 36); buf.writeUInt32LE(samples * 2, 40);
+  for (let i = 0; i < samples; i++) buf.writeInt16LE(Math.round(Math.sin((2 * Math.PI * hz * i) / rate) * 8000), 44 + i * 2);
+  return buf;
+}
+const PNG_1PX = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+const MINI_PDF = Buffer.from(
+  "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 100]/Contents 4 0 R/Resources<</Font<</F1<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>>>>>>>endobj\n4 0 obj<</Length 44>>stream\nBT /F1 12 Tf 20 50 Td (Synthetic evidence) Tj ET\nendstream endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n",
+);
+const MEDIA = {
+  "ev-img": { name: "20261001-01-EVD-20261015-1000.png", category: "EVD", mime: "image/png", bytes: () => PNG_1PX },
+  "ev-aud": { name: "20261001-01-EVD-20261015-1001.wav", category: "EVD", mime: "audio/wav", bytes: () => wavTone() },
+  "ev-pdf": { name: "20261001-01-EVD-20261015-1002.pdf", category: "EVD", mime: "application/pdf", bytes: () => MINI_PDF },
+  "ev-doc": { name: "20261001-01-EVD-20261015-1003.doc", category: "EVD", mime: "application/msword", bytes: () => Buffer.from("synthetic word bytes") },
+  "dc-mc": { name: "20261001-01-MC-20261001-0900.pdf", category: "MC", mime: "application/pdf", bytes: () => MINI_PDF },
+};
+
+const members = () =>
+  Object.values(people).map(({ id, name, role }) =>
+    pr7
+      ? { id, name, role, president: role === "president", active: true,
+          // Synthetic combined authority: the President may also record assignments (F15).
+          can_authorize_assignment: role === "president", can_record_assignment: ["secretary", "admin", "president"].includes(role) }
+      : { id, name, role });
+const json = (res, status, body) => {
+  res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+  res.end(JSON.stringify(body));
+};
+const admin = () => ["secretary", "admin"].includes(role);
+const me = () => people[role];
+// Mirrors backend D19 (PR #7): original non-applicant author, current writer authority, open case.
+function canRevise(report) {
+  const c = state.cases.find((x) => x.id === report.case);
+  return report.author_id === me().id && report.author_role !== "applicant" && c.status === "open" && (admin() || c.assigned === me().id);
+}
+function reportRow(report) {
+  const list = state.revisions[report.id];
+  const last = list[list.length - 1];
+  const { case: _case, author_role: _role, author_id, author, submitted_at, method, ...row } = report;
+  return { ...row, version: last.version, answers: last.answers, observations: last.observations,
+    ...(pr7 ? { author_id, author, submitted_at, method, can_revise: canRevise(report) } : {}) };
+}
+const caseRow = (c) => ({ id: c.id, number: c.number, status: c.status, assigned_member: nameOf(c.assigned) });
+
+function applicationRow(a) {
+  const base = { ...a };
+  if (!pr7) return base;
+  return {
+    ...base,
+    applicant_name: "Synthetic Applicant",
+    submitted_at: "2026-10-20T18:04:00Z",
+    submitted_version: a.version,
+    questionnaire: { id: "qn-1", version: 1, published: true, definition: { fields: [
+      { code: "first_name_en", label_en: "First name (English)", label_ar: "" },
+      { code: "last_name_en", label_en: "Last name (English)", label_ar: "" },
+      { code: "grounds", label_en: "Grounds", label_ar: "" },
+    ] } },
+    manifest: [
+      { file_id: "f-mc-" + a.id, category: "MC", name: `${a.case_number}-MC-20261020-1804.pdf`, scan_state: "clean" },
+      { file_id: "f-cdd-" + a.id, category: "CDD", name: `${a.case_number}-CDD-20261020-1805.pdf`, scan_state: "pending" },
+    ],
+    reviews: state.reviews.filter((r) => r.app === a.id),
+    can_review: admin() && a.status === "submitted",
+    ...(a.kind === "appeal" || a.origin === "closed_case_intake" ? appealExtras(a) : {}),
+  };
+}
+
+function appealExtras(a) {
+  const c = state.cases.find((x) => x.id === a.case_id);
+  const eligible = state.hearings.filter((hh) => hh.case_id === a.case_id && hh.state === "held" && hh.presenter_id === c.assigned)
+    .map((hh) => ({ id: hh.id, session_date: state.sessions.find((x) => x.id === state.agenda.find((i) => i.id === hh.agenda)?.session)?.date || "2026-10-08" }));
+  return {
+    supplements: [{ id: "sup-1", text: "Synthetic supplement.", manifest: [], actor: "Synthetic Applicant", actor_id: "applicant-x", timestamp: "2026-10-12T17:00:00Z" }],
+    disposition: a.disposition || null,
+    eligible_hearings: eligible,
+    can_record_result: Boolean(a.status === "submitted" && !a.disposition && eligible.length && (admin() || c.assigned === me().id)),
+  };
+}
+
+function agendaRow(item, s) {
+  const c = state.cases.find((x) => x.id === item.case_id);
+  const row = { id: item.id, case_id: c.id, case_number: c.number, part: item.part, state: item.state, position: item.position };
+  if (!pr7) return row;
+  const hearing = state.hearings.find((h) => h.agenda === item.id);
+  const presence = state.attendance.find((r) => r.member_id === me().id);
+  return {
+    ...row,
+    hearing_id: hearing ? hearing.id : null,
+    assigned_member_id: c.assigned,
+    assigned_member_name: nameOf(c.assigned),
+    party_names: parties(c).map((p) => p.name),
+    can_present: Boolean(c.assigned === me().id && item.part === 2 && item.state === "scheduled" && s.state === "planned" && presence && presence.present),
+    can_record_outcome: Boolean(hearing && (admin() || c.assigned === me().id) && c.status === "open"),
+    testimony: state.testimony.filter((t) => t.agenda === item.id),
+  };
+}
+
+function decisionRow(d) {
+  const effective = {};
+  for (const v of state.votes.filter((v) => v.decision === d.id)) effective[v.member_id] = v;
+  const approvals = state.approvals.filter((a) => a.decision === d.id);
+  const current = state.decisions.filter((x) => x.proceeding === d.proceeding).every((x) => x.number <= d.number);
+  return {
+    ...d, votes: Object.values(effective), vote_history: state.votes.filter((v) => v.decision === d.id),
+    approval: approvals[approvals.length - 1] || null, approval_history: approvals, current,
+    can_vote: current, can_approve: current && (role === "president" || admin()),
+    ...(decreeRead || pr7 ? { decree: state.decrees.find((x) => x.decision === d.id) || null } : {}),
+  };
+}
+
+function api(req, res, url, body) {
+  const p = url.pathname;
+  let m;
+  if (p === "/__role/") { role = body.role; return json(res, 200, { role }); }
+  if (p === "/__posts/") return json(res, 200, state.posts);
+  if (req.method === "POST") state.posts.push({ path: p, body });
+  if (p === "/api/session/")
+    return json(res, 200, { ...me(), portal: "council", ui_language: "en", notification_language: "en", csrf_token: "x" });
+  if (p === "/api/account/settings/") return json(res, 200, { ui_language: body.ui_language || "en", notification_language: "en", email: "synthetic@example.test" });
+  if (p === "/api/notifications/") return json(res, 200, { items: [], next_offset: null, unread_count: 0 });
+  if (p === "/api/applications/") {
+    let rows = state.applications;
+    if (!pr7) rows = rows.filter((a) => a.origin !== "closed_case_intake");
+    if (pr7 && url.searchParams.get("state") === "awaiting_review") rows = rows.filter((a) => a.kind === "petition" && a.status === "submitted" && a.origin !== "closed_case_intake");
+    if (pr7 && url.searchParams.get("state") === "council_consideration") rows = rows.filter((a) => a.status === "submitted" && (a.kind === "appeal" || a.origin === "closed_case_intake"));
+    return json(res, 200, { items: rows.map(applicationRow) });
+  }
+  if ((m = p.match(/^\/api\/applications\/([^/]+)\/review\/$/))) {
+    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const app = state.applications.find((a) => a.id === m[1]);
+    if (!app || app.status !== "submitted") return json(res, 422, { error: "validation", messages: ["No petition is awaiting completeness review."] });
+    if (body.result === "reject" && !String(body.instructions || "").trim())
+      return json(res, 422, { error: "validation", messages: ["Reject requires correction instructions."] });
+    app.status = body.result === "accept" ? "accepted" : "returned";
+    state.reviews.push({ app: app.id, result: body.result, instructions: body.instructions, actor: me().name, timestamp: now() });
+    return json(res, 201, { id: "r-" + app.id });
+  }
+  if (p === "/api/cases/") return json(res, 200, { items: state.cases.map(caseRow) });
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/$/))) {
+    const c = state.cases.find((x) => x.id === m[1]);
+    const extra = pr7
+      ? { assigned_member_id: c.assigned, can_place_part2: admin() || c.assigned === me().id, can_assign: admin() && c.status === "open",
+          assignment_history: (state.assignments || []).filter((x) => x.case === c.id) }
+      : {};
+    return json(res, 200, { ...caseRow(c), ...extra, can_message: true, parties: parties(c), proceedings: [{ id: "p-" + c.id, kind: "initial", status: c.status, sequence: 1 }] });
+  }
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/files\/$/))) {
+    // Simulates the asynchronous safety check finishing before the next listing.
+    for (const f of state.files.filter((f) => f.case === m[1])) {
+      if (f.scan_state === "pending" && f.checked) f.scan_state = "clean";
+      f.checked = true;
+    }
+    const rows = state.files.filter((f) => f.case === m[1] && f.scan_state === "clean" && !state.decrees.some((d) => d.signed_file_id === f.id));
+    const uploaded = rows.map((f) => ({
+      id: f.id, name: f.name, category: f.category, version: 1, mime_type: f.mime || "application/pdf", byte_count: f.size || 1024,
+      created_at: now(), download_url: `/api/files/${f.id}/`, preview_url: (f.mime || "application/pdf") === "application/pdf" ? `/api/files/${f.id}/?view=1` : null,
+    }));
+    const evidence = m[1] === "c-4" ? Object.entries(MEDIA).map(([id, x]) => ({
+      id, name: x.name, category: x.category, version: 1, mime_type: x.mime, byte_count: x.bytes().length, created_at: "2026-10-15T17:00:00Z",
+      download_url: `/api/files/${id}/`, preview_url: ["application/pdf", "image/png"].includes(x.mime) ? `/api/files/${id}/?view=1` : null,
+    })) : [];
+    return json(res, 200, { items: [...evidence, ...uploaded], next_offset: null });
+  }
+  if (p === "/api/files/" && body.request_id && body.category === "REPORT") {
+    // Backend 6fe7d51/746e5a4: a council writer uploads a priest paper bound to a sent request; owner NULL,
+    // council visibility. The scan starts pending; GET /status/ reports clean on the second check
+    // (POST /__paper_scan/ {state:"rejected"} makes the next upload fail its check).
+    const r = state.requests.find((x) => x.id === body.request_id);
+    const c = r && state.cases.find((x) => x.id === r.case);
+    if (!c || (!admin() && c.assigned !== me().id)) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    if (r.state !== "sent") return json(res, 422, { error: "validation", messages: ["Report request is not accepting uploads."] });
+    const f = { id: "f-" + (state.files.length + 1), case: c.id, request: r.id, category: "REPORT", name: "paper-original.pdf", mime: "application/pdf",
+      scan_state: state.paperScan === "rejected" ? "rejected" : "pending", checks: 0 };
+    state.files.push(f);
+    return json(res, 201, { id: f.id, name: f.name, scan_state: f.scan_state, sha256: "synthetic" });
+  }
+  if ((m = p.match(/^\/api\/files\/([^/]+)\/status\/$/))) {
+    const f = state.files.find((x) => x.id === m[1]);
+    if (!f) return json(res, 404, { error: "not_found" });
+    if (f.scan_state === "pending" && ++f.checks >= 2) f.scan_state = "clean";
+    return json(res, 200, { id: f.id, scan_state: f.scan_state, can_download: f.scan_state === "clean" });
+  }
+  if ((m = p.match(/^\/api\/files\/([^/]+)\/$/)) && state.files.some((x) => x.id === m[1] && ["REPORT", "AUDIO"].includes(x.category))) {
+    const x = state.files.find((y) => y.id === m[1]);
+    if (x.scan_state !== "clean") return json(res, 403, { error: "forbidden" });
+    if (x.category === "AUDIO") {
+      const data = MEDIA["ev-aud"].bytes();
+      res.writeHead(200, { "Content-Type": "audio/wav", "Content-Length": data.length, "Accept-Ranges": "none", "Cache-Control": "private, no-store" });
+      return res.end(data);
+    }
+    res.writeHead(200, { "Content-Type": "application/pdf", "Content-Length": MINI_PDF.length, "Cache-Control": "private, no-store",
+      "Content-Disposition": url.searchParams.get("view") === "1" ? "inline" : `attachment; filename="${x.name}"` });
+    return res.end(MINI_PDF);
+  }
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/recording-completion\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    const f = state.files.find((x) => x.id === body.file_id);
+    const extra = Object.keys(body).filter((k) => !["file_id", "completion_date", "recording_notice", "duration_ms", "expected_version"].includes(k));
+    if (extra.length) return json(res, 422, { error: "validation", messages: ["Unsupported recording completion fields."] });
+    if (!r || r.kind !== "external_priest" || r.state !== "sent") return json(res, 422, { error: "validation", messages: ["Request is not awaiting this recorded response."] });
+    if (!body.recording_notice || body.recording_notice.acknowledged !== true) return json(res, 422, { error: "validation", messages: ["Record an explicit, bounded acknowledgement that the person was informed of recording."] });
+    if (body.duration_ms !== null && body.duration_ms !== undefined && !(Number.isInteger(body.duration_ms) && body.duration_ms >= 0)) return json(res, 422, { error: "validation", messages: ["Measured duration must be a non-negative integer or null."] });
+    if (!f || f.category !== "AUDIO" || f.case !== r.case || f.request) return json(res, 403, { error: "forbidden", detail: "Use a council-only recording original for this case and proceeding." });
+    if (f.scan_state !== "clean" || (state.media && state.media.recordings.some((x) => x.source === f.id))) return json(res, 422, { error: "validation", messages: ["Use a validated current original not already associated with another recording."] });
+    r.state = "completed";
+    const reportId = "rep-rec-" + r.id;
+    state.externalReports = state.externalReports || [];
+    state.externalReports.push({ id: reportId, title: r.title, kind: "external_priest", subject: r.subject_name, date: body.completion_date, parent_report_id: null,
+      questions: [], answers: { files: [f.id] }, observations: null, version: 1, method: "recording", author: me().name, author_id: me().id, submitted_at: now(), can_revise: false, case: r.case });
+    if (state.media) state.media.recordings.push({ id: "rec-" + r.id, report: reportId, file: f.id, source: f.id, duration_ms: body.duration_ms ?? null, notice: true, created_at: now(), finalized_at: now(),
+      runs: [{ id: "run-rec-" + r.id, attempt: 1, state: "queued" }] });
+    return json(res, 201, { id: reportId, recording_id: "rec-" + r.id, method: "recording", completion_date: body.completion_date });
+  }
+  if (p === "/__paper_scan/") { state.paperScan = body.state || null; return json(res, 200, { state: state.paperScan }); }
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/paper-completion\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    const f = state.files.find((x) => x.id === body.file_id);
+    if (!r || r.kind !== "external_priest" || r.state !== "sent") return json(res, 422, { error: "validation", messages: ["Request is not awaiting this paper response."] });
+    if (!f || f.request !== r.id) return json(res, 403, { error: "forbidden", detail: "Paper original must be a council-only PDF bound to this request." });
+    if (f.scan_state !== "clean") return json(res, 422, { error: "validation", messages: ["Await validation of the current paper original."] });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.completion_date || "")) return json(res, 422, { error: "validation", messages: ["Provide the received date as YYYY-MM-DD, no later than today."] });
+    r.state = "completed";
+    state.externalReports = state.externalReports || [];
+    state.externalReports.push({ id: "rep-paper-" + r.id, title: r.title, kind: "external_priest", subject: r.subject_name, date: body.completion_date, parent_report_id: null,
+      questions: [], answers: { files: [f.id] }, observations: null, version: 1, method: "paper", author: me().name, author_id: me().id, submitted_at: now(), can_revise: false, case: r.case });
+    return json(res, 201, { id: "rep-paper-" + r.id });
+  }
+  if (p === "/api/files/") {
+    const c = state.cases.find((x) => x.id === body.case_id);
+    if (!admin() && (!c || c.assigned !== me().id)) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    const audio = body.category === "REC" || body.category === "AUDIO";
+    const caseAudio = body.category === "AUDIO"; // fcf03a2 council case original for a recorded priest response
+    const f = {
+      id: "f-" + (state.files.length + 1), case: body.case_id, category: body.category,
+      name: `${body.case_number}-${body.category}-20261021-1800.${caseAudio ? "wav" : audio ? "webm" : "pdf"}`,
+      mime: caseAudio ? "audio/wav" : audio ? "video/webm" : "application/pdf", size: body.size || 0,
+      scan_state: caseAudio ? (state.paperScan === "rejected" ? "rejected" : "pending") : state.files.length ? "clean" : "pending", checks: 0,
+    };
+    state.files.push(f);
+    return json(res, 201, { id: f.id, name: f.name, scan_state: f.scan_state, sha256: "synthetic" });
+  }
+  if ((m = p.match(/^\/api\/files\/([^/]+)\/$/)) && MEDIA[m[1]]) {
+    const x = MEDIA[m[1]];
+    const data = x.bytes();
+    res.writeHead(200, { "Content-Type": x.mime, "Content-Length": data.length, "Accept-Ranges": "none", "Cache-Control": "private, no-store",
+      "Content-Disposition": url.searchParams.get("view") === "1" ? "inline" : `attachment; filename="${x.name}"` });
+    return res.end(data);
+  }
+  // D20 (backend #7 media-read-and-review.md): recording status, transcripts, review, correction, retry.
+  if (!state.media) {
+    const t0 = "2026-10-16T18:30:00Z";
+    state.media = {
+      recordings: [
+        { id: "rec-seed-1", report: "rep-int-1", file: "ev-aud", duration_ms: 95000, notice: true, created_at: t0, finalized_at: t0,
+          runs: [{ id: "run-seed-1", attempt: 1, state: "failed" }] },
+        { id: "rec-seed-2", report: "rep-int-1", file: "ev-aud", duration_ms: 61000, notice: true, created_at: t0, finalized_at: t0,
+          runs: [{ id: "run-seed-2", attempt: 1, state: "completed" }] },
+      ],
+      transcripts: [
+        { id: "tr-en-1", recording: "rec-seed-2", run: "run-seed-2", language: "en", kind: "original", version: 1, reviewed: false, timestamp: t0,
+          text: "Synthetic generated transcript, first paragraph.\n\nSecond paragraph of generated text.",
+          segments: [{ start: 0, end: 4.2, text: "Synthetic generated transcript," }, { start: 4.2, end: 7.9, text: "first paragraph." }] },
+        { id: "tr-ar-1", recording: "rec-seed-2", run: "run-seed-2", language: "ar", kind: "translation", version: 1, reviewed: true, timestamp: t0,
+          text: "ترجمة تجريبية مولَّدة لنص المقابلة.", segments: [] },
+      ],
+    };
+  }
+  const mediaWriter = (reportId) => { const r = state.reports.find((x) => x.id === reportId) || (state.externalReports || []).find((x) => x.id === reportId); const c = r && state.cases.find((x) => x.id === r.case); return Boolean(c && c.status === "open" && (admin() || c.assigned === me().id)); };
+  const latestOf = (tr) => Math.max(...state.media.transcripts.filter((x) => x.recording === tr.recording && x.language === tr.language && x.kind === tr.kind).map((x) => x.version));
+  const recordingOf = (id) => state.media.recordings.find((x) => x.id === id);
+  if ((m = p.match(/^\/api\/reports\/([^/]+)\/recordings\/$/))) {
+    if (!pr7) return json(res, 404, { error: "resource_or_input_invalid" });
+    const writable = mediaWriter(m[1]);
+    const items = state.media.recordings.filter((x) => x.report === m[1]).map((x) => {
+      const run = x.runs[x.runs.length - 1];
+      const processing = run ? { run_id: run.id, state: run.state === "completed" ? "succeeded" : run.state, attempt: run.attempt, engine: "", updated_at: null,
+        safe_error: run.state === "failed" ? "Processing failed; the original is retained." : "", can_retry: writable && run.state === "failed" } : null;
+      const transcripts = state.media.transcripts.filter((tr) => tr.recording === x.id && (writable || tr.reviewed))
+        .map((tr) => ({ id: tr.id, kind: tr.kind, language: tr.language, version: tr.version, reviewed: tr.reviewed, actor: null, timestamp: tr.timestamp }));
+      return { id: x.id, file_id: x.file, mime_type: "audio/wav", byte_count: 32044, duration_ms: x.duration_ms ?? null, captured_by: null, recording_notice: {},
+        notice_recorded: x.notice, created_at: x.created_at, finalized_at: x.finalized_at, download_url: `/api/files/${x.file}/`, processing, transcripts,
+        transcripts_next_offset: null, can_finalize: writable && x.notice && !x.finalized_at };
+    });
+    return json(res, 200, { items, next_offset: null });
+  }
+  if ((m = p.match(/^\/api\/transcripts\/([^/]+)\/(review|correct)?\/?$/))) {
+    const tr = state.media.transcripts.find((x) => x.id === m[1]);
+    if (!tr) return json(res, 404, { error: "resource_or_input_invalid" });
+    const writable = mediaWriter(recordingOf(tr.recording).report);
+    if (!writable && !tr.reviewed) return json(res, 403, { error: "forbidden", detail: "This exact transcript version is not released for council reading." });
+    if (m[2] === "review") {
+      if (!writable) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+      if (tr.version !== latestOf(tr)) return json(res, 422, { error: "validation", messages: ["Only the latest transcript version can be reviewed."] });
+      tr.reviewed = true;
+      return json(res, 201, { id: "review-" + tr.id });
+    }
+    if (m[2] === "correct") {
+      if (!writable) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+      if (!Number.isInteger(body.expected_version) || typeof body.text !== "string" || !body.text.trim() || !Array.isArray(body.segments))
+        return json(res, 422, { error: "validation", messages: ["A bound version, nonempty text and bounded segment list are required."] });
+      const latest = state.media.transcripts.find((x) => x.recording === tr.recording && x.language === tr.language && x.kind === tr.kind && x.version === latestOf(tr));
+      if (latest.version !== body.expected_version) {
+        if (latest.version === body.expected_version + 1 && latest.text === body.text) return json(res, 201, { id: latest.id, version: latest.version, reviewed: latest.reviewed });
+        return json(res, 422, { error: "validation", messages: ["A newer transcript version was saved. Reload before correcting."] });
+      }
+      const row = { ...latest, id: `tr-${tr.language}-${latest.version + 1}`, version: latest.version + 1, text: body.text, segments: body.segments, reviewed: false, timestamp: now() };
+      state.media.transcripts.push(row);
+      return json(res, 201, { id: row.id, version: row.version, reviewed: false });
+    }
+    return json(res, 200, { id: tr.id, recording_id: tr.recording, run_id: tr.run, kind: tr.kind, language: tr.language, version: tr.version, text: tr.text,
+      segments: tr.segments, reviewed: tr.reviewed, can_review: writable && tr.version === latestOf(tr), timestamp: tr.timestamp });
+  }
+  if ((m = p.match(/^\/api\/processing\/([^/]+)\/retry\/$/))) {
+    const recording = state.media.recordings.find((x) => x.runs.some((r) => r.id === m[1]));
+    if (!recording) return json(res, 404, { error: "resource_or_input_invalid" });
+    if (!mediaWriter(recording.report)) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    const source = recording.runs.find((r) => r.id === m[1]);
+    const next = recording.runs.find((r) => r.attempt === source.attempt + 1);
+    if (next) return json(res, 201, { id: next.id, attempt: next.attempt, state: next.state });
+    if (source.state !== "failed") return json(res, 422, { error: "validation", messages: ["Only a failed processing attempt can be retried."] });
+    const run = { id: `${source.id}-a${source.attempt + 1}`, attempt: source.attempt + 1, state: "queued" };
+    recording.runs.push(run);
+    return json(res, 201, { id: run.id, attempt: run.attempt, state: run.state });
+  }
+  if (p === "/__transcript_bump/") {
+    const tr = state.media.transcripts.find((x) => x.id === (body.id || "tr-en-1"));
+    const row = { ...tr, id: `tr-${tr.language}-${latestOf(tr) + 1}`, version: latestOf(tr) + 1, text: "Correction saved in another session.", reviewed: false, timestamp: now() };
+    state.media.transcripts.push(row);
+    return json(res, 200, { id: row.id, version: row.version });
+  }
+  if (p === "/api/recordings/") {
+    const f = state.files.find((x) => x.id === body.file_id);
+    if (!f || !String(f.mime).startsWith("video/") && !String(f.mime).startsWith("audio/")) return json(res, 422, { error: "validation", messages: ["Store a technically validated council-only recording first."] });
+    if (!body.notice_recorded) return json(res, 422, { error: "validation", messages: ["Recording notice and technical validation required."] });
+    if (!state.recordings) state.recordings = [];
+    const existing = state.recordings.find((x) => x.file === f.id);
+    if (existing) return json(res, 201, { id: existing.id });
+    const rec = { id: "rec-" + (state.recordings.length + 1), file: f.id, report: body.report_id, finalized: false };
+    state.recordings.push(rec);
+    if (state.media) state.media.recordings.push({ id: rec.id, report: body.report_id, file: "ev-aud", duration_ms: body.duration_ms ?? null, notice: true, created_at: now(), finalized_at: null, runs: [] });
+    return json(res, 201, { id: rec.id });
+  }
+  if ((m = p.match(/^\/api\/recordings\/([^/]+)\/finalize\/$/))) {
+    const rec = (state.recordings || []).find((x) => x.id === m[1]);
+    rec.finalized = true;
+    const media = state.media && state.media.recordings.find((x) => x.id === rec.id);
+    if (media && !media.finalized_at) { media.finalized_at = now(); media.runs.push({ id: "run-" + rec.id, attempt: 1, state: "queued" }); }
+    return json(res, 201, { id: "run-" + rec.id });
+  }
+  if ((m = p.match(/^\/api\/files\/([^/]+)\/signature\/$/))) {
+    if (role !== "president" && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    if (!body.evidence || body.evidence.confirmed_signed !== true || !["digital", "signed_scan"].includes(body.method))
+      return json(res, 422, { error: "validation", messages: ["Record digital signature or uploaded signed scan evidence."] });
+    state.attestations.push({ file: m[1], signer: body.signer_id, method: body.method });
+    return json(res, 201, { id: "att-" + m[1] });
+  }
+  if ((m = p.match(/^\/api\/decisions\/([^/]+)\/decree\/$/))) {
+    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const d = state.decisions.find((x) => x.id === m[1]);
+    if (!state.approvals.some((a) => a.decision === d.id && a.president_id === body.signer_id))
+      return json(res, 422, { error: "validation", messages: ["Matching presidential approval is required."] });
+    if (!state.attestations.some((a) => a.file === body.file_id && a.signer === body.signer_id))
+      return json(res, 422, { error: "validation", messages: ["Record the president signature evidence/method for this exact stored PDF before issuance."] });
+    const c = state.cases.find((x) => "p-" + x.id === d.proceeding);
+    const decree = { id: "dcr-" + c.id, decision: d.id, reference: "DCR-" + c.number, language: body.language, issued_at: now(), signer: nameOf(body.signer_id), signed_file_id: body.file_id, releases: [] };
+    state.decrees.push(decree);
+    c.status = "closed";
+    return json(res, 201, { id: decree.id });
+  }
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/audit\/$/))) {
+    if (!state.audit) state.audit = [
+      { id: "ev-1", action: "application_submitted", timestamp: "2026-10-20T18:04:00Z", source: "Application", source_id: "a", actor: "applicant-x" },
+      { id: "ev-2", action: "completeness_accept", timestamp: "2026-10-20T19:00:00Z", source: "CompletenessReview", source_id: "r", actor: "u-sec" },
+      { id: "ev-3", action: "case_assigned", timestamp: "2026-10-21T17:00:00Z", source: "CaseAssignment", source_id: "x", actor: "u-sec" },
+      { id: "ev-4", action: "session_closed", timestamp: "2026-10-21T20:00:00Z", source: "CouncilSession", source_id: "s", actor: null },
+    ];
+    return json(res, 200, { items: state.audit });
+  }
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/calls\/$/))) {
+    if (!state.calls) state.calls = [];
+    if (req.method === "POST") {
+      const c = state.cases.find((x) => x.id === m[1]);
+      if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+      if (!String(body.outcome || "").trim() || !/(Z|[+-]\d{2}:\d{2})$/.test(body.occurred_at || ""))
+        return json(res, 422, { error: "validation", messages: ["Call outcome and actual timestamp with timezone are required."] });
+      const call = { id: "call-" + (state.calls.length + 1), case: m[1], party_id: body.party_id, occurred_at: body.occurred_at, recorded_at: now(), outcome: body.outcome, notes: body.notes };
+      state.calls.unshift(call);
+      return json(res, 201, { id: call.id });
+    }
+    return json(res, 200, { items: state.calls.filter((x) => x.case === m[1]) });
+  }
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/messages\/$/))) return json(res, 200, { items: [] });
+  if ((m = p.match(/^\/api\/proceedings\/([^/]+)\/notes\/$/))) {
+    if (!state.notes) state.notes = [];
+    if (req.method === "POST") {
+      const c = state.cases.find((x) => "p-" + x.id === m[1]);
+      if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+      if (!String(body.text || "").trim()) return json(res, 422, { error: "validation", messages: ["Note cannot be empty."] });
+      if (body.note_id) {
+        const prior = state.notes.filter((n) => n.note_id === body.note_id);
+        if (!prior.length || prior[0].author_id !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the original author can edit a note." });
+        state.notes.push({ ...prior[0], id: "nr-" + body.note_id + "-" + (prior.length + 1), version: prior.length + 1, text: body.text, timestamp: now() });
+        return json(res, 201, { id: body.note_id });
+      }
+      const id = "n-" + (state.notes.length + 1);
+      state.notes.push({ id: "nr-" + id, note_id: id, version: 1, text: body.text, proceeding: m[1], author_id: me().id, author: me().name, timestamp: now() });
+      return json(res, 201, { id });
+    }
+    return json(res, 200, {
+      items: state.notes
+        .filter((n) => n.proceeding === m[1])
+        .map((n) => (pr7 ? { ...n, can_edit: n.author_id === me().id } : { id: n.id, note_id: n.note_id, version: n.version, text: n.text })),
+    });
+  }
+  if ((m = p.match(/^\/api\/proceedings\/([^/]+)\/findings\/$/))) {
+    if (!pr7) return json(res, 405, { error: "method_not_allowed" });
+    return json(res, 200, {
+      items: m[1] === "p-c-4" ? [{ id: "fr-1", fact_code: "marriage_date_confirmed", version: 1, value: "Confirmed against certificate", sources: [], actor_id: "u-mem", actor: "Fr. Synthetic Member", timestamp: "2026-10-21T18:00:00Z" }] : [],
+    });
+  }
+  if ((m = p.match(/^\/api\/files\/([^/]+)\/status\/$/))) {
+    if (!pr7) return json(res, 404, { error: "resource_or_input_invalid" });
+    const f = state.files.find((x) => x.id === m[1]);
+    if (f && f.scan_state === "pending") { if (f.checked) f.scan_state = "clean"; f.checked = true; }
+    return json(res, 200, { id: m[1], scan_state: f ? f.scan_state : "pending", can_download: f?.scan_state === "clean" });
+  }
+  if (p === "/api/templates/") {
+    if (!state.templates) state.templates = [{ id: "tpl-1", title: "Common guided interview", shared: true, retired: false, owner_id: null, version: 1, questions: [{ code: "DM-01", version: 1 }, { code: "DM-02", version: 1 }] }];
+    if (req.method === "POST") {
+      const tpl = { id: "tpl-" + (state.templates.length + 1), title: body.title, shared: false, retired: false, owner_id: me().id, version: 1, questions: (body.questions || []).map((code) => ({ code, version: 1 })) };
+      state.templates.push(tpl);
+      return json(res, 201, { id: tpl.id });
+    }
+    const view = (tpl) => pr7
+      ? { ...tpl, can_publish: admin() && !tpl.shared && !tpl.retired, can_retire: !tpl.retired && (tpl.shared ? admin() : tpl.owner_id === me().id) }
+      : { id: tpl.id, title: tpl.title, shared: tpl.shared, retired: tpl.retired };
+    return json(res, 200, { items: state.templates.filter((tpl) => tpl.shared || tpl.owner_id === me().id).map(view) });
+  }
+  if ((m = p.match(/^\/api\/templates\/([^/]+)\/(publish|retire)\/$/))) {
+    const tpl = state.templates.find((x) => x.id === m[1]);
+    if (m[2] === "retire") tpl.retired = true;
+    else state.templates.push({ ...tpl, id: tpl.id + "-shared", shared: true, owner_id: null });
+    return json(res, m[2] === "publish" ? 201 : 200, { id: tpl.id });
+  }
+  if (p === "/api/dashboard/")
+    return json(res, 200, {
+      my_cases: state.cases.filter((c) => c.status === "open" && c.assigned === me().id).length,
+      review_queue: admin() ? state.applications.filter((a) => a.kind === "petition" && a.status === "submitted" && a.origin !== "closed_case_intake").length : null,
+      upcoming_sessions: state.sessions.filter((s) => s.state === "planned").map((s) => ({ id: s.id, date: s.date })),
+    });
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/parties\/$/))) {
+    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    return json(res, 201, { id: "pending-" + Date.now() });
+  }
+  if (p === "/api/search/") {
+    // PR #7: POST JSON only (GET 405); main: GET query only.
+    if (pr7 && req.method !== "POST") return json(res, 405, { error: "method_not_allowed" });
+    if (!pr7 && req.method !== "GET") return json(res, 405, { error: "method_not_allowed" });
+    const q = (pr7 ? body.q : url.searchParams.get("q")) || "";
+    if (q.trim().length < 2) return json(res, 422, { error: "validation", messages: ["Use a search phrase of2–200characters."] });
+    if (q === "unconfigured") return json(res, 422, { error: "validation", messages: ["Search engine is not configured."] });
+    return json(res, 200, {
+      items: [{ file_id: "f-search-1", case_id: "c-4", name: "20261001-01-PET-20261001-0930.pdf", snippet: `Synthetic excerpt containing ${q}.` }],
+      returned_count: 1,
+    });
+  }
+  if ((m = p.match(/^\/api\/(?:appeals\/([^/]+)\/result|applications\/([^/]+)\/closed-case-result)\/$/))) {
+    const app = state.applications.find((a) => a.id === (m[1] || m[2]));
+    if (m[2] && app.origin !== "closed_case_intake") return json(res, 422, { error: "validation", messages: ["This is not a closed-case first filing."] });
+    if (m[1] && app.kind !== "appeal") return json(res, 422, { error: "validation", messages: ["No pending appeal or invalid result."] });
+    const c = state.cases.find((x) => x.id === app.case_id);
+    if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    if (app.status !== "submitted" || !["accept", "decline"].includes(body.result))
+      return json(res, 422, { error: "validation", messages: ["No pending appeal or invalid result."] });
+    if (!state.hearings.some((h) => h.id === body.hearing_id && h.case_id === c.id)) return json(res, 404, { error: "resource_or_input_invalid" });
+    app.status = body.result === "accept" ? "accepted" : "declined";
+    app.disposition = { id: "disp-" + app.id, result: body.result, explanation: body.explanation, actor: me().name, actor_id: me().id, timestamp: now(), hearing_id: body.hearing_id, reopened_proceeding_id: null };
+    if (body.result === "accept") c.status = "open";
+    return json(res, 201, { id: "disp-" + app.id });
+  }
+  if ((m = p.match(/^\/api\/decrees\/([^/]+)\/release\/$/))) {
+    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const decree = state.decrees.find((x) => x.id === m[1]);
+    const d = state.decisions.find((x) => x.id === decree.decision);
+    if ((d.entitlements || {})[body.party_id] !== "certificate") return json(res, 403, { error: "forbidden", detail: "Party is entitled to notice only." });
+    decree.releases.push({ party_id: body.party_id, action: body.action, actor: me().name, timestamp: now() });
+    return json(res, 201, { id: "rel-" + decree.releases.length });
+  }
+  // Council projection of a medical report without a council-scope release.
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/reports\/$/))) {
+    const external = (state.externalReports || []).filter((x) => x.case === m[1]).map(({ case: _c, ...row }) => row);
+    return json(res, 200, { items: m[1] === "c-4" ? [{ id: "rep-med-1", restricted: true }, ...state.reports.map(reportRow), ...external] : external });
+  }
+  if (p === "/__revise_fail/") { state.reviseFail = body.mode || null; return json(res, 200, { mode: state.reviseFail }); }
+  if (p === "/__revise_bump/") {
+    const list = state.revisions[body.report || "rep-int-1"];
+    const last = list[list.length - 1];
+    list.push({ ...last, id: "rv-" + (list.length + 1), version: last.version + 1, answers: { ...last.answers, "DM-01": "Concurrent edit by another session." }, actor: "Synthetic Secretary", timestamp: now() });
+    return json(res, 200, { version: last.version + 1 });
+  }
+  if ((m = p.match(/^\/api\/reports\/([^/]+)\/revisions\/$/))) {
+    const report = state.reports.find((r) => r.id === m[1]);
+    if (!report) return json(res, 404, { error: "resource_or_input_invalid" });
+    const list = state.revisions[report.id];
+    if (req.method === "POST") {
+      if (state.reviseFail === "500") { state.reviseFail = null; return json(res, 500, { error: "server_error" }); }
+      if (state.reviseFail === "403" || !canRevise(report))
+        return json(res, 403, { error: "forbidden", detail: "Only the original authorized council author can revise this report." });
+      if (!body || typeof body.answers !== "object") return json(res, 400, { error: "resource_or_input_invalid" });
+      // Backend #7 contract: required expected_version, exact replay returns the retained revision, else 409.
+      if (!Number.isInteger(body.expected_version) || body.expected_version < 0)
+        return json(res, 422, { error: "validation", messages: ["expected_version must be a non-negative integer."] });
+      const last = list[list.length - 1];
+      const sorted = (v) => JSON.stringify(v, Object.keys(v || {}).sort());
+      if (last && last.version === body.expected_version + 1 && last.actor === me().name
+          && sorted(last.answers) === sorted(body.answers) && last.observations === (body.observations || ""))
+        return json(res, 201, { id: last.id, version: last.version });
+      if (body.expected_version !== list.length) return json(res, 409, { error: "version_conflict", current_version: list.length });
+      const rev = { id: "rv-" + (list.length + 1), version: list.length + 1, answers: body.answers, observations: body.observations || "", actor: me().name, timestamp: now() };
+      list.push(rev);
+      // "lostack": the save is stored but the reply never arrives (simulated lost acknowledgement).
+      if (state.reviseFail === "lostack") { state.reviseFail = null; return res.socket.destroy(); }
+      return json(res, 201, { id: rev.id, version: rev.version });
+    }
+    return json(res, 200, { items: [...list].reverse() });
+  }
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/assignment\/$/))) {
+    if (!admin() && !(pr7 && role === "president")) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const c = state.cases.find((x) => x.id === m[1]);
+    if (!members().some((x) => x.id === body.president_id && x.role === "president")) return json(res, 404, { error: "resource_or_input_invalid" });
+    c.assigned = body.member_id;
+    if (!state.assignments) state.assignments = [];
+    state.assignments.push({ id: "as-" + state.assignments.length, case: c.id, member_id: body.member_id, member: nameOf(body.member_id),
+      president_id: body.president_id, president: nameOf(body.president_id), actor_id: me().id, actor: me().name, timestamp: now() });
+    return json(res, 201, { id: "as-" + c.id });
+  }
+  if (p === "/api/council/members/") return json(res, 200, { items: members() });
+  if (p === "/api/report-questions/")
+    return json(res, 200, { items: state.questions.map((q) => (pr7 ? { ...q, ...taxonomy[q.code] } : q)) });
+  if ((m = p.match(/^\/api\/cases\/([^/]+)\/requests\/$/))) {
+    const c = state.cases.find((x) => x.id === m[1]);
+    if (req.method === "POST") {
+      if (!admin() && c.assigned !== me().id)
+        return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+      if (!body.title || !body.party_id) return json(res, 404, { error: "resource_or_input_invalid" });
+      const codes = ["intake", "interview"].includes(body.kind) ? new Set(["OPEN-01", ...(body.questions || [])]) : new Set();
+      const r = {
+        id: "rq-" + (state.requests.length + 1), case: c.id, title: body.title, kind: body.kind, state: "draft", instructions: body.instructions,
+        questions: state.questions.filter((q) => codes.has(q.code)).map((q) => ({ code: q.code, version: q.version, en: q.wording_en, ar: q.wording_ar })),
+        subject_party_id: body.party_id, subject_name: parties(c).find((x) => x.id === body.party_id)?.name, language: body.language,
+        created_at: now(), sent_at: null, parent_report_id: body.parent_id, author: me().name,
+      };
+      state.requests.unshift(r);
+      return json(res, 201, { id: r.id });
+    }
+    const rows = state.requests.filter((r) => r.case === c.id).map((r) => {
+      const { token: _t, expires_at: _e, saved_response: _d, ...safe } = r; // never project the capability
+      if (pr7 && r.kind === "external_priest") {
+        // Backend c377706 council link projection; flags follow writer authority and an open case.
+        const writable = (admin() || c.assigned === me().id) && c.status === "open";
+        const state = r.state === "completed" || r.state === "cancelled" ? r.state : c.status !== "open" ? "closed"
+          : r.state === "draft" ? "not_issued" : r.token && r.expires_at ? (Date.now() < r.expires_at ? "active" : "expired") : "unavailable";
+        const unfinished = r.state === "draft" || r.state === "sent";
+        return { ...safe, request_version: 1, external_link: { priest_name: r.external_name || "", expires_at: r.expires_at ? new Date(r.expires_at).toISOString() : null, state,
+          can_issue: writable && unfinished && r.state === "draft", can_reissue: writable && unfinished && r.state === "sent", can_cancel: writable && unfinished } };
+      }
+      if (pr7) return ["medical", "psychological"].includes(r.kind) ? { ...safe, release_status: "none", release_scope: null } : { ...safe, request_version: 1 };
+      const { subject_party_id, subject_name, language, created_at, sent_at, parent_report_id, author, ...old } = r;
+      return old;
+    });
+    return json(res, 200, { items: rows });
+  }
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/send\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    if (!["draft", "sent"].includes(r.state)) return json(res, 422, { error: "validation", messages: ["Completed/cancelled request cannot be sent."] });
+    r.state = "sent";
+    r.sent_at = r.sent_at || now();
+    if (r.kind !== "external_priest") return json(res, 200, { id: r.id, token: null });
+    r.token = "tok-" + Math.random().toString(36).slice(2, 12);
+    r.expires_at = Date.now() + (state.linkTtlMs ?? 30 * 24 * 3600 * 1000);
+    r.external_name = body.external_name || "";
+    r.external_email = body.external_email || "";
+    return json(res, 200, { id: r.id, token: r.token });
+  }
+  if ((m = p.match(/^\/external\/reports\/([^/]+)\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    const token = String(req.headers.authorization || "").replace(/^Bearer /, "");
+    const ok = r && r.kind === "external_priest" && r.state === "sent" && r.token && token === r.token && Date.now() < r.expires_at;
+    res.setHeader("Referrer-Policy", "no-referrer");
+    if (!ok) return json(res, 403, { error: "link_unavailable" });
+    const c = state.cases.find((x) => x.id === r.case);
+    if (req.method === "GET")
+      return json(res, 200, { id: r.id, title: r.title, case_number: c.number, subject: r.subject_name, instructions: r.instructions, language: r.language, draft: r.saved_response || {} });
+    if (body.action === "save") { r.saved_response = body.answers || {}; return json(res, 200, { saved: true }); }
+    if (!body.answers || !Object.keys(body.answers).length) return json(res, 403, { error: "link_unavailable" });
+    r.state = "completed";
+    r.saved_response = {};
+    const report = { id: "rep-ext-" + r.id, report: true };
+    state.externalReports = state.externalReports || [];
+    state.externalReports.push({ id: report.id, title: r.title, kind: "external_priest", subject: r.subject_name, date: now().slice(0, 10), parent_report_id: null,
+      questions: [], answers: body.answers, observations: null, version: 1, method: "external", author: null, author_id: null, submitted_at: now(), can_revise: false, case: r.case });
+    return json(res, 201, { submitted: true, report_id: report.id });
+  }
+  // Backend 6a3f6df (/print/) and c0fc9ae (print.pdf): unfinished external_priest request, private/no-store. The PDF
+  // mode can be switched to 503 (renderer missing) or 422 (too long) with POST /__pdf_mode/ {mode}.
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/print(\/|\.pdf)$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    if (!r || r.kind !== "external_priest" || !["draft", "sent"].includes(r.state)) return json(res, 404, { error: "not_found" });
+    const c = state.cases.find((x) => x.id === r.case);
+    if (m[2] === ".pdf") {
+      if (state.pdfMode === "unavailable") return json(res, 503, { error: "pdf_unavailable", messages: ["Use the printable page and the browser's Print."] });
+      if (state.pdfMode === "too_long") return json(res, 422, { error: "validation", messages: ["The request is too long for the PDF."] });
+      res.writeHead(200, { "Content-Type": "application/pdf", "Cache-Control": "private, no-store", "Content-Disposition": `attachment; filename="priest-request-${r.id}.pdf"` });
+      return res.end(MINI_PDF);
+    }
+    const esc = (v) => String(v || "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-store" });
+    return res.end(`<!doctype html><meta charset="utf-8"><title>${esc(r.title)}</title><h1>${esc(r.title)}</h1><p>${esc(c.number)} · ${esc(r.subject_name)}</p><p>${esc(r.instructions)}</p><hr><hr><hr>`);
+  }
+  if (p === "/__pdf_mode/") { state.pdfMode = body.mode || null; return json(res, 200, { mode: state.pdfMode }); }
+  if (p === "/__link_ttl/") { state.linkTtlMs = body.ms; return json(res, 200, { ms: body.ms }); }
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/cancel\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    if (r.state === "cancelled") return json(res, 200, { id: r.id });
+    if (!["draft", "sent"].includes(r.state)) return json(res, 422, { error: "validation", messages: ["Only an unfinished request can be cancelled."] });
+    r.state = "cancelled";
+    return json(res, 200, { id: r.id });
+  }
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/complete\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    if (r.state !== "sent") return json(res, 422, { error: "validation", messages: ["Request is not awaiting this response."] });
+    r.state = "completed";
+    return json(res, 201, { id: "rep-" + r.id });
+  }
+  if (p === "/api/sessions/") {
+    if (req.method === "POST") {
+      if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+      if (state.sessions.some((s) => s.date === body.date)) return json(res, 409, { error: "conflict", detail: "The operation conflicts with another saved record." });
+      const s = { id: "s-" + body.date, date: body.date, reference: "CS" + body.date.replace(/-/g, ""), state: "planned" };
+      state.sessions.unshift(s);
+      return json(res, 201, { id: s.id });
+    }
+    return json(res, 200, { items: [...state.sessions].sort((a, b) => b.date.localeCompare(a.date)) });
+  }
+  if ((m = p.match(/^\/api\/sessions\/([^/]+)\/agenda\/$/))) {
+    const s = state.sessions.find((x) => x.id === m[1]);
+    if (req.method === "POST") {
+      const c = state.cases.find((x) => x.id === body.case_id);
+      if (body.part === 1 && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+      if (body.part === 2 && !admin() && c.assigned !== me().id)
+        return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+      const item = { id: "i-" + s.id + c.id, session: s.id, case_id: c.id, part: body.part, state: "scheduled", position: state.agenda.length + 1 };
+      state.agenda.push(item);
+      return json(res, 201, { id: item.id });
+    }
+    const session = { id: s.id, date: s.date, state: s.state, can_record_attendance: admin() && s.state === "planned" };
+    if (pr7) Object.assign(session, { can_manage: admin() && s.state === "planned", can_close: admin() && s.state === "planned", can_reschedule: admin() && s.state === "planned" });
+    return json(res, 200, { session, items: state.agenda.filter((x) => x.session === s.id).map((x) => agendaRow(x, s)) });
+  }
+  if ((m = p.match(/^\/api\/sessions\/([^/]+)\/attendance\/$/))) {
+    if (req.method === "POST") {
+      const mem = members().find((x) => x.id === body.member_id);
+      state.attendance = state.attendance.filter((r) => r.member_id !== body.member_id);
+      state.attendance.push({ id: "at-" + mem.id, member_id: mem.id, member_name: mem.name, member_active: true, present: body.present, actor_id: me().id, timestamp: now() });
+      return json(res, 201, { id: "at-" + mem.id });
+    }
+    return json(res, 200, { items: state.attendance });
+  }
+  if ((m = p.match(/^\/api\/sessions\/([^/]+)\/close\/$/))) {
+    const s = state.sessions.find((x) => x.id === m[1]);
+    s.state = "closed";
+    for (const x of state.agenda.filter((x) => x.session === s.id && x.state === "scheduled")) {
+      const c = state.cases.find((y) => y.id === x.case_id);
+      x.state = pr7 && x.part === 1 && c.assigned ? "assigned" : "unpresented";
+    }
+    return json(res, 200, { id: s.id });
+  }
+  if ((m = p.match(/^\/api\/sessions\/([^/]+)\/reschedule\/$/))) {
+    if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const s = state.sessions.find((x) => x.id === m[1]);
+    if (!String(body.reason || "").trim()) return json(res, 422, { error: "validation", messages: ["Record the reason for rescheduling."] });
+    if (state.sessions.some((x) => x.date === body.date)) return json(res, 422, { error: "validation", messages: ["Another council session already uses this date."] });
+    const active = state.testimony.filter((t) => t.session === s.id && t.state !== "cancelled");
+    for (const t of active) {
+      const slot = (body.appointments || {})[t.id];
+      if (!slot || !/[+-]\d{2}:\d{2}$/.test(slot.starts_at) || !/[+-]\d{2}:\d{2}$/.test(slot.ends_at))
+        return json(res, 422, { error: "validation", messages: ["Provide explicit new times for every active testimony appointment."] });
+    }
+    const target = { id: "s-" + body.date, date: body.date, reference: "CS" + body.date.replace(/-/g, ""), state: "planned" };
+    state.sessions.push(target);
+    for (const item of state.agenda.filter((x) => x.session === s.id)) { item.session = target.id; item.id = "i-" + target.id + item.case_id; }
+    for (const t of active) Object.assign(t, { session: target.id, agenda: "i-" + target.id + state.agenda.find((x) => x.session === target.id)?.case_id, starts_at: body.appointments[t.id].starts_at, ends_at: body.appointments[t.id].ends_at, version: t.version + 1, response: null });
+    state.sessions = state.sessions.filter((x) => x.id !== s.id);
+    return json(res, 201, { id: target.id, date: target.date, reference: target.reference });
+  }
+  if ((m = p.match(/^\/api\/appointments\/([^/]+)\/cancel\/$/))) {
+    const t = state.testimony.find((x) => x.id === m[1]);
+    if (body.expected_version !== t.version) return json(res, 422, { error: "validation", messages: ["Reload the latest testimony invitation before cancelling."] });
+    t.state = "cancelled";
+    return json(res, 200, { id: t.id, version: t.version, state: t.state });
+  }
+  if ((m = p.match(/^\/api\/agenda\/([^/]+)\/hear\/$/))) {
+    const item = state.agenda.find((x) => x.id === m[1]);
+    const c = state.cases.find((x) => x.id === item.case_id);
+    if (c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned member presents the hearing." });
+    const row = state.attendance.find((r) => r.member_id === me().id);
+    if (!row) return json(res, 422, { error: "validation", messages: ["Record the assigned presenter's attendance before the hearing."] });
+    if (!row.present) { item.state = "presenter_absent"; return json(res, 200, { state: "presenter_absent", awaiting_manual_placement: true }); }
+    item.state = "heard";
+    const hearing = { id: "h-" + item.id, agenda: item.id, case_id: c.id, state: "held", presenter_id: me().id };
+    state.hearings.push(hearing);
+    return json(res, 201, { id: hearing.id });
+  }
+  if ((m = p.match(/^\/api\/agenda\/([^/]+)\/testimony\/$/))) {
+    const item = state.agenda.find((x) => x.id === m[1]);
+    const c = state.cases.find((x) => x.id === item.case_id);
+    if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    const s = state.sessions.find((x) => x.id === item.session);
+    if (!body.starts_at.startsWith(s.date) || body.starts_at >= body.ends_at)
+      return json(res, 422, { error: "validation", messages: ["Use non-overlapping testimony times on the session date."] });
+    if (state.testimony.some((t) => t.session === s.id && t.starts_at < body.ends_at && t.ends_at > body.starts_at))
+      return json(res, 422, { error: "validation", messages: ["Another applicant's testimony overlaps this appointment."] });
+    const party = parties(c).find((x) => x.id === body.party_id);
+    const appt = { id: "t-" + (state.testimony.length + 1), agenda: item.id, session: s.id, party_id: party.id, party_name: party.name,
+      starts_at: /[+-]\d{2}:\d{2}$/.test(body.starts_at) ? body.starts_at : body.starts_at + ":00-08:00", ends_at: /[+-]\d{2}:\d{2}$/.test(body.ends_at) ? body.ends_at : body.ends_at + ":00-08:00", instructions: body.instructions, version: 1, state: "scheduled", response: null };
+    state.testimony.push(appt);
+    return json(res, 201, { id: appt.id });
+  }
+  if ((m = p.match(/^\/api\/hearings\/([^/]+)\/$/))) {
+    if (!pr7) return json(res, 404, { error: "resource_or_input_invalid" });
+    const hearing = state.hearings.find((x) => x.id === m[1]);
+    const c = state.cases.find((x) => x.id === hearing.case_id);
+    return json(res, 200, { ...hearing, can_record_outcome: admin() || c.assigned === me().id, outcomes: state.outcomes.filter((o) => o.hearing === hearing.id) });
+  }
+  if ((m = p.match(/^\/api\/hearings\/([^/]+)\/outcome\/$/))) {
+    const hearing = state.hearings.find((x) => x.id === m[1]);
+    const c = state.cases.find((x) => x.id === hearing.case_id);
+    if (!admin() && c.assigned !== me().id) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
+    const o = { id: "o-" + (state.outcomes.length + 1), hearing: hearing.id, internal_text: body.internal_text, recommendations: body.recommendations, actor: me().name, actor_id: me().id, timestamp: now() };
+    state.outcomes.push(o);
+    return json(res, 201, { id: o.id });
+  }
+  if ((m = p.match(/^\/api\/proceedings\/([^/]+)\/decision\/$/))) {
+    if (req.method !== "POST") {
+      if (!pr7) return json(res, 405, { error: "method_not_allowed" });
+      return json(res, 200, { items: state.decisions.filter((d) => d.proceeding === m[1]).sort((a, b) => b.number - a.number).map(decisionRow) });
+    }
+    if (!String(body.grounds || "").trim())
+      return json(res, 422, { error: "validation", messages: ["Record the decision type and grounds/reason."] });
+    const number = state.decisions.filter((d) => d.proceeding === m[1]).length + 1;
+    const d = { id: "dv-" + m[1] + "-" + number, proceeding: m[1], number, ...body, actor: me().name, timestamp: now() };
+    state.decisions.push(d);
+    return json(res, 201, { id: d.id });
+  }
+  if ((m = p.match(/^\/api\/decisions\/([^/]+)\/vote\/$/))) {
+    if (body.member_id && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const d = state.decisions.find((x) => x.id === m[1]);
+    if (!decisionRow(d).current) return json(res, 422, { error: "validation", messages: ["This decision has been revised; use the latest version."] });
+    state.votes.push({ decision: d.id, member_id: body.member_id || me().id, choice: body.choice, actor_id: me().id, actor: me().name, timestamp: now() });
+    return json(res, 201, { id: "vote-" + state.votes.length });
+  }
+  if ((m = p.match(/^\/api\/decisions\/([^/]+)\/approve\/$/))) {
+    if (role !== "president" && !admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });
+    const presidentId = role === "president" ? me().id : body.president_id;
+    if (!members().some((x) => x.id === presidentId && x.role === "president")) return json(res, 404, { error: "resource_or_input_invalid" });
+    state.approvals.push({ decision: m[1], president_id: presidentId, president: nameOf(presidentId), actor: me().name, actor_id: me().id, timestamp: now() });
+    return json(res, 201, { id: "appr-" + m[1] });
+  }
+  return json(res, 404, { error: "resource_or_input_invalid" });
+}
+
+http
+  .createServer((req, res) => {
+    const url = new URL(req.url, `http://127.0.0.1:${port}`);
+    if (url.pathname.startsWith("/static/")) {
+      const file = path.join(root, url.pathname);
+      if (!file.startsWith(path.join(root, "static"))) return json(res, 404, {});
+      return fs.readFile(file, (err, data) => {
+        if (err) return json(res, 404, {});
+        const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg" };
+        res.writeHead(200, { "Content-Type": contentTypes[path.extname(file).toLowerCase()] || "application/octet-stream" });
+        res.end(data);
+      });
+    }
+    if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/__") || url.pathname.startsWith("/external/")) {
+      let raw = "";
+      req.on("data", (c) => (raw += c));
+      req.on("end", () => {
+        let body = {};
+        if ((req.headers["content-type"] || "").startsWith("multipart/form-data")) {
+          // Loose multipart read of the text fields only; file bytes are ignored.
+          for (const field of ["case_id", "category", "visibility", "request_id"]) {
+            const hit = raw.match(new RegExp(`name="${field}"\\r\\n\\r\\n([^\\r]*)`));
+            if (hit) body[field] = hit[1];
+          }
+          body.case_number = state.cases.find((x) => x.id === body.case_id)?.number || "case";
+          body.size = raw.length;
+        } else {
+          try { body = raw ? JSON.parse(raw) : {}; } catch { return json(res, 400, {}); }
+        }
+        api(req, res, url, body);
+      });
+      return;
+    }
+    const shell = fs
+      .readFileSync(path.join(root, "tribunal/templates/tribunal/shell.html"), "utf8")
+      .replace("{% load static %}", "")
+      .replace(/\{% static '([^']+)' %\}/g, "/static/$1")
+      .replace('{{ boot|json_script:"ctm-config" }}', '<script id="ctm-config" type="application/json">{"providers":[]}</script>');
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+    res.end(shell);
+  })
+  .listen(port, "127.0.0.1", () => console.log(`council fixture on http://127.0.0.1:${port} as ${role} (${pr7 ? "pr7" : "main"} contract)`));

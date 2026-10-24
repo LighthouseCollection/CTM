@@ -10,6 +10,10 @@ from tribunal.models import (
 )
 from tribunal.policy import administrator, staff
 from .common import audit, lock_key
+from tribunal.validation import validate_json_value, VersionConflict
+import re
+
+_UNBOUND = object()
 
 SECRET_KEYS = {
     "api_key",
@@ -24,7 +28,10 @@ SECRET_KEYS = {
 
 def safe_configuration(value):
     if isinstance(value, dict):
-        if any(str(key).lower() in SECRET_KEYS for key in value):
+        forbidden = {re.sub(r"[^a-z0-9]", "", key) for key in SECRET_KEYS} | {
+            "authorization", "bearertoken", "accesskey", "accesstoken", "refreshtoken",
+        }
+        if any(re.sub(r"[^a-z0-9]", "", str(key).casefold()) in forbidden for key in value):
             raise ValidationError(
                 "Store provider credentials in protected server secrets, not readable settings."
             )
@@ -36,8 +43,10 @@ def safe_configuration(value):
 
 
 @transaction.atomic
-def save_setting(actor, key, value):
+def save_setting(actor, key, value, *, expected_version=_UNBOUND, schema_version=1):
     administrator(actor)
+    if not isinstance(key, str):
+        raise ValidationError("Unsupported setting key.")
     if key not in {
         "translation_prompt",
         "translation_routing",
@@ -45,13 +54,27 @@ def save_setting(actor, key, value):
         "email_templates",
         "document_categories",
         "recommended_doctors",
+        "diocese_settings",
+        "document_templates",
+        "decision_outcomes",
+        "workflow_stages",
+        "canonical_reasons",
+        "mobile_settings",
     }:
         raise ValidationError("Unsupported setting key.")
+    validate_json_value(value, maximum=100_000)
     safe_configuration(value)
+    from .setting_schemas import validate_setting_value
+    validate_setting_value(key, value, schema_version=schema_version)
     lock_key(f"setting:{key}")
     number = (
         SettingRevision.objects.filter(key=key).aggregate(n=Max("number"))["n"] or 0
     ) + 1
+    if expected_version is not _UNBOUND:
+        if type(expected_version) is not int or expected_version < 0:
+            raise ValidationError("expected_version must be a non-negative integer.")
+        if expected_version != number - 1:
+            raise VersionConflict(number - 1)
     record = SettingRevision.objects.create(
         key=key, number=number, value=value, actor=actor
     )
@@ -62,6 +85,15 @@ def save_setting(actor, key, value):
 @transaction.atomic
 def create_template(actor, title, questions, shared=False):
     staff(actor)
+    if not isinstance(title, str) or not title.strip() or len(title) > 200:
+        raise ValidationError("Provide a template title of1–200 characters.")
+    if type(shared) is not bool:
+        raise ValidationError("shared must be a boolean.")
+    validate_json_value(title)
+    if (not isinstance(questions, list) or len(questions) > 500
+            or any(not isinstance(code, str) or not code.strip() or len(code) > 100 for code in questions)
+            or len(set(questions)) != len(questions)):
+        raise ValidationError("Provide at most500 distinct question codes as a list.")
     if shared:
         administrator(actor)
     snapshots = []
@@ -78,7 +110,7 @@ def create_template(actor, title, questions, shared=False):
             }
         )
     template = ReportTemplate.objects.create(
-        title=title, shared=shared, owner=None if shared else actor
+        title=title.strip(), shared=shared, owner=None if shared else actor
     )
     TemplateVersion.objects.create(
         template=template, number=1, questions=snapshots, actor=actor
@@ -90,10 +122,13 @@ def create_template(actor, title, questions, shared=False):
 @transaction.atomic
 def publish_personal_template(actor, template_id):
     administrator(actor)
+    lock_key(f"template:{template_id}")
     source = ReportTemplate.objects.get(pk=template_id, shared=False, retired=False)
     version = (
         TemplateVersion.objects.filter(template=source).order_by("-number").first()
     )
+    if version is None:
+        raise ValidationError("A retained template version is required before publication.")
     target = ReportTemplate.objects.create(title=source.title, shared=True)
     TemplateVersion.objects.create(
         template=target, number=1, questions=version.questions, actor=actor
@@ -108,31 +143,35 @@ def publish_personal_template(actor, template_id):
 
 
 @transaction.atomic
+def retire_template(actor, template_id):
+    staff(actor)
+    lock_key(f"template:{template_id}")
+    template = ReportTemplate.objects.select_for_update(of=("self",)).get(pk=template_id)
+    if template.shared:
+        administrator(actor)
+    elif template.owner_id != actor.pk:
+        raise PermissionDenied("Only the owner may retire a personal template.")
+    if not template.retired:
+        template.retired = True
+        template.save(update_fields=["retired"])
+        audit(actor, "template_retired", template)
+    return template
+
+
+@transaction.atomic
 def publish_questionnaire(actor, purpose, definition, declaration_en, declaration_ar):
     administrator(actor)
     if (
-        purpose not in {"petition", "appeal", "medical_release"}
-        or not declaration_en.strip()
-        or not declaration_ar.strip()
+        not isinstance(purpose, str) or purpose not in {"petition", "appeal", "medical_release"}
+        or not isinstance(declaration_en, str) or not declaration_en.strip()
+        or not isinstance(declaration_ar, str) or not declaration_ar.strip()
+        or len(declaration_en) > 100_000 or len(declaration_ar) > 100_000
     ):
         raise ValidationError(
             "Approved English and Arabic declaration text is required."
         )
-    if not isinstance(definition, dict):
-        raise ValidationError("Invalid questionnaire definition.")
-    for field in definition.get("fields", []):
-        if (
-            not isinstance(field, dict)
-            or not field.get("code")
-            or field.get("type") not in {"text", "date", "choice", "boolean", "list"}
-        ):
-            raise ValidationError("Invalid configured field definition.")
-        if field.get("when") and (
-            not isinstance(field["when"], dict)
-            or "field" not in field["when"]
-            or "equals" not in field["when"]
-        ):
-            raise ValidationError("Invalid conditional field rule.")
+    validate_json_value([declaration_en, declaration_ar], maximum=1_000_000)
+    validate_questionnaire_definition(definition)
     lock_key(f"questionnaire:{purpose}")
     number = (
         QuestionnaireVersion.objects.filter(purpose=purpose).aggregate(n=Max("number"))[
@@ -169,3 +208,62 @@ def publish_questionnaire(actor, purpose, definition, declaration_en, declaratio
         )
     audit(actor, "questionnaire_published", version)
     return version
+
+
+def validate_questionnaire_definition(definition):
+    if not isinstance(definition, dict):
+        raise ValidationError("Invalid questionnaire definition.")
+    validate_json_value(definition)
+    fields = definition.get("fields", [])
+    if not isinstance(fields, list) or len(fields) > 500:
+        raise ValidationError("Provide at most500 configured fields as a list.")
+    codes = {}
+    for field in fields:
+        if not isinstance(field, dict):
+            raise ValidationError("Invalid configured field definition.")
+        code, kind = field.get("code"), field.get("type")
+        if (not isinstance(code, str) or not code.strip() or code != code.strip()
+                or len(code) > 100 or code in codes
+                or not isinstance(kind, str) or kind not in {"text", "textarea", "date", "choice", "boolean", "list"}):
+            raise ValidationError("Field codes must be distinct and have a supported type.")
+        codes[code] = field
+        if "item_fields" in field:
+            if kind != "list" or not isinstance(field["item_fields"], list) or not field["item_fields"]:
+                raise ValidationError("item_fields requires a nonempty list of repeat field definitions.")
+            validate_questionnaire_definition({"fields": field["item_fields"]})
+        if "required" in field and type(field["required"]) is not bool:
+            raise ValidationError("required must be a boolean.")
+        if kind == "choice":
+            choices = field.get("choices")
+            if (not isinstance(choices, list) or not 1 <= len(choices) <= 500
+                    or any(not isinstance(item, str) or not item.strip() for item in choices)
+                    or len(set(choices)) != len(choices)):
+                raise ValidationError("Choice fields require distinct nonempty string choices.")
+    for code, field in codes.items():
+        if "when" not in field:
+            continue
+        rule = field["when"]
+        if (not isinstance(rule, dict) or set(rule) != {"field", "equals"}
+                or not isinstance(rule["field"], str) or rule["field"] not in codes):
+            raise ValidationError("Conditions must reference a configured field and equality value.")
+        # Use the same vocabulary as runtime answers, so unreachable conditions
+        # cannot silently hide required questions.
+        from types import SimpleNamespace
+        from tribunal.validation import validate_answers
+        source = {**codes[rule["field"]], "required": True}
+        source.pop("when", None)
+        validate_answers(SimpleNamespace(definition={"fields": [source]}), {source["code"]: rule["equals"]})
+    for code in codes:
+        seen = set()
+        cursor = code
+        while "when" in codes[cursor]:
+            if cursor in seen:
+                raise ValidationError("Conditional fields cannot contain dependency cycles.")
+            seen.add(cursor)
+            cursor = codes[cursor]["when"]["field"]
+    categories = definition.get("required_document_categories", [])
+    from .applications import DOCUMENT_LABELS
+    if (not isinstance(categories, list) or len(categories) > len(DOCUMENT_LABELS)
+            or any(not isinstance(item, str) or item not in DOCUMENT_LABELS for item in categories)
+            or len(set(categories)) != len(categories)):
+        raise ValidationError("Use distinct supported filing document categories.")

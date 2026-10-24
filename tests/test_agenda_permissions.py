@@ -85,10 +85,33 @@ def test_manager_agenda_api_uses_same_permission(assigned, people, client):
     assert response.status_code == 201
 
 
+def test_session_presiding_member_comes_from_the_configured_president(people):
+    session = council.create_session(
+        people["admin"], date(2031, 2, 2), presiding_member=people["member"]
+    )
+
+    assert session.presiding_member_id == people["president"].pk
+
+
+
+def test_council_president_cannot_be_assigned_as_case_manager(ready_application, people):
+    app = ready_application
+    submit_application(
+        app.owner, app.pk, "president-assignment", {"accepted": True, "name": "John Smith"}
+    )
+    app.refresh_from_db()
+
+    with pytest.raises(ValidationError, match="president cannot be assigned"):
+        council.assign_case(
+            people["admin"], app.case_id, people["president"].pk, people["president"].pk
+        )
+
+
+
 def test_former_manager_cannot_schedule_after_reassignment(assigned, people):
     app, session = assigned
     council.assign_case(
-        people["admin"], app.case_id, people["president"].pk, people["president"].pk
+        people["admin"], app.case_id, people["secretary"].pk, people["president"].pk
     )
     with pytest.raises(PermissionDenied):
         council.place_agenda(people["member"], session.pk, app.case_id)
@@ -109,6 +132,8 @@ def test_session_close_preserves_existing_next_session_placement(assigned, peopl
     from datetime import timedelta
 
     app, session = assigned
+    session.state = "draft"
+    session.save(update_fields=["state"])
     source = council.place_agenda(people["member"], session.pk, app.case_id, part=2)
     next_session = council.create_session(
         people["admin"], session.date + timedelta(days=7)

@@ -1,0 +1,1101 @@
+{
+  "schema_version": 1,
+  "mapping_status": "Explicit source candidates; no parity or migration approval",
+  "batches": [
+    {
+      "id": "identity",
+      "title": "Identity and case ownership",
+      "tables": [
+        "persons",
+        "person_identity_versions",
+        "accounts",
+        "account_identities",
+        "account_email_versions",
+        "verification_tokens",
+        "app_sessions",
+        "tribunals",
+        "staff_memberships",
+        "staff_roles",
+        "account_events",
+        "identity_consolidations",
+        "identity_review_holds",
+        "ctm_applicants",
+        "dioceses",
+        "parishes",
+        "marriages",
+        "cases",
+        "case_identifiers",
+        "case_number_counters",
+        "case_parties",
+        "applicant_references",
+        "person_open_case_claims",
+        "person_active_draft_claims",
+        "case_association_events",
+        "case_party_onboarding",
+        "registration_invitation_events"
+      ]
+    },
+    {
+      "id": "forms",
+      "title": "Questionnaires, declarations and question wording",
+      "tables": [
+        "questionnaires",
+        "questionnaire_versions",
+        "declaration_versions",
+        "ground_definitions",
+        "report_questions",
+        "report_question_versions"
+      ]
+    },
+    {
+      "id": "drafts",
+      "title": "Draft answers, assertions and repeat identity",
+      "tables": [
+        "applications",
+        "application_revisions",
+        "application_person_assertions",
+        "application_marriage_assertions",
+        "application_separation_assertions",
+        "application_repeat_entries",
+        "application_children",
+        "application_restraining_orders",
+        "application_prior_records",
+        "application_answers",
+        "application_selected_grounds",
+        "application_answer_changes",
+        "draft_schema_migrations"
+      ]
+    },
+    {
+      "id": "files",
+      "title": "Private originals, context and provenance",
+      "tables": [
+        "document_categories",
+        "files",
+        "file_versions",
+        "file_name_events",
+        "file_context_links",
+        "submission_file_manifest",
+        "upload_sessions",
+        "file_technical_events",
+        "file_derivatives",
+        "file_access_events",
+        "search_documents"
+      ]
+    },
+    {
+      "id": "filing",
+      "title": "Filing snapshots, completeness and withdrawal",
+      "tables": [
+        "filing_candidates",
+        "application_submissions",
+        "application_completeness_reviews",
+        "party_withdrawals",
+        "case_proceedings",
+        "case_lifecycle_events"
+      ]
+    },
+    {
+      "id": "payments",
+      "title": "Fees, checkout candidates and financial history",
+      "tables": [
+        "fee_obligations",
+        "fee_waivers",
+        "payment_attempts",
+        "payment_events",
+        "payment_allocations",
+        "refund_events"
+      ]
+    },
+    {
+      "id": "appointments",
+      "title": "Private testimony invitations",
+      "tables": [
+        "testimony_appointments",
+        "testimony_appointment_versions",
+        "testimony_invitation_responses"
+      ]
+    },
+    {
+      "id": "requests",
+      "title": "Own requests, responses and medical consent",
+      "tables": [
+        "report_requests",
+        "sent_intake_question_snapshots",
+        "reports",
+        "report_revisions",
+        "report_answers",
+        "report_source_links",
+        "recommended_providers",
+        "evaluation_requests",
+        "evaluation_release_attestations",
+        "evaluation_release_scopes",
+        "evaluation_reports",
+        "evaluation_disclosures"
+      ]
+    },
+    {
+      "id": "appeals",
+      "title": "Appeal entry, additions and disposition",
+      "tables": [
+        "appeal_applications",
+        "pending_appeal_claims",
+        "appeal_supplements",
+        "hearing_appeals",
+        "appeal_dispositions",
+        "proceeding_appeals",
+        "appeal_withdrawals"
+      ]
+    },
+    {
+      "id": "decrees",
+      "title": "Decision provenance and released certificates",
+      "tables": [
+        "decision_types",
+        "case_decision_versions",
+        "council_votes",
+        "presidential_approvals",
+        "decree_template_versions",
+        "decrees",
+        "decree_certificates",
+        "decree_issuance_events",
+        "decree_entitlements",
+        "decree_release_events"
+      ]
+    }
+  ],
+  "mappings": {
+    "persons": {
+      "model": "tribunal.Person",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "canonical_person_id": {
+          "column": "canonical_id",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "accounts": {
+      "model": "tribunal.Account",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "ui_locale": {
+          "column": "ui_language",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "notification_locale": {
+          "column": "notification_language",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        }
+      }
+    },
+    "tribunals": {
+      "model": "tribunal.Tribunal",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items."
+    },
+    "staff_memberships": {
+      "model": "tribunal.StaffMembership",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items."
+    },
+    "staff_roles": {
+      "model": "tribunal.StaffRole",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items."
+    },
+    "cases": {
+      "model": "tribunal.Case",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items."
+    },
+    "case_number_counters": {
+      "model": "tribunal.CaseNumberCounter",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "local_date": {
+          "column": "date",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        }
+      }
+    },
+    "case_parties": {
+      "model": "tribunal.Party",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "party_slot": {
+          "column": "slot",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "source_name_snapshot": {
+          "column": "name",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        }
+      }
+    },
+    "person_open_case_claims": {
+      "model": "tribunal.OpenCaseClaim",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items."
+    },
+    "case_proceedings": {
+      "model": "tribunal.Proceeding",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items."
+    },
+    "case_assignments": {
+      "model": "tribunal.CaseAssignment",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "recorded_by_id": {
+          "column": "actor_id",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        }
+      }
+    },
+    "questionnaire_versions": {
+      "model": "tribunal.QuestionnaireVersion",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "version": {
+          "column": "number",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "questionnaires": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.QuestionnaireVersion",
+          "column": "purpose",
+          "reason": "Questionnaire purpose and bilingual declaration are consolidated into the published questionnaire adapter; separate version IDs/digests/provenance need review."
+        }
+      ]
+    },
+    "declaration_versions": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.QuestionnaireVersion",
+          "column": "declaration_en",
+          "reason": "Questionnaire purpose and bilingual declaration are consolidated into the published questionnaire adapter; separate version IDs/digests/provenance need review."
+        }
+      ]
+    },
+    "applications": {
+      "model": "tribunal.Application",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "owner_account_id": {
+          "column": "owner_id",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "purpose": {
+          "column": "kind",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "questionnaire_version_id": {
+          "column": "questionnaire_id",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "last_applicant_activity_at": {
+          "column": "last_activity",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "first_submitted_at": {
+          "column": "submitted_at",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "row_version": {
+          "column": "current_version",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "application_revisions": {
+      "model": "tribunal.AnswerRevision",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "version": {
+          "column": "number",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "questionnaire_version_id": {
+          "column": "questionnaire_id",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "application_person_assertions": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AnswerRevision",
+          "column": "answers",
+          "reason": "Variable answer JSON may carry facts/repeat UUIDs; this is not evidence of the required typed assertion/entry relation or full field coverage."
+        }
+      ]
+    },
+    "application_marriage_assertions": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AnswerRevision",
+          "column": "answers",
+          "reason": "Variable answer JSON may carry facts/repeat UUIDs; this is not evidence of the required typed assertion/entry relation or full field coverage."
+        }
+      ]
+    },
+    "application_separation_assertions": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AnswerRevision",
+          "column": "answers",
+          "reason": "Variable answer JSON may carry facts/repeat UUIDs; this is not evidence of the required typed assertion/entry relation or full field coverage."
+        }
+      ]
+    },
+    "application_repeat_entries": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AnswerRevision",
+          "column": "answers",
+          "reason": "Variable answer JSON may carry facts/repeat UUIDs; this is not evidence of the required typed assertion/entry relation or full field coverage."
+        }
+      ]
+    },
+    "application_children": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AnswerRevision",
+          "column": "answers",
+          "reason": "Variable answer JSON may carry facts/repeat UUIDs; this is not evidence of the required typed assertion/entry relation or full field coverage."
+        }
+      ]
+    },
+    "application_restraining_orders": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AnswerRevision",
+          "column": "answers",
+          "reason": "Variable answer JSON may carry facts/repeat UUIDs; this is not evidence of the required typed assertion/entry relation or full field coverage."
+        }
+      ]
+    },
+    "application_prior_records": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AnswerRevision",
+          "column": "answers",
+          "reason": "Variable answer JSON may carry facts/repeat UUIDs; this is not evidence of the required typed assertion/entry relation or full field coverage."
+        }
+      ]
+    },
+    "application_answers": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AnswerRevision",
+          "column": "answers",
+          "reason": "Variable answer JSON may carry facts/repeat UUIDs; this is not evidence of the required typed assertion/entry relation or full field coverage."
+        }
+      ]
+    },
+    "application_selected_grounds": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AnswerRevision",
+          "column": "answers",
+          "reason": "Variable answer JSON may carry facts/repeat UUIDs; this is not evidence of the required typed assertion/entry relation or full field coverage."
+        }
+      ]
+    },
+    "files": {
+      "model": "tribunal.Attachment",
+      "reason": "Attachment holds original context/category/visibility; exact physical files contract is not implemented by this name alone.",
+      "columns": {
+        "owner_application_id": {
+          "column": "application_id",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        }
+      }
+    },
+    "file_versions": {
+      "model": "tribunal.FileVersion",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "file_id": {
+          "column": "attachment_id",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "version": {
+          "column": "number",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "presented_name": {
+          "column": "display_name",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "size_bytes": {
+          "column": "byte_count",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "checksum_sha256": {
+          "column": "sha256",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "uploaded_by_id": {
+          "column": "actor_id",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "external_link_id": {
+          "column": "external_request_id",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        }
+      }
+    },
+    "file_technical_events": {
+      "model": "tribunal.FileTechnicalEvent",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "file_version_id": {
+          "column": "file_id",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "safe_metadata": {
+          "column": "metadata",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        }
+      }
+    },
+    "file_context_links": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Attachment",
+          "column": "context",
+          "reason": "JSON context exists; explicit contextual FK linkage requires owner/backend reconciliation."
+        }
+      ]
+    },
+    "submission_file_manifest": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Submission",
+          "column": "manifest",
+          "reason": "Immutable submission manifest JSON is tested; it does not establish separate relational manifest rows."
+        }
+      ]
+    },
+    "search_documents": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.DocumentText",
+          "column": "text",
+          "reason": "Local extracted text is retained; full search document/derivative/access metadata is not established by text alone."
+        }
+      ]
+    },
+    "filing_candidates": {
+      "model": "tribunal.CheckoutIntent",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "frozen_manifest": {
+          "column": "manifest",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "attestation_snapshot": {
+          "column": "attestation",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "application_submissions": {
+      "model": "tribunal.Submission",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "submitted_by_id": {
+          "column": "actor_id",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "application_completeness_reviews": {
+      "model": "tribunal.CompletenessReview",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "correction_instructions": {
+          "column": "instructions",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "party_withdrawals": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Party",
+          "column": "withdrawn_at",
+          "reason": "Own withdrawal is currently represented by application status, party withdrawal time and audit events; no standalone withdrawal model mapped."
+        }
+      ]
+    },
+    "fee_obligations": {
+      "model": "tribunal.FeeObligation",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "disposition": {
+          "column": "status",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "fee_waivers": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.FeeObligation",
+          "column": "waived_by_id",
+          "reason": "Fee status/waived actor exists; a separately attributed waiver event/reason is not established by this model alone."
+        }
+      ]
+    },
+    "payment_attempts": {
+      "model": "tribunal.CheckoutIntent",
+      "reason": "CheckoutIntent is only an adapter candidate: frozen filing candidate and provider attempt are consolidated, with different relations.",
+      "columns": {
+        "status": {
+          "column": "state",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "payment_events": {
+      "model": "tribunal.PaymentEvent",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "event_type": {
+          "column": "kind",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "refund_events": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.PaymentEvent",
+          "column": "kind",
+          "reason": "Generic financial events may include refund kinds; not proof of exact refund event schema or real provider acceptance."
+        }
+      ]
+    },
+    "testimony_appointments": {
+      "model": "tribunal.TestimonyAppointment",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "agenda_item_id": {
+          "column": "agenda_id",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "status": {
+          "column": "state",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "testimony_appointment_versions": {
+      "model": "tribunal.TestimonyAppointmentVersion",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items."
+    },
+    "testimony_invitation_responses": {
+      "model": "tribunal.AppointmentResponse",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items."
+    },
+    "report_requests": {
+      "model": "tribunal.ReportRequest",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "subject_party_id": {
+          "column": "subject_id",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "created_by_id": {
+          "column": "author_id",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "status": {
+          "column": "state",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        }
+      }
+    },
+    "sent_intake_question_snapshots": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.ReportRequest",
+          "column": "questions",
+          "reason": "Frozen sent question JSON is used by actual own read/response; normalized snapshot rows/version FKs need reconciliation."
+        }
+      ]
+    },
+    "report_questions": {
+      "model": "tribunal.ReportQuestion",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items."
+    },
+    "report_question_versions": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.ReportQuestion",
+          "column": "version",
+          "reason": "Question adapter combines versioned wording in one model; separate source-version entity is not established."
+        }
+      ]
+    },
+    "reports": {
+      "model": "tribunal.Report",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "author_account_id": {
+          "column": "author_id",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "identifier_text": {
+          "column": "identifier",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        }
+      }
+    },
+    "report_revisions": {
+      "model": "tribunal.ReportRevision",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "version": {
+          "column": "number",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        },
+        "internal_observations": {
+          "column": "observations",
+          "reason": "Candidate alias only; semantics, constraints and migration remain unverified."
+        }
+      }
+    },
+    "report_answers": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.ReportRevision",
+          "column": "answers",
+          "reason": "Bound answers and file IDs are retained as JSON with own privacy; explicit per-question/version relations require mapping."
+        }
+      ]
+    },
+    "report_source_links": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.ReportRevision",
+          "column": "answers",
+          "reason": "Answer evidence IDs exist, but exact source links/provenance require explicit mapping review."
+        }
+      ]
+    },
+    "evaluation_requests": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.ReportRequest",
+          "column": "kind",
+          "reason": "Medical/psychological requests use kind on ReportRequest; provider details/snapshots are not established."
+        }
+      ]
+    },
+    "evaluation_release_attestations": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.MedicalRelease",
+          "column": "signature_id",
+          "reason": "MedicalRelease binds request/subject/declaration/signature/scope/time; exact text/language/person relations require reconciliation."
+        }
+      ]
+    },
+    "evaluation_release_scopes": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.MedicalRelease",
+          "column": "scope",
+          "reason": "Strict JSON council/purpose/request/proceeding scope is enforced and browser-tested, but separate normalized release-scope entity is not mapped."
+        }
+      ]
+    },
+    "evaluation_reports": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Report",
+          "column": "request_id",
+          "reason": "Clinical reports share own Report/ReportRevision; evaluation-specific provider/authorization relations require review."
+        }
+      ]
+    },
+    "appeal_supplements": {
+      "model": "tribunal.AppealSupplement",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "text_content": {
+          "column": "text",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "file_manifest": {
+          "column": "manifest",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "appeal_dispositions": {
+      "model": "tribunal.AppealDisposition",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items."
+    },
+    "appeal_applications": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Application",
+          "column": "kind",
+          "reason": "Own appeal is Application(kind=appeal), not a separate appeal root or challenged decree/decision relation."
+        }
+      ]
+    },
+    "pending_appeal_claims": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Application",
+          "column": "status",
+          "reason": "Conditional owner/case uniqueness and transaction locks implement adapter claim behavior; person/case claim entity is not mapped."
+        }
+      ]
+    },
+    "hearing_appeals": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AppealDisposition",
+          "column": "hearing_id",
+          "reason": "Disposition records hearing linkage; distinct hearing/appeal association needs reconciliation."
+        }
+      ]
+    },
+    "proceeding_appeals": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AppealDisposition",
+          "column": "reopened_proceeding_id",
+          "reason": "Result retains reopened proceeding; full explicit proceeding/appeal association needs review."
+        }
+      ]
+    },
+    "appeal_withdrawals": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Application",
+          "column": "status",
+          "reason": "Own pending withdrawal is tested, with audit retained; separate appeal withdrawal event is not mapped."
+        }
+      ]
+    },
+    "case_decision_versions": {
+      "model": "tribunal.DecisionRevision",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "version": {
+          "column": "number",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "council_votes": {
+      "model": "tribunal.Vote",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "decision_version_id": {
+          "column": "decision_id",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "voting_member_id": {
+          "column": "member_id",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "vote": {
+          "column": "choice",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "presidential_approvals": {
+      "model": "tribunal.PresidentialApproval",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "decision_version_id": {
+          "column": "decision_id",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "president_member_id": {
+          "column": "president_id",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "decrees": {
+      "model": "tribunal.Decree",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items.",
+      "columns": {
+        "decision_version_id": {
+          "column": "decision_id",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        },
+        "decree_reference": {
+          "column": "reference",
+          "reason": "Candidate alias; semantic parity and migration remain unverified."
+        }
+      }
+    },
+    "decree_certificates": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Decree",
+          "column": "signed_file_id",
+          "reason": "Current decree retains signed original/signer; separate certificate identity and signature metadata require mapping."
+        }
+      ]
+    },
+    "decree_issuance_events": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Decree",
+          "column": "issued_at",
+          "reason": "Issued timestamp is retained; separate issuance event/certificate/approval relation requires review."
+        }
+      ]
+    },
+    "decree_entitlements": {
+      "model": null,
+      "reason": "No standalone model mapped in the 63-domain-model inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.DecisionRevision",
+          "column": "entitlements",
+          "reason": "Entitlement JSON is not equivalent to separate decree-entitlement rows."
+        }
+      ]
+    },
+    "decree_release_events": {
+      "model": "tribunal.DecreeRelease",
+      "reason": "Named adapter candidate; structural and semantic differences remain review items."
+    },
+    "person_identity_versions": {
+      "model": null,
+      "reason": "No standalone version model mapped.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Person",
+          "column": "first_name",
+          "reason": "Current identity fields on Person are not proof of immutable identity history; versions require explicit reconciliation."
+        }
+      ]
+    },
+    "case_party_onboarding": {
+      "model": "tribunal.PendingPartyLink",
+      "reason": "Narrow invitation/onboarding adapter candidate; source/status/version differences remain.",
+      "columns": {
+        "normalized_email": {
+          "column": "email",
+          "reason": "Candidate onboarding alias; state semantics remain unverified."
+        },
+        "entered_by_id": {
+          "column": "actor_id",
+          "reason": "Candidate onboarding alias; state semantics remain unverified."
+        },
+        "status": {
+          "column": "state",
+          "reason": "Candidate onboarding alias; state semantics remain unverified."
+        }
+      }
+    },
+    "marriages": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Case",
+          "column": "marriage_date",
+          "reason": "Case date/DOB tuple supports matching, not a complete independent marriage relation."
+        }
+      ]
+    },
+    "applicant_references": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Party",
+          "column": "reference",
+          "reason": "Issued reference retained on Party; immutable allocation component/event relation remains separate."
+        }
+      ]
+    },
+    "case_identifiers": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Case",
+          "column": "number",
+          "reason": "Current case number retained on Case; namespace/history/allocation records need reconciliation."
+        }
+      ]
+    },
+    "identity_review_holds": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Application",
+          "column": "duplicate_hold",
+          "reason": "Boolean hold exists; explicit candidate snapshot/rule/resolver event is not established by this field."
+        }
+      ]
+    },
+    "evaluation_disclosures": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AuditEvent",
+          "column": "action",
+          "reason": "Generic audit may record protected actions; not proof of dedicated report/scope/file disclosure relation."
+        }
+      ]
+    },
+    "application_answer_changes": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AnswerRevision",
+          "column": "answers",
+          "reason": "Before/after revisions are retained; typed per-question attributed change records need reconciliation."
+        }
+      ]
+    },
+    "case_lifecycle_events": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.AuditEvent",
+          "column": "action",
+          "reason": "Generic append audit exists; exact proceeding/source/request/event relation is not established."
+        }
+      ]
+    },
+    "file_derivatives": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.DocumentText",
+          "column": "text",
+          "reason": "Extracted text exists; full source derivative checksum/status/engine provenance needs reconciliation."
+        }
+      ]
+    },
+    "account_identities": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Account",
+          "column": "microsoft_subject",
+          "reason": "Account field exists; allauth/framework provider tables are outside this domain-only inventory and must be reviewed separately."
+        }
+      ]
+    },
+    "account_email_versions": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.Account",
+          "column": "email",
+          "reason": "Current email/verified flag and framework auth support do not prove exact immutable email-version contract."
+        }
+      ]
+    },
+    "ground_definitions": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.QuestionnaireVersion",
+          "column": "definition",
+          "reason": "Choices live in published definition JSON; six accepted grounds and labels need institutional-content mapping."
+        }
+      ]
+    },
+    "payment_allocations": {
+      "model": null,
+      "reason": "No standalone model mapping in the domain inventory.",
+      "storage_candidates": [
+        {
+          "model": "tribunal.PaymentEvent",
+          "column": "application_id",
+          "reason": "Payment events bind an application, not proof of the explicit attempt/obligation/submission allocation relation."
+        }
+      ]
+    }
+  }
+}

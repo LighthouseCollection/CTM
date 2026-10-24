@@ -1,0 +1,87 @@
+{
+  "date": "2026-10-21",
+  "backend_sha": "d724ba56b8bd5cf501d55fbbca416470108f963a",
+  "applicant_base": "44f311e",
+  "scope": "isolated real Django/SQLite; synthetic accounts/content; controlled provider output; no real charge",
+  "batches": [
+    {
+      "number": 1,
+      "task": "Draft deletion",
+      "status": "completed locally",
+      "evidence": "Explicit current capability and confirmation; draft revisions/file records are removed and retained original URLs deny access."
+    },
+    {
+      "number": 2,
+      "task": "Action concurrency/privacy",
+      "status": "completed locally",
+      "evidence": "Missing/malformed/stale versions and foreign owner fail; stale browser confirmation locks until refresh."
+    },
+    {
+      "number": 3,
+      "task": "Returned withdrawal",
+      "status": "completed locally",
+      "evidence": "Returned filing cannot use draft deletion; own withdrawal retains fee/history."
+    },
+    {
+      "number": 4,
+      "task": "Joint case safety",
+      "status": "completed locally",
+      "evidence": "Synthetic second participant remains active after first withdrawal; last withdrawal closes case; no spouse notice."
+    },
+    {
+      "number": 5,
+      "task": "Pending appeal withdrawal",
+      "status": "completed locally",
+      "evidence": "Synthetic pending appeal stays owner-only before disposition; fee/revision and closed case retained."
+    },
+    {
+      "number": 6,
+      "task": "Original checkout recovery",
+      "status": "completed locally",
+      "evidence": "Real adapter with controlled provider output retains exact candidate/version/signer/declarations; GET is private/no-store."
+    },
+    {
+      "number": 7,
+      "task": "URL and expiry",
+      "status": "completed locally",
+      "evidence": "Exact HTTPS provider host, raw controls rejected, explicit future expiry; timer and click recheck."
+    },
+    {
+      "number": 8,
+      "task": "Payment state changes",
+      "status": "completed locally",
+      "evidence": "Processing/paid/reconciliation/elapsed expiry/changed revisions hide resume and block fresh charge."
+    },
+    {
+      "number": 9,
+      "task": "Interruption and EN/AR",
+      "status": "completed locally",
+      "evidence": "Lost deletion acknowledgement recovers once; mobile RTL and expiry while mounted verified."
+    },
+    {
+      "number": 10,
+      "task": "Review and evidence",
+      "status": "completed locally",
+      "evidence": "Read-only independent review, consolidated report/JSON and remaining dependency reconciliation."
+    }
+  ],
+  "checks": {
+    "frontend_tests": 68,
+    "real_api_browser_groups": 54,
+    "response_recovery_lifecycle_fixture_groups": 11,
+    "shell_groups": 9
+  },
+  "boundaries": [
+    "PostgreSQL/RLS/concurrent transactions not independently accepted",
+    "No live payment/provider callback or antivirus acceptance",
+    "Joint second filing and pending appeal state are explicit fixtures",
+    "No institutional wording/signature/issuance approval",
+    "No shared shell source/backend/specification edits; PR remains draft"
+  ],
+  "remaining": [
+    "Own supplement history and can_supplement",
+    "Complete institution-approved bilingual forms and repeat validation",
+    "Governance serial integration",
+    "PostgreSQL and live service/issuance acceptance"
+  ]
+}

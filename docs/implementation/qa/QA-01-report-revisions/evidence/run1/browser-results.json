@@ -1,0 +1,315 @@
+{
+  "summary": {
+    "PASS": 30,
+    "FAIL": 4,
+    "ERROR": 0
+  },
+  "checks": [
+    {
+      "scenario": "S1",
+      "check": "author sees Revise on own open report",
+      "role": "member (assigned author)",
+      "expected": "Revise visible",
+      "actual": "visible=True",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s1-author-main-newest.png"
+    },
+    {
+      "scenario": "S1",
+      "check": "newest answers and observations load (v2)",
+      "role": "member (assigned author)",
+      "expected": "v2 texts shown",
+      "actual": "shown=True",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s1-author-main-newest.png"
+    },
+    {
+      "scenario": "S1",
+      "check": "no Revise on secretary-authored report",
+      "role": "member (assigned, non-author)",
+      "expected": "hidden + explanation",
+      "actual": "revise=False explanation=True",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s1-author-no-revise-secretary-authored.png"
+    },
+    {
+      "scenario": "S1",
+      "check": "no Revise on applicant intake",
+      "role": "member (assigned, non-author)",
+      "expected": "hidden + explanation",
+      "actual": "revise=False explanation=True",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s1-author-no-revise-applicant.png"
+    },
+    {
+      "scenario": "S1",
+      "check": "wilson sees report but no Revise",
+      "role": "member (unassigned)",
+      "expected": "hidden",
+      "actual": "revise=False",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s1-wilson-no-revise.png"
+    },
+    {
+      "scenario": "S1",
+      "check": "anderson sees report but no Revise",
+      "role": "admin (non-author)",
+      "expected": "hidden",
+      "actual": "revise=False",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s1-anderson-no-revise.png"
+    },
+    {
+      "scenario": "S1",
+      "check": "secretary author sees Revise on own report",
+      "role": "secretary (author)",
+      "expected": "visible",
+      "actual": "revise=True",
+      "result": "PASS",
+      "screenshot": null
+    },
+    {
+      "scenario": "S2",
+      "check": "UI save appends exactly one version",
+      "role": "member (assigned author)",
+      "expected": "1+1",
+      "actual": "2",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s2-saved.png"
+    },
+    {
+      "scenario": "S2",
+      "check": "non-text answers carried over by the editor",
+      "role": "member (assigned author)",
+      "expected": "QA-PREF dict and QA-SCORE=3 unchanged",
+      "actual": "QA-PREF={'choice': 'no', 'noted_by': 'council'} QA-SCORE=3",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s2-editor-filled.png"
+    },
+    {
+      "scenario": "S2",
+      "check": "untouched text answers preserved",
+      "role": "member (assigned author)",
+      "expected": "QA-SEP unchanged",
+      "actual": "QA-SEP='Original separation narrative (ui).'",
+      "result": "PASS",
+      "screenshot": null
+    },
+    {
+      "scenario": "S2",
+      "check": "version attributed to author",
+      "role": "member (assigned author)",
+      "expected": "f59f6098-3413-404a-9059-07de623f6691",
+      "actual": "f59f6098-3413-404a-9059-07de623f6691",
+      "result": "PASS",
+      "screenshot": null
+    },
+    {
+      "scenario": "S2",
+      "check": "after reload newest text shown; history lists both versions with author; v1 still readable",
+      "role": "member (assigned author)",
+      "expected": "v2 shown, 2 options with Michael Thompson, v1 text visible",
+      "actual": "v2_shown=True options=['Version 2 · Oct 21, 2026, 9:33 PM · Michael Thompson', 'Version 1 · Oct 21, 2026, 9:32 PM · Michael Thompson'] v1_visible=True",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s2-reload-history-v1.png"
+    },
+    {
+      "scenario": "S3",
+      "check": "UI: unchanged save sends no POST and creates no version",
+      "role": "member (assigned author)",
+      "expected": "0 POSTs, versions unchanged",
+      "actual": "posts=0 versions 1->1",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s3-unchanged.png"
+    },
+    {
+      "scenario": "S8",
+      "check": "simulated 500: text kept, no false success, no version",
+      "role": "member (assigned author)",
+      "expected": "text kept, no success, versions unchanged",
+      "actual": "kept=True success_shown=False versions 1->1",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s8-simulated-500.png"
+    },
+    {
+      "scenario": "S8",
+      "check": "lost acknowledgement: server committed once, UI shows no false success and keeps text",
+      "role": "member (assigned author)",
+      "expected": "1 new version, no success notice, text kept",
+      "actual": "versions 1->2 success_shown=False kept=True",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s8-lost-ack.png"
+    },
+    {
+      "scenario": "S8",
+      "check": "retry after lost acknowledgement does not silently duplicate",
+      "role": "member (assigned author)",
+      "expected": "no second version without an explicit choice",
+      "actual": "versions 2->2 stale_choice_shown=True",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s8-retry-after-lost-ack.png"
+    },
+    {
+      "scenario": "S8",
+      "check": "OBSERVATION: retry after lost ack presents the user's own saved version as a conflicting newer version",
+      "role": "member (assigned author)",
+      "expected": "UI recognises its own committed write (idempotent receipt) instead of a conflict",
+      "actual": "stale_choice_shown=True (a 'Save anyway' click would append a duplicate)",
+      "result": "FAIL",
+      "screenshot": "evidence/screens/s8-retry-after-lost-ack.png"
+    },
+    {
+      "scenario": "S8",
+      "check": "simulated 403: text kept, Save hidden, denial explained",
+      "role": "member (assigned author)",
+      "expected": "kept, Save hidden",
+      "actual": "kept=True save_hidden=True",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s8-simulated-403.png"
+    },
+    {
+      "scenario": "S8",
+      "check": "real server denial mid-edit (reassigned): no write, text kept, no false success",
+      "role": "member (author, reassigned away)",
+      "expected": "no new version, text kept",
+      "actual": "reassign=201 POST statuses=[404] kept=True versions 1->1",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s8-real-denial-after-reassignment.png"
+    },
+    {
+      "scenario": "S8",
+      "check": "real server denial is presented as a denial (Save hidden, 'not allowed')",
+      "role": "member (author, reassigned away)",
+      "expected": "denial notice, Save hidden (needs 403 from server)",
+      "actual": "POST statuses=[404] denial_notice=False save_hidden=False",
+      "result": "FAIL",
+      "screenshot": "evidence/screens/s8-real-denial-after-reassignment.png"
+    },
+    {
+      "scenario": "S9",
+      "check": "UI preflight: second session warned before overwriting a newer version",
+      "role": "member (author, 2 sessions)",
+      "expected": "stale warning, no extra version",
+      "actual": "warned=True versions 1->2",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s9-ui-sequential-stale.png"
+    },
+    {
+      "scenario": "S9",
+      "check": "near-simultaneous saves from two sessions: only one may win without a conflict",
+      "role": "member (author, 2 sessions)",
+      "expected": "1 new version + 1 conflict/stale warning",
+      "actual": "versions 2->4 both_reported_saved=True",
+      "result": "FAIL",
+      "screenshot": "evidence/screens/s9-ui-race-session1.png"
+    },
+    {
+      "scenario": "S10",
+      "check": "refresh with unsaved narrative triggers the leave-page warning; dismiss keeps text",
+      "role": "member (assigned author)",
+      "expected": "beforeunload dialog, text kept",
+      "actual": "dialogs=['beforeunload'] kept=True",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s10-reload-guard.png"
+    },
+    {
+      "scenario": "S10",
+      "check": "in-app navigation away from the editor warns or preserves the unsaved narrative",
+      "role": "member (assigned author)",
+      "expected": "warning before leaving, or text restored",
+      "actual": "in_app_dialogs=[] editor_restored=False",
+      "result": "FAIL",
+      "screenshot": "evidence/screens/s10-sidebar-navigation.png"
+    },
+    {
+      "scenario": "S11",
+      "check": "EN 390px reader: direction, author label, Revise label, no overflow",
+      "role": "member (assigned author)",
+      "expected": "dir=ltr/empty, labels present, overflow<=0",
+      "actual": "dir='ltr' lang='en' author_label=True revise_label=True overflow=0 inline_styles=0",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s11-en-390-reader.png"
+    },
+    {
+      "scenario": "S11",
+      "check": "EN 390px editor: fields not clipped, no horizontal overflow",
+      "role": "member (assigned author)",
+      "expected": "all textareas within viewport and >=120px wide",
+      "actual": "textareas=4 clipped=0 overflow=0",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s11-en-390-editor.png"
+    },
+    {
+      "scenario": "S11",
+      "check": "EN 390px: no page errors",
+      "role": "member (assigned author)",
+      "expected": "none",
+      "actual": "[]",
+      "result": "PASS",
+      "screenshot": null
+    },
+    {
+      "scenario": "S11",
+      "check": "AR 1280px reader: direction, author label, Revise label, no overflow",
+      "role": "member (assigned author)",
+      "expected": "dir=rtl, labels present, overflow<=0",
+      "actual": "dir='rtl' lang='ar' author_label=True revise_label=True overflow=0 inline_styles=0",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s11-ar-1280-reader.png"
+    },
+    {
+      "scenario": "S11",
+      "check": "AR 1280px editor: fields not clipped, no horizontal overflow",
+      "role": "member (assigned author)",
+      "expected": "all textareas within viewport and >=120px wide",
+      "actual": "textareas=4 clipped=0 overflow=0",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s11-ar-1280-editor.png"
+    },
+    {
+      "scenario": "S11",
+      "check": "AR 1280px: no page errors",
+      "role": "member (assigned author)",
+      "expected": "none",
+      "actual": "[]",
+      "result": "PASS",
+      "screenshot": null
+    },
+    {
+      "scenario": "S11",
+      "check": "AR 390px reader: direction, author label, Revise label, no overflow",
+      "role": "member (assigned author)",
+      "expected": "dir=rtl, labels present, overflow<=0",
+      "actual": "dir='rtl' lang='ar' author_label=True revise_label=True overflow=0 inline_styles=0",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s11-ar-390-reader.png"
+    },
+    {
+      "scenario": "S11",
+      "check": "AR 390px editor: fields not clipped, no horizontal overflow",
+      "role": "member (assigned author)",
+      "expected": "all textareas within viewport and >=120px wide",
+      "actual": "textareas=4 clipped=0 overflow=0",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s11-ar-390-editor.png"
+    },
+    {
+      "scenario": "S11",
+      "check": "AR 390px: no page errors",
+      "role": "member (assigned author)",
+      "expected": "none",
+      "actual": "[]",
+      "result": "PASS",
+      "screenshot": null
+    },
+    {
+      "scenario": "S11",
+      "check": "AR 390px non-author: no Revise control, explanation in Arabic",
+      "role": "member (unassigned)",
+      "expected": "no تعديل التقرير button",
+      "actual": "revise_button=0",
+      "result": "PASS",
+      "screenshot": "evidence/screens/s11-ar-390-non-author.png"
+    }
+  ]
+}

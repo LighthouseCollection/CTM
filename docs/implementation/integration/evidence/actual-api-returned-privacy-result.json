@@ -1,0 +1,43 @@
+{
+  "backend_sha": "37d6ed7afb000b8959843e42607d56e156f6a851",
+  "acceptance": "F08/F25 direct-owner returned privacy",
+  "checks": {
+    "council_detail_keeps_formal_answers": true,
+    "council_version_keeps_formal_revision": true,
+    "council_history_excludes_pending_answers": true,
+    "council_case_files_exclude_pending_original": true,
+    "council_direct_download_denies_pending_original": true,
+    "council_range_denies_pending_original": true,
+    "council_preview_denies_pending_original": true,
+    "council_manifest_keeps_submitted_original": true,
+    "council_head_denies_pending_original": true,
+    "council_listing_keeps_formal_original": true,
+    "council_formal_original_download_survives": true,
+    "council_audit_excludes_pending_sources": true,
+    "assigned_manager_receives_no_early_correction_alert": true
+  },
+  "owner_checks": {
+    "owner_keeps_saved_answers": true,
+    "owner_keeps_pending_original": true
+  },
+  "pending_scan_checks": {
+    "pending_replacement_keeps_formal_manifest": true,
+    "pending_replacement_keeps_formal_listing": true,
+    "formal_original_download_survives_pending_replacement": true,
+    "council_cannot_download_pending_replacement": true,
+    "owner_cannot_download_unscanned_replacement": true
+  },
+  "remaining_surfaces": [
+    "live search integration",
+    "live email delivery",
+    "PostgreSQL RLS"
+  ],
+  "scope": "Isolated SQLite/browser API fixtures; no actual case data",
+  "post_resubmission_checks": {
+    "council_sees_formally_resubmitted_answers": true,
+    "new_manifest_binds_resubmitted_original": true,
+    "new_manifest_does_not_bind_superseded_original": true,
+    "council_can_download_resubmitted_original": true,
+    "earlier_submitted_original_retained": true
+  }
+}

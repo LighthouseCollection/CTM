@@ -38,7 +38,7 @@ def people(db):
 
 
 @pytest.fixture
-def ready_application(people):
+def unpaid_application(people):
     from tribunal.services.applications import (
         start_application,
         save_answers,
@@ -77,6 +77,23 @@ def ready_application(people):
             actor=app.owner,
         )
         FileTechnicalEvent.objects.create(file=file, task="scan", result="clean")
-    waive_fee(people["admin"], app.pk)
     app.refresh_from_db()
     return app
+
+
+@pytest.fixture
+def ready_application(unpaid_application, people):
+    from tribunal.services.applications import waive_fee
+
+    waive_fee(people["admin"], unpaid_application.pk)
+    unpaid_application.refresh_from_db()
+    return unpaid_application
+
+
+def pytest_make_parametrize_id(config, val, argname):
+    """Keep parameter names portable without changing test payloads or checks."""
+    text = repr(val)
+    if len(text) > 120:
+        import hashlib
+        return f"{argname}-{type(val).__name__}-{hashlib.sha256(text.encode('utf-8', errors='backslashreplace')).hexdigest()[:10]}"
+    return None

@@ -1,8 +1,164 @@
 {
   "status": "partial implementation; not a contract replacement",
   "contract_table_count": 151,
-  "implemented_domain_model_count": 58,
+  "implemented_domain_model_count": 63,
   "models": [
+    {
+      "model": "tribunal.Tribunal",
+      "table": "tribunals",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "UUIDField",
+          "nullable": false,
+          "primary_key": true
+        },
+        {
+          "name": "created_at",
+          "column": "created_at",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "name_en",
+          "column": "name_en",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "name_ar",
+          "column": "name_ar",
+          "type": "CharField",
+          "nullable": true,
+          "primary_key": false
+        },
+        {
+          "name": "timezone",
+          "column": "timezone",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        }
+      ]
+    },
+    {
+      "model": "tribunal.StaffMembership",
+      "table": "staff_memberships",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "UUIDField",
+          "nullable": false,
+          "primary_key": true
+        },
+        {
+          "name": "created_at",
+          "column": "created_at",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "account",
+          "column": "account_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.Account"
+        },
+        {
+          "name": "tribunal",
+          "column": "tribunal_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.Tribunal"
+        },
+        {
+          "name": "appointed_by",
+          "column": "appointed_by_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.Account"
+        },
+        {
+          "name": "active_from",
+          "column": "active_from",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "active_until",
+          "column": "active_until",
+          "type": "DateTimeField",
+          "nullable": true,
+          "primary_key": false
+        }
+      ]
+    },
+    {
+      "model": "tribunal.StaffRole",
+      "table": "staff_roles",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "UUIDField",
+          "nullable": false,
+          "primary_key": true
+        },
+        {
+          "name": "created_at",
+          "column": "created_at",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "membership",
+          "column": "membership_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.StaffMembership"
+        },
+        {
+          "name": "role",
+          "column": "role",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "granted_by",
+          "column": "granted_by_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.Account"
+        },
+        {
+          "name": "revoked_at",
+          "column": "revoked_at",
+          "type": "DateTimeField",
+          "nullable": true,
+          "primary_key": false
+        }
+      ]
+    },
     {
       "model": "tribunal.Person",
       "table": "tribunal_person",
@@ -545,6 +701,13 @@
           "primary_key": false
         },
         {
+          "name": "origin",
+          "column": "origin",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
           "name": "status",
           "column": "status",
           "type": "CharField",
@@ -829,6 +992,13 @@
           "type": "CharField",
           "nullable": false,
           "primary_key": false
+        },
+        {
+          "name": "payment_reference",
+          "column": "payment_reference",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
         }
       ]
     },
@@ -888,6 +1058,13 @@
           "primary_key": false
         },
         {
+          "name": "payment_reference",
+          "column": "payment_reference",
+          "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
           "name": "state",
           "column": "state",
           "type": "CharField",
@@ -899,6 +1076,20 @@
           "column": "failure",
           "type": "CharField",
           "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "checkout_url",
+          "column": "checkout_url",
+          "type": "TextField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "checkout_expires_at",
+          "column": "checkout_expires_at",
+          "type": "DateTimeField",
+          "nullable": true,
           "primary_key": false
         }
       ]
@@ -1396,6 +1587,13 @@
           "nullable": true,
           "primary_key": false,
           "target": "tribunal.Case"
+        },
+        {
+          "name": "version",
+          "column": "version",
+          "type": "PositiveIntegerField",
+          "nullable": false,
+          "primary_key": false
         }
       ]
     },
@@ -1663,9 +1861,23 @@
           "primary_key": false
         },
         {
+          "name": "discarded_at",
+          "column": "discarded_at",
+          "type": "DateTimeField",
+          "nullable": true,
+          "primary_key": false
+        },
+        {
           "name": "lease_until",
           "column": "lease_until",
           "type": "DateTimeField",
+          "nullable": true,
+          "primary_key": false
+        },
+        {
+          "name": "lease_token",
+          "column": "lease_token",
+          "type": "UUIDField",
           "nullable": true,
           "primary_key": false
         },
@@ -2496,6 +2708,28 @@
           "type": "DateTimeField",
           "nullable": true,
           "primary_key": false
+        },
+        {
+          "name": "captured_by",
+          "column": "captured_by_id",
+          "type": "ForeignKey",
+          "nullable": true,
+          "primary_key": false,
+          "target": "tribunal.Account"
+        },
+        {
+          "name": "duration_ms",
+          "column": "duration_ms",
+          "type": "PositiveBigIntegerField",
+          "nullable": true,
+          "primary_key": false
+        },
+        {
+          "name": "recording_notice",
+          "column": "recording_notice",
+          "type": "JSONField",
+          "nullable": false,
+          "primary_key": false
         }
       ]
     },
@@ -2550,6 +2784,13 @@
           "name": "error",
           "column": "error",
           "type": "CharField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "attempt",
+          "column": "attempt",
+          "type": "PositiveIntegerField",
           "nullable": false,
           "primary_key": false
         }
@@ -3005,6 +3246,13 @@
           "type": "CharField",
           "nullable": false,
           "primary_key": false
+        },
+        {
+          "name": "idempotency_key",
+          "column": "idempotency_key",
+          "type": "CharField",
+          "nullable": true,
+          "primary_key": false
         }
       ]
     },
@@ -3215,6 +3463,13 @@
           "type": "JSONField",
           "nullable": false,
           "primary_key": false
+        },
+        {
+          "name": "idempotency_key",
+          "column": "idempotency_key",
+          "type": "CharField",
+          "nullable": true,
+          "primary_key": false
         }
       ]
     },
@@ -3353,6 +3608,20 @@
           "nullable": true,
           "primary_key": false,
           "target": "tribunal.CouncilSession"
+        },
+        {
+          "name": "session_snapshot",
+          "column": "session_snapshot",
+          "type": "JSONField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "idempotency_key",
+          "column": "idempotency_key",
+          "type": "CharField",
+          "nullable": true,
+          "primary_key": false
         }
       ]
     },
@@ -3466,6 +3735,164 @@
           "column": "state",
           "type": "CharField",
           "nullable": false,
+          "primary_key": false
+        }
+      ]
+    },
+    {
+      "model": "tribunal.TestimonyAppointmentVersion",
+      "table": "testimony_appointment_versions",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "UUIDField",
+          "nullable": false,
+          "primary_key": true
+        },
+        {
+          "name": "created_at",
+          "column": "created_at",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "appointment",
+          "column": "appointment_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.TestimonyAppointment"
+        },
+        {
+          "name": "version",
+          "column": "version",
+          "type": "PositiveIntegerField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "starts_at",
+          "column": "starts_at",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "ends_at",
+          "column": "ends_at",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "instructions",
+          "column": "instructions",
+          "type": "TextField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "attendance_location",
+          "column": "attendance_location",
+          "type": "JSONField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "cancelled",
+          "column": "cancelled",
+          "type": "BooleanField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "actor",
+          "column": "actor_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.Account"
+        },
+        {
+          "name": "request_id",
+          "column": "request_id",
+          "type": "UUIDField",
+          "nullable": true,
+          "primary_key": false
+        }
+      ]
+    },
+    {
+      "model": "tribunal.AgendaTransferEvent",
+      "table": "agenda_transfer_events",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "type": "UUIDField",
+          "nullable": false,
+          "primary_key": true
+        },
+        {
+          "name": "created_at",
+          "column": "created_at",
+          "type": "DateTimeField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "case",
+          "column": "case_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.Case"
+        },
+        {
+          "name": "from_session_snapshot",
+          "column": "from_session_snapshot",
+          "type": "JSONField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "to_session",
+          "column": "to_session_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.CouncilSession"
+        },
+        {
+          "name": "destination_item",
+          "column": "destination_item_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.AgendaItem"
+        },
+        {
+          "name": "reason",
+          "column": "reason",
+          "type": "TextField",
+          "nullable": false,
+          "primary_key": false
+        },
+        {
+          "name": "actor",
+          "column": "actor_id",
+          "type": "ForeignKey",
+          "nullable": false,
+          "primary_key": false,
+          "target": "tribunal.Account"
+        },
+        {
+          "name": "request_id",
+          "column": "request_id",
+          "type": "UUIDField",
+          "nullable": true,
           "primary_key": false
         }
       ]

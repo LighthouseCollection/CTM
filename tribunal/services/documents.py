@@ -9,6 +9,8 @@ from django.core.exceptions import ValidationError
 from tribunal.models import FileVersion, DocumentText, MedicalRelease
 from .files import private_path
 from .applications import safe_file
+import hashlib
+from django.db import transaction
 
 
 def extract_local(file_id):
@@ -16,15 +18,23 @@ def extract_local(file_id):
     if not safe_file(file):
         raise ValidationError("Technical validation required first.")
     if (
-        file.attachment.visibility == "medical"
+        (file.attachment.visibility == "medical" or (file.attachment.report_request_id
+            and file.attachment.report_request.kind in {"medical", "psychological"}))
         and not MedicalRelease.objects.filter(
-            request_id=file.attachment.report_request_id, scope__council=True
+            request_id=file.attachment.report_request_id, subject_id=file.attachment.owner_id,
+            request__subject__account_id=file.attachment.owner_id, scope__council=True
         ).exists()
     ):
         raise ValidationError("Await signed medical disclosure before extraction.")
     path = private_path(file.object_key)
     if not path.is_file():
         raise ValidationError("Original file is unavailable.")
+    digest = hashlib.sha256()
+    with path.open("rb") as original:
+        for chunk in iter(lambda: original.read(65536), b""):
+            digest.update(chunk)
+    if path.stat().st_size != file.byte_count or digest.hexdigest() != file.sha256:
+        raise ValidationError("Original integrity verification failed; extraction was not started.")
     text = ""
     engine = ""
     try:
@@ -73,11 +83,15 @@ def extract_local(file_id):
         ):
             with zipfile.ZipFile(path) as archive:
                 info = archive.getinfo("word/document.xml")
-                if info.file_size > 25 * 1024 * 1024:
+                if info.file_size > 25 * 1024 * 1024 or info.flag_bits & 1:
                     raise ValidationError(
                         "Uncompressed document is too large to parse safely."
                     )
-                xml = ElementTree.fromstring(archive.read(info))
+                source = archive.read(info)
+                probe = source.replace(b"\x00", b"").upper()
+                if b"<!DOCTYPE" in probe or b"<!ENTITY" in probe:
+                    raise ValidationError("Document entity declarations are not supported.")
+                xml = ElementTree.fromstring(source)
                 text = "\n".join(
                     node.text
                     for node in xml.iter()
@@ -102,4 +116,10 @@ def extract_local(file_id):
         raise ValidationError(
             "Extracted text requires large-document processing; original is retained without silently truncating the record."
         )
-    return DocumentText.objects.create(file=file, engine=engine, text=text)
+    with transaction.atomic():
+        from .common import lock_key
+        lock_key(f"document-text:{file.pk}")
+        if not safe_file(FileVersion.objects.get(pk=file.pk)):
+            raise ValidationError("Original safety changed during extraction; no derivative was published.")
+        result, _ = DocumentText.objects.get_or_create(file=file, engine=engine, text=text)
+        return result

@@ -1,0 +1,892 @@
+{
+  "source": "docs/architecture/reference-study/interview-current-question-bank.json",
+  "source_sha256": "2467cc5aa52100127a2480cd95d0f3ff90d428051b68fbb9a60a1129f24691d4",
+  "version": "ctm-topic-group-planner-v3-reconciled",
+  "questions": {
+    "BKG-02": {
+      "category_id": "QC04",
+      "category_ar": "التعارف والخطوبة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "BKG-03": {
+      "category_id": "QC04",
+      "category_ar": "التعارف والخطوبة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "DEC-01": {
+      "category_id": "QC05",
+      "category_ar": "قرار الزواج",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "DEC-02": {
+      "category_id": "QC05",
+      "category_ar": "قرار الزواج",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "DEC-03": {
+      "category_id": "QC05",
+      "category_ar": "قرار الزواج",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "DEC-04": {
+      "category_id": "QC05",
+      "category_ar": "قرار الزواج",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "PRS-01": {
+      "category_id": "QC05",
+      "category_ar": "قرار الزواج",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "PRS-02": {
+      "category_id": "QC05",
+      "category_ar": "قرار الزواج",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "PRS-03": {
+      "category_id": "QC05",
+      "category_ar": "قرار الزواج",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "PRS-04": {
+      "category_id": "QC05",
+      "category_ar": "قرار الزواج",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "DBT-01": {
+      "category_id": "QC05",
+      "category_ar": "قرار الزواج",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "DBT-02": {
+      "category_id": "QC05",
+      "category_ar": "قرار الزواج",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "DBT-03": {
+      "category_id": "QC05",
+      "category_ar": "قرار الزواج",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "CON-01": {
+      "category_id": "QC06",
+      "category_ar": "التحريف أو الإخفاء",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "CON-02": {
+      "category_id": "QC06",
+      "category_ar": "التحريف أو الإخفاء",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "CON-03": {
+      "category_id": "QC06",
+      "category_ar": "التحريف أو الإخفاء",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "CON-04": {
+      "category_id": "QC06",
+      "category_ar": "التحريف أو الإخفاء",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "CON-05": {
+      "category_id": "QC06",
+      "category_ar": "التحريف أو الإخفاء",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "WED-01": {
+      "category_id": "QC08",
+      "category_ar": "ظروف يوم الزفاف",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "WED-02": {
+      "category_id": "QC08",
+      "category_ar": "ظروف يوم الزفاف",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "WED-03": {
+      "category_id": "QC08",
+      "category_ar": "ظروف يوم الزفاف",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "INT-01": {
+      "category_id": "QC09",
+      "category_ar": "المسائل الحميمة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "INT-03": {
+      "category_id": "QC09",
+      "category_ar": "المسائل الحميمة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "TIM-01": {
+      "category_id": "QC10",
+      "category_ar": "بداية المشكلات",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "TIM-02": {
+      "category_id": "QC10",
+      "category_ar": "بداية المشكلات",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "INF-01": {
+      "category_id": "QC11",
+      "category_ar": "الخيانة الزوجية",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "INF-02": {
+      "category_id": "QC11",
+      "category_ar": "الخيانة الزوجية",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "INF-03": {
+      "category_id": "QC11",
+      "category_ar": "الخيانة الزوجية",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "INF-04": {
+      "category_id": "QC11",
+      "category_ar": "الخيانة الزوجية",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "ABU-01": {
+      "category_id": "QC12",
+      "category_ar": "الإساءة أو الإدمان",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "ABU-02": {
+      "category_id": "QC12",
+      "category_ar": "الإساءة أو الإدمان",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "ABU-03": {
+      "category_id": "QC12",
+      "category_ar": "الإساءة أو الإدمان",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "ABU-04": {
+      "category_id": "QC12",
+      "category_ar": "الإساءة أو الإدمان",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "ADD-01": {
+      "category_id": "QC12",
+      "category_ar": "الإساءة أو الإدمان",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "ADD-02": {
+      "category_id": "QC12",
+      "category_ar": "الإساءة أو الإدمان",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "ADD-03": {
+      "category_id": "QC12",
+      "category_ar": "الإساءة أو الإدمان",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "ADD-04": {
+      "category_id": "QC12",
+      "category_ar": "الإساءة أو الإدمان",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "FTH-01": {
+      "category_id": "QC13",
+      "category_ar": "الانتماء الديني والتغيير",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "FTH-02": {
+      "category_id": "QC13",
+      "category_ar": "الانتماء الديني والتغيير",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "FTH-03": {
+      "category_id": "QC13",
+      "category_ar": "الانتماء الديني والتغيير",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "FTH-04": {
+      "category_id": "QC13",
+      "category_ar": "الانتماء الديني والتغيير",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "MON-03": {
+      "category_id": "QC14",
+      "category_ar": "الأمور المالية",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        }
+      ]
+    },
+    "SEP-01": {
+      "category_id": "QC15",
+      "category_ar": "الانفصال المؤقت والنهائي",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "ABD-01": {
+      "category_id": "QC15",
+      "category_ar": "الانفصال المؤقت والنهائي",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "ABD-02": {
+      "category_id": "QC15",
+      "category_ar": "الانفصال المؤقت والنهائي",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "ABD-03": {
+      "category_id": "QC15",
+      "category_ar": "الانفصال المؤقت والنهائي",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG04",
+          "title": "Divorce/dissolution grounds",
+          "title_ar": null
+        }
+      ]
+    },
+    "REC-01": {
+      "category_id": "QC16",
+      "category_ar": "جهود المصالحة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        }
+      ]
+    },
+    "MED-01": {
+      "category_id": "QC20",
+      "category_ar": "التقييم أو المساعدة المهنية ذات الصلة",
+      "topic_groups": []
+    },
+    "MED-02": {
+      "category_id": "QC20",
+      "category_ar": "التقييم أو المساعدة المهنية ذات الصلة",
+      "topic_groups": []
+    },
+    "MED-03": {
+      "category_id": "QC20",
+      "category_ar": "التقييم أو المساعدة المهنية ذات الصلة",
+      "topic_groups": []
+    },
+    "CHD-01": {
+      "category_id": "QC18",
+      "category_ar": "المناقشات قبل الزواج والتطورات اللاحقة ذات الصلة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "INT-02": {
+      "category_id": "QC18",
+      "category_ar": "المناقشات قبل الزواج والتطورات اللاحقة ذات الصلة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "MON-01": {
+      "category_id": "QC18",
+      "category_ar": "المناقشات قبل الزواج والتطورات اللاحقة ذات الصلة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "CHD-02": {
+      "category_id": "QC18",
+      "category_ar": "المناقشات قبل الزواج والتطورات اللاحقة ذات الصلة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "CHD-03": {
+      "category_id": "QC18",
+      "category_ar": "المناقشات قبل الزواج والتطورات اللاحقة ذات الصلة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "CHD-04": {
+      "category_id": "QC18",
+      "category_ar": "المناقشات قبل الزواج والتطورات اللاحقة ذات الصلة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "CHD-05": {
+      "category_id": "QC18",
+      "category_ar": "المناقشات قبل الزواج والتطورات اللاحقة ذات الصلة",
+      "topic_groups": [
+        {
+          "id": "TG02",
+          "title": "Common guided interview",
+          "title_ar": null
+        },
+        {
+          "id": "TG03",
+          "title": "Annulment-related factual inquiry",
+          "title_ar": null
+        }
+      ]
+    },
+    "OPEN-01": {
+      "category_ar": "الأسئلة الأساسية"
+    },
+    "BASIS-01": {
+      "category_ar": "الأسئلة الأساسية"
+    }
+  }
+}

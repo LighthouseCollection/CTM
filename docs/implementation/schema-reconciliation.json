@@ -1,0 +1,2549 @@
+{
+  "status": "review inventory; no automatic missing-table or completion claim",
+  "approved_table_count": 151,
+  "current_model_count": 63,
+  "candidate_mapped_count": 122,
+  "unmapped_count": 29,
+  "tables": [
+    {
+      "approved_table": "persons",
+      "domain": "identity",
+      "purpose": "Stable person identity; consolidation never rewrites original event actors",
+      "candidate_adapters": [
+        "Person"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "canonical_person_id",
+        "identity_state",
+        "row_version"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "person_identity_versions",
+      "domain": "identity",
+      "purpose": "Attributed identity corrections; issued CTM references stay frozen",
+      "candidate_adapters": [
+        "Person"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "actor_id",
+        "request_id",
+        "person_id",
+        "version",
+        "first_name_en",
+        "last_name_en",
+        "name_ar",
+        "facts",
+        "source"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "accounts",
+      "domain": "identity",
+      "purpose": "Provider-only account; no usable local password credential",
+      "candidate_adapters": [
+        "Account"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "status",
+        "ui_locale",
+        "notification_locale",
+        "row_version"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "account_identities",
+      "domain": "identity",
+      "purpose": "Bind validated issuer and subject, never email-only role inference",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "account_id",
+        "provider",
+        "issuer",
+        "subject",
+        "tenant_id",
+        "verified_email",
+        "linked_at",
+        "revoked_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "account_email_versions",
+      "domain": "identity",
+      "purpose": "Verified contact history; changing email does not rewrite filings",
+      "candidate_adapters": [
+        "Account"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "account_id",
+        "normalized_email",
+        "verified_at",
+        "superseded_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "verification_tokens",
+      "domain": "identity",
+      "purpose": "Hashed one-use email/invitation token; not password recovery",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "account_id",
+        "purpose",
+        "token_hash",
+        "expires_at",
+        "consumed_at",
+        "revoked_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "app_sessions",
+      "domain": "identity",
+      "purpose": "Server sessions; no application inactivity logout; revocation remains enforceable",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "account_id",
+        "session_hash",
+        "provider_identity_id",
+        "authenticated_at",
+        "revoked_at",
+        "provider_expires_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "tribunals",
+      "domain": "identity",
+      "purpose": "One operating tribunal, not a new multi-tenant product",
+      "candidate_adapters": [
+        "Tribunal"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "staff_memberships",
+      "domain": "identity",
+      "purpose": "Explicit admin-authorized council enrollment",
+      "candidate_adapters": [
+        "StaffMembership"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "staff_roles",
+      "domain": "identity",
+      "purpose": "Effective role grants; only existing admin creates council membership",
+      "candidate_adapters": [
+        "StaffRole"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "account_events",
+      "domain": "identity",
+      "purpose": "Status changes, role changes, identity linking and authentication events",
+      "candidate_adapters": [
+        "Account"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "actor_id",
+        "request_id",
+        "account_id",
+        "event_type",
+        "restricted_details"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "identity_consolidations",
+      "domain": "identity",
+      "purpose": "Verified primary account and canonical person; retained duplicate histories",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "actor_id",
+        "request_id",
+        "source_person_id",
+        "target_person_id",
+        "primary_account_id",
+        "disabled_account_id",
+        "evidence"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "identity_review_holds",
+      "domain": "identity",
+      "purpose": "Exact duplicate-person review blocks payment/submission, not draft saves",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "actor_id",
+        "request_id",
+        "application_id",
+        "matching_rule",
+        "protected_candidate_snapshot",
+        "status",
+        "resolved_by_id",
+        "resolved_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "ctm_applicants",
+      "domain": "identity",
+      "purpose": "CTM identity independent of account and case reference",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "person_id",
+        "tribunal_id",
+        "internal_temporary_label"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "dioceses",
+      "domain": "identity",
+      "purpose": "Optional directory; submitted text assertions remain original",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "name_en",
+        "name_ar",
+        "contact",
+        "active"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "parishes",
+      "domain": "identity",
+      "purpose": "Optional parish reference; no forced normalization of submitted spelling",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "diocese_id",
+        "name_en",
+        "name_ar",
+        "location",
+        "active"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "marriages",
+      "domain": "cases",
+      "purpose": "Matching registry separate from both parties attributed assertions",
+      "candidate_adapters": [
+        "Case"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "spouse_birth_date_low",
+        "spouse_birth_date_high",
+        "matching_state"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "cases",
+      "domain": "cases",
+      "purpose": "Shared permanent case with original number and separate proceedings",
+      "candidate_adapters": [
+        "Case"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "tribunal_id",
+        "marriage_id",
+        "opened_at",
+        "row_version"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_identifiers",
+      "domain": "cases",
+      "purpose": "Original, canonical and alias identifiers; never reused or renumbered",
+      "candidate_adapters": [
+        "Case"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "case_id",
+        "reference",
+        "namespace",
+        "is_primary",
+        "allocation_date",
+        "daily_sequence"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_number_counters",
+      "domain": "cases",
+      "purpose": "Atomic Los Angeles daily sequence allocation",
+      "candidate_adapters": [
+        "CaseNumberCounter"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "local_date"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_parties",
+      "domain": "cases",
+      "purpose": "Known spouse and participating applicant are different states",
+      "candidate_adapters": [
+        "Party"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "applicant_id",
+        "party_slot",
+        "participation_state",
+        "source_name_snapshot"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "applicant_references",
+      "domain": "cases",
+      "purpose": "Frozen case-based or historical applicant reference, never an access key",
+      "candidate_adapters": [
+        "Party"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "party_id",
+        "origin",
+        "issued_components",
+        "issued_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "person_open_case_claims",
+      "domain": "cases",
+      "purpose": "One open case per canonical participating person; includes historical cases",
+      "candidate_adapters": [
+        "OpenCaseClaim"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "party_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "person_active_draft_claims",
+      "domain": "cases",
+      "purpose": "One new-case draft; mutually exclusive with different open case claim",
+      "candidate_adapters": [
+        "Application"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "person_id",
+        "application_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_proceedings",
+      "domain": "cases",
+      "purpose": "Closed original proceedings never unlock; accepted appeal creates new section",
+      "candidate_adapters": [
+        "Proceeding"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "opened_at",
+        "appeal_decree_sequence"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_lifecycle_events",
+      "domain": "cases",
+      "purpose": "Opening, closure, reopening, retained association and historical correction history",
+      "candidate_adapters": [
+        "Proceeding"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "actor_id",
+        "request_id",
+        "proceeding_id",
+        "event_type",
+        "source_reference"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_association_events",
+      "domain": "cases",
+      "purpose": "Preserved matching evidence, original case aliases and wrong-association corrections",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "actor_id",
+        "request_id",
+        "case_id",
+        "application_id",
+        "matching_rule",
+        "source_snapshot",
+        "result"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_party_onboarding",
+      "domain": "cases",
+      "purpose": "Pending intended email; activate only on matching verified registration",
+      "candidate_adapters": [
+        "PendingPartyLink"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "party_id",
+        "normalized_email",
+        "entered_by_id",
+        "status",
+        "activated_account_id",
+        "activated_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "registration_invitation_events",
+      "domain": "cases",
+      "purpose": "Staff-initiated invitation email only; not an automatic enrollment side effect",
+      "candidate_adapters": [
+        "PendingPartyLink"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "onboarding_id",
+        "communication_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_assignments",
+      "domain": "cases",
+      "purpose": "President-authorized single current case manager; separate entering actor",
+      "candidate_adapters": [
+        "CaseAssignment"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "recorded_by_id",
+        "session_id",
+        "authorized_at",
+        "starts_at",
+        "ends_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "historical_entry_workspaces",
+      "domain": "cases",
+      "purpose": "Private admin historical entry staging; no fee or fabricated required facts",
+      "candidate_adapters": [
+        "HistoricalWorkspace"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "created_by_id",
+        "draft_payload",
+        "published_case_id",
+        "declared_status",
+        "finalized_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "questionnaires",
+      "domain": "filings",
+      "purpose": "Versioned applicant/appeal form identity",
+      "candidate_adapters": [
+        "QuestionnaireVersion"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "code"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "questionnaire_versions",
+      "domain": "filings",
+      "purpose": "Immutable published form; exact version retained on submission",
+      "candidate_adapters": [
+        "QuestionnaireVersion"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "questionnaire_id",
+        "version",
+        "state",
+        "digest",
+        "published_by_id",
+        "published_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "declaration_versions",
+      "domain": "filings",
+      "purpose": "Exact bilingual declaration or medical-release wording",
+      "candidate_adapters": [
+        "QuestionnaireVersion"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "version",
+        "text_en",
+        "text_ar",
+        "digest",
+        "published_by_id",
+        "published_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "applications",
+      "domain": "filings",
+      "purpose": "Private draft, independent filing owner, same application on return/resubmission",
+      "candidate_adapters": [
+        "Application"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "owner_person_id",
+        "owner_account_id",
+        "purpose",
+        "questionnaire_version_id",
+        "last_applicant_activity_at",
+        "first_submitted_at",
+        "row_version"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_revisions",
+      "domain": "filings",
+      "purpose": "Immutable committed snapshot; frozen revision at payment/submission",
+      "candidate_adapters": [
+        "AnswerRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "version",
+        "predecessor_id",
+        "questionnaire_version_id",
+        "digest"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_person_assertions",
+      "domain": "filings",
+      "purpose": "Self/spouse facts, explicit missing-value states, no shared overwrite",
+      "candidate_adapters": [
+        "AnswerRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "revision_id",
+        "subject",
+        "first_name_en",
+        "middle_name_en",
+        "last_name_en",
+        "name_ar",
+        "birth_date",
+        "gender",
+        "nationality",
+        "birth_country",
+        "address",
+        "contacts",
+        "immigration_status",
+        "parish",
+        "father_of_confession",
+        "residence_country",
+        "religious_affiliation",
+        "denomination",
+        "additional_facts",
+        "answer_states"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_marriage_assertions",
+      "domain": "filings",
+      "purpose": "Exact source marriage/date/certificate assertion and prior religious affiliation",
+      "candidate_adapters": [
+        "AnswerRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "revision_id",
+        "church_marriage_date",
+        "certificate_number",
+        "church_name",
+        "church_location",
+        "diocese",
+        "officiating_priest",
+        "outside_coptic_marriage",
+        "outside_denomination",
+        "additional_facts",
+        "answer_states"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_separation_assertions",
+      "domain": "filings",
+      "purpose": "Attributed separation/civil-divorce/counseling assertions",
+      "candidate_adapters": [
+        "AnswerRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "revision_id",
+        "separation_date",
+        "initiated_by",
+        "civil_divorce_date",
+        "court_name",
+        "court_case_number",
+        "facts",
+        "answer_states"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_repeat_entries",
+      "domain": "filings",
+      "purpose": "Stable collection row identity across application revisions",
+      "candidate_adapters": [
+        "AnswerRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "collection_code"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_children",
+      "domain": "filings",
+      "purpose": "Child name, DOB, gender and lives-with; Unknown allowed where approved",
+      "candidate_adapters": [
+        "AnswerRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "revision_id",
+        "entry_id",
+        "names",
+        "birth_date",
+        "gender",
+        "lives_with",
+        "answer_states"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_restraining_orders",
+      "domain": "filings",
+      "purpose": "Multiple reported orders; each requires court, case number, status and copy",
+      "candidate_adapters": [
+        "AnswerRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "revision_id",
+        "entry_id",
+        "court_name",
+        "court_case_number",
+        "current_status",
+        "order_date",
+        "expiry_date",
+        "named_person",
+        "answer_states"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_prior_records",
+      "domain": "filings",
+      "purpose": "Separate previous marriages, prior tribunal applications and priest-name entries",
+      "candidate_adapters": [
+        "AnswerRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "revision_id",
+        "entry_id",
+        "kind",
+        "record_date",
+        "spouse_name",
+        "ecclesiastical_permit",
+        "council_or_diocese",
+        "outcome",
+        "priest_name",
+        "answer_states"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_answers",
+      "domain": "filings",
+      "purpose": "Other versioned semantic fields; one editable binding per field",
+      "candidate_adapters": [
+        "AnswerRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "revision_id",
+        "question_code",
+        "entry_id",
+        "answer_type",
+        "answer_state",
+        "value"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "ground_definitions",
+      "domain": "filings",
+      "purpose": "Six approved grounds with versioned bilingual labels",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "code",
+        "version",
+        "label_en",
+        "label_ar",
+        "retired_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_selected_grounds",
+      "domain": "filings",
+      "purpose": "Multiple grounds; never council findings",
+      "candidate_adapters": [
+        "AnswerRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "revision_id",
+        "ground_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_answer_changes",
+      "domain": "filings",
+      "purpose": "Field/repeat-entry change, actual actor/time; no reason or re-sign required",
+      "candidate_adapters": [
+        "AnswerRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "from_revision_id",
+        "to_revision_id",
+        "question_code",
+        "entry_id",
+        "before_value",
+        "after_value"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "filing_candidates",
+      "domain": "filings",
+      "purpose": "Frozen checkout candidate for idempotent payment-to-submission recovery",
+      "candidate_adapters": [
+        "CheckoutIntent"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "idempotency_key",
+        "frozen_manifest",
+        "attestation_snapshot"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_submissions",
+      "domain": "filings",
+      "purpose": "Immutable original or resubmission; signed version is never replaced",
+      "candidate_adapters": [
+        "Submission"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "candidate_id",
+        "previous_submission_id",
+        "declaration_version_id",
+        "signature_file_version_id",
+        "submitted_by_id",
+        "received_at",
+        "digest"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "application_completeness_reviews",
+      "domain": "filings",
+      "purpose": "Accept/Reject for completeness; Reject returns same filing with instructions",
+      "candidate_adapters": [
+        "CompletenessReview"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "correction_instructions"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "draft_schema_migrations",
+      "domain": "filings",
+      "purpose": "Applicant drafts update to published form without losing answers; report draft rules differ",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "actor_id",
+        "request_id",
+        "application_id",
+        "from_version_id",
+        "to_version_id",
+        "preserved_mapping",
+        "notice_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "party_withdrawals",
+      "domain": "filings",
+      "purpose": "Own petition withdrawal; admin may act for all; no reason or approval",
+      "candidate_adapters": [
+        "Party"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "actor_id",
+        "request_id",
+        "party_id",
+        "application_id",
+        "on_behalf"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "document_categories",
+      "domain": "files",
+      "purpose": "Stable document meaning, editable labels/code; historical names recorded",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "code",
+        "label_en",
+        "label_ar",
+        "row_version",
+        "retired_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "files",
+      "domain": "files",
+      "purpose": "Logical owner and contextual location; no independent message attachment store",
+      "candidate_adapters": [
+        "Attachment"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "owner_application_id",
+        "owner_party_id",
+        "category_id",
+        "row_version"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "file_versions",
+      "domain": "files",
+      "purpose": "Private immutable original; opaque key, latest safe default, version history council only",
+      "candidate_adapters": [
+        "FileVersion"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "file_id",
+        "version",
+        "presented_name",
+        "size_bytes",
+        "checksum_sha256",
+        "uploaded_by_id",
+        "external_link_id",
+        "uploaded_at",
+        "technical_state",
+        "wrong_upload_removed_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "file_name_events",
+      "domain": "files",
+      "purpose": "Code rename changes presented filename, never source bytes or original manifest",
+      "candidate_adapters": [
+        "FileVersion"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "file_version_id",
+        "previous_name",
+        "new_name",
+        "category_snapshot"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "file_context_links",
+      "domain": "files",
+      "purpose": "Correct question/order/request/evidence context, exact version and description",
+      "candidate_adapters": [
+        "Attachment"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "file_version_id",
+        "application_revision_id",
+        "repeat_entry_id",
+        "report_revision_id",
+        "medical_report_id",
+        "question_code",
+        "purpose",
+        "description"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "submission_file_manifest",
+      "domain": "files",
+      "purpose": "Exact filenames/checksums/versions retained with submitted filing",
+      "candidate_adapters": [
+        "Submission"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "submission_id",
+        "file_version_id",
+        "metadata_snapshot"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "upload_sessions",
+      "domain": "files",
+      "purpose": "Resumable upload with final authorization and technical validation",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "file_id",
+        "uploader_id",
+        "external_link_id",
+        "expected_bytes",
+        "capture_kind",
+        "status",
+        "expires_at",
+        "completed_version_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "file_technical_events",
+      "domain": "files",
+      "purpose": "Safety/type/size scan separate from council acceptance",
+      "candidate_adapters": [
+        "FileTechnicalEvent"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "actor_id",
+        "request_id",
+        "file_version_id",
+        "engine_version",
+        "safe_metadata"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "file_derivatives",
+      "domain": "files",
+      "purpose": "Private OCR, extraction, preview or media derivative; original unchanged",
+      "candidate_adapters": [
+        "DocumentText"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "source_version_id",
+        "kind",
+        "object_key",
+        "extracted_text",
+        "engine_version",
+        "languages",
+        "status",
+        "checksum_sha256"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "file_access_events",
+      "domain": "files",
+      "purpose": "Audited view/download/playback with source permission recheck",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "actor_id",
+        "request_id",
+        "file_version_id",
+        "action",
+        "result",
+        "correlation_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "search_documents",
+      "domain": "files",
+      "purpose": "Rebuildable Meilisearch provenance, no independent authorization",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "case_id",
+        "party_id",
+        "source_kind",
+        "source_id",
+        "source_version_id",
+        "security_scope",
+        "locale",
+        "index_generation",
+        "indexed_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "fee_obligations",
+      "domain": "payments",
+      "purpose": "One USD250 fee per filing; historical exemption/waiver distinct from payment",
+      "candidate_adapters": [
+        "FeeObligation"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "disposition",
+        "assessed_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "fee_waivers",
+      "domain": "payments",
+      "purpose": "Admin/secretary handles outside applicant application",
+      "candidate_adapters": [
+        "FeeObligation"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "actor_id",
+        "request_id",
+        "obligation_id",
+        "reason"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "payment_attempts",
+      "domain": "payments",
+      "purpose": "Provider references only; no card data; browser redirect never proof",
+      "candidate_adapters": [
+        "CheckoutIntent"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "obligation_id",
+        "candidate_id",
+        "provider",
+        "idempotency_key",
+        "amount_minor",
+        "currency",
+        "status"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "payment_events",
+      "domain": "payments",
+      "purpose": "Verified, deduplicated payment success/reversal/chargeback events",
+      "candidate_adapters": [
+        "PaymentEvent"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "attempt_id",
+        "event_type",
+        "verified_at",
+        "safe_payload"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "payment_allocations",
+      "domain": "payments",
+      "purpose": "A successful charge is allocated to exactly one filing obligation",
+      "candidate_adapters": [
+        "PaymentEvent"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "attempt_id",
+        "obligation_id",
+        "submission_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "refund_events",
+      "domain": "payments",
+      "purpose": "Only accidental duplicate refunds; authorization and provider result distinct",
+      "candidate_adapters": [
+        "PaymentEvent"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "actor_id",
+        "request_id",
+        "attempt_id",
+        "provider_refund_id",
+        "status",
+        "reason"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "topic_groups",
+      "domain": "reports",
+      "purpose": "Accepted Topic groups; views do not duplicate questions",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "code",
+        "labels",
+        "position"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "question_categories",
+      "domain": "reports",
+      "purpose": "Reusable Question categories, not duplicate Question topic headings",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "code",
+        "labels",
+        "position"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "report_questions",
+      "domain": "reports",
+      "purpose": "Stable accepted question IDs",
+      "candidate_adapters": [
+        "ReportQuestion"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "retired_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "report_question_versions",
+      "domain": "reports",
+      "purpose": "Exact main wording, optional contextual prompts and translation versions",
+      "candidate_adapters": [
+        "ReportQuestion"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "question_id",
+        "conditional_guidance",
+        "published_by_id",
+        "published_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "topic_category_memberships",
+      "domain": "reports",
+      "purpose": "Reusable categories across Topic groups",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "topic_group_id",
+        "category_id",
+        "position"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "category_question_memberships",
+      "domain": "reports",
+      "purpose": "Question/category mapping; selected question appears once unless explicit distinct event",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "category_id",
+        "question_id",
+        "position"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "report_templates",
+      "domain": "reports",
+      "purpose": "Shared or personal template identity; personal has owner",
+      "candidate_adapters": [
+        "ReportTemplate"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "scope",
+        "owner_member_id",
+        "retired_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "report_template_versions",
+      "domain": "reports",
+      "purpose": "Immutable published selection/order; no answers or private case facts in reusable templates",
+      "candidate_adapters": [
+        "TemplateVersion"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "version",
+        "definition",
+        "digest",
+        "state",
+        "published_by_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "template_publication_submissions",
+      "domain": "reports",
+      "purpose": "Publish separate shared copy; retain personal original",
+      "candidate_adapters": [
+        "ReportTemplate"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "actor_id",
+        "request_id",
+        "personal_version_id",
+        "shared_version_id",
+        "status",
+        "reviewed_by_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "report_requests",
+      "domain": "reports",
+      "purpose": "Request first; assigned intake, freeform external priest or professional assessment",
+      "candidate_adapters": [
+        "ReportRequest"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "subject_party_id",
+        "created_by_id",
+        "identifier_text",
+        "status",
+        "closed_at",
+        "template_version_id",
+        "row_version"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "sent_intake_question_snapshots",
+      "domain": "reports",
+      "purpose": "Immutable exact sent questions, not all optional interviewer guidance",
+      "candidate_adapters": [
+        "ReportRequest"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "source_question_version_id",
+        "question_code",
+        "position",
+        "text_en",
+        "text_ar",
+        "source_context_snapshot"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "external_report_links",
+      "domain": "reports",
+      "purpose": "External priest request only; direct link expires in30days; hash only",
+      "candidate_adapters": [
+        "ReportRequest"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "recipient_email",
+        "priest_name",
+        "issued_at",
+        "revoked_at",
+        "used_submission_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "external_response_drafts",
+      "domain": "reports",
+      "purpose": "Limited request-scoped save/resume; no case browsing",
+      "candidate_adapters": [
+        "ReportRequest"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "response",
+        "saved_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "reports",
+      "domain": "reports",
+      "purpose": "Completed and working reports; follow-up is also an individual report",
+      "candidate_adapters": [
+        "Report"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "case_id",
+        "proceeding_id",
+        "subject_party_id",
+        "parent_report_id",
+        "author_account_id",
+        "external_author_name",
+        "recorded_by_id",
+        "identifier_text",
+        "title",
+        "status",
+        "submitted_at",
+        "row_version"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "report_revisions",
+      "domain": "reports",
+      "purpose": "Original author narrative edits while authorized/open; actual external/applicant response stays distinct",
+      "candidate_adapters": [
+        "ReportRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "version",
+        "predecessor_id",
+        "narrative",
+        "internal_observations",
+        "digest"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "report_answers",
+      "domain": "reports",
+      "purpose": "Structured or rich text typed answers separate from generated transcript",
+      "candidate_adapters": [
+        "ReportRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "revision_id",
+        "question_snapshot_id",
+        "answer_type",
+        "value"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "report_source_links",
+      "domain": "reports",
+      "purpose": "Exact application/evidence version displayed or confirmed; never silently rewrite source",
+      "candidate_adapters": [
+        "Report"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "report_revision_id",
+        "question_snapshot_id",
+        "source_application_revision_id",
+        "source_file_version_id",
+        "question_code",
+        "context_snapshot",
+        "confirmation"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "recordings",
+      "domain": "reports",
+      "purpose": "Whole-report or council testimony audio; finalize before transcription",
+      "candidate_adapters": [
+        "Recording"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "testimony_appointment_id",
+        "file_version_id",
+        "origin"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "processing_runs",
+      "domain": "reports",
+      "purpose": "Server-side task; local/API transcription per approved purpose; failure keeps source usable",
+      "candidate_adapters": [
+        "ProcessingRun"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "recording_id",
+        "file_version_id",
+        "task",
+        "provider",
+        "model_version",
+        "input_digest",
+        "status",
+        "safe_error",
+        "started_at",
+        "finished_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "transcript_versions",
+      "domain": "reports",
+      "purpose": "Original AI output plus all edits; source/mixed transcript and full English/Arabic",
+      "candidate_adapters": [
+        "TranscriptRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "version",
+        "predecessor_id",
+        "source_transcript_id",
+        "origin",
+        "text_content"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "transcript_segments",
+      "domain": "reports",
+      "purpose": "Timestamped text with applicant/council speaker labels",
+      "candidate_adapters": [
+        "TranscriptRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "text_version_id",
+        "ordinal",
+        "start_ms",
+        "end_ms",
+        "speaker_label",
+        "speaker_person_id",
+        "content",
+        "source_segment_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "text_review_events",
+      "domain": "reports",
+      "purpose": "Exact version review; report manager versus testimony admin/secretary",
+      "candidate_adapters": [
+        "TranscriptReview"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "text_version_id",
+        "action",
+        "reviewer_member_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "recommended_providers",
+      "domain": "medical",
+      "purpose": "Optional recommended doctors; no external doctor account requirement",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "display_name",
+        "specialty",
+        "contact",
+        "active"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "evaluation_requests",
+      "domain": "medical",
+      "purpose": "Separate professional assessment workflow over a report request",
+      "candidate_adapters": [
+        "ReportRequest"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "report_request_id",
+        "subject_party_id",
+        "purpose",
+        "provider_details",
+        "recommended_provider_snapshots"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "evaluation_release_attestations",
+      "domain": "medical",
+      "purpose": "Exact signed scoped release, not inferred from uploading report",
+      "candidate_adapters": [
+        "MedicalRelease"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "evaluation_request_id",
+        "declaration_version_id",
+        "subject_person_id",
+        "signer_person_id",
+        "signature_file_version_id",
+        "language",
+        "exact_text",
+        "purpose",
+        "attestation"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "evaluation_release_scopes",
+      "domain": "medical",
+      "purpose": "Release scope applied to bytes/OCR/search/context and disclosures",
+      "candidate_adapters": [
+        "MedicalRelease"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "attestation_id",
+        "recipient_scope",
+        "purpose",
+        "file_scope"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "evaluation_reports",
+      "domain": "medical",
+      "purpose": "Report receipt, authorization and OCR readiness are separate states",
+      "candidate_adapters": [
+        "Report"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "evaluation_request_id",
+        "report_id",
+        "release_attestation_id",
+        "provider_details",
+        "authorization_state"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "evaluation_disclosures",
+      "domain": "medical",
+      "purpose": "Accessor, release scope, exact original/derivative and timestamp",
+      "candidate_adapters": [
+        "MedicalRelease"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "actor_id",
+        "evaluation_report_id",
+        "release_scope_id",
+        "file_version_id",
+        "action"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_findings",
+      "domain": "review",
+      "purpose": "Council finding never overwrites either applicant answer",
+      "candidate_adapters": [
+        "FindingRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "case_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "finding_versions",
+      "domain": "review",
+      "purpose": "Assigned/admin/secretary revisions while proceeding open",
+      "candidate_adapters": [
+        "FindingRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "finding_id",
+        "version"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_notes",
+      "domain": "review",
+      "purpose": "Council only; original author edits own note with current write eligibility",
+      "candidate_adapters": [
+        "CaseNote"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "case_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "note_versions",
+      "domain": "review",
+      "purpose": "Preserve every edit; case closure locks notes",
+      "candidate_adapters": [
+        "NoteRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "version",
+        "content"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "council_sessions",
+      "domain": "sessions",
+      "purpose": "One dated session; rescheduling planned meeting moves cases and removes cancelled row",
+      "candidate_adapters": [
+        "CouncilSession"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "session_date",
+        "reference",
+        "created_by_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "agenda_requests",
+      "domain": "sessions",
+      "purpose": "Assigned member asks to place own case; no global agenda authority",
+      "candidate_adapters": [
+        "AgendaItem"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "actor_id",
+        "request_id",
+        "requested_session_id",
+        "placed_item_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "session_agenda_items",
+      "domain": "sessions",
+      "purpose": "Two ordered parts; one case hearing item can include both pending appeals",
+      "candidate_adapters": [
+        "AgendaItem"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "status"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "agenda_transfer_events",
+      "domain": "sessions",
+      "purpose": "Case audit preserves old/new date facts without retaining cancelled meeting",
+      "candidate_adapters": [
+        "AgendaTransferEvent"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "session_attendance",
+      "domain": "sessions",
+      "purpose": "Session default attendance; actual hearing attendance separate",
+      "candidate_adapters": [
+        "Attendance"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "recorded_by_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_hearings",
+      "domain": "sessions",
+      "purpose": "Only assigned member presents; testimony is a limited separate segment",
+      "candidate_adapters": [
+        "Hearing"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "agenda_item_id",
+        "case_id",
+        "presenter_member_id",
+        "occurred_at",
+        "result"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "hearing_attendance",
+      "domain": "sessions",
+      "purpose": "Hearing-specific presence does not hide members from vote UI",
+      "candidate_adapters": [
+        "Attendance"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "recorded_by_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "hearing_outcome_revisions",
+      "domain": "sessions",
+      "purpose": "Internal recommendations and applicant message remain distinct; later corrections no resend",
+      "candidate_adapters": [
+        "HearingOutcome"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "version",
+        "applicant_message_snapshot",
+        "communication_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "testimony_appointments",
+      "domain": "sessions",
+      "purpose": "Private applicant testimony invitation; never simultaneous both applicants",
+      "candidate_adapters": [
+        "TestimonyAppointment"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "case_id",
+        "agenda_item_id",
+        "status",
+        "created_by_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "testimony_appointment_versions",
+      "domain": "sessions",
+      "purpose": "Rescheduling requests fresh Confirm/Reject while preserving former response",
+      "candidate_adapters": [
+        "TestimonyAppointmentVersion"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "testimony_invitation_responses",
+      "domain": "sessions",
+      "purpose": "Applicant Confirm/Reject only; rejection explanation optional",
+      "candidate_adapters": [
+        "AppointmentResponse"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "appointment_version_id",
+        "party_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "decision_types",
+      "domain": "decisions",
+      "purpose": "Prototype type catalog, not invented generic canonical outcomes",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "code",
+        "label_en",
+        "label_ar",
+        "entitlement_rule",
+        "active"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "case_decision_versions",
+      "domain": "decisions",
+      "purpose": "Exact type/grounds/reason and party entitlement shown before voting",
+      "candidate_adapters": [
+        "DecisionRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "case_id",
+        "hearing_id",
+        "version",
+        "type_id",
+        "grounds_reason",
+        "party_outcomes"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "council_votes",
+      "domain": "decisions",
+      "purpose": "Self vote or admin/secretary on behalf; history per exact decision version",
+      "candidate_adapters": [
+        "Vote"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "decision_version_id",
+        "voting_member_id",
+        "vote",
+        "supersedes_vote_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "presidential_approvals",
+      "domain": "decisions",
+      "purpose": "Actual approving president distinct from entering actor; votes optional",
+      "candidate_adapters": [
+        "PresidentialApproval"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "decision_version_id",
+        "president_member_id",
+        "approved_at",
+        "revoked_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "decree_template_versions",
+      "domain": "decisions",
+      "purpose": "Bilingual type-specific template; issued certificate never changes retroactively",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "type_id",
+        "version",
+        "content_en",
+        "content_ar",
+        "layout_definition",
+        "published_by_id",
+        "digest"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "decrees",
+      "domain": "decisions",
+      "purpose": "One decree per decree-producing proceeding, original or appeal suffix; no replacement workflow",
+      "candidate_adapters": [
+        "Decree"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "case_id",
+        "proceeding_id",
+        "decision_version_id",
+        "decree_reference",
+        "template_version_id",
+        "prepared_by_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "decree_certificates",
+      "domain": "decisions",
+      "purpose": "Stored president-signed PDF; no clerical replacement orchestration",
+      "candidate_adapters": [
+        "SignatureAttestation"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "decree_id",
+        "signed_file_version_id",
+        "president_member_id",
+        "signature_method",
+        "signature_metadata",
+        "prepared_by_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "decree_issuance_events",
+      "domain": "decisions",
+      "purpose": "Signed certificate plus current approval required; atomic case/proceeding closure",
+      "candidate_adapters": [
+        "Decree"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "actor_id",
+        "request_id",
+        "decree_id",
+        "certificate_id",
+        "approval_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "decree_entitlements",
+      "domain": "decisions",
+      "purpose": "Recipient certificate entitlement separate from official notice and explicit release",
+      "candidate_adapters": [
+        "Decree"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "decree_id",
+        "party_id",
+        "entitlement"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "decree_release_events",
+      "domain": "decisions",
+      "purpose": "Explicit admin/secretary release or access withdrawal; original appeal access unchanged by default",
+      "candidate_adapters": [
+        "DecreeRelease"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "entitlement_id",
+        "certificate_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "appeal_applications",
+      "domain": "appeals",
+      "purpose": "Separate each applicant filing, statement and new information; shared case",
+      "candidate_adapters": [
+        "Application"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "application_id",
+        "challenged_decision_id",
+        "challenged_decree_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "pending_appeal_claims",
+      "domain": "appeals",
+      "purpose": "Only one draft/pending appeal per applicant/case; sibling remains independent",
+      "candidate_adapters": [
+        "Application"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "person_id",
+        "appeal_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "appeal_supplements",
+      "domain": "appeals",
+      "purpose": "Append-only applicant additions; never overwrite submitted appeal",
+      "candidate_adapters": [
+        "AppealSupplement"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "appeal_id",
+        "text_content",
+        "file_manifest"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "hearing_appeals",
+      "domain": "appeals",
+      "purpose": "Separate appeals considered in a single case hearing",
+      "candidate_adapters": [
+        "Hearing"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "hearing_id",
+        "appeal_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "appeal_dispositions",
+      "domain": "appeals",
+      "purpose": "Accept or Decline separately, with optional explanation and no new approval gate",
+      "candidate_adapters": [
+        "AppealDisposition"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "appeal_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "proceeding_appeals",
+      "domain": "appeals",
+      "purpose": "Sibling accepted appeals share one reopened proceeding",
+      "candidate_adapters": [
+        "AppealDisposition"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "proceeding_id",
+        "appeal_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "appeal_withdrawals",
+      "domain": "appeals",
+      "purpose": "Owner withdrawal before disposition; fee retained, original ruling unchanged",
+      "candidate_adapters": [
+        "AppealDisposition"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "appeal_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "communications",
+      "domain": "communications",
+      "purpose": "Permanent in-app/email message or manual call record; applicant isolation",
+      "candidate_adapters": [
+        "Message"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "proceeding_id",
+        "sender_account_id",
+        "direction",
+        "subject",
+        "sent_at",
+        "council_session_id",
+        "template_snapshot"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "communication_recipients",
+      "domain": "communications",
+      "purpose": "Private recipient copy; no cross-party thread or reply disclosure",
+      "candidate_adapters": [
+        "MessageRecipient"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "communication_id",
+        "account_id",
+        "external_email",
+        "recipient_snapshot"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "communication_file_links",
+      "domain": "communications",
+      "purpose": "Reference file in real case location; no separate message file storage",
+      "candidate_adapters": [
+        "Message"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "communication_id",
+        "file_version_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "call_details",
+      "domain": "communications",
+      "purpose": "Manual actual call date/time/person/outcome/notes; no dialer or recording",
+      "candidate_adapters": [
+        "CallRecord"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "communication_id",
+        "contacted_person",
+        "call_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "reply_routes",
+      "domain": "communications",
+      "purpose": "Hashed opaque inbound route; verified sender/recipient, not subject-only matching",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "recipient_id",
+        "token_hash",
+        "revoked_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "inbound_email_receipts",
+      "domain": "communications",
+      "purpose": "Deduplicated retained safe body/header; rejected attachments not evidence",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "provider",
+        "message_id",
+        "sender_snapshot",
+        "safe_headers",
+        "body",
+        "received_at",
+        "routing_state",
+        "recipient_id",
+        "communication_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "email_attachment_returns",
+      "domain": "communications",
+      "purpose": "Return/notify attachment rejection; transient payload outside permanent document store",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "receipt_id",
+        "metadata",
+        "temporary_payload_key",
+        "cleanup_due_at",
+        "return_delivery_id",
+        "status"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "notifications",
+      "domain": "communications",
+      "purpose": "Immediate private portal activity/read flag, distinct from email scheduling",
+      "candidate_adapters": [
+        "Notification"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "recipient_account_id",
+        "event_key",
+        "purpose",
+        "safe_payload"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "channel_deliveries",
+      "domain": "communications",
+      "purpose": "Per-recipient exact rendered payload and retry/delivery evidence",
+      "candidate_adapters": [
+        "Outbox"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "communication_recipient_id",
+        "notification_id",
+        "channel",
+        "address_snapshot",
+        "rendered_payload",
+        "state",
+        "provider_id",
+        "idempotency_key"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "delivery_events",
+      "domain": "communications",
+      "purpose": "Provider acceptance/delivery/bounce is not human reading",
+      "candidate_adapters": [
+        "Outbox"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "delivery_id",
+        "provider_event_key",
+        "result",
+        "occurred_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "notification_batches",
+      "domain": "communications",
+      "purpose": "Applicant changes digest after10quiet minutes; resolve current manager at send",
+      "candidate_adapters": [
+        "Outbox"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "source_person_id",
+        "status",
+        "event_keys",
+        "delivered_to_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "audit_events",
+      "domain": "operations",
+      "purpose": "Append-only case/system audit, restricted projection; no raw secrets",
+      "candidate_adapters": [
+        "AuditEvent"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "subject_person_id",
+        "operation",
+        "source_table",
+        "classification",
+        "safe_details"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "outbox_events",
+      "domain": "operations",
+      "purpose": "Atomic domain-event handoff; retries do not duplicate business actions",
+      "candidate_adapters": [
+        "Outbox"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "event_key",
+        "aggregate_id",
+        "source_version_id",
+        "safe_payload",
+        "processed_at"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "background_jobs",
+      "domain": "operations",
+      "purpose": "Durable scans/OCR/transcription/search/email/cleanup retries and leases",
+      "candidate_adapters": [
+        "Outbox"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "outbox_id",
+        "source_reference",
+        "status",
+        "attempt",
+        "safe_error"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "draft_retention_events",
+      "domain": "operations",
+      "purpose": "180day inactivity,7day warning, deletion versus retained-submission barrier",
+      "candidate_adapters": [
+        "AuditEvent"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "request_id",
+        "application_id",
+        "application_snapshot_id",
+        "event_type",
+        "deadline",
+        "retained_metadata"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "system_setting_versions",
+      "domain": "operations",
+      "purpose": "Admin system configuration; not applicant settings or permissions bypass",
+      "candidate_adapters": [
+        "SettingRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "version",
+        "safe_value",
+        "edited_by_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "translation_prompt_versions",
+      "domain": "operations",
+      "purpose": "Exact user master prompt preserved/versioned; all translation purposes",
+      "candidate_adapters": [
+        "SettingRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "version",
+        "content",
+        "digest",
+        "edited_by_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "integration_configurations",
+      "domain": "operations",
+      "purpose": "Server-only secret reference, ordered primary/fallback; no plaintext key in UI",
+      "candidate_adapters": [
+        "SettingRevision"
+      ],
+      "status": "candidate_adapter_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "purpose",
+        "priority",
+        "provider",
+        "mode",
+        "safe_configuration",
+        "secret_reference",
+        "enabled"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "translation_jobs",
+      "domain": "operations",
+      "purpose": "Source/version/prompt/provider provenance, restricted medical egress boundary",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "source_kind",
+        "source_id",
+        "source_version",
+        "source_locale",
+        "target_locale",
+        "prompt_version_id",
+        "provider_configuration_id",
+        "status",
+        "content_class"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "translation_versions",
+      "domain": "operations",
+      "purpose": "Original and reviewed translated text are separate retained versions",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "actor_id",
+        "request_id",
+        "job_id",
+        "version",
+        "content",
+        "state",
+        "reviewer_id"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "ui_resource_versions",
+      "domain": "operations",
+      "purpose": "Reviewed en/ar UI bundles, not live per-render AI translation",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "resource_key",
+        "version",
+        "text_en",
+        "text_ar",
+        "published_by_id",
+        "digest"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    },
+    {
+      "approved_table": "recovery_manifests",
+      "domain": "operations",
+      "purpose": "Database/file/key backup integrity and restore evidence, not user export",
+      "candidate_adapters": [],
+      "status": "unmapped_requires_review",
+      "columns_without_same_named_adapter_column": [
+        "id",
+        "created_at",
+        "backup_reference",
+        "file_manifest_digest",
+        "database_backup_reference",
+        "secret_backup_reference",
+        "restore_verified_at",
+        "result"
+      ],
+      "limitation": "Name/column association is not field-semantic, ownership, lifecycle or acceptance equivalence; JSON/relationship mapping needs explicit review."
+    }
+  ]
+}

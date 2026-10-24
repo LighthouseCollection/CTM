@@ -1,0 +1,2995 @@
+PAGE admin-archived.html
+8: Archived | Clerical Tribunal Management
+55: Archived
+62: Archived Cases
+62: (0)
+70: {'line': 70, 'kind': 'input', 'id': 'archSearch', 'name': None, 'type': 'text', 'placeholder': 'Search by case ID, applicant, respondent, or council member…'}
+72: Search
+81: Case ID
+82: Applicant
+83: Respondent
+84: Status
+85: Assigned To
+86: Decree
+87: Closed Date
+
+PAGE admin-case-audit.html
+8: Audit Log | Clerical Tribunal Management
+75: Respondent
+75: Patrick O'Brien
+78: Case #: 2025-20187
+80: Managed by: Fr. Gawargious Kotta
+84: Applicant
+84: Jessica O'Brien
+93: Audit Log
+93: (20)
+96: {'line': 96, 'kind': 'input', 'id': 'q', 'name': None, 'type': 'text', 'placeholder': 'Search audit log...'}
+97: {'line': 97, 'kind': 'select', 'id': 'fAction', 'name': None, 'type': None, 'placeholder': None}
+97: All Actions
+97: Add
+97: Edit
+97: Delete
+97: Status Change
+98: {'line': 98, 'kind': 'select', 'id': 'fUser', 'name': None, 'type': None, 'placeholder': None}
+98: All Users
+98: Fr. Gawargious Kotta
+98: Fr. Mauritius Mikhail
+98: Jessica O'Brien
+98: Patrick O'Brien
+98: System
+101: Timestamp
+101: Action
+101: User
+101: Target
+101: Description
+
+PAGE admin-case-communications.html
+8: Communications | Clerical Tribunal Management
+244: Respondent
+244: Patrick O'Brien
+247: Case #: 2025-20187
+249: Managed by: Fr. Gawargious Kotta
+253: Applicant
+253: Jessica O'Brien
+268: Send Email
+269: Compose and send email to a party or clergy
+281: Log Call
+282: Record a phone call with notes and outcome
+293: Communication History
+293: (12)
+299: Subject / Description
+300: Date
+301: Type
+315: Compose Email
+320: To
+321: {'line': 321, 'kind': 'select', 'id': 'emailTo', 'name': None, 'type': None, 'placeholder': None}
+322: Select recipient…
+323: Jessica O'Brien (Applicant) — jessica@email.com
+324: Patrick O'Brien (Respondent) — patrick@email.com
+325: Fr. Youhana Ibrahim — fr.youhana@lacopts.org
+326: Fr. Antony Attallah — fr.antony@lacopts.org
+327: Fr. Gawargious Kotta — fr.gawargious@lacopts.org
+331: Date
+332: {'line': 332, 'kind': 'input', 'id': 'emailDate', 'name': None, 'type': 'date', 'placeholder': None}
+335: Subject
+336: {'line': 336, 'kind': 'input', 'id': 'emailSubject', 'name': None, 'type': 'text', 'placeholder': "Re: Case #2025-20187 — O'Brien vs O'Brien"}
+339: Message
+340: {'line': 340, 'kind': 'textarea', 'id': 'emailBody', 'name': None, 'type': None, 'placeholder': 'Compose your message…'}
+344: Cancel
+345: Send Email
+354: Log Phone Call
+359: Contact
+360: {'line': 360, 'kind': 'select', 'id': 'callContact', 'name': None, 'type': None, 'placeholder': None}
+361: Select contact…
+362: Jessica O'Brien (Applicant)
+363: Patrick O'Brien (Respondent)
+364: Fr. Youhana Ibrahim
+365: Fr. Antony Attallah
+366: Fr. Gawargious Kotta
+370: Direction
+371: {'line': 371, 'kind': 'select', 'id': 'callDirection', 'name': None, 'type': None, 'placeholder': None}
+372: Outbound
+373: Inbound
+377: Date
+378: {'line': 378, 'kind': 'input', 'id': 'callDate', 'name': None, 'type': 'date', 'placeholder': None}
+381: Duration
+382: {'line': 382, 'kind': 'input', 'id': 'callDuration', 'name': None, 'type': 'text', 'placeholder': 'e.g. 12 minutes'}
+385: Notes
+386: {'line': 386, 'kind': 'textarea', 'id': 'callNotes', 'name': None, 'type': None, 'placeholder': 'Summarize the call…'}
+390: Cancel
+391: Save Call Log
+
+PAGE admin-case-decree-view.html
+8: Decree Issued | Clerical Tribunal Management
+204: Respondent
+204: Patrick O'Brien
+207: Case #: 2025-20187
+209: Managed by: Fr. Gawargious Kotta
+213: Applicant
+213: Jessica O'Brien
+226: Decree Issued — Petition Granted
+227: Ecclesiastical divorce has been granted by the Clerical Tribunal on March 3, 2026. Decree #DEC-2026-00187.
+233: Decree Details
+236: Decree Number
+237: DEC-2026-00187
+240: Date Issued
+241: Mar 03, 2026
+244: Decision
+245: Petition Granted
+248: Reason
+249: Adultery
+252: Presiding
+253: H.E. Metropolitan Serapion
+256: Session
+257: S-2026-03 — Mar 03, 2026
+264: Council Vote
+268: Approve
+269: 8
+273: Deny
+274: 1
+278: Abstain
+279: 1
+285: Approved (8)
+289: H.E. Metropolitan Serapion
+290: Presiding
+294: Fr. Mauritius Mikhail
+295: Secretary
+299: Fr. Gawargious Kotta
+300: Member
+304: Fr. Youhana Ibrahim
+305: Member
+309: Fr. Boules Mikhail
+310: Member
+314: Fr. Youhanna Youssef
+315: Member
+319: Fr. David Elias
+320: Member
+324: Fr. Jonah Labib
+325: Member
+330: Denied (1)
+334: Fr. Antony Attallah
+335: Member
+340: Abstained (1)
+344: Fr. Bishoy Bastawros
+345: Member
+354: Preamble
+355: Approved
+357: In the Name of the Father, the Son, and the Holy Spirit, One God. Amen.
+357: The Clerical Tribunal of the Coptic Orthodox Diocese of Los Angeles, having been duly convened under the authority of His Eminence Metropolitan Serapion, and having received and examined the petition of Jessica Marie O'Brien against Patrick James O'Brien regarding the dissolution of their ecclesiastical marriage, hereby issues the following decree.
+363: Findings of Fact
+364: Approved
+366: The Tribunal finds the following facts established through testimony and evidence presented:
+366: 1. The parties were joined in holy matrimony on June 12, 2010 at St. Mark Coptic Orthodox Church, Los Angeles, officiated by Fr. Antony Attallah.
+366: 2. The respondent, Patrick James O'Brien, engaged in an extramarital relationship beginning approximately March 2024, as admitted in his testimony of April 8, 2025.
+366: 3. The applicant discovered the infidelity in September 2024 and sought pastoral counsel from Fr. Youhana Ibrahim.
+366: 4. Reconciliation was attempted through three sessions of marriage counseling between August and October 2024. The respondent declined to continue after the third session.
+366: 5. Fr. Youhana Ibrahim submitted a written statement on October 28, 2024 confirming that all pastoral avenues for reconciliation had been exhausted.
+366: 6. The civil divorce was finalized on January 6, 2025 at the Los Angeles Superior Court.
+372: Canonical Basis
+373: Approved
+375: The petition is brought on the ground of infidelity, which is recognized as a valid ground for the dissolution of an ecclesiastical marriage under the canonical tradition of the Coptic Orthodox Church, in accordance with the Lord's teaching in the Gospel of St. Matthew (19:9).
+381: Decree Statement
+382: Approved
+384: Having carefully examined the testimony of both parties, the documentary evidence presented, the written statement of Fr. Youhana Ibrahim confirming the exhaustion of all reconciliation efforts, and the requisition report prepared by Fr. Gawargious Kotta, the Tribunal hereby grants the petition for the dissolution of the ecclesiastical marriage between Jessica Marie O'Brien and Patrick James O'Brien.
+384: The respondent's admission of the extramarital relationship during testimony, together with the corroborating evidence, satisfies the evidentiary standard required under canonical procedure. The Tribunal is satisfied that the ground of infidelity has been established and that all due pastoral and procedural steps were followed prior to this decree.
+390: Conditions & Directives
+391: Approved
+393: 1. The applicant, Jessica Marie O'Brien, is permitted to remarry within the Coptic Orthodox Church following a period of spiritual preparation as directed by her Father of Confession.
+393: 2. The respondent, Patrick James O'Brien, shall undergo a period of repentance and spiritual counseling with his Father of Confession, Fr. Antony Attallah, before any future marriage within the Church may be considered. The duration and nature of this period shall be determined by Fr. Antony Attallah in consultation with His Eminence.
+393: 3. Both parties are encouraged to continue to prioritize the spiritual welfare and upbringing of their children within the Orthodox faith.
+398: Signature
+402: H.E. Metropolitan Serapion
+403: Metropolitan of Los Angeles
+405: Signed Mar 03, 2026
+415: Document
+421: Decree_2025-20187.pdf
+422: Issued Mar 03, 2026
+424: 4.1 MB
+432: Decree_2025-20187.pdf
+433: PDF Document · 4.1 MB
+
+PAGE admin-case-decree.html
+8: Decision | Clerical Tribunal Management
+213: Respondent
+213: Patrick O'Brien
+216: Case #: 2025-20187
+218: Managed by: Fr. Gawargious Kotta
+222: Applicant
+222: Jessica O'Brien
+236: Vote
+241: Decision
+246: Decree
+251: Document
+256: Notify
+268: Council vote
+269: Record each council member's vote before proceeding to the decision
+273: Vote record
+276: Council member
+276: Approve
+276: Deny
+276: Abstain
+280: Approve:
+280: 0
+281: Deny:
+281: 0
+282: Abstain:
+282: 0
+287: Save draft
+288: Record votes & continue
+297: Decision
+298: Select the canonical outcome. This determines communication templates and whether a formal decree is required
+303: Dissolution
+305: {'line': 305, 'kind': 'input', 'id': None, 'name': 'decision', 'type': 'radio', 'placeholder': None}
+305: Dissolution Granted — Permission to Remarry (Applicant)
+305: Grants ecclesiastical divorce; applicant receives permission to remarry
+306: {'line': 306, 'kind': 'input', 'id': None, 'name': 'decision', 'type': 'radio', 'placeholder': None}
+306: Dissolution Granted — Permission to Remarry (Respondent)
+306: Grants ecclesiastical divorce; respondent receives permission to remarry
+307: {'line': 307, 'kind': 'input', 'id': None, 'name': 'decision', 'type': 'radio', 'placeholder': None}
+307: Dissolution Granted — Permission to Remarry (Both Parties)
+307: Grants ecclesiastical divorce; both parties receive permission to remarry
+308: {'line': 308, 'kind': 'input', 'id': None, 'name': 'decision', 'type': 'radio', 'placeholder': None}
+308: Dissolution Granted — Conditional Permission to Remarry
+308: Grants dissolution subject to conditions (counseling, waiting period, etc.)
+312: Annulment
+314: {'line': 314, 'kind': 'input', 'id': None, 'name': 'decision', 'type': 'radio', 'placeholder': None}
+314: Declaration of Nullity — Permission to Remarry Granted
+314: Marriage declared invalid from inception; permission to remarry granted
+315: {'line': 315, 'kind': 'input', 'id': None, 'name': 'decision', 'type': 'radio', 'placeholder': None}
+315: Declaration of Nullity — Conditional Permission to Remarry
+315: Marriage declared invalid; remarriage subject to conditions
+319: Procedural
+321: {'line': 321, 'kind': 'input', 'id': None, 'name': 'decision', 'type': 'radio', 'placeholder': None}
+321: Decision Deferred — Further Investigation Required
+321: Insufficient evidence; additional testimony or documentation needed
+322: {'line': 322, 'kind': 'input', 'id': None, 'name': 'decision', 'type': 'radio', 'placeholder': None}
+322: Petition Denied — No Permission to Remarry
+322: Petition does not meet canonical requirements
+323: {'line': 323, 'kind': 'input', 'id': None, 'name': 'decision', 'type': 'radio', 'placeholder': None}
+323: Petition Withdrawn
+323: Applicant has voluntarily withdrawn the petition
+324: {'line': 324, 'kind': 'input', 'id': None, 'name': 'decision', 'type': 'radio', 'placeholder': None}
+324: Reconciliation — Case Closed
+324: Parties have reconciled; case closed with no decree
+330: Decision rationale
+332: This rationale will be included in the formal decree. Include references to evidence, testimony, and canonical basis.
+336: ← Back to vote
+337: Save decision & continue
+346: Communicate decision to parties
+347: Send the decision outcome to the applicant and/or respondent
+354: Select a decision first to see matching communication templates
+360: Select a template on the left to preview
+365: Select a template to preview
+366: Send communication
+369: ← Back to issued decree
+378: Decree
+379: Draft and finalise the formal decree document
+384: Preamble
+384: {'line': 384, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+384: — Template —
+385: B
+385: I
+385: U
+385: 1.
+385: •
+385: In the Name of the Father, the Son, and the Holy Spirit, One God. Amen.
+385: The Clerical Tribunal of the Coptic Orthodox Diocese of Los Angeles, having been duly convened on
+385: [DATE]
+385: under the authority of His Eminence Metropolitan Serapion, and having received and examined the petition of
+385: Jessica Marie O'Brien
+385: against
+385: Patrick James O'Brien
+385: regarding the dissolution of their ecclesiastical marriage, hereby issues the following decree.
+389: Findings of fact
+389: {'line': 389, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+389: — Template —
+390: B
+390: I
+390: U
+390: 1.
+390: •
+390: The Tribunal finds the following facts established through testimony and evidence presented:
+390: 1. The parties were joined in holy matrimony on June 12, 2010 at St. Mark Coptic Orthodox Church, Los Angeles, officiated by Fr. Antony Attallah.
+390: 2. The respondent, Patrick James O'Brien, engaged in an extramarital relationship beginning approximately March 2024, as admitted in testimony of April 8, 2025.
+390: 3. Reconciliation was attempted through three sessions of marriage counseling. The respondent declined to continue after the third session.
+390: 4. Fr. Youhana Ibrahim submitted a written statement confirming that all pastoral avenues for reconciliation had been exhausted.
+390: 5. The civil divorce was finalized on January 6, 2025.
+394: Canonical basis
+394: {'line': 394, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+394: — Template —
+395: B
+395: I
+395: U
+395: The petition is brought on the cause of adultery, which is recognized as a valid cause for the dissolution of an ecclesiastical marriage under the canonical tradition of the Coptic Orthodox Church, in accordance with the Lord's teaching in the Gospel of St. Matthew (19:9).
+399: Decree statement
+399: {'line': 399, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+399: — Template —
+400: B
+400: I
+400: U
+400: 1.
+400: •
+400: Having carefully examined the testimony of both parties, the documentary evidence presented, and the written statement of Fr. Youhana Ibrahim confirming the exhaustion of all reconciliation efforts, the Tribunal hereby grants the petition for the dissolution of the ecclesiastical marriage between Jessica Marie O'Brien and Patrick James O'Brien.
+404: Conditions & directives
+404: {'line': 404, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+404: — Template —
+405: B
+405: I
+405: U
+405: 1.
+405: •
+405: 1. The applicant, Jessica Marie O'Brien, is permitted to remarry within the Coptic Orthodox Church following a period of spiritual preparation as directed by her Father of Confession.
+405: 2. The respondent, Patrick James O'Brien, shall undergo a period of repentance and spiritual counseling with his Father of Confession before any future marriage within the Church may be considered.
+409: Signature
+410: H.E. Metropolitan Serapion
+410: Metropolitan of Los Angeles
+411: Sign using mouse or touch
+411: Clear
+415: ← Back to decision
+416: Generate & issue decree
+425: Issued decree
+426: The formal decree has been generated and is ready for download and filing
+431: Decree — 2025-20187
+433: Issued
+439: Case
+439: 2025-20187
+440: Decision
+440: —
+441: Issued date
+441: —
+442: Presiding
+442: H.E. Metropolitan Serapion
+443: Applicant
+443: Jessica O'Brien
+444: Respondent
+444: Patrick O'Brien
+447: Download PDF
+448: Print
+449: View decree
+454: ← Back to decree
+455: Proceed to notify parties
+
+PAGE admin-case-documents.html
+8: Documents | Clerical Tribunal Management
+39: Respondent
+39: Patrick O'Brien
+42: Case #: 2025-20187
+44: Managed by: Fr. Gawargious Kotta
+48: Applicant
+48: Jessica O'Brien
+57: Documents
+57: (10)
+60: Add Document
+68: Document Name
+68: Type
+68: Created
+68: User
+75: Select a document to preview
+
+PAGE admin-case-evidence.html
+8: Evidence | Clerical Tribunal Management
+39: Respondent
+39: Patrick O'Brien
+42: Case #: 2025-20187
+44: Managed by: Fr. Gawargious Kotta
+48: Applicant
+48: Jessica O'Brien
+57: Evidence
+57: (8)
+60: Add Evidence
+68: Document Name
+68: Type
+68: Created
+68: User
+75: Select evidence to preview
+
+PAGE admin-case-hearings-2.html
+8: Hearings | 2025-20192 | Clerical Tribunal Management
+80: Respondent
+80: Carlos Santos
+83: Case #: 2025-20192
+85: Managed by: Fr. Gawargious Kotta
+89: Applicant
+89: Maria Santos
+99: Hearing in Session
+100: Schedule to Session
+101: Previous Hearings
+101: (1)
+115: Schedule Case to Upcoming Session
+122: S-2026-04
+123: Tuesday, April 14, 2026 at 10:00 AM
+124: St. George Coptic Orthodox Church, Bellflower · Presiding: H.E. Metropolitan Serapion
+127: 8 cases assigned
+133: S-2026-05
+134: Tuesday, May 13, 2026 at 10:00 AM
+135: St. George Coptic Orthodox Church, Bellflower · Presiding: H.E. Metropolitan Serapion
+138: 5 cases assigned
+144: S-2026-06
+145: Tuesday, June 10, 2026 at 10:00 AM
+146: St. George Coptic Orthodox Church, Bellflower · Presiding: H.E. Metropolitan Serapion
+149: 3 cases assigned
+158: Hearing Type
+159: {'line': 159, 'kind': 'select', 'id': 'hearingTypeSelect', 'name': None, 'type': None, 'placeholder': None}
+160: Applicant Testimony
+161: Respondent Testimony
+162: Council Review & Decision
+163: Follow-up Hearing
+164: Final Hearing
+166: This case is currently at the “Under Review” stage. Next expected hearing: Applicant Testimony.
+171: Select a session above to continue
+172: Assign to Session
+183: Previous Hearings
+183: (1)
+200: No Active Session
+204: This case must be
+204: assigned to an upcoming session
+204: before a hearing in session can take place.
+204: Use the
+204: Schedule to Session
+204: tab to assign this case first.
+206: Close
+207: Go to Schedule
+216: Confirm Session Assignment
+221: Once assigned, this case will appear on the session agenda. You can remove it from the session page if needed.
+224: Cancel
+225: Confirm Assignment
+
+PAGE admin-case-hearings.html
+7: Hearings | Clerical Tribunal Management
+172: Hearing in Session
+173: Schedule to Session
+174: Previous Hearings
+188: No Hearing in Session
+189: This case has not been assigned to an upcoming session yet.
+189: Use the
+189: Schedule to Session
+189: tab to assign it.
+200: Current Hearing
+208: Attendance
+210: Pre-filled from session roster — edit as needed
+222: Outcome
+241: Previous Hearings
+258: No Active Session
+262: This case must be
+262: assigned to an upcoming session
+262: before a hearing can take place.
+262: Use the
+262: Schedule to Session
+262: tab to assign this case first.
+264: Close
+265: Go to Schedule
+274: Confirm Session Assignment
+279: Once assigned, this case will appear on the session agenda.
+282: Cancel
+283: Confirm Assignment
+
+PAGE admin-case-intake.html
+8: Intake | Clerical Tribunal Management
+181: Respondent
+181: Patrick O'Brien
+184: Case #: 2025-20187
+186: Managed by: Fr. Gawargious Kotta
+190: Applicant
+190: Jessica O'Brien
+200: New Intake
+201: Intake Log
+201: (4)
+211: Person Interviewed
+212: {'line': 212, 'kind': 'select', 'id': 'intakePerson', 'name': None, 'type': None, 'placeholder': None}
+213: Select person…
+214: Jessica O'Brien (Applicant)
+215: Patrick O'Brien (Respondent)
+216: Fr. Youhana Ibrahim (Father of Confession)
+217: Fr. Antony Attallah (Resp. Father of Confession)
+218: Michael Thompson (Witness)
+219: Sarah Mitchell (Witness)
+220: Other…
+224: Intake By
+225: {'line': 225, 'kind': 'select', 'id': 'intakeBy', 'name': None, 'type': None, 'placeholder': None}
+226: Fr. Gawargious Kotta (Assigned)
+227: H.E. Metropolitan Serapion
+228: Fr. Mauritius Mikhail
+229: Fr. Bishoy Bastawros
+230: Fr. Youhana Ibrahim
+231: Fr. Antony Attallah
+232: Fr. Boules Mikhail
+233: Fr. Youhanna Youssef
+234: Fr. David Elias
+235: Fr. Jonah Labib
+239: Method
+240: {'line': 240, 'kind': 'select', 'id': 'intakeMethod', 'name': None, 'type': None, 'placeholder': None}
+241: In Person
+242: Phone
+243: Virtual
+251: Date & Time
+252: {'line': 252, 'kind': 'input', 'id': 'intakeDate', 'name': None, 'type': 'datetime-local', 'placeholder': None}
+255: Location
+256: {'line': 256, 'kind': 'input', 'id': 'intakeLocation', 'name': None, 'type': 'text', 'placeholder': 'e.g. St. George Church, Bellflower — Parish Office'}
+259: Duration
+260: {'line': 260, 'kind': 'input', 'id': 'intakeDuration', 'name': None, 'type': 'text', 'placeholder': 'e.g. 45 minutes'}
+268: B
+269: I
+270: U
+272: 1.
+273: •
+275: H
+285: Attach Document
+287: {'line': 287, 'kind': 'input', 'id': 'fileInput', 'name': None, 'type': 'file', 'placeholder': None}
+290: Perform OCR
+296: Clear
+297: Save Intake
+306: Intake Log
+306: (4)
+
+PAGE admin-case-marriage.html
+8: Marriage Information | Clerical Tribunal Management
+47: Respondent
+47: Patrick O'Brien
+50: Case #: 2025-20187
+52: Managed by: Fr. Gawargious Kotta
+56: Applicant
+56: Jessica O'Brien
+67: Marriage Details
+68: Documents
+77: Church Marriage
+82: Were You Married Outside the Coptic Orthodox Church?
+83: No
+86: Religious Denomination Officiating
+87: —
+90: Date of Marriage Outside Coptic Church
+91: —
+94: Date of Church Marriage
+95: Jun 12, 2010
+98: Officiating Priest
+99: Fr. Antony Attallah
+102: Marriage Duration
+103: 14 years, 8 months
+106: Church Name
+107: St. Mark Coptic Orthodox Church
+110: Church Address / Location
+111: Los Angeles, CA
+114: Diocese
+115: Diocese of Los Angeles
+124: Marriage Certificate
+129: Marriage Certificate Number
+130: MC-2010-04892
+133: Certificate Date Issued
+134: Jun 15, 2010
+144: Documents
+147: Add Document
+155: Document Name
+155: Type
+155: Created
+155: User
+162: Select a document to preview
+
+PAGE admin-case-notes.html
+8: Notes | Clerical Tribunal Management
+215: Respondent
+215: Patrick O'Brien
+218: Case #: 2025-20187
+220: Managed by: Fr. Gawargious Kotta
+224: Applicant
+224: Jessica O'Brien
+234: Notes
+234: (6)
+238: New Note
+
+PAGE admin-case-parties.html
+7: Parties | Clerical Tribunal Management
+75: Respondent
+75: Patrick O'Brien
+78: Case #: 2025-20187
+80: Managed by: Fr. Gawargious Kotta
+84: Applicant
+84: Jessica O'Brien
+101: Applicant
+102: Jessica Marie O'Brien
+103: Born Sep 14, 1988 (age 36)
+106: Personal Details
+108: Other Names Known By
+108: —
+109: Place of Birth
+109: Egypt
+110: Nationality
+110: Egyptian
+111: Awareness of Application
+111: —
+113: Contact
+115: Address
+115: 1842 Maple Dr, Bellflower, California, 90706, United States
+116: Mobile Number
+116: (562) 555-1042
+117: Email Address
+117: jessica.obrien@email.com
+118: Immigration Status
+118: Citizen
+119: Residing With
+119: Alone
+121: Career
+123: Education
+123: Bachelor of Business Administration
+124: Year of Graduation
+124: 2007
+125: Occupation
+125: Registered Nurse
+128: Church Membership
+130: Denomination
+130: Coptic Orthodox
+131: Name of Bishop
+131: H.E. Metropolitan Serapion
+132: Diocese
+132: Los Angeles, Southern California and Hawaii
+133: Parish Name
+133: St. Mary Coptic Orthodox Church, Bellflower
+134: Father of Confession
+134: Fr. Abraam Mikhail
+145: Respondent
+146: ✓ Aware
+148: Patrick James O'Brien
+149: Born Mar 22, 1986 (age 38)
+152: Personal Details
+154: Other Names Known By
+154: —
+155: Place of Birth
+155: Cairo, Egypt
+156: Nationality
+156: Egyptian-American
+157: Awareness of Application
+157: Yes
+159: Contact
+161: Address
+161: 507 Cedar Ave, Apt 3B, Long Beach, California, 90802, United States
+162: Mobile Number
+162: (562) 555-7891
+163: Email Address
+163: patrick.obrien@email.com
+164: Immigration Status
+164: Citizen
+165: Residing With
+165: Alone
+167: Career
+169: Education
+169: Bachelor of Science in Mechanical Engineering
+170: Year of Graduation
+170: 2008
+171: Occupation
+171: Mechanical Engineer
+174: Church Membership
+176: Denomination
+176: Coptic Orthodox
+177: Name of Bishop
+177: H.E. Metropolitan Serapion
+178: Diocese
+178: Diocese of Los Angeles
+179: Parish Name
+179: St. Mark Coptic Orthodox Church, Los Angeles
+180: Father of Confession
+180: Fr. Antony Attallah
+191: Children
+191: (3)
+197: Name
+198: Date of Birth
+199: Age
+200: Gender
+201: Resides With
+206: Michael O'Brien
+207: Apr 03, 2017
+207: 8
+207: Male
+207: Jessica O'Brien
+210: Sarah O'Brien
+211: Nov 19, 2020
+211: 5
+211: Female
+211: Jessica O'Brien
+214: David O'Brien
+215: Jul 08, 2023
+215: 2
+215: Male
+215: Jessica O'Brien
+229: ✕
+
+PAGE admin-case-requisition.html
+8: Requisition | Clerical Tribunal Management
+48: Respondent
+48: Patrick O’Brien
+51: Case #: 2025-20187
+53: Managed by: Fr. Gawargious Kotta
+57: Applicant
+57: Jessica O’Brien
+67: Request by Jessica O’Brien
+68: Request by Patrick O’Brien
+69: Documents
+76: Requisition — Applicant
+78: Submitted By
+78: Jessica O’Brien
+79: Date Submitted
+79: Jan 14, 2025
+83: I, Jessica Marie O’Brien, respectfully petition the Clerical Tribunal of the Coptic Orthodox Diocese of Los Angeles for the dissolution of my ecclesiastical marriage to Patrick James O’Brien.
+83: Our marriage was blessed at St. Mark Coptic Orthodox Church, Los Angeles, on June 12, 2010, officiated by Fr. Antony Attallah. We have three children together: Michael (8), Sarah (5), and David (2).
+83: In September 2024, I discovered that my husband had been engaged in an extramarital relationship since approximately March 2024. When confronted, he initially denied the relationship but later admitted to it during pastoral counseling with Fr. Youhana Ibrahim.
+83: We attempted reconciliation through three sessions of marriage counseling between August and October 2024. My husband declined to continue after the third session and moved out of the marital home in November 2024.
+83: Fr. Youhana Ibrahim has confirmed in writing that all pastoral avenues for reconciliation have been exhausted. Our civil divorce was finalized on January 6, 2025 at the Los Angeles Superior Court.
+83: I humbly request that the Tribunal investigate this matter and grant permission for the dissolution of our ecclesiastical marriage on the cause of adultery, in accordance with the Lord’s teaching in the Gospel of St. Matthew (19:9). I also respectfully request permission to remarry within the Coptic Orthodox Church at such time as the Tribunal deems appropriate.
+92: Requisition — Respondent
+94: Submitted By
+94: Patrick O’Brien
+95: Date Submitted
+95: Feb 05, 2025
+99: I, Patrick James O’Brien, acknowledge receipt of the petition filed by my wife, Jessica Marie O’Brien, regarding the dissolution of our ecclesiastical marriage.
+99: I do not contest the petition. I acknowledge that I failed in my marital vows and that my actions caused the breakdown of our marriage. I take full responsibility for the infidelity that led to this situation.
+99: I have cooperated fully with Fr. Youhana Ibrahim during the pastoral counseling process and with Fr. Gawargious Kotta during the investigation. I have provided truthful testimony regarding the circumstances of our separation.
+99: I respectfully ask the Tribunal to consider that I have expressed genuine repentance for my actions and have committed to a period of spiritual counseling with Fr. Antony Attallah as my Father of Confession.
+99: I do not oppose Jessica’s request for permission to remarry. I understand that any future permission for me to remarry within the Church will be at the discretion of the Tribunal and subject to the completion of my spiritual counseling.
+108: Requisition Documents
+111: Add Document
+119: Document Name
+119: Created
+119: Party
+126: Select a document to preview
+
+PAGE admin-case-separation.html
+8: Separation Information | Clerical Tribunal Management
+72: Respondent
+72: Patrick O'Brien
+75: Case #: 2025-20187
+77: Managed by: Fr. Gawargious Kotta
+81: Applicant
+81: Jessica O'Brien
+92: Separation Details
+93: Documents
+102: Separation Details
+107: Current Marital Status
+108: Separated
+111: Date of Separation
+112: Nov 03, 2024
+115: Initiated By
+116: Jessica O'Brien
+116: (Applicant)
+119: Reason for Divorce
+120: Adultery
+129: Civil Divorce
+134: Civil Divorce Filed?
+135: Yes
+138: Date of Civil Divorce
+139: Jan 06, 2025
+142: Name of Court
+143: Los Angeles Superior Court
+146: Court Street Address / Location
+147: —
+150: Civil Case Number
+151: 24STFL-09834
+154: Civil Divorce Status
+155: Finalized
+164: Restraining Order
+169: Restraining Order Filed?
+170: Yes
+173: Date of Restraining Order
+174: Nov 10, 2024
+176: Restraining Order Expiration Date
+176: —
+178: Name Listed on Order
+179: Jessica O'Brien
+179: (Applicant)
+182: Name of Court
+183: Los Angeles Superior Court
+186: Restraining Order Case Number
+187: 24DVRO-05217
+190: Restraining Order Status
+191: Active
+200: Reconciliation
+205: Clergy Counseling / Reconciliation Attempted?
+206: Yes
+209: Previously Applied for Ecclesiastical Marriage Permit?
+210: No
+213: When Did You Previously Apply?
+214: —
+217: Where Did You Previously Apply?
+218: —
+221: Decision Outcome
+222: —
+231: Current Living Arrangements
+237: Applicant
+238: Jessica O'Brien
+239: Street Address
+240: 1842 Maple Dr
+240: Bellflower, CA 90706
+241: Residing With
+242: Children (Michael, Sarah, David)
+245: Respondent
+246: Patrick O'Brien
+247: Street Address
+248: 507 Cedar Ave, Apt 3B
+248: Long Beach, CA 90802
+249: Residing With
+250: Alone
+261: Documents
+264: Add Document
+272: Document Name
+272: Type
+272: Created
+272: User
+279: Select a document to preview
+
+PAGE admin-case-summary.html
+8: Case Summary | Clerical Tribunal Management
+186: Respondent
+186: Patrick O'Brien
+189: Case #: 2025-20187
+191: Managed by: Fr. Gawargious Kotta
+195: Applicant
+195: Jessica O'Brien
+208: Case Overview
+213: Case Number
+214: 2025-20187
+217: Filing Date
+218: Jan 14, 2025
+221: Status
+223: Active
+227: Applicant
+228: Jessica O'Brien
+231: Respondent
+232: Patrick O'Brien
+235: Reason for Divorce
+236: Adultery
+239: Assigned Council Member
+240: Fr. Gawargious Kotta
+243: Marriage Duration
+244: 14 years, 8 months
+247: Last Hearing Date
+248: Apr 08, 2025
+251: Children
+253: Michael O'Brien,
+253: age 8
+254: Sarah O'Brien,
+254: age 5
+255: David O'Brien,
+255: age 2
+265: Key Dates
+273: Decree Issued
+274: Pending
+277: Upcoming
+284: Council Review & Decision
+285: Pending
+288: Upcoming
+295: Recommendation Pending
+296: In progress
+297: Awaiting recommendation from Fr. Gawargious Kotta
+300: Current
+307: Second Hearing
+308: Apr 08, 2025
+309: Respondent testimony — Session S-2025-04
+312: Completed
+319: First Hearing
+320: Mar 11, 2025
+321: Applicant testimony — Session S-2025-03
+324: Completed
+331: Assigned to Council Member
+332: Feb 11, 2025
+333: Assigned to Fr. Gawargious Kotta — Session S-2025-02
+336: Completed
+343: Case Filed
+344: Jan 14, 2025
+345: Application received and logged
+348: Completed
+
+PAGE admin-case-timeline.html
+8: Case Timeline — 2025-20187
+58: Respondent
+58: Patrick O'Brien
+61: Case #: 2025-20187
+63: Managed by: Fr. Gawargious Kotta
+67: Applicant
+67: Jessica O'Brien
+75: Case Timeline
+79: All
+80: Case
+81: Marriage
+
+PAGE admin-cases.html
+8: Cases | Clerical Tribunal Management
+84: Cases
+88: + Create a Case
+94: {'line': 94, 'kind': 'input', 'id': 'q', 'name': None, 'type': 'text', 'placeholder': 'Search by case ID, applicant, or respondent...'}
+95: Search
+96: Filters
+100: {'line': 100, 'kind': 'select', 'id': 'fS', 'name': None, 'type': None, 'placeholder': None}
+100: Status
+100: Open
+100: Under Review
+100: Pending Hearing
+100: Closed - Granted
+100: Closed - Denied
+100: Incomplete
+101: {'line': 101, 'kind': 'select', 'id': 'fY', 'name': None, 'type': None, 'placeholder': None}
+101: Year
+101: 2026
+101: 2025
+101: 2024
+102: {'line': 102, 'kind': 'select', 'id': 'fG', 'name': None, 'type': None, 'placeholder': None}
+102: Reason
+102: Adultery
+102: Abandonment
+102: Apostasy
+102: Abuse
+105: Clear Filters
+106: Apply Filters
+
+PAGE admin-index.html
+8: Home | Clerical Council Systems
+484: Upcoming Council Meeting
+485: Tuesday, February 17, 2026 at 10:00 AM
+487: Presiding:
+487: H.E. Metropolitan Serapion
+488: Location:
+488: St. George Coptic Orthodox Church, Bellflower
+491: View Session
+492: Add to Calendar
+496: 5
+496: Cases to Assign
+497: 3
+497: Hearings
+501: Previous Session
+502: Jan 14, 2026
+504: 18
+504: cases assigned,
+504: 12
+504: hearings conducted
+505: View Summary →
+513: New Cases
+516: 8
+517: This month
+523: Total Cases
+524: {'line': 524, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+525: 2026
+526: 2025
+527: 2024
+528: 2023
+529: All
+533: 60
+534: In 2025
+540: Avg. Case Duration
+541: {'line': 541, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+542: 2026
+543: 2025
+544: 2024
+545: 2023
+546: All
+550: 127
+551: Days (2025)
+559: Council Members
+561: H.E. Metropolitan
+561: Serapion
+561: Presiding
+562: Fr. Mauritius
+562: Mikhail
+562: Secretary
+562: 2
+562: active
+563: Fr. Gawargious
+563: Kotta
+563: Member
+563: 5
+563: active
+564: Fr. Bishoy
+564: Bastawros
+564: Member
+564: 2
+564: active
+565: Fr. Youhana
+565: Ibrahim
+565: Member
+565: 2
+565: active
+566: Fr. Antony
+566: Attallah
+566: Member
+566: 3
+566: active
+567: Fr. Boules
+567: Mikhail
+567: Member
+567: 2
+567: active
+568: Fr. Youhanna
+568: Youssef
+568: Member
+568: 1
+568: active
+569: Fr. David
+569: Elias
+569: Member
+569: 1
+569: active
+570: Fr. Jonah
+570: Labib
+570: Member
+570: 3
+570: active
+579: Council Member Case Load
+580: {'line': 580, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+581: 2026
+582: 2025
+583: 2024
+584: 2023
+585: All
+593: Cases by Reason
+594: {'line': 594, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+595: 2026
+596: 2025
+597: 2024
+598: 2023
+599: All
+607: Granted vs. Submitted
+608: {'line': 608, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+609: 2026
+610: 2025
+611: 2024
+612: 2023
+613: All
+619: Annulments (Both Parties)
+620: 18 / 24
+623: 75%
+627: Annulments (1 Party)
+628: 6 / 8
+631: 75%
+635: Petitions Denied
+636: 8 / 32
+639: 25%
+651: Applicant Gender
+652: {'line': 652, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+653: 2026
+654: 2025
+655: 2024
+656: 2023
+657: All
+665: Male Applicants
+666: 27 cases
+668: 45%
+672: Female Applicants
+673: 33 cases
+675: 55%
+684: Applicant Background
+685: {'line': 685, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+686: 2026
+687: 2025
+688: 2024
+689: 2023
+690: All
+698: Born & Raised in America
+699: 38 cases
+701: 64%
+705: Raised in Egypt
+706: 22 cases
+708: 36%
+717: Education vs. Divorce Rate
+718: {'line': 718, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+719: 2026
+720: 2025
+721: 2024
+722: 2023
+723: All
+731: High School or Less
+732: 25 cases
+734: 42%
+738: College Degree
+739: 17 cases
+741: 28%
+745: Graduate Degree
+746: 11 cases
+748: 18%
+757: Duration Before Divorce
+758: {'line': 758, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+759: 2026
+760: 2025
+761: 2024
+762: 2023
+763: All
+768: 0–5 Years
+769: 23 cases
+771: 38%
+775: 6–10 Years
+776: 21 cases
+778: 35%
+782: 11–15 Years
+783: 11 cases
+785: 18%
+789: 16+ Years
+790: 5 cases
+792: 9%
+802: Latest Case Submissions
+803: View All Cases
+808: Case #
+809: Applicant
+810: Respondent
+811: Reason
+812: Submitted
+813: Status
+818: 2026-00061
+819: Michael Hanna
+820: Sarah Hanna
+822: Feb 10, 2026
+823: Pending Review
+826: 2026-00060
+827: Marina Abdel-Malik
+828: George Abdel-Malik
+830: Feb 03, 2026
+831: Under Investigation
+834: 2026-00059
+835: Peter Tawfik
+836: Christine Tawfik
+838: Jan 28, 2026
+839: Assigned
+842: 2026-00058
+843: Irene Girgis
+844: Andrew Girgis
+846: Jan 22, 2026
+847: Assigned
+850: 2026-00057
+851: Samuel Boulos
+852: Mary Boulos
+854: Jan 15, 2026
+855: Hearing Scheduled
+
+PAGE admin-management.html
+8: Admin | Clerical Tribunal Management
+181: Admin
+191: Users & Roles
+192: Tribunal Config
+193: Data & Records
+194: Audit & Security
+206: Users
+208: Active Members
+209: Previous Members
+213: + Add Staff User
+222: Name
+223: Role
+224: Email
+225: Active Cases
+226: Status
+227: Actions
+239: Name
+240: Role
+241: Email
+242: Departed
+243: Reason
+244: Actions
+250: Previous members are automatically added when a user is deactivated, or manually archived from the Active Members list.
+259: Role Permissions
+261: Save Changes
+267: Permission
+268: Presiding
+269: Secretary
+270: Member
+280: Login History
+283: {'line': 283, 'kind': 'select', 'id': 'loginUserFilter', 'name': None, 'type': None, 'placeholder': None}
+284: All Users
+285: Fr. Mauritius Mikhail
+286: Fr. Gawargious Kotta
+287: Fr. Bishoy Bastawros
+288: Fr. Youhana Ibrahim
+289: Fr. Antony Attallah
+290: Fr. Jonah Labib
+292: {'line': 292, 'kind': 'select', 'id': 'loginResultFilter', 'name': None, 'type': None, 'placeholder': None}
+293: All Results
+294: Success
+295: Failed
+297: {'line': 297, 'kind': 'input', 'id': 'loginDateFilter', 'name': None, 'type': 'date', 'placeholder': None}
+301: Timestamp
+301: User
+301: IP Address
+301: Device
+301: Result
+317: Diocese Settings
+319: Save Changes
+323: Diocese Name
+323: {'line': 323, 'kind': 'input', 'id': 'adm-diocese-of-los-angeles', 'name': None, 'type': 'text', 'placeholder': None}
+324: System Email
+324: {'line': 324, 'kind': 'input', 'id': 'adm-tribunallacoptsdioceseorg', 'name': None, 'type': 'email', 'placeholder': None}
+325: Case ID Prefix
+325: {'line': 325, 'kind': 'input', 'id': 'casePrefixInput', 'name': None, 'type': 'text', 'placeholder': 'e.g. CTM — leave blank for none'}
+325: Applied to every case number site-wide. Blank = no prefix.
+326: Default Session Day
+327: {'line': 327, 'kind': 'select', 'id': 'adm-default-session-day', 'name': None, 'type': None, 'placeholder': None}
+327: Monday
+327: Tuesday
+327: Wednesday
+327: Thursday
+329: Session Location
+329: {'line': 329, 'kind': 'input', 'id': 'adm-text3', 'name': None, 'type': 'text', 'placeholder': None}
+330: Presiding Bishop
+330: {'line': 330, 'kind': 'input', 'id': 'adm-he-metropolitan-serapion', 'name': None, 'type': 'text', 'placeholder': None}
+331: Tribunal Secretary
+332: {'line': 332, 'kind': 'select', 'id': 'tribunalSecretary', 'name': None, 'type': None, 'placeholder': None}
+333: Fr. Mauritius Mikhail
+334: Fr. Gawargious Kotta
+335: Fr. Bishoy Bastawros
+344: Canonical Reasons
+346: Save Changes
+351: Add Reason
+359: Case Workflow Stages
+361: Save Changes
+366: Add Stage
+370: Drag the ⠿ handle to reorder stages. Changes affect all new cases from the date of saving.
+378: Decision Outcomes
+380: Save Changes
+386: Category
+387: Label
+388: Description
+389: Rationale
+390: Active
+396: Add Outcome
+400: Changes apply to all new cases. Existing cases retain the outcome label at time of decree.
+408: Document Templates
+410: Save Template
+417: New
+418: Category
+419: Template
+421: {'line': 421, 'kind': 'input', 'id': 'tmplSearch', 'name': None, 'type': None, 'placeholder': 'Search templates…'}
+426: Select a template to edit
+430: —
+434: {'line': 434, 'kind': 'select', 'id': 'templateCatSelect', 'name': None, 'type': None, 'placeholder': None}
+435: Preamble
+436: Findings of Fact
+437: Canonical Basis
+438: Decree Statement
+439: Conditions & Directives
+440: Notification
+441: Cover Letter
+442: Other
+444: Delete
+448: INSERT:
+452: B
+453: I
+454: U
+456: 1.
+457: •
+476: Export Cases
+479: Date From
+479: {'line': 479, 'kind': 'input', 'id': 'adm-date5', 'name': None, 'type': 'date', 'placeholder': None}
+480: Date To
+480: {'line': 480, 'kind': 'input', 'id': 'adm-date6', 'name': None, 'type': 'date', 'placeholder': None}
+481: Case Status
+482: {'line': 482, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+482: All Statuses
+482: Open
+482: In Review
+482: Hearing Scheduled
+482: Decided
+482: Closed
+484: Format
+485: {'line': 485, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+485: PDF
+485: CSV
+485: Excel
+487: Include
+488: {'line': 488, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+488: Cases only
+488: Cases + parties
+488: Full case data
+493: Export
+502: Purge
+504: Purge Selected
+508: {'line': 508, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+508: All Statuses
+508: Closed
+508: Archived
+509: {'line': 509, 'kind': 'input', 'id': 'adm-search-by-case-id-or-party', 'name': None, 'type': 'text', 'placeholder': 'Search by case ID or party…'}
+514: {'line': 514, 'kind': 'input', 'id': 'archiveSelectAll', 'name': None, 'type': 'checkbox', 'placeholder': None}
+515: Case ID
+515: Parties
+515: Reason
+515: Closed Date
+515: Status
+521: Purge is permanent and cannot be undone.
+529: System Audit Log
+532: {'line': 532, 'kind': 'select', 'id': 'auditUserFilter', 'name': None, 'type': None, 'placeholder': None}
+533: All Users
+534: Fr. Mauritius Mikhail
+535: Fr. Gawargious Kotta
+536: Fr. Bishoy Bastawros
+537: Fr. Youhana Ibrahim
+538: Fr. Antony Attallah
+540: {'line': 540, 'kind': 'select', 'id': 'auditActionFilter', 'name': None, 'type': None, 'placeholder': None}
+541: All Actions
+542: Login
+543: Saved intake
+544: Uploaded evidence
+545: Decree drafted
+546: Case status updated
+547: Case closed
+549: {'line': 549, 'kind': 'input', 'id': 'auditDateFilter', 'name': None, 'type': 'date', 'placeholder': None}
+553: Timestamp
+553: User
+553: Action
+553: Target
+569: Active Sessions
+571: Revoke All Other Sessions
+580: Login History
+583: {'line': 583, 'kind': 'select', 'id': 'secLoginUserFilter', 'name': None, 'type': None, 'placeholder': None}
+584: All Users
+585: Fr. Mauritius Mikhail
+586: Fr. Gawargious Kotta
+587: Fr. Bishoy Bastawros
+588: Fr. Youhana Ibrahim
+589: Fr. Antony Attallah
+591: {'line': 591, 'kind': 'select', 'id': 'secLoginResultFilter', 'name': None, 'type': None, 'placeholder': None}
+592: All Results
+593: Success
+594: Failed
+599: Timestamp
+599: User
+599: IP Address
+599: Device
+599: Result
+608: Mobile Settings
+610: Save Changes
+617: System available on Mobile
+618: When off, mobile users see a desktop-only message. Individual section toggles below only apply when mobile access is on.
+621: {'line': 621, 'kind': 'input', 'id': 'masterMobileToggle', 'name': None, 'type': 'checkbox', 'placeholder': None}
+631: Section / Page
+632: Area
+633: Mobile
+634: Desktop
+642: Desktop access is always enabled and cannot be disabled. Changes take effect immediately after saving.
+658: Add Staff User
+659: Tribunal council member details
+661: ×
+666: Title
+666: {'line': 666, 'kind': 'input', 'id': 'mTitle', 'name': None, 'type': 'text', 'placeholder': 'Father'}
+667: First Name
+667: {'line': 667, 'kind': 'input', 'id': 'mFirstName', 'name': None, 'type': 'text', 'placeholder': 'Mauritius'}
+668: Last Name
+668: {'line': 668, 'kind': 'input', 'id': 'mLastName', 'name': None, 'type': 'text', 'placeholder': 'Mikhail'}
+669: Phone #
+669: {'line': 669, 'kind': 'input', 'id': 'mPhone', 'name': None, 'type': 'tel', 'placeholder': '+1 (213) 555-0000'}
+671: Tribunal Role
+672: {'line': 672, 'kind': 'select', 'id': 'mRole', 'name': None, 'type': None, 'placeholder': None}
+673: Presiding
+674: Secretary
+675: Member
+679: Status
+680: {'line': 680, 'kind': 'select', 'id': 'mStatus', 'name': None, 'type': None, 'placeholder': None}
+681: Active
+682: Inactive
+686: Email
+686: {'line': 686, 'kind': 'input', 'id': 'mEmail', 'name': None, 'type': 'email', 'placeholder': 'name@lacoptsdiocese.org'}
+690: Cancel
+691: Add User
+701: Reset Password
+702: The user will be sent a reset link
+704: ×
+707: A password reset link will be sent to
+708: via email and SMS.
+712: Cancel
+713: Send Reset Link
+
+PAGE admin-member.html
+8: Council Member | Clerical Tribunal Management
+132: Council Member
+144: Email |
+145: Member ID |
+149: 0
+150: Active Cases
+159: Assigned Cases
+159: (0)
+166: Case ID
+166: Applicant
+166: Respondent
+166: Reason
+166: Status
+166: Submitted
+177: Past Cases
+177: (0)
+184: Case ID
+184: Applicant
+184: Respondent
+184: Reason
+184: Outcome
+184: Closed
+
+PAGE admin-reports.html
+8: Statistics & Reports | Clerical Tribunal Management
+70: Statistics & Reports
+76: Tribunal Analytics
+76: Overview of case activity, outcomes, and tribunal performance
+77: {'line': 77, 'kind': 'select', 'id': 'period', 'name': None, 'type': None, 'placeholder': None}
+77: Last 12 Months
+77: Year to Date
+77: 2025
+77: 2024
+77: All Time
+83: Total Cases
+83: 44
+83: ▲ 12%
+83: vs prior year
+84: Active Cases
+84: 15
+84: ▲ 3
+84: new this month
+85: Avg. Case Duration
+85: 8.4 mo
+85: ▼ 1.2 mo
+85: faster than last year
+86: Grant Rate
+86: 82%
+86: 19 granted • 4 denied
+91: Case Volume Over Time
+91: {'line': 91, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+91: 2026
+91: 2025
+91: 2024
+91: 2023
+91: All
+92: Cases by Status
+92: {'line': 92, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+92: 2026
+92: 2025
+92: 2024
+92: 2023
+92: All
+97: Cases by Reason
+97: {'line': 97, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+97: 2026
+97: 2025
+97: 2024
+97: 2023
+97: All
+98: Outcomes (Granted vs Denied)
+98: {'line': 98, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+98: 2026
+98: 2025
+98: 2024
+98: 2023
+98: All
+103: Reviewer Workload
+103: {'line': 103, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+103: 2026
+103: 2025
+103: 2024
+103: 2023
+103: All
+
+PAGE admin-search.html
+8: Search | Clerical Tribunal Management
+83: Search
+88: Advanced Search
+89: Search across cases, people, documents, and tribunal sessions
+94: {'line': 94, 'kind': 'input', 'id': 'q', 'name': None, 'type': 'text', 'placeholder': 'Search by name, case ID, keyword...'}
+96: Search
+97: Filters
+105: {'line': 105, 'kind': 'input', 'id': 'fCid', 'name': None, 'type': 'text', 'placeholder': 'Case ID'}
+106: {'line': 106, 'kind': 'input', 'id': 'fName', 'name': None, 'type': 'text', 'placeholder': 'Person Name'}
+107: {'line': 107, 'kind': 'select', 'id': 'fStatus', 'name': None, 'type': None, 'placeholder': None}
+107: Status
+107: Open
+107: Under Review
+107: Pending Hearing
+107: Closed - Granted
+107: Closed - Denied
+107: Incomplete
+108: {'line': 108, 'kind': 'select', 'id': 'fCause', 'name': None, 'type': None, 'placeholder': None}
+108: Reason
+108: Adultery
+108: Abandonment
+108: Apostasy
+108: Abuse
+109: {'line': 109, 'kind': 'select', 'id': 'fReviewer', 'name': None, 'type': None, 'placeholder': None}
+109: Assigned To
+109: Fr. Gawargious Kotta
+109: Fr. Jonah Labib
+110: {'line': 110, 'kind': 'select', 'id': 'fDocType', 'name': None, 'type': None, 'placeholder': None}
+110: Document Type
+110: Petition
+110: Decree
+110: Witness Statement
+110: Evidence
+110: Correspondence
+111: {'line': 111, 'kind': 'input', 'id': 'fDateFrom', 'name': None, 'type': 'text', 'placeholder': 'Date From'}
+112: {'line': 112, 'kind': 'input', 'id': 'fDateTo', 'name': None, 'type': 'text', 'placeholder': 'Date To'}
+115: Clear Filters
+116: Apply Filters
+
+PAGE admin-session-summary.html
+8: Session Summary | Clerical Tribunal Management
+70: Session Summary
+79: Session 2026-0002
+83: Date
+83: |
+83: Wednesday, January 14, 2026 at 10:00 AM
+84: Presiding
+84: |
+84: H.E. Metropolitan Serapion
+85: Location
+85: |
+85: Diocesan Center, Los Angeles
+86: Duration
+86: |
+86: 10:00 AM — 3:45 PM (5h 45m)
+91: Cases Assigned
+91: 18
+92: Hearings
+92: 12
+99: Cases Heard
+101: #
+101: Case ID
+101: Applicant
+101: Respondent
+101: Reason
+101: Assigned To
+101: Outcome
+101: Recommendation
+103: 1
+103: 2025-20187
+103: Jessica O'Brien
+103: Patrick O'Brien
+103: Fr. Gawargious Kotta
+103: Granted
+103: Recommendation
+104: 2
+104: 2025-20192
+104: Maria Santos
+104: Carlos Santos
+104: Fr. Gawargious Kotta
+104: Under Review
+104: Recommendation
+105: 3
+105: 2024-20180
+105: Miriam Farag
+105: Joseph Farag
+105: Fr. Jonah Labib
+105: Granted
+105: Recommendation
+106: 4
+106: 2024-20183
+106: Sarah Hanna
+106: Michael Hanna
+106: Fr. Antony Attallah
+106: Deferred
+106: Recommendation
+107: 5
+107: 2025-20195
+107: Nadia Mikhail
+107: George Mikhail
+107: Fr. Jonah Labib
+107: Denied
+107: Recommendation
+108: 6
+108: 2025-20194
+108: Irene Aziz
+108: Hany Aziz
+108: Fr. Bishoy Bastawros
+108: Granted
+108: Recommendation
+109: 7
+109: 2025-20196
+109: Marina Girgis
+109: Amir Girgis
+109: Fr. Antony Attallah
+109: Granted
+109: Recommendation
+110: 8
+110: 2025-20197
+110: Christine Tadros
+110: Fady Tadros
+110: Fr. Youhana Ibrahim
+110: Under Review
+110: Recommendation
+111: 9
+111: 2025-20198
+111: Suzy Naguib
+111: Magdi Naguib
+111: Fr. Bishoy Bastawros
+111: Deferred
+111: Recommendation
+112: 10
+112: 2025-20193
+112: Mona Soliman
+112: Ashraf Soliman
+112: Fr. Boules Mikhail
+112: Granted
+112: Recommendation
+113: 11
+113: 2025-20175
+113: Diana Khalil
+113: Sameh Khalil
+113: Fr. Youhanna Youssef
+113: Granted
+113: Recommendation
+114: 12
+114: 2025-20188
+114: Laila Botros
+114: Wagih Botros
+114: Fr. David Elias
+114: Settled
+114: Recommendation
+115: 13
+115: 2025-20170
+115: Yvonne Farid
+115: Maher Farid
+115: Fr. Mauritius Mikhail
+115: Granted
+115: Recommendation
+116: 14
+116: 2025-20165
+116: Fayza Mansour
+116: Ramzy Mansour
+116: Fr. Gawargious Kotta
+116: Withdrawn
+116: Recommendation
+117: 15
+117: 2025-20178
+117: Hala Gerges
+117: Nabil Gerges
+117: Fr. Jonah Labib
+117: Granted
+117: Recommendation
+118: 16
+118: 2025-20182
+118: Rania Habib
+118: Samir Habib
+118: Fr. Antony Attallah
+118: Deferred
+118: Recommendation
+119: 17
+119: 2025-20190
+119: Mervat Rizk
+119: Emad Rizk
+119: Fr. Boules Mikhail
+119: Under Review
+119: Recommendation
+120: 18
+120: 2025-20174
+120: Nevine Moussa
+120: Sherif Moussa
+120: Fr. Youhana Ibrahim
+120: Denied
+120: Recommendation
+127: Council Members in attendance
+129: H.E. Metropolitan
+129: Serapion
+129: Presiding
+130: Fr. Mauritius
+130: Mikhail
+130: Secretary
+130: 2
+130: active
+131: Fr. Gawargious
+131: Kotta
+131: Member
+131: 5
+131: active
+132: Fr. Bishoy
+132: Bastawros
+132: Member
+132: 2
+132: active
+133: Fr. Youhana
+133: Ibrahim
+133: Member
+133: 2
+133: active
+134: Fr. Antony
+134: Attallah
+134: Member
+134: 3
+134: active
+135: Fr. Boules
+135: Mikhail
+135: Member
+135: 2
+135: active
+136: Fr. Youhanna
+136: Youssef
+136: Member
+136: 1
+136: active
+137: Fr. David
+137: Elias
+137: Member
+137: 1
+137: active
+138: Fr. Jonah
+138: Labib
+138: Member
+138: 3
+138: active
+144: Session Minutes
+146: TBD
+149: Recorded by
+149: Fr. Mauritius Mikhail
+149: , Secretary — Approved Jan 21, 2026
+150: Print Summary
+166: Edit Note
+167: Cases Heard
+169: ×
+172: {'line': 172, 'kind': 'textarea', 'id': 'noteModalInput', 'name': None, 'type': None, 'placeholder': 'Add a note about this case…'}
+175: Cancel
+176: Save
+
+PAGE admin-sessions-historical.html
+8: Tribunal Sessions — Historical | Clerical Tribunal Management
+189: Tribunal Sessions — Historical
+190: Complete record of all past council sessions
+195: Upcoming Session
+205: {'line': 205, 'kind': 'input', 'id': 'histSearch', 'name': None, 'type': 'text', 'placeholder': 'Search by date or session #…'}
+206: {'line': 206, 'kind': 'select', 'id': 'histYearFilter', 'name': None, 'type': None, 'placeholder': None}
+207: All Years
+208: 2026
+209: 2025
+210: 2024
+211: 2023
+214: 12
+214: sessions found
+
+PAGE admin-sessions-upcoming.html
+8: Tribunal Sessions Upcoming | Clerical Tribunal Management
+93: Tribunal Sessions
+94: Manage upcoming council sessions and case assignments
+110: Tribunal Council Session #01
+113: Upcoming
+116: In Session
+119: Completed
+125: Tuesday, February 17, 2026 at 10:00 AM
+127: Presiding
+127: |
+128: H.E. Metropolitan Serapion
+129: Location
+129: |
+130: St. George Coptic Orthodox Church, Bellflower, California
+138: Cases to Assign
+139: 12
+144: Scheduled Hearings
+145: 20
+160: Cases to Assign
+160: (12)
+163: Add a Case to Be Assigned
+175: Applicant
+176: Respondent
+177: Reason
+178: Married
+179: Submitted
+180: Status
+195: Cases assigned on:
+195: Tribunal Council Session #01 | February 17, 2026
+195: (0)
+209: Applicant
+210: Respondent
+211: Reason
+212: Married
+213: Assigned To
+228: Scheduled Hearings
+228: (20)
+231: Add a Case to Hearings
+242: #
+243: Applicant
+244: Respondent
+245: Assigned To
+246: Recommendation
+1062: Session In Progress
+1065: ×
+1071: Attendance Roll Call
+1077: Cases to Be Assigned
+1080: Case
+1080: Applicant
+1080: Respondent
+1088: Cases to Be Heard
+1091: Case
+1091: Applicant
+1091: Respondent
+1091: Assigned To
+1099: Cancel
+1100: Confirm & Start Session
+
+PAGE admin-sessions.html
+8: Tribunal Sessions | Clerical Tribunal Management
+269: Tribunal Sessions
+281: Next Upcoming Session
+282: Tuesday, February 17, 2026 at 10:00 AM
+283: View upcoming session to add cases for hearing
+288: 12
+289: Cases to Assign
+292: 20
+293: Hearings
+298: Add or Edit a Case for Assignment or Hearing
+310: All Upcoming Sessions
+310: (11)
+313: Create Session
+322: Date
+323: Session ID
+324: Cases Assigned
+325: Hearings
+336: Past Sessions
+338: 0
+338: sessions
+345: {'line': 345, 'kind': 'input', 'id': 'histSearch', 'name': None, 'type': 'text', 'placeholder': 'Search by date or session #...'}
+346: Search
+347: Filters
+351: {'line': 351, 'kind': 'select', 'id': 'histYearFilter', 'name': None, 'type': None, 'placeholder': None}
+351: Year
+351: 2025
+351: 2024
+351: 2023
+352: {'line': 352, 'kind': 'select', 'id': 'histAssignedFilter', 'name': None, 'type': None, 'placeholder': None}
+352: Assigned to
+353: {'line': 353, 'kind': 'select', 'id': 'histCauseFilter', 'name': None, 'type': None, 'placeholder': None}
+353: Reason
+353: Adultery
+353: Apostasy
+353: Abandonment
+353: Addiction
+353: Imprisonment
+354: {'line': 354, 'kind': 'select', 'id': 'histStatusFilter', 'name': None, 'type': None, 'placeholder': None}
+354: Status
+354: Granted
+354: Denied
+354: Continued
+354: Pending
+357: Clear Filters
+358: Apply Filters
+366: Date
+367: Session ID
+368: Cases Assigned
+369: Hearings
+710: Create Upcoming Tribunal Session
+711: Select a date for the new session
+713: ×
+718: Session Date
+719: {'line': 719, 'kind': 'input', 'id': 'csDate', 'name': None, 'type': 'date', 'placeholder': None}
+724: Cancel
+725: Create Session
+
+PAGE admin-support.html
+8: Support | Clerical Tribunal Management
+36: Support
+37: Diocese of Los Angeles — Clerical Tribunal
+45: Support
+46: This page is under development.
+46: Return to Dashboard
+
+PAGE admin-user-account.html
+8: My Account | Clerical Tribunal Management
+99: My Account
+113: Fr. Mauritius Mikhail
+114: Secretary · Diocese of Los Angeles — Clerical Tribunal
+116: Change Photo
+117: {'line': 117, 'kind': 'input', 'id': 'avatarInput', 'name': None, 'type': 'file', 'placeholder': None}
+124: Profile
+126: Save Changes
+131: Title
+132: {'line': 132, 'kind': 'select', 'id': 'acc-title', 'name': None, 'type': None, 'placeholder': None}
+133: H.E.
+134: H.G.
+135: Fr.
+136: Dr.
+137: Mr.
+138: Mrs.
+139: Ms.
+140: Dn.
+144: First Name
+145: {'line': 145, 'kind': 'input', 'id': 'acc-mauritius', 'name': None, 'type': 'text', 'placeholder': None}
+148: Last Name
+149: {'line': 149, 'kind': 'input', 'id': 'acc-mikhail', 'name': None, 'type': 'text', 'placeholder': None}
+152: Phone #
+153: {'line': 153, 'kind': 'input', 'id': 'acc-1-213-5550148', 'name': None, 'type': 'tel', 'placeholder': None}
+156: Email
+157: {'line': 157, 'kind': 'input', 'id': 'acc-mauritiuslacoptsdioceseorg', 'name': None, 'type': 'email', 'placeholder': None}
+165: Security
+167: Sign Out All Devices
+168: Save Changes
+173: Password
+175: ••••••••••
+176: Change
+180: Last Login
+181: Today, 7:39 PM
+184: Session Timeout
+185: {'line': 185, 'kind': 'select', 'id': None, 'name': None, 'type': None, 'placeholder': None}
+186: 4 hours
+187: 8 hours
+188: 24 hours
+197: Tribunal Role
+201: Role
+202: Secretary
+205: Permissions
+206: Full Access
+209: Total Cases
+210: 6 Assigned
+213: Active Cases
+214: 2 Active
+217: Closed Cases
+218: 4 Closed
+221: Appointed By
+222: H.E. Metropolitan Serapion
+225: Member Since
+226: January 2022
+230: Role and permissions can only be changed by an administrator.
+238: Notifications
+240: Save Changes
+246: Notification
+247: Email
+248: SMS
+258: Activity Log
+264: Activity
+265: Date
+269: Saved intake —
+269: 2025-20187
+269: O'Brien vs O'Brien
+269: Today
+270: Uploaded evidence —
+270: 2026-20199
+270: Farid vs Farid
+270: Yesterday
+271: Decree drafted —
+271: 2023-20150
+271: Kamel vs Kamel
+271: Mar 12
+272: Saved intake —
+272: 2026-20199
+272: Farid vs Farid
+272: Mar 11
+273: Added hearing notes —
+273: 2025-20187
+273: Mar 10
+274: Login — Los Angeles
+274: Mar 10
+275: Case closed —
+275: 2023-20150
+275: Kamel vs Kamel
+275: Mar 8
+276: Saved intake —
+276: 2025-20187
+276: O'Brien vs O'Brien
+276: Mar 6
+290: Change Password
+291: ✕
+294: Current Password
+294: {'line': 294, 'kind': 'input', 'id': 'acc-enter-current-password', 'name': None, 'type': 'password', 'placeholder': 'Enter current password'}
+295: New Password
+295: {'line': 295, 'kind': 'input', 'id': 'acc-min-10-characters', 'name': None, 'type': 'password', 'placeholder': 'Min. 10 characters'}
+296: Confirm New Password
+296: {'line': 296, 'kind': 'input', 'id': 'acc-repeat-new-password', 'name': None, 'type': 'password', 'placeholder': 'Repeat new password'}
+299: Cancel
+300: Update Password
+
+PAGE consolidation-preview.html
+5: Consolidation Decisions
+44: Consolidation Decisions
+45: For each real element role, pick ONE option. All choices show live samples of what the result will look like. When you've picked one for every remaining decision, hit "Copy picks" at the bottom and reply with the string.
+46: Resolved:
+46: D1 (no-op, only .TXT_h2 exists) · D2 → 2B (single .TXT_h2Dark, dead .CARD_caseHeadName removed).
+62: Decision 3 of 8 — Card micro-title
+63: How should "New Cases" / "Case Overview" card headers render?
+64: Element: 12px extrabold UPPERCASE. Currently
+64: .TXT_h6
+64: (229 uses) is navy blue;
+64: .TXT_h6Bronze
+64: (41 uses in public forms) is Bronze.
+66: A
+67: Split by color:
+67: .TXT_h6Navy
+67: +
+67: .TXT_h6Bronze
+68: Two atomic classes for the two color contexts (admin vs public forms).
+69: New Cases
+70: Personal Details
+71: Admin: TXT_h6Navy · Public: TXT_h6Bronze
+73: B
+74: Force all to Navy
+74: .TXT_h6
+75: Public forms lose their bronze card headers. Visual change on public pages.
+76: New Cases
+77: Personal Details
+78: class="TXT_h6" everywhere
+80: C
+81: Keep
+81: .TXT_h6
+81: and
+81: .TXT_h6Bronze
+81: separate
+82: Names stay as-is. No consolidation.
+83: New Cases
+84: Personal Details
+85: Two class names kept
+92: Decision 4 of 8 — Admin form label
+93: How should "Applicant" / "Case Number" labels render?
+94: Element: 9px UPPERCASE.
+94: .TXT_h9
+94: alone is used
+94: 474 times
+94: . Plus
+94: .TXT_h9
+94: (42),
+94: .TXT_h9
+94: (18),
+94: .TXT_h9
+94: (7), and 13 others — all render the same admin label.
+96: A
+97: Merge all into
+97: .TXT_h9
+98: All 17 classes retire, 619 elements switch to
+98: .TXT_h9
+98: . Same look everywhere.
+99: Applicant
+100: class="TXT_h9"
+102: B
+103: Keep
+103: .TXT_h9
+103: as canonical, merge others in
+104: Name stays familiar (474 elements unchanged); 16 other classes retire and use
+104: .TXT_h9
+104: instead.
+105: Applicant
+106: class="TXT_h9"
+108: C
+109: Leave all 17 classes alone
+110: No merge. Every screen keeps its local variant name.
+111: Applicant
+112: 17 different class names
+119: Decision 5 of 8 — Bronze eyebrow labels
+120: How should "Previous Session" / "Petition" mini-labels render?
+121: Element: 9px 800 UPPERCASE — but the color varies wildly: Bronze (default), CoolGrey, NavyBlue, white on dark hero. 30 classes total across these color contexts.
+123: A
+124: 4 atomic variants by color
+125: .TXT_h10
+125: (Bronze),
+125: .TXT_h10Cool
+125: ,
+125: .TXT_h10Navy
+125: ,
+125: .TXT_h10Dark
+125: . Each is a single class.
+126: Previous Session
+127: Overview
+128: Decree
+129: 4 class names
+131: B
+132: Force all to Bronze
+132: .TXT_h10
+133: One class. Loses the non-Bronze eyebrows (grey / navy variants become Bronze).
+134: Previous Session
+135: Overview
+136: Decree
+137: class="TXT_h10" everywhere
+139: C
+140: Keep all 30 classes as-is
+141: No merge. Every eyebrow keeps its own class name.
+142: Previous Session
+143: 30 class names
+150: Decision 6 of 8 — Big display numbers
+151: How should big stat numbers ("60" on the dashboard) render?
+152: Element: 28px Display extrabold. 9 classes currently:
+152: .TXT_h1
+152: ,
+152: .TXT_h1
+152: ,
+152: .TXT_h1
+152: ,
+152: .TXT_h1Dark
+152: ,
+152: .TXT_h1Dark
+152: , etc.
+154: A
+155: Merge all into
+155: .TXT_h1
+156: 9 classes retire. All big-number displays use one class.
+157: 60
+159: B
+160: Keep 9 separate classes
+161: No merge.
+162: 60
+169: Decision 7 of 8 — Modal / card titles
+170: How should "Log Phone Call" / "Case Details" modal titles render?
+171: Element: 18px Display extrabold. 11 classes:
+171: .TXT_h3Dark
+171: ,
+171: .TXT_h3
+171: ,
+171: .TXT_h3
+171: ,
+171: .TXT_h3
+171: , etc.
+173: A
+174: Merge all into
+174: .TXT_h3
+175: Every modal/panel/popout title uses one class.
+176: Log Phone Call
+178: B
+179: Keep 11 separate classes
+180: No merge.
+181: Log Phone Call
+188: Decision 8 of 8 — Structural components (buttons, inputs, tables)
+189: Should structural component classes be renamed to
+189: .TXT_h7
+189: ?
+190: 134 classes at 12px including
+190: .FORM_control
+190: (60 uses),
+190: .TBL
+190: (59),
+190: .BTN_h
+190: (16),
+190: .RAD_opt
+190: (37). These aren't "headings" — they're components that happen to have text.
+192: A
+193: Leave structural components alone (recommended)
+194: Don't rename. Only merge the ~15 that are clearly text/label-only into
+194: .TXT_h7
+194: .
+195: Row primary line
+196: Skip buttons/inputs/tables. Only merge label-like ones.
+198: B
+199: Full rename — everything at 12px becomes
+199: .TXT_h7
+200: 134 classes retire. Buttons/inputs/tables now typography-agnostic.
+201: Row primary line
+202: Requires re-checking every button/input
+209: Your picks so far
+210: — pick from each row —
+212: Copy picks
+
+PAGE design-preview.html
+6: CTM Design Pattern Preview
+71: CTM Design Pattern Preview
+72: Left column: live pattern rendered against the actual shared
+73: styles.css
+73: . Right column: every CSS rule targeting the class(es) shown, with every
+74: var(--Token)
+74: substituted for its resolved literal value. All font, colour, spacing, and radius tokens are read from
+75: :root
+75: at page load — so this page always reflects the current state of the design system.
+84: Headings & Text
+85: Six visual tiers, from 28px page-title down to 9px eyebrow.
+89: .TXT_h1
+90: Page heading — Display 28/800 UPPERCASE.
+91: Tribunal Sessions
+98: .TXT_h2
+99: Section heading — Display 20/800.
+100: Assigned Cases
+107: .TXT_h6
+108: The workhorse micro-title on every card/panel header.
+109: New Cases
+116: .TXT_subtitle
+117: Subtitle under a page or section title.
+118: Manage upcoming and historical tribunal sessions.
+125: .TXT_dateline
+126: Date rendered in body context.
+127: Tuesday, February 17, 2026
+134: .TXT_caption
+135: Muted body/caption paragraph.
+136: Council members will review each case before the hearing.
+143: .TXT_h10
+144: Bronze eyebrow — 9px UPPERCASE .16em Bronze.
+145: Previous Session
+155: Statistics
+156: Large display numerals used on dashboard stat cards and hero rows.
+160: .TXT_h1
+161: 28px Display extrabold NavyBlue — the big number on any stat card.
+162: 60
+172: Pills & Badges
+173: Every pill in the app renders at the SAME 22px total height with Mono 14 regular typography. Only colour varies.
+177: .BADGE
+178: Canonical pill base — every variant inherits this shape.
+179: Default
+186: .BADGE.BADGE_muted
+187: Grey/muted pill — Closed, Hearing Scheduled.
+188: Closed
+195: .BADGE.BADGE_warn
+196: Amber warn pill — Pending, Under Investigation.
+197: Pending Review
+204: .BADGE.BADGE_green
+205: Green pill — Assigned, active status.
+206: Assigned
+213: .BADGE.BADGE_reason
+214: Reason pill — maroon, one style for every CASE_REASONS entry.
+215: Adultery
+222: .BADGE_caseId
+223: Case-ID chip — Mono 14 semibold NavyBlue. Same shape as BADGE.
+224: CTM-2026-00061
+231: .BADGE_outcome.BADGE_outcomeGranted
+232: Decision pill — granted variant.
+233: Granted
+240: .BADGE_outcome.BADGE_outcomeDenied
+241: Decision pill — denied variant.
+242: Denied
+249: .AVATAR_party.MOD_male.MOD_sm
+250: Party pill — male (blue). Icon + name.
+251: Patrick O'Brien
+258: .AVATAR_party.MOD_female.MOD_sm
+259: Party pill — female (pink).
+260: Jessica O'Brien
+267: .AVATAR_party.MOD_clergy.MOD_sm
+268: Clergy party pill — grey with cross icon.
+269: Fr. Gawargious Kotta
+279: Buttons
+280: Three-tier size system — every button in the app carries exactly one of
+280: .MOD_small
+280: /
+280: .MOD_medium
+280: /
+280: .MOD_normal
+280: . All 32px tall; padding + font-size differ per tier.
+284: .BTN.MOD_small
+285: Small (9px font, tight padding) — inline row actions.
+286: Remove
+293: .BTN.MOD_medium
+294: Medium (11px font) — default for form footers, modals, tool buttons.
+295: Save Changes
+302: .BTN.MOD_normal
+303: Normal (14px font, generous padding) — page-header CTAs, sticky footer actions.
+304: Create Session
+311: .BTN_white.MOD_medium
+312: Ghost/white variant.
+313: Cancel
+320: .BTN_white.BTN_dangerTint.MOD_medium
+321: White + crimson-tinted danger variant (destructive but not solid).
+322: Sign Out All Devices
+332: Form Controls
+333: Labels split cleanly into admin vs public style.
+337: .TXT_h9 (admin base)
+338: Admin pages — 9px regular NavyBlue UPPERCASE .08em.
+339: Reason for Divorce
+346: .FORM_contactFull .TXT_h9 (public)
+347: Public forms — 11px extrabold NavyBlue UPPERCASE .06em.
+348: Reason for Divorce
+355: .FORM_control
+356: Text input / select — Mono 14, 8px radius, focus glow.
+357: {'line': 357, 'kind': 'input', 'id': None, 'name': None, 'type': 'text', 'placeholder': None}
+364: .FORM_value
+365: Read-only field value — Mono 14 regular InkBlack.
+366: Jan 14, 2025
+376: Cards & Panels
+377: The canonical
+377: .CARD
+377: surface plus common composite patterns.
+381: .CARD
+382: Base card — OffWhite, 1px BorderGrey, 8px radius, soft shadow.
+383: Card content area.
+390: .CARD + .SECTION_header + .TXT_h6
+391: Composite: card with a titled header row.
+395: Latest Case Submissions
+409: Council-Member Card (Compound)
+410: Four-part pattern:
+410: .CARD_cm
+410: wrapper →
+410: .AVATAR_cm
+410: photo +
+410: .CARD_cmInfo
+410: (name/role) +
+410: .CARD_cmCount
+410: (stat + label).
+414: .CARD_cm { .AVATAR_cm, .CARD_cmInfo, .CARD_cmCount }
+415: Full compound. Right column shows every rule targeting any nested class.
+420: Fr. Youhana Ibrahim
+421: Member
+424: 3
+425: Active
+438: Table (Compound)
+439: Base
+439: .TBL
+439: plus header/cell anatomy, ID cells, mono date cells, and pills inside rows.
+443: .TBL
+444: Compact case table — grey header, mono dates, party + status pills.
+448: Case #
+448: Applicant
+448: Reason
+448: Status
+452: CTM-2026-00061
+453: Michael Hanna
+454: Abandonment
+455: Pending Review
+458: CTM-2026-00058
+459: Irene Girgis
+460: Adultery
+461: Assigned
+475: Table-in-Panel (Compound)
+476: Header row (title + "View All" link) above a table, all wrapped in a panel surface.
+480: .PANEL_recent { .SECTION_header, table.TBL }
+481: Compact stripped-down demo.
+485: Latest Case Submissions
+486: View All Cases
+489: Case #
+489: Status
+491: CTM-2026-00061
+491: Pending
+505: Session Summary Bar (Compound)
+506: Recap strip under the hero card — Bronze label, mono date, meta, right-aligned link.
+510: .HDR_heroPrevRow
+511: All five children in a flex row.
+514: Previous Session
+515: Jan 14, 2026
+517: 18
+517: cases assigned,
+517: 12
+517: hearings conducted
+518: View Summary →
+
+PAGE patternfly-spike\index.html
+9: PatternFly Admin Spike
+
+PAGE patternfly-spike\token-match-matrix.html
+6: PatternFly Token Match Matrix
+380: PatternFly adoption artifact
+381: Legacy to PatternFly Token Match Matrix
+382: This page separates approved decisions from proposed matches. Component implementation should consume PatternFly tokens, while direct hex values stay only at the token override boundary.
+388: Color Tokens
+393: Legacy token
+394: Legacy sample
+395: PatternFly token decision
+396: PatternFly sample
+397: Status
+398: Implementation rule
+403: --NavyBlue
+403: #1e4d7b
+404: Legacy navy
+405: --pf-t--global--color--brand--default
+405: #004D99
+406: Approved brand
+407: Approved
+408: Use the PatternFly brand token for primary identity surfaces, links, and key dividers.
+411: --Gold
+411: #cc9900
+412: Legacy gold
+414: #cc9900
+416: --pf-t--global--background--color--highlight--clicked
+417: --pf-t--global--color--favorite--hover
+418: --pf-t--global--text--color--status--warning--default
+419: --pf-t--global--border--color--nonstatus--yellow--hover
+422: Approved gold behavior
+423: Approved
+424: Use semantic highlight, warning, favorite, icon, and yellow border tokens. Do not use generic yellow tokens for approved gold behavior.
+427: --CharcoalNavy
+427: #3a3d47
+428: Legacy sidebar
+429: --pf-t--global--background--color--inverse--default
+429: #474b57
+430: Approved inverse nav
+431: Approved
+432: Use the PatternFly inverse background token for the navigation pane. Do not preserve the legacy sidebar color as a standalone token.
+435: --Bronze
+435: #8b6f47
+436: Legacy bronze
+437: --pf-t--global--color--nonstatus--orange--300 / 400 / 500
+437: #8b6f47
+438: Nearest orange family
+439: Approved
+440: Override the nearest PatternFly nonstatus orange tokens to the approved bronze value for hero and label surfaces.
+443: --PageParchment
+443: #e8e6e0
+444: Legacy page
+445: --pf-t--global--background--color--secondary--default
+445: #e8e6e0
+446: PatternFly page
+447: Approved
+448: Use PatternFly page background for workspace canvas.
+451: --OffWhite
+451: #f7f7f7
+452: Legacy surface
+453: --pf-t--global--background--color--primary--default
+453: #f7f7f7
+454: PatternFly surface
+455: Approved
+456: Override the PatternFly primary surface token to the approved off-white value for cards, tables, and forms.
+459: --BorderGrey
+459: #c0c0c0
+460: Legacy border
+461: --pf-t--global--border--color--default
+461: #c0c0c0
+462: PatternFly border
+463: Approved
+464: Override the PatternFly default border token to the approved border grey value.
+467: --Crimson / --Green / --Orange
+468: Status colors
+470: --pf-t--global--color--status--danger--default
+471: --pf-t--global--color--status--success--default
+472: --pf-t--global--color--status--warning--default
+476: Status danger
+477: Status success
+478: Status warning
+481: Proposed
+482: Use PatternFly status tokens through Label, Alert, HelperText, and validation components.
+490: Typography Tokens
+495: Extracted type style
+496: Raw value
+497: PatternFly token mapping
+498: PatternFly font attributes
+499: Live previews
+500: Status
+501: Implementation rule
+506: .type-title
+507: Outfit / 28px / 800 / 1.00
+508: --pf-t--global--font--family--heading
+508: --pf-t--global--font--size--heading--h1
+508: 1.5rem / 24px
+509: font-family: Outfit, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif
+509: font-size: 1.5rem / 24px
+509: font-weight: 800
+509: line-height: 1.00
+509: letter-spacing: 0
+510: Raw
+510: Council dashboard
+510: PatternFly
+510: Council dashboard
+511: Approved
+512: Use the PatternFly H1 size token with the approved Outfit 24px / 800 / 1.00 display attributes.
+515: .type-subheading
+516: Outfit / 20px / 800 / 1.30
+517: --pf-t--global--font--family--heading
+517: --pf-t--global--font--size--heading--h2
+517: 1.25rem / 20px
+518: font-family: Outfit, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif
+518: font-size: 1.25rem / 20px
+518: font-weight: 800
+518: line-height: 1.3
+518: letter-spacing: 0
+519: Raw
+519: Upcoming council meeting
+519: PatternFly
+519: Upcoming council meeting
+520: Approved
+521: Use the PatternFly H2 attributes exactly for hero headings and major card headings.
+524: .type-subheading-15
+525: Outfit / 15px / 800 / 1.60
+526: --pf-t--global--font--family--heading
+526: --pf-t--global--font--size--body--lg
+526: 0.9375rem / 15px
+527: font-family: Outfit, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif
+527: font-size: 0.9375rem / 15px
+527: font-weight: 800
+527: line-height: 1.6
+527: letter-spacing: 0
+528: Raw
+528: Presiding clergy
+528: PatternFly
+528: Presiding clergy
+529: Approved
+530: Use the 15px body-lg extension only where the legacy admin hierarchy needs a compact strong subheading.
+533: .type-small-body
+534: Inter / 15px / 400 / 1.60
+535: --pf-t--global--font--family--body
+535: --pf-t--global--font--size--body--lg
+535: 0.9375rem / 15px
+536: font-family: Inter, Red Hat Text, Helvetica, Arial, sans-serif
+536: font-size: 0.9375rem / 15px
+536: font-weight: 400
+536: line-height: 1.6
+536: letter-spacing: 0
+537: Raw
+537: Review active petitions and hearing readiness.
+537: PatternFly
+537: Review active petitions and hearing readiness.
+538: Approved
+539: Use Inter first, then PatternFly body fallback stack. Keep 15px as body-lg for legacy-density body copy.
+542: .type-caption
+543: Outfit / 12px / 800 / 1.30 / 0.72px
+544: --pf-t--global--font--size--heading--h6
+544: --pf-t--global--letter-spacing--heading--compact
+544: 0.72px
+545: font-family: Outfit, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif
+545: font-size: 0.75rem / 12px
+545: font-weight: 800
+545: line-height: 1.3
+545: letter-spacing: 0.72px
+546: Raw
+546: Previous session
+546: PatternFly
+546: Previous session
+547: Approved
+548: Use for uppercase compact labels when PatternFly component labels need the legacy tribunal rhythm.
+551: .type-caption-12
+552: Source Code Pro / 12px / 600 / 1.60
+553: --pf-t--global--font--family--mono
+553: --pf-t--global--font--size--heading--h6
+554: font-family: Source Code Pro, Red Hat Mono, Courier New, Courier, monospace
+554: font-size: 0.75rem / 12px
+554: font-weight: 600
+554: line-height: 1.6
+554: letter-spacing: 0
+555: Raw
+555: Jan 14, 2026
+555: PatternFly
+555: Jan 14, 2026
+556: Approved
+557: Use Source Code Pro first, then PatternFly mono fallback stack for dates, IDs, and tabular values.
+560: .type-caption-12-600
+561: Outfit / 12px / 600 / 1.60 / -0.84px
+562: --pf-t--global--font--family--heading
+562: --pf-t--global--font--size--heading--h6
+562: letter-spacing: 0
+563: font-family: Outfit, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif
+563: font-size: 0.75rem / 12px
+563: font-weight: 600
+563: line-height: 1.6
+563: letter-spacing: 0
+563: raw extraction: -0.84px
+564: Raw
+564: Assigned reviewer
+564: PatternFly
+564: Assigned reviewer
+565: Review
+566: Negative tracking is visible in the raw sample but should normalize to 0 in the PatternFly implementation.
+569: .type-link
+570: Inter / 12px / 600 / 1.60
+571: --pf-t--global--font--family--body
+571: --pf-t--global--font--size--heading--h6
+571: --pf-t--global--font--weight--body--bold
+572: font-family: Inter, Red Hat Text, Helvetica, Arial, sans-serif
+572: font-size: 0.75rem / 12px
+572: font-weight: 600
+572: line-height: 1.6
+572: letter-spacing: 0
+573: Raw
+573: View Summary
+573: PatternFly
+573: View Summary
+574: Approved
+575: Use PatternFly link or button-link components with the compact 12px token when needed.
+578: .type-caption-12-400
+579: Inter / 12px / 400 / 1.60
+580: --pf-t--global--font--family--body
+580: --pf-t--global--font--size--heading--h6
+580: --pf-t--global--font--weight--body--default
+581: font-family: Inter, Red Hat Text, Helvetica, Arial, sans-serif
+581: font-size: 0.75rem / 12px
+581: font-weight: 400
+581: line-height: 1.6
+581: letter-spacing: 0
+582: Raw
+582: 12 cases assigned
+582: PatternFly
+582: 12 cases assigned
+583: Approved
+584: Use body family with the compact 12px token for secondary metadata.
+587: .type-caption-12-400
+587: mono duplicate
+588: Source Code Pro / 12px / 400 / 1.60 / -0.84px
+589: --pf-t--global--font--family--mono
+589: --pf-t--global--font--size--heading--h6
+589: letter-spacing: 0
+590: font-family: Source Code Pro, Red Hat Mono, Courier New, Courier, monospace
+590: font-size: 0.75rem / 12px
+590: font-weight: 400
+590: line-height: 1.6
+590: letter-spacing: 0
+590: raw extraction: -0.84px
+591: Raw
+591: 2025-20187
+591: PatternFly
+591: 2025-20187
+592: Review
+593: The duplicate selector should be split by usage before implementation; keep mono values but normalize negative tracking to 0.
+596: .type-link-11
+597: Inter / 11px / 600 / 1.60
+598: --pf-t--global--font--family--body
+598: --pf-t--global--font--size--body--xs
+598: 0.6875rem / 11px
+599: font-family: Inter, Red Hat Text, Helvetica, Arial, sans-serif
+599: font-size: 0.6875rem / 11px
+599: font-weight: 600
+599: line-height: 1.6
+599: letter-spacing: 0
+600: Raw
+600: Open case
+600: PatternFly
+600: Open case
+601: Approved
+602: Use 11px only for compact secondary links where the surrounding PatternFly component is already dense.
+605: .type-small
+606: Inter / 11px / 400 / 1.60
+607: --pf-t--global--font--family--body
+607: --pf-t--global--font--size--body--xs
+608: font-family: Inter, Red Hat Text, Helvetica, Arial, sans-serif
+608: font-size: 0.6875rem / 11px
+608: font-weight: 400
+608: line-height: 1.6
+608: letter-spacing: 0
+609: Raw
+609: Showing 2 cases
+609: PatternFly
+609: Showing 2 cases
+610: Approved
+611: Use for dense table helper text only; prefer PatternFly body-sm when density is not constrained.
+614: .type-small-11
+615: Source Code Pro / 11px / 400 / 1.60
+616: --pf-t--global--font--family--mono
+616: --pf-t--global--font--size--body--xs
+617: font-family: Source Code Pro, Red Hat Mono, Courier New, Courier, monospace
+617: font-size: 0.6875rem / 11px
+617: font-weight: 400
+617: line-height: 1.6
+617: letter-spacing: 0
+618: Raw
+618: 25 days ago
+618: PatternFly
+618: 25 days ago
+619: Approved
+620: Use for compact tabular metadata when mono alignment improves scanning.
+623: .type-small-9
+624: Inter / 9px / 800 / 1.60 / 0.72px
+625: --pf-t--global--font--size--heading--h8
+625: --pf-t--global--letter-spacing--heading--compact
+626: font-family: Inter, Red Hat Text, Helvetica, Arial, sans-serif
+626: font-size: 0.5625rem / 9px
+626: font-weight: 800
+626: line-height: 1.6
+626: letter-spacing: 0.72px
+627: Raw
+627: Status
+627: PatternFly
+627: Status
+628: Approved
+629: Use sparingly for dense column labels, labels, and eyebrow text where PatternFly component sizing is too large.
+632: .type-small-9-800
+633: Outfit / 9px / 800 / 1.10 / 1.26px
+634: --pf-t--global--font--family--heading
+634: --pf-t--global--font--size--heading--h8
+634: --pf-t--global--letter-spacing--brand
+635: font-family: Outfit, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif
+635: font-size: 0.5625rem / 9px
+635: font-weight: 800
+635: line-height: 1.1
+635: letter-spacing: 1.26px
+636: Raw
+636: Clerical Tribunal Management
+636: PatternFly
+636: Clerical Tribunal Management
+637: Approved
+638: Use for the sidebar tribunal name and other approved shell identity text.
+641: .type-small-9-600
+642: Inter / 9px / 600 / 1.60 / 0.36px
+643: --pf-t--global--font--size--heading--h8
+643: --pf-t--global--letter-spacing--caption
+644: font-family: Inter, Red Hat Text, Helvetica, Arial, sans-serif
+644: font-size: 0.5625rem / 9px
+644: font-weight: 600
+644: line-height: 1.6
+644: letter-spacing: 0.36px
+645: Raw
+645: Cases to assign
+645: PatternFly
+645: Cases to assign
+646: Approved
+647: Use for compact stat labels and dense secondary labels.
+650: .type-small-9-600
+650: heading duplicate
+651: Outfit / 9px / 600 / 1.10 / 1.26px
+652: --pf-t--global--font--family--heading
+652: --pf-t--global--font--size--heading--h8
+652: --pf-t--global--letter-spacing--brand
+653: font-family: Outfit, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif
+653: font-size: 0.5625rem / 9px
+653: font-weight: 600
+653: line-height: 1.1
+653: letter-spacing: 1.26px
+654: Raw
+654: Diocese of Los Angeles
+654: PatternFly
+654: Diocese of Los Angeles
+655: Approved
+656: Use for the sidebar diocese name. Keep the duplicate selector separated by semantic usage.
+659: .type-small-9-400
+660: Inter / 9px / 400 / 1.60
+661: --pf-t--global--font--size--heading--h8
+661: --pf-t--global--font--weight--body--default
+662: font-family: Inter, Red Hat Text, Helvetica, Arial, sans-serif
+662: font-size: 0.5625rem / 9px
+662: font-weight: 400
+662: line-height: 1.6
+662: letter-spacing: 0
+663: Raw
+663: Under review
+663: PatternFly
+663: Under review
+664: Approved
+665: Use only where a PatternFly component requires compact helper text below 11px.
+672: Spacing Tokens
+677: Legacy token
+678: Legacy value
+679: PatternFly token
+680: Live sample
+681: Status
+682: Implementation rule
+687: --Pad4
+688: 4px
+689: --pf-t--global--spacer--xs
+689: 0.25rem / 4px
+691: Approved
+692: Use for fine gaps and compact icon/text spacing.
+695: --Pad8
+696: 8px
+697: --pf-t--global--spacer--sm
+697: 0.5rem / 8px
+699: Approved
+700: Use for control padding and compact stacked rhythm.
+703: --Pad16
+704: 16px
+705: --pf-t--global--spacer--md
+705: 1rem / 16px
+707: Approved
+708: Use for standard component and section internal spacing.
+711: --Pad24
+712: 24px
+713: --pf-t--global--spacer--lg
+713: 1.5rem / 24px
+715: Approved
+716: Use for page inset and larger grouped spacing.
+719: --Pad32
+720: 32px
+721: --pf-t--global--spacer--xl
+721: 2rem / 32px
+723: Approved
+724: Use for major page separation and larger page sections.
+727: --Pad48 / --Pad64
+728: 48px / 64px
+729: --pf-t--global--spacer--2xl / 3xl
+729: 3rem / 4rem
+731: Approved
+732: Use sparingly. PatternFly app screens should favor component rhythm over large page-specific whitespace.
+735: --Pad2 / --Pad6 / --Pad10 / --Pad12 / --Pad14 / --Pad18 / --Pad20 / --Pad28 / --Pad36 / --Pad40 / --Pad56
+736: Non-scale values
+737: Nearest PatternFly spacer or component-specific variable
+739: Approved
+740: Do not copy by default. Use the nearest PatternFly spacer or a component slot variable only when the component requires it.
+748: Generic Card Pattern Mapping
+753: Legacy element
+754: PatternFly equivalent
+755: Token mapping
+756: Status
+757: Implementation rule
+762: CARD
+763: Card
+764: --pf-v6-c-card--BackgroundColor
+764: #f7f7f7
+764: --pf-v6-c-card--BorderColor
+764: #c0c0c0
+764: --pf-v6-c-card--BorderRadius
+764: 8px
+764: --pf-v6-c-card--BoxShadow
+764: 0 0 6px rgba(0, 0, 0, 0.04)
+765: Approved
+766: Use PatternFly Card with the approved admin card surface tokens. Do not copy the legacy CARD class into new screens.
+769: SECTION_header
+770: CardHeader with CardTitle
+771: display: flex
+771: align-items: center
+771: justify-content: space-between
+771: gap: 8px
+771: margin-bottom: 20px
+771: padding: 16px 24px 8px
+771: border-bottom: 1px solid #c0c0c0
+772: Approved
+773: Use CardHeader for section headers and CardTitle for the title text. Do not create a custom section-header div inside CardBody.
+776: CARD_title img + text
+777: CardTitle with PatternFly icon
+778: font-family: Outfit
+778: font-size: 14px
+778: font-weight: 800
+778: line-height: 1.3
+778: icon: 14px x 14px
+778: gap: 8px
+779: Approved
+780: Use CardTitle and a PatternFly React icon, such as FileAltIcon, instead of a legacy image tag.
+783: CARD content
+784: CardBody
+785: padding-top: 0
+785: padding-right: 24px
+785: padding-bottom: 16px
+785: padding-left: 24px
+786: Approved
+787: Use CardBody for primary card content. Padding maps to the approved PatternFly spacer pair.
+795: Case List Pattern Mapping
+800: Legacy element
+801: PatternFly equivalent
+802: Token mapping
+803: Status
+804: Implementation rule
+809: Case queue CARD
+810: Card with CardHeader and CardBody
+811: --pf-v6-c-card--BackgroundColor
+811: #f7f7f7
+811: --pf-v6-c-card--BorderColor
+811: #c0c0c0
+811: --pf-v6-c-card--BorderRadius
+811: 8px
+811: --pf-v6-c-card--BoxShadow
+811: 0 0 6px rgba(0, 0, 0, 0.04)
+812: Approved
+813: Use PatternFly Card as the case-list surface and inherit the approved generic admin card tokens.
+816: Queue tabs + counts
+817: Tabs, Tab, Badge
+818: CardHeader divider
+818: 98% width / 1% inset
+818: --pf-t--global--border--width--regular
+818: --pf-t--global--border--color--default
+818: --pf-v6-c-tabs--before--BorderBlockEndWidth
+818: 0
+818: --pf-v6-c-tabs__item-text--FontSize
+818: --pf-t--global--font--size--heading--h6
+818: 0.75rem / 12px
+818: --pf-v6-c-tabs__item-text--FontWeight
+818: 400
+819: Approved
+820: Use PatternFly Tabs with Badge counts for My Cases, Unassigned, Active Cases, Closed, Incomplete, and All Cases. Remove the tab-list baseline; keep only the selected tab underline. The header/body separator is a 98% inset PatternFly border token.
+823: Search + filters row
+824: Toolbar with SearchInput, FormGroup, unlabeled FormSelect, Button
+825: --pf-v6-c-toolbar__content--PaddingBlockStart
+825: --pf-t--global--spacer--xs
+825: 0.25rem / 4px
+825: --pf-v6-c-toolbar__content--PaddingBlockEnd
+825: --pf-t--global--spacer--md
+825: --pf-v6-c-text-input-group__text-input--MinWidth
+825: 21.875rem / 350px
+825: --pf-t--global--border--color--hover
+825: #004D99
+825: --pf-t--global--border--color--clicked
+825: #004D99
+825: focus outline
+825: 0
+825: focus box-shadow
+825: none
+826: Approved
+827: Use PatternFly Toolbar for the case queue search, Status, Year, Reason, and Clear controls. In this compact toolbar, do not render visible select labels; keep select accessibility through aria-label. Focused form controls keep the normal boundary only. No added inner outline, inset ring, or extra focus layer.
+830: Case table rows
+831: Compact Table with Thead, Tbody, Tr, Th, Td
+832: table shell
+832: Inter / 11px / 400 / 1
+832: border-collapse: separate
+832: border-spacing: 0
+832: border-radius: 8px
+832: border: 1px solid #c0c0c0
+832: columns
+832: Case ID / Applicant / Spouse / Status / Assigned reviewer / Last activity / Submitted / Reason / Actions
+832: thead font
+832: Inter / 11px / 800 / 1 / 0.08em / uppercase
+832: text-align: left
+832: white-space: nowrap
+832: tbody font
+832: Source Code Pro / 11px / 400 / 1 / -0.07em / -0.25em
+832: --pf-v6-c-table--cell--PaddingBlockStart
+832: --pf-t--global--spacer--md
+832: --pf-v6-c-table--cell--PaddingInlineStart
+832: --pf-t--global--spacer--md
+833: Approved
+834: Use compact PatternFly Table for case queues. Show legacy Ground data as a Reason column. Apply tight letter and word spacing on header/body cells only, not on the table root. Do not hand-build table rows or cards for desktop case lists.
+837: Case ID / row actions
+838: Button variant link, isInline / Dropdown, DropdownList, DropdownItem, MenuToggle
+839: Case ID
+839: --pf-t--global--font--family--mono
+839: --pf-t--global--font--size--heading--h6
+839: 0.75rem / 12px
+839: --pf-t--global--font--weight--body--bold
+839: tabular-nums
+839: Actions toggle
+839: --pf-v6-c-menu-toggle--BackgroundColor
+839: transparent
+839: --pf-v6-c-menu-toggle--BorderColor
+839: transparent
+839: --pf-v6-c-menu-toggle--FontSize
+839: 0.6875rem / 11px
+839: --pf-t--global--icon--color--subtle
+839: Actions menu
+839: --pf-v6-c-menu--BorderRadius
+839: 8px
+839: --pf-v6-c-menu--BoxShadow
+839: --pf-t--global--box-shadow--lg
+839: --pf-v6-c-menu--MinWidth
+839: 12rem / 192px
+839: --pf-v6-c-menu--PaddingBlockStart / End
+839: 0.25rem / 4px
+839: --pf-v6-c-menu__item--FontSize
+839: 0.75rem / 12px
+839: --pf-v6-c-menu__item--LineHeight
+839: 1.3
+839: --pf-v6-c-menu__item--PaddingBlockStart / End
+839: 0.25rem / 4px
+839: --pf-v6-c-menu__item--PaddingInlineStart / End
+839: 1rem / 16px
+840: Approved
+841: Use PatternFly link Button for case IDs. Use a compact PatternFly Dropdown action menu with an ellipsis MenuToggle for Assign to Session, Open Case, Close Case, Reject, and Delete.
+844: Applicant / Spouse / Status pills
+845: Label with PatternFly semantic color tone
+846: --pf-v6-c-label--FontSize
+846: 0.6875rem / 11px
+846: --pf-v6-c-label--PaddingBlockStart / End
+846: 0.25rem / 4px
+846: --pf-v6-c-label--PaddingInlineStart / End
+846: 0.25rem / 4px
+846: --pf-v6-c-label--BorderWidth
+846: 1px
+846: --pf-v6-c-label--BorderRadius
+846: 0.375rem / 6px
+846: --pf-v6-c-label__content--FontWeight
+846: 600
+846: Label icon slot
+846: --pf-t--global--font--size--heading--h6
+846: 0.75rem / 12px
+846: Applicant / spouse / status tones
+846: blue / red / purple / orange / green / grey
+846: Assigned reviewer
+846: --pf-t--global--color--nonstatus--reviewer--default
+846: #636465
+846: --pf-v6-c-label--Color
+846: #ffffff
+847: Approved
+848: Use PatternFly Label for person chips, assigned reviewer, and status values. Party and assigned clergy chips use the PatternFly Label icon slot with the approved legacy gender/cross assets. Status tone comes from the shared data mapper; reviewer uses the approved neutral reviewer token.
+856: Dashboard Hero Pattern Mapping
+861: Legacy element
+862: PatternFly equivalent
+863: Token mapping
+864: Status
+865: Implementation rule
+870: CARD MOD_flush HDR_meetingHero
+871: Card with CardBody and CardFooter
+872: --pf-v6-c-card--BorderRadius
+872: --pf-t--global--box-shadow--sm
+873: Approved
+874: Keep the dashboard hero as a PatternFly Card surface, not a hand-built panel.
+877: HDR_heroMain
+878: CardBody with Split and nowrap Flex stat layout
+879: --pf-t--global--background--color--hero
+879: --pf-t--global--text--color--on-brand--default
+879: --pf-t--global--spacer--md
+879: --pf-t--global--spacer--hero-main-gap
+879: linear-gradient(180deg, #ad7916 0%, #ac7919 20%, #a9781c 40%, #a57721 60%, #ad7916 80%, #ad7916 100%)
+880: Approved
+881: Use the approved bronze-orange gradient on the PatternFly CardBody. The main Split maps the legacy hero layout: center aligned in the gold body, space-between, 24px gap, and no scroll container. The left content Flex also centers itself within the hero row.
+884: TXT_heroLabel
+885: Content kicker text
+886: --pf-t--global--text--color--on-brand--muted
+886: --pf-t--global--font--family--heading
+886: --pf-t--global--font--size--heading--h8
+886: --pf-t--global--letter-spacing--hero-label
+886: color-mix(in srgb, #fff 55%, transparent)
+886: Outfit / 9px / 800 / 1.60 / 0.1em
+887: Approved
+888: Live selector .pf-admin-kicker uses PatternFly Content with the approved legacy hero label attributes: 55% white, Outfit 9px, 800 weight, uppercase, 0.1em tracking, and zero margin/padding.
+891: HDR_heroDate
+892: Title headingLevel h2
+893: --pf-t--global--font--family--heading
+893: --pf-t--global--font--size--heading--h2
+893: Outfit / 20px / 800 / 1.30
+894: Approved
+895: Live selector .pf-admin-meeting-title keeps PatternFly Title while applying the approved H2 attributes.
+898: HDR_heroMeta
+899: Content body text
+900: --pf-t--global--font--family--body
+900: --pf-t--global--font--size--heading--h6
+900: Inter / 12px / 400 / 1.60
+900: strong: 600
+901: Approved
+902: Live selector .pf-admin-meeting-meta uses the approved 12px metadata mapping. The Presiding and Location labels inherit the same attributes with strong weight.
+905: BTN_heroGhost
+906: Button variant secondary
+907: --pf-v6-c-button--m-secondary--Color
+907: --pf-v6-c-button--m-secondary--BorderColor
+907: --pf-t--global--text--color--on-brand--link
+907: --pf-t--global--border--color--on-brand--link
+907: --pf-t--global--border--color--on-brand--link--hover
+907: --pf-t--global--spacer--hero-button-block
+907: --pf-t--global--spacer--hero-button-inline
+907: --pf-t--global--spacer--hero-actions-gap
+907: Inter / 12px / 600 / 1.60
+907: color-mix 70% white / 8px 20px / 6px gap
+908: Approved
+909: Use PatternFly secondary Button with approved ghost-button tokens: transparent background, 25% white border, 70% white text, 8px/20px padding, 8px radius, and 6px action-row gap.
+912: STAT_heroBox
+913: Compact plain Card
+914: --pf-t--global--background--color--on-brand--stat
+914: --pf-t--global--border--color--on-brand--stat
+914: --pf-t--global--text--color--on-brand--stat-label
+914: --pf-t--global--font--family--heading
+914: --pf-t--global--font--size--heading--hero-stat
+914: 1.75rem / 28px
+915: Approved
+916: Live selector .pf-admin-stat-card uses the approved stat box attributes: min-width 110px, 16px/22px padding, 15% white background, 20% white border, 8px PatternFly radius, centered content, no scroll, and the 28px Outfit stat number. Its parent SplitItem is also flex-centered inside the gold CardBody.
+919: HDR_heroPrevRow
+920: CardFooter with Split, compact Flex details, Content separators, Button link
+921: --pf-t--global--color--nonstatus--orange--500
+921: --pf-t--global--font--family--heading
+921: --pf-t--global--font--size--heading--h8
+921: --pf-t--global--letter-spacing--heading--compact
+921: --pf-t--global--spacer--sm
+921: --pf-t--global--border--color--default
+921: Outfit / 9px / 800 / 1.60 / 0.72px
+922: Approved
+923: Use PatternFly footer composition for the previous-session summary row. Keep View Summary right aligned. Group the label/date/metrics in one compact nowrap Flex row with 8px gaps and text separators: Previous Session Jan 14, 2026 | 18 cases assigned | 12 hearings conducted. Each text item uses inline-flex center alignment to sit on the same visual centerline.
