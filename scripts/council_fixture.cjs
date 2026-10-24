@@ -294,12 +294,36 @@ function api(req, res, url, body) {
     if (f.scan_state === "pending" && ++f.checks >= 2) f.scan_state = "clean";
     return json(res, 200, { id: f.id, scan_state: f.scan_state, can_download: f.scan_state === "clean" });
   }
-  if ((m = p.match(/^\/api\/files\/([^/]+)\/$/)) && state.files.some((x) => x.id === m[1] && x.category === "REPORT")) {
+  if ((m = p.match(/^\/api\/files\/([^/]+)\/$/)) && state.files.some((x) => x.id === m[1] && ["REPORT", "AUDIO"].includes(x.category))) {
     const x = state.files.find((y) => y.id === m[1]);
     if (x.scan_state !== "clean") return json(res, 403, { error: "forbidden" });
+    if (x.category === "AUDIO") {
+      const data = MEDIA["ev-aud"].bytes();
+      res.writeHead(200, { "Content-Type": "audio/wav", "Content-Length": data.length, "Accept-Ranges": "none", "Cache-Control": "private, no-store" });
+      return res.end(data);
+    }
     res.writeHead(200, { "Content-Type": "application/pdf", "Content-Length": MINI_PDF.length, "Cache-Control": "private, no-store",
       "Content-Disposition": url.searchParams.get("view") === "1" ? "inline" : `attachment; filename="${x.name}"` });
     return res.end(MINI_PDF);
+  }
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/recording-completion\/$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    const f = state.files.find((x) => x.id === body.file_id);
+    const extra = Object.keys(body).filter((k) => !["file_id", "completion_date", "recording_notice", "duration_ms", "expected_version"].includes(k));
+    if (extra.length) return json(res, 422, { error: "validation", messages: ["Unsupported recording completion fields."] });
+    if (!r || r.kind !== "external_priest" || r.state !== "sent") return json(res, 422, { error: "validation", messages: ["Request is not awaiting this recorded response."] });
+    if (!body.recording_notice || body.recording_notice.acknowledged !== true) return json(res, 422, { error: "validation", messages: ["Record an explicit, bounded acknowledgement that the person was informed of recording."] });
+    if (body.duration_ms !== null && body.duration_ms !== undefined && !(Number.isInteger(body.duration_ms) && body.duration_ms >= 0)) return json(res, 422, { error: "validation", messages: ["Measured duration must be a non-negative integer or null."] });
+    if (!f || f.category !== "AUDIO" || f.case !== r.case || f.request) return json(res, 403, { error: "forbidden", detail: "Use a council-only recording original for this case and proceeding." });
+    if (f.scan_state !== "clean" || (state.media && state.media.recordings.some((x) => x.source === f.id))) return json(res, 422, { error: "validation", messages: ["Use a validated current original not already associated with another recording."] });
+    r.state = "completed";
+    const reportId = "rep-rec-" + r.id;
+    state.externalReports = state.externalReports || [];
+    state.externalReports.push({ id: reportId, title: r.title, kind: "external_priest", subject: r.subject_name, date: body.completion_date, parent_report_id: null,
+      questions: [], answers: { files: [f.id] }, observations: null, version: 1, method: "recording", author: me().name, author_id: me().id, submitted_at: now(), can_revise: false, case: r.case });
+    if (state.media) state.media.recordings.push({ id: "rec-" + r.id, report: reportId, file: f.id, source: f.id, duration_ms: body.duration_ms ?? null, notice: true, created_at: now(), finalized_at: now(),
+      runs: [{ id: "run-rec-" + r.id, attempt: 1, state: "queued" }] });
+    return json(res, 201, { id: reportId, recording_id: "rec-" + r.id, method: "recording", completion_date: body.completion_date });
   }
   if (p === "/__paper_scan/") { state.paperScan = body.state || null; return json(res, 200, { state: state.paperScan }); }
   if ((m = p.match(/^\/api\/requests\/([^/]+)\/paper-completion\/$/))) {
@@ -318,11 +342,13 @@ function api(req, res, url, body) {
   if (p === "/api/files/") {
     const c = state.cases.find((x) => x.id === body.case_id);
     if (!admin() && (!c || c.assigned !== me().id)) return json(res, 403, { error: "forbidden", detail: "Only the assigned case manager can perform this action." });
-    const audio = body.category === "REC";
+    const audio = body.category === "REC" || body.category === "AUDIO";
+    const caseAudio = body.category === "AUDIO"; // fcf03a2 council case original for a recorded priest response
     const f = {
       id: "f-" + (state.files.length + 1), case: body.case_id, category: body.category,
-      name: `${body.case_number}-${body.category}-20261021-1800.${audio ? "webm" : "pdf"}`,
-      mime: audio ? "video/webm" : "application/pdf", size: body.size || 0, scan_state: state.files.length ? "clean" : "pending",
+      name: `${body.case_number}-${body.category}-20261021-1800.${caseAudio ? "wav" : audio ? "webm" : "pdf"}`,
+      mime: caseAudio ? "audio/wav" : audio ? "video/webm" : "application/pdf", size: body.size || 0,
+      scan_state: caseAudio ? (state.paperScan === "rejected" ? "rejected" : "pending") : state.files.length ? "clean" : "pending", checks: 0,
     };
     state.files.push(f);
     return json(res, 201, { id: f.id, name: f.name, scan_state: f.scan_state, sha256: "synthetic" });
@@ -353,7 +379,7 @@ function api(req, res, url, body) {
       ],
     };
   }
-  const mediaWriter = (reportId) => { const r = state.reports.find((x) => x.id === reportId); const c = r && state.cases.find((x) => x.id === r.case); return Boolean(c && c.status === "open" && (admin() || c.assigned === me().id)); };
+  const mediaWriter = (reportId) => { const r = state.reports.find((x) => x.id === reportId) || (state.externalReports || []).find((x) => x.id === reportId); const c = r && state.cases.find((x) => x.id === r.case); return Boolean(c && c.status === "open" && (admin() || c.assigned === me().id)); };
   const latestOf = (tr) => Math.max(...state.media.transcripts.filter((x) => x.recording === tr.recording && x.language === tr.language && x.kind === tr.kind).map((x) => x.version));
   const recordingOf = (id) => state.media.recordings.find((x) => x.id === id);
   if ((m = p.match(/^\/api\/reports\/([^/]+)\/recordings\/$/))) {

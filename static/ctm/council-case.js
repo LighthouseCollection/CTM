@@ -620,6 +620,29 @@ ${ar}` : en;
       interviewStarted: "The interview was started. Record the answers when ready.",
       recordInterview: "Record interview answers",
       paperTitle: "Paper response",
+      recTitle: "Recorded response",
+      recHelp: "If the priest gave the report in a conversation the council recorded, upload the recording here to complete the request. The recording is kept as the report and queued for transcription; no transcript is shown until one is produced.",
+      recStart: "Record a recorded response",
+      recFile: "Recording (MP3, WAV, OGG, MP4 or WebM)",
+      recFileHelp: "Council only. It is stored with the case's original recordings; the spouses cannot hear it.",
+      chooseRecording: "Choose the recording file.",
+      audioOnly: "Only an audio or video recording can be used (MP3, WAV, OGG, MP4 or WebM).",
+      recTooLargeAudio: "An MP3, WAV or OGG recording must be 100 MB or smaller.",
+      recTooLargeVideo: "An MP4 or WebM recording must be 500 MB or smaller.",
+      recReceived: "Date recorded",
+      recReceivedHelp: "The date of the recorded conversation. It cannot be later than today.",
+      recConfirm: "This is the recording of the priest's report.",
+      confirmRecording: "Confirm that the file is the recording of the priest's report.",
+      recInformed: "The priest was told the conversation was being recorded.",
+      confirmInformed: "Confirm that the priest was told about the recording. CTM keeps this as your declaration.",
+      recUpload: "Upload recording",
+      recRecord: "Record recorded response",
+      recDuration: "Length",
+      recDurationUnknown: "Not measured by this browser",
+      recRetained: "The uploaded recording stays on record with the case even if another file is used.",
+      recConfirmTitle: "Record the recorded response?",
+      recConfirmMessage: "The request will be completed and its private link will stop working. Your declaration that the priest was informed is kept with your name. The recording cannot be replaced afterwards; it is queued for transcription.",
+      recRecorded: "The recorded response was recorded and the request is complete. Transcription is queued.",
       chooseFile: "Choose the PDF file.",
       pdfOnly: "Only a PDF file can be used.",
       paperHelp: "If the priest returned the report on paper, upload the scanned original here to complete the request. The scan is kept as the report; it is not transcribed.",
@@ -634,18 +657,18 @@ ${ar}` : en;
       paperConfirm: "This PDF is the priest's paper response as it was received.",
       confirmPaper: "Confirm that the PDF is the priest's paper response.",
       paperUpload: "Upload paper original",
-      paperCheck: "Check again",
+      returnedCheck: "Check again",
       paperRecord: "Record paper response",
-      paperCheckState: "File check",
+      returnedCheckState: "File check",
       scan_pending: "Checking",
       scan_clean: "Passed",
       scan_rejected: "Rejected",
-      paperChecking: "The file is being checked. The response can be recorded once the check passes.",
-      paperStillChecking: "The file is still being checked. Try again shortly.",
-      paperRejected: "The file failed the check and cannot be used. Upload another scan.",
-      paperChooseAnother: "Use a different file",
+      returnedChecking: "The file is being checked. The response can be recorded once the check passes.",
+      returnedStillChecking: "The file is still being checked. Try again shortly.",
+      returnedRejected: "The file failed the check and cannot be used. Upload another file.",
+      returnedChooseAnother: "Use a different file",
       paperRetained: "The uploaded file stays on record with this request even if another file is used.",
-      paperNoFile: "The server did not confirm the upload. Nothing was recorded.",
+      returnedNoFile: "The server did not confirm the upload. Nothing was recorded.",
       paperConfirmTitle: "Record the paper response?",
       paperConfirmMessage: "The request will be completed and its private link will stop working. The paper original cannot be replaced afterwards; a correction needs a separate follow-up request.",
       paperRecorded: "The paper response was recorded and the request is complete.",
@@ -1065,6 +1088,29 @@ ${ar}` : en;
       interviewStarted: "بدأت المقابلة. سجّل الإجابات عندما تكون جاهزًا.",
       recordInterview: "تسجيل إجابات المقابلة",
       paperTitle: "الرد الورقي",
+      recTitle: "الرد المسجَّل",
+      recHelp: "إذا قدّم الكاهن التقرير في محادثة سجّلها المجلس، فارفع التسجيل هنا لإكمال الطلب. يُحفظ التسجيل بوصفه التقرير ويُدرج في قائمة انتظار النسخ؛ ولا يُعرض نص قبل إنتاجه.",
+      recStart: "تسجيل رد مسجَّل",
+      recFile: "التسجيل (MP3 أو WAV أو OGG أو MP4 أو WebM)",
+      recFileHelp: "للمجلس فقط. ويُحفظ مع التسجيلات الأصلية للقضية؛ ولا يستطيع الزوجان سماعه.",
+      chooseRecording: "اختر ملف التسجيل.",
+      audioOnly: "لا يمكن استخدام غير تسجيل صوتي أو مرئي (MP3 أو WAV أو OGG أو MP4 أو WebM).",
+      recTooLargeAudio: "يجب ألا يتجاوز تسجيل MP3 أو WAV أو OGG ‏100 ميغابايت.",
+      recTooLargeVideo: "يجب ألا يتجاوز تسجيل MP4 أو WebM ‏500 ميغابايت.",
+      recReceived: "تاريخ التسجيل",
+      recReceivedHelp: "تاريخ المحادثة المسجَّلة. ولا يجوز أن يكون بعد اليوم.",
+      recConfirm: "هذا تسجيل تقرير الكاهن.",
+      confirmRecording: "أكّد أن الملف هو تسجيل تقرير الكاهن.",
+      recInformed: "أُبلغ الكاهن بأن المحادثة تُسجَّل.",
+      confirmInformed: "أكّد أن الكاهن أُبلغ بالتسجيل. ويحفظ النظام ذلك بوصفه إقرارك.",
+      recUpload: "رفع التسجيل",
+      recRecord: "تسجيل الرد المسجَّل",
+      recDuration: "المدة",
+      recDurationUnknown: "لم يقسها هذا المتصفح",
+      recRetained: "يبقى التسجيل المرفوع محفوظًا مع القضية حتى لو استُخدم ملف آخر.",
+      recConfirmTitle: "تسجيل الرد المسجَّل؟",
+      recConfirmMessage: "سيكتمل الطلب ويتوقف رابطه الخاص عن العمل. ويُحفظ إقرارك بأن الكاهن أُبلغ مع اسمك. ولا يمكن استبدال التسجيل بعد ذلك؛ ويُدرج في قائمة انتظار النسخ.",
+      recRecorded: "سُجّل الرد المسجَّل واكتمل الطلب. والنسخ في قائمة الانتظار.",
       chooseFile: "اختر ملف PDF.",
       pdfOnly: "لا يمكن استخدام غير ملف PDF.",
       paperHelp: "إذا أعاد الكاهن التقرير على الورق، فارفع النسخة الممسوحة ضوئيًا من الأصل هنا لإكمال الطلب. تُحفظ النسخة الممسوحة بوصفها التقرير، ولا يُنسخ نصها.",
@@ -1079,18 +1125,18 @@ ${ar}` : en;
       paperConfirm: "ملف PDF هذا هو الرد الورقي للكاهن كما استُلم.",
       confirmPaper: "أكّد أن ملف PDF هو الرد الورقي للكاهن.",
       paperUpload: "رفع الأصل الورقي",
-      paperCheck: "التحقق مجددًا",
+      returnedCheck: "التحقق مجددًا",
       paperRecord: "تسجيل الرد الورقي",
-      paperCheckState: "فحص الملف",
+      returnedCheckState: "فحص الملف",
       scan_pending: "قيد الفحص",
       scan_clean: "اجتاز الفحص",
       scan_rejected: "مرفوض",
-      paperChecking: "الملف قيد الفحص. يمكن تسجيل الرد بعد اجتياز الفحص.",
-      paperStillChecking: "ما زال الملف قيد الفحص. حاول مجددًا بعد قليل.",
-      paperRejected: "لم يجتز الملف الفحص ولا يمكن استخدامه. ارفع نسخة ممسوحة أخرى.",
-      paperChooseAnother: "استخدام ملف آخر",
+      returnedChecking: "الملف قيد الفحص. يمكن تسجيل الرد بعد اجتياز الفحص.",
+      returnedStillChecking: "ما زال الملف قيد الفحص. حاول مجددًا بعد قليل.",
+      returnedRejected: "لم يجتز الملف الفحص ولا يمكن استخدامه. ارفع ملفًا آخر.",
+      returnedChooseAnother: "استخدام ملف آخر",
       paperRetained: "يبقى الملف المرفوع محفوظًا مع هذا الطلب حتى لو استُخدم ملف آخر.",
-      paperNoFile: "لم يؤكد الخادم الرفع. ولم يُسجَّل شيء.",
+      returnedNoFile: "لم يؤكد الخادم الرفع. ولم يُسجَّل شيء.",
       paperConfirmTitle: "تسجيل الرد الورقي؟",
       paperConfirmMessage: "سيكتمل الطلب ويتوقف رابطه الخاص عن العمل. ولا يمكن استبدال الأصل الورقي بعد ذلك؛ ويتطلب التصحيح طلب متابعة منفصلًا.",
       paperRecorded: "سُجّل الرد الورقي واكتمل الطلب.",
@@ -1714,53 +1760,123 @@ ${ar}` : en;
     );
   }
 
-  // Paper response (backend 746e5a4): the council uploads the priest's returned paper as a council-only PDF bound
-  // to the request (category REPORT), waits for the file check, then records it with the received date. The
-  // uploaded file's id is kept in page memory only, so in-app navigation does not lose a file awaiting its check.
-  const paperUploads = new Map();
-  const PAPER_LIMIT = 25 * 1024 * 1024;
-  function paperProblem(form, today) {
+  // A priest's response that came back outside the private link: the council uploads the original, waits for the
+  // server's file check, then records it with the received date.
+  // - paper (backend 746e5a4): council-only PDF bound to the request (category REPORT, request_id).
+  // - recording (backend fcf03a2): council case original (category AUDIO, case_id, no request_id), an explicit
+  //   declaration that the person was told about the recording, and the duration when the browser can measure it.
+  // An uploaded file awaiting its check is kept in page memory only, so in-app navigation does not lose it.
+  const returnedUploads = new Map();
+  const MB = 1024 * 1024;
+  const RECORDING_TYPES = { mp3: 100, wav: 100, ogg: 100, mp4: 500, m4a: 500, webm: 500 }; // backend identify() limits
+  const RETURNED = {
+    paper: {
+      prefix: "paper",
+      category: "REPORT",
+      bindRequest: true,
+      accept: ".pdf,application/pdf",
+      endpoint: "paper-completion",
+      checks: ["confirmed"],
+      fileProblem(file) {
+        const pdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name || "");
+        if (!pdf) return "pdfOnly";
+        if (file.size > 25 * MB) return "paperTooLarge";
+        return null;
+      },
+    },
+    recording: {
+      prefix: "rec",
+      category: "AUDIO",
+      bindRequest: false,
+      accept: ".mp3,.wav,.ogg,.mp4,.m4a,.webm,audio/mpeg,audio/wav,audio/ogg,video/mp4,video/webm",
+      endpoint: "recording-completion",
+      checks: ["confirmed", "informed"],
+      fileProblem(file) {
+        const ext = String(file.name || "").toLowerCase().split(".").pop();
+        const limit = RECORDING_TYPES[ext];
+        if (!limit && !/^(audio|video)\//.test(file.type || "")) return "audioOnly";
+        if (file.size > (limit || 100) * MB) return limit === 500 ? "recTooLargeVideo" : "recTooLargeAudio";
+        return null;
+      },
+    },
+  };
+  function returnedProblem(variant, form, today) {
+    const spec = RETURNED[variant];
     if (!form.fileId) {
-      if (!form.chosen) return "chooseFile";
-      const pdf = form.chosen.type === "application/pdf" || /\.pdf$/i.test(form.chosen.name || "");
-      if (!pdf) return "pdfOnly";
-      if (form.chosen.size > PAPER_LIMIT) return "paperTooLarge";
+      if (!form.chosen) return variant === "paper" ? "chooseFile" : "chooseRecording";
+      const issue = spec.fileProblem(form.chosen);
+      if (issue) return issue;
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(form.date || "")) return "receivedRequired";
     if (form.date > today) return "receivedFuture";
-    if (form.confirmed !== true) return "confirmPaper";
+    if (form.confirmed !== true) return variant === "paper" ? "confirmPaper" : "confirmRecording";
+    if (spec.checks.includes("informed") && form.informed !== true) return "confirmInformed";
     return null;
   }
-  function paperAllowed(request, canWrite) {
+  const paperProblem = (form, today) => returnedProblem("paper", form, today);
+  function returnedAllowed(request, canWrite) {
     if (!request || request.kind !== EXTERNAL || request.state !== "sent" || !canWrite) return false;
     const controls = linkControls(request, canWrite);
     return !controls.projected || controls.cancel;
   }
+  const paperAllowed = returnedAllowed;
+  // Measured by the browser from the chosen file; null when it cannot tell (never estimated).
+  function measureDuration(file) {
+    return new Promise((resolve) => {
+      let url = null;
+      const done = (value) => {
+        if (url) window.URL.revokeObjectURL(url);
+        resolve(value);
+      };
+      try {
+        const media = window.document.createElement(/^video\//.test(file.type || "") ? "video" : "audio");
+        url = window.URL.createObjectURL(file);
+        const timer = window.setTimeout(() => done(null), 8000);
+        media.preload = "metadata";
+        media.onloadedmetadata = () => {
+          window.clearTimeout(timer);
+          const seconds = media.duration;
+          done(Number.isFinite(seconds) && seconds >= 0 ? Math.round(seconds * 1000) : null);
+        };
+        media.onerror = () => {
+          window.clearTimeout(timer);
+          done(null);
+        };
+        media.src = url;
+      } catch {
+        done(null);
+      }
+    });
+  }
 
-  function PaperCompletionPanel({ api, lang, request, canWrite, onRecorded }) {
+  function ReturnedResponsePanel({ api, lang, request, record, canWrite, variant, onRecorded }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
+    const spec = RETURNED[variant];
+    const w = (key, params) => t(spec.prefix + key, params);
+    const memoryKey = `${variant}:${request.id}`;
     const today = base.todayInLosAngeles();
-    const kept = paperUploads.get(request.id);
-    const [form, setForm] = R.useState(() => kept || { chosen: null, fileId: null, fileName: "", scan: null, date: "", confirmed: false });
+    const kept = returnedUploads.get(memoryKey);
+    const blank = { chosen: null, fileId: null, fileName: "", scan: null, date: "", confirmed: false, informed: false, durationMs: null };
+    const [form, setForm] = R.useState(() => kept || blank);
     const [open, setOpen] = R.useState(Boolean(kept));
     const [problem, setProblem] = R.useState(null);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [confirm, setConfirm] = R.useState(false);
-    if (!paperAllowed(request, canWrite)) return null;
+    if (!returnedAllowed(request, canWrite)) return null;
     const update = (patch) => {
       setForm((old) => {
         const next = { ...old, ...patch };
-        if (next.fileId) paperUploads.set(request.id, { ...next, chosen: null });
+        if (next.fileId) returnedUploads.set(memoryKey, { ...next, chosen: null });
         return next;
       });
       setProblem(null);
     };
-    const err = (code) => (problem === code ? t(code) : null);
+    const err = (...codes) => (codes.includes(problem) ? t(problem) : null);
     async function run(fn) {
       setPending(true);
       setFailure(null);
@@ -1776,45 +1892,47 @@ ${ar}` : en;
     // Upload, then use the scan state the server reports; never assume the file is clean.
     const upload = () =>
       run(async () => {
+        const durationMs = variant === "recording" ? await measureDuration(form.chosen) : null;
         const body = new window.FormData();
         body.append("file", form.chosen);
-        body.append("category", "REPORT");
-        body.append("request_id", request.id);
+        body.append("category", spec.category);
+        if (spec.bindRequest) body.append("request_id", request.id);
+        else body.append("case_id", (record && record.id) || request.case_id || "");
         body.append("visibility", "council");
         const stored = await api("/api/files/", { method: "POST", body });
-        if (!stored || !stored.id) throw { data: { detail: t("paperNoFile") } };
-        update({ fileId: stored.id, fileName: stored.name || form.chosen.name, scan: stored.scan_state || "pending", chosen: null });
-        return stored;
+        if (!stored || !stored.id) throw { data: { detail: t("returnedNoFile") } };
+        update({ fileId: stored.id, fileName: stored.name || form.chosen.name, scan: stored.scan_state || "pending", chosen: null, durationMs });
       });
     const recheck = () =>
       run(async () => {
         const status = await api(`/api/files/${encodeURIComponent(form.fileId)}/status/`);
         const scan = ["clean", "pending", "rejected"].includes(status && status.scan_state) ? status.scan_state : "pending";
         update({ scan });
-        if (scan === "pending") setNotice("paperStillChecking");
+        if (scan === "pending") setNotice("returnedStillChecking");
       });
     const start = () => {
-      const issue = paperProblem(form, today);
+      const issue = returnedProblem(variant, form, today);
       setProblem(issue);
       if (issue) return;
       if (!form.fileId) upload();
       else if (form.scan === "clean") setConfirm(true);
       else recheck();
     };
-    const record = () =>
+    const payload = () =>
+      variant === "paper"
+        ? { file_id: form.fileId, completion_date: form.date, expected_version: request.request_version }
+        : { file_id: form.fileId, completion_date: form.date, recording_notice: { acknowledged: true }, duration_ms: form.durationMs, expected_version: request.request_version };
+    const complete = () =>
       run(async () => {
-        await api(`/api/requests/${encodeURIComponent(request.id)}/paper-completion/`, {
-          method: "POST",
-          body: JSON.stringify({ file_id: form.fileId, completion_date: form.date, expected_version: request.request_version }),
-        });
-        paperUploads.delete(request.id);
+        await api(`/api/requests/${encodeURIComponent(request.id)}/${spec.endpoint}/`, { method: "POST", body: JSON.stringify(payload()) });
+        returnedUploads.delete(memoryKey);
         setConfirm(false);
-        onRecorded("paperRecorded");
+        onRecorded(variant === "paper" ? "paperRecorded" : "recRecorded");
       });
     const discard = () => {
       // The uploaded original stays retained on the server; only this form forgets it.
-      paperUploads.delete(request.id);
-      setForm({ chosen: null, fileId: null, fileName: "", scan: null, date: form.date, confirmed: false });
+      returnedUploads.delete(memoryKey);
+      setForm({ ...blank, date: form.date });
       setProblem(null);
       setFailure(null);
       setNotice(null);
@@ -1822,64 +1940,63 @@ ${ar}` : en;
     if (!open)
       return h(
         P.Panel,
-        { icon: "doc-text", title: t("paperTitle") },
-        h(P.Stack, { gap: "sm" }, h(P.Text, { variant: "secondary" }, t("paperHelp")), h(P.Inline, null, h(P.Button, { size: "sm", onClick: () => setOpen(true) }, t("paperStart")))),
+        { icon: "doc-text", title: w("Title") },
+        h(P.Stack, { gap: "sm" }, h(P.Text, { variant: "secondary" }, w("Help")), h(P.Inline, null, h(P.Button, { size: "sm", onClick: () => setOpen(true) }, w("Start")))),
       );
-    const action = !form.fileId ? "paperUpload" : form.scan === "clean" ? "paperRecord" : "paperCheck";
+    const action = !form.fileId ? w("Upload") : form.scan === "clean" ? w("Record") : t("returnedCheck");
     return h(
       P.Panel,
-      { icon: "doc-text", title: t("paperTitle") },
+      { icon: "doc-text", title: w("Title") },
       h(
         P.Stack,
         { gap: "md" },
-        h(P.Text, { variant: "secondary" }, t("paperHelp")),
+        h(P.Text, { variant: "secondary" }, w("Help")),
         form.fileId
           ? h(
               P.PropertyList,
               null,
-              h(P.PropertyList.Item, { label: t("paperFile") }, base.isolate(form.fileName)),
-              h(P.PropertyList.Item, { label: t("paperCheckState") }, h(P.Badge, { tone: form.scan === "clean" ? "success" : form.scan === "rejected" ? "danger" : "neutral" }, t("scan_" + form.scan))),
+              h(P.PropertyList.Item, { label: w("File") }, base.isolate(form.fileName)),
+              h(P.PropertyList.Item, { label: t("returnedCheckState") }, h(P.Badge, { tone: form.scan === "clean" ? "success" : form.scan === "rejected" ? "danger" : "neutral" }, t("scan_" + form.scan))),
+              variant === "recording" ? h(P.PropertyList.Item, { label: t("recDuration") }, form.durationMs === null ? t("recDurationUnknown") : base.isolate(formatDuration(form.durationMs))) : null,
             )
           : h(
               P.Field,
-              { label: t("paperFile"), description: t("paperFileHelp"), required: true, error: err("chooseFile") || err("pdfOnly") || err("paperTooLarge") },
-              h(P.FileInput, { accept: ".pdf,application/pdf", disabled: pending, onChange: (files) => update({ chosen: files && files[0] ? files[0] : null }) }),
+              { label: w("File"), description: w("FileHelp"), required: true, error: err("chooseFile", "chooseRecording", "pdfOnly", "audioOnly", "paperTooLarge", "recTooLargeAudio", "recTooLargeVideo") },
+              h(P.FileInput, { accept: spec.accept, disabled: pending, onChange: (files) => update({ chosen: files && files[0] ? files[0] : null }) }),
             ),
-        form.scan === "pending" ? h(P.Notice, { tone: "info" }, t("paperChecking")) : null,
-        form.scan === "rejected" ? h(P.Notice, { tone: "danger" }, t("paperRejected")) : null,
+        form.scan === "pending" ? h(P.Notice, { tone: "info" }, t("returnedChecking")) : null,
+        form.scan === "rejected" ? h(P.Notice, { tone: "danger" }, t("returnedRejected")) : null,
         h(
           P.Field,
-          { label: t("paperReceived"), description: t("paperReceivedHelp"), required: true, error: err("receivedRequired") || err("receivedFuture") },
+          { label: w("Received"), description: w("ReceivedHelp"), required: true, error: err("receivedRequired", "receivedFuture") },
           h(P.Input, { type: "date", width: "sm", max: today, value: form.date, disabled: pending, onChange: (e) => update({ date: e.target.value }) }),
         ),
-        h(P.Checkbox, {
-          label: t("paperConfirm"),
-          checked: form.confirmed === true,
-          disabled: pending,
-          onChange: (e) => update({ confirmed: e.target.checked }),
-        }),
-        problem === "confirmPaper" ? h(P.Notice, { tone: "warning" }, t("confirmPaper")) : null,
+        h(P.Checkbox, { label: w("Confirm"), checked: form.confirmed === true, disabled: pending, onChange: (e) => update({ confirmed: e.target.checked }) }),
+        spec.checks.includes("informed")
+          ? h(P.Checkbox, { label: t("recInformed"), checked: form.informed === true, disabled: pending, onChange: (e) => update({ informed: e.target.checked }) })
+          : null,
+        ["confirmPaper", "confirmRecording", "confirmInformed"].includes(problem) ? h(P.Notice, { tone: "warning" }, t(problem)) : null,
         notice ? h(P.Text, { variant: "secondary" }, t(notice)) : null,
         failure && !confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
         h(
           P.Inline,
           { wrap: true },
           form.scan === "rejected"
-            ? h(P.Button, { variant: "primary", disabled: pending, onClick: discard }, t("paperChooseAnother"))
-            : h(P.Button, { variant: "primary", loading: pending, disabled: pending, onClick: start }, t(action)),
-          form.fileId && form.scan !== "rejected" ? h(P.Button, { disabled: pending, onClick: discard }, t("paperChooseAnother")) : null,
+            ? h(P.Button, { variant: "primary", disabled: pending, onClick: discard }, t("returnedChooseAnother"))
+            : h(P.Button, { variant: "primary", loading: pending, disabled: pending, onClick: start }, action),
+          form.fileId && form.scan !== "rejected" ? h(P.Button, { disabled: pending, onClick: discard }, t("returnedChooseAnother")) : null,
           !form.fileId ? h(P.Button, { disabled: pending, onClick: () => setOpen(false) }, t("cancel")) : null,
         ),
-        form.fileId ? h(P.Text, { variant: "secondary" }, t("paperRetained")) : null,
+        form.fileId ? h(P.Text, { variant: "secondary" }, w("Retained")) : null,
         h(
           P.ConfirmDialog,
           {
             open: confirm,
-            title: t("paperConfirmTitle"),
-            message: t("paperConfirmMessage"),
-            confirmLabel: t("paperRecord"),
+            title: w("ConfirmTitle"),
+            message: w("ConfirmMessage"),
+            confirmLabel: w("Record"),
             cancelLabel: t("cancel"),
-            onConfirm: record,
+            onConfirm: complete,
             onCancel: () => !pending && setConfirm(false),
           },
           failure && confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
@@ -1887,8 +2004,15 @@ ${ar}` : en;
       ),
     );
   }
+  function formatDuration(ms) {
+    const total = Math.round(ms / 1000);
+    const hh = Math.floor(total / 3600), mm = Math.floor((total % 3600) / 60), ss = total % 60;
+    return (hh ? `${hh}:${String(mm).padStart(2, "0")}` : String(mm)) + `:${String(ss).padStart(2, "0")}`;
+  }
+  const PaperCompletionPanel = (props) => window.React.createElement(ReturnedResponsePanel, { ...props, variant: "paper" });
+  const RecordingCompletionPanel = (props) => window.React.createElement(ReturnedResponsePanel, { ...props, variant: "recording" });
 
-  function RequestDetail({ api, lang, request, canWrite, onSent }) {
+  function RequestDetail({ api, lang, request, record, canWrite, onSent }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -1941,7 +2065,8 @@ ${ar}` : en;
           ),
       request.instructions ? h(P.Panel, { icon: "doc-text", title: t(external ? "priestInstructions" : "instructions") }, h(P.Text, { as: "p", dir: "auto" }, request.instructions)) : null,
       external ? h(ExternalLinkPanel, { api, lang, request, canWrite, onChanged: (note) => onSent(note || "externalIssued", { stay: true }) }) : null,
-      external ? h(PaperCompletionPanel, { api, lang, request, canWrite, onRecorded: (note) => onSent(note, { stay: true }) }) : null,
+      external ? h(PaperCompletionPanel, { api, lang, request, record, canWrite, onRecorded: (note) => onSent(note, { stay: true }) }) : null,
+      external ? h(RecordingCompletionPanel, { api, lang, request, record, canWrite, onRecorded: (note) => onSent(note, { stay: true }) }) : null,
       failure && !confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
       request.state === "draft" && canWrite && (request.kind === "intake" || interview)
         ? h(P.Inline, null, h(P.Button, { variant: "primary", onClick: () => setConfirm(true) }, t(interview ? "startInterview" : "send")))
@@ -2016,7 +2141,7 @@ ${ar}` : en;
       !interviewOnly && editing ? editor : h(P.SplitView, {
         label: panelTitle, firstLabel: t("requests"), first: drafts,
         second: h(P.ReadingPane, { label: chosen?.title || t("chooseRequest"), empty: h(P.EmptyState, { title: t("chooseRequest") }) },
-          chosen ? h(RequestDetail, { key: chosen.id, api, lang, request: chosen, canWrite, onSent: (key) => { setNotice(key || "sentNotice"); retry(); if (key === "paperRecorded" || key === "interviewRecorded") onCompleted?.(); } }) : null,
+          chosen ? h(RequestDetail, { key: chosen.id, api, lang, request: chosen, record, canWrite, onSent: (key) => { setNotice(key || "sentNotice"); retry(); if (["paperRecorded", "recRecorded", "interviewRecorded"].includes(key)) onCompleted?.(); } }) : null,
         ),
       }),
     );
@@ -4064,6 +4189,10 @@ ${ar}` : en;
     linkControls,
     pdfProblem,
     PaperCompletionPanel,
+    RecordingCompletionPanel,
+    ReturnedResponsePanel,
+    returnedProblem,
+    measureDuration,
     paperProblem,
     paperAllowed,
     RequestDetail,

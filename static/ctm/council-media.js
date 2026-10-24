@@ -342,6 +342,12 @@
       method_written: "Entered in CTM",
       method_external: "External source link",
       method_paper: "Paper original recorded by the council",
+      method_recording: "Recording made by the council",
+      recordedOn: "Recorded on",
+      recordedOriginal: "Recording",
+      recordedOriginalHelp: "The council's recording of the priest's report. Its transcript appears under Transcripts once one is produced; until then none exists.",
+      recordedOriginalName: "Recording — {title}",
+      recordedNotRevisable: "A recorded response is kept as recorded and cannot be revised. A transcript correction or a follow-up request is separate.",
       paperRecordedBy: "Recorded by",
       paperReceivedOn: "Paper received",
       paperOriginal: "Paper original",
@@ -564,6 +570,12 @@
       method_written: "أُدخل في النظام",
       method_external: "رابط مصدر خارجي",
       method_paper: "أصل ورقي سجّله المجلس",
+      method_recording: "تسجيل أجراه المجلس",
+      recordedOn: "تاريخ التسجيل",
+      recordedOriginal: "التسجيل",
+      recordedOriginalHelp: "تسجيل المجلس لتقرير الكاهن. ويظهر نصه تحت النصوص بعد إنتاجه؛ ولا يوجد نص قبل ذلك.",
+      recordedOriginalName: "التسجيل — {title}",
+      recordedNotRevisable: "يُحفظ الرد المسجَّل كما سُجّل ولا يمكن تعديله. وتصحيح النص أو طلب المتابعة أمر منفصل.",
       paperRecordedBy: "سجّله",
       paperReceivedOn: "تاريخ استلام الورقة",
       paperOriginal: "الأصل الورقي",
@@ -1842,6 +1854,8 @@
     const latestShown = !history || version === history[0]?.version;
     const methodLabel = report.method ? t(`method_${report.method}`) : null;
     const paper = report.method === "paper";
+    const recorded = report.method === "recording"; // council-recorded priest response (backend fcf03a2)
+    const councilSource = paper || recorded;
     const answers = editing
       ? h(ReportRevisionEditor, {
           api,
@@ -1866,8 +1880,8 @@
         null,
         h(P.PropertyList.Item, { label: t("reportFor") }, report.subject || ""),
         h(P.PropertyList.Item, { label: t("version") }, String(shown.version ?? report.version ?? "")),
-        report.author ? h(P.PropertyList.Item, { label: t(paper ? "paperRecordedBy" : "reportAuthor") }, base.isolate(report.author)) : null,
-        paper && report.date ? h(P.PropertyList.Item, { label: t("paperReceivedOn"), data: true }, report.date) : null,
+        report.author ? h(P.PropertyList.Item, { label: t(councilSource ? "paperRecordedBy" : "reportAuthor") }, base.isolate(report.author)) : null,
+        councilSource && report.date ? h(P.PropertyList.Item, { label: t(paper ? "paperReceivedOn" : "recordedOn"), data: true }, report.date) : null,
         report.submitted_at ? h(P.PropertyList.Item, { label: t("reportSubmitted"), data: true }, base.formatWhen(report.submitted_at, lang)) : null,
         methodLabel ? h(P.PropertyList.Item, { label: t("reportMethod") }, methodLabel.startsWith("method_") ? report.method : methodLabel) : null,
       ),
@@ -1898,16 +1912,25 @@
             { icon: "document", key: code, title: t("paperOriginal") },
             h(P.Stack, { gap: "md" }, h(P.Text, { variant: "secondary" }, t("paperOriginalHelp")), ...answer.map((id) => paperOriginal(String(id), report, lang))),
           );
+        if (recorded && code === "files" && Array.isArray(answer))
+          return h(
+            P.Panel,
+            { icon: "document", key: code, title: t("recordedOriginal") },
+            h(P.Stack, { gap: "md" }, h(P.Text, { variant: "secondary" }, t("recordedOriginalHelp")), ...answer.map((id) => recordedOriginal(String(id), report, lang))),
+          );
         const question = (report.questions || []).find((q) => q.code === code);
         const label = question ? `${code} — ${base.isolate((lang === "ar" && question.ar) || question.en || code)}` : code === "files" ? t("response") : code === "testimony" ? t("priestTestimony") : code;
         return h(P.Panel, { icon: "document", key: code, title: label }, h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
       }),
       shown.observations ? h(P.Panel, { icon: "document", title: t("observations") }, h(P.Text, { as: "p", dir: "auto" }, shown.observations)) : null,
       access === "unknown" ? h(P.Text, { variant: "secondary" }, t("revisionPending")) : null,
-      access === "denied" ? h(P.Text, { variant: "secondary" }, t(paper ? "paperNotRevisable" : "revisionNotAllowed")) : null,
+      access === "denied" ? h(P.Text, { variant: "secondary" }, t(paper ? "paperNotRevisable" : recorded ? "recordedNotRevisable" : "revisionNotAllowed")) : null,
     );
     const interview = report.kind === "interview";
-    const recording = interview
+    const hasMedia = interview || recorded;
+    const recording = recorded
+      ? h(RecordingStatusList, { api, lang, report, refreshKey: submittedCount })
+      : interview
       ? h(
           P.Stack,
           { gap: "lg" },
@@ -1932,7 +1955,7 @@
       items: [
         { value: "answers", label: t("answersTab"), content: answers },
         { value: "recording", label: t("recordingTab"), content: interview && !writer ? h(P.Stack, { gap: "md" }, h(P.Notice, { tone: "info" }, t("writerOnlyRecording")), recording) : recording },
-        { value: "transcripts", label: t("transcriptsTab"), content: interview ? h(TranscriptsPanel, { api, lang, report, refreshKey: submittedCount }) : h(P.EmptyState, { title: t("notInterview") }) },
+        { value: "transcripts", label: t("transcriptsTab"), content: hasMedia ? h(TranscriptsPanel, { api, lang, report, refreshKey: submittedCount }) : h(P.EmptyState, { title: t("notInterview") }) },
       ],
     });
   }
@@ -2006,6 +2029,22 @@
       P.Stack,
       { gap: "sm", key: id },
       h(PdfPreview, { key: id, file, lang, inline: `${url}?view=1` }),
+      h(P.Inline, null, h(P.Button, { size: "sm", href: url }, t("download"))),
+    );
+  }
+
+  // A council-recorded priest response keeps only the recording's file id in its answers: play it through the
+  // authorized file route (byte ranges) and offer the download. No transcript is implied.
+  function recordedOriginal(id, report, lang) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const url = `/api/files/${encodeURIComponent(id)}/`;
+    return h(
+      P.Stack,
+      { gap: "sm", key: id },
+      h(P.MediaPlayer, { key: id, src: url, kind: "audio", label: t("recordedOriginalName", { title: report.title || "" }), strings: mediaStrings(t) }),
       h(P.Inline, null, h(P.Button, { size: "sm", href: url }, t("download"))),
     );
   }
@@ -2202,6 +2241,7 @@
     TranscriptViewer,
     PdfPreview,
     paperOriginal,
+    recordedOriginal,
     FilePreview,
     pdfStrings,
     answerEntries,

@@ -30,6 +30,12 @@ A priest who knows the marriage writes a free-form report through a private link
   - An upload awaiting its check is remembered in page memory only, so in-app navigation doesn't lose it; nothing is put in browser storage.
   - Completed reports reloads its list after a paper (or interview) response is recorded.
   - **In Completed reports** a paper report shows the method "Paper original recorded by the council", **Recorded by** (the council member), **Paper received** (the date), and the original in the protected PDF viewer (`/api/files/{id}/?view=1`) with a Download button. It is not transcribed and cannot be revised; a follow-up is a separate request.
+- **Recorded response (backend `fcf03a2`):** same panel design as the paper response, for a priest who gave the report in a conversation the council recorded. Paper and recording share one component (`ReturnedResponsePanel`).
+  - The recording (MP3, WAV, OGG up to 100 MB; MP4, WebM up to 500 MB, the backend's limits) is uploaded as a **council case original**: `/api/files/` with `category AUDIO`, `case_id` and council visibility, **without** `request_id`, as the backend requires.
+  - The council declares two things: it is the recording of the priest's report, and **the priest was told the conversation was being recorded**. The second is sent as `recording_notice: {acknowledged: true}`; CTM keeps it as the recorder's declaration, not as a signed consent.
+  - The length is measured by the browser from the chosen file (media metadata) and sent as `duration_ms`; when the browser can't measure it, `null` is sent and the panel says "Not measured by this browser". It is never estimated.
+  - **Record recorded response** posts `{file_id, completion_date, recording_notice, duration_ms, expected_version}` to `/api/requests/{id}/recording-completion/`.
+  - **In Completed reports** the method reads "Recording made by the council", with **Recorded by**, **Recorded on**, the recording in the media player through the protected file route, and a download button. The Recording tab lists it with its processing state (transcription **queued**; the server's dispatcher isn't configured yet, which the existing status wording says); there are no capture controls. The Transcripts tab shows transcripts only once produced. It cannot be revised.
 - **The submitted report** appears in Completed reports as "Report by Fr. [name]" with its date and method "External source link". The free-form answer is labelled **Written testimony**. It isn't revisable (no council author), and a follow-up is a separate linked report.
 
 ## Priest page (`static/ctm/external-report.html` and `.js`)
@@ -55,14 +61,14 @@ A priest who knows the marriage writes a free-form report through a private link
 
 - An HTML route at `/external/reports/{id}/` (the static boot page is used meanwhile).
 - Distinguishable link states on the priest page (council now sees them through the projection).
-- Priest recording upload.
+- Priest recording upload by the priest through the link (council-recorded completion is built).
 - Email delivery.
 - **Privacy defect: fixed in backend `6fe7d51` (migration 0042).** Reproduced on `dccbd63`, where the spouse downloaded the paper. On `f0e97fa` the same upload is stored with no owner and council visibility; the spouse is refused on GET, HEAD and range requests, and council still reads it. Awaiting the governance successor rerun.
 - **Council paper listing:** `/api/requests/{id}/files/` is applicant-only, so council can't list papers uploaded to a request. A wrong upload that was replaced in the form stays retained but isn't listed; the backend's wrong-upload correction is also unfinished.
 
 ## Testing
 
-- `tests/frontend/external-report.test.cjs` (13), `tests/frontend/council-external.test.cjs` (21) and `tests/frontend/council-paper.test.cjs` (12).
-- The fixture (`scripts/council_fixture.cjs --contract=pr7`) models the send token, reissue, cancel, capability route, and print routes (`POST /__pdf_mode/ {mode: "unavailable"|"too_long"}` switches the PDF reply), paper upload, file status (clean on the second check; `POST /__paper_scan/ {state: "rejected"}`), paper completion and the paper original download.
+- `tests/frontend/external-report.test.cjs` (13), `tests/frontend/council-external.test.cjs` (21) , `tests/frontend/council-paper.test.cjs` (12) and `tests/frontend/council-recording-completion.test.cjs` (8).
+- The fixture (`scripts/council_fixture.cjs --contract=pr7`) models the send token, reissue, cancel, capability route, and print routes (`POST /__pdf_mode/ {mode: "unavailable"|"too_long"}` switches the PDF reply), paper upload, file status (clean on the second check; `POST /__paper_scan/ {state: "rejected"}`), paper completion, the paper original download, AUDIO case-original upload, recording completion (queued processing) and playback.
 - Actual-backend results are in the #3 report.
 - Evidence: `evidence/c05-ar-390-priest-page-real-backend.jpg`, `evidence/c05-ar-390-link-inactive-real-backend.jpg`, `evidence/c05-ar-390-link-expired-projection-real-backend.jpg` (synthetic data).

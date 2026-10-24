@@ -61,7 +61,7 @@ test("paper: offered only to a writer on a sent priest request the server still 
   assert.equal(C.paperAllowed({ ...sent, external_link: { state: "active", can_cancel: true } }, true), true);
   assert.equal(C.paperAllowed({ ...sent, external_link: { state: "closed", can_cancel: false } }, true), false);
   const ui = panel({ ...sent, state: "draft" }, () => ({}));
-  assert.equal(ui.tree, null);
+  assert.equal(byName(ui.tree, "Panel").length, 0, "nothing rendered");
 });
 
 test("paper: upload bound to the request, wait for the check, confirm, then record with date and version", async () => {
@@ -205,7 +205,7 @@ test("non-paper reports keep their existing author label", () => {
 
 test("recording a paper response refreshes Completed reports from the server (wiring; browser-checked)", () => {
   const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  assert.ok(src.includes('if (key === "paperRecorded" || key === "interviewRecorded") onCompleted?.();'));
+  assert.ok(src.includes('if (["paperRecorded", "recRecorded", "interviewRecorded"].includes(key)) onCompleted?.();'));
   assert.ok(src.includes("h(base.ReportsReader, { api, lang, user, caseId, reports, refreshKey: completedKey })"));
   const media = fs.readFileSync("static/ctm/council-media.js", "utf8");
   assert.ok(media.includes("if (refreshKey) reloadReports();"));
