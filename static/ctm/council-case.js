@@ -190,6 +190,16 @@
     };
   }
 
+  // GET /api/requests/{id}/print.pdf: 200 application/pdf; 503 pdf_unavailable (renderer missing: use browser
+  // print); 422 too long to render without truncation; 403/404 not printable for this person or request.
+  function pdfProblem(status) {
+    if (status === 503) return "pdfUnavailable";
+    if (status === 422) return "pdfTooLong";
+    if (status === 401) return "pdfSignedOut";
+    if (status === 403 || status === 404 || status === 405) return "pdfNotAllowed";
+    return status ? "pdfFailed" : "pdfNetwork";
+  }
+
   function priestLink(origin, requestId, token) {
     return `${origin}/static/ctm/external-report.html#r=${encodeURIComponent(requestId)}&t=${encodeURIComponent(token)}`;
   }
@@ -609,6 +619,17 @@ ${ar}` : en;
       startInterviewMessage: "The question list is frozen. The applicant is not notified.",
       interviewStarted: "The interview was started. Record the answers when ready.",
       recordInterview: "Record interview answers",
+      printTitle: "Printed request",
+      printHelp: "For a priest who prefers paper. It contains the saved title, instructions and names with blank lines to write on; no link, token or answers.",
+      printOpen: "Open printable request",
+      printPdf: "Download PDF",
+      pdfDone: "The PDF was downloaded to this device.",
+      pdfUnavailable: "This server cannot generate the PDF right now. Open the printable request and use your browser's Print or Save as PDF.",
+      pdfTooLong: "The request is too long to fit the PDF without cutting text. Open the printable request and print it from the browser.",
+      pdfSignedOut: "Your session has ended. Sign in again, then download the PDF.",
+      pdfNotAllowed: "This request can no longer be printed. Only the case manager can print an unfinished request while the case is open.",
+      pdfFailed: "The PDF could not be downloaded. Try again, or open the printable request.",
+      pdfNetwork: "The connection failed. Try again, or open the printable request.",
       externalHelp: "A priest who knows the marriage writes a free-form report through a private link. No council account is created.",
       priestName: "Priest's name",
       priestNameHelp: "The report is titled “Report by Fr. [name]”.",
@@ -1013,6 +1034,17 @@ ${ar}` : en;
       startInterviewMessage: "يتم تثبيت قائمة الأسئلة. ولا يتم إخطار مقدم الطلب.",
       interviewStarted: "بدأت المقابلة. سجّل الإجابات عندما تكون جاهزًا.",
       recordInterview: "تسجيل إجابات المقابلة",
+      printTitle: "الطلب المطبوع",
+      printHelp: "للكاهن الذي يفضّل الورق. ويتضمن العنوان والتعليمات والأسماء المحفوظة مع أسطر فارغة للكتابة؛ ولا يتضمن رابطًا أو رمزًا أو إجابات.",
+      printOpen: "فتح الطلب القابل للطباعة",
+      printPdf: "تنزيل ملف PDF",
+      pdfDone: "نُزّل ملف PDF على هذا الجهاز.",
+      pdfUnavailable: "لا يستطيع هذا الخادم إنشاء ملف PDF حاليًا. افتح الطلب القابل للطباعة واستخدم الطباعة أو الحفظ كملف PDF من المتصفح.",
+      pdfTooLong: "الطلب أطول من أن يتسع له ملف PDF دون قطع النص. افتح الطلب القابل للطباعة واطبعه من المتصفح.",
+      pdfSignedOut: "انتهت جلستك. سجّل الدخول مجددًا ثم نزّل ملف PDF.",
+      pdfNotAllowed: "لم يعد من الممكن طباعة هذا الطلب. ولا يطبع الطلب غير المكتمل إلا مسؤول القضية ما دامت القضية مفتوحة.",
+      pdfFailed: "تعذر تنزيل ملف PDF. حاول مجددًا أو افتح الطلب القابل للطباعة.",
+      pdfNetwork: "تعذر الاتصال. حاول مجددًا أو افتح الطلب القابل للطباعة.",
       externalHelp: "يكتب كاهن يعرف الزواج تقريرًا حرًّا عبر رابط خاص. ولا يُنشأ له حساب في المجلس.",
       priestName: "اسم الكاهن",
       priestNameHelp: "يكون عنوان التقرير «Report by Fr. [الاسم]».",
@@ -1442,6 +1474,32 @@ ${ar}` : en;
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [copied, setCopied] = R.useState(false);
+    const [pdf, setPdf] = R.useState(null); // { busy } | { problem } | { done }
+    // Backend rule: writer, open case and proceeding, unfinished (draft or sent) request. With the projection, the
+    // server's control flags already encode writer and open; without it, fall back to the request state.
+    const printable = Boolean(canWrite) && ["draft", "sent"].includes(request.state) && (!controls.projected || controls.issue || controls.reissue || controls.cancel);
+    const printUrl = `/api/requests/${encodeURIComponent(request.id)}/print/`;
+    async function downloadPdf() {
+      setPdf({ busy: true });
+      let response;
+      try {
+        response = await window.fetch(`/api/requests/${encodeURIComponent(request.id)}/print.pdf`, { credentials: "same-origin", cache: "no-store" });
+      } catch {
+        return setPdf({ problem: pdfProblem(0) });
+      }
+      const type = (response.headers && response.headers.get && response.headers.get("Content-Type")) || "";
+      if (!response.ok || !type.startsWith("application/pdf")) return setPdf({ problem: pdfProblem(response.ok ? 503 : response.status) });
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = window.document.createElement("a");
+      a.href = url;
+      a.download = `priest-request-${request.id}.pdf`;
+      window.document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+      return setPdf({ done: true });
+    }
     async function issue() {
       setConfirm(null);
       setFailure(null);
@@ -1551,6 +1609,22 @@ ${ar}` : en;
                   ? h(P.Button, { disabled: pending, onClick: () => setConfirm("cancel") }, t("cancelExternal"))
                   : null,
               ),
+            )
+          : null,
+        printable
+          ? h(
+              P.Stack,
+              { gap: "sm" },
+              h(P.Text, { variant: "strong" }, t("printTitle")),
+              h(P.Text, { variant: "secondary" }, t("printHelp")),
+              h(
+                P.Inline,
+                { wrap: true },
+                h(P.Button, { size: "sm", href: printUrl, target: "_blank", rel: "noopener noreferrer" }, t("printOpen")),
+                h(P.Button, { size: "sm", loading: Boolean(pdf && pdf.busy), disabled: Boolean(pdf && pdf.busy), onClick: downloadPdf }, t("printPdf")),
+              ),
+              pdf && pdf.problem ? h(P.Notice, { tone: pdf.problem === "pdfUnavailable" || pdf.problem === "pdfTooLong" ? "warning" : "danger" }, t(pdf.problem)) : null,
+              pdf && pdf.done ? h(P.Text, { variant: "secondary" }, t("pdfDone")) : null,
             )
           : null,
         ["completed", "cancelled", "closed"].includes(controls.state)
@@ -3750,6 +3824,7 @@ ${ar}` : en;
     priestTitle,
     priestFromTitle,
     linkControls,
+    pdfProblem,
     RequestDetail,
     DECISION_TYPES,
     typeLabel,

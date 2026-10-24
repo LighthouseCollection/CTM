@@ -175,3 +175,85 @@ test("a priest report names one spouse: 'both spouses' is rejected and the paylo
   assert.equal("party_ids" in payload, false);
   assert.ok(C.caseWords.en.chooseOneSpouse && C.caseWords.ar.chooseOneSpouse);
 });
+
+// Print (backend 6a3f6df / c0fc9ae): printable HTML page and server PDF for a priest who prefers paper.
+function pdfWindow(responder) {
+  const fetched = [];
+  const downloads = [];
+  const revoked = [];
+  return {
+    fetched, downloads, revoked,
+    window: {
+      fetch: async (url, options) => { fetched.push({ url, options }); return responder(url); },
+      URL: { createObjectURL: () => "blob:pdf-1", revokeObjectURL: (u) => revoked.push(u) },
+      document: {
+        createElement: () => { const a = { click() { downloads.push({ href: a.href, download: a.download }); }, remove() {} }; return a; },
+        body: { appendChild() {} },
+      },
+      setTimeout: (fn) => fn(),
+    },
+  };
+}
+const reply = (status, type = "application/json") => ({ ok: status >= 200 && status < 300, status, headers: { get: () => type }, blob: async () => ({ size: 10 }) });
+
+test("print: an unfinished request offers the printable page in a new tab and a PDF download", async () => {
+  const w = pdfWindow(() => reply(200, "application/pdf"));
+  const ui = panel(draft, () => ({}), w.window);
+  const open = buttons(ui.tree, "Open printable request")[0];
+  assert.equal(open.props.href, "/api/requests/req-1/print/");
+  assert.equal(open.props.target, "_blank");
+  assert.match(open.props.rel, /noopener/);
+  assert.match(open.props.rel, /noreferrer/);
+  assert.match(ui.text(), /no link, token or answers/);
+  await ui.click("Download PDF");
+  assert.equal(w.fetched[0].url, "/api/requests/req-1/print.pdf");
+  assert.equal(w.fetched[0].options.credentials, "same-origin");
+  assert.equal(w.fetched[0].options.cache, "no-store");
+  assert.deepEqual(w.downloads, [{ href: "blob:pdf-1", download: "priest-request-req-1.pdf" }]);
+  assert.deepEqual(w.revoked, ["blob:pdf-1"], "the in-memory copy is released");
+  assert.match(ui.text(), /downloaded to this device/);
+  assert.equal(ui.calls.length, 0, "printing changes nothing on the server");
+});
+
+test("print: renderer missing (503) and oversize (422) point to browser printing; nothing is downloaded", async () => {
+  for (const [status, words] of [[503, /cannot generate the PDF/], [422, /too long/]]) {
+    const w = pdfWindow(() => reply(status));
+    const ui = panel(draft, () => ({}), w.window);
+    await ui.click("Download PDF");
+    assert.equal(w.downloads.length, 0);
+    assert.match(notices(ui.tree).join(" "), words);
+    assert.match(notices(ui.tree).join(" "), /printable request/);
+  }
+});
+
+test("print: a 200 that is not a PDF is not presented as a download", async () => {
+  const w = pdfWindow(() => reply(200, "text/html"));
+  const ui = panel(draft, () => ({}), w.window);
+  await ui.click("Download PDF");
+  assert.equal(w.downloads.length, 0);
+  assert.match(notices(ui.tree).join(" "), /cannot generate the PDF/);
+});
+
+test("print: refused, signed-out and network failures are distinguished", () => {
+  const C = load(harness());
+  assert.equal(C.pdfProblem(403), "pdfNotAllowed");
+  assert.equal(C.pdfProblem(404), "pdfNotAllowed");
+  assert.equal(C.pdfProblem(401), "pdfSignedOut");
+  assert.equal(C.pdfProblem(500), "pdfFailed");
+  assert.equal(C.pdfProblem(0), "pdfNetwork");
+});
+
+test("print: hidden once the request is finished, for readers, and when the server forbids cancelling", () => {
+  for (const request of [{ ...draft, state: "completed" }, { ...draft, state: "cancelled" },
+    { ...draft, state: "sent", external_link: { state: "active", can_issue: false, can_reissue: false, can_cancel: false } }]) {
+    const ui = panel(request, () => ({}));
+    assert.equal(buttons(ui.tree, "Download PDF").length, 0, request.state);
+    assert.equal(buttons(ui.tree, "Open printable request").length, 0, request.state);
+  }
+});
+
+test("print: Arabic wording", () => {
+  const ui = panel(draft, () => ({}), { lang: "ar" });
+  assert.ok(buttons(ui.tree, "فتح الطلب القابل للطباعة")[0]);
+  assert.ok(buttons(ui.tree, "تنزيل ملف PDF")[0]);
+});

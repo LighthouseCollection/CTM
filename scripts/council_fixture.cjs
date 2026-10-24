@@ -649,6 +649,23 @@ function api(req, res, url, body) {
       questions: [], answers: body.answers, observations: null, version: 1, method: "external", author: null, author_id: null, submitted_at: now(), can_revise: false, case: r.case });
     return json(res, 201, { submitted: true, report_id: report.id });
   }
+  // Backend 6a3f6df (/print/) and c0fc9ae (print.pdf): unfinished external_priest request, private/no-store. The PDF
+  // mode can be switched to 503 (renderer missing) or 422 (too long) with POST /__pdf_mode/ {mode}.
+  if ((m = p.match(/^\/api\/requests\/([^/]+)\/print(\/|\.pdf)$/))) {
+    const r = state.requests.find((x) => x.id === m[1]);
+    if (!r || r.kind !== "external_priest" || !["draft", "sent"].includes(r.state)) return json(res, 404, { error: "not_found" });
+    const c = state.cases.find((x) => x.id === r.case);
+    if (m[2] === ".pdf") {
+      if (state.pdfMode === "unavailable") return json(res, 503, { error: "pdf_unavailable", messages: ["Use the printable page and the browser's Print."] });
+      if (state.pdfMode === "too_long") return json(res, 422, { error: "validation", messages: ["The request is too long for the PDF."] });
+      res.writeHead(200, { "Content-Type": "application/pdf", "Cache-Control": "private, no-store", "Content-Disposition": `attachment; filename="priest-request-${r.id}.pdf"` });
+      return res.end(MINI_PDF);
+    }
+    const esc = (v) => String(v || "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-store" });
+    return res.end(`<!doctype html><meta charset="utf-8"><title>${esc(r.title)}</title><h1>${esc(r.title)}</h1><p>${esc(c.number)} · ${esc(r.subject_name)}</p><p>${esc(r.instructions)}</p><hr><hr><hr>`);
+  }
+  if (p === "/__pdf_mode/") { state.pdfMode = body.mode || null; return json(res, 200, { mode: state.pdfMode }); }
   if (p === "/__link_ttl/") { state.linkTtlMs = body.ms; return json(res, 200, { ms: body.ms }); }
   if ((m = p.match(/^\/api\/requests\/([^/]+)\/cancel\/$/))) {
     const r = state.requests.find((x) => x.id === m[1]);

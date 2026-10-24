@@ -18,6 +18,11 @@ A priest who knows the marriage writes a free-form report through a private link
   - **Cancel request** (`POST /api/requests/{id}/cancel/ {expected_version}`, confirmation) also stops the link.
   - Completed or closed requests show their state with no link controls.
   - **Link status (backend `c377706`):** when request rows carry `external_link`, the panel shows the priest's name, the state (not issued, active, expired, report submitted, cancelled, closed, unavailable) and the expiry for active or expired links. Issue, Reissue and Cancel follow the server's `can_issue`, `can_reissue` and `can_cancel` only. Older servers fall back to the request state.
+- **Printed request (backend `6a3f6df`, `c0fc9ae`):** for a priest who prefers paper. Shown to a writer while the request is a draft or sent (with the projection, only when the server allows a link control).
+  - **Open printable request** opens `GET /api/requests/{id}/print/` in a new tab (`noopener noreferrer`) for the browser's Print.
+  - **Download PDF** fetches `GET /api/requests/{id}/print.pdf` same-origin with `no-store`, saves it as `priest-request-{id}.pdf` from an in-memory copy and releases it. Nothing is kept in browser storage.
+  - `503 pdf_unavailable` (renderer missing) and `422` (too long) point to the printable page; a non-PDF reply is never presented as a download; refused, signed-out and network failures have their own messages.
+  - The printout carries the saved title, instructions and names with blank lines, never the link or token.
 - **The submitted report** appears in Completed reports as "Report by Fr. [name]" with its date and method "External source link". The free-form answer is labelled **Written testimony**. It isn't revisable (no council author), and a follow-up is a separate linked report.
 
 ## Priest page (`static/ctm/external-report.html` and `.js`)
@@ -44,14 +49,14 @@ A priest who knows the marriage writes a free-form report through a private link
 - An HTML route at `/external/reports/{id}/` (the static boot page is used meanwhile).
 - Distinguishable link states on the priest page (council now sees them through the projection).
 - Priest recording upload.
-- A printable request and paper-response completion.
+- Paper-response completion (backend `746e5a4`; council UI in progress).
 - Email delivery.
 - **Privacy defect: fixed in backend `6fe7d51` (migration 0042).** Reproduced on `dccbd63`, where the spouse downloaded the paper. On `f0e97fa` the same upload is stored with no owner and council visibility; the spouse is refused on GET, HEAD and range requests, and council still reads it. Awaiting the governance successor rerun.
 - **Council paper listing:** `/api/requests/{id}/files/` is applicant-only, so council can't list a returned paper on the request. Paper completion is also missing.
 
 ## Testing
 
-- `tests/frontend/external-report.test.cjs` (13) and `tests/frontend/council-external.test.cjs` (8).
-- The fixture (`scripts/council_fixture.cjs --contract=pr7`) models the send token, reissue, cancel and capability route.
+- `tests/frontend/external-report.test.cjs` (13) and `tests/frontend/council-external.test.cjs` (21).
+- The fixture (`scripts/council_fixture.cjs --contract=pr7`) models the send token, reissue, cancel, capability route, and print routes (`POST /__pdf_mode/ {mode: "unavailable"|"too_long"}` switches the PDF reply).
 - Actual-backend results are in the #3 report.
 - Evidence: `evidence/c05-ar-390-priest-page-real-backend.jpg`, `evidence/c05-ar-390-link-inactive-real-backend.jpg`, `evidence/c05-ar-390-link-expired-projection-real-backend.jpg` (synthetic data).
