@@ -30,6 +30,18 @@ jobs:
           node-version: '22'
       - name: Validate combined applicant and council frontend
         run: node --test tests/frontend/*.test.cjs
+      - name: Provision least-privileged runtime roles in the CI database
+        # Reuses the canonical fresh-cluster init (deploy/postgres) inside the
+        # postgres:16 service, so the migrations see the same ctm_app/ctm_worker
+        # roles as a real deployment. The passwords are dummy CI-only values.
+        env:
+          CTM_APP_PASSWORD: ci-ctm-app-only
+          CTM_WORKER_PASSWORD: ci-ctm-worker-only
+        run: |
+          db="${{ job.services.postgres.id }}"
+          docker cp deploy/postgres/init.sql "$db:/tmp/ctm-init.sql"
+          docker exec -i --env CTM_APP_PASSWORD --env CTM_WORKER_PASSWORD --env CTM_INIT_SQL=/tmp/ctm-init.sql "$db" bash -s < deploy/postgres/00-init-roles.sh
+          docker exec "$db" psql -X -v ON_ERROR_STOP=1 -U ctm_validation -d ctm_validation -tAc "SELECT rolname, rolsuper, rolbypassrls, rolinherit FROM pg_roles WHERE rolname IN ('ctm_app','ctm_worker') ORDER BY 1"
       - run: uv run python manage.py makemigrations --check --dry-run --settings=ctm.settings_postgres_test
       - run: uv run pytest --ds=ctm.settings_postgres_test -q
       - run: uv run python docs/architecture/build-spec/validate_spec.py
