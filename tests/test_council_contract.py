@@ -582,6 +582,7 @@ def test_active_session_agenda_requires_an_audited_override_to_move(filed, peopl
 
 def test_draft_session_agenda_can_move_to_a_later_open_session(filed, people):
     app = filed
+    assign_case(people["admin"], app.case_id, people["member"].pk, people["president"].pk)
     source_session = create_session(people["admin"], date(2030, 2, 2), state="draft")
     target_session = create_session(people["admin"], date(2030, 2, 9), state="draft")
     source = place_agenda(people["member"], source_session.pk, app.case_id)
@@ -657,6 +658,7 @@ def test_administrator_can_delete_an_unassigned_draft_session(people):
 
 def test_draft_session_with_agenda_is_retained(people, filed):
     session = create_session(people["admin"], date(2030, 5, 2), state="draft")
+    assign_case(people["admin"], filed.case_id, people["member"].pk, people["president"].pk)
     place_agenda(people["member"], session.pk, filed.case_id)
 
     with pytest.raises(ValidationError, match="agenda"):
