@@ -89,6 +89,33 @@ BEGIN
 END $$;
 '''
 
+# 0055 put a BEFORE DELETE trigger on tribunal_councilsession that allows only an
+# unassigned draft. That also refused the planned-reschedule delete of the source
+# session (transactions-and-acceptance: reschedule creates a new dated session and
+# does not retain the cancelled one; SES01), which the 0016 session_transfer_delete
+# policy already permits. The trigger now accepts either existing rule; neither
+# rule is widened.
+GUARD_DRAFT_SESSION_DELETE = r'''
+CREATE OR REPLACE FUNCTION public.ctm_guard_draft_session_delete() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+  IF NOT (public.ctm_draft_session_delete_allowed(OLD.id) OR public.ctm_session_transfer_context(OLD.id)) THEN
+    RAISE EXCEPTION 'Only an unassigned draft session can be deleted' USING ERRCODE='23514';
+  END IF;
+  RETURN OLD;
+END $$;
+'''
+GUARD_DRAFT_SESSION_DELETE_0055 = r'''
+CREATE OR REPLACE FUNCTION public.ctm_guard_draft_session_delete() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+  IF NOT public.ctm_draft_session_delete_allowed(OLD.id) THEN
+    RAISE EXCEPTION 'Only an unassigned draft session can be deleted' USING ERRCODE='23514';
+  END IF;
+  RETURN OLD;
+END $$;
+'''
+
 
 def grant_runtime(apps, schema_editor):
     if schema_editor.connection.vendor != "postgresql":
@@ -108,6 +135,7 @@ def install(apps, schema_editor):
     grant_runtime(apps, schema_editor)
     schema_editor.execute(REJECT_HISTORY_UPDATE)
     schema_editor.execute(GUARD_HISTORY_DELETE)
+    schema_editor.execute(GUARD_DRAFT_SESSION_DELETE)
 
 
 def uninstall(apps, schema_editor):
@@ -118,6 +146,7 @@ def uninstall(apps, schema_editor):
         return
     schema_editor.execute(REJECT_HISTORY_UPDATE_0057)
     schema_editor.execute(GUARD_HISTORY_DELETE_0057)
+    schema_editor.execute(GUARD_DRAFT_SESSION_DELETE_0055)
 
 
 class Migration(migrations.Migration):
