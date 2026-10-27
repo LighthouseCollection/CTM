@@ -23,6 +23,25 @@ def provider_identity(sociallogin):
         yield
 
 
+def bind_first_microsoft_subject(user, subject):
+    """Record an enrolled council account's first Microsoft subject.
+
+    On PostgreSQL the runtime role cannot change identity fields; the narrow
+    ctm_bind_microsoft_subject function re-checks every condition (validated
+    provider settings, active administrator-enrolled council account, empty
+    subject, verified @lacopts.org email, unused subject) before binding.
+    """
+    from django.db import connection
+
+    if connection.vendor == "postgresql":
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT public.ctm_bind_microsoft_subject(%s)", [str(user.pk)])
+        user.refresh_from_db(fields=["microsoft_subject"])
+        return
+    user.microsoft_subject = subject
+    user.save(update_fields=["microsoft_subject"])
+
+
 class ProviderOnlyAdapter(DefaultAccountAdapter):
     def is_open_for_signup(self, request):
         return False
@@ -88,8 +107,7 @@ class AccountAdapter(DefaultSocialAccountAdapter):
                         .first()
                     )
                     if user is not None:
-                        user.microsoft_subject = sociallogin.account.uid
-                        user.save(update_fields=["microsoft_subject"])
+                        bind_first_microsoft_subject(user, sociallogin.account.uid)
             if (
                 not user
                 or not user.is_active
