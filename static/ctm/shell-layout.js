@@ -42,11 +42,12 @@
       }
       return {
         ...column, type, ...projected,
-        ...(isAction ? { kind: "center", maxWidth: column.maxWidth || "--plx-ref-size-240px", headerSort: false, groupable: false } : {}),
+        ...(isAction ? { kind: "center", maxWidth: column.maxWidth || "--plx-ref-size-240px", sortable: false, groupable: false } : {}),
         ...(/^(status|state)$/.test(column.field) ? { maxWidth: column.maxWidth || "--plx-ref-size-240px" } : {}),
         ...(/^(code|number|case_number|case_code)$/.test(column.field) ? { kind: "data" } : {}),
         ...(render && !native ? { pill: false, render } : {}),
-        headerSort: !isAction && column.headerSort !== false,
+        // Plenix 0.70.0 renamed the column option headerSort to sortable (no alias).
+        sortable: !isAction && column.sortable !== false && column.headerSort !== false,
         resizable: column.resizable !== false,
       };
     });
