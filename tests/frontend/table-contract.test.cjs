@@ -40,7 +40,8 @@ test("action columns stay bounded without disabling their resize handles", () =>
   const result=mount({label:"Actions",rows:[],columns:[{field:"open_action",minWidth:"7rem",render:()=>({type:"Button"})}]});
   const column=result.props.columns[0];
   assert.equal(column.resizable,true);
-  assert.equal(column.headerSort,false);
+  assert.equal(column.sortable,false);
+  assert.equal("headerSort" in column,false);
   assert.equal(column.maxWidth,"--plx-ref-size-240px");
   assert.equal(column.minWidth,"7rem");
   assert.equal(column.render({}).type,"Button");
