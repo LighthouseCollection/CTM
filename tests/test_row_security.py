@@ -194,8 +194,8 @@ def test_council_compare_save_vote_replay_and_unique_versions_under_rls(runtime,
         save_note(people["admin"], ready_application.proceeding_id, "Changed", note.pk, expected_version=1)
         finding = save_finding(people["admin"], ready_application.proceeding_id, "fact", {"source": "Note"}, [{"note_id": str(note.pk)}], expected_version=0)
         decision = record_decision(people["admin"], ready_application.proceeding_id, "deferred", "Reason", {}, expected_version=0)
-        vote = cast_vote(people["admin"], decision.pk, "approve", idempotency_key="runtime-vote")
-        assert cast_vote(people["admin"], decision.pk, "approve", idempotency_key="runtime-vote").pk == vote.pk
+        vote = cast_vote(people["admin"], decision.pk, "approve", people["member"].pk, idempotency_key="runtime-vote")
+        assert cast_vote(people["admin"], decision.pk, "approve", people["member"].pk, idempotency_key="runtime-vote").pk == vote.pk
         with pytest.raises(VersionConflict):
             save_finding(people["admin"], ready_application.proceeding_id, "fact", {"changed": True}, expected_version=0)
     for model, values in [(m.NoteRevision, {"note": note, "number": 1, "text": "Duplicate"}),
@@ -1215,14 +1215,21 @@ def test_new_assignee_cannot_append_to_previous_authors_note(
     from tribunal.models import NoteRevision
     from tribunal.services.council import assign_case
 
+    from tribunal.models import Account
+
     app, _, _, note, _ = council_sources
+    # Presidents cannot be case managers (a57e8b8); the new assignee is a second member.
+    successor = Account.objects.create_user(
+        email="successor@example.test", first_name="successor", last_name="Test",
+        role="member", email_verified=True,
+    )
     assign_case(
-        people["admin"], app.case_id, people["president"].pk, people["president"].pk
+        people["admin"], app.case_id, successor.pk, people["president"].pk
     )
     with pytest.raises(DatabaseError):
-        with runtime(people["president"]):
+        with runtime(successor):
             NoteRevision.objects.create(
-                note=note, number=2, text="Forged revision", actor=people["president"]
+                note=note, number=2, text="Forged revision", actor=successor
             )
 
 
