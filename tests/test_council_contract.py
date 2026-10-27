@@ -303,7 +303,8 @@ def test_question_taxonomy_preserves_multiple_groups_and_missing_translation(cli
     row = client.get("/api/report-questions/").json()["items"][0]
     assert row["category_id"] == "QC05"
     assert {group["id"] for group in row["topic_groups"]} == {"TG02", "TG03"}
-    assert row["category_ar"] is None and row["wording_ar"] == ""
+    # 9fc788b translated every taxonomy category; the question wording itself has no Arabic.
+    assert row["category_ar"] == "قرار الزواج" and row["wording_ar"] == ""
     assert all(group["title_ar"] is None for group in row["topic_groups"])
 
 
