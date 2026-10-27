@@ -126,6 +126,50 @@ GRANT EXECUTE ON FUNCTION public.ctm_purge_case(uuid) TO ctm_app;
 '''
 
 
+# Restores the definitions in force before this migration: 0002
+# (ctm_reject_history_update), 0009 (ctm_guard_history_delete) and 0016
+# (ctm_guard_attendance_transfer_delete). Forward behavior is unchanged.
+REVERSE = r'''
+DROP POLICY IF EXISTS admin_case_purge_delete ON public.tribunal_case;
+DROP POLICY IF EXISTS admin_case_purge_delete ON public.tribunal_party;
+DROP POLICY IF EXISTS admin_case_purge_delete ON public.tribunal_proceeding;
+DROP FUNCTION IF EXISTS public.ctm_purge_case(uuid);
+
+CREATE OR REPLACE FUNCTION public.ctm_reject_history_update() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN RAISE EXCEPTION 'CTM historical records cannot be overwritten' USING ERRCODE='23514'; END $$;
+
+CREATE OR REPLACE FUNCTION public.ctm_guard_attendance_transfer_delete() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF OLD.hearing_id IS NOT NULL OR NOT public.ctm_session_transfer_context(OLD.session_id) THEN
+   RAISE EXCEPTION 'Attendance history cannot be deleted outside planned reschedule' USING ERRCODE='23514';
+ END IF;
+ RETURN OLD;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.ctm_guard_history_delete() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE disposable boolean=false;
+BEGIN
+  CASE TG_TABLE_NAME
+    WHEN 'tribunal_answerrevision' THEN
+      SELECT a.submitted_at IS NULL AND a.status='draft' INTO disposable FROM tribunal_application a WHERE a.id=OLD.application_id;
+    WHEN 'tribunal_fileversion' THEN
+      SELECT a.submitted_at IS NULL AND a.status='draft' INTO disposable FROM tribunal_attachment f JOIN tribunal_application a ON a.id=f.application_id WHERE f.id=OLD.attachment_id;
+    WHEN 'tribunal_filetechnicalevent', 'tribunal_documenttext' THEN
+      SELECT a.submitted_at IS NULL AND a.status='draft' INTO disposable FROM tribunal_fileversion v JOIN tribunal_attachment f ON f.id=v.attachment_id JOIN tribunal_application a ON a.id=f.application_id WHERE v.id=OLD.file_id;
+    ELSE disposable=false;
+  END CASE;
+  IF disposable IS NOT TRUE THEN
+    RAISE EXCEPTION 'Submitted records and case history cannot be deleted' USING ERRCODE='23514';
+  END IF;
+  RETURN OLD;
+END $$;
+
+DROP FUNCTION IF EXISTS public.ctm_admin_case_purge_active();
+DROP FUNCTION IF EXISTS public.ctm_admin_case_purge_allowed(uuid);
+'''
+
+
 def remove_retired_demo(apps, schema_editor):
     if schema_editor.connection.vendor != "postgresql":
         return
@@ -152,5 +196,5 @@ def remove_retired_demo(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [("tribunal", "0056_populate_archived_session_data")]
-    operations = [migrations.RunSQL(FORWARD), migrations.RunPython(remove_retired_demo, migrations.RunPython.noop)]
+    operations = [migrations.RunSQL(FORWARD, REVERSE), migrations.RunPython(remove_retired_demo, migrations.RunPython.noop)]
 
