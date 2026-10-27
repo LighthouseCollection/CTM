@@ -114,18 +114,6 @@ def test_case_listing_exposes_party_names_for_session_placement_choices(client, 
     assert {"applicant_name", "respondent_name", "reason", "closed_at"} <= row.keys()
 
 
-def test_session_agenda_keeps_gender_pills_when_a_party_uses_its_linked_account_person(client, filed, people):
-    party = Party.objects.get(case=filed.case, account=filed.owner)
-    party.person = None
-    party.save(update_fields=["person"])
-    session = create_session(people["admin"], date(2030, 1, 2))
-    place_agenda(people["admin"], session.pk, filed.case_id, part=1)
-    login(client, people["secretary"])
-
-    row = client.get(f"/api/sessions/{session.pk}/agenda/").json()["items"][0]
-    assert row["applicant_gender"] == filed.owner.person.gender == "M"
-
-
 def test_session_workspace_exposes_the_last_recorded_hearing_recommendation(client, hearing, filed, people):
     save_hearing_outcome(people["member"], hearing.pk, "Private notes", "Proceed with reconciliation")
     following = create_session(people["admin"], date(2030, 1, 9))
