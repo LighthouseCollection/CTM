@@ -1,7 +1,7 @@
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from tribunal.models import Attachment, FileTechnicalEvent, FileVersion, Party
-from tribunal.services.applications import submit_application
+from tribunal.services.applications import save_answers, submit_application
 from tribunal.services.council import assign_case, save_finding
 
 pytestmark = pytest.mark.django_db
@@ -93,7 +93,8 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
         "church_location": "Los Angeles, CA",
         "diocese": "Diocese of Los Angeles",
     }
-    revision.__class__.objects.filter(pk=revision.pk).update(answers=revision.answers)
+    # Answer revisions are immutable history; save new answers as a new revision.
+    save_answers(app.owner, app.pk, revision.answers, app.current_version)
     submit_application(app.owner, app.pk, "case-profile", {"accepted": True, "name": "John Smith"})
     app.refresh_from_db()
     revision.answers = {
@@ -121,7 +122,8 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
             "lives_with": "self",
         }],
     }
-    revision.__class__.objects.filter(pk=revision.pk).update(answers=revision.answers)
+    save_answers(app.owner, app.pk, revision.answers, app.current_version)
+    app.refresh_from_db()
     spouse = Party.objects.create(case=app.case, slot="B", name="Jessica O'Brien")
     photo_attachment = Attachment.objects.create(
         application=app, owner=app.owner, category="PHOTO"
