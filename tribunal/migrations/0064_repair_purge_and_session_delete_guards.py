@@ -41,6 +41,54 @@ BEGIN
 END $$;
 '''
 
+# 0057 rewrote ctm_guard_history_delete as SECURITY INVOKER while making it call
+# private definer helpers the runtime roles cannot execute, so a draft owner's
+# permitted delete failed with "permission denied for function ctm_migration_caller".
+# Same body, now SECURITY DEFINER with a pinned search_path and no PUBLIC execute
+# (the pattern 0016 uses for ctm_guard_attendance_transfer_delete).
+GUARD_HISTORY_DELETE = r'''
+CREATE OR REPLACE FUNCTION public.ctm_guard_history_delete() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE disposable boolean=false;
+BEGIN
+  IF public.ctm_migration_caller() OR public.ctm_admin_case_purge_active() THEN RETURN OLD; END IF;
+  CASE TG_TABLE_NAME
+    WHEN 'tribunal_answerrevision' THEN
+      SELECT a.submitted_at IS NULL AND a.status='draft' INTO disposable FROM tribunal_application a WHERE a.id=OLD.application_id;
+    WHEN 'tribunal_fileversion' THEN
+      SELECT a.submitted_at IS NULL AND a.status='draft' INTO disposable FROM tribunal_attachment f JOIN tribunal_application a ON a.id=f.application_id WHERE f.id=OLD.attachment_id;
+    WHEN 'tribunal_filetechnicalevent', 'tribunal_documenttext' THEN
+      SELECT a.submitted_at IS NULL AND a.status='draft' INTO disposable FROM tribunal_fileversion v JOIN tribunal_attachment f ON f.id=v.attachment_id JOIN tribunal_application a ON a.id=f.application_id WHERE v.id=OLD.file_id;
+    ELSE disposable=false;
+  END CASE;
+  IF disposable IS NOT TRUE THEN
+    RAISE EXCEPTION 'Submitted records and case history cannot be deleted' USING ERRCODE='23514';
+  END IF;
+  RETURN OLD;
+END $$;
+REVOKE ALL ON FUNCTION public.ctm_guard_history_delete() FROM PUBLIC;
+'''
+GUARD_HISTORY_DELETE_0057 = r'''
+CREATE OR REPLACE FUNCTION public.ctm_guard_history_delete() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE disposable boolean=false;
+BEGIN
+  IF public.ctm_migration_caller() OR public.ctm_admin_case_purge_active() THEN RETURN OLD; END IF;
+  CASE TG_TABLE_NAME
+    WHEN 'tribunal_answerrevision' THEN
+      SELECT a.submitted_at IS NULL AND a.status='draft' INTO disposable FROM tribunal_application a WHERE a.id=OLD.application_id;
+    WHEN 'tribunal_fileversion' THEN
+      SELECT a.submitted_at IS NULL AND a.status='draft' INTO disposable FROM tribunal_attachment f JOIN tribunal_application a ON a.id=f.application_id WHERE f.id=OLD.attachment_id;
+    WHEN 'tribunal_filetechnicalevent', 'tribunal_documenttext' THEN
+      SELECT a.submitted_at IS NULL AND a.status='draft' INTO disposable FROM tribunal_fileversion v JOIN tribunal_attachment f ON f.id=v.attachment_id JOIN tribunal_application a ON a.id=f.application_id WHERE v.id=OLD.file_id;
+    ELSE disposable=false;
+  END CASE;
+  IF disposable IS NOT TRUE THEN
+    RAISE EXCEPTION 'Submitted records and case history cannot be deleted' USING ERRCODE='23514';
+  END IF;
+  RETURN OLD;
+END $$;
+'''
+
 
 def grant_runtime(apps, schema_editor):
     if schema_editor.connection.vendor != "postgresql":
@@ -59,6 +107,7 @@ def install(apps, schema_editor):
         schema_editor.execute(f"REVOKE ALL ON FUNCTION public.{signature} FROM PUBLIC")
     grant_runtime(apps, schema_editor)
     schema_editor.execute(REJECT_HISTORY_UPDATE)
+    schema_editor.execute(GUARD_HISTORY_DELETE)
 
 
 def uninstall(apps, schema_editor):
@@ -68,6 +117,7 @@ def uninstall(apps, schema_editor):
     if schema_editor.connection.vendor != "postgresql":
         return
     schema_editor.execute(REJECT_HISTORY_UPDATE_0057)
+    schema_editor.execute(GUARD_HISTORY_DELETE_0057)
 
 
 class Migration(migrations.Migration):
