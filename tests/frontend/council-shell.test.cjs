@@ -22,14 +22,14 @@ test("session layout assets use a current cache version", () => {
   assert.match(shell, /ctm\/council\.js\x27 %\}\?v=[a-z0-9-]+/);
 });
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
-  const order = ["cdn/0.68.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
+  const order = ["cdn/0.72.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
   for (const index of order) assert.ok(index > 0);
   assert.deepEqual([...order].sort((a, b) => a - b), order);
-  assert.doesNotMatch(shell, /cdn\/(?!0\.68\.0)\d+\.\d+\.\d+/);
+  assert.doesNotMatch(shell, /cdn\/(?!0\.72\.0)\d+\.\d+\.\d+/);
 });
 
 test("shell loads the full Material icon stylesheet for requested navigation symbols", () => {
-  assert.match(shell, /cdn\/0\.68\.0\/icons-all\.css/);
+  assert.match(shell, /cdn\/0\.72\.0\/icons-all\.css/);
   assert.match(app, /name: "document_search"/);
   assert.match(app, /name: "person_cancel"/);
 });
