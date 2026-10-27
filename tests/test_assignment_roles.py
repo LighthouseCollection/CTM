@@ -81,9 +81,12 @@ def test_f15_configuration_membership_and_grant_api_permissions(client, filed, p
     response = client.post("/api/council/assignment-authorities/", data={"account_id": str(people["admin"].pk), "tribunal_id": str(institution.pk)}, content_type="application/json")
     assert response.status_code == 201
     role_id = response.json()["id"]
-    roster = client.get("/api/council/members/").json()["items"]
-    actor = next(row for row in roster if row["id"] == str(people["admin"].pk))
-    assert actor["can_authorize_assignment"] and not actor["president"]
+    listing = client.get("/api/council/members/").json()
+    # The voting roster stays council-only (3721917); F15 holders are listed separately.
+    assert str(people["admin"].pk) not in {row["id"] for row in listing["items"]}
+    actor = next(row for row in listing["assignment_authorities"] if row["id"] == str(people["admin"].pk))
+    assert actor["can_authorize_assignment"] and actor["can_record_assignment"] and actor["role"] == "admin"
+    assert "president" not in actor
     response = client.post(f"/api/cases/{filed.case_id}/assignment/", data={"member_id": str(people["member"].pk), "president_id": str(people["admin"].pk)}, content_type="application/json")
     assert response.status_code == 201
     history = client.get(f"/api/cases/{filed.case_id}/").json()["assignment_history"]

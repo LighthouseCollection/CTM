@@ -868,6 +868,17 @@ def members(request):
     from tribunal.services.staff_roles import assignment_president, assignment_recorder
 
     staff(request.user)
+    # The roster (items) stays council-only: it feeds voting, attendance and
+    # presiding choices. F15 assignment authority can also be held by an admin,
+    # so its holders are listed separately for the assignment panel.
+    authorities = []
+    for x in m.Account.objects.filter(
+        is_active=True, role__in=["admin", "president", "secretary", "member"]
+    ).order_by("created_at"):
+        authorize, record = assignment_president(x), assignment_recorder(x)
+        if authorize or record:
+            authorities.append(encoded(x, name=f"{x.first_name} {x.last_name}".strip(), role=x.role,
+                                       can_authorize_assignment=authorize, can_record_assignment=record))
     return JsonResponse(
         {
             "items": [
@@ -878,7 +889,8 @@ def members(request):
                 for x in m.Account.objects.filter(
                     is_active=True, role__in=["president", "secretary", "member"]
                 ).order_by("created_at")
-            ]
+            ],
+            "assignment_authorities": authorities,
         }
     )
 
