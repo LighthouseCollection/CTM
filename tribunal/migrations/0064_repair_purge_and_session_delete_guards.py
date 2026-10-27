@@ -22,13 +22,14 @@ APP_POLICY_ENTRYPOINTS = [
 # 0057 made ctm_reject_history_update RETURN OLD for the migration owner and for an
 # active purge. On its BEFORE UPDATE triggers that silently discarded overwrites
 # instead of refusing them. Updates are refused for every caller again (as in
-# 0002); only deletes keep the 0057 purge/migration path. SECURITY DEFINER so the
+# 0002). Deletes are allowed only during an authorized admin purge; the 0057
+# migration-owner bypass is dropped, restoring the pre-0057 refusal for the owner. SECURITY DEFINER so the
 # runtime roles need no EXECUTE on the private helpers it consults.
 REJECT_HISTORY_UPDATE = r'''
 CREATE OR REPLACE FUNCTION public.ctm_reject_history_update() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 BEGIN
-  IF TG_OP='DELETE' AND (public.ctm_migration_caller() OR public.ctm_admin_case_purge_active()) THEN RETURN OLD; END IF;
+  IF TG_OP='DELETE' AND public.ctm_admin_case_purge_active() THEN RETURN OLD; END IF;
   RAISE EXCEPTION 'CTM historical records cannot be overwritten' USING ERRCODE='23514';
 END $$;
 REVOKE ALL ON FUNCTION public.ctm_reject_history_update() FROM PUBLIC;
@@ -45,13 +46,14 @@ END $$;
 # private definer helpers the runtime roles cannot execute, so a draft owner's
 # permitted delete failed with "permission denied for function ctm_migration_caller".
 # Same body, now SECURITY DEFINER with a pinned search_path and no PUBLIC execute
-# (the pattern 0016 uses for ctm_guard_attendance_transfer_delete).
+# (the pattern 0016 uses for ctm_guard_attendance_transfer_delete). As above, only
+# an authorized admin purge bypasses it; the migration-owner bypass is dropped.
 GUARD_HISTORY_DELETE = r'''
 CREATE OR REPLACE FUNCTION public.ctm_guard_history_delete() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE disposable boolean=false;
 BEGIN
-  IF public.ctm_migration_caller() OR public.ctm_admin_case_purge_active() THEN RETURN OLD; END IF;
+  IF public.ctm_admin_case_purge_active() THEN RETURN OLD; END IF;
   CASE TG_TABLE_NAME
     WHEN 'tribunal_answerrevision' THEN
       SELECT a.submitted_at IS NULL AND a.status='draft' INTO disposable FROM tribunal_application a WHERE a.id=OLD.application_id;
@@ -116,6 +118,31 @@ BEGIN
 END $$;
 '''
 
+# 0057 also let the migration owner delete attendance history outside a planned
+# reschedule. Only an authorized admin purge bypasses the 0016 rule now.
+GUARD_ATTENDANCE_DELETE = r'''
+CREATE OR REPLACE FUNCTION public.ctm_guard_attendance_transfer_delete() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+  IF public.ctm_admin_case_purge_active() THEN RETURN OLD; END IF;
+  IF OLD.hearing_id IS NOT NULL OR NOT public.ctm_session_transfer_context(OLD.session_id) THEN
+    RAISE EXCEPTION 'Attendance history cannot be deleted outside planned reschedule' USING ERRCODE='23514';
+  END IF;
+  RETURN OLD;
+END $$;
+'''
+GUARD_ATTENDANCE_DELETE_0057 = r'''
+CREATE OR REPLACE FUNCTION public.ctm_guard_attendance_transfer_delete() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+  IF public.ctm_migration_caller() OR public.ctm_admin_case_purge_active() THEN RETURN OLD; END IF;
+  IF OLD.hearing_id IS NOT NULL OR NOT public.ctm_session_transfer_context(OLD.session_id) THEN
+    RAISE EXCEPTION 'Attendance history cannot be deleted outside planned reschedule' USING ERRCODE='23514';
+  END IF;
+  RETURN OLD;
+END $$;
+'''
+
 
 def grant_runtime(apps, schema_editor):
     if schema_editor.connection.vendor != "postgresql":
@@ -136,6 +163,7 @@ def install(apps, schema_editor):
     schema_editor.execute(REJECT_HISTORY_UPDATE)
     schema_editor.execute(GUARD_HISTORY_DELETE)
     schema_editor.execute(GUARD_DRAFT_SESSION_DELETE)
+    schema_editor.execute(GUARD_ATTENDANCE_DELETE)
 
 
 def uninstall(apps, schema_editor):
@@ -147,6 +175,7 @@ def uninstall(apps, schema_editor):
     schema_editor.execute(REJECT_HISTORY_UPDATE_0057)
     schema_editor.execute(GUARD_HISTORY_DELETE_0057)
     schema_editor.execute(GUARD_DRAFT_SESSION_DELETE_0055)
+    schema_editor.execute(GUARD_ATTENDANCE_DELETE_0057)
 
 
 class Migration(migrations.Migration):
