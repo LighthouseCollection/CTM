@@ -173,4 +173,5 @@ def test_member_directory_is_bounded_and_excludes_applicants(granted_roles, peop
     assert len({row['id'] for row in rows}) == 4
     assert all(row['profile_version'] == 0 for row in rows)
     assert all(row['id'] != str(people['applicant'].pk) for row in rows)
-    assert all(set(row) == {'id', 'first_name', 'last_name', 'email', 'role', 'active', 'email_verified', 'profile_version'} for row in rows)
+    assert all(set(row) == {'id', 'first_name', 'last_name', 'email', 'role', 'active', 'email_verified', 'profile_version',
+                            'active_case_count', 'status_version', 'can_suspend', 'can_reactivate'} for row in rows)
