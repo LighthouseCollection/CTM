@@ -114,18 +114,6 @@ def test_case_listing_exposes_party_names_for_session_placement_choices(client, 
     assert {"applicant_name", "respondent_name", "reason", "closed_at"} <= row.keys()
 
 
-def test_session_agenda_keeps_gender_pills_when_a_party_uses_its_linked_account_person(client, filed, people):
-    party = Party.objects.get(case=filed.case, account=filed.owner)
-    party.person = None
-    party.save(update_fields=["person"])
-    session = create_session(people["admin"], date(2030, 1, 2))
-    place_agenda(people["admin"], session.pk, filed.case_id, part=1)
-    login(client, people["secretary"])
-
-    row = client.get(f"/api/sessions/{session.pk}/agenda/").json()["items"][0]
-    assert row["applicant_gender"] == filed.owner.person.gender == "M"
-
-
 def test_session_workspace_exposes_the_last_recorded_hearing_recommendation(client, hearing, filed, people):
     save_hearing_outcome(people["member"], hearing.pk, "Private notes", "Proceed with reconciliation")
     following = create_session(people["admin"], date(2030, 1, 9))
@@ -303,7 +291,8 @@ def test_question_taxonomy_preserves_multiple_groups_and_missing_translation(cli
     row = client.get("/api/report-questions/").json()["items"][0]
     assert row["category_id"] == "QC05"
     assert {group["id"] for group in row["topic_groups"]} == {"TG02", "TG03"}
-    assert row["category_ar"] is None and row["wording_ar"] == ""
+    # 9fc788b translated every taxonomy category; the question wording itself has no Arabic.
+    assert row["category_ar"] == "قرار الزواج" and row["wording_ar"] == ""
     assert all(group["title_ar"] is None for group in row["topic_groups"])
 
 
@@ -581,6 +570,7 @@ def test_active_session_agenda_requires_an_audited_override_to_move(filed, peopl
 
 def test_draft_session_agenda_can_move_to_a_later_open_session(filed, people):
     app = filed
+    assign_case(people["admin"], app.case_id, people["member"].pk, people["president"].pk)
     source_session = create_session(people["admin"], date(2030, 2, 2), state="draft")
     target_session = create_session(people["admin"], date(2030, 2, 9), state="draft")
     source = place_agenda(people["member"], source_session.pk, app.case_id)
@@ -640,7 +630,7 @@ def test_session_date_can_be_corrected_after_a_held_hearing(hearing, people):
 
 def test_council_member_roster_excludes_administrators(client, people):
     login(client, people["admin"])
-    rows = client.get("/api/members/").json()["items"]
+    rows = client.get("/api/council/members/").json()["items"]
     assert {row["role"] for row in rows} <= {"president", "secretary", "member"}
     assert all(row["email"] if "email" in row else True for row in rows)
     assert str(people["admin"].pk) not in {row["id"] for row in rows}
@@ -656,6 +646,7 @@ def test_administrator_can_delete_an_unassigned_draft_session(people):
 
 def test_draft_session_with_agenda_is_retained(people, filed):
     session = create_session(people["admin"], date(2030, 5, 2), state="draft")
+    assign_case(people["admin"], filed.case_id, people["member"].pk, people["president"].pk)
     place_agenda(people["member"], session.pk, filed.case_id)
 
     with pytest.raises(ValidationError, match="agenda"):

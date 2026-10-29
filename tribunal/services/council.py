@@ -515,11 +515,13 @@ def set_session_adjourned(actor, session_id, adjourned, ended_at):
         raise ValidationError("An adjourned session remains closed; open its record to take notes.")
     if session.state != "planned":
         raise ValidationError("Only an in-session tribunal session can be adjourned.")
-    # Keep all normal close-side effects (agenda completion, carryovers, and
-    # queued communication release) in the established command.
-    session = close_session(actor, session_id)
+    # Record the end time while the session is still open: the database keeps a
+    # closed session read-only. Then keep all normal close-side effects (agenda
+    # completion, carryovers, and queued communication release) in the
+    # established command, inside this same transaction.
     session.adjourned_at = ended_at
     session.save(update_fields=["adjourned_at"])
+    session = close_session(actor, session_id)
     audit(actor, "session_adjourned", session)
     return session
 

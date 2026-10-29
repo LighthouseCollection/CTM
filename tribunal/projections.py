@@ -245,16 +245,10 @@ def agenda_item_data(item, actor, attendance):
     )
     applicant_name = (applicant_party.name if applicant_party else "") or (name(application.owner) if application else "")
     respondent = next((party for party in parties if party.pk != applicant_party.pk), None) if applicant_party else None
-    applicant_gender = (
-        applicant_party.person.gender
-        if applicant_party and applicant_party.person_id
-        else application.owner.person.gender if application and application.owner.person_id else None
-    )
-    respondent_gender = (
-        respondent.person.gender
-        if respondent and respondent.person_id
-        else respondent.account.person.gender if respondent and respondent.account_id and respondent.account.person_id else None
-    )
+    # Every party with an account is created with that account's person, and the
+    # database keeps both fixed, so the party's own person is the only source.
+    applicant_gender = applicant_party.person.gender if applicant_party and applicant_party.person_id else None
+    respondent_gender = respondent.person.gender if respondent and respondent.person_id else None
     married_years = None
     if case.marriage_date:
         married_years = item.session.date.year - case.marriage_date.year - (
