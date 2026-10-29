@@ -381,6 +381,16 @@ test("F15: assignment authorizers and recorders follow server flags; one person 
   assert.equal(C.canRecordAssignment({ id: "m", role: "member", portal: "council" }, flagged), false);
   // Same person as authorizer and recorder is valid.
   assert.equal(C.assignmentProblem("m", "a", flagged), null);
+  // A separate assignment_authorities list (an admin outside the council roster) wins when present.
+  const roster = [{ id: "m", role: "member", can_authorize_assignment: false, can_record_assignment: false },
+    { id: "p", role: "president", can_authorize_assignment: true, can_record_assignment: false }];
+  const holders = [{ id: "a", role: "admin", can_authorize_assignment: true, can_record_assignment: true },
+    { id: "p", role: "president", can_authorize_assignment: true, can_record_assignment: false }];
+  assert.deepEqual([...C.assignmentAuthorizers(roster, holders)].map((m) => m.id), ["a", "p"]);
+  assert.equal(C.canRecordAssignment({ id: "a", role: "admin", portal: "council" }, roster, holders), true);
+  assert.equal(C.canRecordAssignment({ id: "p", role: "president", portal: "council" }, roster, holders), false);
+  assert.equal(C.assignmentProblem("m", "a", roster, holders), null);
+  assert.equal(C.assignmentProblem("a", "p", roster, holders), "chooseMember");
   // President approval list is unchanged by the assignment flags.
   assert.deepEqual([...C.presidents(flagged)].map((m) => m.id), ["p"]);
   assert.deepEqual([...C.assignableMembers(flagged)].map((m) => m.id), ["m", "p"]);

@@ -223,8 +223,15 @@ def test_case_capabilities_and_active_president_roster(client, filed, people):
     assert not data["can_place_part2"] and not data["can_assign"]
     login(client, people["admin"])
     Account.objects.create_user(email="inactive@example.test", role="member", is_active=False)
-    rows = client.get("/api/council/members/").json()["items"]
-    assert len(rows) == 4 and all(x["active"] for x in rows)
+    listing = client.get("/api/council/members/").json()
+    rows = listing["items"]
+    # Council roles only (3721917): president, secretary and member; the admin is not a council voter.
+    assert len(rows) == 3 and all(x["active"] for x in rows)
+    assert {x["role"] for x in rows} == {"president", "secretary", "member"}
+    authorities = {x["id"]: x for x in listing["assignment_authorities"]}
+    assert authorities[str(people["admin"].pk)]["can_record_assignment"]
+    assert authorities[str(people["president"].pk)]["can_authorize_assignment"]
+    assert str(people["member"].pk) not in authorities
     assert next(x for x in rows if x["id"] == str(people["president"].pk))["president"]
 
 

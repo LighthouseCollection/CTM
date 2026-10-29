@@ -177,15 +177,19 @@
   // record an assignment; one person may hold both. Older servers: President role
   // authorizes, admin/secretary record. President approval and decree signing keep
   // using presidents() (the role flag), unchanged.
-  function assignmentAuthorizers(members) {
+  // When the server also lists assignment_authorities (holders of F15 authority,
+  // which may include an admin outside the council roster), those rows are used.
+  function assignmentAuthorizers(members, authorities) {
+    if (Array.isArray(authorities)) return authorities.filter((m) => m.can_authorize_assignment);
     const rows = members || [];
     return rows.some((m) => typeof m.can_authorize_assignment === "boolean")
       ? rows.filter((m) => m.can_authorize_assignment)
       : presidents(rows);
   }
 
-  function canRecordAssignment(user, members) {
-    const me = (members || []).find((m) => m.id === user?.id);
+  function canRecordAssignment(user, members, authorities) {
+    const me = (Array.isArray(authorities) ? authorities : []).find((m) => m.id === user?.id)
+      || (members || []).find((m) => m.id === user?.id);
     if (me && typeof me.can_record_assignment === "boolean") return me.can_record_assignment;
     return canManage(user);
   }
@@ -194,10 +198,10 @@
     return (members || []).filter((row) => ["president", "secretary", "member"].includes(row.role));
   }
 
-  function assignmentProblem(memberId, presidentId, members) {
+  function assignmentProblem(memberId, presidentId, members, authorities) {
     if (!memberId) return "chooseMember";
     if (!presidentId) return "choosePresident";
-    if (!assignmentAuthorizers(members).some((row) => row.id === presidentId))
+    if (!assignmentAuthorizers(members, authorities).some((row) => row.id === presidentId))
       return "choosePresident";
     if (!assignableMembers(members).some((row) => row.id === memberId))
       return "chooseMember";
@@ -2144,6 +2148,7 @@
           items: agenda.items,
           cases: cases.items,
           members: members.items,
+          authorities: members.assignment_authorities,
           sessions: sessions.items,
         })),
       [sessionId],
@@ -2170,8 +2175,8 @@
     const c2 = part2Candidates(data.cases, data.items, user);
     const pendingAssignments = pendingAssignmentCount(data.items);
     const scheduledHearings = groups[2].filter((row) => row.state === "scheduled").length;
-    const presidentRows = assignmentAuthorizers(data.members);
-    const recorder = canRecordAssignment(user, data.members);
+    const presidentRows = assignmentAuthorizers(data.members, data.authorities);
+    const recorder = canRecordAssignment(user, data.members, data.authorities);
     const memberRows = assignableMembers(data.members);
     const transferSessions = data.sessions.filter((candidate) => candidate.id !== session.id && candidate.date > session.date && ["draft", "planned"].includes(candidate.state));
     // EntityHeader is the default Plenix record header.  Values come from the
@@ -2227,7 +2232,7 @@
       );
 
     function assign() {
-      const issue = assignmentProblem(choice.member, choice.president, data.members);
+      const issue = assignmentProblem(choice.member, choice.president, data.members, data.authorities);
       setProblem(issue);
       if (issue) return;
       run(
