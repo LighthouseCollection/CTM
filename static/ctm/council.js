@@ -1149,7 +1149,7 @@
       h(
         P.PropertyList,
         null,
-        h(P.PropertyList.Item, { label: t("reference"), data: true }, row.case_number || t("unnumbered")),
+        row.case_number ? h(P.PropertyList.Item, { label: t("reference"), data: true, kind: "id" }, row.case_number) : h(P.PropertyList.Item, { label: t("reference") }, t("unnumbered")),
         row.applicant_name ? h(P.PropertyList.Item, { label: t("applicant") }, row.applicant_name) : null,
         row.submitted_at ? h(P.PropertyList.Item, { label: t("submittedAt"), data: true }, formatWhen(row.submitted_at, lang)) : null,
         h(P.PropertyList.Item, { label: t("version"), data: true }, String(row.submitted_version ?? row.version)),
@@ -2281,11 +2281,11 @@
           P.Stack,
           { gap: "sm" },
           h(P.DataGrid, {
-            density: "compact", cells: "pill", uniformPillWidths: true, typeIcons: false, wrapHeaders: false,
+            density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
             label: t(`part${n}`), data: groups[n], index: "id", narrow: "table", mode: "fill", isStatic: true,
             empty: t(`part${n}Empty`),
             columns: [
-              { title: t("caseNumber"), field: "case_number", kind: "name" },
+              { title: t("caseNumber"), field: "case_number", kind: ["name", "id"] },
               { title: t("statusLabel"), field: "state", pill: false, render: (row) => t(row.state === "assigned" ? "assigned_state" : row.state) },
               { title: t("agenda"), field: "id", pill: false, render: (row) => h(AgendaItemCard, {
               compact: true,
@@ -2949,7 +2949,7 @@
     const columns = [
       ...(archived
       ? [
-          { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
+          { title: t("caseNumber"), field: "number", kind: ["data", "id"], sorter: "string" },
           { title: t("caseApplicant"), field: "applicant", type: "person", kind: "name", sorter: "string" },
           { title: t("caseRespondent"), field: "respondent", type: "person", kind: "name", sorter: "string" },
           { title: t("caseAssignee"), field: "manager", type: "person", kind: "name", sorter: "string" },
@@ -2957,7 +2957,7 @@
           { title: t("statusLabel"), field: "status", maxWidth: "--plx-ref-size-240px", sorter: "string" },
         ]
       : [
-          { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
+          { title: t("caseNumber"), field: "number", kind: ["data", "id"], sorter: "string" },
           { title: t("caseApplicant"), field: "applicant", type: "person", kind: "name", sorter: "string" },
           { title: t("caseRespondent"), field: "respondent", type: "person", kind: "name", sorter: "string" },
           { title: t("caseReason"), field: "reason", sorter: "string" },
@@ -2981,7 +2981,7 @@
         !archived ? h(P.Checkbox, { label: t("showClosedCases"), checked: includeClosed, onChange: (event) => setIncludeClosed(event.target.checked) }) : null,
       ),
       h(P.DataGrid, {
-        density: "compact", cells: "pill", uniformPillWidths: true, typeIcons: false, wrapHeaders: false,
+        density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
         label: title || t(archived ? "archivedTitle" : "casesTitle"), data: rows, index: "id",
         mode: "pages", pageSize: 25, headerMenu: true, rowMenuButton: false, narrow: "table",
         keyColumns: columns.map((column) => column.field), columns,

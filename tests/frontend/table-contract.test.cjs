@@ -58,7 +58,8 @@ test("native person cells retain recorded gender and safe missing names", () => 
  test("068 projects scalar and gender cells through native pills without mutating source records",()=>{
   const rows=[{id:"one",applicant:"Emma",applicant_gender:"F",total:0}];
   const grid=mount({label:"People",rows,columns:[{field:"applicant",type:"person"},{field:"total",type:"number",render:r=>r.total}]});
-  assert.equal(grid.props.uniformPillWidths,true);
+  // Plenix 0.74.0 always uses uniform pill widths and ignores the option; CTM no longer sends it.
+  assert.equal("uniformPillWidths" in grid.props,false);
   assert.equal(grid.props.columns[0].render,undefined);
   assert.equal(grid.props.data[0][grid.props.columns[0].field].gender,"female");
   assert.equal(grid.props.columns[1].render,undefined);
@@ -72,4 +73,10 @@ test("formatted scalar cells retain domain ordering",()=>{
  const c=result.props.columns[0];
  assert.equal(typeof c.sorter,"function");
  assert.ok(c.sorter("9:00 AM","2:00 PM",rows[0],rows[1],c.field,"asc")<0);
+});
+
+test("case numbers are id cells so Arabic pages read them 01-20261020 (Plenix 0.76.0)",()=>{
+  const grid=mount({label:"Cases",rows:[{id:"one",case_number:"20261020-01",code:"Q-1"}],columns:[{field:"case_number",kind:"name"},{field:"code"}]});
+  assert.deepEqual(grid.props.columns[0].kind,["data","id"]);
+  assert.equal(grid.props.columns[1].kind,"data");
 });
