@@ -135,9 +135,11 @@ test("Arabic report questions use an RTL reading surface", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
   assert.match(councilCase, /dir: form\.language === "ar" \? "rtl" : undefined/);
+  // Plenix 0.75.0 follows the wrapper's dir attribute itself (plenix-platform #413); CTM keeps no RTL patch.
+  assert.equal((councilCase.match(/lang: form\.language === "ar" \? "ar" : undefined/g) || []).length, 2);
   assert.match(councilCase, /ctm-report-question-language--rtl/);
-  assert.match(css, /\.ctm-report-question-language--rtl \{/);
-  assert.match(css, /direction: rtl/);
+  assert.doesNotMatch(css, /\.ctm-report-question-language--rtl/);
+  assert.doesNotMatch(css, /direction: rtl/);
 });
 
 test("Decision & Voting uses stacked decision and council-vote containers", () => {
