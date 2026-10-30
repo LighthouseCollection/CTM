@@ -77,6 +77,6 @@ test("formatted scalar cells retain domain ordering",()=>{
 
 test("case numbers are id cells so Arabic pages read them 01-20261020 (Plenix 0.76.0)",()=>{
   const grid=mount({label:"Cases",rows:[{id:"one",case_number:"20261020-01",code:"Q-1"}],columns:[{field:"case_number",kind:"name"},{field:"code"}]});
-  assert.deepEqual(grid.props.columns[0].kind,["data","id"]);
+  assert.deepEqual([...grid.props.columns[0].kind],["data","id"]); // plain copy: the array comes from the vm sandbox realm
   assert.equal(grid.props.columns[1].kind,"data");
 });
