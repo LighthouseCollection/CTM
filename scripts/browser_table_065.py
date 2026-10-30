@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-BASE="https://design-system.lighthouseway.org/cdn/0.65.0/"
+BASE="https://design-system.lighthouseway.org/cdn/0.76.0/"
 with sync_playwright() as p:
     browser=p.chromium.launch()
     page=browser.new_page(viewport={"width":1280,"height":900})
@@ -41,5 +41,5 @@ with sync_playwright() as p:
         page.evaluate("lang=>{document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr'}",lang)
         page.screenshot(path=f'.tmp/table-065-{lang}.png',full_page=True)
     assert not errors,errors
-    print(json.dumps({'cdn':'0.65.0','row_open':True,'zero_preserved':True,'row_heights':sorted(set(row_heights)),'pill_heights':sorted(set(x['height'] for x in metrics)),'browser_errors':errors}))
+    print(json.dumps({'cdn':'0.76.0','row_open':True,'zero_preserved':True,'row_heights':sorted(set(row_heights)),'pill_heights':sorted(set(x['height'] for x in metrics)),'browser_errors':errors}))
     browser.close()

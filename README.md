@@ -42,7 +42,7 @@ No application passwords or demo login bypass are provided. Provider logins requ
 
 ## Browser checks
 
-The root and `/accounts/login/` serve the same pinned Plenix 0.58.0 React shell. Sign-in providers appear only when configured. Existing APIs provide role routing, initial case/session/application views, case communications and self-service language settings. Disabled destinations are not implemented yet; the filing and report editors remain unfinished.
+The root and `/accounts/login/` serve the same pinned Plenix 0.76.0 React shell. Sign-in providers appear only when configured. Existing APIs provide role routing, initial case/session/application views, case communications and self-service language settings. Disabled destinations are not implemented yet; the filing and report editors remain unfinished.
 
 ```powershell
 uv sync --frozen --group browser

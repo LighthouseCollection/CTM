@@ -1,5 +1,7 @@
 # CDN dependencies after review against Plenix 0.61.0
 
+Historical review. CTM now pins Plenix 0.76.0; the current pin and its load order are in `docs/architecture/CTM-Plenix-CDN-contract.md`.
+
 The UI branch pins the immutable 0.61.0 release and consumes only its documented APIs. CTM does not copy CDN assets, define local visual patches, or replace native icons.
 
 - **Avatar background/border:** 0.61.0 supplies the agreed photo treatment for light and dark surfaces. CTM passes the authoritative account image URL to `AppHeader.Account`; account photo storage/editing remains a backend account contract.

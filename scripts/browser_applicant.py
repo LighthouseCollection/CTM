@@ -11,7 +11,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = "https://design-system.lighthouseway.org/cdn/0.61.0/"
+BASE = "https://design-system.lighthouseway.org/cdn/0.76.0/"
 OUT = ROOT / ".tmp" / "applicant-browser"
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -396,6 +396,6 @@ finally:
 
 result = {"checks": checks, "passed": len(checks), "page_errors": errors,
           "typography_observation":typography,
-          "scope": "Synthetic API contract fixtures with real Plenix CDN 0.61.0; not backend/provider E2E"}
+          "scope": "Synthetic API contract fixtures with real Plenix CDN 0.76.0; not backend/provider E2E"}
 (OUT / "result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 print(json.dumps(result, indent=2))

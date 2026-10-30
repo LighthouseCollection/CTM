@@ -157,7 +157,8 @@ test("no browser storage, cookies or token logging in the page module; boot page
   assert.match(src, /history\.replaceState\(null, "", window\.location\.pathname \+ window\.location\.search\)/, "token removed from the address bar");
   const html = fs.readFileSync("static/ctm/external-report.html", "utf8");
   assert.match(html, /<meta name="referrer" content="no-referrer">/);
-  assert.match(html, /cdn\/0\.60\.1\/plenix\.js/);
+  assert.match(html, /cdn\/0\.76\.0\/plenix\.js/);
+  assert.doesNotMatch(html, /cdn\/(?!0\.76\.0)\d+\.\d+\.\d+/);
   assert.doesNotMatch(html, /\{\{|\{%|case_number|token=/);
   assert.doesNotMatch(src, /style\s*:/);
 });
