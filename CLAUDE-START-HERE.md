@@ -99,7 +99,7 @@ not deferred with those features.
 | Capability | Selected direction |
 | --- | --- |
 | Application | Django5.2 modular monolith; Python3.12 baseline; transactional services |
-| UI | React18 with pinned Plenix CDN0.58.0, not a copy of the prototype UI |
+| UI | React18 with pinned Plenix CDN 0.76.0, not a copy of the prototype UI |
 | Relational data | PostgreSQL16; ORM migrations, constraints, explicit authorization and RLS |
 | Background processing | Celery, Redis, Celery Beat, durable transactional outbox |
 | Search | Meilisearch; authorized source filtering and derived indexes |
@@ -128,17 +128,21 @@ send medical documents or all evidence externally. Preserve originals.
 ## Mandatory Plenix rules
 
 Read published component documentation before using a component. Base:
-`https://design-system.lighthouseway.org/cdn/0.58.0/`.
+`https://design-system.lighthouseway.org/cdn/0.76.0/`.
 
 ```html
 <html lang="en" data-plx-density-policy="compact">
-<script src="https://design-system.lighthouseway.org/cdn/0.58.0/theme-boot.js"></script>
-<link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.58.0/fonts.css">
-<link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.css">
-<script src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react.production.min.js"></script>
-<script src="https://design-system.lighthouseway.org/cdn/0.58.0/vendor/react-dom.production.min.js"></script>
-<script src="https://design-system.lighthouseway.org/cdn/0.58.0/plenix.js"></script>
+<script src="https://design-system.lighthouseway.org/cdn/0.76.0/theme-boot.js"></script>
+<link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.76.0/fonts.css">
+<link rel="stylesheet" href="https://design-system.lighthouseway.org/cdn/0.76.0/plenix.css">
+<script src="https://design-system.lighthouseway.org/cdn/0.76.0/vendor/react.production.min.js"></script>
+<script src="https://design-system.lighthouseway.org/cdn/0.76.0/vendor/react-dom.production.min.js"></script>
+<script src="https://design-system.lighthouseway.org/cdn/0.76.0/plenix.js"></script>
+<script src="https://design-system.lighthouseway.org/cdn/0.76.0/plenix-icons-plenix.js"></script>
+<script src="https://design-system.lighthouseway.org/cdn/0.76.0/plenix-engines.js"></script>
 ```
+
+`plenix-engines.js` is needed only on a page that shows a rich-text editor, a chart or a PDF.
 
 - Use `window.Plenix`, documented components/patterns and `plx-` classes.
 - Use `--plx-sys-*`/`--plx-comp-*` tokens; no raw colors or numeric font sizes.

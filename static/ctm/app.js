@@ -1,4 +1,4 @@
-/* CTM uses documented Plenix 0.68.0 CDN exports. No component assets are bundled. */
+/* CTM uses documented Plenix 0.76.0 CDN exports. No component assets are bundled. */
 (() => {
   "use strict";
   const root = document.getElementById("ctm-root");
