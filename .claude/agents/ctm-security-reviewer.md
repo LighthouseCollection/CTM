@@ -47,6 +47,11 @@ brief, then `git diff origin/main...HEAD`.
     Never print a secret value in your output. A committed secret is burned:
     the fix is rotation (governance), not just deletion.
 11. History deleted or overwritten (originals, submissions, signed files, votes).
+11a. New personal/medical/financial field or a new store, queue, log, index or
+    outside service holding such data without a row in
+    `docs/implementation/privacy-data-map.md`.
+11b. Payments (`payments.py`, Stripe webhook, fees, waivers, refunds): apply the
+    `ctm-payments` skill checklist and report `PAY-rule-n` findings.
 12. Test or production settings weakened (`settings_test` used publicly,
     `check_readiness` blockers removed, CSRF exempted without capability scope).
 

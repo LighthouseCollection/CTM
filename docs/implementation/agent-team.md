@@ -130,7 +130,7 @@ co-learning). The roster barely changed. The **protocol** changed a lot.
 - **From the NEXUS docs:** the seven-phase lifecycle, rosters of 15–30 agents, invented thresholds, "mark blocked and keep going", and merging at the end. That last one is the failure CTM already had.
 - **From the rest of the agency-agents catalog:** about 250 agents are irrelevant to CTM (marketing, sales, game development, GIS, and so on).
 
-## 5. The CTM team (14 agents)
+## 5. The CTM team (14 agents; 15 with the media agent added in §9)
 
 The main session is the **team lead** (MetaGPT TeamLeader / NEXUS orchestrator). It triages, writes dispatches, verifies reports, records rulings, and holds the human gates.
 
@@ -195,3 +195,70 @@ team lead ─► spec-analyst ─► solution-architect ─► builder check
 4. Split `council-case.js` and `council.js` per screen, with an ownership map.
 5. Seed `decisions/screens.md` from owner clarifications. Map F01–F36 to tests (GAP-002).
 6. Run one real M slice with `/ctm-slice`. Tune prompts the superpowers writing-skills way: record the failure first, then make the smallest edit that fixes it. Keep `ctm-slice` under 20k characters so it survives compaction.
+
+## 9. Third review: page layout, UI/UX skills and specialists (2026-11-03)
+
+Plenix fixes the look, but how CTM *composes pages* could be much better. I
+reviewed 12 UI/UX skill sources and 9 more agency-agents files against that
+constraint.
+
+### Main finding: Plenix page templates are unused
+
+Plenix 0.68 documents 688 items, including whole-page templates (`RecordPage`,
+`ListingPage`, `MasterDetailPage`, `SettingsLayout`, `FormFlow`, `Wizard`,
+`SearchWorkspace`) and state components (`Skeleton`, `useViewState`,
+`useRetry`, `ReadOnly`, `DraftState`). On main `9fa6386`, CTM uses none of the
+templates or state hooks. It builds every page by hand from small parts
+(`Notice` 230 uses, `PropertyList` 129). This is a likely root cause of the
+inconsistent layouts and missing states. Fix: `plenix-page-templates.md` maps
+each CTM screen to its template, and agents must start from it.
+
+### UI/UX sources
+
+| Source | License | Verdict | Adopted into |
+|---|---|---|---|
+| pbakaus/impeccable | Apache-2.0 | Adapt (primary) | `ctm-screen-shape` (operational mode, shape brief, layout questions); UI gate (Nielsen 0–4, P0–P3, personas) |
+| JacobLinCool/ux-discovery-interviewer | MIT | Adapt | `ctm-owner-interview` (locks decisions, "what changed / what stays") |
+| plugin87/ux-ui-agent-skills | MIT | Adapt | Screen shape (lead element, content reality, assumptions); UI gate (interaction truth, feedback ≠ truth, composition rules); wording formulas |
+| jakubkrehel/skills | MIT | Adapt | UI gate (HOLD-on-sight triggers, evidence types, Introduced/Regression/Pre-existing, one root cause per row); frontend (cheapest-fix ladder, vocabulary reuse) |
+| educlopez/ui-craft | MIT | Adapt | State list and page-type coverage; dated, superseded-not-deleted decision rows |
+| sergekostenchuk/ui-ux-agent-skill-system | Apache-2.0 | Adapt small | State matrix in the frontend report; decision status lifecycle |
+| sugarforever/open-design-skill (nexu-io/open-design craft) | MIT / Apache-2.0 | Adapt small | State coverage, form validation timing, bidi rules |
+| uxuiprinciples/agent-skills | none stated | Ideas only | Flow pre/post-flight questions. Its tools send screen descriptions to a paid outside API, so they are rejected. |
+| skovalik/perception-first-design | CC BY-SA 4.0 | Ideas only (paraphrase) | Derive before deciding; a stable layout builds trust |
+| neuhai/uxagent | MIT | Later | Simulated users need infrastructure and send full page HTML to an AI provider. Revisit later with synthetic data only. |
+| jakubkrehel/make-interfaces-feel-better | MIT | Skip | Almost all CSS and animation values; a few needs went to `plenix-requests.md` |
+| DonkeyKing01/tasteful-ui-skill | MIT | Skip | Picks a new visual style; its own docs say not to use it alongside a design system |
+
+### Additional agency-agents files
+
+| File | Verdict | Adopted into |
+|---|---|---|
+| payments-billing-engineer | Checklist, not an agent | `ctm-payments` skill + security reviewer payments mode. CTM already uses hosted checkout, business-keyed idempotency, signed webhooks and minor units. Gaps: fee literal repeated, no re-check of current state on out-of-order events, no payout reconciliation or dispute deadlines, failure-catalog tests blocked on Stripe test keys. |
+| voice-ai-integration-engineer | On-demand agent | `ctm-media-pipeline-engineer`, for when audio/OCR stop being placeholders |
+| privacy-engineer | Record + rule | `privacy-data-map.md`; security reviewer rule 11a |
+| servicenow-developer-mentor | Method only | `ctm-debug`: isolate Plenix vs CTM, record blast radius and rollback, verify on a second record |
+| brand-guardian | Voice section only | `glossary.md` (EN/AR terms from the code, tone rules) |
+| ui-finish-gate-reviewer, ui-designer, ux-architect | Already covered | No change |
+| visual-storyteller | Skip | Marketing and social media |
+
+### What changed
+
+- **New skills:** `ctm-screen-shape`, `ctm-owner-interview`, `ctm-payments`.
+- **New agent:** `ctm-media-pipeline-engineer` (on demand). The team is now 15
+  definitions; a typical slice still runs 7–9.
+- **New records:**
+  - `plenix-page-templates.md`
+  - `plenix-requests.md`
+  - `glossary.md`
+  - `privacy-data-map.md`
+  - an extended `decisions/screens.md` (why, status lifecycle, applied-in)
+  - DR-007: nav labels differ from the locked navigation
+- **Agent changes:**
+  - frontend engineer: template first, layout statement, state matrix, wording, cheapest fix, no toast without a data change;
+  - UI finish gate: rewritten;
+  - spec analyst: screen shape, owner questions, data map;
+  - security reviewer: data map, payments mode;
+  - debug skill: three habits;
+  - SOP: §2.5 screens, new path gates;
+  - drift auditor: new records.

@@ -14,7 +14,8 @@ made twice. Read `CLAUDE.md` and what your dispatch names. Never dispatch subage
 **May write:** `docs/implementation/status.md` (append a dated section),
 `docs/implementation/slices/<id>/`, `docs/implementation/review-points.md`,
 `docs/implementation/decisions/`, `docs/implementation/spec-gaps.md`,
-`docs/implementation/drift-registry.md`.
+`docs/implementation/drift-registry.md`, `glossary.md`, `privacy-data-map.md`,
+`plenix-requests.md`, `plenix-page-templates.md` (status only).
 **Never write:** `docs/architecture/**`, the question bank, product code,
 tests, PR merges or issue state.
 
@@ -53,6 +54,9 @@ risk, owner, status):
 - Async ordering: Celery/outbox handlers reading state they did not create.
 - Value semantics: Los Angeles time vs civil dates, ids vs references.
 - Review points with zero hits over many slices -> propose pruning.
+- Screens not yet on their Plenix page template (count template component uses
+  in `static/ctm/`); labels differing from `glossary.md`; privacy data map rows
+  still "To verify"; Plenix requests that now exist in the pinned docs.
 
 ## Return (max 12 lines)
 

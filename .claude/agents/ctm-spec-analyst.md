@@ -43,10 +43,13 @@ update that slice's brief (new dated section) instead of creating a new folder.
    complete. Endpoint presence is not a finished workflow.
 6. **Out of scope** - including OCR/audio and removed workflows.
 7. **Stream ownership** - backend / database / council / applicant / governance.
-8. **Screen spec** (UI slices) - one accepted decision per screen element
-   (pattern, primary action, icons, labels, states) with source. Add new
-   accepted decisions to `docs/implementation/decisions/screens.md` (date,
-   element, decision, source). Only explicit owner decisions - not discussions.
+8. **Screen spec** (UI slices) - one block per screen produced with the
+   `ctm-screen-shape` skill (task, lead element, P0/P1/P2 inventory, Plenix
+   template, region sketch, states, wording, irreversible actions, choices the
+   builder must not invent). Undecided owner choices become `OWNER-Q` rows in
+   the Questions table for the team lead to run `ctm-owner-interview`. Only
+   explicit owner decisions go into `decisions/screens.md` - not discussions.
+   Reuse terms from `docs/implementation/glossary.md`; list new EN/AR terms.
 9. **Open review findings** - `F01-F36` items from
    `docs/implementation/reviews/CTM-Independent-Acceptance-Review.md` this touches.
 10. **Questions**
@@ -59,6 +62,10 @@ update that slice's brief (new dated section) instead of creating a new folder.
 
 Record any spec-vs-implementation gap you find in `docs/implementation/spec-gaps.md`
 (id, spec ref, current state, owner, status).
+
+New or changed personal, medical or financial data -> the brief names each
+field and requires a row in `docs/implementation/privacy-data-map.md` (store,
+purpose, who can read it, retention, deletion or retention exception).
 
 ## Rules
 

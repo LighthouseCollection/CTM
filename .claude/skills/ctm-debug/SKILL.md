@@ -22,6 +22,13 @@ without an explanation is a guess, and guesses created most of CTM's rework.
   tests, stuck `DROP DATABASE` containers, CDN unreachable / LAN resolver.
   Re-run once on Linux/CI if available; otherwise report `ENV` and stop.
 
+## Phase 1b - Isolate Plenix vs CTM
+
+For UI bugs, first decide whether the behavior comes from the Plenix component
+itself or from CTM code around it: reproduce with the component's documented
+example at the pinned version, then add CTM's props/data one at a time. A
+Plenix defect goes to `plenix-requests.md`; never patch it with local CSS.
+
 ## Phase 2 - Trace across CTM's layers
 
 Instrument each boundary until you find the first layer where data is wrong:
@@ -49,8 +56,11 @@ Phase 2 with what you learned - do not stack a second change on the first.
 
 ## Phase 4 - Fix
 
-1. Failing regression test that reproduces the root cause (follow `ctm-tdd`).
-2. One fix at the origin. 3. Test passes; whole suite passes.
+1. Before changing anything, write down what the change touches (records,
+   notifications, outbox events, other screens) and how to roll it back.
+2. Failing regression test that reproduces the root cause (follow `ctm-tdd`).
+3. One fix at the origin. Test passes; whole suite passes.
+4. Verify on the original case/record **and** on a second, unrelated one.
 
 ## Circuit breaker
 

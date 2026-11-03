@@ -59,6 +59,14 @@ Dispatch `ctm-spec-analyst`. If its question table has BLOCKING items, ask the
 user once, all questions together, then continue. NON-BLOCKING items proceed on
 their stated default assumption.
 
+## 2.5 Screens (UI slices)
+
+The brief's screen spec comes from `ctm-screen-shape` and names a Plenix page
+template from `docs/implementation/plenix-page-templates.md`. If it lists
+`OWNER-Q` items, run `ctm-owner-interview` here, in the main session, before
+design: one screen at a time, answers recorded as dated rows in
+`decisions/screens.md`. Never let a builder decide an owner question.
+
 ## 3. Design (M/L)
 
 Dispatch `ctm-solution-architect`. Then run
@@ -110,6 +118,8 @@ Always: `ctm-qa-engineer` and `ctm-code-reviewer`. Add by changed paths
 | any `en:`/`ar:` dictionary, template, PDF, email text, question/declaration data | `ctm-i18n-rtl-reviewer` |
 | `static/ctm/*`, `tribunal/templates/` | `ctm-ui-finish-gate` |
 | `tribunal/migrations/`, RLS, grants | `ctm-database-engineer` in review mode |
+| `tribunal/services/payments.py`, Stripe webhook, fees, waivers | `ctm-security-reviewer` in payments mode (`ctm-payments` skill) |
+| media/OCR/transcription workers | `ctm-media-pipeline-engineer` in review mode |
 
 Launch them in one message (read-only, parallel).
 
@@ -142,7 +152,8 @@ forward and shared files touched. Run `node scripts/check_slice_trace.cjs <id> -
 
 Dispatch `ctm-drift-auditor` (sonnet) in **slice mode**: status entry, issue
 comment draft, up to 3 new review points from confirmed blockers (+ hit counts),
-screen decisions and spec gaps touched. Post issue comments only if the user
+screen decisions, spec gaps, glossary terms, privacy data map rows and Plenix
+requests touched. Post issue comments only if the user
 approved posting for this stream.
 
 ## Final report to the user

@@ -92,8 +92,18 @@ Full SOP (artifacts in `docs/implementation/slices/<id>/`, events in `ledger.md`
    screen decisions, spec gaps.
 
 On demand: **ctm-debugger** (root cause), **ctm-platform-engineer** (Compose,
-workers, CI, browser harness — no deployment), **ctm-drift-auditor** audit mode.
+workers, CI, browser harness — no deployment), **ctm-drift-auditor** audit mode,
+**ctm-media-pipeline-engineer** (audio/OCR, only when they stop being placeholders).
 
-Shared records: `docs/implementation/review-points.md`,
-`decisions/screens.md`, `spec-gaps.md`, `drift-registry.md`.
+UI work: screens start from the Plenix page template in
+`docs/implementation/plenix-page-templates.md`; each screen is shaped with
+`ctm-screen-shape`, and open owner choices are settled with
+`ctm-owner-interview` and locked in `decisions/screens.md`. Wording comes from
+`glossary.md`. Missing Plenix capabilities go to `plenix-requests.md`, never
+into local CSS. Payments work follows the `ctm-payments` skill. New personal,
+medical or financial data needs a row in `privacy-data-map.md`.
+
+Shared records (all in `docs/implementation/`): `review-points.md`,
+`decisions/screens.md`, `spec-gaps.md`, `drift-registry.md`, `glossary.md`,
+`privacy-data-map.md`, `plenix-page-templates.md`, `plenix-requests.md`.
 Agent definitions: `.claude/agents/`. Rationale: `docs/implementation/agent-team.md`.

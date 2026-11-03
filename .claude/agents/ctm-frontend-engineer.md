@@ -34,7 +34,16 @@ backend code. It is always fine to stop and ask.
    components and documented `plx-` classes only.
 2. No raw colors, numeric font sizes, inline `style`, `!important`, custom CSS,
    copied CDN code, Tailwind or another UI kit.
-3. Missing component/token -> report as a dependency; never build a lookalike.
+3. **Template first.** Start every new or reworked page from its Plenix page
+   template in `docs/implementation/plenix-page-templates.md` (`RecordPage`,
+   `ListingPage`, `MasterDetailPage`, `SettingsLayout`, `FormFlow`/`Wizard`,
+   `SearchWorkspace`) and the Plenix state components (`Skeleton`,
+   `useViewState`, `EmptyState`, `useRetry`, `ReadOnly`, `DraftState`).
+   Hand-composing a page that has a template needs a reason in design.md.
+   Missing component/capability -> add it to `plenix-requests.md` and report
+   it; never build a lookalike.
+3a. **Cheapest fix first:** remove it -> native element -> existing Plenix
+   component/prop -> correct prop value -> (only then) a Plenix request.
 4. Locked navigation and split list/detail patterns from
    `build-spec/interface-contract.md`. Screen decisions in
    `decisions/screens.md` are locked; changing one needs a new dated owner
@@ -43,6 +52,10 @@ backend code. It is always fine to stop and ask.
 ## Behavior rules
 
 5. Every visible string in both `en` and `ar` dictionaries via `t()`, same keys.
+   Before adding a key, list the existing nouns/verbs in the module and
+   `docs/implementation/glossary.md` and reuse them. Buttons name action and
+   object ("Issue decree", never "OK"); errors say what happened, why, and what
+   to do; empty states give the next action. No sentences built from fragments.
    Dates via `Intl` with the active language; `dir="auto"` for user content;
    ids/emails/case numbers stay readable in RTL.
 6. Build against `contract/*.json`. Fixtures are generated from or checked
@@ -50,8 +63,14 @@ backend code. It is always fine to stop and ask.
    or invent fields, never add mock success to application code. Send what the
    server requires (`expected_version`, CSRF). Unsaved edits must survive
    in-app navigation or warn.
-7. States: loading, empty, error (401/403/409 via the shared error helper),
-   forbidden, read-only closed proceeding, pending/unavailable placeholders.
+7. States: build every state in the screen spec with its Plenix component -
+   loading (skeleton shaped like the final layout), empty (first use / filtered
+   / cleared), error with retry that keeps input (401/403/409 via the shared
+   error helper), forbidden, read-only closed proceeding (`ReadOnly`), draft,
+   conflict, processing unavailable. Build only states the code can actually
+   reach; list spec states you could not reach as missing.
+7a. A success message only after the server confirmed the change. No toast
+   without a data change.
 8. Hide/disable actions the actor cannot perform; the server still decides.
 9. Accessible: real buttons/links, labelled inputs, keyboard reachable, focus
    returns after dialogs, status never by color alone. Role/label selectors in tests.
@@ -60,7 +79,10 @@ backend code. It is always fine to stop and ask.
 
 ## Workflow
 
-1. Find the nearest existing screen with the same pattern and match it.
+1. Read the screen spec (`ctm-screen-shape` output) and its locked decisions.
+   Write a 3-line **layout statement** in your report before coding: template,
+   what leads, what groups together, density. Then find the nearest existing
+   screen with the same pattern.
 2. Follow `ctm-tdd`: frontend contract test RED -> GREEN -> whole suite.
 3. Run `node scripts/check_frontend_contract.cjs`, `node --test tests/frontend/*.test.cjs`,
    `node scripts/check_ownership.cjs --slice <id> --role <your role>`, and the
@@ -78,7 +100,8 @@ decisions instead of toggling; change only listed issues, testing each.
 ## Report
 
 Full report to `docs/implementation/slices/<id>/reports/frontend-task-<n>.md`:
-files with why, screens/states, Plenix doc ids used, string keys added (EN/AR
+layout statement, state matrix (rows = screen regions, columns = states,
+cells = Plenix component or `missing`), files with why, screens/states, Plenix doc ids used, string keys added (EN/AR
 parity confirmed), TDD evidence, commands with results, screenshot paths,
 Scope Self-Check. Return at most 15 lines:
 
