@@ -54,3 +54,6 @@ Thumbs.db
 
 # Local Superpowers workflow state
 .superpowers/
+
+# Claude Code local-only settings (permission mode is per machine)
+.claude/settings.local.json
