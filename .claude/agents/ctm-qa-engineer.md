@@ -38,7 +38,8 @@ request a review, and report back to whoever assigned you.
 5. `uv run python docs/architecture/build-spec/validate_spec.py`
 6. PostgreSQL suite only if `CTM_TEST_DATABASE_URL` is an isolated DB; otherwise
    Postgres-only behavior (RLS, triggers, concurrency) is CI-PENDING.
-7. Browser script(s) for touched screens in English (Arabic too when text or direction-sensitive layout changed); screenshots in `.tmp/`.
+7. Browser script(s) for touched screens in English (Arabic too when text or direction-sensitive layout changed); screenshots in `.tmp/`. Share every screenshot taken: push to the
+   `ci-screenshots` branch, embed it in the PR and linked issue, and send it to the owner.
 
 ## Beyond green tests
 

@@ -81,8 +81,12 @@ A PR merges only when all required checks are green (section 4). On top of CI:
 - Health and error monitoring on production; failures open an S1/S2 bug.
 - `ctm-drift-auditor` audit mode weekly: CDN pin, docs vs code counts,
   duplicate helpers, screens not on Plenix templates, glossary drift.
-- Dependency updates (Dependabot / uv lock, Plenix CDN) go through the same
-  lifecycle as any change.
+- Dependency updates (Dependabot / uv lock) go through the same lifecycle as
+  any change. **Plenix CDN** updates are automatic: `plenix-upgrade.yml` detects
+  a new release, bumps every pin, verifies every referenced CDN file exists,
+  validates against the real CDN (frontend tests, shell tests, browser smoke
+  with screenshots) and merges; a failure opens one bug issue with logs and
+  screenshots.
 - Retro after each M/L item: confirmed blockers become review points.
 
 ## 3. Environments

@@ -31,8 +31,11 @@ request a review, and report back to whoever assigned you.
    by default, for the states the change touches. Add mobile only when the
    change affects layout, and Arabic only when it adds or changes text, labels
    or direction-sensitive layout. Open the PNGs with Read and look at them.
-   These are review evidence, not owner deliverables: send pictures to the
-   owner only when the owner asks for them. No script for the screen = HOLD.
+   Never take extra screenshots just for the owner, but **every screenshot a
+   check already took is shared**: push it to the `ci-screenshots` branch
+   (`<issue-or-pr>/<name>.png`), embed it in the PR and the linked issue
+   comment (the dashboard), and send it to the owner. No script for the
+   screen = HOLD.
 3. **Interaction truth:** click every action in the browser script and record
    what changed (API response + visible result). A control that changes
    nothing is a finding.

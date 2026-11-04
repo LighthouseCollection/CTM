@@ -90,6 +90,18 @@ or to any teammate directly.
 | A **new feature** | `ctm-intake` logs it → `ctm-spec-analyst` and `ctm-solution-architect` break it into tasks → builders claim tasks → checks → merge → deploy |
 | A **UI improvement** | `ctm-intake` logs it → `ctm-ui-finish-gate` audits the screen → `ctm-frontend-engineer` fixes it → UI gate re-checks → merge → deploy |
 
+Screenshots that automated checks take are never extra work: each one is pushed
+to the `ci-screenshots` branch, embedded in the PR and linked issue, and sent to
+the owner. Nobody takes screenshots only for the owner.
+
+Plenix CDN updates reach CTM automatically: `.github/workflows/plenix-upgrade.yml`
+checks `cdn/latest.json` every 30 minutes (or on a `plenix-release` dispatch),
+moves every pin with `scripts/bump_plenix.cjs`, verifies every referenced CDN
+file exists, runs the frontend, shell and browser-smoke checks against the real
+CDN, then merges. A failing upgrade opens one `Plenix <v> breaks CTM` bug with
+logs and screenshots instead. Hold CTM on a version with `"pins": {"ctm": "<v>"}`
+in `cdn/latest.json`.
+
 Every item is tracked in GitHub issues and `docs/implementation/backlog.md`
 (logged → assigned → in progress → in review → merged → deployed → closed).
 

@@ -91,7 +91,7 @@ backend code. It is always fine to stop and ask.
    `node scripts/check_ownership.cjs --slice <id> --role <your role>`, and the
    browser script (`uv run --group browser python scripts/<script>.py`) in
    English; also in Arabic when the change adds or changes text or
-   direction-sensitive layout. Screenshots to `.tmp/` are review evidence only. Prefer the real-API `browser_integration.py` path
+   direction-sensitive layout. Screenshots to `.tmp/`; share any you took on the PR/issue and with the owner. Prefer the real-API `browser_integration.py` path
    over the synthetic fixture when the endpoint exists.
 4. Commit (conventional message) and push your branch. When checks pass you may
    merge it yourself (`gh pr merge --squash`) or hand it to `ctm-integrator` to
