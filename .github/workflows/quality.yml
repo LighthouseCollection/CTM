@@ -1,0 +1,106 @@
+name: CTM quality gates
+# SDLC phase 4 (Verify): see docs/implementation/sdlc.md section 4.
+# Blocks only on NEW problems (diff-aware), so existing debt does not stop work.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  fast-gates:
+    name: Fast gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Resolve base commit
+        run: echo "BASE=${{ github.event.pull_request.base.sha || 'HEAD~1' }}" >> "$GITHUB_ENV"
+      - name: Plenix CDN pin and styling (changed files)
+        run: node scripts/check_frontend_contract.cjs --base "$BASE"
+      - name: Migration lint
+        run: node scripts/check_migration_diff.cjs "$BASE"
+      - name: Ownership
+        run: node scripts/check_ownership.cjs --base "$BASE"
+      - name: Agent instructions in sync (CLAUDE.md -> AGENTS.md)
+        run: node scripts/sync_agent_rules.cjs --check
+
+  semgrep:
+    name: Semgrep
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --quiet semgrep
+      - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
+      - name: Scan (new findings only)
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || 'HEAD~1' }}
+        run: |
+          semgrep scan --config .semgrep/ctm.yml --config p/django --config p/python \
+            --config p/javascript --config p/secrets \
+            --baseline-commit "$BASE" --sarif --output semgrep.sarif --error
+      - name: Comment findings on changed lines
+        if: always() && github.event_name == 'pull_request'
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: reviewdog -f=sarif -name=semgrep -reporter=github-pr-review -filter-mode=added -fail-level=none < semgrep.sarif
+      - name: Upload SARIF to code scanning
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4.39.1
+        with:
+          sarif_file: semgrep.sarif
+
+  sonarqube:
+    name: SonarQube quality gate
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Skip until SonarQube is configured
+        if: env.SONAR_TOKEN == '' || env.SONAR_HOST_URL == ''
+        run: echo "::warning::SONAR_TOKEN / SONAR_HOST_URL not set - SonarQube gate skipped (see sdlc.md section 7)."
+      - uses: SonarSource/sonarqube-scan-action@v8.3.0
+        if: env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != ''
+      - uses: SonarSource/sonarqube-quality-gate-action@v1.2.1
+        if: env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != ''
+        timeout-minutes: 5
+
+  ai-review:
+    name: PR-Agent review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_KEY }}
+    steps:
+      - name: Skip until an AI key is configured
+        if: env.ANTHROPIC_KEY == ''
+        run: echo "::warning::ANTHROPIC_KEY not set - PR-Agent review skipped (see sdlc.md section 7)."
+      - uses: The-PR-Agent/pr-agent@v0.49.0
+        if: env.ANTHROPIC_KEY != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC.KEY: ${{ secrets.ANTHROPIC_KEY }}
+          config.model: anthropic/claude-sonnet-5-5
+          config.fallback_models: '["anthropic/claude-haiku-5-5"]'
+          config.custom_model_max_tokens: '200000'
+          github_action_config.auto_review: 'true'
+          github_action_config.auto_describe: 'true'
+          github_action_config.auto_improve: 'false'

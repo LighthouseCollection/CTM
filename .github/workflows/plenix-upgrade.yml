@@ -1,0 +1,159 @@
+name: Plenix CDN auto-upgrade
+# Keeps CTM on the newest Plenix (PDS) CDN release with no human step:
+# detect a new version -> update every pin -> validate against the real CDN
+# (frontend tests, shell tests, browser smoke with screenshots) -> merge.
+# If validation fails, it opens one bug issue with the logs and screenshots.
+# Hold CTM on a version by adding "ctm": "<version>" to pins in cdn/latest.json.
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Plenix version (default: latest)'
+        required: false
+  repository_dispatch:
+    types: [plenix-release]   # PDS release workflow can call this for an instant upgrade
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: plenix-upgrade
+  cancel-in-progress: false
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    env:
+      # A bot token makes the merge trigger the normal CI/deploy workflows;
+      # GITHUB_TOKEN works but its pushes do not start other workflows.
+      GH_TOKEN: ${{ secrets.CTM_BOT_TOKEN || secrets.GITHUB_TOKEN }}
+      REQUESTED: ${{ github.event.inputs.version || github.event.client_payload.version || 'latest' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.CTM_BOT_TOKEN || secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Detect new Plenix version
+        id: bump
+        run: |
+          old=$(node scripts/bump_plenix.cjs --current)
+          out=$(node scripts/bump_plenix.cjs "$REQUESTED")
+          echo "$out"
+          new=$(node scripts/bump_plenix.cjs --current)
+          echo "old=$old" >> "$GITHUB_OUTPUT"
+          echo "new=$new" >> "$GITHUB_OUTPUT"
+          if [ "$old" = "$new" ]; then echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          branch="bot/plenix-$new"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1 \
+             || gh issue list --state open --search "Plenix $new breaks CTM in:title" --json number --jq '.[0].number' | grep -q .; then
+            echo "Already handled $new (branch or open issue exists)"; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        if: steps.bump.outputs.changed == 'true'
+        with:
+          version: '0.8.22'
+      - name: Install app and browser
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core
+          uv sync --frozen --python 3.12 --group browser
+          uv run --group browser playwright install --with-deps chromium
+
+      - name: Every referenced CDN file exists at the new version
+        id: files
+        if: steps.bump.outputs.changed == 'true'
+        continue-on-error: true
+        run: node scripts/bump_plenix.cjs --verify 2>&1 | tee .files.log
+      - name: Pins and styling (changed files)
+        id: contract
+        if: steps.bump.outputs.changed == 'true'
+        continue-on-error: true
+        run: node scripts/check_frontend_contract.cjs --base HEAD 2>&1 | tee .contract.log
+      - name: Frontend contract tests
+        id: node
+        if: steps.bump.outputs.changed == 'true'
+        continue-on-error: true
+        run: node --test tests/frontend/*.test.cjs 2>&1 | tee .node.log
+      - name: Shell tests
+        id: shell
+        if: steps.bump.outputs.changed == 'true'
+        continue-on-error: true
+        run: uv run pytest -q tests/test_shell.py 2>&1 | tee .shell.log
+      - name: Browser smoke against the real CDN (screenshots)
+        id: smoke
+        if: steps.bump.outputs.changed == 'true'
+        continue-on-error: true
+        run: uv run --group browser python scripts/browser_smoke.py 2>&1 | tee .smoke.log
+
+      - name: Publish screenshots to the dashboard branch
+        id: shots
+        if: steps.bump.outputs.changed == 'true' && always()
+        run: |
+          dir="plenix/${{ steps.bump.outputs.new }}/${{ github.run_id }}"
+          md=""
+          if ls .tmp/*.png >/dev/null 2>&1; then
+            git config user.name "ctm-bot"; git config user.email "ctm-bot@users.noreply.github.com"
+            if git fetch -q origin ci-screenshots 2>/dev/null; then
+              git worktree add -q -B ci-screenshots /tmp/shots origin/ci-screenshots
+            else
+              git worktree add -q --detach /tmp/shots && (cd /tmp/shots && git switch -q --orphan ci-screenshots)
+            fi
+            mkdir -p "/tmp/shots/$dir" && cp .tmp/*.png "/tmp/shots/$dir/"
+            (cd /tmp/shots && git add "$dir" && git commit -qm "Screenshots: Plenix ${{ steps.bump.outputs.new }} run ${{ github.run_id }}" && git push -q origin ci-screenshots)
+            for f in .tmp/*.png; do n=$(basename "$f"); md="$md"$'\n'"**$n**"$'\n'"![$n](https://github.com/${{ github.repository }}/blob/ci-screenshots/$dir/$n?raw=true)"$'\n'; done
+          fi
+          { echo 'md<<EOF'; echo "$md"; echo 'EOF'; } >> "$GITHUB_OUTPUT"
+
+      - name: Merge the upgrade (all checks passed)
+        if: steps.bump.outputs.changed == 'true' && steps.files.outcome == 'success' && steps.contract.outcome == 'success' && steps.node.outcome == 'success' && steps.shell.outcome == 'success' && steps.smoke.outcome == 'success'
+        env:
+          SHOTS: ${{ steps.shots.outputs.md }}
+        run: |
+          git config user.name "ctm-bot"; git config user.email "ctm-bot@users.noreply.github.com"
+          git switch -c "${{ steps.bump.outputs.branch }}"
+          git add -A ':!.tmp' ':!.*.log'
+          git commit -m "chore(plenix): upgrade CDN ${{ steps.bump.outputs.old }} -> ${{ steps.bump.outputs.new }}"
+          git push -u origin "${{ steps.bump.outputs.branch }}"
+          printf 'Automatic Plenix CDN upgrade **%s -> %s**.\n\nValidated in run %s: CDN files exist, pins/styling, frontend contract tests, shell tests, browser smoke against the real CDN.\n\n### Screenshots\n%s\n' \
+            "${{ steps.bump.outputs.old }}" "${{ steps.bump.outputs.new }}" "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" "$SHOTS" > .pr.md
+          url=$(gh pr create --base main --head "${{ steps.bump.outputs.branch }}" --title "chore(plenix): upgrade CDN to ${{ steps.bump.outputs.new }}" --body-file .pr.md)
+          gh pr merge "$url" --squash --delete-branch
+          echo "Merged $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report a breaking upgrade as a bug
+        if: steps.bump.outputs.changed == 'true' && !(steps.files.outcome == 'success' && steps.contract.outcome == 'success' && steps.node.outcome == 'success' && steps.shell.outcome == 'success' && steps.smoke.outcome == 'success')
+        env:
+          SHOTS: ${{ steps.shots.outputs.md }}
+        run: |
+          for l in "type:bug" "sev:S2" "area:frontend" "agent:ctm-frontend-engineer" "plenix-upgrade"; do gh label create "$l" --force >/dev/null 2>&1 || true; done
+          {
+            echo "Plenix **${{ steps.bump.outputs.new }}** (CTM is on **${{ steps.bump.outputs.old }}**) failed CTM validation, so CTM was not upgraded."
+            echo
+            echo "| Check | Result |"; echo "|---|---|"
+            echo "| CDN files exist | ${{ steps.files.outcome }} |"
+            echo "| Pins and styling | ${{ steps.contract.outcome }} |"
+            echo "| Frontend contract tests | ${{ steps.node.outcome }} |"
+            echo "| Shell tests | ${{ steps.shell.outcome }} |"
+            echo "| Browser smoke (real CDN) | ${{ steps.smoke.outcome }} |"
+            echo
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            for f in .files.log .contract.log .node.log .shell.log .smoke.log; do
+              [ -s "$f" ] && { echo; echo "<details><summary>$f (last 60 lines)</summary>"; echo; echo '```'; tail -60 "$f"; echo '```'; echo "</details>"; }
+            done
+            echo; echo "Fix: run \`node scripts/bump_plenix.cjs ${{ steps.bump.outputs.new }}\` on a branch, adapt CTM to the new Plenix API (or report a Plenix defect upstream), and merge. The auto-upgrade retries on the next release."
+            echo; echo "### Screenshots"; echo "$SHOTS"
+          } > .issue.md
+          gh issue create --title "Plenix ${{ steps.bump.outputs.new }} breaks CTM" --body-file .issue.md \
+            --label "type:bug,sev:S2,area:frontend,agent:ctm-frontend-engineer,plenix-upgrade"

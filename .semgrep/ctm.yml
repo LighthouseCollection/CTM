@@ -1,0 +1,109 @@
+# CTM custom Semgrep rules. Run with:
+#   semgrep scan --config .semgrep/ctm.yml --config p/django --config p/python \
+#     --config p/javascript --config p/secrets --baseline-commit origin/main --error
+# Each rule encodes a CTM rule that previously cost rework (see review-points.md).
+rules:
+  # ---- Plenix design-system rules (RP-CSS-01) ----
+  - id: ctm-no-raw-color
+    message: Raw color value. Use Plenix --plx-sys-*/--plx-comp-* tokens or documented components (RP-CSS-01).
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include: ["static/ctm/**", "tribunal/templates/**"]
+      exclude: ["**/*rtl*", "**/*arabic-styling*", "**/*_print.html", "**/*_pdf.html"]
+    patterns:
+      - pattern-regex: '(?i)(#[0-9a-f]{6}\b|#[0-9a-f]{3}\b(?=["''`;\s)])|\brgba?\(\s*\d|\bhsla?\(\s*\d)'
+
+  - id: ctm-no-important
+    message: "!important is not allowed; fix the composition with Plenix components (RP-CSS-01)."
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include: ["static/ctm/**", "tribunal/templates/**"]
+      exclude: ["**/*rtl*", "**/*arabic-styling*"]
+    pattern-regex: '!important'
+
+  - id: ctm-no-inline-style
+    message: Inline style object/attribute. Use documented Plenix components and plx- classes (RP-CSS-01).
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include: ["static/ctm/**/*.js", "static/ctm/**/*.html", "tribunal/templates/**"]
+      exclude: ["**/*rtl*", "**/*arabic-styling*", "**/*_print.html", "**/*_pdf.html"]
+    pattern-regex: '(\bstyle\s*:\s*\{|\sstyle\s*=\s*["''])'
+
+  - id: ctm-no-numeric-font-size
+    message: Numeric font size. Use Plenix typography (RP-CSS-01).
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include: ["static/ctm/**"]
+    pattern-regex: '(?i)font-?size\s*:\s*[''"]?\d'
+
+  - id: ctm-no-dangerous-html
+    message: dangerouslySetInnerHTML/innerHTML can render applicant-controlled text as HTML. Render text nodes instead.
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include: ["static/ctm/**/*.js"]
+    pattern-regex: '(dangerouslySetInnerHTML|\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML)'
+
+  # ---- Migrations (RP-MIG-01, RP-MIG-02) ----
+  - id: ctm-runsql-needs-reverse
+    message: RunSQL without reverse_sql - every migration must be reversible (RP-MIG-01).
+    severity: ERROR
+    languages: [python]
+    paths:
+      include: ["tribunal/migrations/*.py"]
+    patterns:
+      - pattern-either:
+          - pattern: migrations.RunSQL(...)
+          - pattern: RunSQL(...)
+      - pattern-not: migrations.RunSQL(..., reverse_sql=$R, ...)
+      - pattern-not: RunSQL(..., reverse_sql=$R, ...)
+      - pattern-not: migrations.RunSQL($SQL, $REVERSE, ...)
+      - pattern-not: RunSQL($SQL, $REVERSE, ...)
+
+  - id: ctm-runpython-needs-reverse
+    message: RunPython without reverse_code - every migration must be reversible (RP-MIG-01).
+    severity: ERROR
+    languages: [python]
+    paths:
+      include: ["tribunal/migrations/*.py"]
+    patterns:
+      - pattern-either:
+          - pattern: migrations.RunPython($F)
+          - pattern: RunPython($F)
+
+  # ---- Django security ----
+  - id: ctm-csrf-exempt-needs-capability
+    message: csrf_exempt is only allowed for signed webhooks and scoped capability links. Confirm the view verifies a signature or capability token.
+    severity: WARNING
+    languages: [python]
+    paths:
+      include: ["tribunal/**/*.py", "ctm/**/*.py"]
+    pattern-either:
+      - pattern: |
+          @csrf_exempt
+          def $F(...):
+              ...
+      - pattern: csrf_exempt($F)
+
+  - id: ctm-no-mark-safe
+    message: mark_safe/SafeString on dynamic content can inject HTML. Escape or use format_html.
+    severity: ERROR
+    languages: [python]
+    paths:
+      include: ["tribunal/**/*.py", "ctm/**/*.py"]
+    pattern-either:
+      - pattern: mark_safe($X)
+      - pattern: SafeString($X)
+
+  - id: ctm-test-settings-in-production
+    message: Test settings (relaxed transport/scan) must never be used outside isolated validation.
+    severity: ERROR
+    languages: [python]
+    paths:
+      include: ["ctm/wsgi.py", "ctm/celery.py", "manage.py", "deploy/**"]
+      exclude: ["deploy/probe-isolated-worker.py", "deploy/prepare-isolated-test-db.py", "deploy/Dockerfile.test"]
+    pattern-regex: 'settings_(postgres_)?test'
