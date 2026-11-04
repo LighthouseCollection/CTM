@@ -183,7 +183,7 @@ def test_concurrent_compare_writes_and_vote_replays(filed, people, kind):
                     return str(record_decision(user, filed.proceeding_id, "deferred", text, {}, expected_version=0).pk)
                 if kind == "workspace":
                     return str(stage(user, {"number": text, "status": "closed"}, workspace.pk, expected_version=1).pk)
-                return str(cast_vote(user, decision.pk, "approve", idempotency_key="concurrent").pk)
+                return str(cast_vote(user, decision.pk, "approve", people["member"].pk, idempotency_key="concurrent").pk)
             except VersionConflict:
                 return "conflict"
         finally:
