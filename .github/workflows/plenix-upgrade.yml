@@ -24,6 +24,12 @@ concurrency:
   group: plenix-upgrade
   cancel-in-progress: false
 
+# Explicit bash adds -o pipefail, so `check | tee log` fails when the check fails.
+# Without it a failing check piped to tee reports success (run 41932216907).
+defaults:
+  run:
+    shell: bash
+
 jobs:
   upgrade:
     runs-on: ubuntu-latest
@@ -121,9 +127,10 @@ jobs:
         env:
           SHOTS: ${{ steps.shots.outputs.md }}
         run: |
+          node scripts/bump_plenix.cjs --verify   # second guard: never merge a pin whose CDN files are missing
           git config user.name "ctm-bot"; git config user.email "ctm-bot@users.noreply.github.com"
           git switch -c "${{ steps.bump.outputs.branch }}"
-          git add -A ':!.tmp' ':!.*.log'
+          git add -u   # the bump only edits tracked files; logs and .tmp stay out
           git commit -m "chore(plenix): upgrade CDN ${{ steps.bump.outputs.old }} -> ${{ steps.bump.outputs.new }}"
           git push -u origin "${{ steps.bump.outputs.branch }}"
           printf 'Automatic Plenix CDN upgrade **%s -> %s**.\n\nValidated in run %s: CDN files exist, pins/styling, frontend contract tests, shell tests, browser smoke against the real CDN.\n\n### Screenshots\n%s\n' \
