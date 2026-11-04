@@ -73,6 +73,8 @@ def runtime():
             "ctm_closed_case_cleanup(uuid)",
             "ctm_external_status_receipt()",
             "ctm_message_sender_names(uuid[])",
+            "ctm_draft_session_delete_allowed(uuid)",
+            "ctm_admin_case_purge_allowed(uuid)",
             "ctm_reference_readable(text,jsonb)",
             "ctm_reference_writable(text,jsonb)",
             "ctm_staff_readable()",
