@@ -177,7 +177,7 @@ team lead ─► spec-analyst ─► solution-architect ─► builder check
 |---|---|---|
 | `.claude/hooks/guard-protected.cjs` (PreToolUse) | Edits to `build-spec/`, the question bank, `.env*`, keys | Active in this repo |
 | `scripts/check_frontend_contract.cjs` | CDN pin differs from `PLENIX_BASE`; raw colors, `!important`, numeric font sizes, inline styles in `static/ctm` (JS, HTML, CSS) and templates | **Fails today**: DR-001 and DR-003 in `drift-registry.md` |
-| `scripts/check_migration_diff.cjs` | RunSQL/RunPython without reverse, demo data, `SECURITY DEFINER` without `search_path`, BYPASSRLS, number reuse (comments ignored) | Passes on this branch. Against the PR #26 range it flags exactly 0055 and 0057 (irreversible) and 0054/0061–0063 (demo data). |
+| `scripts/check_migration_diff.cjs` | RunSQL/RunPython without reverse, demo data, `SECURITY DEFINER` without `search_path`, BYPASSRLS, number reuse (comments ignored) | Passes on this branch. Against the PR #26 range it flags 0057 (irreversible) and 0054/0061–0063 (demo data); an earlier version also flagged 0055 by mistake (its reverse is positional). |
 | `scripts/check_ownership.cjs` | UI branches touching DB-owned paths; files outside a slice's `owners` block; files with two owners | New; used per role by engineers and the lead |
 | `scripts/check_slice_trace.cjs` | Acceptance IDs in the brief missing from the design or evidence | New |
 | `.claude/settings.json` deny rules | Push to main, force-push, `gh pr merge`, `git clean -fdx`, forced worktree removal, reading `.env` and SSH keys | Active (deny rules apply in bypass mode) |

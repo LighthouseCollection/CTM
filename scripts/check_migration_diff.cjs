@@ -33,7 +33,9 @@ for (const f of changed) {
   }
   if (f.endsWith('.py')) {
     const runSqlCount = (text.match(/RunSQL\s*\(/g) || []).length;
-    const reverseCount = (text.match(/reverse_sql\s*=/g) || []).length;
+    // Reverse given as keyword (reverse_sql=...) or as the second positional argument.
+    const reverseCount = (text.match(/reverse_sql\s*=/g) || []).length
+      + (text.match(/RunSQL\s*\(\s*[A-Za-z_][\w.]*\s*,\s*(?!reverse_sql|state_operations|hints|elidable)[A-Za-z_][\w.]*\s*[,)]/g) || []).length;
     if (runSqlCount > reverseCount) problems.push(`${f}: ${runSqlCount} RunSQL but ${reverseCount} reverse_sql - every RunSQL must be reversible.`);
     const runPyCount = (text.match(/RunPython\s*\(/g) || []).length;
     const runPyRev = (text.match(/RunPython\s*\([^)]*,\s*(reverse_code\s*=\s*)?[A-Za-z_.]+/g) || []).length;

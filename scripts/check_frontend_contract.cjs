@@ -8,6 +8,16 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const warnOnly = process.argv.includes('--warn');
+// --base <ref>: only check files changed since <ref> (used by CI and the pre-commit hook).
+const baseIdx = process.argv.indexOf('--base');
+let changedSet = null;
+if (baseIdx > -1) {
+  const { execSync } = require('child_process');
+  const base = process.argv[baseIdx + 1];
+  const out = (cmd) => execSync(cmd, { cwd: root }).toString().split(/\r?\n/).filter(Boolean);
+  changedSet = new Set([...out(`git diff --name-only ${base}`), ...out('git ls-files --others --exclude-standard')]);
+}
+const inScope = (f) => !changedSet || changedSet.has(path.relative(root, f).replace(/\\/g, '/'));
 const problems = [];
 
 function walk(dir, exts, out = []) {
@@ -28,7 +38,7 @@ const pin = pinMatch && pinMatch[1];
 if (!pin) problems.push('ctm/settings.py: could not find the pinned Plenix CDN version');
 
 const cdnFiles = walk(root, ['.py', '.js', '.cjs', '.html'])
-  .filter((f) => !rel(f).startsWith('docs/'));
+  .filter((f) => !rel(f).startsWith('docs/') && inScope(f));
 for (const f of cdnFiles) {
   const text = fs.readFileSync(f, 'utf8');
   for (const m of text.matchAll(/design-system\.lighthouseway\.org\/cdn\/(\d+\.\d+\.\d+)/g)) {
@@ -38,7 +48,8 @@ for (const f of cdnFiles) {
 
 // 2. Styling rules in application JS/HTML (the RTL bridge is the documented exception)
 const uiFiles = walk(path.join(root, 'static', 'ctm'), ['.js', '.html', '.css'])
-  .concat(walk(path.join(root, 'tribunal', 'templates'), ['.html']));
+  .concat(walk(path.join(root, 'tribunal', 'templates'), ['.html']))
+  .filter(inScope);
 const checks = [
   [/#[0-9a-fA-F]{3,8}\b(?=["'`;\s)])/g, 'raw hex color (use --plx-sys-*/--plx-comp-* tokens)'],
   [/\brgba?\(\s*\d/g, 'raw rgb() color (use Plenix tokens)'],

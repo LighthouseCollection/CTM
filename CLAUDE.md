@@ -51,6 +51,8 @@ node scripts/check_frontend_contract.cjs          # CDN pin + styling gate (seco
 node scripts/check_migration_diff.cjs             # migration lint vs origin/main (seconds)
 node scripts/check_ownership.cjs --slice <id>      # changed files vs owners block + DB-owned paths
 node scripts/check_slice_trace.cjs <id>            # acceptance IDs: brief -> design -> evidence
+node scripts/sync_agent_rules.cjs                  # regenerate AGENTS.md after editing CLAUDE.md
+semgrep scan --config .semgrep/ctm.yml --baseline-commit origin/main --error   # CTM rules, new findings
 node --test tests/frontend/*.test.cjs              # frontend contracts
 uv run pytest -q                                   # fast SQLite pass
 uv run python manage.py makemigrations --check --dry-run --settings=ctm.settings_test
@@ -58,6 +60,19 @@ uv run pytest --ds=ctm.settings_postgres_test -q   # needs isolated CTM_TEST_DAT
 uv run python docs/architecture/build-spec/validate_spec.py
 uv run --group browser python scripts/browser_integration.py
 ```
+
+## SDLC — the lifecycle every change follows
+
+Full definition: `docs/implementation/sdlc.md`. Phases and their automated gates:
+0 Intake (`ctm-intake`) → 1 Requirements (G1 Ready) → 2 Design (G2) →
+3 Build (G3 pre-commit hook `.githooks/pre-commit`) → 4 Verify (G4 Done: CI —
+fast gates, Semgrep + reviewdog, SonarQube quality gate, tests, build, PR-Agent
+and CTM reviewers; the author never reviews its own change) → 5 Stage (merge to
+`main`, auto-deploy to staging) → 6 Release (version tag, production deploy with
+backup and automatic rollback) → 7 Operate (monitoring, drift audits, dependency
+updates; incidents return to phase 0). Environments: local → CI → staging
+(synthetic data) → production (real data). Enable the hook once per checkout:
+`git config core.hooksPath .githooks`.
 
 ## Owner intake — how you give the team work
 
