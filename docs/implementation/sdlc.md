@@ -85,7 +85,7 @@ A PR merges only when all required checks are green (section 4). On top of CI:
   any change. **Plenix CDN** updates are automatic: `plenix-upgrade.yml` detects
   a new release, bumps every pin, verifies every referenced CDN file exists,
   validates against the real CDN (frontend tests, shell tests, browser smoke
-  with screenshots) and merges; a failure opens one bug issue with logs and
+  with screenshots: `browser_cdn_smoke.py`, EN desktop, EN mobile, AR) and merges; a failure opens one bug issue with logs and
   screenshots.
 - Retro after each M/L item: confirmed blockers become review points.
 
