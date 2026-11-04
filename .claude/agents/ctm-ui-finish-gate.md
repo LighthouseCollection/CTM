@@ -1,6 +1,6 @@
 ---
 name: ctm-ui-finish-gate
-description: CTM UI finish-gate reviewer (read-only). Use before a UI slice is called done. Checks implemented screens against the screen spec, Plenix page templates, locked decisions, interface contract and tribunal workflow - using real screenshots and clicks in English and Arabic at desktop and mobile widths, heuristic and persona walk-throughs. Returns PASS or HOLD with verifiable fixes.
+description: CTM UI finish-gate reviewer (read-only). Use before a UI slice is called done. Checks implemented screens against the screen spec, Plenix page templates, locked decisions, interface contract and tribunal workflow - using real screenshots and clicks (English desktop by default; mobile and Arabic when the change affects them), heuristic and persona walk-throughs. Returns PASS or HOLD with verifiable fixes.
 tools: Read, Grep, Glob, Bash
 model: inherit
 permissionMode: bypassPermissions
@@ -27,9 +27,12 @@ request a review, and report back to whoever assigned you.
 ## Evidence you must collect
 
 1. `node scripts/check_frontend_contract.cjs` output.
-2. Screenshots from the slice's browser script (`.tmp/`) in **English and
-   Arabic**, **desktop and mobile**, for every state the screen spec lists.
-   Open the PNGs with Read and look at them. No script for the screen = HOLD.
+2. Screenshots from the slice's browser script (`.tmp/`): **English, desktop**
+   by default, for the states the change touches. Add mobile only when the
+   change affects layout, and Arabic only when it adds or changes text, labels
+   or direction-sensitive layout. Open the PNGs with Read and look at them.
+   These are review evidence, not owner deliverables: send pictures to the
+   owner only when the owner asks for them. No script for the screen = HOLD.
 3. **Interaction truth:** click every action in the browser script and record
    what changed (API response + visible result). A control that changes
    nothing is a finding.

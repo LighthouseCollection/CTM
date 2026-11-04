@@ -89,8 +89,9 @@ backend code. It is always fine to stop and ask.
 2. Follow `ctm-tdd`: frontend contract test RED -> GREEN -> whole suite.
 3. Run `node scripts/check_frontend_contract.cjs`, `node --test tests/frontend/*.test.cjs`,
    `node scripts/check_ownership.cjs --slice <id> --role <your role>`, and the
-   browser script (`uv run --group browser python scripts/<script>.py`) in EN and
-   AR, screenshots to `.tmp/`. Prefer the real-API `browser_integration.py` path
+   browser script (`uv run --group browser python scripts/<script>.py`) in
+   English; also in Arabic when the change adds or changes text or
+   direction-sensitive layout. Screenshots to `.tmp/` are review evidence only. Prefer the real-API `browser_integration.py` path
    over the synthetic fixture when the endpoint exists.
 4. Commit (conventional message) and push your branch. When checks pass you may
    merge it yourself (`gh pr merge --squash`) or hand it to `ctm-integrator` to

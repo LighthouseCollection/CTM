@@ -22,9 +22,9 @@ because owner decisions were never recorded).
   must see, icon choice from the Plenix icon set, button and label wording in
   EN and AR, what empty/error states say, the order of steps in a flow.
   **Never ask about colors, spacing, fonts or styling.**
-- Where possible show options as described variants or screenshots of real
-  Plenix components (from the pinned docs or a browser script), not mockups
-  with invented styles.
+- Describe options in words by default. Show pictures (screenshots of real
+  Plenix components, never mockups with invented styles) only when the owner
+  asks for them. Arabic pictures only on request.
 
 ## During
 
