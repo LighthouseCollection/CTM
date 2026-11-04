@@ -2012,7 +2012,7 @@
 
   // ---------- Evidence and documents ----------
 
-  // Embedded PDF (Plenix 0.61.0 DocumentViewer; PDF.js from the CDN vendor folder via vendorBase()). The document is
+  // Embedded PDF (Plenix DocumentViewer; since 0.74.0 its PDF engine comes from plenix-engines.js, loaded by shell.html). The document is
   // fetched from the protected /api/files/{id}/?view=1 route with the session; the server sends private, no-store.
   // Nothing is written to browser storage. A page already drawn stays on screen until the viewer closes: withdrawing
   // access stops later loads, it cannot erase what was already shown or downloaded.

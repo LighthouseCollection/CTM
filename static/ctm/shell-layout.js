@@ -42,17 +42,19 @@
       }
       return {
         ...column, type, ...projected,
-        ...(isAction ? { kind: "center", maxWidth: column.maxWidth || "--plx-ref-size-240px", headerSort: false, groupable: false } : {}),
+        ...(isAction ? { kind: "center", maxWidth: column.maxWidth || "--plx-ref-size-240px", sortable: false, groupable: false } : {}),
         ...(/^(status|state)$/.test(column.field) ? { maxWidth: column.maxWidth || "--plx-ref-size-240px" } : {}),
-        ...(/^(code|number|case_number|case_code)$/.test(column.field) ? { kind: "data" } : {}),
+        // Case numbers are computed identifiers: Plenix 0.76.0 reads them 01-20261020 on Arabic pages (kind "id").
+        ...(/^(number|case_number|case_code)$/.test(column.field) ? { kind: ["data", "id"] } : column.field === "code" ? { kind: "data" } : {}),
         ...(render && !native ? { pill: false, render } : {}),
-        headerSort: !isAction && column.headerSort !== false,
+        // Plenix 0.70.0 renamed the column option headerSort to sortable (no alias).
+        sortable: !isAction && column.sortable !== false && column.headerSort !== false,
         resizable: column.resizable !== false,
       };
     });
     const common = {
       label, data: gridRows, columns: gridColumns, index: "id", className,
-      density: "compact", cells: "pill", uniformPillWidths: true, typeIcons: false, wrapHeaders: false,
+      density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
       narrow: "table", empty,
     };
     return h(P.DataGrid, {

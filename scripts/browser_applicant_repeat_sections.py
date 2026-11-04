@@ -6,7 +6,7 @@ from playwright.sync_api import sync_playwright,expect
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'.tmp/applicant-repeat-sections';OUT.mkdir(parents=True,exist_ok=True)
 MODULE=(ROOT/'static/ctm/applicant.js').read_bytes()
 SOURCE_SHA=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
-CDN='https://design-system.lighthouseway.org/cdn/0.61.0/'
+CDN='https://design-system.lighthouseway.org/cdn/0.76.0/'
 HTML="""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script src="CDNtheme-boot.js"></script><link rel="stylesheet" href="CDNfonts.css"><link rel="stylesheet" href="CDNplenix.css">
 <script src="CDNvendor/react.production.min.js"></script><script src="CDNvendor/react-dom.production.min.js"></script><script src="CDNplenix.js"></script><script src="/applicant.js"></script></head><body><div id="root"></div><script>
@@ -120,5 +120,5 @@ try:
   checks.append('Missing nested Arabic label blocks form editing without inventing wording or mutating saved snapshots')
   assert not errors,errors;browser.close()
 finally:server.shutdown()
-result={'source_commit':SOURCE_SHA,'module_sha256':hashlib.sha256(MODULE).hexdigest(),'passed':len(checks),'checks':checks,'page_errors':errors,'scope':'Five-family synthetic UI fixtures with pinned Plenix0.61.0; not approved content, document evidence or backend validation acceptance','families':list(families)}
+result={'source_commit':SOURCE_SHA,'module_sha256':hashlib.sha256(MODULE).hexdigest(),'passed':len(checks),'checks':checks,'page_errors':errors,'scope':'Five-family synthetic UI fixtures with pinned Plenix 0.76.0; not approved content, document evidence or backend validation acceptance','families':list(families)}
 (OUT/'result.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8');print(json.dumps(result,indent=2))

@@ -19,7 +19,7 @@ def test_public_shell_uses_pinned_cdn_in_required_order_and_csrf(client):
     assert response.status_code == 200
     assert response["Content-Type"].startswith("text/html")
     html = response.content.decode()
-    base = "https://design-system.lighthouseway.org/cdn/0.68.0/"
+    base = "https://design-system.lighthouseway.org/cdn/0.76.0/"
     files = [
         "theme-boot.js",
         "fonts.css",
@@ -27,6 +27,8 @@ def test_public_shell_uses_pinned_cdn_in_required_order_and_csrf(client):
         "vendor/react.production.min.js",
         "vendor/react-dom.production.min.js",
         "plenix.js",
+        "plenix-icons-plenix.js",
+        "plenix-engines.js",
     ]
     positions = [html.index(base + name) for name in files]
     assert positions == sorted(positions)

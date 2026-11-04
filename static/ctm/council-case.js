@@ -1418,6 +1418,7 @@ ${ar}` : en;
         first: h(P.Panel, { title: t("questionCategories") }, h("div", {
           className: `ctm-report-question-language${form.language === "ar" ? " ctm-report-question-language--rtl" : ""}`,
           dir: form.language === "ar" ? "rtl" : undefined,
+          lang: form.language === "ar" ? "ar" : undefined,
         }, h(P.NavList, {
           label: t("questionCategories"), value: activeCategory, onSelect: setActiveCategory,
           items: categoryGroups.map((group) => ({ id: group.category, label: groupTitle(group, form.language), count: group.questions.length })),
@@ -1426,6 +1427,7 @@ ${ar}` : en;
           h("div", {
             className: `ctm-report-question-language${form.language === "ar" ? " ctm-report-question-language--rtl" : ""}`,
             dir: form.language === "ar" ? "rtl" : undefined,
+            lang: form.language === "ar" ? "ar" : undefined,
           }, h(P.Fieldset, { legend: groupTitle(categoryGroups.find((group) => group.category === activeCategory) || {}, form.language) },
             ...activeQuestions.map((q) => h(P.Checkbox, {
               key: q.code, label: wording(q, form.language),

@@ -22,14 +22,15 @@ test("session layout assets use a current cache version", () => {
   assert.match(shell, /ctm\/council\.js\x27 %\}\?v=[a-z0-9-]+/);
 });
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
-  const order = ["cdn/0.68.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
+  const order = ["cdn/0.76.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
   for (const index of order) assert.ok(index > 0);
   assert.deepEqual([...order].sort((a, b) => a - b), order);
-  assert.doesNotMatch(shell, /cdn\/(?!0\.68\.0)\d+\.\d+\.\d+/);
+  assert.doesNotMatch(shell, /cdn\/(?!0\.76\.0)\d+\.\d+\.\d+/);
 });
 
-test("shell loads the full Material icon stylesheet for requested navigation symbols", () => {
-  assert.match(shell, /cdn\/0\.68\.0\/icons-all\.css/);
+test("shell draws Material navigation symbols through Icon, without the retired icons-all.css (Plenix 0.74.0)", () => {
+  assert.doesNotMatch(shell, /icons-all\.css/);
+  assert.match(shell, /cdn\/0\.76\.0\/plenix\.js"><\/script>\s*<script defer src="https:\/\/design-system\.lighthouseway\.org\/cdn\/0\.76\.0\/plenix-icons-plenix\.js"><\/script>\s*<script defer src="https:\/\/design-system\.lighthouseway\.org\/cdn\/0\.76\.0\/plenix-engines\.js">/);
   assert.match(app, /name: "document_search"/);
   assert.match(app, /name: "person_cancel"/);
 });
@@ -135,9 +136,11 @@ test("Arabic report questions use an RTL reading surface", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
   assert.match(councilCase, /dir: form\.language === "ar" \? "rtl" : undefined/);
+  // Plenix 0.75.0 follows the wrapper's dir attribute itself (plenix-platform #413); CTM keeps no RTL patch.
+  assert.equal((councilCase.match(/lang: form\.language === "ar" \? "ar" : undefined/g) || []).length, 2);
   assert.match(councilCase, /ctm-report-question-language--rtl/);
-  assert.match(css, /\.ctm-report-question-language--rtl \{/);
-  assert.match(css, /direction: rtl/);
+  assert.doesNotMatch(css, /\.ctm-report-question-language--rtl/);
+  assert.doesNotMatch(css, /direction: rtl/);
 });
 
 test("Decision & Voting uses stacked decision and council-vote containers", () => {

@@ -192,7 +192,7 @@ The user selected Django with Plenix CDN and identified Plenix as React-based. [
 
 ## Pinned Plenix CDN contract — 2026-10-20
 
-[Plenix 0.58.0 contract](CTM-Plenix-CDN-contract.md) is authoritative: load theme-boot, fonts, plenix CSS, matching React/ReactDOM vendor scripts and plenix.js in the user's specified order, using window.Plenix (or the documented ESM alternative with React 18 peer). Use documented Plenix components/patterns, plx- classes and --plx-sys-*/--plx-comp-* tokens only; no inline styles, raw colors, numeric font sizes or !important. Ask for missing components/values. No CDN assets are copied. The old prototype Arabic bridge is not yet compliant production styling; its necessary behavior must be reconciled against documented tokens before use.
+[Plenix CDN contract (pinned 0.76.0)](CTM-Plenix-CDN-contract.md) is authoritative: load theme-boot, fonts, plenix CSS, matching React/ReactDOM vendor scripts and plenix.js in the user's specified order, using window.Plenix (or the documented ESM alternative with React 18 peer). Use documented Plenix components/patterns, plx- classes and --plx-sys-*/--plx-comp-* tokens only; no inline styles, raw colors, numeric font sizes or !important. Ask for missing components/values. No CDN assets are copied. The old prototype Arabic bridge is not yet compliant production styling; its necessary behavior must be reconciled against documented tokens before use.
 
 
 ## Initial VM deployment address — confirmed 2026-10-20

@@ -231,7 +231,7 @@
           P.PropertyList,
           null,
           h(P.PropertyList.Item, { label: t("requestFor") }, isolate(request.title)),
-          h(P.PropertyList.Item, { label: t("caseNumber"), data: true }, request.case_number),
+          h(P.PropertyList.Item, { label: t("caseNumber"), data: true, kind: "id" }, request.case_number),
           request.subject ? h(P.PropertyList.Item, { label: t("regarding") }, isolate(request.subject)) : null,
           h(P.PropertyList.Item, { label: t("requestedLanguage") }, t(`lang_${request.language}`)),
         ),
