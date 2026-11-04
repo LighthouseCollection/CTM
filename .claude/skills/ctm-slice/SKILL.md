@@ -85,9 +85,12 @@ design gaps with the architect before building.
 ## 4. Build
 
 - Record `BASE=$(git rev-parse HEAD)` in the ledger.
-- Builders whose `owners` globs do not overlap run **in parallel, each in its
-  own worktree** (Agent tool `isolation: "worktree"`). Never two writers in one
-  checkout. Overlapping owners run sequentially.
+- Builders run in parallel as **teammates** when their `owners` globs do not
+  overlap; they claim tasks from the shared list and message each other about
+  contracts. Never two writers on the same files. When parallel builders would
+  share one checkout and their changes interact, launch them instead as
+  worktree subagents (Agent tool `isolation: "worktree"`; such a call starts a
+  subagent, not a teammate) and merge their branches one at a time.
 - Order when there is a dependency: database (migrations/RLS) -> backend ->
   frontend; frontend may start in parallel against `contract/*.json`.
 - Handle each returned status:
@@ -141,20 +144,21 @@ Launch them in one message (read-only, parallel).
 7. Escalation after the limit, choose and ledger one: reassign, split, revise
    the design, accept with a documented limitation (user approval), or defer.
 
-## 6. Publish
+## 6. Merge and deploy
 
-Dispatch `ctm-integrator` in **publish mode**: if `origin/main` moved and
-touched slice files, sync again and re-run QA in integrated mode; push the
-branch; open/update the draft PR with the evidence table, risks carried
-forward and shared files touched. Run `node scripts/check_slice_trace.cjs <id> --require-evidence`.
+`ctm-integrator`: if `origin/main` moved and touched slice files, sync again and
+re-run QA in integrated mode; push; open/update the PR with the evidence table;
+run `node scripts/check_slice_trace.cjs <id> --require-evidence`; merge with
+`gh pr merge --squash --delete-branch` when CI is green and QA is READY; deploy
+(backup -> build -> migrate -> restart -> health check -> automatic rollback);
+update the issue and backlog to `deployed`.
 
 ## 7. Record
 
 Dispatch `ctm-drift-auditor` (sonnet) in **slice mode**: status entry, issue
 comment draft, up to 3 new review points from confirmed blockers (+ hit counts),
 screen decisions, spec gaps, glossary terms, privacy data map rows and Plenix
-requests touched. Post issue comments only if the user
-approved posting for this stream.
+requests touched. Post the issue comment and update the backlog.
 
 ## Final report to the user
 

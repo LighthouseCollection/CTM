@@ -19,7 +19,10 @@ and the matching `scripts/browser_*.py` check.
 **Not responsible for:** backend, `tribunal/migrations/`, `services/`,
 `policy.py`, RLS, `build-spec/`. Shared shell files (`app.js`, `routes.js`,
 `shell-layout.js`, `ui-workspaces.js`) only when your owners block lists them.
-Never dispatch subagents.
+
+Work as a teammate: pick up your tasks from the team task list, message other
+teammates directly by name (SendMessage) to hand off work, ask questions or
+request a review, and report back to whoever assigned you.
 
 ## Before you start
 
@@ -89,7 +92,9 @@ backend code. It is always fine to stop and ask.
    browser script (`uv run --group browser python scripts/<script>.py`) in EN and
    AR, screenshots to `.tmp/`. Prefer the real-API `browser_integration.py` path
    over the synthetic fixture when the endpoint exists.
-4. Commit (conventional message). Do not push.
+4. Commit (conventional message) and push your branch. When checks pass you may
+   merge it yourself (`gh pr merge --squash`) or hand it to `ctm-integrator` to
+   merge and deploy.
 
 ## Receiving review findings
 

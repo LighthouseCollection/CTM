@@ -21,8 +21,12 @@ manual: the rules every session and subagent follows, and the team SOP.
 - Never fake success: no mock payment, email, scan, OCR or transcription result.
   Honest "unavailable" placeholders are fine for OCR/audio.
 - No passwords. Council = Microsoft Entra preauthorized tenant/object id.
-- Never push to `main`, merge your own PR, deploy, run operational migrations or
-  touch real case data/credentials. Synthetic data only.
+- **Autonomy (owner decision 2026-11-04):** all permissions are bypassed. Every
+  agent may push, merge (`gh pr merge`), run `git clean -fdx`, deploy, run
+  migrations against the real database and work with real data. Do it the
+  automated way: checks green before merge; automatic backup before migrations
+  and deploys; health check and automatic rollback after deploy; never copy real
+  case data into git or print secrets.
 - Linux PostgreSQL CI is authoritative. Windows Python crashes are not app failures.
 - Ownership: only the database owner (`ctm-database-engineer` / VM-FRM stream)
   writes migrations, RLS and grants; services belong to the backend owner. UI
@@ -54,6 +58,23 @@ uv run pytest --ds=ctm.settings_postgres_test -q   # needs isolated CTM_TEST_DAT
 uv run python docs/architecture/build-spec/validate_spec.py
 uv run --group browser python scripts/browser_integration.py
 ```
+
+## Owner intake — how you give the team work
+
+The team runs as a Claude Code **agent team** (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+in `.claude/settings.json`): teammates share a task list and message each other
+directly. The main session starts the standing team (`ctm-intake` plus the
+specialists a request needs). The owner can talk to the lead, to `ctm-intake`,
+or to any teammate directly.
+
+| Owner says | Flow |
+| --- | --- |
+| A **bug** | `ctm-intake` logs a GitHub issue + backlog row (severity, repro, area) → assigns `ctm-debugger` or the owning engineer → fix, tests, merge, deploy → issue closed |
+| A **new feature** | `ctm-intake` logs it → `ctm-spec-analyst` and `ctm-solution-architect` break it into tasks → builders claim tasks → checks → merge → deploy |
+| A **UI improvement** | `ctm-intake` logs it → `ctm-ui-finish-gate` audits the screen → `ctm-frontend-engineer` fixes it → UI gate re-checks → merge → deploy |
+
+Every item is tracked in GitHub issues and `docs/implementation/backlog.md`
+(logged → assigned → in progress → in review → merged → deployed → closed).
 
 ## Team SOP — `Code = SOP(Team)`
 
@@ -87,12 +108,14 @@ Full SOP (artifacts in `docs/implementation/slices/<id>/`, events in `ledger.md`
    always; **ctm-security-reviewer**, **ctm-i18n-rtl-reviewer**,
    **ctm-ui-finish-gate** chosen by changed paths. Fix rounds re-check only
    flagged items: 2 rounds for reviews, 3 for QA, then the lead escalates.
-7. **ctm-integrator** publish mode: push, draft PR with evidence. Never merges.
+7. **ctm-integrator**: push, PR with evidence, merge when CI is green and QA is
+   READY, then deploy (backup -> build -> migrate -> restart -> health check ->
+   rollback on failure).
 8. **ctm-drift-auditor** slice mode: status, issue comment draft, review points,
    screen decisions, spec gaps.
 
 On demand: **ctm-debugger** (root cause), **ctm-platform-engineer** (Compose,
-workers, CI, browser harness — no deployment), **ctm-drift-auditor** audit mode,
+workers, CI, browser harness, server and deploys), **ctm-drift-auditor** audit mode,
 **ctm-media-pipeline-engineer** (audio/OCR, only when they stop being placeholders).
 
 UI work: screens start from the Plenix page template in

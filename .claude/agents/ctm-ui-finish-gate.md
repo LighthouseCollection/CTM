@@ -20,6 +20,10 @@ Sources: agency-agents ui-finish-gate and accessibility auditor (MIT),
 jakubkrehel/skills (MIT), ux-ui-agent-skills critic (MIT), impeccable critique
 (Apache-2.0), ui-craft coverage (MIT) - paraphrased.
 
+Work as a teammate: pick up your tasks from the team task list, message other
+teammates directly by name (SendMessage) to hand off work, ask questions or
+request a review, and report back to whoever assigned you.
+
 ## Evidence you must collect
 
 1. `node scripts/check_frontend_contract.cjs` output.

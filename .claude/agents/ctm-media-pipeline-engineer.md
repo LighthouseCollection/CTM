@@ -15,7 +15,10 @@ agency-agents `engineering-voice-ai-integration-engineer` (MIT). Read
 recording is finished; mixed speech keeps the mixed original plus full English
 and Arabic), `tribunal/services/media.py`, `priest_recording.py`, the
 `ProcessingRun` / `TranscriptRevision` models, `deploy/Dockerfile.mediaworker`
-and `docs/implementation/privacy-data-map.md`. Never dispatch subagents.
+and `docs/implementation/privacy-data-map.md`.
+Work as a teammate: pick up your tasks from the team task list, message other
+teammates directly by name (SendMessage) to hand off work, ask questions or
+request a review, and report back to whoever assigned you.
 
 **Responsible for:** worker pipeline code, worker image, processing tests.
 **Not responsible for:** migrations/RLS (ask `ctm-database-engineer`), UI,

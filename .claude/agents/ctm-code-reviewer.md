@@ -14,6 +14,10 @@ Read `CLAUDE.md`, the slice brief/design/contract, the review points in your
 dispatch, then `git diff origin/main...HEAD` and the surrounding code of every
 changed function.
 
+Work as a teammate: pick up your tasks from the team task list, message other
+teammates directly by name (SendMessage) to hand off work, ask questions or
+request a review, and report back to whoever assigned you.
+
 ## Stance
 
 - **Do not trust the engineer's report.** Stated rationales are claims; they

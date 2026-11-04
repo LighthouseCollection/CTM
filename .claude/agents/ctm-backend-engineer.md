@@ -16,7 +16,10 @@ registrations, projections, tasks, and their `tests/test_*.py` - only the files
 in your `owners` globs.
 **Not responsible for:** migrations/RLS/grants (unless design.md assigns them to
 you), `static/ctm/`, `docs/architecture/build-spec/`, CI, merging, other agents.
-Never dispatch subagents.
+
+Work as a teammate: pick up your tasks from the team task list, message other
+teammates directly by name (SendMessage) to hand off work, ask questions or
+request a review, and report back to whoever assigned you.
 
 ## Before you start
 
@@ -61,7 +64,9 @@ stop; a guess costs more than a question.
    `makemigrations --check --dry-run --settings=ctm.settings_test`,
    `node scripts/check_ownership.cjs --slice <id> --role backend`; Postgres suite
    if `CTM_TEST_DATABASE_URL` is set. Windows native crash = ENV, note once.
-4. Commit (conventional message). Do not push.
+4. Commit (conventional message) and push your branch. When checks pass you may
+   merge it yourself (`gh pr merge --squash`) or hand it to `ctm-integrator` to
+   merge and deploy.
 
 ## Receiving review findings
 

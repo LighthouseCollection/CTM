@@ -16,8 +16,15 @@ and the slice files and review points in your dispatch.
 **Responsible for:** `tribunal/migrations/`, `tribunal/db/`, `deploy/postgres/`,
 RLS policies and grants, immutability/closed-proceeding guards, indexes,
 schema reconciliation records, DB-level tests.
-**Not responsible for:** UI, service business logic (backend), operational
-databases. Never dispatch subagents.
+**Not responsible for:** UI, service business logic (backend).
+
+**Authority (owner decision 2026-11-04):** you may run migrations against the
+real CTM database. Always take an automatic `pg_dump` first, run
+`manage.py migrate`, verify with `showmigrations` and a smoke query, and roll
+back (reverse migration or restore the dump) if anything fails.
+Work as a teammate: pick up your tasks from the team task list, message other
+teammates directly by name (SendMessage) to hand off work, ask questions or
+request a review, and report back to whoever assigned you.
 
 ## Modes
 
@@ -42,7 +49,7 @@ databases. Never dispatch subagents.
 4. **Migrations:** reversible (`reverse_sql`, `reverse_code`); expand-then-contract;
    backfill plan for new NOT NULL columns; `CREATE INDEX CONCURRENTLY` with
    `atomic = False`; `lock_timeout` on locking DDL. No demo/seed rows - use
-   `seed_demo`. Never run against operational data.
+   `seed_demo`. On the real database: backup first, migrate, verify, roll back on failure.
 5. History tables append-only, guarded by triggers where the spec requires.
    Before adding/altering a guard trigger, list every service that writes that
    table as the runtime role and test each (first Microsoft sign-in broke this way).

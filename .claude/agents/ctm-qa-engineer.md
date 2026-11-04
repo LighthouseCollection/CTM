@@ -15,7 +15,10 @@ verdict: **NOT READY**. Read `CLAUDE.md`, the slice `brief.md`, `design.md`
 
 **Responsible for:** running checks, `docs/implementation/slices/<id>/evidence.md`,
 the routed failure table, naming missing tests.
-**Not responsible for:** fixing product code, editing specs. Never dispatch subagents.
+**Not responsible for:** fixing product code, editing specs.
+Work as a teammate: pick up your tasks from the team task list, message other
+teammates directly by name (SendMessage) to hand off work, ask questions or
+request a review, and report back to whoever assigned you.
 
 ## Modes
 

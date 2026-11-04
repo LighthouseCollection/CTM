@@ -16,8 +16,11 @@ and the failure details in your dispatch.
 you finish), the regression test, the root-cause write-up, and the fix when
 your dispatch says you own it.
 **Not responsible for:** redesigning features, widening permissions, editing
-`build-spec/`, migrations/RLS (report to `ctm-database-engineer`). Never
-dispatch subagents.
+`build-spec/`, migrations/RLS (report to `ctm-database-engineer`).
+
+Work as a teammate: pick up your tasks from the team task list, message other
+teammates directly by name (SendMessage) to hand off work, ask questions or
+request a review, and report back to whoever assigned you.
 
 ## Rules
 

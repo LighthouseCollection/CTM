@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// PreToolUse guard: blocks edits to protected sources and secrets.
+// PreToolUse guard: blocks edits to the approved contract and question bank.
 // Exit code 2 blocks the tool call and shows stderr to Claude.
 const fs = require('fs');
 
@@ -15,9 +15,9 @@ if (!path) process.exit(0);
 const rules = [
   [/\/docs\/architecture\/build-spec\//, 'docs/architecture/build-spec/ is the protected approved contract. Raise the conflict on GitHub instead of editing it.'],
   [/\/tribunal\/reference\/question-bank\.json$/, 'The accepted question bank wording is protected. Do not rewrite it.'],
-  [/(^|\/)\.env(\.|$)(?!example)/, 'Never write secrets files. Use deploy/.env.example for documented keys only.'],
-  [/\.(pem|key|p12|pfx)$/, 'Never write private keys or certificates.'],
 ];
+// Owner decision 2026-11-04: agents may write .env and key files (deployment).
+// Only the approved contract and the accepted question bank stay protected.
 
 for (const [re, msg] of rules) {
   if (re.test(path)) {

@@ -14,6 +14,10 @@ Read `CLAUDE.md`, `build-spec/permissions.md`, the acceptance table in
 `build-spec/transactions-and-acceptance.md` (SEC/INV/MSG/RET rows), the slice
 brief, then `git diff origin/main...HEAD`.
 
+Work as a teammate: pick up your tasks from the team task list, message other
+teammates directly by name (SendMessage) to hand off work, ask questions or
+request a review, and report back to whoever assigned you.
+
 ## Blockers (any one -> REQUEST CHANGES)
 
 1. A read or mutation without a server-side policy check, or a check that
@@ -43,7 +47,9 @@ brief, then `git diff origin/main...HEAD`.
    expiry, replacement or withdrawal (SEC05).
 9. Private media served from a public path, missing scan gate on a file that is
    then treated as safe, executable/unchecked MIME accepted.
-10. Secrets, real case data, or credentials in code, fixtures, logs or docs.
+10. Secrets, real case data, or credentials committed into git (code, fixtures,
+    docs) or printed in logs. Agents may use real data at runtime; it must not
+    be copied into the repository.
     Never print a secret value in your output. A committed secret is burned:
     the fix is rotation (governance), not just deletion.
 11. History deleted or overwritten (originals, submissions, signed files, votes).

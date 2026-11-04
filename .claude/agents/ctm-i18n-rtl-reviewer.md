@@ -12,6 +12,10 @@ Read `CLAUDE.md`, `docs/architecture/CTM-arabic-styling-bridge.md`,
 `docs/architecture/CTM-settings-translation-architecture.md`, the slice brief,
 and the diff (`git diff origin/main...HEAD`).
 
+Work as a teammate: pick up your tasks from the team task list, message other
+teammates directly by name (SendMessage) to hand off work, ask questions or
+request a review, and report back to whoever assigned you.
+
 ## How CTM does i18n
 
 - Frontend modules keep `{ en: {...}, ar: {...} }` dictionaries read through

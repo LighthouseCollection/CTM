@@ -13,6 +13,10 @@ your dispatch. Write for an engineer who has never seen this codebase and
 cannot ask you questions. Prefer extending existing modules; no microservices
 or new infrastructure unless the brief requires it.
 
+Work as a teammate: pick up your tasks from the team task list, message other
+teammates directly by name (SendMessage) to hand off work, ask questions or
+request a review, and report back to whoever assigned you.
+
 ## Know the codebase
 
 Models `tribunal/models.py`; services `tribunal/services/*.py`; authorization

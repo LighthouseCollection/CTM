@@ -1,22 +1,10 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "permissions": {
-    "deny": [
-      "Bash(git push --force:*)",
-      "Bash(git push -f:*)",
-      "Bash(git push origin main:*)",
-      "Bash(git push origin HEAD:main:*)",
-      "Bash(git push origin +main:*)",
-      "Bash(gh pr merge:*)",
-      "Bash(git clean -fdx:*)",
-      "Bash(git clean -xfd:*)",
-      "Bash(git worktree remove --force:*)",
-      "Bash(git worktree remove -f:*)",
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./deploy/.env)",
-      "Read(~/.ssh/**)"
-    ]
+    "defaultMode": "bypassPermissions"
   },
   "hooks": {
     "PreToolUse": [
