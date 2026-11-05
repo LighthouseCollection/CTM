@@ -109,6 +109,111 @@ def placeholder_png():
     )
 
 
+QUESTIONNAIRE_FIELDS = [
+    {
+        "code": "first_name",
+        "type": "text",
+        "required": True,
+        "label_en": "First name",
+        "label_ar": "الاسم الأول",
+    },
+    {
+        "code": "last_name",
+        "type": "text",
+        "required": True,
+        "label_en": "Last name",
+        "label_ar": "اسم العائلة",
+    },
+    {
+        "code": "birth_date",
+        "type": "date",
+        "required": True,
+        "label_en": "Date of birth",
+        "label_ar": "تاريخ الميلاد",
+    },
+    {
+        "code": "gender",
+        # The applicant form and server validator only know `choice` (#104).
+        "type": "choice",
+        "choices": ["M", "F"],
+        "choice_labels": {
+            "M": {"label_en": "Male", "label_ar": "ذكر"},
+            "F": {"label_en": "Female", "label_ar": "أنثى"},
+        },
+        "label_en": "Gender",
+        "label_ar": "النوع",
+    },
+    {
+        "code": "marriage_date",
+        "type": "date",
+        "required": True,
+        "label_en": "Marriage date",
+        "label_ar": "تاريخ الزواج",
+    },
+    {
+        "code": "statement",
+        "type": "textarea",
+        "required": True,
+        "label_en": "Petition statement",
+        "label_ar": "بيان الطلب",
+    },
+]
+
+
+def renderable_definition(definition):
+    """True when both the server validator and the applicant form accept it."""
+    from django.core.exceptions import ValidationError
+    from tribunal.services.configuration import validate_questionnaire_definition
+
+    try:
+        validate_questionnaire_definition(definition)
+    except ValidationError:
+        return False
+    fields = definition.get("fields", [])
+    return all(
+        isinstance(field.get(key), str) and field[key].strip()
+        for field in fields
+        for key in ("label_en", "label_ar")
+    ) and all(
+        isinstance(labels.get(key), str) and labels[key].strip()
+        for field in fields
+        for choice in field.get("choices", [])
+        for labels in [field.get("choice_labels", {}).get(choice, {})]
+        for key in ("label_en", "label_ar")
+    )
+
+
+def supersede_unrenderable_questionnaires():
+    """Republish this dataset's schema when an older seed stored an invalid one.
+
+    Questionnaire versions are immutable, so a corrected version is appended and
+    only unsubmitted drafts move to it; submitted provenance stays pinned.
+    """
+    for purpose in ("petition", "appeal"):
+        versions = m.QuestionnaireVersion.objects.filter(purpose=purpose)
+        broken = [
+            version
+            for version in versions.filter(definition__dataset=DATASET).order_by("number")
+            if not renderable_definition(version.definition)
+        ]
+        if not broken:
+            continue
+        target = versions.filter(published=True).order_by("-number").first()
+        if target is None or target in broken:
+            latest = versions.order_by("-number").first()
+            target = m.QuestionnaireVersion.objects.create(
+                purpose=purpose,
+                number=latest.number + 1,
+                definition={**broken[-1].definition, "fields": QUESTIONNAIRE_FIELDS},
+                declaration_en=broken[-1].declaration_en,
+                declaration_ar=broken[-1].declaration_ar,
+                published=True,
+            )
+        m.Application.objects.filter(
+            questionnaire__in=broken, submitted_at__isnull=True
+        ).update(questionnaire=target)
+
+
 class Command(BaseCommand):
     help = "Populate an explicitly opted-in fictitious Western-name workflow dataset."
 
@@ -335,53 +440,11 @@ class Command(BaseCommand):
                         # synthetic-dataset guard above has already passed.
                         m.AnswerRevision.objects.filter(pk=revision.pk).update(answers=answers)
             repair_synthetic_photo_originals()
+            supersede_unrenderable_questionnaires()
             ensure_session_agenda(current_session, archived_session)
             self.stdout.write("Dataset already exists; synthetic session scenarios, profile fixtures, and photo originals refreshed.")
             return
-        fields = [
-            {
-                "code": "first_name",
-                "type": "text",
-                "required": True,
-                "label_en": "First name",
-                "label_ar": "الاسم الأول",
-            },
-            {
-                "code": "last_name",
-                "type": "text",
-                "required": True,
-                "label_en": "Last name",
-                "label_ar": "اسم العائلة",
-            },
-            {
-                "code": "birth_date",
-                "type": "date",
-                "required": True,
-                "label_en": "Date of birth",
-                "label_ar": "تاريخ الميلاد",
-            },
-            {
-                "code": "gender",
-                "type": "select",
-                "choices": ["M", "F"],
-                "label_en": "Gender",
-                "label_ar": "النوع",
-            },
-            {
-                "code": "marriage_date",
-                "type": "date",
-                "required": True,
-                "label_en": "Marriage date",
-                "label_ar": "تاريخ الزواج",
-            },
-            {
-                "code": "statement",
-                "type": "textarea",
-                "required": True,
-                "label_en": "Petition statement",
-                "label_ar": "بيان الطلب",
-            },
-        ]
+        fields = QUESTIONNAIRE_FIELDS
         schemas = {}
         for purpose in ("petition", "appeal"):
             latest = (
