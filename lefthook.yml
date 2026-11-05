@@ -1,0 +1,21 @@
+# Local fast checks (same as CI's fast gates). Enable once per checkout:
+#   npx lefthook@2.2.2 install
+pre-commit:
+  parallel: true
+  commands:
+    plenix-styling:
+      run: node scripts/check_frontend_contract.cjs --base HEAD
+    ownership:
+      run: node scripts/check_ownership.cjs --base HEAD
+    i18n:
+      glob: "static/ctm/*.js"
+      run: node scripts/check_i18n.cjs --base HEAD
+    agent-rules:
+      glob: ".rulesync/**"
+      run: npx --yes rulesync@43.6.0 generate && git add CLAUDE.md AGENTS.md
+    opengrep:
+      run: command -v opengrep >/dev/null 2>&1 && opengrep scan --config .opengrep/ctm.yml --error --quiet {staged_files} || true
+pre-push:
+  commands:
+    frontend-tests:
+      run: node --test tests/frontend/*.test.cjs

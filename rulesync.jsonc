@@ -1,0 +1,4 @@
+{
+  "targets": ["claudecode", "codexcli"],
+  "features": ["rules"]
+}

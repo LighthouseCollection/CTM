@@ -1,0 +1,29 @@
+name: Bug
+description: Something in CTM is broken or wrong
+title: "Bug: "
+labels: ["type:bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Plain words are enough. ctm-product-lead logs, routes and reports back on this issue. Never include real case data; this repository is public.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you saw instead. A screenshot helps (synthetic data only).
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: Screen or link, and English or Arabic
+  - type: dropdown
+    id: severity
+    attributes:
+      label: How bad is it
+      options:
+        - "S1 - CTM is down or data is exposed"
+        - "S2 - a main task cannot be done"
+        - "S3 - a task works but something is wrong"
+        - "S4 - cosmetic or minor"

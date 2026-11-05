@@ -1,3 +1,5 @@
+> **Superseded 2026-11-04** by `docs/implementation/sdlc.md` (PDS 1.0 structure). Kept as the original analysis; role names here are the old ones.
+
 # CTM agent team — analysis and design
 
 Date: 2026-11-03. Branch: `work/claude-agent-team`.

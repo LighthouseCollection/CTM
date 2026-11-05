@@ -1,0 +1,19 @@
+name: UI / UX improvement
+description: A screen looks wrong, reads badly or is hard to use
+title: "UI: "
+labels: ["type:ui"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should change
+      description: The screen, the element and what you want instead. An annotated screenshot helps (synthetic data only).
+    validations:
+      required: true
+  - type: dropdown
+    id: pictures
+    attributes:
+      label: Pictures back
+      options:
+        - "No - just fix it and show the check's before/after"
+        - "Yes - show me options first"

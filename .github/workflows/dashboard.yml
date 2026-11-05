@@ -1,0 +1,63 @@
+name: CTM dashboard and daily summary
+# Regenerates the two pinned issues from GitHub only (decisions D-0002, D-0014):
+# "CTM dashboard" (decisions + their live checks + visual checks) and
+# "Daily summary" (last 24 hours). Read-only output; never hand-edit them.
+on:
+  push:
+    branches: [main]
+  # Safe here: fires only for runs on main, checks out main, reads no artifacts from the triggering run.
+  workflow_run: # zizmor: ignore[dangerous-triggers]
+    workflows: ["CTM quality gates", "CTM backend validation", "Plenix CDN auto-upgrade"]
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: '0 14 * * *'   # 06:00 Los Angeles (PST)
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ctm-dashboard
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build dashboard
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.8.22'
+      - name: Labels used by the team
+        run: |
+          while IFS='|' read -r name color; do
+            gh label create "$name" --color "$color" --force >/dev/null
+          done <<'EOF'
+          type:bug|d73a4a
+          type:feature|0e8a16
+          type:ui|1d76db
+          type:question|cc317c
+          sev:S1|b60205
+          sev:S2|d93f0b
+          sev:S3|fbca04
+          sev:S4|c2e0c6
+          decision|5319e7
+          security|b60205
+          plenix-upgrade|0052cc
+          EOF
+      - name: Update the pinned issues
+        run: uv run --no-project --python 3.12 --with pyyaml==6.0.3 python scripts/build_dashboard.py --write
