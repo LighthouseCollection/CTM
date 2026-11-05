@@ -283,7 +283,8 @@ decisions:
     why: The owner kept manual bearer-link delivery unapproved (owner clarifications 2026-10-21, D8(b)/F21), but main showed the link once with Copy link. Decision card on #10; applied default, owner can switch to B
     options: [No manual link, email or paper only (chosen), Keep the shown-once copy link]
     decided_by: agent:ctm3-product-lead
-    status: active
+    status: superseded
+    superseded_by: D-0033
     check: { kind: test, ref: tests/frontend/council-external.test.cjs }
 
   - id: D-0031
@@ -305,3 +306,13 @@ decisions:
     decided_by: owner
     status: active
     review_only: Not built yet (#81); its permission and "not yet supplied" tests become the check
+
+  - id: D-0033
+    date: 2026-11-05
+    area: security
+    decision: CTM itself sends an external priest's private report link, by email or by text message as the council chooses for that priest; nobody shows, copies or forwards the link by hand. Text is offered only once a text-message provider is set up, email once CTM email delivery is confirmed (#54); until then the paper form is the path and the unavailable channel says so
+    why: Owner answered on #10 from the dashboard (2026-11-05) "It can be sent via text or email". Read as CTM sending through those channels, which keeps the owner's earlier refusal of manual bearer-link delivery (2026-10-21, D8(b)/F21); decision card on #10, the owner can switch to B. Work in #84
+    options: [CTM sends it by email or text (chosen), Council copies the link and sends it by text or email themselves]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/council-external.test.cjs }
