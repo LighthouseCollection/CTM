@@ -1,4 +1,4 @@
-/* CTM uses documented Plenix 0.76.0 CDN exports. No component assets are bundled. */
+/* CTM uses documented Plenix CDN exports (0.86.0 page templates: Auth, ResourceList, RecordPage; #97 slice 4). No component assets are bundled. */
 (() => {
   "use strict";
   const root = document.getElementById("ctm-root");
@@ -708,44 +708,33 @@
         setPending(false);
       }
     }
+    // The inbox is a ResourceList (resource-list.md): one row per notice, its open and read actions at the row end.
+    const when = new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" });
     return h(
       P.Stack,
       null,
       heading(t("notifications")),
-      ...rows.map((row) =>
-        h(
-          P.Panel,
-          { icon: "doc-text",
-            key: row.id,
-            title: row.case_number || t("caseUpdate"),
-            description: `${new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(row.timestamp))} · ${t(row.read ? "read" : "unread")}`,
-          },
-          text(
-            t("event_" + row.kind) === t("unknown")
-              ? t("caseUpdate")
-              : t("event_" + row.kind),
-          ),
-          h(
+      h(P.ResourceList, {
+        label: t("notifications"),
+        emptyState: h(P.EmptyState, { title: t("noNotifications") }),
+        items: rows.map((row) => ({
+          id: row.id,
+          name: row.case_number || t("caseUpdate"),
+          description: t("event_" + row.kind) === t("unknown") ? t("caseUpdate") : t("event_" + row.kind),
+          meta: `${when.format(new Date(row.timestamp))} · ${t(row.read ? "read" : "unread")}`,
+          thumbnail: { icon: "doc-text" },
+          actions: h(
             P.Inline,
-            null,
+            { gap: "sm" },
             row.case_id
-              ? h(
-                  P.Button,
-                  { onClick: () => onCase(row.case_id) },
-                  t("openCase"),
-                )
+              ? h(P.Button, { size: "sm", onClick: () => onCase(row.case_id) }, t("openCase"))
               : null,
             !row.read
-              ? h(
-                  P.Button,
-                  { disabled: pending, onClick: () => update(row) },
-                  t("markRead"),
-                )
+              ? h(P.Button, { size: "sm", disabled: pending, onClick: () => update(row) }, t("markRead"))
               : null,
           ),
-        ),
-      ),
-      !rows.length ? h(P.EmptyState, { title: t("noNotifications") }) : null,
+        })),
+      }),
       failed ? h(P.Notice, { tone: "danger" }, t("error")) : null,
       next !== null
         ? h(P.Button, { disabled: pending, onClick: more }, t("more"))
@@ -1251,10 +1240,9 @@
         failure ? errorView() : text(t("loading")),
       );
     if (user === null) {
-      const loginHeader = h(P.Center, {
-        maxWidth: "lg",
-        className: "plx-u-absolute plx-u-top-0 plx-u-left-0 plx-u-right-0 plx-u-z-raised",
-      },
+      // The diocese header lies over the top of the Auth page from Medium up, so the card stays centered in
+      // the window; under Medium the Auth page starts at the top (auth.css), so the header joins the flow.
+      const brandHeader = (className) => h(P.Center, { maxWidth: "lg", className },
         h(P.Stack, { inset: "lg" },
               h("header", null,
                 h(P.Inline, { justify: "center", align: "center", wrap: true, gap: "lg" },
@@ -1272,28 +1260,33 @@
               )
         ),
       );
+      const loginHeader = h(P.Show, { above: "medium", fallback: brandHeader() },
+        brandHeader("plx-u-absolute plx-u-top-0 plx-u-left-0 plx-u-right-0 plx-u-z-raised"));
+      // Sign-in: the Auth page with SsoButtons (sign-in.md, single-sign-on.md). SignInForm is left out on
+      // purpose: in 0.86.0 it always draws a password field, and CTM has no passwords (plenix-requests.md: "SignInForm without a password").
       return h(P.AppShell, { page: "form", strings: { skip: t("skip") } },
-        h(P.PageContent, { className: "plx-u-relative plx-u-justify-center" },
+        h(P.PageContent, { className: "plx-u-relative" },
           loginHeader,
-          h(P.Center, { maxWidth: "sm" },
-            h(P.Panel, null,
-              h(P.Stack, { gap: "lg", inset: "lg" },
-                h(P.Center, { intrinsic: true, text: true },
-                  h(P.Image, {
-                    src: "/static/ctm/tribunal-logo-cropped.svg", alt: "CTM",
-                    width: 1104, height: 1050, className: "plx-u-w-72px plx-u-bg-transparent",
-                    fit: "contain", placeholder: "none", priority: true,
-                  }),
-                ),
-                text(t("signIn"), { as: "h2", variant: "display", className: "plx-u-text-center" }),
-                h(P.Stack, { gap: "sm" },
-                  ...config.providers.map((name) => h(P.Button, {
-                    key: name, variant: name === "microsoft" ? "primary" : "secondary",
-                    onClick: () => postForm(`/accounts/${name}/login/`),
-                  }, t(name))),
-                ),
-                !config.providers.length ? h(P.Notice, { tone: "warning" }, t("noProviders")) : null,
+          h(P.Auth, {
+            page: true,
+            title: t("signIn"),
+            headingLevel: 2,
+          },
+            h(P.Stack, { gap: "lg" },
+              h(P.Center, { intrinsic: true, text: true },
+                h(P.Image, {
+                  src: "/static/ctm/tribunal-logo-cropped.svg", alt: "CTM",
+                  width: 1104, height: 1050, className: "plx-u-w-72px plx-u-bg-transparent",
+                  fit: "contain", placeholder: "none", priority: true,
+                }),
               ),
+              config.providers.length
+                ? h(P.SsoButtons, {
+                    providers: config.providers.map((name) => ({ id: name, label: t(name) })),
+                    onProvider: (provider) => postForm(`/accounts/${provider.id}/login/`),
+                    strings: { label: t("signIn"), provider: "{name}" },
+                  })
+                : h(P.Notice, { tone: "warning" }, t("noProviders")),
             ),
           ),
         ),
@@ -1495,7 +1488,14 @@
     const nav = h(
           P.NavPane,
           { title: t(council ? "council" : "applicant"), label: t("tribunal"),
-            rail: navigationRail(mainRailItems, (id) => go(id)) },
+            rail: navigationRail(mainRailItems, (id) => go(id)),
+            // side-navigation.md: the footer row holds the app's settings (the same page as the account menu's).
+            footer: h(P.NavList, {
+              label: t("settings"),
+              value: page,
+              onSelect: (id) => go(id),
+              items: [{ id: "settings", icon: h(P.Icon, { name: "settings", "aria-hidden": true }), label: t("settings") }],
+            }) },
           council ? h(P.NavList, {
             label: t("tribunal"),
             value: page,
@@ -1577,38 +1577,36 @@
         }),
       ),
     });
-    const caseCard = (row) =>
-      h(
-        P.Card,
-        { icon: "folder-open",
-          key: row.id,
-          title: row.number,
-          meta: t(row.status),
-          onOpen: () => openCase(row.id, { page: "home", labelKey: "backHome" }),
-        },
-        text(`${t("assigned")}: ${row.assigned_member || t("unassigned")}`, {
-          variant: "secondary",
-        }),
-      );
+    // Applicant cases and applications are ResourceLists (resource-list.md): name, one line, the status at the end.
+    const caseItem = (row) => ({
+      id: row.id,
+      name: row.number,
+      description: `${t("assigned")}: ${row.assigned_member || t("unassigned")}`,
+      meta: t(row.status),
+      thumbnail: { icon: "folder-open" },
+      onOpen: () => openCase(row.id, { page: "home", labelKey: "backHome" }),
+    });
     const caseList = (rows) =>
-      rows.length
-        ? h(P.Stack, null, ...rows.map(caseCard))
-        : h(P.EmptyState, { title: t("noCases") });
-    const applicationCard = (row) =>
-      h(
-        P.Panel,
-        { icon: "doc-text", key: row.id, title: t(row.kind), description: t(row.status) },
-        h(
-          P.Stack,
-          null,
-          text(`${t("payment")}: ${t(row.fee?.status || "unknown")}`),
-          h(P.Notice, null, t("fee")),
-          user.portal === "applicant" && window.CTMApplicant
-            ? h(P.Button, { onClick: () => go("application", row.id) },
-                lang === "ar" ? "فتح الطلب" : "Open application")
-            : null,
-        ),
-      );
+      h(P.ResourceList, {
+        label: t("cases"),
+        items: rows.map(caseItem),
+        emptyState: h(P.EmptyState, { title: t("noCases") }),
+      });
+    const applicationItem = (row) => ({
+      id: row.id,
+      name: t(row.kind),
+      // Status first, so a narrow row cuts the payment words rather than the status.
+      description: `${t(row.status)} · ${t("payment")}: ${t(row.fee?.status || "unknown")}`,
+      thumbnail: { icon: "doc-text" },
+      actions: user.portal === "applicant" && window.CTMApplicant
+        ? h(P.Button, { size: "sm", onClick: () => go("application", row.id) },
+            lang === "ar" ? "فتح الطلب" : "Open application")
+        : null,
+    });
+    const applicationList = (rows) =>
+      h(P.ResourceList, { label: t("applications"), items: rows.map(applicationItem) });
+    // The filing fee notice, once under the applications (it sat in every application card before).
+    const feeNotice = (rows) => (rows.length ? h(P.Notice, null, t("fee")) : null);
     function content() {
       if (failure) return errorView();
       if (!data) return text(t("loading"));
@@ -1785,17 +1783,14 @@
       if (page === "communications") return h(CommunicationsWorkspace, {
         key: selection, data, t, lang, council, councilModule, api, user, selection, reload,
       });
+      // The case is a RecordPage (record-page.md): the number leads, its status under it, the parts below.
       if (page === "case")
-        return h(
-          P.Stack,
-          { gap: "lg" },
-          h(
-            P.Button,
-            { variant: "ghost", onClick: () => go(council ? "cases" : "past") },
-            t("backCases"),
-          ),
-          heading(data.number),
-          text(`${t("status")}: ${t(data.status)}`),
+        return h(P.RecordPage, {
+            header: h(P.RecordPage.Header, { title: data.number,
+              description: `${t("status")}: ${t(data.status)}`,
+              actions: h(P.Button, { variant: "ghost", onClick: () => go(council ? "cases" : "past") }, t("backCases")),
+            }),
+          },
           !council && data.can_start_petition === true && window.CTMApplicantAppeals?.StartPetition
             ? h(window.CTMApplicantAppeals.StartPetition, {key:"petition-"+selection,record:data,api,lang,
                 onOpen:(id)=>go("application",id)}) : null,
@@ -1943,7 +1938,8 @@
           !council && window.CTMApplicant ? h(window.CTMApplicant.StartApplication, {
             api, lang, onOpen: (id) => go("application", id),
           }) : null,
-          ...data.items.map(applicationCard),
+          data.items.length ? applicationList(data.items) : null,
+          feeNotice(data.items),
         );
       if (page === "home" && !council) {
         const filing =
@@ -1962,10 +1958,11 @@
           heading(t("home")),
           text(t("current")),
           filing
-            ? applicationCard(filing)
+            ? applicationList([filing])
             : currentCase
-              ? caseCard(currentCase)
+              ? caseList([currentCase])
               : h(P.EmptyState, { title: t("noCurrent") }),
+          filing ? feeNotice([filing]) : null,
         );
       }
       if (council && councilModule?.CasesTable && ["myCases", "cases", "archived"].includes(page))
