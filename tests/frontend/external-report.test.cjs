@@ -3,7 +3,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const { harness, loadExternal, textareas, notices, buttons, dialogs, type, settle, find, textOf, byName } = require("./harness.cjs");
+const { harness, loadExternal, textareas, notices, buttons, dialogs, type, settle, find, textOf, byName, nameOf } = require("./harness.cjs");
 
 const REQ = "11111111-2222-4333-8444-555555555555";
 const OTHER = "99999999-2222-4333-8444-555555555555";
@@ -148,7 +148,43 @@ test("Arabic: requests in Arabic open in Arabic, with an English switch", async 
   await ui.render();
   await ui.render();
   assert.match(ui.text(), /تقريرك المكتوب/);
-  assert.ok(buttons(ui.tree, "English")[0]);
+  const toggle = byName(ui.tree, "AppHeader.Item").find((n) => n.props.label === "English");
+  assert.ok(toggle, "English switch in the header");
+  assert.equal(byName(ui.tree, "AppShell")[0].props.strings.skip, "الانتقال إلى المحتوى الرئيسي");
+});
+
+// #97 slice 8: the page sits on the one-column layout (one-column-layout.md: AppShell page "form" + PageContent),
+// with the form-flow parts (Form, Field, FormActions, primary last); FormFlow itself is not used (PLX-018, PLX-020).
+test("one-column layout: AppShell page form, header with the language switch, content in PageContent", async () => {
+  const ui = mount(() => [200, sample]);
+  await ui.render();
+  const shell = byName(ui.tree, "AppShell")[0];
+  assert.ok(shell, "AppShell");
+  assert.equal(shell.props.page, "form");
+  assert.equal(nameOf(shell.props.header.type), "AppHeader");
+  assert.equal(shell.props.header.props.switcher, false);
+  assert.ok(byName(ui.tree, "AppHeader.Item").find((n) => n.props.label === "العربية"), "Arabic switch");
+  const content = byName(ui.tree, "PageContent")[0];
+  assert.ok(content, "PageContent");
+  assert.equal(byName(content, "Text").find((n) => n.props.as === "h1").children.join(""), "Report request");
+  assert.equal(byName(ui.tree, "Center").length, 0, "no hand-sized column");
+  const actions = byName(content, "FormActions")[0];
+  assert.deepEqual(byName(actions, "Button").map((b) => b.props.variant || "secondary"), ["secondary", "primary"]);
+  assert.equal(byName(ui.tree, "FormFlow").length, 0);
+});
+
+test("the case number is a left-to-right data value, never kind id (Arabic read it 01-20261021)", async () => {
+  const ui = mount(() => [200, { ...sample, language: "ar" }]);
+  await ui.render();
+  await ui.render();
+  const item = byName(ui.tree, "PropertyList.Item").find((n) => textOf(n).includes("20261021-01"));
+  assert.equal(item.props.data, true);
+  assert.equal(item.props.kind, undefined);
+  // An element child keeps Plenix from localizing the digits (٢٠٢٦١٠٢١-٠١ read 01-20261021); bdi dir=ltr isolates it.
+  const [value] = item.children;
+  assert.equal(value.type, "bdi");
+  assert.equal(value.props.dir, "ltr");
+  assert.deepEqual(value.children, ["20261021-01"]);
 });
 
 test("no browser storage, cookies or token logging in the page module; boot page has no case data", () => {

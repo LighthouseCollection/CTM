@@ -1253,37 +1253,29 @@ ${ar}` : en;
   function ReportPartySelector({ P, h, t, parties, kind, interviewReady, value, disabled, error, onChange }) {
     const eligible = (parties || []).filter((party) => party.can_receive || (kind === "interview" && interviewReady) || kind === EXTERNAL);
     const selected = value === "both" ? eligible.map((party) => party.id) : value ? [value] : [];
-    const changeSelection = (partyId, checked) => {
-      const next = checked ? [...new Set([...selected, partyId])] : selected.filter((id) => id !== partyId);
-      onChange(next.length === eligible.length && eligible.length > 1 ? "both" : next[0] || "");
-    };
+    // #48 row 18 (from PR #87): Plenix ChoiceList control cards (checkbox) instead of CTM card CSS. The list's
+    // legend is the visible name; the Field keeps the help, the error and required, with its label not drawn twice.
     return h(
       P.Field,
       kind === EXTERNAL
-        ? { label: t("externalSubject"), description: t("externalSubjectHelp"), required: true, error }
-        : { label: t("subject"), required: true, error },
-      h(
-        "div",
-        { className: "ctm-report-party-cards", role: "group", "aria-label": t("subject") },
-        ...eligible.map((party) => {
-          const checked = selected.includes(party.id);
-          return h(
-            "div",
-            { key: party.id, className: `ctm-report-party-card${checked ? " is-selected" : ""}` },
-            h(P.Checkbox, {
-              checked,
-              disabled,
-              onChange: (event) => changeSelection(party.id, event.target.checked),
-              label: h(
-                P.Inline,
-                { gap: "sm", align: "center" },
-                h(P.Avatar, { src: party.photo_url || undefined, name: party.name, size: "lg", label: party.name }),
-                h(P.Text, { as: "span", variant: "strong" }, party.name),
-              ),
-            }),
-          );
-        }),
-      ),
+        ? { label: t("externalSubject"), hideLabel: true, description: t("externalSubjectHelp"), required: true, error }
+        : { label: t("subject"), hideLabel: true, required: true, error },
+      h(P.ChoiceList, {
+        legend: kind === EXTERNAL ? t("externalSubject") : t("subject"),
+        control: "checkbox",
+        values: selected,
+        onChange: (values) => {
+          const next = eligible.map((party) => party.id).filter((id) => values.includes(id));
+          onChange(next.length === eligible.length && eligible.length > 1 ? "both" : next[0] || "");
+        },
+        options: eligible.map((party) => ({
+          value: party.id,
+          disabled,
+          label: h(P.Inline, { gap: "sm", align: "center" },
+            h(P.Avatar, { src: party.photo_url || undefined, name: party.name, size: "lg", label: party.name }),
+            h(P.Text, { as: "span", variant: "strong" }, party.name)),
+        })),
+      }),
     );
   }
 
@@ -1417,7 +1409,6 @@ ${ar}` : en;
         label: t("reportTemplates"),
         firstLabel: t("questionCategories"),
         first: h(P.Panel, { title: t("questionCategories") }, h("div", {
-          className: `ctm-report-question-language${form.language === "ar" ? " ctm-report-question-language--rtl" : ""}`,
           dir: form.language === "ar" ? "rtl" : undefined,
           lang: form.language === "ar" ? "ar" : undefined,
         }, h(P.NavList, {
@@ -1426,7 +1417,6 @@ ${ar}` : en;
         }))),
         second: h(P.FormSection, { title: t("questionSelection"), description: t("selectedCount", { n: form.selected.length }) },
           h("div", {
-            className: `ctm-report-question-language${form.language === "ar" ? " ctm-report-question-language--rtl" : ""}`,
             dir: form.language === "ar" ? "rtl" : undefined,
             lang: form.language === "ar" ? "ar" : undefined,
           }, h(P.Fieldset, { legend: groupTitle(categoryGroups.find((group) => group.category === activeCategory) || {}, form.language) },

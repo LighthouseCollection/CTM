@@ -13,12 +13,13 @@ with sync_playwright() as p:
         page.route("**/api/session/",lambda route:route.fulfill(status=401,json={"error":"unauthenticated"}))
         def boot(route):
             response=route.fetch()
-            route.fulfill(response=response,body=response.text().replace('"providers":[]','"providers":["microsoft","google","apple"]'))
+            route.fulfill(response=response,body=re.sub(r'"providers":\s*\[\]','"providers":["microsoft","google","apple"]',response.text()))
         page.route(re.compile(r"^http://127\.0\.0\.1:18860/$"),boot)
         page.goto(os.environ.get("CTM_REVIEW_URL","http://127.0.0.1:18860/"))
         page.get_by_role("heading",name="Coptic Orthodox Church - Diocese of Los Angeles",exact=True).wait_for()
         page.get_by_text("Office of the Ecclesiastical Council for Family Affairs",exact=True).wait_for()
-        card=page.locator(".plx-panel").filter(has=page.get_by_role("heading",name="Sign in",exact=True))
+        # The sign-in card is the Auth page card (sign-in.md, #97 slice 4).
+        card=page.locator(".plx-auth__card").filter(has=page.get_by_role("heading",name="Sign in",exact=True))
         assert card.count()==1
         for image in [card.get_by_role("img",name="CTM",exact=True),page.get_by_role("img",name="Diocese of Los Angeles seal",exact=True)]:
             assert image.evaluate("async e=>{await e.decode();return e.naturalWidth>0}")
@@ -32,7 +33,10 @@ with sync_playwright() as p:
         assert page.get_by_text("Access your application or council workspace securely.",exact=True).count()==0
         box=card.bounding_box()
         assert abs(box["x"]+box["width"]/2-width/2)<2
-        assert abs(box["y"]+box["height"]/2-height/2)<3, "Login card must be vertically centered in the viewport"
+        # From Medium (600px) up the brand header floats over the Auth page, so the card is centered in the
+        # viewport; on a phone the header is in the flow above the card (slice 4, app.js loginHeader).
+        if width>=600:
+            assert abs(box["y"]+box["height"]/2-height/2)<3, "Login card must be vertically centered in the viewport"
         logo=card.get_by_role("img",name="CTM",exact=True).bounding_box()
         assert abs(logo["x"]+logo["width"]/2-width/2)<2
         requests=[]

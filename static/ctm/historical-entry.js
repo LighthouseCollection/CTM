@@ -75,7 +75,7 @@
     }
     // Form flow (form-flow.md, form-actions.md): the title, then the form's sections, then one FormActions with the
     // primary action last. FormFlow itself is not used: it replaces the server's explanation with one generic failure
-    // and keeps its unsaved state apart from CTM's navigation guard (docs/implementation/plenix-requests.md).
+    // and keeps its unsaved state apart from CTM's navigation guard (docs/implementation/plenix-requests.md PLX-018).
     const partyTitle=(slot)=>t(slot === "A" ? "partyA" : "partyB");
     const disabled=pending||published;
     return h(P.Stack,{gap:"lg"},
