@@ -82,3 +82,81 @@ def test_seed_refuses_existing_non_demo_case(monkeypatch):
     Case.objects.create(number="20261021-99")
     with pytest.raises(CommandError):
         call_command("seed_workflow_demo")
+
+
+def _assert_applicant_renderable(definition):
+    """Mirror the server and applicant-form contract for a published schema (#104)."""
+    from tribunal.services.configuration import validate_questionnaire_definition
+
+    validate_questionnaire_definition(definition)
+    for field in definition["fields"]:
+        assert field["type"] in {"text", "textarea", "date", "choice", "boolean", "list"}
+        assert field["label_en"].strip() and field["label_ar"].strip()
+        for choice in field.get("choices", []):
+            labels = field.get("choice_labels", {}).get(choice, {})
+            assert labels.get("label_en", "").strip() and labels.get("label_ar", "").strip()
+
+
+@pytest.mark.django_db
+@pytest.mark.skipif(
+    connection.vendor != "sqlite",
+    reason="Local review fixtures intentionally reject PostgreSQL",
+)
+def test_workflow_demo_publishes_applicant_renderable_questionnaires(
+    monkeypatch, settings, tmp_path
+):
+    from tribunal.models import Application, QuestionnaireVersion
+
+    monkeypatch.setenv("CTM_SYNTHETIC_DEMO", "true")
+    settings.MEDIA_ROOT = tmp_path
+    call_command("seed_workflow_demo")
+    for purpose in ("petition", "appeal"):
+        latest = QuestionnaireVersion.objects.filter(
+            purpose=purpose, published=True
+        ).order_by("-number").first()
+        _assert_applicant_renderable(latest.definition)
+    for app in Application.objects.select_related("questionnaire"):
+        _assert_applicant_renderable(app.questionnaire.definition)
+
+
+@pytest.mark.django_db
+@pytest.mark.skipif(
+    connection.vendor != "sqlite",
+    reason="Local review fixtures intentionally reject PostgreSQL",
+)
+def test_workflow_demo_rerun_supersedes_broken_select_schema_for_drafts(
+    monkeypatch, settings, tmp_path
+):
+    """Databases seeded before #104 carry an immutable `select` gender field."""
+    from tribunal.management.commands.seed_workflow_demo import DATASET
+    from tribunal.models import Application, QuestionnaireVersion
+
+    monkeypatch.setenv("CTM_SYNTHETIC_DEMO", "true")
+    settings.MEDIA_ROOT = tmp_path
+    call_command("seed_workflow_demo")
+    latest = QuestionnaireVersion.objects.filter(purpose="petition").order_by("-number").first()
+    fields = [
+        {**field, "type": "select"} if field["code"] == "gender" else field
+        for field in latest.definition["fields"]
+    ]
+    for field in fields:
+        field.pop("choice_labels", None)
+    broken = QuestionnaireVersion.objects.create(
+        purpose="petition", number=latest.number + 1, published=True,
+        definition={**latest.definition, "dataset": DATASET, "fields": fields},
+        declaration_en=latest.declaration_en, declaration_ar=latest.declaration_ar,
+    )
+    draft = Application.objects.create(
+        owner=Account.objects.filter(role="applicant").first(),
+        kind="petition", status="draft", questionnaire=broken,
+    )
+    call_command("seed_workflow_demo")
+    draft.refresh_from_db()
+    assert draft.questionnaire_id != broken.pk
+    _assert_applicant_renderable(draft.questionnaire.definition)
+    current = QuestionnaireVersion.objects.filter(
+        purpose="petition", published=True
+    ).order_by("-number").first()
+    assert current.pk == draft.questionnaire_id and current.number == broken.number + 1
+    call_command("seed_workflow_demo")
+    assert QuestionnaireVersion.objects.filter(purpose="petition").count() == current.number
