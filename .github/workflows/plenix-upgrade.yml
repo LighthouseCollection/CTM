@@ -19,6 +19,7 @@ permissions:
   contents: write
   pull-requests: write
   issues: write
+  actions: write   # start quality.yml on the upgrade branch
 
 concurrency:
   group: plenix-upgrade
@@ -161,8 +162,12 @@ jobs:
           printf 'Automatic Plenix CDN upgrade **%s -> %s**.\n\nValidated in run %s: CDN files exist, pins/styling, frontend contract tests, shell tests, browser smoke against the real CDN.\n\n### Screenshots\n%s\n' \
             "${{ steps.bump.outputs.old }}" "${{ steps.bump.outputs.new }}" "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" "$SHOTS" > .pr.md
           url=$(gh pr create --base main --head "${{ steps.bump.outputs.branch }}" --title "chore(plenix): upgrade CDN to ${{ steps.bump.outputs.new }}" --body-file .pr.md)
-          gh pr merge "$url" --squash --delete-branch
-          echo "Merged $url" >> "$GITHUB_STEP_SUMMARY"
+          # PRs opened with GITHUB_TOKEN do not start other workflows, so start the
+          # required checks on the upgrade branch ourselves (workflow_dispatch is
+          # allowed), then let GitHub merge once they pass.
+          gh workflow run quality.yml --ref "${{ steps.bump.outputs.branch }}"
+          gh pr merge "$url" --squash --auto --delete-branch
+          echo "Auto-merge set on $url (merges when the required checks pass)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Report a breaking upgrade as a bug
         if: steps.bump.outputs.changed == 'true' && !(steps.files.outcome == 'success' && steps.contract.outcome == 'success' && steps.node.outcome == 'success' && steps.shell.outcome == 'success' && steps.smoke.outcome == 'success')
