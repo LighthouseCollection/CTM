@@ -57,6 +57,8 @@ test("Tribunal Session data uses native pills and its state uses a semantic badg
   assert.doesNotMatch(sessionList, /field: "assigned_case_count"[^\n]*pill: false/);
   assert.doesNotMatch(sessionList, /field: "hearing_case_count"[^\n]*pill: false/);
   assert.match(sessionList, /h\(P\.Badge, \{ tone: sessionStatusTone\(row\.state\) \}/);
-  assert.match(sessionList, /field: "session_actions"[^\n]*pill: false/);
+  // row actions moved to the row menu (phone row cards); no button column is left
+  assert.doesNotMatch(sessionList, /field: "session_actions"/);
+  assert.match(sessionList, /rowMenu: manage/);
 });
 

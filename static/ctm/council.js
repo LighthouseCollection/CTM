@@ -598,6 +598,18 @@
       searchResults: "Results",
       searchCount: "{n} results",
       searchNone: "No permitted documents match this search.",
+      // CDN page templates (#97 slice 2): dashboard metrics, listings, search and read-only notes.
+      unreadTitle: "Unread notifications",
+      considerationTitle: "Awaiting council consideration",
+      considerationHelp: "Appeals and later petitions. Place them on a session agenda from the case.",
+      metricMore: "More for {title}",
+      archivedReadOnly: "Closed cases are read-only.",
+      archivedSessionsReadOnly: "Archived sessions are read-only.",
+      sessionNotSaved: "The council session was not saved.",
+      searchStart: "Enter a search phrase, then choose Search.",
+      searchNoun: "document",
+      searchNouns: "documents",
+      searchField: "Search {nouns}",
       searchChoose: "Select a result",
       searchExcerpt: "Excerpt",
       searchNoExcerpt: "No text excerpt is available for this document.",
@@ -906,6 +918,18 @@
       searchResults: "النتائج",
       searchCount: "{n} نتيجة",
       searchNone: "لا توجد مستندات مسموح بها تطابق هذا البحث.",
+      // CDN page templates (#97 slice 2): dashboard metrics, listings, search and read-only notes.
+      unreadTitle: "إشعارات غير مقروءة",
+      considerationTitle: "في انتظار نظر المجلس",
+      considerationHelp: "الاستئنافات والطلبات اللاحقة. أدرجها في جدول أعمال جلسة من القضية.",
+      metricMore: "المزيد عن {title}",
+      archivedReadOnly: "القضايا المغلقة للاطلاع فقط.",
+      archivedSessionsReadOnly: "الجلسات المؤرشفة للاطلاع فقط.",
+      sessionNotSaved: "لم تُحفظ جلسة المجلس.",
+      searchStart: "أدخل عبارة البحث، ثم اختر «بحث».",
+      searchNoun: "مستند",
+      searchNouns: "مستندات",
+      searchField: "البحث في {nouns}",
       searchChoose: "اختر نتيجة",
       searchExcerpt: "مقتطف",
       searchNoExcerpt: "لا يتوفر مقتطف نصي لهذا المستند.",
@@ -951,6 +975,22 @@
     },
   };
 
+  // Plural messages for the DataGrid card counts (strings.cardCount): English one/other, the six Arabic forms.
+  const counts = {
+    en: {
+      casesCount: { one: "{n} case", other: "{n} cases" },
+      sessionsCount: { one: "{n} session", other: "{n} sessions" },
+      applicationsCount: { one: "{n} application", other: "{n} applications" },
+      resultsCount: { one: "{n} document", other: "{n} documents" },
+    },
+    ar: {
+      casesCount: { zero: "لا توجد قضايا", one: "قضية واحدة", two: "قضيتان", few: "{n} قضايا", many: "{n} قضية", other: "{n} قضية" },
+      sessionsCount: { zero: "لا توجد جلسات", one: "جلسة واحدة", two: "جلستان", few: "{n} جلسات", many: "{n} جلسة", other: "{n} جلسة" },
+      applicationsCount: { zero: "لا توجد طلبات", one: "طلب واحد", two: "طلبان", few: "{n} طلبات", many: "{n} طلبًا", other: "{n} طلب" },
+      resultsCount: { zero: "لا توجد مستندات", one: "مستند واحد", two: "مستندان", few: "{n} مستندات", many: "{n} مستندًا", other: "{n} مستند" },
+    },
+  };
+
   function translator(lang) {
     const table = words[lang === "ar" ? "ar" : "en"];
     return (key, vars) => {
@@ -980,8 +1020,16 @@
     return [state, () => setTick((n) => n + 1)];
   }
 
+  // The plural message a DataGrid card count takes ({ one, other } in English; the six Arabic forms).
+  function plural(lang, key) {
+    return counts[lang === "ar" ? "ar" : "en"][key] || counts.en[key];
+  }
+
+  // Loading: Skeleton rows hold the page's place (skeleton.md, DESIGN.md §3), announced as busy.
   function loadingView(P, h, t) {
-    return h(P.Inline, { gap: "sm" }, h(P.Spinner, { size: "sm", label: t("loading") }), h(P.Text, null, t("loading")));
+    return h(P.Stack, { gap: "sm", role: "status", "aria-busy": "true", "aria-label": t("loading") },
+      h(P.Skeleton, { width: "240px", height: "24px" }),
+      ...[0, 1, 2, 3].map((key) => h(P.Skeleton, { key, height: "36px" })));
   }
 
   // Error boundary: a failure inside one council page shows a recoverable message
@@ -1293,6 +1341,8 @@
     );
   }
 
+  // Completeness review: the queue and the chosen application side by side (SplitWorkspace through
+  // CTMShell.Workspace, master-detail-workspace.md); Back sits in the command bar.
   function ReviewWorkspace({ api, lang, user, onCase, onBack }) {
     const R = window.React,
       P = window.Plenix,
@@ -1301,65 +1351,49 @@
     const [state, retry] = useLoad(() => api(REVIEW_URL), [user?.id]);
     const [done, setDone] = R.useState({});
     const [notice, setNotice] = R.useState(null);
-    const rows = awaitingReview(state.data?.items).filter((row) => !done[row.id]);
-    const chosen = rows.find((row) => row.id === selected);
-    const list = state.pending
-      ? loadingView(P, h, t)
-      : state.error
-        ? loadFailure(P, h, t, retry, state.error)
-        : rows.length
-          ? h(
-              P.Stack,
-              { gap: "sm" },
-              ...rows.map((row) =>
-                h(P.Card, { icon: "doc-text",
-                  key: row.id,
-                  title: row.case_number || t("unnumbered"),
-                  meta: reviewMeta(row, t, lang),
-                  selected: row.id === selected,
-                  onOpen: () => {
-                    setNotice(null);
-                    select(row.id);
-                  },
-                }),
-              ),
-            )
-          : h(P.EmptyState, { title: t("reviewQueueEmpty") });
+    const [selected, select] = R.useState(null);
+    const rows = awaitingReview(state.data?.items).filter((row) => !done[row.id]).map((row) => ({
+      ...row,
+      title: row.case_number || t("unnumbered"),
+      submitted: row.submitted_at ? formatWhen(row.submitted_at, lang) : t("notRecorded"),
+      fee_status: feeLabel(row, t),
+    }));
+    if (state.pending && !state.data) return loadingView(P, h, t);
+    if (state.error) return loadFailure(P, h, t, retry, state.error);
     return h(
       P.Stack,
-      { gap: "lg" },
-      h(P.Inline, null, h(P.Button, { variant: "ghost", onClick: onBack }, t("back"))),
+      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("review")),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-      h(P.SplitView, {
-        label: t("review"),
-        firstLabel: t("reviewQueue"),
-        first: list,
-        second: h(
-          P.ReadingPane,
-          {
-            label: chosen ? chosen.case_number || t("unnumbered") : t("chooseApplication"),
-            empty: h(P.EmptyState, { title: t("chooseApplication") }),
-          },
-          chosen
-            ? h(ReviewDetail, {
-                key: chosen.id,
-                row: chosen,
-                api,
-                lang,
-                user,
-                onCase,
-                onDone: (id, outcome) => {
-                  setDone((old) => ({ ...old, [id]: outcome }));
-                              setNotice(outcome);
-                },
-              })
-            : null,
-        ),
-      }),
+      h(window.CTMShell.Workspace, {
+        label: t("reviewQueue"), rows, selected, empty: t("reviewQueueEmpty"), selectionPrompt: t("chooseApplication"),
+        onSelect: (id) => { setNotice(null); select(id); },
+        commandBar: { actions: onBack ? [{ id: "back", label: t("back"), icon: "arrow-left", onSelect: onBack }] : [] },
+        cardCount: plural(lang, "applicationsCount"),
+        template: { title: "title", subtitle: "applicant_name", date: "submitted", primary: "fee_status" },
+        columns: [
+          { title: t("caseNumber"), field: "title", kind: "name", minWidth: "9rem" },
+          { title: t("applicant"), field: "applicant_name", type: "person", minWidth: "11rem" },
+          { title: t("submitted"), field: "submitted", minWidth: "11rem" },
+          { title: t("fee"), field: "fee_status", minWidth: "7rem" },
+        ],
+      }, (chosen) => h(ReviewDetail, {
+        key: chosen.id, row: chosen, api, lang, user, onCase,
+        onDone: (id, outcome) => {
+          setDone((old) => ({ ...old, [id]: outcome }));
+          select(null);
+          setNotice(outcome);
+        },
+      })),
     );
   }
 
+  const SESSION_LOCATION = "St. George Coptic Orthodox Church, Bellflower, California";
+
+  // Tribunal sessions. Current: the session record itself. Upcoming: a listing with its command bar
+  // (listing-page.md, command-bar.md), Open, Edit and Delete in each row's menu, and the create/edit form as a
+  // FormFlow dialog (form-flow.md). Archived: a SplitWorkspace whose reading pane holds the session's record,
+  // read-only (read-only-state.md).
   function SessionList({ api, lang, user, mode = "current", onOpen, onCase, renderAttendance }) {
     const R = window.React,
       P = window.Plenix,
@@ -1374,10 +1408,7 @@
       () => selected && mode === "archived" ? api(`/api/sessions/${encodeURIComponent(selected)}/agenda/`) : Promise.resolve({ items: [] }),
       [selected, mode],
     );
-    const [date, setDate] = R.useState("");
-    const [time, setTime] = R.useState("");
-    const [presiding, setPresiding] = R.useState("");
-    const [location, setLocation] = R.useState("St. George Coptic Orthodox Church, Bellflower, California");
+    const [initial, setInitial] = R.useState({ date: "", time: "", presiding: "", location: SESSION_LOCATION });
     const [problem, setProblem] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
@@ -1390,14 +1421,13 @@
       || presidingMembers.find((row) => row.name?.includes("Metropolitan Serapion"))
       || presidingMembers.find((row) => row.president)
       || presidingMembers[0];
-    R.useEffect(() => {
-      if (!presiding && defaultPresiding?.id) setPresiding(defaultPresiding.id);
-    }, [presiding, defaultPresiding?.id]);
+    const presiding = initial.presiding || defaultPresiding?.id || "";
     const today = todayInLosAngeles();
     const buckets = sessionBuckets(loaded, today);
     const rows = buckets[mode] || [];
     const tableRows = rows.map((row) => ({
       ...row,
+      title: sessionLabel(row.date, t),
       session_time: formatTime(row.starts_at, lang) || t("timeNotRecorded"),
       adjourned_time: formatTime(row.adjourned_at, lang) || t("timeNotRecorded"),
     }));
@@ -1406,36 +1436,28 @@
 
     const selectedSession = loaded.find((row) => row.id === selected) || null;
     const archivedItems = archivedAgendaRows(archiveAgendaState.data?.items);
-    const editing = Boolean(selectedSession);
-    function editSession(row) {
-      select(row.id);
-      setDate(row.date || "");
-      setTime(row.starts_at ? row.starts_at.slice(11, 16) : "");
-      setPresiding(row.presiding_member_id || defaultPresiding?.id || "");
-      setLocation(row.location || "");
+    const editing = Boolean(selectedSession) && mode === "upcoming";
+    // Loads the chosen session (or a blank one with the default presiding member and location) into the form.
+    function openForm(row) {
+      select(row ? row.id : "");
+      setInitial(row
+        ? { date: row.date || "", time: row.starts_at ? row.starts_at.slice(11, 16) : "", presiding: row.presiding_member_id || defaultPresiding?.id || "", location: row.location || "" }
+        : { date: "", time: "", presiding: defaultPresiding?.id || "", location: SESSION_LOCATION });
       setProblem(null);
       setFailure(null);
       setCreated(false);
       setFormOpen(true);
     }
-    function resetSessionForm() {
-      setDate("");
-      setTime("");
-      setPresiding(defaultPresiding?.id || "");
-      setLocation("St. George Coptic Orthodox Church, Bellflower, California");
-      setProblem(null);
-      setFailure(null);
+    function editSession(row) {
+      openForm(row);
     }
     function startCreate() {
-      resetSessionForm();
-      select("");
-      setCreated(false);
-      setFormOpen(true);
+      openForm(null);
     }
     function cancelSessionForm() {
-      resetSessionForm();
       select("");
-      setCreated(false);
+      setProblem(null);
+      setFailure(null);
       setFormOpen(false);
     }
 
@@ -1456,29 +1478,34 @@
       }
     }
 
-    async function create(event) {
-      event.preventDefault();
-      const issue = sessionDateProblem(date, loaded, selectedSession?.id);
-      const validation = issue || (!time ? "timeRequired" : !presiding ? "presidingRequired" : !location.trim() ? "locationRequired" : null);
+    // FormFlow runs validate, then onSubmit; the field's own error shows beside it as well.
+    function validateSession(value) {
+      const issue = sessionDateProblem(value.date, loaded, selectedSession?.id);
+      const validation = issue || (!value.time ? "timeRequired" : !presiding ? "presidingRequired" : !value.location.trim() ? "locationRequired" : null);
       setProblem(validation);
-      setCreated(false);
-      if (validation) return;
+      return validation ? t(validation) : "";
+    }
+    // A server refusal keeps its reason under the fields; FormFlow adds "not saved" and keeps the input.
+    async function create(value) {
       setPending(true);
       setFailure(null);
       try {
-        await api(editing ? `/api/sessions/${encodeURIComponent(selectedSession.id)}/` : "/api/sessions/", {
+        return await api(editing ? `/api/sessions/${encodeURIComponent(selectedSession.id)}/` : "/api/sessions/", {
           method: editing ? "PATCH" : "POST",
-          body: JSON.stringify({ date, starts_at: laIso(date, time), location: location.trim() }),
+          body: JSON.stringify({ date: value.date, starts_at: laIso(value.date, value.time), location: value.location.trim() }),
         });
-        resetSessionForm();
-        setFormOpen(false);
-        setCreated(editing ? "sessionUpdated" : "sessionCreated");
-        retry();
       } catch (error) {
         setFailure(error && error.status === 409 ? t("dateTaken") : serverMessage(error, t));
+        throw error;
       } finally {
         setPending(false);
       }
+    }
+    function saved() {
+      setFormOpen(false);
+      select("");
+      setCreated(editing ? "sessionUpdated" : "sessionCreated");
+      retry();
     }
 
     if (state.pending && !state.data) return loadingView(P, h, t);
@@ -1489,112 +1516,106 @@
             onCase, onSession: select, onChanged: retry, renderAttendance })
         : h(P.Stack, { gap: "lg" }, h(P.Text, { as: "h1", variant: "title" }, t(titleKey)), h(P.EmptyState, { title: t(emptyKey) }));
 
+    const manage = mode === "upcoming" && canManage(user);
+    const columns = [
+      { title: t("sessionDate"), field: "date", kind: "name", minWidth: "8rem" },
+      { title: t("sessionTime"), field: "session_time", minWidth: "8rem" },
+      ...(mode === "archived" ? [
+        { title: t("adjournEndTime"), field: "adjourned_time", minWidth: "8rem" },
+        { title: t("assignedCases"), field: "assigned_case_count", minWidth: "8rem" },
+        { title: t("caseHearings"), field: "hearing_case_count", minWidth: "8rem" },
+      ] : []),
+      { title: t("statusLabel"), field: "state", minWidth: "8rem", pill: false, render: (row) => h(P.Badge, { tone: sessionStatusTone(row.state) }, t(sessionStatusKey(row.state))) },
+    ];
+    const listProps = {
+      label: t(titleKey), rows: tableRows, empty: t(emptyKey), columns,
+      cardCount: plural(lang, "sessionsCount"),
+      template: { title: "date", subtitle: "session_time", primary: "state" },
+    };
+    const open = (row) => onOpen && onOpen(row.id);
+    const caseColumns = (extra) => [
+      { title: t("caseNumber"), field: "case_number", kind: "name", minWidth: "8rem" },
+      { title: t("applicant"), field: "applicant", type: "person", minWidth: "10rem" },
+      { title: t("respondent"), field: "respondent", type: "person", minWidth: "10rem" },
+      ...extra,
+    ];
+    // An archived agenda part: each row opens its case (row click or the row menu).
+    const archiveTable = (label, items, empty, columns) => h(window.CTMShell.Table, {
+      label, rows: items, empty, isStatic: true, columns,
+      rowMenu: [{ label: t("open"), icon: "open", onSelect: (row) => onCase(row.case_id) }],
+      onSelect: (id) => { const row = items.find((item) => item.id === id); if (row) onCase(row.case_id); },
+      // In the reading pane the grid sizes to its rows (pages) instead of filling a room it does not have.
+      grid: { mode: "pages", pageSize: 10, strings: { cardCount: plural(lang, "casesCount"), perPage: t("tablePerPage"),
+        range: t("tableRange"), count: t("tableCount"), pages: t("tablePages") } },
+    });
+    const archivedDetail = () => h(P.ReadOnly, { reason: t("archivedSessionsReadOnly") },
+      h(P.Stack, { gap: "md" },
+        archiveAgendaState.pending ? loadingView(P, h, t) : null,
+        archiveAgendaState.error ? h(P.Notice, { tone: "danger" }, serverMessage(archiveAgendaState.error, t)) : null,
+        !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { title: t("assignedCases") },
+          archiveTable(t("assignedCases"), archivedItems.assigned, t("part1Empty"), caseColumns([
+            { title: t("reason"), field: "reason", minWidth: "9rem", pill: false, render: (row) => row.reason || t("notRecorded") },
+            { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
+            { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
+          ])),
+        ) : null,
+        !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { title: t("casesPresented") },
+          archiveTable(t("casesPresented"), archivedItems.presented, t("part2Empty"), caseColumns([
+            { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
+            { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
+            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, render: (row) => h(PreviousRecommendationCell, { value: row.previous_recommendation, lang }) },
+          ])),
+        ) : null,
+      ));
+
     return h(
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t(titleKey)),
-      mode === "upcoming" && canManage(user)
-        ? h(P.Toolbar, { label: t("tribunalSession") },
-            h(P.Button, { icon: "add", onClick: startCreate, disabled: pending }, t("createSession")),
-            formOpen ? h(P.Button, { icon: "close", onClick: cancelSessionForm, disabled: pending }, t("cancel")) : null,
-            formOpen ? h(P.Toolbar.Spacer) : null,
-            formOpen ? h(P.Button, { icon: "save", type: "submit", form: "ctm-session-form", variant: "primary", disabled: pending, loading: pending }, t("saveSession")) : null,
-          )
+      created && !formOpen ? h(P.Notice, { tone: "success", onDismiss: () => setCreated(false) }, t(created)) : null,
+      mode === "archived"
+        ? h(window.CTMShell.Workspace, { ...listProps, selected: selected || null, onSelect: select,
+            selectionPrompt: t("archivedSessionDetails") }, archivedDetail)
+        : h(window.CTMShell.Listing, {
+            ...listProps, onOpen: open,
+            commandBar: manage ? { actions: [{ id: "create", label: t("createSession"), icon: "add", primary: true, disabled: pending, onSelect: startCreate }] } : undefined,
+            rowMenu: manage
+              ? (row) => [
+                  { label: t("open"), icon: "open", onSelect: () => open(row) },
+                  { label: t("editSession"), icon: "pencil", disabled: pending, onSelect: () => editSession(row) },
+                  { separator: true },
+                  { label: t("deleteSession"), icon: "trash", danger: true, disabled: pending || row.state !== "draft", onSelect: () => setDeleteTarget(row) },
+                ]
+              : [{ label: t("open"), icon: "open", onSelect: open }],
+          }),
+      manage
+        ? h(P.ToastProvider, null, h(P.FormFlow, {
+            open: formOpen, surface: "dialog", mode: editing ? "edit" : "create",
+            title: t(editing ? "editSession" : "newSession"), initialValue: initial, sessionKey: selected || "new",
+            validate: validateSession, onSubmit: create, onSuccess: saved, onCancel: cancelSessionForm,
+            strings: { create: t("createSession"), save: t("saveSession"), cancel: t("cancel"), close: t("cancel"),
+              failed: t("sessionNotSaved"), saved: t(editing ? "sessionUpdated" : "sessionCreated") },
+          }, ({ value, setValue, busy }) => h(R.Fragment, null, h(P.Columns, { count: 2, collapseBelow: "wide" },
+            h(P.Field, { label: t("sessionDate"), required: true, error: problem === "dateRequired" || problem === "dateTaken" ? t(problem) : undefined },
+              h(P.Input, { type: "date", value: value.date, width: "sm", disabled: busy,
+                onChange: (event) => { const date = event.target.value; setValue((old) => ({ ...old, date })); setProblem(null); } })),
+            h(P.Field, { label: t("sessionTime"), required: true, error: problem === "timeRequired" ? t(problem) : undefined },
+              h(P.Input, { type: "time", value: value.time, width: "sm", disabled: busy,
+                onChange: (event) => { const time = event.target.value; setValue((old) => ({ ...old, time })); setProblem(null); } })),
+            h(P.Field, { label: t("presiding"), required: true, error: problem === "presidingRequired" ? t(problem) : undefined },
+              h(P.Select, { value: presiding, disabled: true,
+                options: [{ value: "", label: t("presidingRequired") }, ...presidingMembers.map((row) => ({ value: row.id, label: row.name || row.id }))] })),
+            h(P.Field, { label: t("location"), required: true, error: problem === "locationRequired" ? t(problem) : undefined },
+              h(P.Input, { value: value.location, maxLength: 300, disabled: busy,
+                onChange: (event) => { const location = event.target.value; setValue((old) => ({ ...old, location })); setProblem(null); } }))),
+            failure && !deleteTarget ? h(P.Notice, { tone: "danger" }, failure) : null,
+          )))
         : null,
-      mode === "upcoming" && canManage(user) && formOpen
-        ? h(
-            P.Panel,
-            { icon: "calendar", title: t(editing ? "editSession" : "newSession") },
-            h(
-              P.Form,
-              { id: "ctm-session-form", onSubmit: create, label: t("newSession"), noValidate: true },
-              h(P.Columns, { count: 2, collapseBelow: "wide" },
-              h(
-                P.Field,
-                { label: t("sessionDate"), required: true, error: problem === "dateRequired" || problem === "dateTaken" ? t(problem) : undefined },
-                h(P.Input, {
-                  type: "date",
-                  value: date,
-                  width: "sm",
-                  disabled: pending,
-                  onChange: (event) => {
-                    setDate(event.target.value);
-                    setProblem(null);
-                  },
-                }),
-              ),
-              h(P.Field, { label: t("sessionTime"), required: true, error: problem === "timeRequired" ? t(problem) : undefined },
-                h(P.Input, { type: "time", value: time, width: "sm", disabled: pending,
-                  onChange: (event) => { setTime(event.target.value); setProblem(null); } })),
-              h(P.Field, { label: t("presiding"), required: true, error: problem === "presidingRequired" ? t(problem) : undefined },
-                h(P.Select, { value: presiding, disabled: true,
-                  options: [{ value: "", label: t("presidingRequired") }, ...presidingMembers.map((row) => ({ value: row.id, label: row.name || row.id }))] })),
-              h(P.Field, { label: t("location"), required: true, error: problem === "locationRequired" ? t(problem) : undefined },
-                h(P.Input, { value: location, maxLength: 300, disabled: pending,
-                  onChange: (event) => { setLocation(event.target.value); setProblem(null); } })),
-              ),
-              failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-              created ? h(P.Notice, { tone: "success" }, t(created)) : null,
-            ),
-          )
-        : null,
-      h(window.CTMShell.Table, {
-        label: t(titleKey), rows: tableRows, selected, onSelect: select, empty: t(emptyKey), isStatic: true,
-        columns: [
-          { title: t("sessionDate"), field: "date", kind: "name", minWidth: "8rem" },
-          { title: t("sessionTime"), field: "session_time", minWidth: "8rem" },
-          ...(mode === "archived" ? [
-            { title: t("adjournEndTime"), field: "adjourned_time", minWidth: "8rem" },
-            { title: t("assignedCases"), field: "assigned_case_count", minWidth: "8rem" },
-            { title: t("caseHearings"), field: "hearing_case_count", minWidth: "8rem" },
-          ] : []),
-          { title: t("statusLabel"), field: "state", minWidth: "8rem", pill: false, render: (row) => h(P.Badge, { tone: sessionStatusTone(row.state) }, t(sessionStatusKey(row.state))) },
-          ...(mode === "upcoming" && canManage(user) ? [{ title: t("actions"), field: "session_actions", minWidth: "10rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
-            h(P.Button, { size: "xs", icon: "pencil", disabled: pending, onClick: () => editSession(row) }, t("editSession")),
-            h(P.Button, { size: "xs", icon: "trash", variant: "danger-secondary", disabled: pending || row.state !== "draft", onClick: () => setDeleteTarget(row) }, t("deleteSession")),
-          ) }] : []),
-        ],
-      }),
       h(P.ConfirmDialog, {
         open: Boolean(deleteTarget), title: t("deleteSessionTitle"), message: t("deleteSessionMessage"),
         confirmLabel: t("deleteSession"), cancelLabel: t("cancel"), onConfirm: deleteSession,
         onCancel: () => !pending && setDeleteTarget(null),
       }, failure && deleteTarget ? h(P.Notice, { tone: "danger" }, failure) : null),
-      mode === "archived" && selectedSession
-        ? h(P.Stack, { gap: "md" },
-            h(P.Text, { as: "h2", variant: "heading" }, t("archivedSessionDetails")),
-            archiveAgendaState.pending ? loadingView(P, h, t) : null,
-            archiveAgendaState.error ? h(P.Notice, { tone: "danger" }, serverMessage(archiveAgendaState.error, t)) : null,
-            !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { title: t("assignedCases") },
-              h(window.CTMShell.Table, {
-                label: t("assignedCases"), rows: archivedItems.assigned, empty: t("part1Empty"), isStatic: true,
-                columns: [
-                  { title: t("caseNumber"), field: "case_number", kind: "name", minWidth: "8rem" },
-                  { title: t("applicant"), field: "applicant", type: "person", minWidth: "10rem" },
-                  { title: t("respondent"), field: "respondent", type: "person", minWidth: "10rem" },
-                  { title: t("reason"), field: "reason", minWidth: "9rem", pill: false, render: (row) => row.reason || t("notRecorded") },
-                  { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
-                  { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
-                  { title: t("actions"), field: "case_id", minWidth: "6rem", pill: false, render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
-                ],
-              }),
-            ) : null,
-            !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { title: t("casesPresented") },
-              h(window.CTMShell.Table, {
-                label: t("casesPresented"), rows: archivedItems.presented, empty: t("part2Empty"), isStatic: true,
-                columns: [
-                  { title: t("caseNumber"), field: "case_number", kind: "name", minWidth: "8rem" },
-                  { title: t("applicant"), field: "applicant", type: "person", minWidth: "10rem" },
-                  { title: t("respondent"), field: "respondent", type: "person", minWidth: "10rem" },
-                  { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
-                  { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
-                  { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, render: (row) => h(PreviousRecommendationCell, { value: row.previous_recommendation, lang }) },
-                  { title: t("actions"), field: "case_id", minWidth: "6rem", pill: false, render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
-                ],
-              }),
-            ) : null,
-          )
-        : null,
     );
   }
 
@@ -2687,6 +2708,8 @@
     }
   }
 
+  // Document search on the SearchWorkspace template (search-workspace.md): the query, the result count and the
+  // results. The phrase still goes to the server only when Search is chosen (or Enter), never per keystroke.
   function SearchWorkspace({ api, lang, user, onCase }) {
     const R = window.React,
       P = window.Plenix,
@@ -2726,6 +2749,8 @@
       id: row.file_id,
       case_number: cases[row.case_id] || "—",
     }));
+    // Before a search runs, the template's "nothing matches" line asks for a phrase instead.
+    const nothing = t(pending ? "loading" : failure ? "loadFailed" : result === null ? "searchStart" : "searchNone");
     return h(
       P.Stack,
       { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
@@ -2733,29 +2758,37 @@
       h(
         P.Form,
         { onSubmit: run, label: t("searchTitle"), noValidate: true },
-        h(
-          P.Inline,
-          { wrap: true, align: "end" },
-          h(
-            P.Field,
-            { error: problem ? t(problem) : undefined },
-            h(P.Input, { type: "search", width: "lg", value: query, maxLength: 200, disabled: pending, onChange: (e) => { setQuery(e.target.value); setProblem(null); } }),
-          ),
-          h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("searchAction")),
-        ),
-        h(P.Checkbox, { label: t("searchHistory"), checked: history, disabled: pending, onChange: (e) => setHistory(e.target.checked) }),
+        // Outside the workspace body, which draws its results only when there are some.
+        problem ? h(P.Notice, { tone: "warning" }, t(problem)) : null,
+        failure ? h(P.Notice, { tone: "warning" }, failure) : null,
+        h(P.SearchWorkspace, {
+          title: t("searchResults"),
+          query,
+          onQueryChange: (next) => { setQuery(String(next).slice(0, 200)); setProblem(null); },
+          placeholder: t("searchAction"),
+          count: rows.length,
+          noun: t("searchNoun"),
+          plural: t("searchNouns"),
+          locale: lang === "ar" ? "ar-EG" : "en-US",
+          strings: { title: t("searchTitle"), searchField: t("searchField"), noMatchQuery: nothing, noMatchFilters: nothing, noMatchQueryFilters: nothing },
+          headEnd: h(P.Inline, { gap: "md", align: "center", wrap: true },
+            h(P.Checkbox, { label: t("searchHistory"), checked: history, disabled: pending, onChange: (e) => setHistory(e.target.checked) }),
+            h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("searchAction"))),
+        },
+        h(window.CTMShell.Table, {
+          label: t("searchResults"),
+          rows,
+          empty: nothing,
+          onSelect: (id) => { const row = rows.find((item) => item.id === id); if (row) onCase(row.case_id); },
+          rowMenu: [{ label: t("open"), icon: "open", onSelect: (row) => onCase(row.case_id) }],
+          cardCount: plural(lang, "resultsCount"),
+          template: { title: "name", subtitle: "case_number" },
+          columns: [
+            { title: t("searchResults"), field: "name", kind: "name", minWidth: "16rem" },
+            { title: t("caseNumber"), field: "case_number", kind: "data", minWidth: "10rem" },
+          ],
+        })),
       ),
-      failure ? h(P.Notice, { tone: "warning" }, failure) : null,
-      h(window.CTMShell.Table, {
-        label: t("searchResults"),
-        rows,
-        empty: t(pending ? "loading" : failure ? "loadFailed" : "searchNone"),
-        columns: [
-          { title: t("searchResults"), field: "name", kind: "name", minWidth: "16rem" },
-          { title: t("caseNumber"), field: "case_number", kind: "data", minWidth: "10rem" },
-          { title: t("actions"), field: "open_action", kind: "actions", pill: false, minWidth: "6rem", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")) },
-        ],
-      }),
     );
   }
 
@@ -2773,6 +2806,8 @@
     return (cases || []).filter((row) => row.status === "open" && user?.id && row.assigned_member_id === user.id);
   }
 
+  // A dashboard (dashboard-page.md): the counts people act on as MetricCards first, then the queues as panels,
+  // each row in a WidgetGrid (dashboard-grid.md; not reorderable). A count the server did not send is "–", never 0.
   function CouncilHome({ api, lang, user, onCase, onSession, onReview, onNotifications, onCases }) {
     const R = window.React,
       P = window.Plenix,
@@ -2798,11 +2833,19 @@
     const { dashboard, cases, unread, consideration } = state.data;
     const upcoming = dashboard.upcoming_sessions || [];
     const mine = myCases(cases, user);
-    return h(
-      P.Stack,
-      { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("homeTitle")),
-      h(
+    const n = (value) => typeof value === "number" ? new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(value) : undefined;
+    const open = (label, onSelect, icon) => onSelect ? h(P.MenuItem, { icon, onSelect }, label) : undefined;
+    const metricStrings = { more: t("metricMore") };
+    const metrics = [
+      { id: "mine", icon: "folder-open", title: t("myCases"), value: n(dashboard.my_cases), menu: open(t("casesTitle"), onCases, "folder-open") },
+      { id: "unread", icon: "hdr-bell", title: t("unreadTitle"), value: n(unread), menu: open(t("openNotifications"), onNotifications, "hdr-bell") },
+      ...(canManage(user) ? [
+        { id: "review", icon: "doc-text", title: t("reviewQueue"), value: n(dashboard.review_queue), menu: open(t("reviewOpen"), onReview, "doc-text") },
+        { id: "consideration", icon: "doc-text", title: t("considerationTitle"), value: n(consideration), info: t("considerationHelp") },
+      ] : []),
+    ];
+    const panels = [
+      { id: "upcoming", span: "1", body: () => h(
         P.Panel,
         { icon: "calendar", title: t("upcomingSession") },
         upcoming.length
@@ -2814,36 +2857,8 @@
               ),
             )
           : h(P.EmptyState, { title: t("noUpcoming") }),
-      ),
-      h(
-        P.Panel,
-        { icon: "hdr-bell", title: t("needsAttention") },
-        h(
-          P.Stack,
-          { gap: "sm" },
-          unread
-            ? h(
-                P.Inline,
-                { justify: "between", wrap: true },
-                h(P.Text, null, t("unreadNotifications", { n: unread })),
-                h(P.Button, { size: "xs", onClick: onNotifications }, t("openNotifications")),
-              )
-            : null,
-          typeof dashboard.review_queue === "number" && dashboard.review_queue > 0
-            ? h(
-                P.Inline,
-                { justify: "between", wrap: true },
-                h(P.Text, null, t("reviewCount", { n: dashboard.review_queue })),
-                h(P.Button, { size: "xs", onClick: onReview }, t("reviewOpen")),
-              )
-            : null,
-          consideration
-            ? h(P.Text, null, t("considerationCount", { n: consideration }))
-            : null,
-          !unread && !(dashboard.review_queue > 0) && !consideration ? h(P.EmptyState, { title: t("nothingNeedsAttention") }) : null,
-        ),
-      ),
-      h(
+      ) },
+      { id: "mine", span: "1", body: () => h(
         P.Panel,
         { icon: "folder-open", title: t("myCases"), description: typeof dashboard.my_cases === "number" ? t("myCasesCount", { n: dashboard.my_cases }) : undefined },
         mine.length
@@ -2854,7 +2869,20 @@
             )
           : dashboard.my_cases === 0 ? h(P.EmptyState, { title: t("noMyCases") }) : h(P.Notice, { tone: "info" },
               t("myCasesUnavailable"), onCases ? h(P.Button, { onClick: onCases }, t("casesTitle")) : null),
-      ),
+      ) },
+    ];
+    const calm = !unread && !(dashboard.review_queue > 0) && !consideration;
+    return h(
+      P.Stack,
+      { gap: "lg" },
+      h(P.Text, { as: "h1", variant: "title" }, t("homeTitle")),
+      h(P.WidgetGrid, {
+        label: t("needsAttention"), items: metrics,
+        renderItem: (item) => h(P.MetricCard, { key: item.id, icon: item.icon, title: item.title, value: item.value,
+          info: item.info, menu: item.menu, size: "lg", headingLevel: 2, strings: metricStrings }),
+      }),
+      calm ? h(P.Notice, { tone: "success" }, t("nothingNeedsAttention")) : null,
+      h(P.WidgetGrid, { label: t("homeTitle"), items: panels, renderItem: (item) => item.body() }),
     );
   }
 
@@ -2868,12 +2896,17 @@
         .some((value) => String(value).toLowerCase().includes(q)));
   }
 
+  // The words a case row is found by: the same fields caseRows searches.
+  const caseSearchText = (row) => [row.number, row.applicant?.name, row.respondent?.name, row.reason, row.manager].filter(Boolean).join(" ");
+
+  // My / all active / archived cases on the ListingPage template (CTMShell.Listing): the command bar holds the
+  // search (kept per list between visits, view-state.md) and the "show closed" toggle; Open and Delete are in
+  // each row's menu, so phones get row cards. Archived cases are read-only (read-only-state.md).
   function CasesTable({ api, user, cases, archived, view, title, lang, onOpen }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [query, setQuery] = R.useState("");
     const [includeClosed, setIncludeClosed] = R.useState(false);
     const [deleteTarget, setDeleteTarget] = R.useState(null);
     const [deleting, setDeleting] = R.useState(false);
@@ -2893,7 +2926,7 @@
         setDeleting(false);
       }
     }
-    const rows = caseRows(cases, archived, query, includeClosed).map((row) => ({
+    const rows = caseRows(cases, archived, "", includeClosed).map((row) => ({
       id: row.id,
       number: row.number,
       applicant: { name: row.applicant_name || "—", gender: row.applicant_gender === "M" ? "male" : row.applicant_gender === "F" ? "female" : undefined },
@@ -2903,8 +2936,7 @@
       status: t(row.status === "closed" ? "closed" : "open"),
       closedAt: row.closed_at ? row.closed_at.slice(0, 10) : "—",
     }));
-    const columns = [
-      ...(archived
+    const columns = archived
       ? [
           { title: t("caseNumber"), field: "number", kind: ["data", "id"], sorter: "string" },
           { title: t("caseApplicant"), field: "applicant", type: "person", kind: "name", sorter: "string" },
@@ -2920,34 +2952,28 @@
           { title: t("caseReason"), field: "reason", sorter: "string" },
           ...(view === "active" ? [{ title: t("caseAssignee"), field: "manager", type: "person", kind: "name", sorter: "string" }] : []),
           { title: t("statusLabel"), field: "status", maxWidth: "--plx-ref-size-240px", sorter: "string" },
-        ]),
-      {
-        title: t("actions"), field: "open_action", minWidth: canDelete ? "11rem" : "6rem", pill: false,
-        render: (row) => h(P.Inline, { gap: "xs" },
-          h(P.Button, { size: "xs", icon: "open", onClick: () => onOpen(row.id) }, t("open")),
-          canDelete ? h(P.Button, { size: "xs", icon: "trash", variant: "danger-secondary", onClick: () => setDeleteTarget(row) }, t("deleteCase")) : null,
-        ),
-      },
+        ];
+    const label = title || t(archived ? "archivedTitle" : "casesTitle");
+    const rowMenu = [
+      { label: t("open"), icon: "open", onSelect: (row) => onOpen(row.id) },
+      ...(canDelete ? [{ separator: true }, { label: t("deleteCase"), icon: "trash", danger: true, onSelect: (row) => setDeleteTarget(row) }] : []),
     ];
-    const table = h(
-      R.Fragment,
-      null,
-      h(P.Text, { as: "h1", variant: "title" }, title || t(archived ? "archivedTitle" : "casesTitle")),
-      h(P.Inline, { gap: "md", align: "end", wrap: true },
-        h(P.Input, { type: "search", width: "lg", "aria-label": t("searchCases"), value: query, onChange: (e) => setQuery(e.target.value) }),
-        !archived ? h(P.Checkbox, { label: t("showClosedCases"), checked: includeClosed, onChange: (event) => setIncludeClosed(event.target.checked) }) : null,
-      ),
-      h(P.DataGrid, {
-        density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
-        label: title || t(archived ? "archivedTitle" : "casesTitle"), data: rows, index: "id",
-        mode: "pages", pageSize: 25, headerMenu: true, rowMenuButton: false, narrow: "table",
-        keyColumns: columns.map((column) => column.field), columns,
-        empty: t(query ? "noMatchingCases" : archived ? "noArchived" : "noOpenCases"),
-        strings: { perPage: t("tablePerPage"), range: t("tableRange"), count: t("tableCount"), pages: t("tablePages"), empty: t("noMatchingCases"), failed: t("loadFailed"), retry: t("retry") },
-      }),
-    );
-    return h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
-      table,
+    const listing = h(window.CTMShell.Listing, {
+      label, rows, columns, rowMenu,
+      onOpen: (row) => onOpen(row.id),
+      empty: t(archived ? "noArchived" : "noOpenCases"),
+      search: { text: caseSearchText, placeholder: t("searchCases"), storageKey: `ctm.council.cases.${view || (archived ? "archived" : "active")}` },
+      commandBar: archived ? undefined : {
+        actions: [{ id: "closed", label: t("showClosedCases"), icon: "archive", toggle: true, pressed: includeClosed, onSelect: (next) => setIncludeClosed(next) }],
+      },
+      cardCount: plural(lang, "casesCount"),
+      template: archived
+        ? { title: "number", subtitle: "applicant", date: "closedAt", primary: "status", secondary: "respondent", tertiary: "manager" }
+        : { title: "number", subtitle: "applicant", primary: "status", secondary: "respondent", tertiary: view === "active" ? "manager" : "reason" },
+    });
+    return h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
+      h(P.Text, { as: "h1", variant: "title" }, label),
+      archived ? h(P.ReadOnly, { reason: t("archivedReadOnly"), className: "plx-u-flex-1 plx-u-min-h-0" }, listing) : listing,
       h(P.ConfirmDialog, {
         open: Boolean(deleteTarget), title: t("deleteCaseTitle"), message: t("deleteCaseMessage"),
         confirmLabel: t("deleteCase"), cancelLabel: t("cancel"), onConfirm: deleteCase,
@@ -2956,6 +2982,7 @@
     );
   }
 
+  // New applications awaiting completeness review, on the ListingPage template; a row opens the standard case view.
   function NewApplicationsTable({ api, lang, user, onOpen }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const [state, retry] = useLoad(() => api(REVIEW_URL), [user?.id]);
@@ -2970,10 +2997,15 @@
       assigned_to: row.assigned_to || t("unassigned"),
       submitted: row.submitted_at ? formatWhen(row.submitted_at, lang) : t("notRecorded"),
     }));
+    const open = (row) => onOpen(row.case_id, row.id);
     return h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h1", variant: "title" }, t("newApplications")),
-      h(window.CTMShell.Table, {
+      h(window.CTMShell.Listing, {
         label: t("newApplications"), rows, empty: t("reviewQueueEmpty"), isStatic: true,
+        onOpen: open,
+        rowMenu: [{ label: t("open"), icon: "open", onSelect: open }],
+        cardCount: plural(lang, "applicationsCount"),
+        template: { title: "case_number", subtitle: "applicant", date: "submitted", primary: "status", secondary: "respondent", tertiary: "assigned_to" },
         columns: [
           { title: t("caseNumber"), field: "case_number", kind: "data", minWidth: "9rem" },
           { title: t("applicant"), field: "applicant", type: "person", minWidth: "11rem" },
@@ -2981,7 +3013,6 @@
           { title: t("statusLabel"), field: "status", minWidth: "9rem" },
           { title: t("assignedTo"), field: "assigned_to", type: "person", minWidth: "12rem" },
           { title: t("submitted"), field: "submitted", minWidth: "12rem" },
-          { title: t("actions"), field: "open_action", pill: false, minWidth: "7rem", render: (row) => h(P.Button, { size: "xs", icon: "open", onClick: () => onOpen(row.case_id, row.id) }, t("open")) },
         ],
       }),
     );
@@ -3008,6 +3039,8 @@
   }
 
   function StatisticsWorkspace({ api, lang }) {
+    // A dashboard of MetricCards (metric-card.md) in a WidgetGrid (dashboard-grid.md); the per-manager counts
+    // are one ranked list card.
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -3020,39 +3053,25 @@
     if (state.error) return loadFailure(P, h, t, retry, state.error);
     const s = state.data;
     const n = (value) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(value);
+    const strings = { more: t("metricMore") };
+    const card = (id, icon, title, context, value) => ({ id, render: () => h(P.MetricCard, { icon, title, context, value: n(value), headingLevel: 2, strings }) });
+    const items = [
+      card("open", "folder-open", t("statsOpen"), t("statsCases"), s.open),
+      card("unassigned", "folder-open", t("statsUnassigned"), t("statsCases"), s.unassigned),
+      card("closed", "folder-open", t("statsClosed"), t("statsCases"), s.closed),
+      card("planned", "calendar", t("planned"), t("statsSessions"), s.plannedSessions),
+      card("closedSessions", "calendar", t("closed"), t("statsSessions"), s.closedSessions),
+      { id: "byManager", span: "2", render: () => s.byManager.length
+        ? h(P.MetricCard, { type: "list", icon: "settings-users", title: t("statsByManager"), headingLevel: 2, strings,
+            items: s.byManager.map(([name, count]) => ({ id: name, label: name, value: n(count), amount: count })) })
+        : h(P.MetricCard, { icon: "settings-users", title: t("statsByManager"), state: "empty", emptyText: t("statsNoAssigned"), headingLevel: 2, strings }) },
+    ];
     return h(
       P.Stack,
       { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("statsTitle")),
       s.partial ? h(P.Notice, { tone: "warning" }, t("statsPartial")) : null,
-      h(
-        P.Panel,
-        { icon: "folder-open", title: t("statsCases") },
-        h(
-          P.PropertyList,
-          null,
-          h(P.PropertyList.Item, { label: t("statsOpen") }, n(s.open)),
-          h(P.PropertyList.Item, { label: t("statsUnassigned") }, n(s.unassigned)),
-          h(P.PropertyList.Item, { label: t("statsClosed") }, n(s.closed)),
-        ),
-      ),
-      h(
-        P.Panel,
-        { icon: "settings-users", title: t("statsByManager") },
-        s.byManager.length
-          ? h(P.PropertyList, null, ...s.byManager.map(([name, count]) => h(P.PropertyList.Item, { key: name, label: name }, n(count))))
-          : h(P.EmptyState, { title: t("statsNoAssigned") }),
-      ),
-      h(
-        P.Panel,
-        { icon: "calendar", title: t("statsSessions") },
-        h(
-          P.PropertyList,
-          null,
-          h(P.PropertyList.Item, { label: t("planned") }, n(s.plannedSessions)),
-          h(P.PropertyList.Item, { label: t("closed") }, n(s.closedSessions)),
-        ),
-      ),
+      h(P.WidgetGrid, { label: t("statsTitle"), items, renderItem: (item) => item.render() }),
     );
   }
 
@@ -3099,6 +3118,7 @@
     useLoad,
     loadFailure,
     loadingView,
+    plural,
     guarded,
     ReviewQueuePanel: guarded(ReviewQueuePanel),
     ReviewWorkspace: guarded(ReviewWorkspace),
