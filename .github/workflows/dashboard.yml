@@ -2,6 +2,8 @@ name: CTM dashboard and daily summary
 # Regenerates the two pinned issues from GitHub only (decisions D-0002, D-0014):
 # "CTM dashboard" (decisions + their live checks + visual checks) and
 # "Daily summary" (last 24 hours). Read-only output; never hand-edit them.
+# Also publishes the dashboard web page on GitHub Pages (D-0031): rebuilt when
+# issues or comments change (the owner answers decisions from it) and every 15 minutes.
 on:
   push:
     branches: [main]
@@ -10,15 +12,16 @@ on:
     workflows: ["CTM quality gates", "CTM backend validation", "Plenix CDN auto-upgrade"]
     types: [completed]
     branches: [main]
+  issues:
+    types: [opened, edited, closed, reopened, labeled, unlabeled]
+  issue_comment:
+    types: [created, edited]
   schedule:
     - cron: '0 14 * * *'   # 06:00 Los Angeles (PST)
+    - cron: '*/15 * * * *' # the web page only
   workflow_dispatch:
 
 permissions: {}
-
-concurrency:
-  group: ctm-dashboard
-  cancel-in-progress: true
 
 defaults:
   run:
@@ -27,7 +30,12 @@ defaults:
 jobs:
   build:
     name: Build dashboard
+    # The pinned issues: not on issue or comment events (that would loop on its own edits) nor the 15-minute schedule.
+    if: github.event_name != 'issues' && github.event_name != 'issue_comment' && github.event.schedule != '*/15 * * * *'
     runs-on: ubuntu-latest
+    concurrency:
+      group: ctm-dashboard
+      cancel-in-progress: true
     permissions:
       contents: read
       issues: write
@@ -61,3 +69,37 @@ jobs:
           EOF
       - name: Update the pinned issues
         run: uv run --no-project --python 3.12 --with pyyaml==6.0.3 python scripts/build_dashboard.py --write
+
+  page:
+    name: Dashboard web page
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ctm-dashboard-page
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.8.22'
+      - name: Build the page
+        run: uv run --no-project --python 3.12 --with pyyaml==6.0.3 python scripts/build_dashboard_page.py --out _site
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

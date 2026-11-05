@@ -1,0 +1,27 @@
+# Product Lead's order of the team's open work, with the next step for each issue.
+# Issues not listed sort after these by severity. Edited by ctm3-product-lead.
+order:
+  - {issue: 63, next: "Find why the app behind the proxy is down and bring it back"}
+  - {issue: 46, next: "Root-cause the session-reschedule failures, then make postgres a required check"}
+  - {issue: 8, next: "Mark F01-F31 addressed / superseded / remaining against main"}
+  - {issue: 9, next: "Link the F08/F09/F25 tests already on main, mark the rest"}
+  - {issue: 51, next: "Repair or remove the stale browser scripts; add a CI job with screenshots"}
+  - {issue: 10, next: "Mark F16-F23 against main"}
+  - {issue: 11, next: "Link the merged F12/F15 work, mark F26-F33"}
+  - {issue: 48, next: "Plenix requests first (RTL, vote table, A4 print); one preview at the end"}
+  - {issue: 54, next: "After the site is back: one dated result per provider"}
+  - {issue: 14, next: "Split the P1 rows into slice issues with briefs"}
+  - {issue: 12, next: "List each missing institutional text and where it is used (feeds #81)"}
+  - {issue: 81, next: "Spec, then contract: Admin/President/Secretary enter and approve texts in CTM (D-0032)"}
+  - {issue: 84, next: "CTM sends the priest link by email or text; text needs a provider (D-0033)"}
+
+# Questions for the owner that have no decision card on GitHub. Process options only:
+# church wording is never invented here.
+owner_input:
+  - issue: 12
+    id: "#12"
+    title: "Church wording: who supplies the approved texts?"
+    context: "CTM shows only approved institutional wording (declarations, medical release, decree templates, Arabic translations). None has been supplied yet, so those screens wait."
+    options:
+      - {key: A, recommended: true, text: "Product Lead lists every missing text with where it is used; I supply or approve each one."}
+      - {key: B, recommended: false, text: "I name the person at the tribunal who owns these texts; the team works with them."}

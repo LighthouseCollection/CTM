@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" data-plx-theme="default" data-plx-mode="system" data-plx-density-policy="compact">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CTM 3.0 Dashboard</title>
+<!-- The Plenix address below is filled in from PLENIX_BASE in ctm/settings.py by scripts/build_dashboard_page.py -->
+<script src="__PLENIX_BASE__theme-boot.js"></script>
+<link rel="stylesheet" href="__PLENIX_BASE__plenix.css">
+<style>
+  body { margin: 0; background: var(--plx-sys-surface-canvas); }
+  #root { block-size: 100vh; }
+  .shot { max-inline-size: 100%; border: var(--plx-sys-border-width-thin) solid var(--plx-sys-border-default); border-radius: var(--plx-sys-radius-card-6px); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="__PLENIX_BASE__vendor/react.production.min.js"></script>
+<script src="__PLENIX_BASE__vendor/react-dom.production.min.js"></script>
+<script src="__PLENIX_BASE__plenix.js"></script>
+<script src="__PLENIX_BASE__plenix-icons-plenix.js"></script>
+<script src="__PLENIX_BASE__plenix-engines.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
