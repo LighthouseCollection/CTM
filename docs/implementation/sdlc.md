@@ -188,4 +188,11 @@ only).
 2. Stop the old CTM 2.0 team and its cron/tmux lines.
 3. Staging Compose project, database and DNS.
 4. Optional `CTM_BOT_TOKEN` secret so bot merges start the other workflows.
-5. `PDS_ISSUE_TOKEN` secret (fine-grained, Issues: read and write on `plenix-ds/pds`) so a failed Plenix upgrade also opens an issue for the PDS team.
+5. **PDS GitHub App** (D-0027): after PDS Phase 0 creates the app, install it on
+   `LighthouseCollection/CTM` (Issues: read and write, Contents: read only) and add
+   the repository secrets `PDS_APP_ID` and `PDS_APP_PRIVATE_KEY`. CTM then reports
+   failed Plenix upgrades to `plenix-ds/pds`, and PDS sends `plenix-release` to CTM
+   for an instant upgrade, both through that app. Note: GitHub only accepts
+   `repository_dispatch` from a token with **Contents: write** on CTM. With
+   Contents read only, the instant trigger is refused and CTM still upgrades
+   within 30 minutes through the schedule.

@@ -233,3 +233,24 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: config, ref: agent-limits.yaml }
+
+  - id: D-0026
+    date: 2026-11-04
+    area: release
+    decision: Report failed Plenix upgrades to plenix-ds/pds with a personal fine-grained token (PDS_ISSUE_TOKEN)
+    why: First version of the PDS link
+    options: [Personal token (chosen then), PDS GitHub App]
+    decided_by: owner
+    status: superseded
+    superseded_by: D-0027
+    review_only: Superseded by D-0027 before it was set up
+
+  - id: D-0027
+    date: 2026-11-04
+    area: release
+    decision: CTM and PDS talk both ways through the PDS GitHub App - CTM mints an app token (PDS_APP_ID, PDS_APP_PRIVATE_KEY) to open or update issues in plenix-ds/pds when an upgrade fails, and PDS sends repository_dispatch plenix-release to CTM for an instant upgrade. The app is installed on CTM with Issues read/write and Contents read only
+    why: Owner decision via the PDS 1.0 plan; no personal tokens, one identity, least privilege. GitHub requires Contents write for repository_dispatch, so with Contents read only the instant trigger is refused and the 30-minute schedule is the fallback
+    options: [PDS GitHub App (chosen), Personal fine-grained token]
+    decided_by: owner
+    status: active
+    check: { kind: ci-job, ref: .github/workflows/plenix-upgrade.yml#upgrade }
