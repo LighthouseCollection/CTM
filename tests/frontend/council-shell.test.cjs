@@ -496,33 +496,35 @@ test("agenda tables reserve enough space for complete header labels", () => {
 test("new council sessions preselect Metropolitan Serapion as presiding", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /row\.name === "H\.E\. Metropolitan Serapion"/);
-  assert.match(council, /if \(!presiding && defaultPresiding\?\.id\) setPresiding\(defaultPresiding\.id\)/);
+  // the form's starting value carries the default presiding member (FormFlow initialValue)
+  assert.match(council, /const presiding = initial\.presiding \|\| defaultPresiding\?\.id \|\| ""/);
+  assert.match(council, /presiding: defaultPresiding\?\.id \|\| "", location: SESSION_LOCATION/);
 });
 
 
-test("upcoming sessions use a full table and load the selected session into the form", () => {
+test("upcoming sessions use a full listing and load the selected session into the FormFlow dialog", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const source = council.slice(council.indexOf("function SessionList"), council.indexOf("function AgendaItemCard"));
   assert.doesNotMatch(source, /P\.SplitView/);
   assert.match(source, /const \[selected, select\] = R\.useState\(""\)/);
   assert.match(source, /function editSession\(row\)/);
-  assert.match(source, /rows: tableRows, selected, onSelect: select, empty: t\(emptyKey\), isStatic: true/);
-  assert.match(source, /empty: t\(emptyKey\), isStatic: true/);
+  assert.match(source, /h\(window\.CTMShell\.Listing, \{\s*\.\.\.listProps, onOpen: open/);
+  assert.match(source, /label: t\(titleKey\), rows: tableRows, empty: t\(emptyKey\), columns/);
   assert.match(source, /method: editing \? "PATCH" : "POST"/);
   assert.match(source, /const \[formOpen, setFormOpen\] = R\.useState\(false\)/);
-  assert.match(source, /onClick: startCreate/);
-  assert.match(source, /mode === "upcoming" && canManage\(user\) && formOpen/);
+  assert.match(source, /onSelect: startCreate/);
+  assert.match(source, /h\(P\.FormFlow, \{\s*open: formOpen, surface: "dialog", mode: editing \? "edit" : "create"/);
   assert.match(source, /title: t\("sessionTime"\), field: "session_time", minWidth: "8rem"/);
   assert.match(source, /h\(P\.Badge, \{ tone: sessionStatusTone\(row\.state\) \}/);
-  assert.doesNotMatch(source.slice(source.indexOf("columns: ["), source.indexOf("]),\n      }),")), /presiding_member_name/);
-  assert.doesNotMatch(source.slice(source.indexOf("columns: ["), source.indexOf("]),\n      }),")), /locationNotRecorded/);
+  const columns = source.slice(source.indexOf("const columns = ["), source.indexOf("const listProps"));
+  assert.doesNotMatch(columns, /presiding_member_name/);
+  assert.doesNotMatch(columns, /locationNotRecorded/);
 });
 
 
 test("new session form defaults the Bellflower location and uses a responsive two-column grid", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
-  assert.match(council, /R\.useState\("St\. George Coptic Orthodox Church, Bellflower, California"\)/);
+  assert.match(council, /const SESSION_LOCATION = "St\. George Coptic Orthodox Church, Bellflower, California"/);
   assert.match(council, /h\(P\.Columns, \{ count: 2, collapseBelow: "wide" \}/);
 });
 
@@ -535,38 +537,41 @@ test("tribunal session lists do not show date filters", () => {
 });
 
 
-test("upcoming session actions live in each row instead of the toolbar", () => {
+test("upcoming session actions live in each row menu; Create is the command bar primary command", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const source = council.slice(council.indexOf("function SessionList"), council.indexOf("function AgendaItemCard"));
-  const toolbar = source.slice(source.indexOf('h(P.Toolbar'), source.indexOf('mode === "upcoming" && canManage(user) && formOpen'));
-  assert.match(toolbar, /icon: "add"/);
-  assert.doesNotMatch(toolbar, /icon: "pencil"/);
-  assert.match(source, /field: "session_actions"/);
-  assert.match(source, /onClick: \(\) => editSession\(row\)/);
-  assert.match(source, /onClick: \(\) => setDeleteTarget\(row\)/);
-  assert.match(source, /icon: "trash", variant: "danger-secondary", disabled: pending \|\| row\.state !== "draft"/);
+  const bar = source.slice(source.indexOf("commandBar: manage"), source.indexOf("rowMenu: manage"));
+  assert.match(bar, /id: "create", label: t\("createSession"\), icon: "add", primary: true/);
+  assert.doesNotMatch(bar, /icon: "pencil"/);
+  assert.match(source, /label: t\("editSession"\), icon: "pencil", disabled: pending, onSelect: \(\) => editSession\(row\)/);
+  assert.match(source, /label: t\("deleteSession"\), icon: "trash", danger: true, disabled: pending \|\| row\.state !== "draft", onSelect: \(\) => setDeleteTarget\(row\)/);
+  assert.doesNotMatch(source, /field: "session_actions"/);
   assert.match(source, /method: "DELETE"/);
   assert.match(source, /P\.ConfirmDialog/);
-  assert.match(source, /form: "ctm-session-form"/);
-  assert.match(source, /t\("saveSession"\)/);
+  assert.match(source, /save: t\("saveSession"\)/);
 });
 
-test("delete controls use the shared danger-secondary treatment", () => {
+test("delete controls use the shared danger treatment", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const lifecycle = fs.readFileSync("static/ctm/applicant-lifecycle.js", "utf8");
-  assert.match(council, /icon: "trash", variant: "danger-secondary", onClick: \(\) => setDeleteTarget\(row\).*t\("deleteCase"\)/);
+  // a row menu's delete item is the danger item after a separator (data-grid.md rowMenu)
+  assert.match(council, /\{ separator: true \}, \{ label: t\("deleteCase"\), icon: "trash", danger: true, onSelect: \(row\) => setDeleteTarget\(row\) \}/);
   assert.match(lifecycle, /variant:action==="delete"\?"danger-secondary":undefined/);
   assert.match(lifecycle, /variant:selected==="delete"\?"danger-secondary":undefined/);
 });
 
-test("case list workspaces are table-only and open cases from their action column", () => {
+test("case list workspaces are listings: search in the command bar, cases open from the row or its menu", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const source = council.slice(council.indexOf("function CasesTable"), council.indexOf("// Operational counts"));
   assert.doesNotMatch(source, /P\.SplitView/);
   assert.doesNotMatch(source, /P\.ReadingPane/);
-  assert.match(source, /h\(P\.Inline, \{ gap: "md", align: "end", wrap: true \},[\s\S]*P\.Input, \{ type: "search", width: "lg"[\s\S]*showClosedCases/);
-  assert.match(source, /title: t\("actions"\), field: "open_action"/);
-  assert.match(source, /onClick: \(\) => onOpen\(row\.id\)/);
+  assert.doesNotMatch(source, /P\.Input, \{ type: "search"/);
+  assert.match(source, /h\(window\.CTMShell\.Listing, \{/);
+  assert.match(source, /search: \{ text: caseSearchText, placeholder: t\("searchCases"\)/);
+  assert.match(source, /id: "closed", label: t\("showClosedCases"\), icon: "archive", toggle: true/);
+  assert.doesNotMatch(source, /field: "open_action"/);
+  assert.match(source, /onSelect: \(row\) => onOpen\(row\.id\)/);
+  assert.match(source, /onOpen: \(row\) => onOpen\(row\.id\)/);
 });
 
 test("document search omits redundant helper and field-label copy", () => {
@@ -591,7 +596,7 @@ test("archived agenda rows retain gender metadata and use approved case statuses
   assert.match(rows, /row\?\.state === "heard"\) return "closed"/);
   assert.match(rows, /row\?\.part === 1 && !row\?\.assigned_member_id\) return "toBeAssigned"/);
   assert.match(rows, /return "inProgress"/);
-  const archive = council.slice(council.indexOf("mode === \"archived\" && selectedSession"), council.indexOf("function AgendaItemCard"));
+  const archive = council.slice(council.indexOf("const caseColumns"), council.indexOf("function AgendaItemCard"));
   assert.match(archive, /field: "applicant", type: "person"/);
   assert.match(archive, /field: "respondent", type: "person"/);
 });
@@ -660,7 +665,8 @@ test("upcoming session editing offers Cancel that clears selection and closes th
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const source = council.slice(council.indexOf("function SessionList"), council.indexOf("function AgendaItemCard"));
   assert.match(source, /function cancelSessionForm\(\)[\s\S]*select\(""\)[\s\S]*setFormOpen\(false\)/);
-  assert.match(source, /icon: "close", onClick: cancelSessionForm, disabled: pending[\s\S]*t\("cancel"\)/);
+  assert.match(source, /onCancel: cancelSessionForm/);
+  assert.match(source, /cancel: t\("cancel"\)/);
 });
 
 test("home attention empty state uses a calm reassurance", () => {
