@@ -1,4 +1,4 @@
-/* CTM 3.0 dashboard on CTM's Plenix pin (0.86.0), built from the CDN's documented templates:
+/* CTM 3.0 dashboard on CTM's Plenix pin (0.88.0), built from the CDN's documented templates:
    SplitWorkspace (AppShell + SplitView: a DataGrid list, the chosen row in a ReadingPane) with a
    NavPane + NavList on the left. Data: data.js, a snapshot taken from GitHub by collect.py. */
 (function () {

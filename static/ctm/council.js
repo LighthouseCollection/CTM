@@ -1602,7 +1602,7 @@
                 ]
               : [{ label: t("open"), icon: "open", onSelect: open }],
           }),
-      // FormFlow needs a ToastProvider that AppShell does not give in 0.86.0 (plenix-requests.md PLX-021).
+      // FormFlow needs a ToastProvider that AppShell does not give through 0.88.0 (plenix-requests.md PLX-021).
       manage
         ? h(P.ToastProvider, null, h(P.FormFlow, {
             open: formOpen, surface: "dialog", mode: editing ? "edit" : "create",
