@@ -1,5 +1,5 @@
 window.CTM_DATA = {
- "generatedAt": "2026-11-05T07:19+00:00",
+ "generatedAt": "2026-11-05T07:22+00:00",
  "mainSha": "fb518c9",
  "tasks": [
   {
@@ -77,7 +77,7 @@ window.CTM_DATA = {
    "decision": true,
    "next": "Publish this dashboard as a GitHub Pages page from dashboard.yml",
    "waiting": "",
-   "updated": "2026-11-05T06:45:04Z",
+   "updated": "2026-11-05T07:20:25Z",
    "rank": 4
   },
   {
@@ -115,7 +115,7 @@ window.CTM_DATA = {
    "decision": true,
    "next": "Mark F16-F23 against main",
    "waiting": "",
-   "updated": "2026-11-05T07:19:43Z",
+   "updated": "2026-11-05T07:22:23Z",
    "rank": 6
   },
   {
@@ -250,6 +250,26 @@ window.CTM_DATA = {
    "waiting": "",
    "updated": "2026-11-05T07:19:06Z",
    "rank": 13
+  },
+  {
+   "number": 84,
+   "title": "Priest report link: CTM sends it by text message as well as email (D-0033)",
+   "url": "https://github.com/LighthouseCollection/CTM/issues/84",
+   "sev": "S3",
+   "type": "feature",
+   "areas": [
+    "backend",
+    "security"
+   ],
+   "owners": [
+    "backend-engineer",
+    "release-engineer"
+   ],
+   "decision": false,
+   "next": "See the issue",
+   "waiting": "",
+   "updated": "2026-11-05T07:21:42Z",
+   "rank": 14
   }
  ],
  "ownerDecisions": [
@@ -338,9 +358,14 @@ window.CTM_DATA = {
     }
    ],
    "applied": "A",
-   "replied": "",
+   "replied": "**Answer to D-0031: Other**\n\nI bbelieve this is closed as i have this now.\n\n_Sent from the CTM 3.0 dashboard._",
    "at": "2026-11-05T04:05:29Z",
-   "answer": null,
+   "answer": {
+    "choice": "Other",
+    "text": "I bbelieve this is closed as i have this now.",
+    "at": "2026-11-05T07:20:25Z",
+    "url": "https://github.com/LighthouseCollection/CTM/issues/61#issuecomment-6652205871"
+   },
    "sent": []
   },
   {
@@ -366,14 +391,45 @@ window.CTM_DATA = {
    "at": "2026-11-05T07:19:30Z",
    "answer": null,
    "sent": []
+  },
+  {
+   "id": "D-0033",
+   "title": "Priest report link: who sends it by text or email?",
+   "issue": 10,
+   "url": "https://github.com/LighthouseCollection/CTM/issues/10",
+   "context": "you answered \"It can be sent via text or email\" (comment above). That can mean CTM sends it, or the council copies the link and sends it.",
+   "options": [
+    {
+     "key": "A",
+     "recommended": true,
+     "text": "CTM itself sends the link by email or text message, chosen per priest; nobody copies it by hand — risk: text needs a text-message provider set up first; until then email or paper (#84, #54)."
+    },
+    {
+     "key": "B",
+     "recommended": false,
+     "text": "the council copies the link and sends it by text or email themselves — risk: the link can be forwarded over channels CTM does not control."
+    }
+   ],
+   "applied": "A",
+   "replied": "",
+   "at": "2026-11-05T07:22:23Z",
+   "answer": null,
+   "sent": []
   }
  ],
  "openPrs": [
   {
+   "headRefName": "ctm3/remove-ctm-css-part2",
+   "isDraft": false,
+   "number": 83,
+   "title": "UI: case overview cards and session form on Plenix layout parts (#48, part 2 of 4)",
+   "url": "https://github.com/LighthouseCollection/CTM/pull/83"
+  },
+  {
    "headRefName": "ctm3/d0032-institutional-texts",
    "isDraft": false,
    "number": 82,
-   "title": "Record D-0032: institutional texts entered and approved in CTM by Admin, President and Secretary",
+   "title": "Record D-0032 (institutional texts in CTM) and D-0033 (priest link by email or text)",
    "url": "https://github.com/LighthouseCollection/CTM/pull/82"
   },
   {
@@ -691,7 +747,7 @@ window.CTM_DATA = {
    "check": ".github/workflows/dashboard.yml",
    "kind": "workflow",
    "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986115827"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986425334"
   },
   {
    "id": "D-0003",
@@ -847,7 +903,7 @@ window.CTM_DATA = {
    "check": ".github/workflows/dashboard.yml",
    "kind": "workflow",
    "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986115827"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986425334"
   },
   {
    "id": "D-0015",
@@ -1044,8 +1100,8 @@ window.CTM_DATA = {
    "name": "CTM dashboard and daily summary",
    "file": "dashboard.yml",
    "conclusion": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986115827",
-   "at": "2026-11-05T07:17:39Z"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986425334",
+   "at": "2026-11-05T07:20:12Z"
   },
   {
    "name": "CTM deploy",
