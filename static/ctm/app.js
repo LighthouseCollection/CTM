@@ -1263,7 +1263,7 @@
       const loginHeader = h(P.Show, { above: "medium", fallback: brandHeader() },
         brandHeader("plx-u-absolute plx-u-top-0 plx-u-left-0 plx-u-right-0 plx-u-z-raised"));
       // Sign-in: the Auth page with SsoButtons (sign-in.md, single-sign-on.md). SignInForm is left out on
-      // purpose: in 0.86.0 it always draws a password field, and CTM has no passwords (plenix-requests.md: "SignInForm without a password").
+      // purpose: in 0.86.0 it always draws a password field, and CTM has no passwords (plenix-requests.md PLX-015).
       return h(P.AppShell, { page: "form", strings: { skip: t("skip") } },
         h(P.PageContent, { className: "plx-u-relative" },
           loginHeader,

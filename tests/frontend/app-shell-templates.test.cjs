@@ -81,9 +81,18 @@ test("the applicant case is a RecordPage with its header, body panels unchanged 
   assert.match(record, /title: t\("timeline"\)/);
 });
 
-test("shell.html bumps the app.js cache version and keeps slice 1's shell-layout.js version", () => {
-  assert.match(shell, /ctm\/shell-layout\.js' %\}\?v=ctm97s1-20261105/);
-  assert.match(shell, /ctm\/app\.js' %\}\?v=ctm97s4-20261105/);
-  // Slice 3 changed council-case.js on main (#100): its stamp moves too.
-  assert.match(shell, /ctm\/council-case\.js' %\}\?v=ctm97s3-20261105/);
+// #97 slice 8: every CTM script carries a cache stamp (slices 1–8 changed them all), so a browser never mixes
+// a fresh module with a stale cached one.
+test("shell.html gives every static/ctm script a cache stamp, bumped after slices 1–8", () => {
+  const scripts = [...shell.matchAll(/static '(ctm\/[a-z-]+\.js)' %\}(\?v=[^"]*)?"/g)];
+  assert.ok(scripts.length >= 25, "every module is listed");
+  for (const [, file, stamp] of scripts) assert.equal(stamp, "?v=ctm97s8-20261105", file);
+});
+
+// CTM#113 (owner: "it feels smaller than the cdn tab"): CTM renders at the CDN default density (density.md:
+// "standard when unset"); only DataGrid keeps its own compact rows (its default, owner 2026-10-22).
+test("CTM#113: no app-wide compact density; tables keep their own compact rows", () => {
+  for (const file of ["tribunal/templates/tribunal/shell.html", "static/ctm/external-report.html"])
+    assert.doesNotMatch(fs.readFileSync(file, "utf8"), /data-plx-density/, file);
+  assert.match(fs.readFileSync("static/ctm/shell-layout.js", "utf8"), /density: "compact", cells: "pill"/);
 });

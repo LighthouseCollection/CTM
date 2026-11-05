@@ -15,7 +15,7 @@ BASE = "https://design-system.lighthouseway.org/cdn/0.86.0/"
 OUT = ROOT / ".tmp" / "applicant-browser"
 OUT.mkdir(parents=True, exist_ok=True)
 
-HARNESS = """<!doctype html><html lang="en" data-plx-density-policy="compact"><head>
+HARNESS = """<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="BASEtheme-boot.js"></script><link rel="stylesheet" href="BASEfonts.css">
 <link rel="stylesheet" href="BASEplenix.css">

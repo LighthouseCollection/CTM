@@ -77,10 +77,17 @@ test("formatted scalar cells retain domain ordering",()=>{
  assert.ok(c.sorter("9:00 AM","2:00 PM",rows[0],rows[1],c.field,"asc")<0);
 });
 
-test("case numbers are id cells so Arabic pages read them 01-20261020 (Plenix 0.76.0)",()=>{
-  const grid=mount({label:"Cases",rows:[{id:"one",case_number:"20261020-01",code:"Q-1"}],columns:[{field:"case_number",kind:"name"},{field:"code"}]});
-  assert.deepEqual([...grid.props.columns[0].kind],["data","id"]); // plain copy: the array comes from the vm sandbox realm
+// #97 slice 8: in Arabic, Plenix's undocumented kind "id" laid case numbers out right to left (09-NEW-DEMO,
+// 04-20261020). Case numbers and codes are documented "data" values, which read left to right.
+test("case numbers and codes are LTR data cells, never kind id (Arabic DEMO-NEW-09, 20261020-04)",()=>{
+  const grid=mount({label:"Cases",rows:[{id:"one",case_number:"20261020-04",number:"DEMO-NEW-09",code:"Q-1",ref:"X"}],
+    columns:[{field:"case_number",kind:"name"},{field:"number",kind:["data","id"]},{field:"code"},{field:"ref",kind:["name","id"]}]});
+  assert.equal(grid.props.columns[0].kind,"data");
   assert.equal(grid.props.columns[1].kind,"data");
+  assert.equal(grid.props.columns[2].kind,"data");
+  assert.deepEqual([...grid.props.columns[3].kind],["name"]); // plain copy: the array comes from the vm sandbox realm
+  for (const file of fs.readdirSync("static/ctm").filter((name)=>name.endsWith(".js")))
+    assert.doesNotMatch(fs.readFileSync(`static/ctm/${file}`,"utf8"),/kind: "id"|"id"]/,file);
 });
 
 // #97 slice 1: the collection foundation on the 0.86.0 DataGrid defaults and page templates.
@@ -211,4 +218,11 @@ test("searched grids keep the same data array and row copies while the records a
   const third = draw();
   assert.notEqual(third, first);
   assert.equal(third[0].__ctm_display_0.name, "Emma B");
+});
+
+// #97 slice 8: parallel slices once appended the same PLX number twice; every request id is unique.
+test("plenix-requests.md has one row per PLX id", () => {
+  const ids = [...fs.readFileSync("docs/implementation/plenix-requests.md", "utf8").matchAll(/^\| (PLX-\d+) \|/gm)].map((m) => m[1]);
+  assert.ok(ids.length >= 23);
+  assert.deepEqual(ids.filter((id, i) => ids.indexOf(id) !== i), []);
 });

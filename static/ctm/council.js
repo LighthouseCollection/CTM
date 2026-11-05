@@ -1201,7 +1201,7 @@
       h(
         P.PropertyList,
         null,
-        row.case_number ? h(P.PropertyList.Item, { label: t("reference"), data: true, kind: "id" }, row.case_number) : h(P.PropertyList.Item, { label: t("reference") }, t("unnumbered")),
+        row.case_number ? h(P.PropertyList.Item, { label: t("reference"), data: true }, h("bdi", { dir: "ltr" }, row.case_number)) : h(P.PropertyList.Item, { label: t("reference") }, t("unnumbered")),
         row.applicant_name ? h(P.PropertyList.Item, { label: t("applicant") }, row.applicant_name) : null,
         row.submitted_at ? h(P.PropertyList.Item, { label: t("submittedAt"), data: true }, formatWhen(row.submitted_at, lang)) : null,
         h(P.PropertyList.Item, { label: t("version"), data: true }, String(row.submitted_version ?? row.version)),
@@ -1588,6 +1588,7 @@
                 ]
               : [{ label: t("open"), icon: "open", onSelect: open }],
           }),
+      // FormFlow needs a ToastProvider that AppShell does not give in 0.86.0 (plenix-requests.md PLX-021).
       manage
         ? h(P.ToastProvider, null, h(P.FormFlow, {
             open: formOpen, surface: "dialog", mode: editing ? "edit" : "create",
@@ -2321,7 +2322,7 @@
             label: t(`part${n}`), data: groups[n], index: "id", narrow: "table", mode: "fill", isStatic: true,
             empty: t(`part${n}Empty`),
             columns: [
-              { title: t("caseNumber"), field: "case_number", kind: ["name", "id"] },
+              { title: t("caseNumber"), field: "case_number", kind: ["name", "data"] },
               { title: t("statusLabel"), field: "state", pill: false, render: (row) => t(row.state === "assigned" ? "assigned_state" : row.state) },
               { title: t("agenda"), field: "id", pill: false, render: (row) => h(AgendaItemCard, {
               compact: true,
@@ -2709,7 +2710,8 @@
   }
 
   // Document search on the SearchWorkspace template (search-workspace.md): the query, the result count and the
-  // results. The phrase still goes to the server only when Search is chosen (or Enter), never per keystroke.
+  // results. The phrase still goes to the server only when Search is chosen (or Enter), never per keystroke
+  // (plenix-requests.md PLX-022).
   function SearchWorkspace({ api, lang, user, onCase }) {
     const R = window.React,
       P = window.Plenix,
@@ -2938,7 +2940,7 @@
     }));
     const columns = archived
       ? [
-          { title: t("caseNumber"), field: "number", kind: ["data", "id"], sorter: "string" },
+          { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
           { title: t("caseApplicant"), field: "applicant", type: "person", kind: "name", sorter: "string" },
           { title: t("caseRespondent"), field: "respondent", type: "person", kind: "name", sorter: "string" },
           { title: t("caseAssignee"), field: "manager", type: "person", kind: "name", sorter: "string" },
@@ -2946,7 +2948,7 @@
           { title: t("statusLabel"), field: "status", maxWidth: "--plx-ref-size-240px", sorter: "string" },
         ]
       : [
-          { title: t("caseNumber"), field: "number", kind: ["data", "id"], sorter: "string" },
+          { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
           { title: t("caseApplicant"), field: "applicant", type: "person", kind: "name", sorter: "string" },
           { title: t("caseRespondent"), field: "respondent", type: "person", kind: "name", sorter: "string" },
           { title: t("caseReason"), field: "reason", sorter: "string" },

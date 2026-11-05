@@ -45,6 +45,7 @@
       unsaved: "Your report has not been saved.",
       otherFormats: "To send a recording or a signed paper response instead, please contact the tribunal office.",
       retry: "Try again",
+      skip: "Skip to main content",
     },
     ar: {
       pageTitle: "طلب تقرير",
@@ -82,6 +83,7 @@
       unsaved: "لم يُحفظ تقريرك.",
       otherFormats: "لإرسال تسجيل صوتي أو رد ورقي موقَّع بدلًا من ذلك، يرجى التواصل مع مكتب المحكمة.",
       retry: "إعادة المحاولة",
+      skip: "الانتقال إلى المحتوى الرئيسي",
     },
   };
   // Unicode first-strong isolate: names and titles keep their own direction inside the other language.
@@ -208,12 +210,28 @@
       return undefined;
     }
 
-    const header = h(
-      P.Inline,
-      { wrap: true, justify: "between" },
-      h(P.Text, { as: "h1", variant: "heading" }, t("pageTitle")),
-      h(P.Button, { size: "sm", onClick: () => setLang(lang === "ar" ? "en" : "ar") }, t("language")),
-    );
+    // One-column layout (one-column-layout.md): AppShell page "form" draws one readable column; the header
+    // carries only the tribunal's name and the language switch (no account, no navigation: an outside priest).
+    const header = h(P.AppHeader, {
+      appName: "CTM",
+      brand: h(R.Fragment, null,
+        h(P.Image, {
+          src: "/static/ctm/tribunal-logo-cropped.svg", alt: "", width: 36, height: 36,
+          className: "plx-u-w-36px plx-u-bg-transparent", fit: "contain", placeholder: "none", priority: true,
+        }),
+        h("span", { className: "plx-app-header__name" },
+          h("strong", { className: "plx-app-header__product" }, "DIOCESE OF LOS ANGELES"),
+          h("strong", { className: "plx-app-header__app" }, "CLERICAL TRIBUNAL MANAGEMENT"),
+        ),
+      ),
+      switcher: false,
+      nav: null,
+      actions: h(P.AppHeader.Item, {
+        icon: h("span", null, lang === "ar" ? "EN" : "ع"),
+        label: t("language"),
+        onClick: () => setLang(lang === "ar" ? "en" : "ar"),
+      }),
+    });
     let body;
     if (state === "loading") body = h(P.Inline, { gap: "sm" }, h(P.Spinner, { size: "sm", label: t("loading") }), h(P.Text, null, t("loading")));
     else if (state === "malformed") body = h(P.Notice, { tone: "warning" }, t("malformed"));
@@ -231,11 +249,13 @@
           P.PropertyList,
           null,
           h(P.PropertyList.Item, { label: t("requestFor") }, isolate(request.title)),
-          h(P.PropertyList.Item, { label: t("caseNumber"), data: true, kind: "id" }, request.case_number),
+          h(P.PropertyList.Item, { label: t("caseNumber"), data: true }, h("bdi", { dir: "ltr" }, request.case_number)),
           request.subject ? h(P.PropertyList.Item, { label: t("regarding") }, isolate(request.subject)) : null,
           h(P.PropertyList.Item, { label: t("requestedLanguage") }, t(`lang_${request.language}`)),
         ),
         request.instructions ? h(P.Panel, { icon: "doc-text", title: t("instructions") }, h(P.Text, { as: "p", dir: "auto" }, request.instructions)) : null,
+        // The form-flow parts (Form, Field, FormActions with the primary last). FormFlow itself would replace the
+        // link-specific failure messages with one strings.failed and always draws Cancel (PLX-018, PLX-020).
         h(
           P.Form,
           { label: t("testimony"), noValidate: true, onSubmit: (e) => { e.preventDefault(); setConfirm(true); } },
@@ -263,7 +283,8 @@
           onCancel: () => setConfirm(false),
         }),
       );
-    return h(P.Center, { maxWidth: "md" }, h(P.Stack, { gap: "lg", inset: "md" }, header, body));
+    return h(P.AppShell, { page: "form", header, strings: { skip: t("skip") } },
+      h(P.PageContent, null, h(P.Stack, { gap: "lg" }, h(P.Text, { as: "h1", variant: "title" }, t("pageTitle")), body)));
   }
 
   const api = { words, parseFragment, outcome, client, ExternalReportPage };

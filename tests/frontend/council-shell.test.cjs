@@ -5,9 +5,16 @@ const fs = require("node:fs");
 const shell = fs.readFileSync("tribunal/templates/tribunal/shell.html", "utf8");
 const app = fs.readFileSync("static/ctm/app.js", "utf8");
 const shellLayout = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
+// #97 slice 8 (#48, D-0022/D-0034): ctm.css is gone; the CSS halves of older tests read "" and still hold.
+const ctmCss = () => (fs.existsSync("static/ctm/ctm.css") ? fs.readFileSync("static/ctm/ctm.css", "utf8") : "");
+
+test("#48: ctm.css is deleted and the shell links no CTM stylesheet", () => {
+  assert.equal(fs.existsSync("static/ctm/ctm.css"), false);
+  assert.doesNotMatch(shell, /ctm\.css|rel="stylesheet" href="\{% static/);
+});
 
 test("static table headers retain their full label on hover", () => {
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  const css = ctmCss();
   assert.doesNotMatch(css, /\.plx-table__title > \.plx-table__type-icon/);
   assert.doesNotMatch(css, /--plx-comp-data-grid-context-hover-reserve/);
   // 0.86.0 DataGrid defaults (#97 slice 1): type icons on, row cards on phones.
@@ -85,7 +92,7 @@ test("report templates are an inline category-to-question workspace", () => {
   assert.match(councilCase, /title: t\("questionCategories"\)/);
   assert.match(councilCase, /title: t\("questionSelection"\)/);
   assert.match(councilCase, /function ReportPartySelector/);
-  assert.match(councilCase, /ctm-report-party-cards/);
+  assert.match(councilCase, /h\(P\.ChoiceList, \{/);
   assert.match(councilCase, /next\.length === eligible\.length && eligible\.length > 1 \? "both"/);
   assert.match(councilCase, /const partyIds = form\.party === "both"/);
   assert.match(councilCase, /party_ids: partyIds/);
@@ -95,13 +102,16 @@ test("report templates are an inline category-to-question workspace", () => {
 
 test("report template intake uses selectable spouse cards and keeps applicant delivery disabled", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  const css = ctmCss();
   assert.match(councilCase, /h\(P\.Avatar, \{ src: party\.photo_url/);
   assert.match(councilCase, /kind: "interview"/);
   assert.match(councilCase, /\{ value: "intake", label: t\("methodApplicant"\), disabled: true \}/);
   assert.doesNotMatch(councilCase.slice(councilCase.indexOf("function RequestComposer"), councilCase.indexOf("const interviewDraftKey")), /description: t\("interviewHelp"\)/);
-  assert.match(css, /\.ctm-report-party-cards \{/);
-  assert.match(css, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  // #48 row 18: the spouse choice is Plenix ChoiceList control cards (checkbox), not CTM card CSS.
+  assert.match(councilCase, /control: "checkbox"/);
+  assert.match(councilCase, /label: t\("subject"\), hideLabel: true, required: true, error/, "the legend is not drawn twice");
+  assert.doesNotMatch(councilCase, /ctm-report-party-card/);
+  assert.doesNotMatch(css, /ctm-report-party-card/);
 });
 
 test("council case module has no stale template exports", () => {
@@ -136,12 +146,11 @@ test("report template draft action is named as a report", () => {
 
 test("Arabic report questions use an RTL reading surface", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  const css = ctmCss();
   assert.match(councilCase, /dir: form\.language === "ar" \? "rtl" : undefined/);
   // Plenix 0.75.0 follows the wrapper's dir attribute itself (plenix-platform #413); CTM keeps no RTL patch.
   assert.equal((councilCase.match(/lang: form\.language === "ar" \? "ar" : undefined/g) || []).length, 2);
-  assert.match(councilCase, /ctm-report-question-language--rtl/);
-  assert.doesNotMatch(css, /\.ctm-report-question-language--rtl/);
+  assert.doesNotMatch(councilCase, /ctm-report-question-language/, "dir and lang alone; no unstyled class");
   assert.doesNotMatch(css, /direction: rtl/);
 });
 
@@ -236,7 +245,7 @@ test("the session header is Plenix EntityHeader style 2: facts carry their actio
   assert.match(council, /action: current && editable \? \{ label: t\("addHearingCase"\), icon: "event_available"/);
   assert.match(council, /action: current \? \{ label: t\("attendance"\)/);
   assert.match(council, /className: "ctm-session-agenda-grid"/);
-  assert.match(shell, /ctm\/ctm\.css/);
+  assert.match(shell, /ctm\/council\.js/);
   assert.match(council, /session\.state === "planned" && manage/);
   assert.match(council, /\/plan\//);
   assert.match(council, /session\.state === "draft" && session\.can_activate/);
@@ -480,7 +489,7 @@ test("active-session transfers require a reason and use the retained override en
 
 test("agenda tables reserve enough space for complete header labels", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  const css = ctmCss();
   assert.match(council, /yearsMarried"\), field: "married_years", minWidth: "7\.5rem"/);
   assert.match(council, /applicant"\), field: "applicant", kind: "name", minWidth: "10\.5rem"/);
   assert.match(council, /respondent"\), field: "respondent", minWidth: "10\.5rem"/);
@@ -628,7 +637,7 @@ test("case hearing header is rendered above its tabs and Hearings uses the balan
 
 test("council can edit a spouse contact through a versioned case finding", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  const css = ctmCss();
   assert.match(councilCase, /function SpouseContactSection\(/);
   assert.match(councilCase, /fact_code: `case_card\.contact_\$\{party\.id\}`/);
   assert.match(councilCase, /h\(SpouseContactSection, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
@@ -674,10 +683,9 @@ test("home attention empty state uses a calm reassurance", () => {
   assert.match(council, /nothingNeedsAttention: "You’re all caught up for now\."/);
 });
 
-test("neutral table pill treatment does not override CDN gender categories", () => {
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
-  assert.match(css, /\.plx-data-grid \.plx-data-pill:not\(\[data-plx-category\]\),\s*\.plx-data-grid \.plx-data-pill\[data-plx-category="grey"\]/);
-  assert.doesNotMatch(css, /\.plx-data-grid \.plx-data-pill\s*\{\s*background-color/);
+test("table pills keep the CDN categories: CTM overrides no pill color (#97 slice 8)", () => {
+  const css = ctmCss();
+  assert.doesNotMatch(css, /plx-data-pill/);
 });
 
 test("council spouse cards offer authorized profile-photo uploads", () => {
@@ -708,9 +716,8 @@ test("session forms show the centrally configured president as read-only", () =>
   assert.doesNotMatch(council, /presiding_member_id: presiding/);
 });
 
-// ctm3-48 (#48, D-0022): rows whose Plenix default is the intended look. The JS no longer uses the class; the
-// rules themselves go when the last #48 PR deletes ctm.css (touching it earlier fails the contract check on its
-// old raw colors), so that PR replaces the CSS half of this test with "ctm.css does not exist".
+// ctm3-48 (#48, D-0022): rows whose Plenix default is the intended look. The JS no longer uses the class, and
+// ctm.css itself is deleted (#97 slice 8; "#48: ctm.css is deleted" above).
 const removedStyling = [
   ["#1", "ctm-session-header-action"], ["#4", "ctm-spouse-profile-section__heading"], ["#5", "ctm-spouse-profile-section__edit"],
   ["#6", "ctm-spouse-profile-section__divider"], ["#7", "ctm-decision-nav-icon"], ["#7", "ctm-decree-nav-icon"],

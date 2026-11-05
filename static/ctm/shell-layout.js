@@ -90,8 +90,12 @@
         ...column, type, ...projected,
         ...(isAction ? { kind: "center", maxWidth: column.maxWidth || "--plx-ref-size-240px", sortable: false, groupable: false } : {}),
         ...(/^(status|state)$/.test(column.field) ? { maxWidth: column.maxWidth || "--plx-ref-size-240px" } : {}),
-        // Case numbers are computed identifiers: Plenix 0.76.0 reads them 01-20261020 on Arabic pages (kind "id").
-        ...(/^(number|case_number|case_code)$/.test(column.field) ? { kind: ["data", "id"] } : column.field === "code" ? { kind: "data" } : {}),
+        // Case numbers and codes are data values that read left to right in Arabic too (#97 slice 8): kind "data"
+        // (data-grid.md) gives the pill an auto direction that resolves to LTR for DEMO-NEW-09 and 20261020-04.
+        // The undocumented kind "id" is dropped everywhere: on Arabic pages it laid the segments out right to
+        // left (09-NEW-DEMO, 04-20261020) and changed the digits.
+        ...(/^(number|case_number|case_code|code)$/.test(column.field) ? { kind: "data" }
+          : [].concat(column.kind || []).includes("id") ? { kind: [].concat(column.kind).filter(k => k !== "id") } : {}),
         ...(render && !native ? { pill: false, render } : {}),
         // Plenix 0.70.0 renamed the column option headerSort to sortable (no alias).
         sortable: !isAction && column.sortable !== false && column.headerSort !== false,
