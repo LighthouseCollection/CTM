@@ -240,6 +240,7 @@
       history: "Revision history",
       loadHistory: "Show revision history",
       version: "Version",
+      versionNumber: "Version {n}",
       response: "Response",
       revisionPending: "Revising a report is available to its original author once the server identifies report authorship.",
       revisionNotAllowed: "Only the report's original council author can revise it, while the case and proceeding are open.",
@@ -468,6 +469,7 @@
       history: "سجل التعديلات",
       loadHistory: "عرض سجل التعديلات",
       version: "الإصدار",
+      versionNumber: "الإصدار {n}",
       response: "الرد",
       revisionPending: "يتاح تعديل التقرير لكاتبه الأصلي بمجرد أن يحدد الخادم كاتب التقرير.",
       revisionNotAllowed: "لا يعدّل التقرير إلا كاتبه الأصلي من المجلس، ما دامت القضية والإجراء مفتوحين.",
@@ -1977,36 +1979,32 @@
     R.useEffect(() => {
       if (refreshKey) reloadReports();
     }, [refreshKey]);
-    const chosen = rows.find((row) => row.id === selected);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    return h(P.SplitView, {
+    // #97 slice 7 (D-0034): the shared split list and detail (CTMShell.Workspace; master-detail-workspace.md).
+    return h(window.CTMShell.Workspace, {
       label: t("reportsList"),
-      firstLabel: t("reportsList"),
-      first: h(window.CTMShell.Table, {
-        label: t("reportsList"), rows, selected, onSelect: select, empty: t("noReports"),
-        columns: [
-          { title: t("completedBy"), field: "completed_by", type: "person", render: row => row.completed_by || row.author || "—" },
-          { title: t("completedDate"), field: "date", type: "date" },
-          { title: t("intakeBy"), field: "intake_by", type: "person", render: row => row.intake_by || "—" },
-        ],
-      }),
-      second: h(
-        P.ReadingPane,
-        { label: chosen ? chosen.title : t("chooseReport"), empty: h(P.EmptyState, { title: t("chooseReport") }) },
-        chosen
-          ? h(ReportDetailTabs, {
-              key: chosen.id,
-              api,
-              lang,
-              user,
-              report: chosen,
-              record: state.data,
-              onOriginal: () => select(chosen.parent_report_id),
-              onRevised: reloadReports,
-            })
-          : null,
-      ),
+      rows,
+      selected,
+      onSelect: select,
+      empty: t("noReports"),
+      selectionPrompt: t("chooseReport"),
+      columns: [
+        { title: t("completedBy"), field: "completed_by", type: "person", render: row => row.completed_by || row.author || "—" },
+        { title: t("completedDate"), field: "date", type: "date" },
+        { title: t("intakeBy"), field: "intake_by", type: "person", render: row => row.intake_by || "—" },
+      ],
+      children: (chosen) =>
+        h(ReportDetailTabs, {
+          key: chosen.id,
+          api,
+          lang,
+          user,
+          report: chosen,
+          record: state.data,
+          onOriginal: () => select(chosen.parent_report_id),
+          onRevised: reloadReports,
+        }),
     });
   }
 
@@ -2120,6 +2118,26 @@
     );
   }
 
+  // One stored file (or a static demo file) as a Plenix FileList row (file-list.md): the name, its size, its
+  // upload date, its MIME type and its version as the row status. No storage URL is carried: the detail pane
+  // opens and downloads it through the authorized /api/files/ route (fileUrls).
+  const DEMO_TYPES = { png: "image/png", pdf: "application/pdf", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" };
+  function fileListEntry(row, t) {
+    const extension = String(row.name || "").split(".").pop().toLowerCase();
+    const type = row.mime_type || (row.demoType ? DEMO_TYPES[extension] : undefined);
+    const modified = row.created_at ? new Date(row.created_at) : undefined;
+    const known = row.version !== undefined && row.version !== null && row.version !== "—";
+    return {
+      id: row.id,
+      name: row.name || String(row.id),
+      kind: "file",
+      ...(typeof row.byte_count === "number" ? { size: row.byte_count } : {}),
+      ...(type ? { type } : {}),
+      ...(modified && !Number.isNaN(modified.getTime()) ? { modified } : {}),
+      ...(known ? { status: { tone: "neutral", label: t("versionNumber", { n: String(row.version) }) } } : {}),
+    };
+  }
+
   function CaseFilesWorkspace({ api, lang, caseId, section }) {
     const R = window.React,
       P = window.Plenix,
@@ -2182,32 +2200,40 @@
     const viewerItems = images.map((row) => ({ src: fileUrls(row).inline, alt: row.name, title: row.name, meta: [row.category, formatBytes(row.byte_count, lang)] }));
     const demoPreview = chosen?.demoSrc
       ? h(P.Stack, { gap: "md" },
-          chosen.demoType === "image" ? h("img", { className: "ctm-demo-file-preview", src: chosen.demoSrc, alt: chosen.name }) : h(P.Text, null, chosen.name),
-          h(P.Inline, null,
+          chosen.demoType === "image"
+            ? h(P.DocumentViewer, { key: chosen.id, kind: "images", pages: [{ id: chosen.id, src: chosen.demoSrc, alt: chosen.name }], label: chosen.name, strings: documentStrings(t) })
+            : h(P.Text, null, chosen.name),
+          h(P.Inline, { wrap: true },
             h(P.Button, { href: chosen.demoSrc, target: "_blank", rel: "noreferrer" }, t("openDocument")),
-            h("a", { className: "plx-button plx-button--secondary", href: chosen.demoSrc, download: chosen.name }, t("downloadDocument")),
+            h(P.Button, { href: chosen.demoSrc, download: chosen.name }, t("downloadDocument")),
           ),
         )
       : null;
-    return h(
-      P.Stack,
-      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
-      h(P.Text, { as: "h1", variant: "title" }, t(section === "documents" ? "documentsTitle" : "evidenceTitle")),
+    // #97 slice 7 (D-0034): a record page header over the split list and detail. The list is the Plenix FileList
+    // (file-list.md): CTMShell.Workspace only draws a DataGrid, so the same SplitView + ReadingPane it draws hold
+    // the FileList here. The open file is marked as the selected row; opening a name shows it in the reading pane.
+    const heading = t(section === "documents" ? "documentsTitle" : "evidenceTitle");
+    return h(P.RecordPage, {
+        className: "plx-u-flex-1 plx-u-min-h-0",
+        header: h(P.RecordPage.Header, { title: heading, headingLevel: 1 }),
+      },
       h(P.SplitView, {
-        label: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
-        firstLabel: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
+        label: heading,
+        firstLabel: heading,
         first: h(
           P.Stack,
           { gap: "sm", className: "plx-u-flex-1 plx-u-min-h-0" },
           h(P.Checkbox, { label: t("olderVersions"), checked: history, onChange: (e) => setHistory(e.target.checked) }),
-          h(window.CTMShell.Table, {
-            label: t(section === "documents" ? "documentsTitle" : "evidenceTitle"),
-            rows: tableRows, selected, onSelect: select, empty: t("noFiles"),
-            columns: [{ title: t(section === "documents" ? "documentsTitle" : "evidenceTitle"), field: "name", kind: "name" }, { title: t("version"), field: "version" }],
+          h(P.FileList, {
+            label: heading,
+            files: tableRows.map((row) => fileListEntry(row, t)),
+            selected: selected ? [selected] : [],
+            onOpen: (file) => select(file.id),
+            empty: h(P.EmptyState, { title: t("noFiles") }),
           }),
           pending ? base.loadingView(P, h, t) : null,
           failure ? base.loadFailure(P, h, t, () => setReload((n) => n + 1), failure) : null,
-          next !== null ? h(P.Button, { size: "sm", disabled: pending, onClick: more }, t("more")) : null,
+          next !== null ? h(P.Inline, null, h(P.Button, { size: "sm", disabled: pending, onClick: more }, t("more"))) : null,
         ),
         second: h(
           P.ReadingPane,
@@ -2217,7 +2243,6 @@
       }),
       viewerIndex !== null ? h(P.MediaViewer, { open: true, items: viewerItems, index: viewerIndex, onIndexChange: setViewerIndex, onClose: () => setViewerIndex(null), label: t("viewerLabel"), strings: { label: t("viewerLabel"), close: t("closePreview"), previous: t("previous"), next: t("next"), counter: t("counter") } }) : null,
     );
-
   }
 
   Object.assign(window.CTMCouncil, {
@@ -2244,6 +2269,7 @@
     paperOriginal,
     recordedOriginal,
     FilePreview,
+    fileListEntry,
     pdfStrings,
     answerEntries,
     extensionFor,

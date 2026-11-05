@@ -137,3 +137,46 @@ test("F12: later petitions on the closed case join appeals and use their own res
 test("decree and appeals pages are wrapped in an error boundary", () => {
   for (const name of ["DecreeWorkspace", "AppealsWorkspace"]) assert.match(C[name].displayName || "", /^Guarded\(/, name);
 });
+
+// #97 slice 7 (D-0034): the decree is a record page (record-page.md) with its step actions in an ActionBar
+// (page-actions.md); the appeals are the shared split list and detail (master-detail-workspace.md).
+const slice = (from, to) => source.slice(source.indexOf(from), source.indexOf(to, source.indexOf(from)));
+
+test("slice 7: the decree page is a RecordPage with its header and the approved decision aside", () => {
+  const page = slice("function DecreeWorkspace(", "// ---------- Appeals");
+  assert.match(page, /h\(P\.RecordPage, \{/);
+  assert.match(page, /header: h\(P\.RecordPage\.Header, \{ title: t\("decree"\)/);
+  assert.match(page, /aside: approved/);
+  assert.doesNotMatch(page, /as: "h1"/);
+});
+
+test("slice 7: every decree step keeps its buttons in an embedded ActionBar", () => {
+  const steps = slice("function DecreePreparation(", "function DecreeProtocolGuide(");
+  const bars = steps.match(/h\(P\.ActionBar, \{ label: t\("steps"\), sticky: false \}/g) || [];
+  assert.equal(bars.length, 4);
+  assert.doesNotMatch(steps, /h\(P\.Inline, null, h\(P\.Button/);
+  const guide = slice("function DecreeProtocolGuide(", "function DecreeWorkspace(");
+  assert.match(guide, /h\(P\.ActionBar, \{ label: t\("decree"\), sticky: false \}/);
+});
+
+test("slice 7: the decree draft shows only the recorded decision; decree wording is never invented here", () => {
+  // Template catalogs and exact wording belong to the later decree design (CTM-case-session-workflow.md).
+  assert.deepEqual(plain(C.decreeTemplateFor({ type: "diss-applicant" })), { kind: "dissolution" });
+  assert.deepEqual(plain(C.decreeTemplateFor({ type: "null-granted" })), { kind: "nullity" });
+  assert.deepEqual(plain(C.decreeTemplateFor({ type: "granted" })), { kind: "decision" });
+  const draft = slice("function DecreeTemplateDraft(", "function DecreePreparation(");
+  assert.doesNotMatch(source, /Preamble|Canonical basis|Decree statement|The Tribunal (grants|declares|issues|records)|Clerical Tribunal of/);
+  assert.match(draft, /decision\.grounds/);
+  assert.match(draft, /decision\.conditions/);
+  assert.match(draft, /t\("templateNotice"\)/);
+  assert.doesNotMatch(draft, /ctm-decree-template|label: "/);
+});
+
+test("slice 7: appeals use the shared CTMShell.Workspace under a record page header", () => {
+  const page = slice("function AppealsWorkspace(", "  Object.assign(window.CTMCouncil");
+  assert.match(page, /h\(window\.CTMShell\.Workspace, \{/);
+  assert.match(page, /h\(P\.RecordPage\.Header, \{ title: t\("appeals"\), description: t\("appealsScope"\)/);
+  assert.match(page, /selectionPrompt: t\("chooseAppeal"\)/);
+  assert.doesNotMatch(page, /P\.SplitView|P\.ReadingPane|as: "h1"/);
+  assert.match(page, /title: t\("statusLabel"\), field: "status"/);
+});

@@ -67,25 +67,14 @@
     return rows.sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0] || null;
   }
 
-  // The recorded decision type selects the decree wording. The grounds and any
-  // imposed conditions remain part of the same exact decision version.
+  // The recorded decision type selects the decree template. The template catalog and its exact wording belong to
+  // the later decree design (docs/architecture/CTM-case-session-workflow.md), so no decree text is written here:
+  // the secretary uploads the signed PDF prepared from the approved template (templateNotice).
   function decreeTemplateFor(decision) {
     const type = decision?.type || "";
-    if (type.startsWith("diss-"))
-      return {
-        kind: "dissolution",
-        title: "Dissolution of ecclesiastical marriage",
-        statement: "The Tribunal grants the petition for dissolution of the ecclesiastical marriage.",
-        canonical: "The Tribunal issues this decree under the canonical authority applicable to the recorded grounds.",
-      };
-    if (type.startsWith("null-"))
-      return {
-        kind: "nullity",
-        title: "Declaration of nullity",
-        statement: "The Tribunal declares the marriage invalid from its inception and grants the recorded permission to remarry.",
-        canonical: "The Tribunal issues this declaration under the canonical authority applicable to the recorded grounds.",
-      };
-    return { kind: "decision", title: "Decision decree", statement: "The Tribunal records the decision stated below.", canonical: "The canonical basis follows the recorded decision grounds." };
+    if (type.startsWith("diss-")) return { kind: "dissolution" };
+    if (type.startsWith("null-")) return { kind: "nullity" };
+    return { kind: "decision" };
   }
 
   // ---------- Words ----------
@@ -449,28 +438,20 @@
     );
   }
 
-  function DecreeTemplateDraft({ decision, record }) {
-    const P = window.Plenix, h = window.React.createElement;
-    const template = decreeTemplateFor(decision);
-    const parties = record.parties || [];
-    const applicant = parties.find((party) => party.role === "applicant")?.name || parties[0]?.name || "";
-    const respondent = parties.find((party) => party.role === "respondent")?.name || parties[1]?.name || "";
-    const sections = [
-      ["Preamble", `The Clerical Tribunal of the Coptic Orthodox Diocese of Los Angeles, having examined the petition of ${applicant} concerning ${respondent}, issues the following decree.`],
-      ["Findings of fact", decision.grounds || "No grounds were recorded."],
-      ["Canonical basis", template.canonical],
-      ["Decree statement", template.statement],
-      ["Conditions & directives", decision.conditions || "No additional conditions were recorded."],
-    ];
+  // What the decree will record: the approved decision version's own type, grounds and conditions, read from the
+  // server as they are. Certificate generation from the approved templates is not available yet (templateNotice).
+  function DecreeTemplateDraft({ decision, lang }) {
+    const P = window.Plenix, h = window.React.createElement, t = translator(lang);
     return h(
       P.Panel,
-      { icon: "doc-text", title: template.title, description: "Selected from the recorded decision type." },
-      h(P.PropertyList, null,
-        h(P.PropertyList.Item, { label: "Decision type" }, base.typeLabel(decision.type)),
-        h(P.PropertyList.Item, { label: "Template" }, template.title),
-      ),
-      h("div", { className: "ctm-decree-template" },
-        ...sections.map(([title, body]) => h(P.Panel, { key: title, title }, h(P.Text, { as: "p" }, body))),
+      { icon: "doc-text", title: base.typeLabel(decision.type) },
+      h(P.Stack, { gap: "md" },
+        h(P.Notice, { tone: "info" }, t("templateNotice")),
+        h(P.PropertyList, { layout: "stacked" },
+          h(P.PropertyList.Item, { label: t("decisionType") }, base.typeLabel(decision.type)),
+          decision.grounds ? h(P.PropertyList.Item, { label: t("grounds") }, decision.grounds) : null,
+          decision.conditions ? h(P.PropertyList.Item, { label: t("conditions") }, decision.conditions) : null,
+        ),
       ),
     );
   }
@@ -588,7 +569,7 @@
       body = h(
         P.Stack,
         { gap: "md" },
-        h(DecreeTemplateDraft, { decision, record }),
+        h(DecreeTemplateDraft, { decision, lang }),
         h(P.RadioGroup, {
           label: t("certificateLanguage"),
           value: work.language,
@@ -607,7 +588,7 @@
             },
           }),
         ),
-        h(P.Inline, null, h(P.Button, { variant: "primary", loading: pending, disabled: pending, onClick: upload }, t("upload"))),
+        h(P.ActionBar, { label: t("steps"), sticky: false }, h(P.Button, { variant: "primary", loading: pending, disabled: pending, onClick: upload }, t("upload"))),
       );
     else if (step === 1)
       body = h(
@@ -615,7 +596,7 @@
         { gap: "md" },
         h(P.Text, { variant: "data" }, work.file.name || work.file.id),
         h(P.Notice, { tone: "warning" }, t("scanWaiting")),
-        h(P.Inline, null, h(P.Button, { loading: pending, disabled: pending, onClick: recheck }, t("checkAgain"))),
+        h(P.ActionBar, { label: t("steps"), sticky: false }, h(P.Button, { loading: pending, disabled: pending, onClick: recheck }, t("checkAgain"))),
       );
     else if (step === 2)
       body = h(
@@ -652,7 +633,7 @@
           { label: t("evidenceNote") },
           h(P.Textarea, { rows: 2, value: sign.note, maxLength: 2000, disabled: pending, onChange: (e) => setSign((old) => ({ ...old, note: e.target.value })) }),
         ),
-        h(P.Inline, null, h(P.Button, { variant: "primary", loading: pending, disabled: pending, onClick: attest }, t("recordSignature"))),
+        h(P.ActionBar, { label: t("steps"), sticky: false }, h(P.Button, { variant: "primary", loading: pending, disabled: pending, onClick: attest }, t("recordSignature"))),
       );
     else
       body = h(
@@ -666,7 +647,7 @@
           h(P.PropertyList.Item, { label: t("signer") }, signerName),
           h(P.PropertyList.Item, { label: t("storedFile") }, h(P.Button, { size: "xs", href: `/api/files/${encodeURIComponent(work.file.id)}/` }, t("download"))),
         ),
-        h(P.Inline, null, h(P.Button, { variant: "primary", disabled: pending, onClick: () => setConfirm(true) }, t("issue"))),
+        h(P.ActionBar, { label: t("steps"), sticky: false }, h(P.Button, { variant: "primary", disabled: pending, onClick: () => setConfirm(true) }, t("issue"))),
       );
 
     return h(
@@ -703,7 +684,7 @@
       { icon: "doc-text", title: t("decree") },
       h(P.Text, { as: "h2", variant: "heading" }, t("decreeProtocolTitle")),
       h(P.Text, { as: "p", variant: "secondary" }, t("decreeProtocolMessage")),
-      h(P.Inline, null, h(P.Button, { variant: "primary", onClick: onGoDecision }, t("goDecisionVoting"))),
+      h(P.ActionBar, { label: t("decree"), sticky: false }, h(P.Button, { variant: "primary", onClick: onGoDecision }, t("goDecisionVoting"))),
     );
   }
   function DecreeWorkspace({ api, lang, user, caseId, onGoDecision }) {
@@ -761,29 +742,36 @@
           setNotice("issued");
         },
       });
-    const detail = h(
-      P.Stack,
-      { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("decree")),
-      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-      current && !eligibility
-        ? h(
-            P.Panel,
-            { icon: "doc-text", title: t("approvedDecision") },
-            h(
-              P.PropertyList,
-              null,
-              h(P.PropertyList.Item, { label: t("decisionType") }, base.typeLabel(current.type)),
-              h(P.PropertyList.Item, { label: t("decreeId"), data: true }, decree?.reference || decreeReference(record.number, proceeding)),
-              h(P.PropertyList.Item, { label: t("president") }, current.approval?.president || ""),
-            ),
-          )
-        : null,
-      !manage && decree ? h(P.Notice, { tone: "info" }, t("adminOnly")) : null,
-      content,
+    // #97 slice 7 (D-0034): the decree is a record page (record-page.md): its title and decree ID in the header,
+    // the approved decision as the aside, and the current step (or the issued decree) as the body.
+    const reference = decree?.reference || decreeReference(record.number, proceeding);
+    const approved = current && !eligibility
+      ? h(
+          P.Panel,
+          { icon: "doc-text", title: t("approvedDecision") },
+          h(
+            P.PropertyList,
+            { layout: "stacked" },
+            h(P.PropertyList.Item, { label: t("decisionType") }, base.typeLabel(current.type)),
+            h(P.PropertyList.Item, { label: t("decreeId"), data: true }, reference),
+            h(P.PropertyList.Item, { label: t("president") }, current.approval?.president || ""),
+          ),
+        )
+      : null;
+    return h(P.RecordPage, {
+        className: "ctm-decree-workspace",
+        header: h(P.RecordPage.Header, { title: t("decree"), headingLevel: 1,
+          meta: approved && reference ? h(P.Badge, { tone: decree ? "success" : "neutral" }, reference) : null }),
+        aside: approved,
+      },
+      h(
+        P.Stack,
+        { gap: "lg" },
+        notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+        !manage && decree ? h(P.Notice, { tone: "info" }, t("adminOnly")) : null,
+        content,
+      ),
     );
-    return h(P.Stack, { gap: "lg", className: "ctm-decree-workspace" }, detail);
-
   }
 
   // ---------- Appeals ----------
@@ -1016,42 +1004,46 @@
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { appeals, record, hearings, hearingsKnown } = state.data;
-    const chosen = appeals.find((row) => row.id === selected);
-    return h(
-      P.Stack,
-      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
-      h(P.Text, { as: "h1", variant: "title" }, t("appeals")),
-      h(P.Text, { variant: "secondary" }, t("appealsScope")),
-      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-      h(P.SplitView, {
-        label: t("appeals"),
-        firstLabel: t("appeals"),
-        first: h(window.CTMShell.Table, {
-          label: t("appeals"), rows: appeals, selected,
-          onSelect: (id) => { setNotice(null); select(id); }, empty: t("noAppeals"),
-          columns: [{ title: t("appeal"), field: "applicant_name", kind: "name" }, { title: t("appeals"), field: "status", render: (row) => t("appeal_" + row.status) }],
+    // #97 slice 7 (D-0034): the appeals are the shared split list and detail (CTMShell.Workspace, the SplitWorkspace
+    // template body; master-detail-workspace.md) under a record page header. The reading pane is titled by the appellant.
+    const rows = appeals.map((row) => ({ ...row, title: row.applicant_name || t("appeal") }));
+    return h(P.RecordPage, {
+        className: "plx-u-flex-1 plx-u-min-h-0",
+        header: h(P.RecordPage.Header, { title: t("appeals"), description: t("appealsScope"), headingLevel: 1 }),
+      },
+      h(
+        P.Stack,
+        { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
+        notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+        h(window.CTMShell.Workspace, {
+          label: t("appeals"),
+          rows,
+          selected,
+          onSelect: (id) => { setNotice(null); select(id); },
+          empty: t("noAppeals"),
+          selectionPrompt: t("chooseAppeal"),
+          columns: [
+            { title: t("appellant"), field: "applicant_name", kind: "name", type: "person", render: (row) => row.applicant_name || t("appeal") },
+            { title: t("statusLabel"), field: "status", render: (row) => t("appeal_" + row.status) },
+            { title: t("submittedAt"), field: "submitted_at", type: "date", render: (row) => (row.submitted_at ? base.formatWhen(row.submitted_at, lang) : "—") },
+          ],
+          children: (chosen) =>
+            h(AppealDetail, {
+              key: chosen.id,
+              api,
+              lang,
+              user,
+              row: chosen,
+              record,
+              hearings,
+              hearingsKnown,
+              onRecorded: (key) => {
+                setNotice(key);
+                retry();
+              },
+            }),
         }),
-        second: h(
-          P.ReadingPane,
-          { label: chosen ? chosen.applicant_name || t("appeal") : t("chooseAppeal"), empty: h(P.EmptyState, { title: t("chooseAppeal") }) },
-          chosen
-            ? h(AppealDetail, {
-                key: chosen.id,
-                api,
-                lang,
-                user,
-                row: chosen,
-                record,
-                hearings,
-                hearingsKnown,
-                onRecorded: (key) => {
-                  setNotice(key);
-                  retry();
-                },
-              })
-            : null,
-        ),
-      }),
+      ),
     );
   }
 
