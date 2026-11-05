@@ -393,9 +393,11 @@ test("My Account does not link to CTM Settings", () => {
 test("CTM Settings users directory supports active, previous, and account-management actions", () => {
   const workspaces = fs.readFileSync("static/ctm/ui-workspaces.js", "utf8");
   assert.match(workspaces, /function MemberDirectory/);
-  assert.match(workspaces, /label: "Active Members"/);
-  assert.match(workspaces, /label: "Previous Members"/);
-  assert.match(workspaces, /Add staff user/);
+  // #97 slice 6: a listing page; active/previous is a command bar choice (settings-templates.test.cjs renders it).
+  assert.match(workspaces, /activeMembers: "Active Members"/);
+  assert.match(workspaces, /previousMembers: "Previous Members"/);
+  assert.match(workspaces, /addStaff: "Add staff user"/);
+  assert.match(workspaces, /window.CTMShell.Listing/);
   assert.match(workspaces, /\/api\/system\/members\//);
   assert.match(workspaces, /\/api\/system\/accounts\/\$\{encodeURIComponent\(archiveTarget\.id\)\}\/status\//);
   assert.match(workspaces, /Manage access/);
