@@ -200,10 +200,6 @@
     return status ? "pdfFailed" : "pdfNetwork";
   }
 
-  function priestLink(origin, requestId, token) {
-    return `${origin}/static/ctm/external-report.html#r=${encodeURIComponent(requestId)}&t=${encodeURIComponent(token)}`;
-  }
-
   function requestProblem(form, questions) {
     if (!form.party) return "chooseSubject";
     if (form.kind === EXTERNAL) {
@@ -689,19 +685,13 @@ ${ar}` : en;
       externalNoQuestions: "The priest writes a free-form report. No question list is sent.",
       externalLinkTitle: "Private link for the priest",
       externalLinkHelp: "The link opens only this request. It expires 30 days after it is issued, stops working when a new link is issued, the request is cancelled or the report is submitted, and gives no access to the case or other reports.",
-      linkShownOnce: "Copy this link now. For privacy it is shown only once and is not stored here.",
-      privateLink: "Private link",
-      copyLink: "Copy link",
-      linkCopied: "Copied",
-      copyFailed: "The link could not be copied. Select it and copy it manually.",
-      linkNotEmailed: "This server does not email the link. Send it to the priest privately, never in case messages or notes.",
-      linkNotReturned: "The server did not return a link. Nothing was sent.",
+      linkEmailUnavailable: "Email delivery is not available yet, so the link was not sent and is not shown here. Use the paper form instead: open or download the printed request below.",
       priestEmail: "Priest's email (for the record)",
       priestEmailHelp: "Stored with the request. It is not used to send anything.",
       issueLink: "Issue private link",
       reissueLink: "Issue a new link",
       issueTitle: "Issue a private link?",
-      issueMessage: "A link valid for 30 days is created. It is shown once so you can send it privately.",
+      issueMessage: "A link valid for 30 days is created. It is never shown here; CTM sends it by email once email delivery is available.",
       reissueTitle: "Issue a new link?",
       reissueMessage: "The earlier link stops working immediately. The new link is valid for 30 days.",
       cancelExternal: "Cancel request",
@@ -710,7 +700,7 @@ ${ar}` : en;
       keepRequest: "Keep request",
       externalCompleted: "The priest's report was submitted. It appears under Completed reports.",
       externalClosed: "This request is closed. The link no longer works.",
-      externalIssued: "Private link issued. Copy it before leaving this page.",
+      externalIssued: "Private link issued. It was not sent: email delivery is not available yet.",
       externalCancelled: "Request cancelled. The private link no longer works.",
       externalSubject: "Spouse named in the request",
       externalSubjectHelp: "The priest sees this name and the case number only.",
@@ -1155,19 +1145,13 @@ ${ar}` : en;
       externalNoQuestions: "يكتب الكاهن تقريرًا حرًّا. ولا تُرسل قائمة أسئلة.",
       externalLinkTitle: "الرابط الخاص بالكاهن",
       externalLinkHelp: "يفتح الرابط هذا الطلب فقط. وتنتهي صلاحيته بعد 30 يومًا من إصداره، ويتوقف عند إصدار رابط جديد أو إلغاء الطلب أو تقديم التقرير، ولا يمنح أي اطلاع على القضية أو التقارير الأخرى.",
-      linkShownOnce: "انسخ هذا الرابط الآن. حفاظًا على الخصوصية لا يُعرض إلا مرة واحدة ولا يُحفظ هنا.",
-      privateLink: "الرابط الخاص",
-      copyLink: "نسخ الرابط",
-      linkCopied: "تم النسخ",
-      copyFailed: "تعذر نسخ الرابط. حدّده وانسخه يدويًا.",
-      linkNotEmailed: "لا يرسل هذا الخادم الرابط بالبريد الإلكتروني. أرسله إلى الكاهن بشكل خاص، ولا تضعه أبدًا في رسائل القضية أو ملاحظاتها.",
-      linkNotReturned: "لم يُرجع الخادم رابطًا. لم يُرسل شيء.",
+      linkEmailUnavailable: "البريد الإلكتروني غير متاح بعد، لذلك لم يُرسل الرابط ولا يُعرض هنا. استخدم النموذج الورقي بدلًا من ذلك: افتح الطلب المطبوع أدناه أو نزّله.",
       priestEmail: "البريد الإلكتروني للكاهن (للسجل)",
       priestEmailHelp: "يُحفظ مع الطلب. ولا يُستخدم لإرسال أي شيء.",
       issueLink: "إصدار رابط خاص",
       reissueLink: "إصدار رابط جديد",
       issueTitle: "هل تريد إصدار رابط خاص؟",
-      issueMessage: "يُنشأ رابط صالح لمدة 30 يومًا. ويُعرض مرة واحدة لتتمكن من إرساله بشكل خاص.",
+      issueMessage: "يُنشأ رابط صالح لمدة 30 يومًا. ولا يُعرض هنا أبدًا؛ ويرسله CTM بالبريد الإلكتروني عندما يصبح البريد متاحًا.",
       reissueTitle: "هل تريد إصدار رابط جديد؟",
       reissueMessage: "يتوقف الرابط السابق فورًا. ويكون الرابط الجديد صالحًا لمدة 30 يومًا.",
       cancelExternal: "إلغاء الطلب",
@@ -1176,7 +1160,7 @@ ${ar}` : en;
       keepRequest: "الإبقاء على الطلب",
       externalCompleted: "قدّم الكاهن تقريره. ويظهر ضمن التقارير المكتملة.",
       externalClosed: "هذا الطلب مغلق. ولم يعد الرابط يعمل.",
-      externalIssued: "صدر الرابط الخاص. انسخه قبل مغادرة هذه الصفحة.",
+      externalIssued: "صدر الرابط الخاص. ولم يُرسل: البريد الإلكتروني غير متاح بعد.",
       externalCancelled: "أُلغي الطلب. ولم يعد الرابط الخاص يعمل.",
       externalSubject: "الزوج/الزوجة المذكور في الطلب",
       externalSubjectHelp: "لا يرى الكاهن إلا هذا الاسم ورقم القضية.",
@@ -1573,11 +1557,10 @@ ${ar}` : en;
     const controls = linkControls(request, canWrite);
     const [name, setName] = R.useState(() => controls.priestName || priestFromTitle(request.title));
     const [email, setEmail] = R.useState("");
-    const [link, setLink] = R.useState(null); // shown once, kept in memory only
+    const [issued, setIssued] = R.useState(false); // D-0030: the token is never kept, shown or copied
     const [confirm, setConfirm] = R.useState(null); // "issue" | "reissue" | "cancel"
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
-    const [copied, setCopied] = R.useState(false);
     const [pdf, setPdf] = R.useState(null); // { busy } | { problem } | { done }
     // Backend rule: writer, open case and proceeding, unfinished (draft or sent) request. With the projection, the
     // server's control flags already encode writer and open; without it, fall back to the request state.
@@ -1610,13 +1593,11 @@ ${ar}` : en;
       if (!name.trim()) return setFailure(t("priestRequired"));
       setPending(true);
       try {
-        const out = await api(`/api/requests/${encodeURIComponent(request.id)}/send/`, {
+        await api(`/api/requests/${encodeURIComponent(request.id)}/send/`, {
           method: "POST",
           body: JSON.stringify({ external_name: name.trim(), external_email: email.trim() }),
         });
-        if (!out || !out.token) throw Object.assign(new Error("no link"), { data: { detail: t("linkNotReturned") } });
-        setLink(priestLink(window.location.origin, request.id, out.token));
-        setCopied(false);
+        setIssued(true);
         onChanged(null);
       } catch (error) {
         setFailure(base.serverMessage(error, t));
@@ -1634,21 +1615,12 @@ ${ar}` : en;
           method: "POST",
           body: JSON.stringify({ expected_version: request.request_version }),
         });
-        setLink(null);
+        setIssued(false);
         onChanged("externalCancelled");
       } catch (error) {
         setFailure(base.serverMessage(error, t));
       } finally {
         setPending(false);
-      }
-    }
-    async function copy() {
-      try {
-        await window.navigator.clipboard.writeText(link);
-        setCopied(true);
-      } catch {
-        setCopied(false);
-        setFailure(t("copyFailed"));
       }
     }
     return h(
@@ -1679,16 +1651,7 @@ ${ar}` : en;
           : null,
         controls.state === "expired" ? h(P.Notice, { tone: "warning" }, t(controls.reissue ? "linkExpiredHint" : "linkExpiredNoAuthority")) : null,
         controls.state === "unavailable" ? h(P.Notice, { tone: "warning" }, t("linkUnavailableHint")) : null,
-        link
-          ? h(
-              P.Stack,
-              { gap: "sm" },
-              h(P.Notice, { tone: "warning" }, t("linkShownOnce")),
-              h(P.Field, { label: t("privateLink") }, h(P.Input, { value: link, readOnly: true, dir: "ltr" })),
-              h(P.Inline, { wrap: true }, h(P.Button, { size: "sm", variant: "primary", onClick: copy }, t(copied ? "linkCopied" : "copyLink"))),
-              h(P.Text, { variant: "secondary" }, t("linkNotEmailed")),
-            )
-          : null,
+        issued ? h(P.Notice, { tone: "warning" }, t("linkEmailUnavailable")) : null,
         controls.issue || controls.reissue || controls.cancel
           ? h(
               P.Stack,
@@ -4181,7 +4144,6 @@ ${ar}` : en;
     caseTranslator: translator,
     InterviewForm, // exported for the unsaved-text regression test
     ExternalLinkPanel,
-    priestLink,
     priestTitle,
     priestFromTitle,
     linkControls,

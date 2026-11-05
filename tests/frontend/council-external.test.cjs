@@ -16,11 +16,6 @@ test("external request: priest name required; payload is free-form with no quest
   assert.equal(C.priestFromTitle("Report by Fr. Synthetic Priest"), "Synthetic Priest");
 });
 
-test("the private link keeps the token in the fragment of the static boot page", () => {
-  const C = load(harness());
-  assert.equal(C.priestLink("https://ctm.example", "req-1", "tok/en+"), "https://ctm.example/static/ctm/external-report.html#r=req-1&t=tok%2Fen%2B");
-});
-
 function panel(request, routes, extra = {}) {
   const h = harness();
   const clipboard = [];
@@ -48,27 +43,41 @@ function panel(request, routes, extra = {}) {
 
 const draft = { id: "req-1", kind: "external_priest", state: "draft", title: "Report by Fr. Synthetic Priest", request_version: 3 };
 
-test("issuing asks first, sends name and email, shows the link once and says it was not emailed", async () => {
+// D-0030 (#55): the council never sees or copies the priest's private link. Until CTM's own email delivery is
+// confirmed, the panel says email is unavailable and points to the paper form.
+function assertNoToken(ui, token) {
+  assert.doesNotMatch(ui.text(), new RegExp(token));
+  assert.equal(find(ui.tree, (n) => n.props && typeof n.props.value === "string" && n.props.value.includes(token)).length, 0, "no field holds the token");
+  assert.equal(buttons(ui.tree, "Copy link").length + buttons(ui.tree, "Copied").length, 0, "no Copy link control");
+  assert.deepEqual(ui.clipboard, [], "nothing on the clipboard");
+}
+
+test("D-0030: issuing asks first, sends name and email, never shows or copies the link, offers the paper form", async () => {
   const ui = panel(draft, () => ({ id: "req-1", token: "secret-token" }));
   await ui.click("Issue private link");
   assert.equal(ui.calls.length, 0, "confirmation first");
   await ui.confirm();
   assert.deepEqual(ui.calls[0], { url: "/api/requests/req-1/send/", method: "POST", body: { external_name: "Synthetic Priest", external_email: "" } });
-  const field = find(ui.tree, (n) => n.props && n.props.readOnly === true)[0];
-  assert.equal(field.props.value, "https://ctm.example/static/ctm/external-report.html#r=req-1&t=secret-token");
-  assert.match(textOf(ui.tree), /shown only once/);
-  assert.match(textOf(ui.tree), /does not email the link/);
-  await ui.click("Copy link");
-  assert.deepEqual(ui.clipboard, [field.props.value]);
-  assert.ok(buttons(ui.tree, "Copied")[0]);
+  assertNoToken(ui, "secret-token");
+  assert.match(notices(ui.tree).join(" "), /Email delivery is not available yet/);
+  assert.match(notices(ui.tree).join(" "), /paper form/);
+  assert.ok(buttons(ui.tree, "Download PDF")[0] || buttons(ui.tree, "Open printable form")[0], "paper form offered");
+  assert.deepEqual(ui.changed, [null]);
 });
 
-test("a missing token is never presented as a sent link", async () => {
+test("D-0030: the panel source has no token display, copy or link building", () => {
+  const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const panelSrc = src.slice(src.indexOf("function ExternalLinkPanel("), src.indexOf("function RequestDetail("));
+  assert.doesNotMatch(panelSrc, /clipboard|out\.token|readOnly: true/);
+  assert.doesNotMatch(src, /function priestLink\(|linkShownOnce|copyLink/);
+});
+
+test("D-0030: a reply without a token is fine; nothing is shown either way", async () => {
   const ui = panel(draft, () => ({ id: "req-1", token: null }));
   await ui.click("Issue private link");
   await ui.confirm();
-  assert.equal(find(ui.tree, (n) => n.props && n.props.readOnly === true).length, 0);
-  assert.match(notices(ui.tree).join(" "), /did not return a link/);
+  assert.match(notices(ui.tree).join(" "), /Email delivery is not available yet/);
+  assert.doesNotMatch(notices(ui.tree).join(" "), /did not return a link/);
 });
 
 test("reissue warns that the earlier link stops working; cancel sends the request version", async () => {
@@ -78,7 +87,7 @@ test("reissue warns that the earlier link stops working; cancel sends the reques
   const reissue = dialogs(ui.tree).find((d) => d.props.open);
   assert.match(reissue.props.message, /earlier link stops working immediately/);
   await ui.confirm();
-  assert.match(find(ui.tree, (n) => n.props && n.props.readOnly === true)[0].props.value, /t=new-token$/);
+  assertNoToken(ui, "new-token");
   await ui.click("Cancel request");
   await ui.confirm();
   assert.deepEqual(ui.calls.at(-1), { url: "/api/requests/req-1/cancel/", method: "POST", body: { expected_version: 3 } });
@@ -94,9 +103,13 @@ test("completed or cancelled requests offer no link controls", async () => {
 });
 
 test("Arabic wording for the link panel", async () => {
-  const ui = panel(draft, () => ({ id: "req-1", token: "t" }), { lang: "ar" });
+  const ui = panel(draft, () => ({ id: "req-1", token: "never-shown" }), { lang: "ar" });
   assert.match(ui.text(), /الرابط الخاص بالكاهن/);
   assert.ok(buttons(ui.tree, "إصدار رابط خاص")[0]);
+  await ui.click("إصدار رابط خاص");
+  await ui.confirm();
+  assert.match(notices(ui.tree).join(" "), /البريد الإلكتروني غير متاح بعد/);
+  assertNoToken(ui, "never-shown");
 });
 
 test("the token is never stored, logged or put in messages by council code", () => {
