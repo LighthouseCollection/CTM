@@ -2026,5 +2026,5 @@
       ),
     );
   }
-  window.ReactDOM.createRoot(root).render(h(P.ThemeProvider, null, h(App)));
+  window.ReactDOM.createRoot(root).render(h(P.ThemeProvider, null, h(P.DirectionProvider, { follow: true }, h(App))));
 })();
