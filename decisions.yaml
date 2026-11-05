@@ -150,7 +150,8 @@ decisions:
     why: Renders on github.com and the mobile app, needs no hosting or login, and cannot drift from GitHub
     options: ["A (Recommended, applied): pinned issue - risk: long pages scroll", "B: GitHub Pages site - risk: one more thing to host"]
     decided_by: agent:ctm3-product-lead
-    status: active
+    status: superseded
+    superseded_by: D-0031
     check: { kind: workflow, ref: .github/workflows/dashboard.yml }
 
   - id: D-0015
@@ -284,3 +285,13 @@ decisions:
     decided_by: agent:ctm3-product-lead
     status: active
     review_only: Not built yet (#55); its frontend test becomes the check
+
+  - id: D-0031
+    date: 2026-11-04
+    area: process
+    decision: The dashboard is also published as an HTML page on GitHub Pages (https://lighthousecollection.github.io/CTM/), built by the same script and workflow from the same data as the pinned issue; the pinned issue stays
+    why: Owner asked for the HTML page (2026-11-04, Product Lead session); replaces the agent decision D-0014. Keeping the issue as well preserves the mobile view at no cost (decision card on #61)
+    options: [HTML page and pinned issue (chosen), HTML page only]
+    decided_by: owner
+    status: active
+    review_only: Not built yet (#61); the dashboard workflow's Pages job becomes the check
