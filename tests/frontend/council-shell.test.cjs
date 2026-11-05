@@ -600,7 +600,7 @@ test("case hearings use full-width current and past tabs with an in-progress hea
   assert.match(councilCase, /variant: "contained", label: t\("hearingsTitle"\)/);
   assert.match(councilCase, /currentHearing: "Current Hearing: \{date\}"/);
   assert.match(councilCase, /pastHearings: "Past hearings"/);
-  assert.match(councilCase, /data-plx-media-hue": "green"/);
+  assert.match(councilCase, /kind: "section",\s*media: \{ icon: "calendar", hue: "green" \}/);
   assert.match(councilCase, /rescheduleHearing: "Reschedule this hearing"/);
   assert.match(councilCase, /councilAttendance: "Council attendance"/);
   assert.match(councilCase, /outcome: "Outcome"/);
@@ -613,8 +613,9 @@ test("case hearing header is rendered above its tabs and Hearings uses the balan
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   const app = fs.readFileSync("static/ctm/app.js", "utf8");
   const hearing = councilCase.slice(councilCase.indexOf("function CaseHearings"), councilCase.indexOf("function HearingAttendance"));
-  assert.match(hearing, /const currentHeader = current \? h\("header", \{ className: "plx-entity-header" \}/);
-  assert.match(hearing, /return h\(P\.Stack, \{ gap: "lg" \}, currentHeader, h\(P\.Tabs/);
+  // #97 slice 3: a Plenix EntityHeader section, inside the case RecordPage, above the tabs.
+  assert.match(hearing, /const currentHeader = current \? h\(P\.EntityHeader, \{\s*kind: "section"/);
+  assert.match(hearing, /return h\(CaseRecordPage, \{ api, lang, caseId, title: t\("hearingsTitle"\) \}, currentHeader, h\(P\.Tabs/);
   assert.match(app, /id === "hearings"\s*\? h\(P\.Icon, \{ name: "balance"/);
 });
 

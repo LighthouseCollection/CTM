@@ -416,6 +416,9 @@ ${ar}` : en;
       pending: "Pending",
       inProgress: "In progress",
       active: "Active",
+      caseClosedReadOnly: "This case is closed and read-only.",
+      caseActions: "Case actions",
+      moreActions: "More actions",
       applicant: "Applicant",
       respondent: "Respondent",
       reasonForDivorce: "Reason Seeking Divorce",
@@ -880,6 +883,9 @@ ${ar}` : en;
       pending: "قيد الانتظار",
       inProgress: "قيد التنفيذ",
       active: "نشطة",
+      caseClosedReadOnly: "هذه القضية مغلقة ومتاحة للقراءة فقط.",
+      caseActions: "إجراءات القضية",
+      moreActions: "مزيد من الإجراءات",
       applicant: "مقدم الطلب",
       respondent: "الطرف الآخر",
       reasonForDivorce: "سبب طلب الطلاق",
@@ -2133,14 +2139,14 @@ ${ar}` : en;
     // A new interview opens its interview tab; an external priest request stays here, where its private link is issued.
     const requests = h(RequestsPanel, { api, lang, user, caseId, reports, onCompleted, onCreated: (id, note) => { if (note !== "externalDraftSaved") setTab("interviews"); } });
     const interviewReports = h(RequestsPanel, { api, lang, user, caseId, reports, mode: "interviews", onCompleted });
-    return h(P.Tabs, {
+    return h(CaseRecordPage, { api, lang, caseId, fill: true }, h(P.Tabs, {
       variant: "contained", label: t("reports"), value: tab, onChange: setTab,
       items: [
         { value: "reports", label: t("completedReports"), content: completedReports },
         { value: "interviews", label: t("interviewReports"), content: interviewReports },
         { value: "requests", label: t("reportTemplates"), content: requests },
       ],
-    });
+    }));
   }
 
   // ---------- Decision & Voting ----------
@@ -2629,9 +2635,9 @@ ${ar}` : en;
         : null,
     );
     return h(
-      P.Stack,
-      { gap: "lg", className: "ctm-decision-voting-workspace" },
-      h(P.Panel, { icon: "doc-text", title: t("decisionVoting") }, detail),
+      CaseRecordPage,
+      { api, lang, caseId, record },
+      h(P.Panel, { icon: "doc-text", title: t("decisionVoting"), className: "ctm-decision-voting-workspace" }, detail),
       current
         ? h(CouncilVoteRecord, {
             key: `vote-${current.id}`,
@@ -2794,9 +2800,8 @@ ${ar}` : en;
     const loaded = auditRows(state.data.items, state.data.members, lang);
     const rows = window.CTMUI.filterAudit(loaded, filters);
     return h(
-      P.Stack,
-      { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
-      h(P.Text, { as: "h1", variant: "title" }, t("caseAudit")),
+      CaseRecordPage,
+      { api, lang, caseId, title: t("caseAudit"), fill: true },
       h(window.CTMUI.AuditFilters, { rows: loaded, filters, onChange: setFilters, lang }),
       h(P.Text, { variant: "secondary" }, t("auditCount", { n: rows.length })),
       h(window.CTMShell.Workspace, {
@@ -2852,9 +2857,9 @@ ${ar}` : en;
       label: t("callLog"), rows, selected, onSelect: select, empty: t("noCalls"), showDetailWhenEmpty: true,
       columns: [{ title: t("callParty"), field: "person", kind: "name" }, { title: t("callOutcome"), field: "outcome" }, { title: t("callTime"), field: "occurred" }],
     }, (call) => call ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, call.person), h(P.Text, { variant: "secondary" }, call.occurred), h(P.Text, { as: "p", variant: "strong" }, call.outcome), call.notes ? h(P.Text, { as: "p" }, call.notes) : null) : h(P.EmptyState, { title: t("noCalls") }));
+    const callFact = countFact("phone", t("callLog"), calls.length, canWrite ? { label: t("recordCall"), icon: "add", name: t("recordCall"), onClick: () => setComposing(true) } : null);
     return h(R.Fragment, null, callDialog,
-      h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
-        h(P.Toolbar, { label: t("callLog") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => setComposing(true) }, "New Call") : null),
+      h(CaseRecordPage, { api, lang, caseId, record, title: t("callLog"), facts: [callFact], readOnly: record.status !== "open", fill: true },
         notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
         h(P.Tabs, {
           variant: "contained", label: t("callLog"), value: tab,
@@ -2984,12 +2989,6 @@ ${ar}` : en;
     const detail = h(
       P.Stack,
       { gap: "lg" },
-      h(P.Toolbar, { label: t("assessments") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => setComposing(true) }, t("newAssessment")) : null),
-      h(P.Text, { as: "h1", variant: "title" }, t("assessments")),
-      h(P.Notice, { tone: "info" }, t("assessmentPrivacy")),
-      h(P.Notice, { tone: "warning" }, t("releaseTextPending")),
-      notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
-      failure && !confirm ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
       h(
         P.Panel,
         { icon: "lock",
@@ -3039,27 +3038,90 @@ ${ar}` : en;
             )
           : h(P.EmptyState, { title: t("noAssessmentReports") }),
       ),
-      h(
-        P.ConfirmDialog,
-        {
-          open: Boolean(confirm),
-          title: t("sendAssessmentTitle"),
-          message: t("sendAssessmentMessage"),
-          confirmLabel: t("send"),
-          cancelLabel: t("cancel"),
-          onConfirm: send,
-          onCancel: () => !pending && setConfirm(null),
-        },
-        failure && confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
+    );
+    const sendDialog = h(
+      P.ConfirmDialog,
+      {
+        open: Boolean(confirm),
+        title: t("sendAssessmentTitle"),
+        message: t("sendAssessmentMessage"),
+        confirmLabel: t("send"),
+        cancelLabel: t("cancel"),
+        onConfirm: send,
+        onCancel: () => !pending && setConfirm(null),
+      },
+      failure && confirm ? h(P.Notice, { tone: "danger" }, failure) : null,
+    );
+    // The count is the rows this tab already lists to this user; the case header on other tabs never shows it.
+    const rows = [...requests, ...reports].map((row) => ({ ...row, title: row.restricted ? t("restrictedAssessment") : row.title }));
+    const assessmentFact = countFact("lock", t("assessments"), rows.length, canWrite ? { label: t("newAssessment"), icon: "add", name: t("newAssessment"), onClick: () => setComposing(true) } : null);
+    return h(R.Fragment, null, requestDialog, sendDialog,
+      h(CaseRecordPage, { api, lang, caseId, record, title: t("assessments"), facts: [assessmentFact], readOnly: !proceeding, fill: true },
+        h(P.Notice, { tone: "info" }, t("assessmentPrivacy")),
+        h(P.Notice, { tone: "warning" }, t("releaseTextPending")),
+        notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
+        failure && !confirm ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
+        h(window.CTMShell.Workspace, {
+          label: t("assessments"), selected, onSelect: select, showDetailWhenEmpty: true, rows,
+          empty: t("noAssessmentReports"),
+          columns: [{ title: t("assessments"), field: "title", kind: "name" }, { title: t("assessmentKind"), field: "kind", render: (row) => row.kind ? t(row.kind) : "" }],
+        }, detail),
       ),
     );
-    return h(window.CTMShell.Workspace, {
-      label: t("assessments"), selected, onSelect: select, showDetailWhenEmpty: true,
-      rows: [...requests, ...reports].map((row) => ({ ...row, title: row.restricted ? t("restrictedAssessment") : row.title })),
-      empty: t("noAssessmentReports"),
-      columns: [{ title: t("assessments"), field: "title", kind: "name" }, { title: t("assessmentKind"), field: "kind", render: (row) => row.kind ? t(row.kind) : "" }],
-    }, detail, requestDialog);
 
+  }
+
+  // ---------- Case record page ----------
+  // #97 slice 3 (D-0034): every case tab is a Plenix RecordPage (record-page.md) under one case header, Plenix
+  // EntityHeader in header style 1, Structured (the default): the case number, the spouses, the status tile and
+  // the case manager. A tab whose count carries an action adds it as a fact with its action (header style 2,
+  // facts[].action, like the council session header). The header shows only what GET /api/cases/{id}/ already
+  // returns to this user, never a report, a request or a Professional Assessment of another tab.
+  function caseManager(record) {
+    const history = record.assignment_history;
+    return history && history.length ? history[history.length - 1].member : record.assigned_member || null;
+  }
+
+  function caseHeaderProps(record, lang, facts) {
+    const t = translator(lang), bt = base.translator(lang);
+    const parties = record.parties || [];
+    const applicant = parties.find((party) => party.slot === "A") || parties[0] || null;
+    const respondent = parties.find((party) => party.slot === "B") || parties.find((party) => party !== applicant) || null;
+    const names = [applicant, respondent].filter(Boolean).map((party) => base.isolate(party.name));
+    const open = record.status === "open";
+    return {
+      media: { icon: "folder", hue: "purple" },
+      title: base.isolate(record.number),
+      subtitle: names.length ? names.join(` ${bt("versus")} `) : undefined,
+      status: { tone: open ? "success" : "neutral", label: open ? t("active") : bt("closed") },
+      facts: [{ icon: "person", label: t("assignedCouncilMember"), value: caseManager(record) || bt("unassigned") }, ...(facts || [])],
+      strings: { status: bt("statusLabel"), more: t("moreActions") },
+      // A tab that fills the room (split list and detail) must never squeeze the header.
+      className: "plx-u-shrink-0",
+    };
+  }
+
+  // A count fact with its add action (header style 2); the action only for those who may add.
+  function countFact(icon, label, count, action) {
+    return { icon, label, value: String(count), data: true, action: action || undefined };
+  }
+
+  // record: the case the tab already loaded; without it the page loads the case for its header alone and
+  // leaves the header out when that read is refused, so the tab still opens and nothing hints at the case.
+  // readOnly: the case is closed: the body is a ReadOnly region with its reason (read-only-state.md).
+  function CaseRecordPage({ api, lang, caseId, record, title, facts, readOnly, fill, children }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [state] = base.useLoad(
+      () => (record ? Promise.resolve(null) : api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r))),
+      [caseId, Boolean(record)],
+    );
+    const shown = record || state.data;
+    const className = fill ? "plx-u-flex-1 plx-u-min-h-0" : undefined;
+    const body = h(P.Stack, { gap: "lg", className },
+      title ? h(P.Text, { as: "h2", variant: "heading" }, title) : null,
+      ...[].concat(children === undefined ? [] : children));
+    return h(P.RecordPage, { className, header: shown ? h(P.EntityHeader, caseHeaderProps(shown, lang, facts)) : null },
+      readOnly ? h(P.ReadOnly, { reason: t("caseClosedReadOnly"), className }, body) : body);
   }
 
   // ---------- Parties and case hearings ----------
@@ -3355,9 +3417,8 @@ ${ar}` : en;
     }
     const err = (key) => (problem === key ? t(key) : undefined);
     return h(
-      P.Stack,
-      { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("partiesTitle")),
+      CaseRecordPage,
+      { api, lang, caseId, record, title: t("partiesTitle") },
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       ...record.parties.map((party) => {
         const profile = spouseProfileValues(record, party);
@@ -3436,7 +3497,7 @@ ${ar}` : en;
                 h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("addParty")),
               ),
             )
-          : h(P.Inline, null, h(P.Button, { onClick: () => setOpen(true) }, t("addParty")))
+          : h(P.ActionBar, { label: t("caseActions"), sticky: false }, h(P.Button, { onClick: () => setOpen(true) }, t("addParty")))
         : null,
     );
   }
@@ -3501,18 +3562,20 @@ ${ar}` : en;
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, notice) : null,
       failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
     ) : h(P.EmptyState, { title: t("noHearings") });
-    const currentHeader = current ? h("header", { className: "plx-entity-header" }, h("div", { className: "plx-entity-header__layout" },
-        h("div", { className: "plx-entity-header__main" }, h("div", { className: "plx-entity-header__lead" },
-          h("div", { className: "plx-entity-header__heading" },
-            h("span", { className: "plx-entity-header__media" }, h("span", { className: "plx-entity-header__tile", "data-plx-media-hue": "green", "aria-hidden": true }, h(P.Icon, { name: "calendar", size: "lg" }))),
-            h("div", { className: "plx-entity-header__text" }, h("h1", { className: "plx-entity-header__title" }, title(current)), h("p", { className: "plx-entity-header__subtitle" }, `${bt("councilSession")} ${current.session.date}`)),
-          ),
-        )),
-        h("div", { className: "plx-entity-header__aside" }, h(P.Stack, { gap: "xs", align: "end" },
-          h(P.Button, { size: "sm", icon: "calendar", onClick: () => onSession(current.session.id) }, t("rescheduleHearing")),
-          h(P.Button, { size: "sm", icon: "settings-users", onClick: () => setAttendanceOpen(true) }, t("councilAttendance")),
-        )),
-      )) : null;
+    // The current hearing is a section of the case record: Plenix EntityHeader kind "section" (record-page.md).
+    const currentHeader = current ? h(P.EntityHeader, {
+      kind: "section",
+      media: { icon: "calendar", hue: "green" },
+      title: title(current),
+      subtitle: `${bt("councilSession")} ${current.session.date}`,
+      actionLabels: "text",
+      actionsLayout: "column",
+      actions: [
+        { icon: "calendar", label: t("rescheduleHearing"), onClick: () => onSession(current.session.id) },
+        { icon: "settings-users", label: t("councilAttendance"), onClick: () => setAttendanceOpen(true) },
+      ],
+      strings: { more: t("moreActions") },
+    }) : null;
     const currentContent = current ? h(P.Stack, { gap: "lg" },
       outcome,
     ) : h(P.EmptyState, { title: t("noHearings") });
@@ -3521,7 +3584,7 @@ ${ar}` : en;
       { title: bt("councilSession"), field: "date", render: (row) => row.session.date },
       { title: t("actions"), field: "open", render: (row) => h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open")) },
     ] }) : h(P.EmptyState, { title: t("noHearings") });
-    return h(P.Stack, { gap: "lg" }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
+    return h(CaseRecordPage, { api, lang, caseId, title: t("hearingsTitle") }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
       items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] }), attendanceDialog);
   }
 
@@ -3595,8 +3658,7 @@ ${ar}` : en;
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { petitions } = state.data;
-    return h(P.Stack, { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("petitionTitle")),
+    return h(CaseRecordPage, { api, lang, caseId, title: t("petitionTitle") },
       ...petitions.map((row) => {
         const answers = petitionAnswers(row.answers);
         const filingParty = row.filing_party_name ? h(
@@ -3650,9 +3712,9 @@ ${ar}` : en;
         h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setComposing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t(editing ? "saveRevision" : "saveNote"))),
       ),
     ) : null;
+    const noteFact = countFact("message", t("internalNotes"), notes.length, canWrite ? { label: t("addNote"), icon: "add", name: t("addNote"), onClick: () => { setEditing(null); setText(""); setFailure(null); setComposing(true); } } : null);
     return h(R.Fragment, null, noteDialog,
-      h(P.Stack, { gap: "lg", className: "plx-u-flex-1 plx-u-min-h-0" },
-        h(P.Toolbar, { label: t("internalNotes") }, canWrite ? h(P.Button, { variant: "primary", icon: "add", onClick: () => { setEditing(null); setText(""); setFailure(null); setComposing(true); } }, t("addNote")) : null),
+      h(CaseRecordPage, { api, lang, caseId, record, title: t("internalNotes"), facts: [noteFact], readOnly: !(proceeding && proceeding.status === "open"), fill: true },
         h(P.Text, { as: "p", variant: "secondary" }, t("internalNotesHelp")),
         notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
         h(window.CTMShell.Workspace, {
@@ -3728,8 +3790,7 @@ ${ar}` : en;
       } catch (error) { setFailure(base.serverMessage(error, t)); }
       finally { setPending(false); }
     };
-    return h(P.Stack, { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("marriageTitle")),
+    return h(CaseRecordPage, { api, lang, caseId, record, title: t("marriageTitle"), readOnly: !proceeding },
       h(P.Panel, { icon: "settings-users", title: t("churchMarriage"), actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, "Edit") : null },
         h(P.Stack, { gap: "md" },
           editing ? h(P.Form, { onSubmit: save, label: t("churchMarriage"), noValidate: true },
@@ -3787,8 +3848,7 @@ ${ar}` : en;
     const civil = councilCardValues(record, "civil_divorce", separation.civil_divorce || {});
     const reconciliation = councilCardValues(record, "reconciliation", separation.reconciliation || {});
     const order = councilCardValues(record, "restraining_order", separation.restraining_orders?.[0] || {});
-    return h(P.Stack, { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("separation")),
+    return h(CaseRecordPage, { api, lang, caseId, record, title: t("separation"), readOnly: !openProceeding(record) },
       h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "separation_details", title: "Separation Details", icon: "move", values: details, fields: [["marital_status", "Current Marital Status"], ["separation_date", "Date of Separation", "date"], ["initiated_by", "Initiated By"], ["reason", "Reason for Divorce"]] }),
       h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "civil_divorce", title: "Civil Divorce", icon: "document", values: civil, fields: [["filed", "Civil Divorce Filed?"], ["date", "Date of Civil Divorce", "date"], ["court", "Name of Court"], ["location", "Court Street Address / Location"], ["case_number", "Civil Case Number"], ["status", "Civil Divorce Status"]] }),
       h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "restraining_order", title: "Restraining Order", icon: "link", values: order, fields: [["filed", "Restraining Order Filed?"], ["date", "Date of Restraining Order", "date"], ["expiration_date", "Restraining Order Expiration Date", "date"], ["name_listed", "Name Listed on Order"], ["court", "Name of Court"], ["case_number", "Restraining Order Case Number"], ["status", "Restraining Order Status"]] }),
@@ -3878,8 +3938,7 @@ ${ar}` : en;
         badge: h(P.Badge, { tone: event.category === "case" ? "active" : "neutral", size: "sm" }, t(event.category === "case" ? "timelineCase" : "timelineMarriage")),
       })) }),
     ))) : h(P.EmptyState, { title: t("noTimeline") });
-    return h(P.Stack, { gap: "lg" },
-      h(P.Text, { as: "h1", variant: "title" }, t("timelineTitle")),
+    return h(CaseRecordPage, { api, lang, caseId, record: state.data.record, title: t("timelineTitle") },
       h(P.Text, { variant: "secondary" }, t("timelineHelp")),
       h(P.Tabs, { variant: "contained", label: t("timelineTitle"), value: tab, onChange: setTab,
         items: [
@@ -3950,9 +4009,10 @@ ${ar}` : en;
     return h(
       R.Fragment,
       null,
-      h(P.Inline, { justify: "end", wrap: true },
+      // Page actions (page-actions.md): the destructive action first, the primary last.
+      h(P.ActionBar, { label: t("caseActions") },
+        h(P.Button, { variant: "danger-secondary", disabled: pending, onClick: () => setMode("reject") }, t("declineApplication")),
         h(P.Button, { variant: "primary", disabled: pending, onClick: () => setMode("accept") }, t("acceptApplication")),
-        h(P.Button, { variant: "danger", disabled: pending, onClick: () => setMode("reject") }, t("declineApplication")),
       ),
       h(P.ConfirmDialog, {
         open: mode === "accept",
@@ -4108,11 +4168,9 @@ ${ar}` : en;
       applicant: applicant?.name, respondent: respondent?.name, reason: summary.reason, marriage_duration: marriageDuration(record.marriage?.church_marriage_date, lang),
       children: summary.children?.length ? summary.children.map(childLabel).join(" · ") : t("noChildren"), last_hearing_date: summaryDate(summary.last_hearing_date, lang),
     };
-    return h(
+    const summaryPanels = h(
       P.Stack,
       { gap: "lg" },
-      reviewApplicationId && !reviewComplete ? h(ApplicationReviewActions, { api, lang, applicationId: reviewApplicationId, onDone: () => { setReviewComplete(true); retry(); } }) : null,
-      h(P.Text, { as: "h1", variant: "title" }, record.number),
       h(
         P.Panel,
         { icon: "document", title: t("caseSummary"), actions: canEditSummary && !summaryEditing ? h(P.Button, { size: "sm", onClick: startSummaryEdit }, "Edit") : null },
@@ -4133,6 +4191,10 @@ ${ar}` : en;
         { icon: "calendar", title: t("keyDates") },
         h(P.Timeline, { label: t("keyDates"), items: summaryTimeline }),
       ),
+    );
+    return h(CaseRecordPage, { api, lang, caseId, record, readOnly: !openProceeding(record) },
+      summaryPanels,
+      reviewApplicationId && !reviewComplete ? h(ApplicationReviewActions, { api, lang, applicationId: reviewApplicationId, onDone: () => { setReviewComplete(true); retry(); } }) : null,
     );
   }
 

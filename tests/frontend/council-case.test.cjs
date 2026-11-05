@@ -387,7 +387,8 @@ test("professional assessments use a request dialog instead of a side-pane form"
   const start = source.indexOf("function AssessmentsWorkspace(");
   const end = source.indexOf("  // ---------- Parties and case hearings", start);
   const workspace = source.slice(start, end);
-  assert.match(workspace, /P\.Toolbar/);
+  // #97 slice 3: the add action is the assessment count fact in the case header (EntityHeader style 2).
+  assert.match(workspace, /countFact\("lock", t\("assessments"\), rows\.length, canWrite \? \{ label: t\("newAssessment"\)/);
   assert.match(workspace, /P\.Dialog/);
   assert.doesNotMatch(workspace, /orientation:\s*"stacked"/);
 });
