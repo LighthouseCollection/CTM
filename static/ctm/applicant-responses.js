@@ -75,8 +75,9 @@
         h(P.Button,{disabled:blocked,onClick:()=>setFileIds(ids=>ids.filter(id=>reportFiles.some(f=>f.id===id)))},t("removeEvidence")))):null,
       state.error?h(P.Notice,{tone:"warning",role:"alert"},t(state.error)):null,
       state.received?h(P.Notice,{role:"status"},t("received")):null,
-      h(P.Inline,{wrap:true},h(P.Button,{disabled:blocked||!dirty||!complete,onClick:()=>setReview(!review)},t(review?"edit":"review")),
-        review?h(P.Button,{disabled:blocked||!dirty||!complete,onClick:async()=>{if(blocked)return;
+      // One place to finish the response (form-actions.md): review first, then the primary submit.
+      h(P.FormActions,{sticky:false,label:t("respond")},h(P.Button,{disabled:blocked||!dirty||!complete,onClick:()=>setReview(!review)},t(review?"edit":"review")),
+        review?h(P.Button,{variant:"primary",disabled:blocked||!dirty||!complete,onClick:async()=>{if(blocked)return;
           if(await session.send({...answers,...(fileIds.length?{files:fileIds}:{})},request,evidence))onRefresh?.();}},t(state.busy?"busy":"submit")):null)
     ));
   }

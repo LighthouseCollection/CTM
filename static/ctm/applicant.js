@@ -162,6 +162,9 @@
       addRecord:"Add another entry",removeRecord:"Remove this entry",noRecords:"No entries added",
       refreshApplication:"Refresh application status",
       correctionNotice:"Corrections preserve your previous submissions. Save your changes, review answers and documents, then resubmit if requested.",
+      stepAnswers:"Your answers",stepDocuments:"Documents",steps:"Application steps",previousStep:"Previous",nextStep:"Next",
+      stepInvalid:"Check the answers in this step.",stepBusy:"Wait for the current action to finish, then try again.",
+      discardConfirm:"Discard unsaved changes?",savedShort:"Saved",notSaved:"Not saved",
     },
     ar: {
       title: "طلبي", loading: "جارٍ تحميل الطلب…", back: "رجوع",
@@ -192,6 +195,9 @@
       addRecord:"إضافة سجل آخر",removeRecord:"إزالة هذا السجل",noRecords:"لم تتم إضافة سجلات",
       refreshApplication:"تحديث حالة الطلب",
       correctionNotice:"تُحفظ طلباتك السابقة عند التصحيح. احفظ التغييرات وراجع الإجابات والمستندات، ثم أعد الإرسال إذا طُلب منك ذلك.",
+      stepAnswers:"إجاباتك",stepDocuments:"المستندات",steps:"خطوات الطلب",previousStep:"السابق",nextStep:"التالي",
+      stepInvalid:"راجع الإجابات في هذه الخطوة.",stepBusy:"انتظر حتى ينتهي الإجراء الحالي، ثم حاول مجددًا.",
+      discardConfirm:"هل تريد تجاهل التغييرات غير المحفوظة؟",savedShort:"محفوظ",notSaved:"غير محفوظ",
     },
   };
 
@@ -315,7 +321,16 @@
     else if (answerProblem(record)) body = h(P.Notice, { tone: "warning" }, t("answersUnavailable"));
     else {
       const fields = record.questionnaire.definition.fields;
-      const renderField = (field, answers=state.answers, change=session.change) => {
+      // Read-only answers are PropertyList pairs; consecutive pairs share one list, a repeat record keeps its panel.
+      const pairs = new WeakSet();
+      const grouped = nodes => nodes.reduce((out, node) => {
+        if (node && pairs.has(node)) {
+          const last = out[out.length - 1];
+          if (last && last.__pairs) last.__pairs.push(node); else { const run = [node]; run.__pairs = run; out.push(run); }
+        } else out.push(node);
+        return out;
+      }, []).map((node, index) => Array.isArray(node) ? h(P.PropertyList, { key: "answers-" + index }, ...node) : node);
+      const renderField = (field, answers=state.answers, change=session.change, readOnly=review) => {
         const value = answers[field.code];
         const fieldLabel = label(field, lang);
         // Read-only capability refresh must not interrupt local typing; writes remain gated below.
@@ -326,11 +341,11 @@
             h(P.Stack,null,
               !rows.length?text(t("noRecords")):null,
               ...rows.map((row,index)=>h(P.Panel,{ icon: "doc-text",key:row.id||index,title:`${fieldLabel} ${index+1}`},
-                h(P.Stack,null,...field.item_fields.filter(child=>isVisible(child,row)).map(child=>renderField(child,row,
-                  (code,next)=>change(field.code,updateRecord(rows,index,code,next)))),
-                  state.editable&&!review?h(P.Button,{disabled:controlsDisabled,
+                h(P.Stack,null,...grouped(field.item_fields.filter(child=>isVisible(child,row)).map(child=>renderField(child,row,
+                  (code,next)=>change(field.code,updateRecord(rows,index,code,next)),readOnly))),
+                  state.editable&&!readOnly?h(P.Button,{disabled:controlsDisabled,
                     onClick:()=>change(field.code,rows.filter((_,i)=>i!==index))},t("removeRecord")):null))),
-              state.editable&&!review?h(P.Button,{disabled:controlsDisabled,
+              state.editable&&!readOnly?h(P.Button,{disabled:controlsDisabled,
                 onClick:()=>change(field.code,[...rows,{id:window.crypto.randomUUID()}])},t("addRecord")):null));
         }
         const options = fieldChoices(field).map(o => ({ value: o.value, label: label(o, lang) }));
@@ -339,12 +354,13 @@
             ? value.map(v => options.find(o => o.value === v)?.label || v).join("، ")
             : typeof value === "boolean" ? t(value ? "yes" : "no")
             : options.find(o => o.value === value)?.label || String(value);
-        if (review || !state.editable) return h(P.Panel, { icon: "doc-text",
-          key: field.code, title: fieldLabel,
-          description: field.required ? t("required") : undefined,
-        }, text(display));
+        if (readOnly || !state.editable) {
+          const pair = h(P.PropertyList.Item, { key: field.code, label: fieldLabel }, h("span", { dir: "auto" }, display));
+          pairs.add(pair); return pair;
+        }
+        // Required stays announced, but never blocks the Wizard on an incomplete draft (the server checks at filing).
         const shared = {
-          value: value ?? "", disabled: state.saving || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy,
+          required: false, "aria-required": field.required ? true : undefined, value: value ?? "", disabled: state.saving || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy,
           onChange: event => change(field.code, event.target.value),
         };
         if (field.type === "boolean") return h(P.RadioGroup, {key:field.code,
@@ -369,11 +385,43 @@
           : h(P.Input, { ...shared, type: field.type === "date" ? "date" : "text" });
         return h(P.Field, { key: field.code, label: fieldLabel, required: !!field.required }, control);
       };
+      const visibleFields = fields.filter(field => isVisible(field, state.answers));
+      const busyAny = state.saving || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy || projectionPending;
+      // The form is a Plenix Wizard (wizard.md): the published questions in their server order, the documents,
+      // then the review summary. Completing the wizard is "Review answers", the same gate filing has always used.
+      const answersStep = h(P.Stack, { gap: "lg" },
+        ...grouped(visibleFields.map(field => renderField(field))),
+        state.editable && !review ? h(P.Inline, { wrap: true },
+          button(state.saving || projectionPending ? "saving" : record.status === "draft" ? "save" : "saveCorrections", saveAnswers,
+            { disabled: busyAny || !state.dirty })) : null);
+      const summary = h(P.Stack, { gap: "lg" },
+        h(P.Notice, null, t("reviewNotice")),
+        ...grouped(visibleFields.map(field => renderField(field, state.answers, session.change, true))),
+        state.editable && review ? h(P.Inline, { wrap: true },
+          button("edit", () => setReview(false), { variant: "secondary", disabled: busyAny })) : null);
+      const steps = [{ id: "answers", label: t("stepAnswers"), content: answersStep }];
+      if (window.CTMApplicantFiles) steps.push({ id: "documents", label: t("stepDocuments"),
+        content: h(window.CTMApplicantFiles.ApplicationFiles, {
+          key: "documents", applicationId, answerVersion:state.version, api, lang,
+          savedApplication:record,
+          disabled: state.dirty || state.saving || filingBusy || actionBusy || filingLocked || actionLocked || projectionPending || supplementBusy,
+          onBusyChange: setUploadBusy, onChanged: documentsChanged,
+          onReadyChange: documentsReadinessChanged,
+          onProjectionRefresh: refreshProjection,
+        }) });
       body = h(P.Stack, { gap: "lg" },
         text(`${t("status")}: ${t(record.status === "expired" ? "expiredStatus" :
           ["draft","submitted","returned","accepted","withdrawn","deleted","declined"].includes(record.status) ? record.status : "statusUnknown")}`),
         record.case_number ? h(P.Text,{variant:"secondary"},`${t("caseReference")}: `,
           h("bdi",{dir:"ltr"},record.case_number)) : null,
+        state.editable ? h(P.DraftState, {
+          version: state.version,
+          saveState: state.saving ? "saving" : state.error ? "failed" : state.saved ? "saved" : undefined,
+          // DraftState asks for confirmation itself, then the saved answers are loaded again from the server.
+          onDiscard: state.dirty && !busyAny && !supplementBusy ? async () => { setReload(n => n + 1); } : undefined,
+          strings: { draft: t(record.status === "returned" ? "returned" : "draft"), discard: t("discard"), confirm: t("discardConfirm"),
+            message: t("discardNotice"), cancel: t("keep"), saving: t("saving"), saved: t("savedShort"), failed: t("notSaved") },
+        }) : null,
         record.status === "draft" ? h(P.Notice, null, t("fee")) : null,
         record.duplicate_hold===true && ["draft","returned"].includes(record.status)
           ? h(P.Notice,{tone:"warning",role:"status"},t(state.editable?"identityHold":"identityHoldReadOnly")) : null,
@@ -383,27 +431,17 @@
         projectionFailure ? h(P.Notice, {tone:"warning",actions:button("reload",reloadAnswers)},t("refreshFailed")) : null,
         state.saved ? h(P.Notice, { tone: "success", role: "status" }, t("saved")) : null,
         state.dirty ? h(P.Notice, { tone: "warning", role: "status" }, t("unsaved")) : null,
-        review ? h(P.Notice, null, t("reviewNotice")) : null,
-        ...fields.filter(field => isVisible(field, state.answers)).map(field=>renderField(field)),
-        h(P.Inline, { wrap: true },
-          state.editable ? button(state.saving || projectionPending ? "saving" : record.status === "draft" ? "save" : "saveCorrections", saveAnswers,
-            { disabled: state.saving || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy || projectionPending || !state.dirty }) : null,
-          state.editable ? button(review ? "edit" : "review", () => setReview(!review),
-            { variant: "secondary", disabled:state.saving || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy || projectionPending })
-            : button("review", () => setReview(true), {variant:"secondary", disabled:review || filingBusy || actionBusy || filingLocked || actionLocked || uploadBusy || projectionPending}),
-        ),
+        h(P.Wizard, { key: "wizard", label: t("title"), steps, summary,
+          onComplete: async () => {
+            if (busyAny || (state.editable && review)) throw new Error("busy");
+            setReview(true);
+          },
+          strings: { back: t("previousStep"), next: t("nextStep"), complete: t("review"), summary: t("review"),
+            steps: t("steps"), invalid: t("stepInvalid"), failed: t("stepBusy") } }),
         window.CTMApplicantHistory?h(window.CTMApplicantHistory.History,{
           applicationId,currentVersion:state.version,currentFields:record.questionnaire.definition.fields,api,lang,
           disabled:state.saving||filingBusy||actionBusy||uploadBusy||supplementBusy,
         }):null,
-        window.CTMApplicantFiles ? h(window.CTMApplicantFiles.ApplicationFiles, {
-          key: "documents", applicationId, answerVersion:state.version, api, lang,
-          savedApplication:record,
-          disabled: state.dirty || state.saving || filingBusy || actionBusy || filingLocked || actionLocked || projectionPending || supplementBusy,
-          onBusyChange: setUploadBusy, onChanged: documentsChanged,
-          onReadyChange: documentsReadinessChanged,
-          onProjectionRefresh: refreshProjection,
-        }) : null,
         window.CTMApplicantFiling ? h(window.CTMApplicantFiling.FilingActions, {
           key: "filing", application: filingRecord, api, lang,
           dirty: state.dirty || state.saving || actionBusy || actionLocked || uploadBusy || !documentsReady || projectionPending || projectionFailure || record.version !== state.version, reviewed: review,

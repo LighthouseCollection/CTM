@@ -73,7 +73,7 @@
     receipt:"Own response receipt",received:"Server acknowledgement received. Refresh to verify the retained record.",
     recovered:"Your retained release matches this original and declaration.",retainedSignature:"Retained signature original",missingOriginal:"Original unavailable",
     uncertain:"The result is uncertain. Do not repeat the action. Refresh to check the retained record.",denied:"This action is no longer available. Refresh the request.",
-    empty:"No originals are listed.",pending:"Safety check pending",clean:"Safety check passed",rejected:"Safety check rejected",signedAt:"Signed"},
+    empty:"No originals are listed.",pending:"Safety check pending",clean:"Safety check passed",rejected:"Safety check rejected",signedAt:"Signed",file:"File",purpose:"Purpose",safety:"Safety check"},
     ar:{open:"فتح الطلب",back:"العودة إلى الطلبات",refresh:"تحديث الطلب والملفات",loading:"جارٍ تحميل الطلب الخاص…",
       unavailable:"تعذر التحقق من الطلب أو ملفاته. حدّث الصفحة أو تواصل مع المجلس. حُفظت إجابتك المحلية.",
       changed:"تغيّر هذا الطلب. احتفظ بنسخة من إجابتك المحلية، ثم عد إلى قائمة الطلبات وافتحه من جديد.",
@@ -88,7 +88,7 @@
       receipt:"إيصال إجابتي",received:"أقرّ الخادم بالاستلام. حدّث الصفحة للتحقق من السجل المحفوظ.",
       recovered:"التفويض المحفوظ يطابق هذا الأصل وهذا الإقرار.",retainedSignature:"أصل التوقيع المحفوظ",missingOriginal:"الأصل غير متاح",
       uncertain:"نتيجة الإجراء غير مؤكدة. لا تكرره. حدّث الصفحة للتحقق من السجل المحفوظ.",denied:"لم يعد هذا الإجراء متاحًا. حدّث الطلب.",
-      empty:"لا توجد أصول مدرجة.",pending:"الفحص قيد الانتظار",clean:"اجتاز فحص السلامة",rejected:"رُفض في فحص السلامة",signedAt:"تاريخ التوقيع"}}
+      empty:"لا توجد أصول مدرجة.",pending:"الفحص قيد الانتظار",clean:"اجتاز فحص السلامة",rejected:"رُفض في فحص السلامة",signedAt:"تاريخ التوقيع",file:"الملف",purpose:"الغرض",safety:"فحص السلامة"}}
   ;
   function Workspace({request,caseId,api,lang="en",onBack,onNavigationGuard}){
     const R=window.React,P=window.Plenix,h=R.createElement,t=key=>words[lang==="ar"?"ar":"en"][key];
@@ -127,9 +127,13 @@
     }
     const filePanel=h(P.Panel,{ icon: "lock",title:t("files")},h(P.Stack,null,
       h(P.Text,null,t("uploadNotice")),!files.length?h(P.Text,null,t("empty")):null,
-      ...files.map(file=>h(P.Panel,{ icon: "lock",key:file.id,title:file.name},h(P.Stack,null,
-        h(P.Text,null,t(file.purpose==="consent"?"consentFile":"reportFile")," · ",t(file.scan_state)),
-        safeURL(file)?h(P.Button,{href:safeURL(file),target:"_blank",rel:"noopener noreferrer"},t("download")):null))),
+      // My originals for this request are a Plenix FileList (file-list.md): the purpose and safety check per row;
+      // the name links to the original only when the server marks it safe.
+      files.length?h(P.FileList,{label:t("files"),view:"table",columns:["owner","status"],
+        files:files.map(file=>({id:file.id,name:file.name,kind:"file",owner:t(file.purpose==="consent"?"consentFile":"reportFile"),
+          status:{tone:file.scan_state==="clean"?"success":file.scan_state==="rejected"?"danger":"warning",label:t(file.scan_state)},href:safeURL(file)})),
+        hrefFor:file=>file.href||undefined,
+        strings:{name:t("file"),owner:t("purpose"),status:t("safety"),empty:t("empty")}}):null,
       ...[...(assessment(request)&&!latest?.signed_releases.length?["consent"]:[]),"report"].map(purpose=>
         latest?.can_upload&&data.files.can_upload?h(P.Fieldset,{key:purpose,legend:t(purpose==="consent"?"consentFile":"reportFile")},
           h(P.Input,{key:`${purpose}:${fileEpoch}`,type:"file",disabled:blocked||uploadLocked,accept:purpose==="consent"?".pdf,.png,.jpg,.jpeg":".pdf,.doc,.docx,.png,.jpg,.jpeg",

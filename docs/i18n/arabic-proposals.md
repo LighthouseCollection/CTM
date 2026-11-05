@@ -14,3 +14,20 @@ glossary change. Never delete rows: mark them `approved` or `corrected`.
 | 2026-11-05 | `caseClosedReadOnly` | This case is closed and read-only. | هذه القضية مغلقة ومتاحة للقراءة فقط. | Same pattern as the session key `closedReadOnly` (هذه الجلسة مغلقة ومتاحة للقراءة فقط.) with القضية | #97 | proposed |
 | 2026-11-05 | `caseActions` | Case actions | إجراءات القضية | Screen-reader name of the case page ActionBar; إجراءات + القضية | #97 | proposed |
 | 2026-11-05 | `moreActions` | More actions | مزيد من الإجراءات | Screen-reader name of the EntityHeader More menu | #97 | proposed |
+| 2026-11-05 | `stepAnswers` | Your answers | إجاباتك | Wizard step; possessive like `title` (طلبي) | #97 | proposed |
+| 2026-11-05 | `stepDocuments` | Documents | المستندات | Same term as the documents title (مستندات الطلب) | #97 | proposed |
+| 2026-11-05 | `steps` | Application steps | خطوات الطلب | Wizard steps label; الطلب as everywhere | #97 | proposed |
+| 2026-11-05 | `previousStep` | Previous | السابق | Wizard back button | #97 | proposed |
+| 2026-11-05 | `nextStep` | Next | التالي | Wizard next button | #97 | proposed |
+| 2026-11-05 | `stepInvalid` | Check the answers in this step. | راجع الإجابات في هذه الخطوة. | Wizard validation message | #97 | proposed |
+| 2026-11-05 | `stepBusy` | Wait for the current action to finish, then try again. | انتظر حتى ينتهي الإجراء الحالي، ثم حاول مجددًا. | Wizard failure while another action runs | #97 | proposed |
+| 2026-11-05 | `discardConfirm` | Discard unsaved changes? | هل تريد تجاهل التغييرات غير المحفوظة؟ | DraftState dialog; reuses `discard` (تجاهل التغييرات غير المحفوظة) | #97 | proposed |
+| 2026-11-05 | `savedShort` | Saved | محفوظ | Save status badge | #97 | proposed |
+| 2026-11-05 | `notSaved` | Not saved | غير محفوظ | Save status badge | #97 | proposed |
+| 2026-11-05 | `file / safety` | File / Safety check | الملف / فحص السلامة | FileList headers; فحص السلامة as in the existing safety-check messages | #97 | proposed |
+| 2026-11-05 | `reference / language` | Certificate / Language | الشهادة / اللغة | Released decree FileList headers | #97 | proposed |
+| 2026-11-05 | `purpose` | Purpose | الغرض | Request originals FileList header | #97 | proposed |
+| 2026-11-05 | `state / time / event / amount / basis / single` | Checkout status / Server time / Payment event / Amount / Amount basis / This event | حالة محاولة الدفع / وقت الخادم / حدث الدفع / المبلغ / أساس المبلغ / هذا الحدث | Payment history table headers; reuse محاولة الدفع and وقت الخادم | #97 | proposed |
+| 2026-11-05 | `path` | Field path | مسار الحقل | Answer history table header | #97 | proposed |
+| 2026-11-05 | `response` | Your response | ردك | Appointments list column; reuses ردك الحالي | #97 | proposed |
+| 2026-11-05 | `request / kind / status` | Request / Request type / Status | الطلب / نوع الطلب / الحالة | Requests list headers | #97 | proposed |

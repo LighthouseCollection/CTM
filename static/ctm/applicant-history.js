@@ -36,11 +36,11 @@
  const words={en:{title:'My saved answer history',open:'View saved answer history',close:'Hide answer history',refresh:'Refresh answer history',loading:'Loading saved revisions…',
   unavailable:'Saved answer history is unavailable or has changed. Refresh the application and try again.',empty:'No saved revisions are listed.',version:'Saved version',actor:'Recorded by',unnamed:'Name not supplied',time:'Server time',
   wording:'Historical question wording is not supplied by this endpoint. Any question labels below come from your current form; the saved values and field paths are retained originals.',
-  changes:'Changes from preceding saved version',before:'Previous saved value',after:'Selected saved value',absent:'Not present in this version',unchanged:'No value changes are listed.',field:'Saved field'},
+  changes:'Changes from preceding saved version',before:'Previous saved value',after:'Selected saved value',absent:'Not present in this version',unchanged:'No value changes are listed.',field:'Saved field',path:'Field path'},
  ar:{title:'سجل إجاباتي المحفوظة',open:'عرض سجل الإجابات المحفوظة',close:'إخفاء سجل الإجابات',refresh:'تحديث سجل الإجابات',loading:'جارٍ تحميل النسخ المحفوظة…',
   unavailable:'سجل الإجابات المحفوظة غير متاح أو تغيّر. حدّث الطلب وحاول مجددًا.',empty:'لا توجد نسخ محفوظة مدرجة.',version:'النسخة المحفوظة',actor:'سجّلها',unnamed:'الاسم غير متوفر',time:'وقت الخادم',
   wording:'لا توفّر هذه الخدمة صياغة الأسئلة التاريخية. عناوين الأسئلة أدناه من نموذجك الحالي؛ والقيم ومسارات الحقول هي الأصول المحفوظة.',
-  changes:'التغييرات عن النسخة المحفوظة السابقة',before:'القيمة المحفوظة السابقة',after:'القيمة المحفوظة المحددة',absent:'غير موجودة في هذه النسخة',unchanged:'لا توجد تغييرات مدرجة في القيم.',field:'حقل محفوظ'}};
+  changes:'التغييرات عن النسخة المحفوظة السابقة',before:'القيمة المحفوظة السابقة',after:'القيمة المحفوظة المحددة',absent:'غير موجودة في هذه النسخة',unchanged:'لا توجد تغييرات مدرجة في القيم.',field:'حقل محفوظ',path:'مسار الحقل'}};
  function History({applicationId,currentVersion,currentFields=[],api,lang='en',disabled=false}){
   const R=window.React,P=window.Plenix,h=R.createElement,t=k=>words[lang==='ar'?'ar':'en'][k];
   const [open,setOpen]=R.useState(false),[data,setData]=R.useState(null),[selected,select]=R.useState(''),[error,setError]=R.useState(false),[loading,setLoading]=R.useState(false),[revision,reload]=R.useState(0),[fieldPath,setFieldPath]=R.useState(null);
@@ -67,8 +67,13 @@
      row?h(P.Stack,null,h(P.Text,null,t('actor'),': ',row.actor||t('unnamed')),h(P.Text,null,t('time'),': ',h('bdi',{dir:'ltr'},row.timestamp)),
       h(P.Text,{as:'h3'},t('changes')),!changes.length?h(P.Text,null,t('unchanged')):null,
       ...changes.map(change=>h(P.Button,{key:'indicator'+change.path,onClick:()=>setFieldPath(fieldPath===change.path?null:change.path),'aria-pressed':fieldPath===change.path},label(change.path)+': '+change.path)),
-      ...changes.filter(change=>!fieldPath||change.path===fieldPath).map(change=>h(P.Panel,{key:change.path,title:label(change.path)},h(P.Stack,null,h(P.Text,null,h('bdi',{dir:'ltr'},change.path)),
-       h(P.Text,null,t('before'),': ',value(change.before_present,change.before)),h(P.Text,null,t('after'),': ',value(change.after_present,change.after)))))):null,
+      // The changed values are one read-only CTMShell table (data-grid.md); saved paths and values stay Latin originals.
+      changes.length?h(window.CTMShell.Table,{label:t('changes'),narrow:'auto',
+       rows:changes.filter(change=>!fieldPath||change.path===fieldPath).map(change=>({...change,id:change.path})),
+       columns:[{title:t('field'),field:'field',render:change=>label(change.path)},
+        {title:t('path'),field:'path',render:change=>change.path},
+        {title:t('before'),field:'before',render:change=>value(change.before_present,change.before)},
+        {title:t('after'),field:'after',render:change=>value(change.after_present,change.after)}]}):null):null,
      ):null))));
  }
  window.CTMApplicantHistory={validHistory,flatten,compare,History};
