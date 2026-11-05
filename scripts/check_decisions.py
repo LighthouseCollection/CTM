@@ -52,8 +52,8 @@ def main():
         if d.get("status") not in STATUSES:
             problems.append(f"{did}: status must be one of {sorted(STATUSES)}")
         by = str(d.get("decided_by", ""))
-        if by != "owner" and not by.startswith("agent:ctm-"):
-            problems.append(f"{did}: decided_by must be 'owner' or 'agent:ctm-<role>'")
+        if by != "owner" and not by.startswith("agent:ctm3-"):
+            problems.append(f"{did}: decided_by must be 'owner' or 'agent:ctm3-<role>'")
         check, review = d.get("check"), d.get("review_only")
         if not check and not review:
             problems.append(f"{did}: needs a 'check' or a 'review_only' reason")

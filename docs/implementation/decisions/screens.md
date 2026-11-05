@@ -11,7 +11,7 @@ trustworthiness, and CTM lost many commits to toggled icons and layouts.
   `Superseded YYYY-MM-DD` and add a new row. Never edit or delete old rows.
 - `Applied in` names the commit or file that implements the decision, so the
   drift auditor can check it.
-- Maintained by `ctm-product-lead` and the team lead; audited by `ctm-drift-auditor`.
+- Maintained by `ctm3-product-lead` and the team lead; audited by `ctm3-drift-auditor`.
 
 | Date | Screen | Element | Decision | Why | Source | Status | Applied in |
 |---|---|---|---|---|---|---|---|

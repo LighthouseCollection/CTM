@@ -5,7 +5,7 @@ labels: ["type:bug"]
 body:
   - type: markdown
     attributes:
-      value: Plain words are enough. ctm-product-lead logs, routes and reports back on this issue. Never include real case data; this repository is public.
+      value: Plain words are enough. ctm3-product-lead logs, routes and reports back on this issue. Never include real case data; this repository is public.
   - type: textarea
     id: what
     attributes:

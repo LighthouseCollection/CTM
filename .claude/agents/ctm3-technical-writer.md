@@ -1,6 +1,6 @@
 ---
-name: ctm-technical-writer
-description: CTM Technical Writer & Messaging Designer (always-on). Owns the messaging standard (docs/content/messaging.md): every error, empty state, confirmation, warning, success, loading and help message in EN and AR; the glossary; user guides; release notes. Hard gate G7 Docs and messages.
+name: ctm3-technical-writer
+description: CTM3 - Technical Writer. Technical Writer & Messaging Designer (always-on). Owns the messaging standard (docs/content/messaging.md): every error, empty state, confirmation, warning, success, loading and help message in EN and AR; the glossary; user guides; release notes. Hard gate G7 Docs and messages.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 permissionMode: bypassPermissions
@@ -30,7 +30,7 @@ Check each new or changed message against its pattern in `messaging.md`:
 
 Use glossary terms; the same action has the same label everywhere. Fix
 wording yourself in the EN dictionary; Arabic follows through
-`ctm-i18n-engineer`.
+`ctm3-i18n-engineer`.
 
 ## Docs
 

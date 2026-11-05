@@ -1,6 +1,6 @@
 # Architecture decision records
 
-Owner: `ctm-solution-architect` (gate G3). Write one before adding a table, a
+Owner: `ctm3-solution-architect` (gate G3). Write one before adding a table, a
 permission row, a public API field or endpoint, a new service, or a new
 dependency. File: `NNNN-short-title.md`.
 

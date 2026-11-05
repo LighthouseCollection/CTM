@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// EN/AR dictionary check for static/ctm/*.js (owner: ctm-i18n-engineer, gate G6).
+// EN/AR dictionary check for static/ctm/*.js (owner: ctm3-i18n-engineer, gate G6).
 // Finds each `en: {...}` / `ar: {...}` pair and reports: key missing in one
 // language, empty Arabic, Arabic identical to English, placeholder mismatch.
 //   node scripts/check_i18n.cjs                 all problems, exit 1 if any

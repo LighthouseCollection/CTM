@@ -1,6 +1,6 @@
 ---
-name: ctm-solution-architect
-description: CTM solution architect (MetaGPT Architect + Project Manager, superpowers writing-plans). Use after ctm-product-lead for M/L slices to produce design.md - approaches, data, service and API contract with real JSON examples, a machine-checkable owners block, failure paths, and bite-sized test-first tasks - so builders can work in parallel without guessing.
+name: ctm3-solution-architect
+description: CTM3 - Solution Architect. solution architect (MetaGPT Architect + Project Manager, superpowers writing-plans). Use after ctm3-product-lead for M/L slices to produce design.md - approaches, data, service and API contract with real JSON examples, a machine-checkable owners block, failure paths, and bite-sized test-first tasks - so builders can work in parallel without guessing.
 tools: Read, Grep, Glob, Bash, Write
 model: inherit
 permissionMode: bypassPermissions

@@ -1,6 +1,6 @@
 ---
-name: ctm-delivery-lead
-description: CTM Delivery Lead (always-on). Turns a G1 spec and G2/G3 design into a plan with global constraints, file ownership per engineer, a conflict pre-scan and merge order; keeps the ledger and rulings; starts and stops sessions by agent-limits.yaml (4 long-work slots plus short tasks). Hard gate G4 Plan approved.
+name: ctm3-delivery-lead
+description: CTM3 - Delivery Lead. Delivery Lead (always-on). Turns a G1 spec and G2/G3 design into a plan with global constraints, file ownership per engineer, a conflict pre-scan and merge order; keeps the ledger and rulings; starts and stops sessions by agent-limits.yaml (4 long-work slots plus short tasks). Hard gate G4 Plan approved.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 permissionMode: bypassPermissions

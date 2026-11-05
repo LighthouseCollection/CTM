@@ -1,6 +1,6 @@
 ---
-name: ctm-backend-engineer
-description: CTM Django backend engineer. Use to implement service commands, API endpoints, projections and Celery tasks from a slice design.md, test-first. Does not write migrations/RLS (ctm-database-engineer owns those unless design.md names backend as schema owner), frontend modules or protected specs.
+name: ctm3-backend-engineer
+description: CTM3 - Backend Engineer. Django backend engineer. Use to implement service commands, API endpoints, projections and Celery tasks from a slice design.md, test-first. Does not write migrations/RLS (ctm3-database-engineer owns those unless design.md names backend as schema owner), frontend modules or protected specs.
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: inherit
 permissionMode: bypassPermissions
@@ -65,7 +65,7 @@ stop; a guess costs more than a question.
    `node scripts/check_ownership.cjs --slice <id> --role backend`; Postgres suite
    if `CTM_TEST_DATABASE_URL` is set. Windows native crash = ENV, note once.
 4. Commit (conventional message) and push your branch. When checks pass you may
-   merge it yourself (`gh pr merge --squash`) or hand it to `ctm-release-engineer` to
+   merge it yourself (`gh pr merge --squash`) or hand it to `ctm3-release-engineer` to
    merge and deploy.
 
 ## Receiving review findings

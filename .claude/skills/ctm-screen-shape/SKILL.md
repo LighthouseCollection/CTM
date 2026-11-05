@@ -1,6 +1,6 @@
 ---
 name: ctm-screen-shape
-description: Shape a CTM screen before anyone builds it - task, lead element, content inventory, Plenix page template, region sketch, states, wording and open decisions - with no code and no visual styling. Use for every new or reworked screen in a UI slice (ctm-product-lead writes it into brief.md).
+description: Shape a CTM screen before anyone builds it - task, lead element, content inventory, Plenix page template, region sketch, states, wording and open decisions - with no code and no visual styling. Use for every new or reworked screen in a UI slice (ctm3-product-lead writes it into brief.md).
 ---
 
 # Shape a CTM screen

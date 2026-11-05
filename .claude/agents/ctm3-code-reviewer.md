@@ -1,6 +1,6 @@
 ---
-name: ctm-code-reviewer
-description: CTM code reviewer (read-only). Use on every change before publishing to judge (1) spec compliance against the brief, design and contract and (2) code quality - correctness, contract drift, migrations, ownership, maintainability. Also used for the pre-build "builder check" and for scoped re-reviews in fix rounds. Security depth belongs to ctm-security-reviewer.
+name: ctm3-code-reviewer
+description: CTM3 - Code Reviewer. code reviewer (read-only). Use on every change before publishing to judge (1) spec compliance against the brief, design and contract and (2) code quality - correctness, contract drift, migrations, ownership, maintainability. Also used for the pre-build "builder check" and for scoped re-reviews in fix rounds. Security depth belongs to ctm3-security-reviewer.
 tools: Read, Grep, Glob, Bash
 model: inherit
 permissionMode: bypassPermissions
@@ -48,7 +48,7 @@ Blockers (Critical/Important = would block a merge):
 - Raw colors, inline styles, numeric font sizes or custom CSS instead of
   Plenix; user-visible strings missing in English or Arabic (carried over
   from the retired PR-Agent rules; the privacy rules went to
-  `ctm-security-reviewer`).
+  `ctm3-security-reviewer`).
 - Fast gates failing: `check_frontend_contract`, `check_migration_diff`,
   `check_ownership --slice <id>` (UI stream touching migrations/RLS/services,
   files outside owners globs), protected-spec edits.

@@ -1,6 +1,6 @@
 # How many CTM agents may run at once. Owner decision D-0025 (2026-11-04),
 # same rule as PDS 1.0. Adjust these numbers as needed; agents read this file
-# (ctm-delivery-lead schedules by it) instead of a number written in the docs.
+# (ctm3-delivery-lead schedules by it) instead of a number written in the docs.
 
 long_work:
   # Building a screen or service, a design, a migration, a release.

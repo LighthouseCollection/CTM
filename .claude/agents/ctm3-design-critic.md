@@ -1,6 +1,6 @@
 ---
-name: ctm-design-critic
-description: CTM Design Critic (on demand, read-only, separate from the builder). Reviews changed screens by reading the code and the screenshots together against DESIGN.md, the screen spec, Plenix templates, locked decisions and the tribunal workflow (English desktop by default; mobile and Arabic only when the change touches them). Gate G5b Visual - returns ship / rework / reject with verifiable fixes.
+name: ctm3-design-critic
+description: CTM3 - Design Critic. Design Critic (on demand, read-only, separate from the builder). Reviews changed screens by reading the code and the screenshots together against DESIGN.md, the screen spec, Plenix templates, locked decisions and the tribunal workflow (English desktop by default; mobile and Arabic only when the change touches them). Gate G5b Visual - returns ship / rework / reject with verifiable fixes.
 tools: Read, Grep, Glob, Bash
 model: inherit
 permissionMode: bypassPermissions

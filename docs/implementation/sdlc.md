@@ -1,6 +1,6 @@
-# CTM delivery system: team, SDLC, intake, decisions, enforcement
+# CTM 3.0 delivery system: team, SDLC, intake, decisions, enforcement
 
-Version 2.0 — 2026-11-04. Product owner: Fr. Raphael Maher. Same structure as
+Version 3.0 — 2026-11-04 (CTM 3.0 restart, D-0028). Every agent and session is named "CTM3 - <role>" (files `.claude/agents/ctm3-*.md`). Product owner: Fr. Raphael Maher. Same structure as
 the PDS 1.0 plan, adapted to CTM: CTM is an application that consumes Plenix
 from the CDN, so it has no token, package or CDN-publishing work of its own.
 
@@ -24,29 +24,29 @@ sources. Definitions: `.claude/agents/`.
 
 | Role | Model | Owns | Hard gate |
 |---|---|---|---|
-| `ctm-product-lead` | strongest | Intake and triage of every owner issue; specs (P0/P1/P2, non-goals); decision log; reports back with links and check screenshots | **G1 Spec written** |
-| `ctm-design-director` | strongest | `DESIGN.md` (the CTM layer on Plenix), screen specs, state matrices, data display; pictures only when the owner asks | **G2 Design fits `DESIGN.md`** |
-| `ctm-solution-architect` | strongest | API contracts (`contract/*.json`), data model, ADRs (`docs/adr/`) | **G3 Contract** |
-| `ctm-delivery-lead` | strong | Plans with global constraints, file ownership, conflict pre-scan, ledger, rulings, merge order | **G4 Plan** |
-| `ctm-database-engineer` | strong | Migrations, RLS, grants (sole owner) | Migration lint, reversible, red -> green |
-| `ctm-backend-engineer` | strong | Services, APIs, tasks, payments | Red -> green per task |
-| `ctm-frontend-engineer` | strong | Council and applicant screens on Plenix | Red -> green per task |
-| `ctm-i18n-engineer` | strongest | EN/AR dictionaries, Arabic standard and proposals, locale checks | **G6 Locale** |
-| `ctm-release-engineer` | strongest | CI, required checks, Compose, merge, staging and production deploys, Plenix auto-upgrade | **G8 Release integrity** |
-| `ctm-technical-writer` | mid | Messaging standard, glossary, guides, release notes | **G7 Docs and messages** |
+| `ctm3-product-lead` | strongest | Intake and triage of every owner issue; specs (P0/P1/P2, non-goals); decision log; reports back with links and check screenshots | **G1 Spec written** |
+| `ctm3-design-director` | strongest | `DESIGN.md` (the CTM layer on Plenix), screen specs, state matrices, data display; pictures only when the owner asks | **G2 Design fits `DESIGN.md`** |
+| `ctm3-solution-architect` | strongest | API contracts (`contract/*.json`), data model, ADRs (`docs/adr/`) | **G3 Contract** |
+| `ctm3-delivery-lead` | strong | Plans with global constraints, file ownership, conflict pre-scan, ledger, rulings, merge order | **G4 Plan** |
+| `ctm3-database-engineer` | strong | Migrations, RLS, grants (sole owner) | Migration lint, reversible, red -> green |
+| `ctm3-backend-engineer` | strong | Services, APIs, tasks, payments | Red -> green per task |
+| `ctm3-frontend-engineer` | strong | Council and applicant screens on Plenix | Red -> green per task |
+| `ctm3-i18n-engineer` | strongest | EN/AR dictionaries, Arabic standard and proposals, locale checks | **G6 Locale** |
+| `ctm3-release-engineer` | strongest | CI, required checks, Compose, merge, staging and production deploys, Plenix auto-upgrade | **G8 Release integrity** |
+| `ctm3-technical-writer` | mid | Messaging standard, glossary, guides, release notes | **G7 Docs and messages** |
 
 ### On demand (spawned for a job, then gone)
 
 | Role | Model | Job | Gate |
 |---|---|---|---|
-| `ctm-code-reviewer` | mid per task / strongest final | Spec compliance + quality; Critical / Important / Minor | **G5a** no next task with an open Critical/Important |
-| `ctm-design-critic` | strong | Reads code and screenshots together against `DESIGN.md` and the screen spec -> ship / rework / reject | **G5b Visual** |
-| `ctm-a11y-rtl-auditor` | mid | axe, keyboard journey, focus, names, contrast, RTL | **G5c a11y** |
-| `ctm-qa-engineer` | mid | Behaviour evidence per acceptance ID; NOT TESTED recorded; 3 attempts then escalate | **G5d Behaviour** |
-| `ctm-security-reviewer` | strongest | Permissions, privacy, applicant isolation, Professional Assessments, payments | **G5e Security** |
-| `ctm-debugger` | strong | Root cause before any fix | Failing test first |
-| `ctm-drift-auditor` | mid | Weekly: pins, duplicate logic, docs vs code, decisions without checks | Feeds the backlog |
-| `ctm-media-pipeline-engineer` | mid | Audio/OCR (parked until they stop being placeholders) | — |
+| `ctm3-code-reviewer` | mid per task / strongest final | Spec compliance + quality; Critical / Important / Minor | **G5a** no next task with an open Critical/Important |
+| `ctm3-design-critic` | strong | Reads code and screenshots together against `DESIGN.md` and the screen spec -> ship / rework / reject | **G5b Visual** |
+| `ctm3-a11y-rtl-auditor` | mid | axe, keyboard journey, focus, names, contrast, RTL | **G5c a11y** |
+| `ctm3-qa-engineer` | mid | Behaviour evidence per acceptance ID; NOT TESTED recorded; 3 attempts then escalate | **G5d Behaviour** |
+| `ctm3-security-reviewer` | strongest | Permissions, privacy, applicant isolation, Professional Assessments, payments | **G5e Security** |
+| `ctm3-debugger` | strong | Root cause before any fix | Failing test first |
+| `ctm3-drift-auditor` | mid | Weekly: pins, duplicate logic, docs vs code, decisions without checks | Feeds the backlog |
+| `ctm3-media-pipeline-engineer` | mid | Audio/OCR (parked until they stop being placeholders) | — |
 
 **Not adopted:** CEO/CPO role-play, NEXUS-full, extra coordinators
 (chief-of-staff, studio-producer), workflow-optimizer, MetaGPT's runtime, paid
@@ -57,12 +57,12 @@ principle APIs, brand catalogs (CTM's look is Plenix).
 | Phase | Entry | Work | Exit gate |
 |---|---|---|---|
 | **0. Foundation** (once) | This document | Required checks, branch protection, auto-merge, issue templates, `DESIGN.md`, `decisions.yaml`, dashboard, hooks, lessons | `main` protected; checks green on an empty change |
-| **1. Spec** | Issue logged | `ctm-product-lead`: brief with P0/P1/P2, non-goals, acceptance IDs (Known / Inferred / Unknown, decision cards) | **G1** |
-| **2. Design** | G1 | `ctm-design-director`: screen spec against `DESIGN.md`, template, state matrix, edge cases (long text, empty, 1,000+ rows; Arabic only if text or direction changes) | **G2** |
-| **3. Contract + plan** | G2 | `ctm-solution-architect`: `design.md`, `contract/*.json`, ADR; `ctm-delivery-lead`: `plan.md` | **G3 + G4** |
+| **1. Spec** | Issue logged | `ctm3-product-lead`: brief with P0/P1/P2, non-goals, acceptance IDs (Known / Inferred / Unknown, decision cards) | **G1** |
+| **2. Design** | G1 | `ctm3-design-director`: screen spec against `DESIGN.md`, template, state matrix, edge cases (long text, empty, 1,000+ rows; Arabic only if text or direction changes) | **G2** |
+| **3. Contract + plan** | G2 | `ctm3-solution-architect`: `design.md`, `contract/*.json`, ADR; `ctm3-delivery-lead`: `plan.md` | **G3 + G4** |
 | **4. Build** | G4 | One engineer per area in its own worktree; test-first; review after each task; fix loop capped at 5; rulings `what — why — cost if wrong` | All tasks done or parked with a ruling |
 | **5. Verify** | Branch done | G5a-e in parallel; one whole-branch review; one fix wave | **G5a-e** |
-| **6. Localize + document** (overlaps 4-5) | Stable text | `ctm-i18n-engineer` (proposals file), `ctm-technical-writer` | **G6 + G7** |
+| **6. Localize + document** (overlaps 4-5) | Stable text | `ctm3-i18n-engineer` (proposals file), `ctm3-technical-writer` | **G6 + G7** |
 | **7. Integrate** | All green | `gh pr merge --squash --auto`; conflicts go back to the owning engineer | `main` green |
 | **8. Release** (on demand) | Merged | Staging on merge; production on tag: backup -> build -> migrate -> restart -> health and live checks -> automatic rollback; release notes and "Rulings I made" on the issues; lessons updated | **G8** |
 
@@ -160,7 +160,7 @@ only).
 |---|---|
 | Semgrep | **Replaced by Opengrep** (community fork, same rule format, unrestricted rules) |
 | SonarQube Community | **Dropped**: no PR analysis without a plugin, 2-4 GB RAM; overlaps our checks |
-| PR-Agent | **Dropped**: a third AI reviewer brings back comment noise; `ctm-code-reviewer` covers it |
+| PR-Agent | **Dropped**: a third AI reviewer brings back comment noise; `ctm3-code-reviewer` covers it |
 | Rulesync | **Adopted**, pinned: one `.rulesync/` source -> `CLAUDE.md` + `AGENTS.md` |
 | reviewdog | **Adopted**, presentation only, SHA-pinned |
 | zizmor | **Adopted**: workflow security check |
@@ -179,7 +179,7 @@ only).
 | Staging | Not yet | `docker compose -p ctm-staging`, `ctm_staging` database, synthetic data |
 | Production | CTM VM (`ctm.lighthouseway.org`) | Deploy on tag with backup and rollback |
 | Screenshots | `ci-screenshots` branch (public) | Synthetic data only, never real case data |
-| Old team | "CTM 2.0" team (Owner desk / Lead / Builder / Reviewer) | Stop it before the next merge: two teams with different rules (L-10) |
+| Old team | "CTM 2.0" team (Owner desk / Lead / Builder / Reviewer), Codex streams Desktop-R and VM-FRM | **Retired 2026-11-04** (D-0028); old branches deleted after tagging `ctm2-final`; stop any process still running them |
 
 ## 9. Setup outside the repo (owner)
 

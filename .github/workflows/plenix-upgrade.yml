@@ -177,7 +177,7 @@ jobs:
         env:
           SHOTS: ${{ steps.shots.outputs.md }}
         run: |
-          for l in "type:bug" "sev:S2" "area:frontend" "agent:ctm-frontend-engineer" "plenix-upgrade"; do gh label create "$l" --force >/dev/null 2>&1 || true; done
+          for l in "type:bug" "sev:S2" "area:frontend" "agent:ctm3-frontend-engineer" "plenix-upgrade"; do gh label create "$l" --force >/dev/null 2>&1 || true; done
           {
             echo "Plenix **${{ steps.bump.outputs.new }}** (CTM is on **${{ steps.bump.outputs.old }}**) failed CTM validation, so CTM was not upgraded."
             echo
@@ -196,7 +196,7 @@ jobs:
             echo; echo "### Screenshots"; echo "$SHOTS"
           } > .issue.md
           ctm_issue=$(gh issue create --title "Plenix ${{ steps.bump.outputs.new }} breaks CTM" --body-file .issue.md \
-            --label "type:bug,sev:S2,area:frontend,agent:ctm-frontend-engineer,plenix-upgrade")
+            --label "type:bug,sev:S2,area:frontend,agent:ctm3-frontend-engineer,plenix-upgrade")
           echo "ctm_issue=$ctm_issue" >> "$GITHUB_OUTPUT"
         id: report
 
@@ -231,4 +231,4 @@ jobs:
           else
             pds=$(GH_TOKEN="$PDS_TOKEN" gh issue create --repo plenix-ds/pds --title "$title" --body-file .pds.md)
           fi
-          gh issue comment "$CTM_ISSUE" --body "Reported to the PDS team: $pds — ctm-release-engineer"
+          gh issue comment "$CTM_ISSUE" --body "Reported to the PDS team: $pds — ctm3-release-engineer"

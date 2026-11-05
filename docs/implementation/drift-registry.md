@@ -2,7 +2,7 @@
 
 Places where code, pins, docs or streams disagree. Never delete an entry: close
 it as Fixed (both sides checked) or Won't Fix (with reason). Maintained by
-`ctm-drift-auditor`.
+`ctm3-drift-auditor`.
 
 | Id | Finding | Side A | Side B | Risk | Owner | Status |
 |---|---|---|---|---|---|---|

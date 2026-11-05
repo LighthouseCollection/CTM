@@ -1,3 +1,5 @@
+> **Retired 2026-11-04 (CTM 2.0).** CTM restarted as **CTM 3.0** in the same repository and server. This file describes the old streams and is kept only as history; the last CTM 2.0 state is tag `ctm2-final`. Current instructions: `CLAUDE.md`, `docs/implementation/sdlc.md`, `DESIGN.md`, `decisions.yaml`.
+
 # Claude: council workspace
 
 Implement council workflows in LighthouseCollection/CTM on branch

@@ -2,7 +2,7 @@
 
 A defect checklist built from CTM's own history. The team lead pastes the
 points whose path tags match a slice into every brief. Reviewers cite a point id
-(or `NEW`) for each finding. `ctm-drift-auditor` adds at most 3 points per
+(or `NEW`) for each finding. `ctm3-drift-auditor` adds at most 3 points per
 slice from confirmed blockers, bumps `hits` when a point catches something, and
 proposes pruning points with no hits over many slices.
 

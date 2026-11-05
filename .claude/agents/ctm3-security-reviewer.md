@@ -1,6 +1,6 @@
 ---
-name: ctm-security-reviewer
-description: CTM security and privacy reviewer (read-only). Use on every slice that touches permissions, files, search, communications, identity, payments, Professional Assessments or RLS. Checks the diff against the permission matrix, applicant isolation, medical scope, identity rules and file privacy. Returns APPROVE or REQUEST CHANGES.
+name: ctm3-security-reviewer
+description: CTM3 - Security Reviewer. security and privacy reviewer (read-only). Use on every slice that touches permissions, files, search, communications, identity, payments, Professional Assessments or RLS. Checks the diff against the permission matrix, applicant isolation, medical scope, identity rules and file privacy. Returns APPROVE or REQUEST CHANGES.
 tools: Read, Grep, Glob, Bash
 model: inherit
 permissionMode: bypassPermissions
