@@ -295,7 +295,7 @@ decisions:
     options: [HTML page and pinned issue (chosen), HTML page only]
     decided_by: owner
     status: active
-    review_only: Not built yet (#61); the dashboard workflow's Pages job becomes the check
+    review_only: Page live since 2026-11-05 (refreshed by hand); the scheduled refresh in #85 becomes the check
 
   - id: D-0032
     date: 2026-11-05
