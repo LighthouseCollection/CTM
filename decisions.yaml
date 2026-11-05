@@ -264,3 +264,23 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: script, ref: scripts/check_decisions.py }
+
+  - id: D-0029
+    date: 2026-10-22
+    area: design
+    decision: Council case overview shows shared marriage and separation facts once, taken from the first formally submitted application; where the other spouse's submitted answer differs, a discrepancy marker beside the field opens both values and their sources. A display projection only - no merge, no overwrite, no automatic council finding; returned private corrections stay hidden until resubmitted
+    why: Owner decision on issue #14 (PA01/PA02/PA05), recorded at the CTM 3.0 triage so it is never asked again. Supersedes the earlier side-by-side and confirmed-by-both suggestions. Exact equality, Unknown and correction-source rules are spec work for the PA01 slice
+    options: [Shown once with discrepancy marker (chosen), Side by side per spouse, Shown only when both spouses agree]
+    decided_by: owner
+    status: active
+    review_only: Not built yet (#14 PA01/PA02/PA05); the overview slice's test becomes the check
+
+  - id: D-0030
+    date: 2026-11-04
+    area: security
+    decision: The council screen does not show or copy an external priest's private report link by hand. The link goes only by CTM email once email delivery is confirmed working; until then the paper form (print.pdf and paper completion) is the path
+    why: The owner kept manual bearer-link delivery unapproved (owner clarifications 2026-10-21, D8(b)/F21), but main showed the link once with Copy link. Decision card on #10; applied default, owner can switch to B
+    options: [No manual link, email or paper only (chosen), Keep the shown-once copy link]
+    decided_by: agent:ctm3-product-lead
+    status: active
+    review_only: Not built yet (#55); its frontend test becomes the check
