@@ -3,7 +3,7 @@
    NavPane + NavList on the left. Data: data.js, a snapshot taken from GitHub by collect.py. */
 (function () {
   'use strict';
-  var R = window.React, P = window.Plenix, D = window.CTM_DATA, h = R.createElement;
+  var R = window.React, P = window.Plenix, h = R.createElement;
   var GH = 'https://github.com/LighthouseCollection/CTM';
 
   function fmt(iso) {
@@ -36,12 +36,6 @@
   function Detail(props) { return h(P.Stack, { gap: 'lg' }, props.children); }
 
   /* ---- Owner decisions: the questions waiting for the owner, kept apart from the team's to-do list ---- */
-  var owner = (D.ownerDecisions || []).map(function (d) {
-    var status = d.answer ? 'answered' : d.applied ? 'applied' : 'open';
-    return Object.assign({}, d, { status: status });
-  });
-  var ownerIssues = {};
-  owner.forEach(function (d) { ownerIssues[d.issue] = d; });
   var STATUS = {
     open: ['action-required', 'Needs your answer'],
     applied: ['waiting', 'Applied for now'],
@@ -124,7 +118,10 @@
     function post() {
       setSend({ state: 'busy' });
       gh(API + '/issues/' + d.issue + '/comments', { method: 'POST', body: JSON.stringify({ body: body }) })
-        .then(function (c) { setSend({ state: 'done', url: c.html_url }); }, function (e) { setSend({ state: 'error', message: keyError(e) }); });
+        .then(function (c) {
+          setSend({ state: 'done', url: c.html_url });
+          if (props.onAnswered) props.onAnswered(d.id, { choice: other ? 'Other' : choice, text: other ? note.trim() : optionText(chosen)[0] + (note.trim() ? ' Note: ' + note.trim() : ''), at: c.created_at || new Date().toISOString(), url: c.html_url });
+        }, function (e) { setSend({ state: 'error', message: keyError(e) }); });
     }
     function copy() { if (navigator.clipboard) navigator.clipboard.writeText(body).then(function () { setCopied(true); }); }
     if (send.state === 'done') {
@@ -145,6 +142,15 @@
         : h(Connect, { onConnected: setLogin }));
   }
 
+  /* ---- Everything below is rebuilt from the data, plus the answers sent from this browser that the
+     next rebuild of data.json has not picked up yet (so a sent answer moves at once). ---- */
+  function derive(D, local, onAnswered, posted) {
+  var owner = (D.ownerDecisions || []).map(function (d) {
+    var answer = d.answer || local[d.id] || null;
+    return Object.assign({}, d, { answer: answer, status: answer ? 'answered' : d.applied ? 'applied' : 'open' });
+  });
+  var ownerIssues = {};
+  owner.forEach(function (d) { ownerIssues[d.issue] = d; });
   var tasks = D.tasks.filter(function (t) { return !t.waiting; });
   var active = D.decisions.filter(function (d) { return d.status === 'active'; });
   var needAnswer = owner.filter(function (d) { return d.status === 'open'; });
@@ -210,7 +216,10 @@
     },
     {
       id: 'owner', label: 'To decide', icon: 'flag', title: 'Decisions waiting on you', rows: toDecide,
-      toolbar: h(P.Text, { variant: 'secondary' }, 'Your decisions, apart from the team’s to-do list. Where the team could not wait, it applied the recommended option and keeps working; you can still change it. Choose a row to answer.'),
+      toolbar: h(P.Stack, { gap: 'sm' },
+        posted ? h(P.Banner, { tone: 'success', title: 'Answer to ' + posted.id + ' posted' },
+          'It is in the thread under your name and now listed under Decisions. ', link(posted.url, 'See your comment'), '.') : null,
+        h(P.Text, { variant: 'secondary' }, 'Your decisions, apart from the team’s to-do list. Where the team could not wait, it applied the recommended option and keeps working; you can still change it. Choose a row to answer.')),
       columns: [
         { title: 'Decision', field: 'id', kind: 'data', width: 88 },
         { title: 'Question', field: 'title', kind: 'name', render: function (d) { return plain(d.title); } },
@@ -222,7 +231,7 @@
           h(P.Inline, { gap: 'sm', wrap: true }, statusBadge(d), link(d.url, 'Open #' + d.issue)),
           d.context ? h(Field, { label: 'Context' }, h(P.Text, null, plain(d.context))) : null,
           d.applied ? h(P.Banner, { tone: 'info', title: 'Applied for now: ' + d.applied }, 'The team went ahead with the recommended option so work did not stop. Pick another option to change it.') : null,
-          h(AnswerForm, { d: d, key: d.id }));
+          h(AnswerForm, { d: d, key: d.id, onAnswered: onAnswered }));
       },
     },
     {
@@ -322,15 +331,59 @@
       },
     },
   ];
+  return SECTIONS;
+  }
 
+  var SECTION_IDS = ['overview', 'owner', 'todo', 'decisions', 'done', 'checks', 'team', 'screenshots'];
   function fromHash() {
     var id = (location.hash || '').replace('#', '');
-    return SECTIONS.some(function (x) { return x.id === id; }) ? id : 'overview';
+    return SECTION_IDS.indexOf(id) >= 0 ? id : 'overview';
+  }
+
+  // Answers sent from this browser, kept until the rebuilt data.json carries them (about a minute).
+  var LOCAL_ANSWERS = 'ctm3-dashboard-answers';
+  function readLocal() { try { return JSON.parse(localStorage.getItem(LOCAL_ANSWERS) || '{}'); } catch (e) { return {}; } }
+  function writeLocal(v) { try { localStorage.setItem(LOCAL_ANSWERS, JSON.stringify(v)); } catch (e) { /* storage blocked */ } }
+  function pending(local, data) {
+    var left = {}, known = {};
+    (data.ownerDecisions || []).forEach(function (d) { if (d.answer) known[d.id] = true; });
+    Object.keys(local).forEach(function (id) {
+      var age = Date.now() - Date.parse(local[id].at || 0);
+      if (!known[id] && age < 24 * 3600 * 1000) left[id] = local[id];
+    });
+    return left;
   }
 
   function App() {
     var st = R.useState(fromHash()), current = st[0], setCurrent = st[1];
     var op = R.useState({}), open = op[0], setOpen = op[1];
+    var ds = R.useState(window.CTM_DATA), data = ds[0], setData = ds[1];
+    var lsx = R.useState(function () { return pending(readLocal(), window.CTM_DATA); }), local = lsx[0], setLocal = lsx[1];
+    var ps = R.useState(null), posted = ps[0], setPosted = ps[1];
+    R.useEffect(function () { writeLocal(local); }, [local]);
+    // Pick up each rebuild of the page's data without a reload: every 30 seconds, and when the tab comes back.
+    R.useEffect(function () {
+      var stamp = window.CTM_DATA.generatedAt;
+      function check() {
+        fetch('data.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (next) {
+          if (next && next.generatedAt !== stamp) {
+            stamp = next.generatedAt;
+            setData(next);
+            setLocal(function (l) { return pending(l, next); });
+          }
+        }, function () { /* offline or not built yet: keep what is shown */ });
+      }
+      var timer = setInterval(check, 30000);
+      function onVisible() { if (document.visibilityState === 'visible') check(); }
+      document.addEventListener('visibilitychange', onVisible);
+      return function () { clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
+    }, []);
+    function onAnswered(id, answer) {
+      setLocal(function (l) { var n = Object.assign({}, l); n[id] = answer; return n; });
+      setPosted({ id: id, url: answer.url });
+      setOpen(function (o) { var n = Object.assign({}, o); n.owner = null; return n; });
+    }
+    var SECTIONS = R.useMemo(function () { return derive(data, local, onAnswered, posted); }, [data, local, posted]);
     R.useEffect(function () {
       function onHash() { setCurrent(fromHash()); }
       window.addEventListener('hashchange', onHash);
@@ -343,7 +396,7 @@
 
     var nav = h(P.NavPane, {
       label: 'Dashboard sections', title: 'CTM 3.0 Dashboard',
-      footer: h(P.Text, { variant: 'secondary' }, 'Snapshot ' + fmt(D.generatedAt) + ' · main ' + D.mainSha),
+      footer: h(P.Text, { variant: 'secondary' }, 'Updated ' + fmt(data.generatedAt) + ' · main ' + data.mainSha),
     }, h(P.NavList, {
       label: 'Sections', value: current,
       onSelect: function (id) { location.hash = id; setCurrent(id); },
