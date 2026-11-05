@@ -230,13 +230,8 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(council, /className: "plx-entity-header__aside"/);
   assert.match(council, /P\.Stack, \{ gap: "xs", align: "end" \},/);
   assert.match(council, /P\.Inline,\s*\{ key: action\.label, justify: "end" \}/);
-  assert.match(council, /className: "ctm-session-header-action"/);
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
-  assert.match(css, /\.ctm-session-header-action\s*\{[^}]*inline-size: 10\.5rem/);
   assert.match(council, /icon: "folder-add", label: t\("addAssignmentCase"\)/);
-  assert.match(council, /className: "ctm-calendar-add-icon"/);
-  assert.match(council, /name: "calendar"/);
-  assert.match(council, /name: "add", size: "2xs"/);
+  assert.match(council, /icon: "event_available", label: t\("addHearingCase"\)/);
   assert.match(council, /className: "ctm-session-agenda-grid"/);
   assert.match(shell, /ctm\/ctm\.css/);
   assert.match(council, /value: "draft", label: t\("sessionStatusPlanned"\), icon: "document"/);
@@ -248,7 +243,7 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(council, /P\.DataPill, \{ size: "md", gender: normalizedGender \}/);
   assert.match(council, /name: "calendar", size: "lg"/);
   assert.match(council, /sessionHeaderActions\.map/);
-  assert.match(council, /h\(P\.Button, \{ className: "ctm-session-header-action", size: "sm", icon: action\.icon/);
+  assert.match(council, /h\(P\.Button, \{ size: "sm", icon: action\.icon/);
   for (const key of ["addAssignmentCase", "addHearingCase", "attendance"])
     assert.match(council, new RegExp(`t\\("${key}"\\)`), key);
   assert.match(council, /t\("casesToAssign"\)/);
@@ -322,7 +317,7 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /t\("personalDetails"\), "person", \[/);
   assert.doesNotMatch(councilCase, /t\("personalDetails"\), "user", \[/);
   assert.match(councilCase, /P\.SectionHeading, \{ level: 2 \}/);
-  assert.match(councilCase, /P\.Divider, \{ className: "ctm-spouse-profile-section__divider" \}/);
+  assert.match(councilCase, /h\(P\.Divider\)/);
   assert.doesNotMatch(councilCase, /ctm-spouse-profile-columns/);
   const spouseCards = councilCase.slice(councilCase.indexOf("function CaseParties"));
   const personal = spouseCards.indexOf('t("personalDetails")');
@@ -533,8 +528,6 @@ test("new session form defaults the Bellflower location and uses a responsive tw
   assert.match(council, /R\.useState\("St\. George Coptic Orthodox Church, Bellflower, California"\)/);
   assert.match(council, /className: "ctm-session-form-grid"/);
   assert.match(css, /\.ctm-session-form-grid[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(css, /\.ctm-session-form \.plx-form-actions[\s\S]*background: transparent/);
-  assert.match(css, /#ctm-root \.plx-panel \.plx-form-actions[\s\S]*background: transparent/);
 });
 
 
@@ -637,7 +630,7 @@ test("council can edit a spouse contact through a versioned case finding", () =>
   assert.match(councilCase, /function SpouseContactSection\(/);
   assert.match(councilCase, /fact_code: `case_card\.contact_\$\{party\.id\}`/);
   assert.match(councilCase, /h\(SpouseContactSection, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
-  assert.match(css, /\.ctm-spouse-profile-section__heading \{[\s\S]*color: var\(--plx-sys-color-primary/);
+  assert.match(councilCase, /P\.SectionHeading, \{ level: 2 \}/);
 });
 
 test("case navigation uses the requested Material folder icons", () => {
@@ -660,7 +653,7 @@ test("opening a new application adds accept and decline controls to the standard
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(councilCase, /function ApplicationReviewActions\(\{ api, lang, applicationId, onDone \}\)/);
   assert.match(councilCase, /variant: "danger"/);
-  assert.match(councilCase, /ctm-application-review__accept/);
+  assert.match(councilCase, /h\(P\.Button, \{ variant: "primary", disabled: pending, onClick: \(\) => setMode\("accept"\) \}, t\("acceptApplication"\)\)/);
   assert.match(councilCase, /api\(`\/api\/applications\/\$\{encodeURIComponent\(applicationId\)\}\/review\/`/);
   assert.match(councilCase, /result,\s*instructions: result === "reject" \? reason\.trim\(\) : ""/);
   assert.match(councilCase, /h\(ApplicationReviewActions, \{ api, lang, applicationId: reviewApplicationId/);
@@ -710,4 +703,26 @@ test("session forms show the centrally configured president as read-only", () =>
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /h\(P\.Select, \{ value: presiding, disabled: true,/);
   assert.doesNotMatch(council, /presiding_member_id: presiding/);
+});
+
+// ctm3-48 (#48, D-0022): rows whose Plenix default is the intended look. The JS no longer uses the class; the
+// rules themselves go when the last #48 PR deletes ctm.css (touching it earlier fails the contract check on its
+// old raw colors), so that PR replaces the CSS half of this test with "ctm.css does not exist".
+const removedStyling = [
+  ["#1", "ctm-session-header-action"], ["#4", "ctm-spouse-profile-section__heading"], ["#5", "ctm-spouse-profile-section__edit"],
+  ["#6", "ctm-spouse-profile-section__divider"], ["#7", "ctm-decision-nav-icon"], ["#7", "ctm-decree-nav-icon"],
+  ["#11", "ctm-case-summary-person-pill"], ["#17", "ctm-calendar-add-icon"], ["#24", "ctm-application-review"],
+  ["#25", "ctm-demo-evidence-gallery"], ["#26", "ctm-demo-document-list"],
+];
+test("ctm3-48: delete-only rows no longer use a CTM styling class", () => {
+  const js = fs.readdirSync("static/ctm").filter((f) => f.endsWith(".js")).map((f) => fs.readFileSync(`static/ctm/${f}`, "utf8")).join("\n");
+  for (const [row, name] of removedStyling) assert.ok(!new RegExp(String.raw`\b${name}\b`).test(js), `${row} class ${name}`);
+  assert.doesNotMatch(js, /["` ]ctm-spouse-profile-section["` ]/, "#4 accent section class");
+  assert.doesNotMatch(js, /ctm-spouse-profile-sections/, "unused section wrapper class");
+});
+
+test("ctm3-48: council root gets direction from DirectionProvider; calendar action uses one Plenix icon", () => {
+  assert.match(app, /h\(P\.ThemeProvider, null, h\(P\.DirectionProvider, \{ follow: true \}, h\(App\)\)\)/);
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(council, /\{ icon: "event_available", label: t\("addHearingCase"\)/);
 });

@@ -2192,7 +2192,7 @@
     // so this uses its documented structural classes and tokenized anatomy.
     const sessionHeaderActions = (current ? [
       editable && manage ? { icon: "folder-add", label: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) } : null,
-      editable ? { icon: h("span", { className: "ctm-calendar-add-icon", "aria-hidden": "true" }, h(P.Icon, { name: "calendar" }), h(P.Icon, { name: "add", size: "2xs" })), label: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) } : null,
+      editable ? { icon: "event_available", label: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) } : null,
       { icon: "settings-users", label: t("attendance"), disabled: pending, onClick: () => setDialog({ kind: "attendance" }) },
     ] : []).filter(Boolean);
     const sessionStatus = session.state === "closed" ? "adjourned" : session.state === "draft" ? "draft" : "in-session";
@@ -2449,7 +2449,7 @@
                 ...sessionHeaderActions.map((action) => h(
                   P.Inline,
                   { key: action.label, justify: "end" },
-                  h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: action.icon, variant: action.primary ? "primary" : "secondary", disabled: action.disabled, onClick: action.onClick }, action.label),
+                  h(P.Button, { size: "sm", icon: action.icon, variant: action.primary ? "primary" : "secondary", disabled: action.disabled, onClick: action.onClick }, action.label),
                 )),
               ),
               current ? h(P.Inline, { justify: "end" },

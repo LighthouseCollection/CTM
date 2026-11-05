@@ -3121,13 +3121,13 @@ ${ar}` : en;
     if (!fields.length) return null;
     return h(
       P.Stack,
-      { gap: "sm", key: title, className: `ctm-spouse-profile-section${twoColumns ? " ctm-spouse-profile-section--two-columns" : ""}` },
+      { gap: "sm", key: title, ...(twoColumns ? { className: "ctm-spouse-profile-section--two-columns" } : {}) },
       h(
         P.Inline,
-        { gap: "sm", align: "center", className: "ctm-spouse-profile-section__heading" },
+        { gap: "sm", align: "center" },
         h(P.Icon, { name: icon, label: title }),
         h(P.SectionHeading, { level: 2 }, title),
-        h(P.Divider, { className: "ctm-spouse-profile-section__divider" }),
+        h(P.Divider),
       ),
       h(
         P.PropertyList,
@@ -3245,13 +3245,13 @@ ${ar}` : en;
     };
     return h(
       P.Stack,
-      { gap: "sm", className: "ctm-spouse-profile-section ctm-spouse-profile-section--two-columns" },
+      { gap: "sm", className: "ctm-spouse-profile-section--two-columns" },
       h(
         P.Inline,
-        { gap: "sm", align: "center", className: "ctm-spouse-profile-section__heading" },
+        { gap: "sm", align: "center" },
         h(P.Icon, { name: "message", label: t("contact") }),
         h(P.SectionHeading, { level: 2 }, t("contact")),
-        h(P.Divider, { className: "ctm-spouse-profile-section__divider" }),
+        h(P.Divider),
       ),
       editing
         ? h(
@@ -3424,7 +3424,7 @@ ${ar}` : en;
                 { gap: "lg" },
                 h(
                   P.Stack,
-                  { gap: "section", className: "ctm-spouse-profile-sections" },
+                  { gap: "section" },
                   spouseProfileSection(P, h, t, t("personalDetails"), "person", [
                     ["otherNamesKnownBy", profile.personal?.other_names],
                     ["placeOfBirth", profile.personal?.place_of_birth],
@@ -3542,8 +3542,8 @@ ${ar}` : en;
           ),
         )),
         h("div", { className: "plx-entity-header__aside" }, h(P.Stack, { gap: "xs", align: "end" },
-          h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "calendar", onClick: () => onSession(current.session.id) }, t("rescheduleHearing")),
-          h(P.Button, { className: "ctm-session-header-action", size: "sm", icon: "settings-users", onClick: () => setAttendanceOpen(true) }, t("councilAttendance")),
+          h(P.Button, { size: "sm", icon: "calendar", onClick: () => onSession(current.session.id) }, t("rescheduleHearing")),
+          h(P.Button, { size: "sm", icon: "settings-users", onClick: () => setAttendanceOpen(true) }, t("councilAttendance")),
         )),
       )) : null;
     const currentContent = current ? h(P.Stack, { gap: "lg" },
@@ -3990,8 +3990,8 @@ ${ar}` : en;
     return h(
       R.Fragment,
       null,
-      h(P.Inline, { justify: "end", wrap: true, className: "ctm-application-review" },
-        h(P.Button, { className: "ctm-application-review__accept", variant: "primary", disabled: pending, onClick: () => setMode("accept") }, t("acceptApplication")),
+      h(P.Inline, { justify: "end", wrap: true },
+        h(P.Button, { variant: "primary", disabled: pending, onClick: () => setMode("accept") }, t("acceptApplication")),
         h(P.Button, { variant: "danger", disabled: pending, onClick: () => setMode("reject") }, t("declineApplication")),
       ),
       h(P.ConfirmDialog, {
@@ -4069,7 +4069,7 @@ ${ar}` : en;
     const personPill = (party) => {
       if (!party) return "—";
       const gender = party.gender === "M" ? "male" : party.gender === "F" ? "female" : undefined;
-      return gender ? h(P.DataPill, { gender, className: "ctm-case-summary-person-pill" }, party.name) : h(P.DataPill, { person: true, className: "ctm-case-summary-person-pill" }, party.name);
+      return gender ? h(P.DataPill, { gender }, party.name) : h(P.DataPill, { person: true }, party.name);
     };
     const latestAudit = (action) => [...facts.audit].filter((row) => row.action === action).sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)))[0];
     const summaryTimeline = [];
