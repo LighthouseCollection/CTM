@@ -43,15 +43,19 @@ log() { printf '[release %s %s] %s\n' "$TARGET" "$(date -u +%H:%M:%S)" "$*"; }
 dc() { CTM_IMAGE_TAG="$CURRENT_TAG" docker compose -p "$PROJECT" --env-file "$ENV_FILE" "${COMPOSE_FILES[@]}" "$@"; }
 
 health_check() {
-  local i body
+  # /health/ must report ok, and the sign-in page and /version.json must
+  # answer 200 through the same URL users reach (#63: a 502 behind the proxy).
+  local i body base="${HEALTH_URL%/health/}"
   for i in $(seq 1 30); do
-    if body="$(curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null)" && grep -q '"status": *"ok"' <<<"$body"; then
-      log "health ok ($HEALTH_URL, try $i)"
+    if body="$(curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null)" && grep -q '"status": *"ok"' <<<"$body" \
+      && curl -fsS --max-time 5 -o /dev/null "$base/" \
+      && curl -fsS --max-time 5 "$base/version.json" 2>/dev/null | grep -q '"version"'; then
+      log "health ok ($base: /health/, /, /version.json; try $i)"
       return 0
     fi
     sleep 5
   done
-  log "health check failed: $HEALTH_URL"
+  log "health check failed: $base (/health/, / or /version.json)"
   return 1
 }
 

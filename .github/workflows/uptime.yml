@@ -1,0 +1,66 @@
+name: CTM live site check
+# Catches an outage between deploys (#63): every 30 minutes a GitHub runner
+# asks the public site for /, /health/ and /version.json. While any of them
+# fails, one open issue labelled `site-down` tracks it; it closes on recovery.
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: uptime
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Live site check
+    if: github.repository == 'LighthouseCollection/CTM'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Probe the live site
+        id: probe
+        env:
+          BASE: https://ctm.lighthouseway.org
+        run: |
+          failed=""
+          for path in / /health/ /version.json; do
+            code=000
+            for try in 1 2 3; do
+              code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$BASE$path" || true)"
+              [[ "$code" == 200 ]] && break
+              sleep 10
+            done
+            echo "$path -> $code" | tee -a "$GITHUB_STEP_SUMMARY"
+            [[ "$code" == 200 ]] || failed="$failed \`$path\` $code,"
+          done
+          echo "failed=${failed%,}" >> "$GITHUB_OUTPUT"
+      - name: Open, keep or close the site-down issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          FAILED: ${{ steps.probe.outputs.failed }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          open="$(gh issue list --repo "$REPO" --label site-down --state open --json number --jq '.[0].number // empty')"
+          if [[ -n "$FAILED" ]]; then
+            if [[ -z "$open" ]]; then
+              gh issue create --repo "$REPO" --title "Live site down: ctm.lighthouseway.org" \
+                --label site-down --label type:bug --label sev:S2 --label area:release \
+                --label agent:ctm3-release-engineer \
+                --body "$(printf '%s\n' "The live site check failed:$FAILED (3 tries each)." "" "Run: $RUN_URL" "" "— ctm3-release-engineer (uptime.yml)")"
+            fi
+            echo "::error::live site failing:$FAILED"
+            exit 1
+          elif [[ -n "$open" ]]; then
+            gh issue comment "$open" --repo "$REPO" --body "Live site answers 200 on \`/\`, \`/health/\` and \`/version.json\` again ($RUN_URL). Closing. — ctm3-release-engineer (uptime.yml)"
+            gh issue close "$open" --repo "$REPO"
+          fi
