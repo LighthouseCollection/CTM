@@ -52,14 +52,62 @@
   function plain(t) { return String(t || '').replace(/\*\*/g, '').replace(/`/g, ''); }
   function optionText(o) { var t = plain(o.text); return (t.charAt(0).toUpperCase() + t.slice(1)).split(' — risk: '); }
 
+  /* ---- Posting the owner's answer as a comment in the decision's own GitHub thread ----
+     The key is a fine-grained GitHub token the owner creates once (this repository only, Issues: read and write).
+     It stays in this browser (localStorage); it is never in the page's files, the repository or data.js. */
+  var KEY_NAME = 'ctm3-dashboard-github-key';
+  var API = 'https://api.github.com/repos/LighthouseCollection/CTM';
+  var memoryKey = '';
+  function getKey() { try { return localStorage.getItem(KEY_NAME) || memoryKey; } catch (e) { return memoryKey; } }
+  function setKey(v) { memoryKey = v || ''; try { if (v) localStorage.setItem(KEY_NAME, v); else localStorage.removeItem(KEY_NAME); } catch (e) { /* storage blocked: keep it for this visit */ } }
+  function gh(path, opts) {
+    return fetch(path.indexOf('http') === 0 ? path : 'https://api.github.com' + path, Object.assign({}, opts, {
+      headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + getKey(), 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
+    })).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) { var e = new Error(j.message || ('GitHub answered ' + r.status)); e.status = r.status; throw e; }
+        return j;
+      });
+    }, function () { throw new Error('This page cannot reach GitHub from here. Use the public page, lighthousecollection.github.io/CTM, or Copy answer.'); });
+  }
+  function keyError(e) {
+    if (e.status === 401) return 'GitHub did not accept this key (wrong, expired or revoked). Create a new one and connect again.';
+    if (e.status === 403 || e.status === 404) return 'This key cannot comment on LighthouseCollection/CTM issues. Give it this repository with Issues: Read and write; the organization may also need to approve it.';
+    return e.message;
+  }
+
+  // Connect once: paste the key; it is checked against GitHub before it is kept.
+  function Connect(props) {
+    var vs = R.useState(''), value = vs[0], setValue = vs[1];
+    var es = R.useState(''), error = es[0], setError = es[1];
+    var bs = R.useState(false), busy = bs[0], setBusy = bs[1];
+    function save() {
+      setBusy(true); setError('');
+      setKey(value.trim());
+      gh('/user').then(function (u) {
+        return gh(API).then(function () { props.onConnected(u.login); });
+      }).catch(function (e) { setKey(''); setError(keyError(e)); }).then(function () { setBusy(false); });
+    }
+    return h(P.Stack, { gap: 'sm' },
+      h(P.Banner, { tone: 'info', title: 'Connect GitHub once to answer here' },
+        'Your answer then goes straight into the thread on GitHub, under your name. ',
+        link('https://github.com/settings/personal-access-tokens/new', 'Create a key'),
+        ': Resource owner LighthouseCollection, "Only select repositories" → CTM, and under Repository permissions set Issues to "Read and write". Nothing else. The key stays in this browser only.'),
+      h(P.Field, { label: 'GitHub key', error: error || undefined },
+        h(P.Input, { type: 'password', autoComplete: 'off', value: value, onChange: function (e) { setValue(e.target.value); } })),
+      h(P.Inline, { gap: 'sm' }, h(P.Button, { variant: 'primary', loading: busy, disabled: !value.trim() || busy, onClick: save }, 'Connect')));
+  }
+
   // The answer form: every option from the decision card (the recommended one marked), plus Other with a text box.
-  // Sending opens a new GitHub issue with the answer filled in (label owner-answer); the Product Lead applies it.
   function AnswerForm(props) {
     var d = props.d;
     var rec = (d.options.filter(function (o) { return o.recommended; })[0] || {}).key || '';
     var cs = R.useState(d.applied || rec), choice = cs[0], setChoice = cs[1];
     var ns = R.useState(''), note = ns[0], setNote = ns[1];
     var cp = R.useState(false), copied = cp[0], setCopied = cp[1];
+    var ls = R.useState(''), login = ls[0], setLogin = ls[1];
+    var ss = R.useState({ state: 'idle' }), send = ss[0], setSend = ss[1];
+    R.useEffect(function () { if (getKey()) gh('/user').then(function (u) { setLogin(u.login); }, function () { setLogin(''); }); }, []);
     var options = d.options.map(function (o) {
       var parts = optionText(o);
       return {
@@ -71,21 +119,31 @@
     var chosen = d.options.filter(function (o) { return o.key === choice; })[0];
     var other = choice === 'other';
     var ready = other ? note.trim().length > 0 : !!chosen;
-    var answer = other ? 'Other' : choice;
-    var body = 'Answer to ' + d.id + (d.id === '#' + d.issue ? '' : ' (#' + d.issue + ')') + ': ' + d.title + '\n\n' +
-      (other ? '**Other:** ' + note.trim() : '**' + choice + '** — ' + optionText(chosen)[0] + (note.trim() ? '\n\nNote: ' + note.trim() : '')) +
-      '\n\nSent from the CTM 3.0 dashboard. Decision card: ' + d.url;
-    var href = GH + '/issues/new?labels=owner-answer&title=' + encodeURIComponent('Answer ' + d.id + ': ' + answer) + '&body=' + encodeURIComponent(body);
+    var body = '**Answer to ' + d.id + ': ' + (other ? 'Other' : choice) + '**\n\n' +
+      (other ? note.trim() : optionText(chosen)[0] + (note.trim() ? '\n\nNote: ' + note.trim() : '')) +
+      '\n\n_Sent from the CTM 3.0 dashboard._';
+    function post() {
+      setSend({ state: 'busy' });
+      gh(API + '/issues/' + d.issue + '/comments', { method: 'POST', body: JSON.stringify({ body: body }) })
+        .then(function (c) { setSend({ state: 'done', url: c.html_url }); }, function (e) { setSend({ state: 'error', message: keyError(e) }); });
+    }
+    function copy() { if (navigator.clipboard) navigator.clipboard.writeText(body).then(function () { setCopied(true); }); }
+    if (send.state === 'done') {
+      return h(P.Banner, { tone: 'success', title: 'Answer posted on #' + d.issue },
+        'It is in the thread under your name. The Product Lead applies it and updates decisions.yaml. ', link(send.url, 'See your comment'), '.');
+    }
     return h(P.Stack, { gap: 'md' },
       h(P.RadioGroup, { label: 'Your answer', name: 'answer-' + d.id, value: choice, onChange: function (v) { setChoice(v && v.target ? v.target.value : v); }, options: options }),
       h(P.Field, { label: other ? 'Your answer' : 'Note (optional)', required: other },
         h(P.Textarea, { rows: 4, autoGrow: true, value: note, onChange: function (e) { setNote(e.target.value); } })),
-      h(P.Inline, { gap: 'sm', wrap: true },
-        h(P.Button, { variant: 'primary', icon: 'open_in_new', href: ready ? href : undefined, target: '_blank', rel: 'noopener', disabled: !ready }, 'Send answer on GitHub'),
-        h(P.Button, { icon: 'content_copy', disabled: !ready, onClick: function () {
-          if (navigator.clipboard) navigator.clipboard.writeText(body).then(function () { setCopied(true); });
-        } }, copied ? 'Copied' : 'Copy answer')),
-      h(P.Text, { variant: 'secondary' }, 'GitHub opens with your answer filled in: press "Submit new issue". The Product Lead applies it, updates decisions.yaml and closes the answer. Or copy it and reply on ', link(d.url, '#' + d.issue), '.'));
+      login ? h(P.Stack, { gap: 'sm' },
+        send.state === 'error' ? h(P.Banner, { tone: 'danger', title: 'Not posted' }, send.message) : null,
+        h(P.Inline, { gap: 'sm', wrap: true },
+          h(P.Button, { variant: 'primary', loading: send.state === 'busy', disabled: !ready || send.state === 'busy', onClick: post }, 'Send answer to #' + d.issue),
+          h(P.Button, { icon: 'content_copy', disabled: !ready, onClick: copy }, copied ? 'Copied' : 'Copy answer')),
+        h(P.Text, { variant: 'secondary' }, 'Posts as ' + login + ' in the thread of ', link(d.url, '#' + d.issue), '. ',
+          h(P.Link, { href: '#owner', onClick: function (e) { e.preventDefault(); setKey(''); setLogin(''); } }, 'Disconnect this browser'), '.'))
+        : h(Connect, { onConnected: setLogin }));
   }
 
   var tasks = D.tasks.filter(function (t) { return !t.waiting; });
