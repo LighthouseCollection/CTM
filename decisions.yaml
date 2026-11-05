@@ -284,7 +284,7 @@ decisions:
     options: [No manual link, email or paper only (chosen), Keep the shown-once copy link]
     decided_by: agent:ctm3-product-lead
     status: active
-    review_only: Not built yet (#55); its frontend test becomes the check
+    check: { kind: test, ref: tests/frontend/council-external.test.cjs }
 
   - id: D-0031
     date: 2026-11-04
