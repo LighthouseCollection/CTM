@@ -17,6 +17,7 @@ trustworthiness, and CTM lost many commits to toggled icons and layouts.
 |---|---|---|---|---|---|---|---|
 | 2026-10-22 | Council case overview (Marriage, Separation, Summary) | Shared facts | Shown once from the first formal submission; discrepancy marker opens both spouses' values and sources | D-0029 | [#14 owner comment](https://github.com/LighthouseCollection/CTM/issues/14#issuecomment-6332044146) | Locked | Not built |
 | 2026-11-04 | Council request: external priest report | Private link panel | No on-screen or copy link; email when working, else paper form | D-0030 | #10 decision card | Locked | Not built (#55) |
+| 2026-11-05 | All CTM screens | Page templates | Every screen uses the Plenix CDN page template for its kind (lists, records, settings, forms, sign-in) at the pinned version; documented components and tokens only | D-0034 | Owner, Product Lead session 2026-11-05 (#97) | Locked | In progress (#97) |
 
 Status values: `Locked`, `Superseded YYYY-MM-DD`, `Applied`, `Partially applied`.
 

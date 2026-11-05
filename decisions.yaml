@@ -316,3 +316,13 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: test, ref: tests/frontend/council-external.test.cjs }
+
+  - id: D-0034
+    date: 2026-11-05
+    area: design
+    decision: Every CTM screen follows the Plenix CDN page templates of the pinned version (0.86.0 today) - ListingPage or SplitWorkspace with CommandBar and DataGrid defaults for lists, RecordPage and EntityHeader for records, SettingsLayout for settings, FormFlow, Wizard and DraftState for forms, Auth and SignInForm for sign-in - using documented components and tokens only. ctm.css keeps only the RTL bridge and what Plenix cannot yet do, each with a Plenix request
+    why: Owner 2026-11-05 "i need full refresh based on the latest cdn!!!" after noticing data grids, navigation and pages do not match the CDN examples. Audit in docs/implementation/slices/cdn-refresh/audit.md; work tracked in #97
+    options: [Full refresh onto the CDN templates (chosen)]
+    decided_by: owner
+    status: active
+    check: { kind: ci-job, ref: ".github/workflows/quality.yml#frontend-tests" }
