@@ -1,5 +1,5 @@
 window.CTM_DATA = {
- "generatedAt": "2026-11-05T07:22+00:00",
+ "generatedAt": "2026-11-05T07:23+00:00",
  "mainSha": "fb518c9",
  "tasks": [
   {
@@ -63,24 +63,6 @@ window.CTM_DATA = {
    "rank": 3
   },
   {
-   "number": 61,
-   "title": "Dashboard: publish the decisions dashboard as an HTML page (GitHub Pages)",
-   "url": "https://github.com/LighthouseCollection/CTM/issues/61",
-   "sev": "S3",
-   "type": "feature",
-   "areas": [
-    "ci"
-   ],
-   "owners": [
-    "release-engineer"
-   ],
-   "decision": true,
-   "next": "Publish this dashboard as a GitHub Pages page from dashboard.yml",
-   "waiting": "",
-   "updated": "2026-11-05T07:20:25Z",
-   "rank": 4
-  },
-  {
    "number": 51,
    "title": "QA: browser scripts no longer match the app and none run in CI",
    "url": "https://github.com/LighthouseCollection/CTM/issues/51",
@@ -96,7 +78,7 @@ window.CTM_DATA = {
    "next": "Repair or remove the stale browser scripts; add a CI job with screenshots",
    "waiting": "",
    "updated": "2026-11-05T03:57:58Z",
-   "rank": 5
+   "rank": 4
   },
   {
    "number": 10,
@@ -116,7 +98,7 @@ window.CTM_DATA = {
    "next": "Mark F16-F23 against main",
    "waiting": "",
    "updated": "2026-11-05T07:22:23Z",
-   "rank": 6
+   "rank": 5
   },
   {
    "number": 11,
@@ -135,7 +117,7 @@ window.CTM_DATA = {
    "next": "Link the merged F12/F15 work, mark F26-F33",
    "waiting": "",
    "updated": "2026-11-05T04:00:25Z",
-   "rank": 7
+   "rank": 6
   },
   {
    "number": 48,
@@ -153,7 +135,7 @@ window.CTM_DATA = {
    "next": "Plenix requests first (RTL, vote table, A4 print); one preview at the end",
    "waiting": "",
    "updated": "2026-11-05T06:58:53Z",
-   "rank": 8
+   "rank": 7
   },
   {
    "number": 54,
@@ -172,7 +154,7 @@ window.CTM_DATA = {
    "next": "After the site is back: one dated result per provider",
    "waiting": "",
    "updated": "2026-11-05T03:58:31Z",
-   "rank": 9
+   "rank": 8
   },
   {
    "number": 14,
@@ -192,7 +174,7 @@ window.CTM_DATA = {
    "next": "Split the P1 rows into slice issues with briefs",
    "waiting": "",
    "updated": "2026-11-05T04:00:43Z",
-   "rank": 10
+   "rank": 9
   },
   {
    "number": 12,
@@ -207,28 +189,10 @@ window.CTM_DATA = {
     "product-lead"
    ],
    "decision": true,
-   "next": "List each missing institutional text; one decision issue per item",
-   "waiting": "Church wording and templates",
-   "updated": "2026-11-05T07:19:30Z",
-   "rank": 11
-  },
-  {
-   "number": 65,
-   "title": "Bug: a refused first Microsoft binding raises DatabaseError (HTTP 500) instead of a uniform denial",
-   "url": "https://github.com/LighthouseCollection/CTM/issues/65",
-   "sev": "S3",
-   "type": "bug",
-   "areas": [
-    "security"
-   ],
-   "owners": [
-    "backend-engineer"
-   ],
-   "decision": false,
-   "next": "See the issue",
+   "next": "List each missing institutional text and where it is used (feeds #81)",
    "waiting": "",
-   "updated": "2026-11-05T07:10:20Z",
-   "rank": 12
+   "updated": "2026-11-05T07:23:36Z",
+   "rank": 10
   },
   {
    "number": 81,
@@ -246,10 +210,10 @@ window.CTM_DATA = {
     "solution-architect"
    ],
    "decision": false,
-   "next": "See the issue",
+   "next": "Spec, then contract: Admin/President/Secretary enter and approve texts in CTM (D-0032)",
    "waiting": "",
    "updated": "2026-11-05T07:19:06Z",
-   "rank": 13
+   "rank": 11
   },
   {
    "number": 84,
@@ -266,9 +230,45 @@ window.CTM_DATA = {
     "release-engineer"
    ],
    "decision": false,
-   "next": "See the issue",
+   "next": "CTM sends the priest link by email or text; text needs a provider (D-0033)",
    "waiting": "",
    "updated": "2026-11-05T07:21:42Z",
+   "rank": 12
+  },
+  {
+   "number": 85,
+   "title": "Dashboard page refreshes itself (dashboard.yml regenerates gh-pages)",
+   "url": "https://github.com/LighthouseCollection/CTM/issues/85",
+   "sev": "S4",
+   "type": "feature",
+   "areas": [
+    "ci"
+   ],
+   "owners": [
+    "release-engineer"
+   ],
+   "decision": false,
+   "next": "dashboard.yml regenerates the dashboard page on its schedule",
+   "waiting": "",
+   "updated": "2026-11-05T07:23:21Z",
+   "rank": 13
+  },
+  {
+   "number": 65,
+   "title": "Bug: a refused first Microsoft binding raises DatabaseError (HTTP 500) instead of a uniform denial",
+   "url": "https://github.com/LighthouseCollection/CTM/issues/65",
+   "sev": "S3",
+   "type": "bug",
+   "areas": [
+    "security"
+   ],
+   "owners": [
+    "backend-engineer"
+   ],
+   "decision": false,
+   "next": "See the issue",
+   "waiting": "",
+   "updated": "2026-11-05T07:10:20Z",
    "rank": 14
   }
  ],
@@ -340,35 +340,6 @@ window.CTM_DATA = {
    "sent": []
   },
   {
-   "id": "D-0031",
-   "title": "Dashboard: HTML page as well as the pinned issue, or instead of it?",
-   "issue": 61,
-   "url": "https://github.com/LighthouseCollection/CTM/issues/61",
-   "context": "you asked for the decisions dashboard as an HTML page; today it exists only as the pinned issue #40 (D-0014, an agent decision, now superseded).",
-   "options": [
-    {
-     "key": "A",
-     "recommended": true,
-     "text": "HTML page on GitHub Pages **and** keep the pinned issue — risk: none beyond one more workflow step."
-    },
-    {
-     "key": "B",
-     "recommended": false,
-     "text": "HTML page only, unpin #40 — risk: no dashboard in the GitHub mobile app."
-    }
-   ],
-   "applied": "A",
-   "replied": "**Answer to D-0031: Other**\n\nI bbelieve this is closed as i have this now.\n\n_Sent from the CTM 3.0 dashboard._",
-   "at": "2026-11-05T04:05:29Z",
-   "answer": {
-    "choice": "Other",
-    "text": "I bbelieve this is closed as i have this now.",
-    "at": "2026-11-05T07:20:25Z",
-    "url": "https://github.com/LighthouseCollection/CTM/issues/61#issuecomment-6652205871"
-   },
-   "sent": []
-  },
-  {
    "id": "D-0032",
    "title": "Institutional texts: how do Admin, President and Secretary supply them?",
    "issue": 12,
@@ -387,9 +358,14 @@ window.CTM_DATA = {
     }
    ],
    "applied": "A",
-   "replied": "",
+   "replied": "**Answer to D-0032: A**\n\nThose three roles enter and approve each text (EN and AR) inside CTM; one of them approves a version before it shows; unsupplied texts show \"not yet supplied\"\n\nNote: any counc member can send texts \nwhat is this question and previous about/\n\n_Sent from the CTM 3.0 dashboard._",
    "at": "2026-11-05T07:19:30Z",
-   "answer": null,
+   "answer": {
+    "choice": "A",
+    "text": "Those three roles enter and approve each text (EN and AR) inside CTM; one of them approves a version before it shows; unsupplied texts show \"not yet supplied\"\n\nNote: any counc member can send texts \nwhat is this question and previous about/",
+    "at": "2026-11-05T07:23:36Z",
+    "url": "https://github.com/LighthouseCollection/CTM/issues/12#issuecomment-6652257250"
+   },
    "sent": []
   },
   {
@@ -642,6 +618,12 @@ window.CTM_DATA = {
    "number": 64,
    "title": "Bug: Microsoft first binding never asserts the tenant id (tid/issuer) of the signed-in account",
    "url": "https://github.com/LighthouseCollection/CTM/issues/64"
+  },
+  {
+   "closedAt": "2026-11-05T07:23:23Z",
+   "number": 61,
+   "title": "Dashboard: publish the decisions dashboard as an HTML page (GitHub Pages)",
+   "url": "https://github.com/LighthouseCollection/CTM/issues/61"
   },
   {
    "closedAt": "2026-11-05T06:54:23Z",
