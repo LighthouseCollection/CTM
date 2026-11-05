@@ -454,6 +454,11 @@ def retry_payment(request, intent_id):
     return JsonResponse({"submitted": result is not None, "submission_id": str(result.pk) if result else None})
 
 
+def _submitted_grounds(answers):
+    from tribunal.services.applications import submitted_grounds
+    return submitted_grounds(answers)
+
+
 def _case_list_data(case):
     """Project the case-list fields from the case and its submitted filing."""
     parties = sorted(case.parties.all(), key=lambda party: party.slot)
@@ -465,9 +470,7 @@ def _case_list_data(case):
     applicant = filing.party if filing and filing.party_id else (parties[0] if parties else None)
     respondent = next((party for party in parties if not applicant or party.pk != applicant.pk), None)
     revision = next((row for row in filing.revisions.all() if row.number == filing.current_version), None) if filing else None
-    grounds = (revision.answers.get("grounds") or revision.answers.get("reason") or []) if revision else []
-    if isinstance(grounds, str):
-        grounds = [grounds]
+    grounds = _submitted_grounds(revision.answers) if revision else []
     def party_gender(party):
         if not party:
             return None
@@ -478,7 +481,9 @@ def _case_list_data(case):
         "respondent_gender": party_gender(respondent),
         "applicant_name": applicant.name if applicant else None,
         "respondent_name": respondent.name if respondent else None,
-        "reason": "; ".join(str(value) for value in grounds if value) or None,
+        # `grounds` holds codes the screens show as EN/AR labels; `reason` keeps the joined codes.
+        "grounds": grounds,
+        "reason": "; ".join(grounds) or None,
         "closed_at": case.closed_at.isoformat() if case.closed_at else None,
         "party_names": [party.name for party in parties],
     }
@@ -610,7 +615,8 @@ def _submitted_separation(answers, application, case):
             "value": initiated,
             "party": {"name": subject.name, "gender": subject.person.gender if subject and subject.person_id else None, "slot": subject.slot} if subject else None,
         } if initiated else None,
-        "reason": _separation_value(answers, "grounds", "reason"),
+        "reason": "; ".join(_submitted_grounds(answers)) or None,
+        "grounds": _submitted_grounds(answers),
         "civil_divorce": {
             "filed": _separation_value(answers, "civil_divorce.filed", "civil_divorce_filed"),
             "date": _separation_value(answers, "civil_divorce.date", "civil_divorce_date", "date_of_civil_divorce"),
@@ -663,9 +669,7 @@ def _summary_child(value):
 def _case_summary(case, application):
     """Case-summary values come only from a filing or a recorded council hearing."""
     answers = _submitted_answers(application)
-    grounds = answers.get("grounds") or answers.get("reason") or []
-    if isinstance(grounds, str):
-        grounds = [grounds]
+    grounds = _submitted_grounds(answers)
     children = answers.get("children") or []
     if isinstance(children, str):
         children = [children]
@@ -682,7 +686,8 @@ def _case_summary(case, application):
     )
     return {
         "filing_date": filing_source["submitted_at"] if filing_source else None,
-        "reason": "; ".join(str(value) for value in grounds if value),
+        "reason": "; ".join(grounds),
+        "grounds": grounds,
         "children": [child for child in (_summary_child(value) for value in children) if child],
         "last_hearing_date": last_hearing.agenda.session.starts_at.isoformat() if last_hearing and last_hearing.agenda.session.starts_at else None,
         "sources": {

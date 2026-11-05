@@ -33,6 +33,12 @@ label, not yet confirmed against the contract.
 | Timeline | Timeline | التسلسل الزمني | Locked nav | Accepted |
 | Case audit | Case Audit | سجل القضية | Locked nav | Accepted |
 | Professional Assessments | Professional Assessments | — | Contract | Arabic to confirm |
+| Separation ground | Infidelity | الخيانة الزوجية | Question bank category; `ground_infidelity` | Proposed (#120) |
+| Separation ground | Abandonment (code `abandonment`; earlier filings `desertion`) | الهجر | `ground_abandonment`; owner D-0035 | Proposed (#120) - Arabic needs institution confirmation |
+| Separation ground | Abuse | الإساءة | Question bank category "Abuse / addiction"; `ground_abuse` | Proposed (#120) |
+| Separation ground | Leaving or changing the faith | ترك الإيمان أو تغييره | `ground_faith` | Proposed (#120) - Arabic needs institution confirmation |
+| Separation ground | Addiction | الإدمان | Question bank category "Abuse / addiction"; `ground_addiction` | Proposed (#120) |
+| Separation ground | Misrepresentation or concealment before marriage | التحريف أو الإخفاء قبل الزواج | Question bank category; `ground_concealment` | Proposed (#120) |
 | Case number | YYYYMMDD-## | (Latin digits, isolated in RTL) | Contract | Accepted |
 | Decree id | DCR-YYYYMMDD-## (appeal: -A1) | (Latin, isolated in RTL) | Contract | Accepted |
 

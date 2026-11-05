@@ -556,7 +556,7 @@ class Command(BaseCommand):
                 # Profile answers are supplied by the seeded filing rather than
                 # synthesized by the council view.
                 **profile_answers(owner),
-                "grounds": ["desertion"],
+                "grounds": ["abandonment"],
                 "statement": "I request council consideration following our separation. We have been living apart since March 2025 despite attempts at reconciliation.",
                 "new_information": "Additional correspondence was located after the original decision.",
             }
@@ -735,7 +735,7 @@ class Command(BaseCommand):
                     proceeding=proceeding,
                     number=1,
                     type="denied" if denied else "diss-applicant",
-                    grounds="Desertion / abandonment, subject to the recorded council assessment.",
+                    grounds="Abandonment, subject to the recorded council assessment.",
                     entitlements={
                         str(p.pk): "notice_only"
                         if denied or p.slot == "B"
