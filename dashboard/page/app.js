@@ -154,7 +154,7 @@
   var tasks = D.tasks.filter(function (t) { return !t.waiting; });
   var active = D.decisions.filter(function (d) { return d.status === 'active'; });
   var needAnswer = owner.filter(function (d) { return d.status === 'open'; });
-  var toDecide = owner.filter(function (d) { return d.status !== 'answered'; });
+  var toDecide = needAnswer; // only questions nobody has decided yet: answered or already-applied ones are under Decisions
   var answered = owner.filter(function (d) { return d.status === 'answered'; });
   var answerOf = {};
   answered.forEach(function (d) { answerOf[d.id] = d; });
@@ -219,7 +219,7 @@
       toolbar: h(P.Stack, { gap: 'sm' },
         posted ? h(P.Banner, { tone: 'success', title: 'Answer to ' + posted.id + ' posted' },
           'It is in the thread under your name and now listed under Decisions. ', link(posted.url, 'See your comment'), '.') : null,
-        h(P.Text, { variant: 'secondary' }, 'Your decisions, apart from the team’s to-do list. Where the team could not wait, it applied the recommended option and keeps working; you can still change it. Choose a row to answer.')),
+        h(P.Text, { variant: 'secondary' }, 'Questions only you can decide, apart from the team’s to-do list. Once answered, they move to Decisions. Choose a row to answer.')),
       columns: [
         { title: 'Decision', field: 'id', kind: 'data', width: 88 },
         { title: 'Question', field: 'title', kind: 'name', render: function (d) { return plain(d.title); } },
