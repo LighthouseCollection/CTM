@@ -1,7 +1,7 @@
 # Product Lead's order of the team's open work, with the next step for each issue.
 # Issues not listed sort after these by severity. Edited by ctm3-product-lead.
 order:
-  - {issue: 63, next: "Find why the app behind the proxy is down and bring it back"}
+  - {issue: 90, next: "Install the deploy runner on the server, then deploy main once with backup and health check"}
   - {issue: 46, next: "Root-cause the session-reschedule failures, then make postgres a required check"}
   - {issue: 8, next: "Mark F01-F31 addressed / superseded / remaining against main"}
   - {issue: 9, next: "Link the F08/F09/F25 tests already on main, mark the rest"}
