@@ -84,4 +84,6 @@ test("the applicant case is a RecordPage with its header, body panels unchanged 
 test("shell.html bumps the app.js cache version and keeps slice 1's shell-layout.js version", () => {
   assert.match(shell, /ctm\/shell-layout\.js' %\}\?v=ctm97s1-20261105/);
   assert.match(shell, /ctm\/app\.js' %\}\?v=ctm97s4-20261105/);
+  // Slice 3 changed council-case.js on main (#100): its stamp moves too.
+  assert.match(shell, /ctm\/council-case\.js' %\}\?v=ctm97s3-20261105/);
 });
