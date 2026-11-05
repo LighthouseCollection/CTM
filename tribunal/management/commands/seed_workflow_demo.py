@@ -434,7 +434,9 @@ class Command(BaseCommand):
                 revision = app.revisions.filter(number=app.current_version).first()
                 if revision:
                     answers = {**revision.answers, **profile_answers(app.owner)}
-                    if answers != revision.answers:
+                    # PostgreSQL immutable-row triggers reject this rewrite outright, which
+                    # aborted every live re-run; only the SQLite review fixture can refresh.
+                    if answers != revision.answers and connection.vendor != "postgresql":
                         # AnswerRevision intentionally blocks normal historical writes.
                         # This direct fixture repair is reachable only after the isolated
                         # synthetic-dataset guard above has already passed.
