@@ -132,3 +132,26 @@ def test_every_refusal_is_the_same_uniform_denial(granted_roles, people, scenari
         return
     cause = refusal(granted_roles, account, values)
     assert (cause.sqlstate, cause.diag.message_primary, cause.diag.message_detail) == ("42501", UNIFORM, None)
+
+
+def test_tables_outside_django_never_block_test_database_flush():
+    # Django's flush truncates only its own tables, so a foreign key from a
+    # database-only table into one of them makes every transactional test
+    # teardown fail (backend.yml after #74).
+    from django.apps import apps
+    django_tables = {m._meta.db_table for m in apps.get_models(include_auto_created=True)}
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT c.conrelid::regclass::text, c.confrelid::regclass::text FROM pg_constraint c
+            JOIN pg_namespace n ON n.oid = (SELECT relnamespace FROM pg_class WHERE oid = c.conrelid)
+            WHERE c.contype = 'f' AND n.nspname = 'public'""")
+        blocking = [(src, dst) for src, dst in cursor.fetchall()
+                    if dst.removeprefix("public.") in django_tables and src.removeprefix("public.") not in django_tables]
+    assert blocking == []
+
+
+def test_deleting_an_account_removes_its_enrolment_record(people):
+    account = enroll_council(people["admin"], "removed.member@lacopts.org", "Removed", "Member", "member")
+    assert enrolment(account) is not None
+    with connection.cursor() as cursor:  # owner-only removal, as a purge would be
+        cursor.execute("DELETE FROM public.tribunal_account WHERE id=%s", [str(account.pk)])
+    assert enrolment(account) is None
