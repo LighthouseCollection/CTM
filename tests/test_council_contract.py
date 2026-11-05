@@ -592,26 +592,47 @@ def test_draft_session_agenda_can_move_to_a_later_open_session(filed, people):
 def test_session_metadata_can_be_edited_before_a_hearing(filed, people):
     session = create_session(people["admin"], date(2030, 2, 2), location="Original location")
     updated = update_session(
-        people["secretary"], session.pk, date(2030, 2, 9),
-        starts_at=datetime(2030, 2, 9, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
+        people["secretary"], session.pk, date(2030, 2, 2),
+        starts_at=datetime(2030, 2, 2, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
         presiding_member=people["president"], location="St. Mark Coptic Orthodox Church",
     )
-    assert updated.date == date(2030, 2, 9)
+    assert updated.date == date(2030, 2, 2)
+    assert updated.starts_at == datetime(2030, 2, 2, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles"))
     assert updated.presiding_member_id == people["president"].pk
     assert updated.location == "St. Mark Coptic Orthodox Church"
 
 
-def test_moving_an_in_progress_session_to_a_future_date_returns_it_to_draft(
-    filed, people, monkeypatch
-):
+def test_moving_a_session_to_another_date_must_use_reschedule(filed, people, monkeypatch):
+    # D-0020: moving a session to another day creates a new dated session.
     session = create_session(people["admin"], date(2030, 2, 2), location="Original location")
     monkeypatch.setattr("tribunal.services.council.timezone.localdate", lambda: date(2030, 2, 1))
-    updated = update_session(
-        people["secretary"], session.pk, date(2030, 2, 9),
-        starts_at=datetime(2030, 2, 9, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
-        presiding_member=people["president"], location="Rescheduled location",
-    )
-    assert updated.state == "draft"
+    state = session.state
+    with pytest.raises(ValidationError, match="reschedul"):
+        update_session(
+            people["secretary"], session.pk, date(2030, 2, 9),
+            starts_at=datetime(2030, 2, 9, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
+            presiding_member=people["president"], location="Rescheduled location",
+        )
+    session.refresh_from_db()
+    assert session.date == date(2030, 2, 2)
+    assert session.state == state
+    assert session.location == "Original location"
+
+
+def test_held_session_date_cannot_be_changed(hearing, people):
+    # D-0020: held sessions are locked history.
+    session = hearing.agenda.session
+    original = session.date
+    with pytest.raises(ValidationError):
+        update_session(
+            people["secretary"], session.pk, date(2030, 1, 9),
+            starts_at=datetime(2030, 1, 9, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
+            presiding_member=people["president"], location="Corrected hearing location",
+        )
+    session.refresh_from_db()
+    assert session.date == original
+    hearing.refresh_from_db()
+    assert hearing.agenda.session_id == session.pk
 
 
 def test_admin_only_account_cannot_be_a_council_voter(filed, people):
@@ -621,18 +642,6 @@ def test_admin_only_account_cannot_be_a_council_voter(filed, people):
     recorded = cast_vote(people["admin"], decision.pk, "approve", people["member"].pk)
     assert recorded.member_id == people["member"].pk
     assert recorded.actor_id == people["admin"].pk
-
-
-def test_session_date_can_be_corrected_after_a_held_hearing(hearing, people):
-    session = hearing.agenda.session
-    updated = update_session(
-        people["secretary"], session.pk, date(2030, 1, 9),
-        starts_at=datetime(2030, 1, 9, 10, 30, tzinfo=ZoneInfo("America/Los_Angeles")),
-        presiding_member=people["president"], location="Corrected hearing location",
-    )
-    assert updated.date == date(2030, 1, 9)
-    hearing.refresh_from_db()
-    assert hearing.agenda.session_id == updated.pk
 
 
 def test_council_member_roster_excludes_administrators(client, people):
