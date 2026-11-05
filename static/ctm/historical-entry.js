@@ -1,9 +1,9 @@
-/* Typed UI for the existing administrator-owned historical workspace contract. */
+/* Typed UI for the existing administrator-owned historical workspace contract (#97 slice 6: form-flow layout). */
 (() => {
   "use strict";
   const words = {
-    en: { title:"Historical case entry", number:"Original case reference", status:"Case status", choose:"Choose status", open:"Open", closed:"Closed", closed_at:"Known closure timestamp", timestampHelp:"Optional. Include the original time-zone offset, for example 2020-01-15T14:30:00-08:00. Leave unknown dates blank.", parties:"Parties", linkedAccount:"Existing linked account reference", partyA:"Party A", partyB:"Party B", name:"Name, if known", legacy_reference:"Original party reference, if known", help:"Retain original references. Leave unknown details blank. New entries do not create or link applicant accounts. Saved account associations in resumed entries are retained.", save:"Save entry", saved:"Entry saved.", reference:"Entry reference", resume:"Resume saved entry", load:"Open entry", publish:"Publish historical case", confirm:"Publish this saved historical record?", confirmHelp:"This creates the historical case using the saved reference, status and parties. Review these details before continuing.", cancel:"Cancel", newEntry:"New entry", published:"Historical case published.", numberRequired:"Enter the original case reference.", statusRequired:"Choose open or closed explicitly.", timestampRequired:"Enter a valid timestamp including its time zone, or leave it blank.", referenceRequired:"Enter a valid saved entry reference.", invalidResponse:"Unable to confirm the saved entry. Your input has been retained.", loading:"Working…" },
-    ar: { title:"إدخال قضية تاريخية", number:"رقم القضية الأصلي", status:"حالة القضية", choose:"اختر الحالة", open:"مفتوحة", closed:"مغلقة", closed_at:"وقت الإغلاق المعروف", timestampHelp:"اختياري. أدرج فرق التوقيت الأصلي، مثل ‎2020-01-15T14:30:00-08:00. اترك التاريخ المجهول فارغًا.", parties:"الأطراف", linkedAccount:"رقم الحساب المرتبط الموجود", partyA:"الطرف أ", partyB:"الطرف ب", name:"الاسم إن كان معروفًا", legacy_reference:"رقم الطرف الأصلي إن كان معروفًا", help:"احتفظ بالأرقام الأصلية واترك التفاصيل المجهولة فارغة. لا تنشئ الإدخالات الجديدة حسابات لمقدمي الطلبات ولا تربطها. تُحفظ ارتباطات الحسابات الموجودة في الإدخالات المستأنفة.", save:"حفظ الإدخال", saved:"تم حفظ الإدخال.", reference:"رقم الإدخال", resume:"استئناف إدخال محفوظ", load:"فتح الإدخال", publish:"نشر القضية التاريخية", confirm:"هل تريد نشر السجل التاريخي المحفوظ؟", confirmHelp:"سيتم إنشاء القضية التاريخية بالرقم والحالة والأطراف المحفوظة. راجع التفاصيل قبل المتابعة.", cancel:"إلغاء", newEntry:"إدخال جديد", published:"تم نشر القضية التاريخية.", numberRequired:"أدخل رقم القضية الأصلي.", statusRequired:"اختر مفتوحة أو مغلقة صراحةً.", timestampRequired:"أدخل وقتًا صالحًا مع المنطقة الزمنية أو اتركه فارغًا.", referenceRequired:"أدخل رقمًا صالحًا لإدخال محفوظ.", invalidResponse:"تعذر تأكيد الإدخال المحفوظ. تم الاحتفاظ ببياناتك.", loading:"جارٍ التنفيذ…" },
+    en: { title:"Historical case entry", number:"Original case reference", status:"Case status", choose:"Choose status", open:"Open", closed:"Closed", closed_at:"Known closure timestamp", timestampHelp:"Optional. Include the original time-zone offset, for example 2020-01-15T14:30:00-08:00. Leave unknown dates blank.", parties:"Parties", linkedAccount:"Existing linked account reference", partyA:"Party A", partyB:"Party B", name:"Name, if known", legacy_reference:"Original party reference, if known", help:"Retain original references. Leave unknown details blank. New entries do not create or link applicant accounts. Saved account associations in resumed entries are retained.", save:"Save entry", saved:"Entry saved.", reference:"Entry reference", resume:"Resume saved entry", load:"Open entry", publish:"Publish historical case", confirm:"Publish this saved historical record?", confirmHelp:"This creates the historical case using the saved reference, status and parties. Review these details before continuing.", cancel:"Cancel", newEntry:"New entry", published:"Historical case published.", numberRequired:"Enter the original case reference.", statusRequired:"Choose open or closed explicitly.", timestampRequired:"Enter a valid timestamp including its time zone, or leave it blank.", referenceRequired:"Enter a valid saved entry reference.", invalidResponse:"Unable to confirm the saved entry. Your input has been retained.", loading:"Working…", caseDetails:"Case details", openCase:"Open case", resumeHelp:"Enter the reference of a saved entry to continue it." },
+    ar: { title:"إدخال قضية تاريخية", number:"رقم القضية الأصلي", status:"حالة القضية", choose:"اختر الحالة", open:"مفتوحة", closed:"مغلقة", closed_at:"وقت الإغلاق المعروف", timestampHelp:"اختياري. أدرج فرق التوقيت الأصلي، مثل ‎2020-01-15T14:30:00-08:00. اترك التاريخ المجهول فارغًا.", parties:"الأطراف", linkedAccount:"رقم الحساب المرتبط الموجود", partyA:"الطرف أ", partyB:"الطرف ب", name:"الاسم إن كان معروفًا", legacy_reference:"رقم الطرف الأصلي إن كان معروفًا", help:"احتفظ بالأرقام الأصلية واترك التفاصيل المجهولة فارغة. لا تنشئ الإدخالات الجديدة حسابات لمقدمي الطلبات ولا تربطها. تُحفظ ارتباطات الحسابات الموجودة في الإدخالات المستأنفة.", save:"حفظ الإدخال", saved:"تم حفظ الإدخال.", reference:"رقم الإدخال", resume:"استئناف إدخال محفوظ", load:"فتح الإدخال", publish:"نشر القضية التاريخية", confirm:"هل تريد نشر السجل التاريخي المحفوظ؟", confirmHelp:"سيتم إنشاء القضية التاريخية بالرقم والحالة والأطراف المحفوظة. راجع التفاصيل قبل المتابعة.", cancel:"إلغاء", newEntry:"إدخال جديد", published:"تم نشر القضية التاريخية.", numberRequired:"أدخل رقم القضية الأصلي.", statusRequired:"اختر مفتوحة أو مغلقة صراحةً.", timestampRequired:"أدخل وقتًا صالحًا مع المنطقة الزمنية أو اتركه فارغًا.", referenceRequired:"أدخل رقمًا صالحًا لإدخال محفوظ.", invalidResponse:"تعذر تأكيد الإدخال المحفوظ. تم الاحتفاظ ببياناتك.", loading:"جارٍ التنفيذ…", caseDetails:"تفاصيل القضية", openCase:"فتح القضية", resumeHelp:"أدخل رقم إدخال محفوظ لمتابعته." },
   };
   function formFrom(payload = {}) {
     return { number:payload.number || "", status:payload.status || "", closed_at:payload.closed_at || "", parties:["A","B"].map((slot) => {
@@ -73,34 +73,46 @@
       } catch(error) {setFailure(base.serverMessage(error,t));}
       finally {setPending(false);}
     }
+    // Form flow (form-flow.md, form-actions.md): the title, then the form's sections, then one FormActions with the
+    // primary action last. FormFlow itself is not used: it replaces the server's explanation with one generic failure
+    // and keeps its unsaved state apart from CTM's navigation guard (docs/implementation/plenix-requests.md).
+    const partyTitle=(slot)=>t(slot === "A" ? "partyA" : "partyB");
+    const disabled=pending||published;
     return h(P.Stack,{gap:"lg"},
       h(P.Text,{as:"h2",variant:"heading"},t("title")),h(P.Notice,{tone:"info"},t("help")),
-      h(P.Inline,{wrap:true,align:"end"},h(P.Field,{label:t("resume")},h(P.Input,{value:entry,disabled:pending,onChange:(e)=>setEntry(e.target.value)})),h(P.Button,{disabled:pending,onClick:()=>guard.navigate(resume)},t("load")),h(P.Button,{disabled:pending,onClick:()=>guard.navigate(()=>{setForm(formFrom());setSaved(null);setEntry("");setNotice(null);setFailure(null);})},t("newEntry"))),
+      h(P.Form,{label:t("resume"),noValidate:true,onSubmit:(event)=>{event.preventDefault();guard.navigate(resume);}},
+        h(P.FormSection,{title:t("resume"),description:t("resumeHelp"),headingLevel:3},
+          h(P.Field,{label:t("reference")},h(P.Input,{value:entry,data:true,disabled:pending,onChange:(e)=>setEntry(e.target.value)}))),
+        h(P.FormActions,{sticky:false},
+          h(P.Button,{disabled:pending,onClick:()=>guard.navigate(()=>{setForm(formFrom());setSaved(null);setEntry("");setNotice(null);setFailure(null);})},t("newEntry")),
+          h(P.Button,{type:"submit",disabled:pending},t("load")))),
       notice ? h(P.Notice,{tone:"success"},t(notice)) : null,
       failure ? h(P.Notice,{tone:"danger"},failure) : null,
-      saved?.payload?.parties?.some((party) => party.account_id) ? h(P.PropertyList, { layout: "stacked" }, ...saved.payload.parties.filter((party) => party.account_id).map((party) => h(P.PropertyList.Item, { key: party.slot, label: `${t(party.slot === "A" ? "partyA" : "partyB")} — ${t("linkedAccount")}`, data: true }, party.account_id))) : null,
+      saved?.payload?.parties?.some((party) => party.account_id) ? h(P.PropertyList, { layout: "stacked" }, ...saved.payload.parties.filter((party) => party.account_id).map((party) => h(P.PropertyList.Item, { key: party.slot, label: `${partyTitle(party.slot)} — ${t("linkedAccount")}`, data: true }, party.account_id))) : null,
       saved ? h(P.PropertyList,null,h(P.PropertyList.Item,{label:t("reference"),data:true},saved.id),h(P.PropertyList.Item,{label:t("version")},saved.version)) : null,
       published ? h(P.Stack, { gap: "md" },
-        h(P.PropertyList, { layout: "stacked" },
+        h(P.FormSection, { title: t("caseDetails"), headingLevel: 3 }, h(P.PropertyList, { layout: "stacked" },
           ...["number", "status", "closed_at"].filter((key) => form[key]).map((key) => h(P.PropertyList.Item, { key, label: t(key) }, key === "status" ? t(form[key]) : form[key])),
-        ),
-        ...form.parties.filter((party) => party.name || party.legacy_reference).map((party) => h(P.FormSection, { key: party.slot, title: t(party.slot === "A" ? "partyA" : "partyB") },
+        )),
+        ...form.parties.filter((party) => party.name || party.legacy_reference).map((party) => h(P.FormSection, { key: party.slot, title: partyTitle(party.slot), headingLevel: 3 },
           h(P.PropertyList, { layout: "stacked" }, ...["name", "legacy_reference"].filter((key) => party[key]).map((key) => h(P.PropertyList.Item, { key, label: t(key) }, party[key]))),
         )),
-        onCase ? h(P.Button, { onClick: () => onCase(saved.finalized_case_id) }, lang === "ar" ? "فتح القضية" : "Open case") : null,
+        onCase ? h(P.ActionBar, { sticky: false }, h(P.Button, { variant: "primary", onClick: () => onCase(saved.finalized_case_id) }, t("openCase"))) : null,
       ) : h(P.Form,{label:t("title"),onSubmit:save,noValidate:true},
-        h(P.Inline,{wrap:true},h(P.Field,{label:t("number"),required:true},h(P.Input,{value:form.number,maxLength:100,disabled:pending||published,onChange:(e)=>update({number:e.target.value})})),h(P.Field,{label:t("status"),required:true},h(P.Select,{value:form.status,disabled:pending||published,onChange:(e)=>update({status:e.target.value}),options:[{value:"",label:t("choose")},...['open','closed'].map(value=>({value,label:t(value)}))]}))),
-        form.status === "closed" ? h(P.Field,{label:t("closed_at"),description:t("timestampHelp")},h(P.Input,{value:form.closed_at,disabled:pending||published,onChange:(e)=>update({closed_at:e.target.value})})) : null,
+        h(P.FormSection,{title:t("caseDetails"),headingLevel:3},
+          h(P.Field,{label:t("number"),required:true},h(P.Input,{value:form.number,maxLength:100,disabled,onChange:(e)=>update({number:e.target.value})})),
+          h(P.Field,{label:t("status"),required:true},h(P.Select,{value:form.status,disabled,onChange:(e)=>update({status:e.target.value}),options:[{value:"",label:t("choose")},...['open','closed'].map(value=>({value,label:t(value)}))]})),
+          form.status === "closed" ? h(P.Field,{label:t("closed_at"),description:t("timestampHelp")},h(P.Input,{value:form.closed_at,data:true,disabled,onChange:(e)=>update({closed_at:e.target.value})})) : null),
         ...form.parties.map((party, index) => h(P.FormSection,
-          { key: party.slot, title: t(index === 0 ? "partyA" : "partyB") },
-          h(P.Inline, { wrap: true }, ...["name", "legacy_reference"].map((key) =>
+          { key: party.slot, title: partyTitle(party.slot), headingLevel: 3 },
+          ...["name", "legacy_reference"].map((key) =>
             h(P.Field, { key, label: t(key) }, h(P.Input, {
-              value: party[key], maxLength: key === "name" ? 300 : 150, disabled: pending || published,
+              value: party[key], maxLength: key === "name" ? 300 : 150, disabled,
               onChange: (event) => update({ parties: form.parties.map((row, i) => i === index ? { ...row, [key]: event.target.value } : row) }),
             })),
-          )),
+          ),
         )),
-        !published ? h(P.FormActions,{sticky:false},h(P.Button,{type:"submit",variant:"primary",disabled:pending,loading:pending},t("save")),h(P.Button,{disabled:pending||!saved||dirty,onClick:()=>setConfirm(true)},t("publish"))) : null),
+        h(P.FormActions,{sticky:false},h(P.Button,{disabled:pending||!saved||dirty,onClick:()=>setConfirm(true)},t("publish")),h(P.Button,{type:"submit",variant:"primary",disabled:pending,loading:pending},t("save")))),
       h(P.ConfirmDialog,{open:confirm,title:t("confirm"),message:t("confirmHelp"),confirmLabel:t("publish"),cancelLabel:t("cancel"),onConfirm:publish,onCancel:()=>!pending&&setConfirm(false)},failure ? h(P.Notice,{tone:"danger"},failure):null),guard.dialog);
   }
   window.CTMHistorical=Object.freeze({formFrom,payloadFrom,problem,validPayload,Workspace});
