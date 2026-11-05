@@ -24,7 +24,7 @@ subagent-driven development, verification), agency-agents (roles).
   mechanical tasks.
 - **A report is a claim** until `git log <BASE>..HEAD --stat`,
   `check_ownership.cjs` and the RED/GREEN evidence confirm it.
-- **Max 4 sessions running at once.**
+- **Concurrency from `agent-limits.yaml`** (adjustable): 4 long-work sessions, plus any number of small tasks capped at about 15 minutes each.
 - Evidence is reported as **Ran / Skipped / Planned / Manual** with a path.
 
 ## Size and route

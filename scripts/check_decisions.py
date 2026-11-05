@@ -15,7 +15,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = ["id", "date", "area", "decision", "why", "decided_by", "status"]
 STATUSES = {"active", "superseded", "retired"}
-KINDS = {"ci-job", "workflow", "test", "hook", "script"}
+KINDS = {"ci-job", "workflow", "test", "hook", "script", "config"}
 
 
 def load(path):

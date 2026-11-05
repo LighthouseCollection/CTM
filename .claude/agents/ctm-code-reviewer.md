@@ -45,6 +45,10 @@ Blockers (Critical/Important = would block a merge):
   that only works against `scripts/council_fixture.cjs`.
 - History/originals overwritten; non-reversible or data-losing migration.
 - Mock success, swallowed errors, skipped/disabled tests, shipped `TODO`.
+- Raw colors, inline styles, numeric font sizes or custom CSS instead of
+  Plenix; user-visible strings missing in English or Arabic (carried over
+  from the retired PR-Agent rules; the privacy rules went to
+  `ctm-security-reviewer`).
 - Fast gates failing: `check_frontend_contract`, `check_migration_diff`,
   `check_ownership --slice <id>` (UI stream touching migrations/RLS/services,
   files outside owners globs), protected-spec edits.

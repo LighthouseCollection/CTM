@@ -192,5 +192,29 @@ jobs:
             echo; echo "Fix: run \`node scripts/bump_plenix.cjs ${{ steps.bump.outputs.new }}\` on a branch, adapt CTM to the new Plenix API (or report a Plenix defect upstream), and merge. The auto-upgrade retries on the next release."
             echo; echo "### Screenshots"; echo "$SHOTS"
           } > .issue.md
-          gh issue create --title "Plenix ${{ steps.bump.outputs.new }} breaks CTM" --body-file .issue.md \
-            --label "type:bug,sev:S2,area:frontend,agent:ctm-frontend-engineer,plenix-upgrade"
+          ctm_issue=$(gh issue create --title "Plenix ${{ steps.bump.outputs.new }} breaks CTM" --body-file .issue.md \
+            --label "type:bug,sev:S2,area:frontend,agent:ctm-frontend-engineer,plenix-upgrade")
+          echo "ctm_issue=$ctm_issue" >> "$GITHUB_OUTPUT"
+        id: report
+
+      - name: Tell the PDS team (issue in plenix-ds/pds)
+        if: steps.report.outputs.ctm_issue != ''
+        env:
+          PDS_TOKEN: ${{ secrets.PDS_ISSUE_TOKEN }}
+          CTM_ISSUE: ${{ steps.report.outputs.ctm_issue }}
+          NEW: ${{ steps.bump.outputs.new }}
+        run: |
+          if [ -z "$PDS_TOKEN" ]; then
+            echo "::warning::PDS_ISSUE_TOKEN is not set, so no issue was opened in plenix-ds/pds. The CTM issue is $CTM_ISSUE."
+            exit 0
+          fi
+          title="CTM: Plenix $NEW breaks CTM"
+          { echo "CTM's automatic upgrade to Plenix **$NEW** failed. Logs, check results and screenshots: $CTM_ISSUE"; echo; cat .issue.md; } > .pds.md
+          existing=$(GH_TOKEN="$PDS_TOKEN" gh issue list --repo plenix-ds/pds --state open --search "\"$title\" in:title" --json url --jq '.[0].url // empty')
+          if [ -n "$existing" ]; then
+            GH_TOKEN="$PDS_TOKEN" gh issue comment "$existing" --repo plenix-ds/pds --body "Failed again in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. CTM issue: $CTM_ISSUE"
+            pds="$existing"
+          else
+            pds=$(GH_TOKEN="$PDS_TOKEN" gh issue create --repo plenix-ds/pds --title "$title" --body-file .pds.md)
+          fi
+          gh issue comment "$CTM_ISSUE" --body "Reported to the PDS team: $pds — ctm-release-engineer"
