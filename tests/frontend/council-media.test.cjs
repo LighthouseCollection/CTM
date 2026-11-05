@@ -155,3 +155,35 @@ test("D19: answers read in the request's question order", () => {
   const answers = { attendance: ["applicant"], "OPEN-01": "b", "BASIS-01": "a" }; // PostgreSQL jsonb key order
   assert.deepEqual([...C.answerEntries(report, answers)].map(([k]) => k), ["BASIS-01", "OPEN-01", "attendance"]);
 });
+
+// #97 slice 7 (D-0034): documents and evidence are a split list and detail with the Plenix FileList
+// (file-list.md); completed reports use the shared CTMShell.Workspace (master-detail-workspace.md).
+const part = (from, to) => source.slice(source.indexOf(from), source.indexOf(to, source.indexOf(from)));
+
+test("slice 7: case files list as Plenix FileList rows beside the reading pane", () => {
+  const files = part("function CaseFilesWorkspace(", "  Object.assign(window.CTMCouncil");
+  assert.match(files, /h\(P\.FileList, \{/);
+  assert.match(files, /h\(P\.RecordPage\.Header, \{ title: heading/);
+  assert.doesNotMatch(files, /window\.CTMShell\.Table|as: "h1"/);
+  // No hand-built Plenix markup: the demo download is a Plenix Button link, the demo picture a DocumentViewer.
+  assert.doesNotMatch(source, /className: "plx-button|h\("a", |h\("img", |ctm-demo-file-preview/);
+  assert.match(files, /h\(P\.Button, \{ href: chosen\.demoSrc, download: chosen\.name \}, t\("downloadDocument"\)\)/);
+});
+
+test("slice 7: a stored file maps to the FileList shape without leaving the authorized route", () => {
+  const t = C.mediaTranslator("en");
+  const row = { id: "f1", name: "scan.pdf", version: 2, byte_count: 2048, mime_type: "application/pdf", created_at: "2026-10-20T10:00:00Z" };
+  const entry = JSON.parse(JSON.stringify(C.fileListEntry(row, t)));
+  assert.deepEqual(entry, { id: "f1", name: "scan.pdf", kind: "file", size: 2048, type: "application/pdf",
+    modified: "2026-10-20T10:00:00.000Z", status: { tone: "neutral", label: "Version 2" } });
+  const demo = JSON.parse(JSON.stringify(C.fileListEntry({ id: "d", name: "x.png", version: "—", demoType: "image" }, t)));
+  assert.deepEqual(demo, { id: "d", name: "x.png", kind: "file", type: "image/png" });
+  assert.equal(C.mediaWords.ar.versionNumber.includes("{n}"), true);
+});
+
+test("slice 7: completed reports use the shared CTMShell.Workspace", () => {
+  const reader = part("function ReportsReader(", "  // ---------- Evidence and documents");
+  assert.match(reader, /h\(window\.CTMShell\.Workspace, \{/);
+  assert.match(reader, /selectionPrompt: t\("chooseReport"\)/);
+  assert.doesNotMatch(reader, /P\.SplitView|P\.ReadingPane/);
+});
