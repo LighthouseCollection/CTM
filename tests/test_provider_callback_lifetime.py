@@ -21,6 +21,7 @@ def validated_callback(request):
         provider=MicrosoftGraphProvider(request, app=app),
         email_addresses=[EmailAddress(email="admin@example.test", verified=True, primary=True)],
     )
+    login.ctm_verified_tenant = "specific-synthetic-tenant"  # tenant-checked by CouncilMicrosoftAdapter
     login.user = AccountAdapter(request).new_user(request, login)
     login.state = {"process": "login"}
     return complete_social_login(request, login)
@@ -34,6 +35,7 @@ def email_bootstrap_callback(request):
         provider=MicrosoftGraphProvider(request, app=app),
         email_addresses=[EmailAddress(email="admin@lacopts.org", verified=True, primary=True)],
     )
+    login.ctm_verified_tenant = "specific-synthetic-tenant"  # tenant-checked by CouncilMicrosoftAdapter
     login.user = AccountAdapter(request).new_user(request, login)
     login.state = {"process": "login"}
     return complete_social_login(request, login)

@@ -1,5 +1,6 @@
 from django.urls import path, include, re_path
 from tribunal import api
+from tribunal import auth
 from tribunal import priest_pdf_api
 from tribunal import priest_recording_api
 from tribunal import version_api
@@ -9,6 +10,8 @@ urlpatterns = [
     path("health/", api.health),
     path("version.json", version_api.version),
     path("accounts/login/", api.shell),
+    # #64: Microsoft callback goes through the tenant-checking adapter.
+    path("accounts/microsoft/login/callback/", auth.microsoft_callback),
     path("accounts/", include("allauth.urls")),
     path("api/session/", api.session),
     path("api/account/sessions/", api.account_sessions),

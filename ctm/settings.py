@@ -114,6 +114,9 @@ for provider, prefix in [
         }
         if provider == "microsoft":
             config["tenant"] = os.environ.get("MICROSOFT_TENANT_ID", "organizations")
+            # openid: the token response then carries the id_token whose tenant
+            # claim the sign-in checks (#64).
+            config["SCOPE"] = ["openid", "User.Read"]
         SOCIALACCOUNT_PROVIDERS[provider] = config
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
