@@ -191,7 +191,7 @@ decisions:
     options: [Link automatically on first sign-in (chosen), Admin types the Microsoft ID]
     decided_by: owner
     status: active
-    review_only: Not built yet (one of the 4 remaining PostgreSQL failures); the fix adds the enforcing test
+    check: { kind: test, ref: tests/test_provider_callback_lifetime.py }
 
   - id: D-0022
     date: 2026-11-03
