@@ -41,7 +41,9 @@ const problems = [];
 
 // 1. Database-owned paths. Only the 'database' role (or a branch whose name says so) may change them.
 const dbOwned = [/^tribunal\/migrations\//, /^tribunal\/db\//, /^deploy\/postgres\//];
-const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: root }).toString().trim();
+// CI checks out a detached merge commit ('HEAD'); the PR branch name is in GITHUB_HEAD_REF.
+const localBranch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: root }).toString().trim();
+const branch = localBranch === 'HEAD' && process.env.GITHUB_HEAD_REF ? process.env.GITHUB_HEAD_REF : localBranch;
 const isDbStream = role === 'database' || /vm-frm|backend|database|schema/.test(branch);
 for (const f of changed) {
   if (dbOwned.some((re) => re.test(f)) && !isDbStream) {
