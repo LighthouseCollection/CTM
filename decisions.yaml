@@ -295,3 +295,13 @@ decisions:
     decided_by: owner
     status: active
     review_only: Not built yet (#61); the dashboard workflow's Pages job becomes the check
+
+  - id: D-0032
+    date: 2026-11-05
+    area: content
+    decision: Institutional texts (declarations, medical release, decree templates and the other items on #12) are entered and approved in English and Arabic inside CTM by Admin, President and Secretary only. Each text is versioned; one of those three roles approves a version before it is shown, and an unsupplied text shows a "not yet supplied" state, never sample wording. Agents never write the wording
+    why: Owner answered #12 from the dashboard (2026-11-05) "Admin, President, secretary". Read as in-app editing by those roles rather than texts sent to the team; decision card on #12, the owner can switch to B
+    options: [Those three roles enter and approve texts in CTM (chosen), Those three people send the texts to the team to load]
+    decided_by: owner
+    status: active
+    review_only: Not built yet (#81); its permission and "not yet supplied" tests become the check
