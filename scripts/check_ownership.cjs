@@ -39,15 +39,21 @@ const globToRe = (g) => new RegExp('^' + g.trim()
 
 const problems = [];
 
-// 1. Database-owned paths. Only the 'database' role (or a branch whose name says so) may change them.
-const dbOwned = [/^tribunal\/migrations\//, /^tribunal\/db\//, /^deploy\/postgres\//];
-// CI checks out a detached merge commit ('HEAD'); the PR branch name is in GITHUB_HEAD_REF.
-const localBranch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: root }).toString().trim();
-const branch = localBranch === 'HEAD' && process.env.GITHUB_HEAD_REF ? process.env.GITHUB_HEAD_REF : localBranch;
-const isDbStream = role === 'database' || /vm-frm|backend|database|schema/.test(branch);
-for (const f of changed) {
-  if (dbOwned.some((re) => re.test(f)) && !isDbStream) {
-    problems.push(`${f}: database-owned path changed on '${branch}'${role ? ` by role '${role}'` : ''}. Only the database/backend stream writes migrations, RLS and grants.`);
+// 1. Database-owned paths. Branch names are chosen by the PR author, so they never
+//    approve these paths (#67). On pull requests the trusted gate is
+//    scripts/db_owner_guard.cjs (pull_request_target: main's code, the PR's label
+//    and repository). Locally the database engineer passes --role database
+//    (or CTM_ROLE=database for the lefthook run).
+const { DB_OWNED, DB_LABEL } = require('./db_owner_guard.cjs');
+const actingRole = role || process.env.CTM_ROLE;
+const dbChanged = changed.filter((f) => DB_OWNED.some((re) => re.test(f)));
+if (dbChanged.length && actingRole !== 'database') {
+  if (process.env.GITHUB_EVENT_NAME === 'pull_request') {
+    console.log(`Ownership: ${dbChanged.length} database-owned file(s); approval is checked by "Database paths owner" (label '${DB_LABEL}').`);
+  } else {
+    for (const f of dbChanged) {
+      problems.push(`${f}: database-owned path. Only ctm3-database-engineer writes migrations, RLS and grants (run with --role database).`);
+    }
   }
 }
 
