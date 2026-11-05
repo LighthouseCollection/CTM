@@ -35,7 +35,62 @@
   }
   function Detail(props) { return h(P.Stack, { gap: 'lg' }, props.children); }
 
-  var tasks = D.tasks, active = D.decisions.filter(function (d) { return d.status === 'active'; });
+  /* ---- Owner decisions: the questions waiting for the owner, kept apart from the team's to-do list ---- */
+  var owner = (D.ownerDecisions || []).map(function (d) {
+    var status = d.sent && d.sent.length ? 'sent' : d.replied ? 'replied' : d.applied ? 'applied' : 'open';
+    return Object.assign({}, d, { status: status });
+  });
+  var ownerIssues = {};
+  owner.forEach(function (d) { ownerIssues[d.issue] = d; });
+  var STATUS = {
+    open: ['action-required', 'Needs your answer'],
+    applied: ['waiting', 'Applied for now'],
+    sent: ['success', 'Answer sent'],
+    replied: ['info', 'You replied on GitHub'],
+  };
+  function statusBadge(d) { var v = STATUS[d.status]; return h(P.Badge, { tone: v[0], size: 'sm' }, v[1]); }
+  function plain(t) { return String(t || '').replace(/\*\*/g, '').replace(/`/g, ''); }
+  function optionText(o) { var t = plain(o.text); return (t.charAt(0).toUpperCase() + t.slice(1)).split(' — risk: '); }
+
+  // The answer form: every option from the decision card (the recommended one marked), plus Other with a text box.
+  // Sending opens a new GitHub issue with the answer filled in (label owner-answer); the Product Lead applies it.
+  function AnswerForm(props) {
+    var d = props.d;
+    var rec = (d.options.filter(function (o) { return o.recommended; })[0] || {}).key || '';
+    var cs = R.useState(d.applied || rec), choice = cs[0], setChoice = cs[1];
+    var ns = R.useState(''), note = ns[0], setNote = ns[1];
+    var cp = R.useState(false), copied = cp[0], setCopied = cp[1];
+    var options = d.options.map(function (o) {
+      var parts = optionText(o);
+      return {
+        value: o.key,
+        label: o.key + (o.recommended ? ' (Recommended)' : '') + (d.applied === o.key ? ' · applied now' : ''),
+        description: parts[0] + (parts[1] ? ' Risk: ' + parts[1] : ''),
+      };
+    }).concat([{ value: 'other', label: 'Other', description: 'Write your own answer below.' }]);
+    var chosen = d.options.filter(function (o) { return o.key === choice; })[0];
+    var other = choice === 'other';
+    var ready = other ? note.trim().length > 0 : !!chosen;
+    var answer = other ? 'Other' : choice;
+    var body = 'Answer to ' + d.id + (d.id === '#' + d.issue ? '' : ' (#' + d.issue + ')') + ': ' + d.title + '\n\n' +
+      (other ? '**Other:** ' + note.trim() : '**' + choice + '** — ' + optionText(chosen)[0] + (note.trim() ? '\n\nNote: ' + note.trim() : '')) +
+      '\n\nSent from the CTM 3.0 dashboard. Decision card: ' + d.url;
+    var href = GH + '/issues/new?labels=owner-answer&title=' + encodeURIComponent('Answer ' + d.id + ': ' + answer) + '&body=' + encodeURIComponent(body);
+    return h(P.Stack, { gap: 'md' },
+      h(P.RadioGroup, { label: 'Your answer', name: 'answer-' + d.id, value: choice, onChange: function (v) { setChoice(v && v.target ? v.target.value : v); }, options: options }),
+      h(P.Field, { label: other ? 'Your answer' : 'Note (optional)', required: other },
+        h(P.Textarea, { rows: 4, autoGrow: true, value: note, onChange: function (e) { setNote(e.target.value); } })),
+      h(P.Inline, { gap: 'sm', wrap: true },
+        h(P.Button, { variant: 'primary', icon: 'open_in_new', href: ready ? href : undefined, target: '_blank', rel: 'noopener', disabled: !ready }, 'Send answer on GitHub'),
+        h(P.Button, { icon: 'content_copy', disabled: !ready, onClick: function () {
+          if (navigator.clipboard) navigator.clipboard.writeText(body).then(function () { setCopied(true); });
+        } }, copied ? 'Copied' : 'Copy answer')),
+      h(P.Text, { variant: 'secondary' }, 'GitHub opens with your answer filled in: press "Submit new issue". The Product Lead applies it, updates decisions.yaml and closes the answer. Or copy it and reply on ', link(d.url, '#' + d.issue), '.'));
+  }
+
+  var tasks = D.tasks.filter(function (t) { return !t.waiting; });
+  var active = D.decisions.filter(function (d) { return d.status === 'active'; });
+  var needAnswer = owner.filter(function (d) { return d.status === 'open'; });
   var noCheck = active.filter(function (d) { return d.kind === 'review only'; });
   var failing = active.filter(function (d) { return d.state === 'failure'; });
   var urgent = tasks.filter(function (t) { return t.sev === 'S1' || t.sev === 'S2'; });
@@ -64,7 +119,8 @@
         s.live.code === 200 ? null : h(P.Banner, { tone: 'danger', title: 'The live site is down' },
           'ctm.lighthouseway.org answers ' + s.live.code + ': the proxy is up, the CTM app behind it is not. Release Engineer has it: ', link(GH + '/issues/63', '#63'), '.'),
         h(P.Inline, { gap: 'md', wrap: true },
-          h(P.Metric, { card: true, value: String(tasks.length), label: 'Open tasks', description: urgent.length + ' urgent (S1/S2)' }),
+          h(P.Metric, { card: true, value: String(needAnswer.length), label: 'Waiting on you', description: owner.length + ' decisions in all' }),
+          h(P.Metric, { card: true, value: String(tasks.length), label: 'Team to-do', description: urgent.length + ' urgent (S1/S2)' }),
           h(P.Metric, { card: true, value: String(D.mergedPrs.length), label: 'Merged, last 3 days', description: D.closedIssues.length + ' issues closed' }),
           h(P.Metric, { card: true, value: String(active.length), label: 'Active decisions', description: noCheck.length + ' without a check yet' }),
           h(P.Metric, { card: true, value: String(failing.length), label: 'Decision checks failing', description: failing.map(function (d) { return d.id; }).join(', ') || 'None' }))),
@@ -82,20 +138,37 @@
       },
     },
     {
+      id: 'owner', label: 'To decide', icon: 'flag', title: 'Decisions waiting on you', rows: owner,
+      toolbar: h(P.Text, { variant: 'secondary' }, 'Your decisions, apart from the team’s to-do list. Where the team could not wait, it applied the recommended option and keeps working; you can still change it. Choose a row to answer.'),
+      columns: [
+        { title: 'Decision', field: 'id', kind: 'data', width: 88 },
+        { title: 'Question', field: 'title', kind: 'name', render: function (d) { return plain(d.title); } },
+        { title: 'Status', field: 'status', kind: 'center', width: 168, render: statusBadge },
+      ],
+      detail: function (d) {
+        return h(Detail, null,
+          h(P.Heading, { level: 2, size: 4 }, d.id + ' · ' + plain(d.title)),
+          h(P.Inline, { gap: 'sm', wrap: true }, statusBadge(d), link(d.url, 'Open #' + d.issue)),
+          d.context ? h(Field, { label: 'Context' }, h(P.Text, null, plain(d.context))) : null,
+          d.applied ? h(P.Banner, { tone: 'info', title: 'Applied for now: ' + d.applied }, 'The team went ahead with the recommended option so work did not stop. Pick another option to change it.') : null,
+          d.sent && d.sent.length ? h(Field, { label: 'Answers you sent' }, h(P.Stack, { gap: 'xs' }, d.sent.map(function (a) { return h(P.Text, { key: a.number }, link(a.url, '#' + a.number + ' ' + a.title), a.state === 'CLOSED' ? ' (applied)' : ' (with the team)'); }))) : null,
+          h(AnswerForm, { d: d, key: d.id }));
+      },
+    },
+    {
       id: 'todo', label: 'To do', icon: 'checklist', title: 'Tasks to do', rows: tasks, index: 'number',
       columns: [
         { title: '#', field: 'rank', kind: 'data', width: 56 },
         { title: 'Issue', field: 'title', kind: 'name', render: function (t) { return '#' + t.number + ' ' + t.title; } },
         { title: 'Severity', field: 'sev', kind: 'center', width: 96, render: sevBadge },
-        { title: 'Owner', field: 'owners', render: function (t) { return t.waiting ? 'You (owner)' : t.owners.map(role).join(', '); } },
+        { title: 'Owner', field: 'owners', render: function (t) { return t.owners.map(role).join(', ') || 'Not assigned'; } },
       ],
       detail: function (t) {
         return h(Detail, null,
           h(P.Heading, { level: 2, size: 4 }, link(t.url, '#' + t.number + ' ' + t.title)),
           h(P.Inline, { gap: 'sm', wrap: true }, sevBadge(t), t.type ? h(P.Badge, { tone: 'neutral', size: 'sm' }, t.type) : null,
-            t.decision ? h(P.Badge, { tone: 'info', size: 'sm' }, 'Decision') : null),
+            ownerIssues[t.number] ? h(P.Badge, { tone: 'info', size: 'sm' }, 'Has your decision ' + ownerIssues[t.number].id) : null),
           h(Field, { label: 'Next step' }, h(P.Text, null, t.next)),
-          t.waiting ? h(Field, { label: 'Waiting on you' }, h(P.Text, null, t.waiting)) : null,
           h(Field, { label: 'Owner' }, h(P.Text, null, t.owners.length ? t.owners.map(role).join(', ') : 'Not assigned')),
           t.areas.length ? h(Field, { label: 'Area' }, h(P.Text, null, t.areas.join(', '))) : null,
           h(Field, { label: 'Last updated' }, h(P.Text, null, fmt(t.updated))));
@@ -202,7 +275,7 @@
     }, h(P.NavList, {
       label: 'Sections', value: current,
       onSelect: function (id) { location.hash = id; setCurrent(id); },
-      items: SECTIONS.map(function (x) { return { id: x.id, label: x.label, icon: x.icon, count: x.id === 'overview' ? undefined : x.rows.length }; }),
+      items: SECTIONS.map(function (x) { return { id: x.id, label: x.label, icon: x.icon, count: x.id === 'overview' ? undefined : x.id === 'owner' ? needAnswer.length || undefined : x.rows.length }; }),
     }));
 
     return h(P.SplitWorkspace, {
