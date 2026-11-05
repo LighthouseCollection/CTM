@@ -1,6 +1,6 @@
 # CDN dependencies after review against Plenix 0.61.0
 
-Historical review. CTM now pins Plenix 0.76.0; the current pin and its load order are in `docs/architecture/CTM-Plenix-CDN-contract.md`.
+Historical review. The current pin is `PLENIX_BASE` in `ctm/settings.py`; later load-order and icon changes are in `docs/architecture/CTM-Plenix-CDN-current.md`.
 
 The UI branch pins the immutable 0.61.0 release and consumes only its documented APIs. CTM does not copy CDN assets, define local visual patches, or replace native icons.
 
