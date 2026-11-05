@@ -153,7 +153,7 @@ def test_an_account_delete_also_removes_its_enrolment_record():
     # Accounts with history are removed only by an admin purge (history guards
     # refuse other deletes), so check the cleanup trigger itself.
     with connection.cursor() as cursor:
-        cursor.execute("""SELECT t.tgtype & 1 = 0 AND t.tgtype & 8 = 8, p.proname, p.prosecdef
+        cursor.execute("""SELECT t.tgtype & 1 = 1 AND t.tgtype & 2 = 0 AND t.tgtype & 8 = 8, p.proname, p.prosecdef
             FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid
             WHERE t.tgrelid = 'public.tribunal_account'::regclass AND t.tgname = 'ctm_council_enrolment_forget'""")
         assert cursor.fetchone() == (True, "ctm_forget_council_enrolment", True)
