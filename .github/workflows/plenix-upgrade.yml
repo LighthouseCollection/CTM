@@ -19,7 +19,7 @@ permissions:
   contents: write
   pull-requests: write
   issues: write
-  actions: write   # start quality.yml on the upgrade branch
+  actions: write   # start quality.yml, backend.yml and db-owner-guard.yml on the upgrade branch
 
 concurrency:
   group: plenix-upgrade
@@ -170,6 +170,7 @@ jobs:
           # allowed), then let GitHub merge once they pass.
           gh workflow run quality.yml --ref "${{ steps.bump.outputs.branch }}"
           gh workflow run backend.yml --ref "${{ steps.bump.outputs.branch }}"   # postgres is required too (issue 46)
+          gh workflow run db-owner-guard.yml --ref "${{ steps.bump.outputs.branch }}" -f pr="${url##*/}"   # required too (issue 67)
           gh pr merge "$url" --squash --auto --delete-branch
           echo "Auto-merge set on $url (merges when the required checks pass)" >> "$GITHUB_STEP_SUMMARY"
 

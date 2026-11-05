@@ -33,6 +33,12 @@ function main() {
   const pr = process.env.PR_NUMBER;
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '') || !/^\d+$/.test(pr || '')) throw new Error('REPO and PR_NUMBER are required');
   const [info] = gh(`repos/${repo}/pulls/${pr}`);
+  // Dispatched runs report on the dispatched commit, so it must be this PR's head.
+  const expect = process.env.EXPECT_HEAD_SHA;
+  if (expect && info.head.sha !== expect) {
+    console.log(`::error:: PR #${pr} head is ${info.head.sha}, not the dispatched commit ${expect}`);
+    process.exit(1);
+  }
   const changes = gh(`repos/${repo}/pulls/${pr}/files?per_page=100`);
   const labelled = info.labels.some((l) => l.name === DB_LABEL);
   let labellerCanWrite = false;
