@@ -25,6 +25,9 @@
   const DISPLAY_ONLY_TYPES = [{ code: "deferred", label: "Decision Deferred — Further Investigation Required" }];
   const ENTITLEMENTS = ["certificate", "notice_only"];
   const VOTES = ["approve", "deny", "abstain"];
+  // #48 row 19/20: interim vote matrix until Plenix ships PLX-009 (Button tone, owner vote-screen-37).
+  const VOTE_TONES = { approve: "success", deny: "danger", abstain: "neutral" };
+  const VOTE_BADGES = { approve: { tone: "success", icon: "check" }, deny: { tone: "negative", icon: "close" }, abstain: { tone: "neutral", icon: "remove" } };
   const LANGUAGES = ["en", "ar", "both"];
 
   // ---------- Pure logic ----------
@@ -514,7 +517,11 @@ ${ar}` : en;
       saveContact: "Save contact",
       editProfile: "Edit profile",
       saveProfile: "Save profile",
-      changePhoto: "Change",
+      changePhoto: "Change photo",
+      addPhoto: "Add photo",
+      photoNotImage: "Choose an image file: JPEG, PNG, GIF or WebP.",
+      photoTooLarge: "The picture is larger than {max}.",
+      photoOf: "{name}’s photo",
       photoUploadFailed: "The photo could not be uploaded.",
       career: "Career",
       churchAffiliation: "Church Affiliation",
@@ -974,7 +981,11 @@ ${ar}` : en;
       saveContact: "حفظ بيانات التواصل",
       editProfile: "تعديل الملف الشخصي",
       saveProfile: "حفظ الملف الشخصي",
-      changePhoto: "تغيير",
+      changePhoto: "تغيير الصورة",
+      addPhoto: "إضافة صورة",
+      photoNotImage: "اختر ملف صورة: JPEG أو PNG أو GIF أو WebP.",
+      photoTooLarge: "الصورة أكبر من {max}.",
+      photoOf: "صورة {name}",
       photoUploadFailed: "تعذر رفع الصورة.",
       career: "العمل والتعليم",
       churchAffiliation: "الانتماء الكنسي",
@@ -2282,40 +2293,23 @@ ${ar}` : en;
     return h(
       P.Panel,
       { icon: "check-square", title: t("councilVote"), description: t("councilVoteDescription") },
-      h(
-        "div",
-        { className: "ctm-council-vote-table", role: "table", "aria-label": t("voteRecord") },
-        h("div", { className: "ctm-council-vote-table__header", role: "row" },
-          h("div", { role: "columnheader" }, t("councilMember")),
-          ...VOTES.map((choice) => h("div", { key: choice, role: "columnheader" }, t(choice))),
-        ),
-        ...rows.map((row) => {
-          const canEditRow = canVote && !pending && (manage || row.member.id === user.id);
-          return h("div", { key: row.member.id, className: "ctm-council-vote-table__row", role: "row" },
-            h("div", { className: "ctm-council-vote-member", role: "cell" },
-              h(P.Avatar, { name: row.member.name || row.member.id, size: "md" }),
-              h("div", null,
-                h(P.Text, { as: "div", variant: "strong" }, row.member.name || row.member.id),
-                h(P.Text, { as: "div", variant: "secondary" }, row.member.former ? t("formerMember") : t(row.member.role || "member")),
-              ),
-            ),
-            ...VOTES.map((choice) => h("label", { key: choice, className: "ctm-council-vote-choice", role: "cell" },
-              h("input", {
-                type: "radio",
-                name: `decision-${decision.id}-member-${row.member.id}`,
-                value: choice,
-                checked: choices[row.member.id] === choice,
-                disabled: !canEditRow,
-                "aria-label": `${t(choice)}: ${row.member.name || row.member.id}`,
-                onChange: () => setChoices((old) => ({ ...old, [row.member.id]: choice })),
-              }),
-            )),
-          );
-        }),
-        h("div", { className: "ctm-council-vote-table__summary", role: "row" },
-          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--approve" }, `${t("approve")}: ${counts.approve}`)),
-          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--deny" }, `${t("deny")}: ${counts.deny}`)),
-          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--abstain" }, `${t("abstain")}: ${counts.abstain}`)),
+      h(P.Stack, { gap: "md" },
+        h(P.Table, { label: t("voteRecord"), index: "key", data: rows.map((row) => ({ ...row, key: row.member.id })), columns: [
+          { title: t("councilMember"), field: "key", rowLabel: true, kind: "wrap", render: (row) => h(P.Inline, { gap: "sm", align: "center" },
+            h(P.Avatar, { name: row.member.name || row.member.id, size: "md" }),
+            h(P.Stack, { gap: "none" },
+              h(P.Text, { as: "div", variant: "strong" }, row.member.name || row.member.id),
+              h(P.Text, { as: "div", variant: "secondary" }, row.member.former ? t("formerMember") : t(row.member.role || "member")),
+            )) },
+          { title: t("councilVote"), field: "vote", render: (row) => {
+            const canEditRow = canVote && !pending && (manage || row.member.id === user.id);
+            return h(P.ButtonGroup, { label: `${t("councilVote")}: ${row.member.name || row.member.id}` },
+              ...VOTES.map((choice) => h(P.Button, { key: choice, size: "sm", tone: VOTE_TONES[choice], pressed: choices[row.member.id] === choice, disabled: !canEditRow,
+                onClick: () => setChoices((old) => ({ ...old, [row.member.id]: choice })) }, t(choice))));
+          } },
+        ] }),
+        h(P.Inline, { gap: "sm", wrap: true },
+          ...VOTES.map((choice) => h(P.Badge, { key: choice, tone: VOTE_BADGES[choice].tone, icon: VOTE_BADGES[choice].icon }, `${t(choice)}: ${counts[choice]}`)),
         ),
       ),
       !readAvailable ? h(P.Notice, { tone: "warning" }, t("sessionVotesNotice")) : null,
@@ -3079,12 +3073,23 @@ ${ar}` : en;
     return null;
   }
 
+  // #48: equal Plenix columns; each column is a Stack, filled in reading order (first part, then the next).
+  function caseColumns(P, h, items, count, collapseBelow) {
+    const size = Math.ceil(items.length / count) || 1;
+    const columns = Array.from({ length: count }, (_, index) => items.slice(index * size, (index + 1) * size));
+    return h(P.Columns, { count, collapseBelow }, ...columns.map((column, index) => h(P.Stack, { gap: "md", key: index }, ...column)));
+  }
+
+  function profileList(P, h, items) {
+    return h(P.PropertyList, { layout: "stacked" }, ...items);
+  }
+
   function spouseProfileSection(P, h, t, title, icon, values, twoColumns = false) {
     const fields = values.filter(([, value]) => value);
     if (!fields.length) return null;
     return h(
       P.Stack,
-      { gap: "sm", key: title, ...(twoColumns ? { className: "ctm-spouse-profile-section--two-columns" } : {}) },
+      { gap: "sm", key: title },
       h(
         P.Inline,
         { gap: "sm", align: "center" },
@@ -3092,11 +3097,9 @@ ${ar}` : en;
         h(P.SectionHeading, { level: 2 }, title),
         h(P.Divider),
       ),
-      h(
-        P.PropertyList,
-        { layout: "stacked" },
-        ...fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value)),
-      ),
+      twoColumns
+        ? caseColumns(P, h, fields.map(([label, value]) => profileList(P, h, [h(P.PropertyList.Item, { key: label, label: t(label) }, value)])), 2, "medium")
+        : profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value))),
     );
   }
 
@@ -3147,10 +3150,10 @@ ${ar}` : en;
         P.Stack,
         { gap: "sm", key: scope },
         h(P.SectionHeading, { level: 2 }, title),
-        h(
-          "div",
-          { className: "ctm-case-edit-grid" },
-          ...fields.map(([key, label]) => h(
+        caseColumns(
+          P,
+          h,
+          fields.map(([key, label]) => h(
             P.Field,
             { key, label },
             h(P.Input, {
@@ -3159,6 +3162,8 @@ ${ar}` : en;
               onChange: (event) => setForm((current) => ({ ...current, [`${scope}.${key}`]: event.target.value })),
             }),
           )),
+          3,
+          "wide",
         ),
       )),
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,
@@ -3208,7 +3213,7 @@ ${ar}` : en;
     };
     return h(
       P.Stack,
-      { gap: "sm", className: "ctm-spouse-profile-section--two-columns" },
+      { gap: "sm" },
       h(
         P.Inline,
         { gap: "sm", align: "center" },
@@ -3220,11 +3225,11 @@ ${ar}` : en;
         ? h(
             P.Form,
             { onSubmit: save, label: t("contact"), noValidate: true },
-            h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+            caseColumns(P, h, fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) }))), 3, "wide"),
             failure ? h(P.Notice, { tone: "danger" }, failure) : null,
             h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveContact"))),
           )
-        : h(P.PropertyList, { layout: "stacked" }, ...fields.map(([key, label]) => h(P.PropertyList.Item, { key, label }, values[key] || "—"))),
+        : caseColumns(P, h, fields.map(([key, label]) => profileList(P, h, [h(P.PropertyList.Item, { key, label }, values[key] || "—")])), 2, "medium"),
     );
   }
 
@@ -3234,9 +3239,8 @@ ${ar}` : en;
     return h(P.Avatar, {
       src: party.photo_url || undefined,
       name: party.name,
-      size: "xl",
+      size: "2xl",
       label: party.name,
-      className: "ctm-spouse-photo",
     });
   }
 
@@ -3245,8 +3249,8 @@ ${ar}` : en;
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const canWrite = writerFor(user, null, record);
-    const upload = async (event) => {
-      const file = event.target.files?.[0];
+    const upload = async (picture) => {
+      const file = picture && (picture.file || picture.blob);
       if (!file || !canWrite || pending) return;
       setPending(true);
       setFailure(null);
@@ -3258,7 +3262,6 @@ ${ar}` : en;
         form.append("case_id", record.id);
         form.append("visibility", "council");
         await api("/api/files/", { method: "POST", body: form });
-        event.target.value = "";
         onSaved();
       } catch (error) {
         setFailure(base.serverMessage(error, t) || t("photoUploadFailed"));
@@ -3267,35 +3270,36 @@ ${ar}` : en;
       }
     };
     if (!canWrite) return spousePhoto(P, h, party);
-    const inputId = `ctm-photo-upload-${party.id}`;
+    // data-ctm-no-toggle: a click on the photo control does not open or close the spouse card.
     return h(
-      "span",
-      { className: "ctm-spouse-photo-control" },
-      spousePhoto(P, h, party),
-      h("input", {
-        id: inputId,
-        className: "ctm-spouse-photo-control__input",
-        type: "file",
+      P.Stack,
+      { gap: "xs", "data-ctm-no-toggle": "" },
+      h(P.AvatarUpload, {
+        name: party.name,
+        src: party.photo_url || undefined,
+        size: "2xl",
+        crop: false,
+        removable: false,
         accept: "image/jpeg,image/png,image/gif,image/webp",
         disabled: pending,
         onChange: upload,
+        strings: { change: t("changePhoto"), add: t("addPhoto"), notImage: t("photoNotImage"), tooLarge: t("photoTooLarge"), picture: t("photoOf") },
       }),
-      h("label", { htmlFor: inputId, className: "ctm-spouse-photo-control__change" }, pending ? "…" : t("changePhoto")),
-      failure ? h("span", { className: "ctm-spouse-photo-control__error", role: "alert" }, failure) : null,
+      failure ? h(P.Text, { as: "span", variant: "danger", role: "alert" }, failure) : null,
     );
   }
 
   function spouseHeaderTitle(P, h, t, party) {
     const fact = (label, value, data) => h(
-      "span",
-      { className: "ctm-spouse-header__fact" },
+      P.Inline,
+      { gap: "xs", align: "center" },
       h(P.Text, { as: "span", variant: "caption" }, label),
       data ? h(P.Text, { as: "span", variant: "data" }, value) : value,
     );
     return h(
-      "span",
-      { className: "ctm-spouse-header" },
-      h(P.Text, { as: "span", variant: "strong", className: "ctm-spouse-header__name" }, party.name),
+      P.Inline,
+      { gap: "md", align: "center", wrap: true },
+      h(P.Text, { as: "span", variant: "strong" }, party.name),
       party.reference ? fact(t("ctmId"), party.reference, true) : null,
       fact(
         t("portalAccount"),
@@ -3374,7 +3378,7 @@ ${ar}` : en;
             onToggle: (next) => setExpandedParties((current) => ({ ...current, [party.id]: next })),
             onClick: (event) => {
               if (!event.target.closest(".plx-panel__header")) return;
-              if (event.target.closest(".plx-panel__toggle, .ctm-spouse-photo-control__change, .ctm-spouse-photo-control__input, .ctm-spouse-profile-edit")) return;
+              if (event.target.closest(".plx-panel__toggle, [data-ctm-no-toggle], .ctm-spouse-profile-edit")) return;
               setExpandedParties((current) => ({ ...current, [party.id]: !current[party.id] }));
             },
             actions: canEditProfile ? h(P.Button, { size: "sm", className: "ctm-spouse-profile-edit", onClick: startEditingProfile }, t("editProfile")) : null,
@@ -3497,7 +3501,7 @@ ${ar}` : en;
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, notice) : null,
       failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
     ) : h(P.EmptyState, { title: t("noHearings") });
-    const currentHeader = current ? h("header", { className: "plx-entity-header ctm-hearing-header" }, h("div", { className: "plx-entity-header__layout" },
+    const currentHeader = current ? h("header", { className: "plx-entity-header" }, h("div", { className: "plx-entity-header__layout" },
         h("div", { className: "plx-entity-header__main" }, h("div", { className: "plx-entity-header__lead" },
           h("div", { className: "plx-entity-header__heading" },
             h("span", { className: "plx-entity-header__media" }, h("span", { className: "plx-entity-header__tile", "data-plx-media-hue": "green", "aria-hidden": true }, h(P.Icon, { name: "calendar", size: "lg" }))),
@@ -3512,14 +3516,11 @@ ${ar}` : en;
     const currentContent = current ? h(P.Stack, { gap: "lg" },
       outcome,
     ) : h(P.EmptyState, { title: t("noHearings") });
-    const pastContent = past.length ? h("div", { className: "ctm-past-hearings-table", role: "table", "aria-label": t("pastHearings") },
-      h("div", { className: "ctm-past-hearings-table__header", role: "row" }, h("div", { role: "columnheader" }, t("caseLabel")), h("div", { role: "columnheader" }, bt("councilSession")), h("div", { role: "columnheader" }, t("actions"))),
-      ...past.map((row) => h("div", { key: row.item.id, className: "ctm-past-hearings-table__row", role: "row" },
-        h("div", { role: "cell" }, title(row)),
-        h("div", { role: "cell" }, row.session.date),
-        h("div", { role: "cell" }, h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open"))),
-      )),
-    ) : h(P.EmptyState, { title: t("noHearings") });
+    const pastContent = past.length ? h(P.Table, { label: t("pastHearings"), index: "key", data: past.map((row) => ({ ...row, key: row.item.id })), columns: [
+      { title: t("caseLabel"), field: "key", rowLabel: true, kind: "wrap", render: (row) => title(row) },
+      { title: bt("councilSession"), field: "date", render: (row) => row.session.date },
+      { title: t("actions"), field: "open", render: (row) => h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open")) },
+    ] }) : h(P.EmptyState, { title: t("noHearings") });
     return h(P.Stack, { gap: "lg" }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
       items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] }), attendanceDialog);
   }
@@ -3532,21 +3533,12 @@ ${ar}` : en;
     const roleLabel = (role) => t(role === "president" ? "presiding" : role === "secretary" ? "councilSecretary" : "councilMemberRole");
     const record = async (memberId, present) => { setSaving(true); setFailure(null); try { await api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }); retry(); } catch (error) { setFailure(base.serverMessage(error, bt)); } finally { setSaving(false); } };
     return state.pending ? base.loadingView(P, h, t) : state.error ? base.loadFailure(P, h, t, retry, state.error) : h(P.Stack, { gap: "md" },
-      h("div", { className: "ctm-hearing-attendance-table", role: "table", "aria-label": t("councilAttendance") },
-        h("div", { className: "ctm-hearing-attendance-table__header", role: "row" },
-          h("div", { role: "columnheader" }, t("councilMember")),
-          h("div", { role: "columnheader" }, bt("presentLabel")),
-          h("div", { role: "columnheader" }, bt("absentLabel")),
-        ),
-        ...(state.data.items || []).map((row) => h("div", { key: row.member_id, className: "ctm-hearing-attendance-table__row", role: "row" },
-          h("div", { className: "ctm-hearing-attendance-member", role: "cell" },
-            h(P.Text, { as: "div", variant: "strong" }, row.member_name),
-            h(P.Text, { as: "div", variant: "secondary" }, roleLabel(row.member_role)),
-          ),
-          h("label", { className: "ctm-hearing-attendance-choice ctm-hearing-attendance-choice--present", role: "cell" }, h("input", { type: "radio", name: `hearing-${hearingId}-member-${row.member_id}`, checked: row.present === true, disabled: readonly, "aria-label": `${bt("presentLabel")}: ${row.member_name}`, onChange: () => record(row.member_id, true) })),
-          h("label", { className: "ctm-hearing-attendance-choice", role: "cell" }, h("input", { type: "radio", name: `hearing-${hearingId}-member-${row.member_id}`, checked: row.present === false, disabled: readonly, "aria-label": `${bt("absentLabel")}: ${row.member_name}`, onChange: () => record(row.member_id, false) })),
-        )),
-      ),
+      h(P.Table, { label: t("councilAttendance"), index: "member_id", data: state.data.items || [], columns: [
+        { title: t("councilMember"), field: "member_name", rowLabel: true, kind: "wrap", render: (row) => h(P.Stack, { gap: "none" }, h(P.Text, { as: "div", variant: "strong" }, row.member_name), h(P.Text, { as: "div", variant: "secondary" }, roleLabel(row.member_role))) },
+        { title: t("councilAttendance"), field: "present", render: (row) => h(P.SegmentedControl, { size: "sm", label: `${t("councilAttendance")}: ${row.member_name}`, value: row.present === true ? "present" : row.present === false ? "absent" : undefined, readOnly: readonly,
+          options: [{ value: "present", label: bt("presentLabel"), icon: "check" }, { value: "absent", label: bt("absentLabel"), icon: "close" }],
+          onChange: (choice) => record(row.member_id, choice === "present") }) },
+      ] }),
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,
     );
   }
@@ -3608,12 +3600,12 @@ ${ar}` : en;
       ...petitions.map((row) => {
         const answers = petitionAnswers(row.answers);
         const filingParty = row.filing_party_name ? h(
-          "span",
-          { className: "ctm-petition-header__party" },
-          h(P.Text, { as: "span", variant: "strong", className: "ctm-petition-header__name" }, row.filing_party_name),
+          P.Inline,
+          { gap: "xs", align: "center" },
+          h(P.Text, { as: "span", variant: "strong" }, row.filing_party_name),
           row.filing_party_role ? h(P.Badge, { tone: row.filing_party_role === "applicant" ? "info" : "waiting" }, t(row.filing_party_role)) : null,
         ) : null;
-        return h(P.Panel, { icon: "doc-text", key: row.id, title: h("span", { className: "ctm-petition-header" }, h("span", { className: "ctm-petition-header__title" }, t("petition")), filingParty), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
+        return h(P.Panel, { icon: "doc-text", key: row.id, title: h(P.Inline, { gap: "md", align: "center", wrap: true }, h(P.Text, { as: "span" }, t("petition")), filingParty), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
           h(P.Stack, { gap: "sm" },
             answers.length ? h(P.PropertyList, { layout: "stacked" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
           ),
@@ -3688,14 +3680,17 @@ ${ar}` : en;
 
   // Council cards use the same field grid in read and edit modes. Read controls
   // intentionally preserve the form layout while preventing direct changes.
-  function CaseReadFields({ P, h, fields, values, className = "" }) {
-    return h("div", { className: `ctm-case-edit-grid ctm-case-read-grid ${className}`.trim() },
-      ...fields.map(([key, label, type = "text"]) => {
-        const value = values[key];
-        const validDate = type === "date" && /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
-        return h(P.Field, { key, label }, h(P.Input, { type: validDate ? "date" : "text", value: value === undefined || value === null || value === "" ? "—" : String(value), readOnly: true, tabIndex: -1 }));
-      }),
-    );
+  // #48 row 14: read mode is a PropertyList, not a disabled-looking input. A date-only value is shown in the
+  // page language and read as UTC so it never moves a day.
+  function CaseReadFields({ P, h, fields, values, lang, columns = 3 }) {
+    const language = lang || window.document.documentElement.lang;
+    const show = (value, type) => {
+      if (value === undefined || value === null || value === "") return "—";
+      if (type === "date" && /^\d{4}-\d{2}-\d{2}$/.test(String(value)))
+        return new Intl.DateTimeFormat(language === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(String(value) + "T00:00:00Z"));
+      return String(value);
+    };
+    return caseColumns(P, h, fields.map(([key, label, type = "text"]) => h(P.PropertyList, { layout: "stacked", key }, h(P.PropertyList.Item, { label }, show(values[key], type)))), columns, "wide");
   }
 
   function CaseMarriage({ api, lang, user, caseId }) {
@@ -3738,7 +3733,7 @@ ${ar}` : en;
       h(P.Panel, { icon: "settings-users", title: t("churchMarriage"), actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, "Edit") : null },
         h(P.Stack, { gap: "md" },
           editing ? h(P.Form, { onSubmit: save, label: t("churchMarriage"), noValidate: true },
-            h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+            caseColumns(P, h, fields.map(([key, label, type]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) }))), 3, "wide"),
             failure ? h(P.Notice, { tone: "danger" }, failure) : null,
             h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
           ) : h(CaseReadFields, { P, h, fields: [
@@ -3773,7 +3768,7 @@ ${ar}` : en;
     };
     return h(P.Panel, { title, icon, actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, "Edit") : null }, h(P.Stack, { gap: "md" },
       editing ? h(P.Form, { onSubmit: save, label: title, noValidate: true },
-        h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+        caseColumns(P, h, fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) }))), 3, "wide"),
         failure ? h(P.Notice, { tone: "danger" }, failure) : null,
         h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
       ) : h(CaseReadFields, { P, h, fields, values }),
@@ -3872,14 +3867,16 @@ ${ar}` : en;
       if (group) group.items.push(item); else all.push({ year: parts.year, items: [item] });
       return all;
     }, []);
-    const content = visible.length ? h("div", { className: "ctm-case-timeline", role: "list" }, ...groups.map((group) => h("section", { key: group.year, className: "ctm-case-timeline__year-group" },
-      h("h2", { className: "ctm-case-timeline__year" }, group.year),
-      h("div", { className: "ctm-case-timeline__events" }, ...group.items.map((event) => h("article", { key: event.id, className: `ctm-case-timeline__event ctm-case-timeline__event--${event.category}`, role: "listitem" },
-        h("time", { className: "ctm-case-timeline__date", dateTime: event.timestamp }, event.date),
-        h("span", { className: "ctm-case-timeline__marker", "aria-hidden": true }),
-        h("div", { className: "ctm-case-timeline__body" }, h(P.Text, { as: "h3", variant: "strong" }, event.label)),
-        h(P.Badge, { tone: event.category === "case" ? "active" : "neutral", size: "sm" }, t(event.category === "case" ? "timelineCase" : "timelineMarriage")),
-      ))),
+    const content = visible.length ? h(P.Stack, { gap: "lg" }, ...groups.map((group) => h(P.Stack, { key: group.year, gap: "sm" },
+      h(P.SectionHeading, { level: 2 }, group.year),
+      h(P.Timeline, { label: `${t("timelineTitle")} ${group.year}`, items: group.items.map((event) => ({
+        id: event.id,
+        time: event.date,
+        dateTime: event.timestamp,
+        title: event.label,
+        icon: event.category === "marriage" ? "church" : "description",
+        badge: h(P.Badge, { tone: event.category === "case" ? "active" : "neutral", size: "sm" }, t(event.category === "case" ? "timelineCase" : "timelineMarriage")),
+      })) }),
     ))) : h(P.EmptyState, { title: t("noTimeline") });
     return h(P.Stack, { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("timelineTitle")),
@@ -4121,7 +4118,7 @@ ${ar}` : en;
         { icon: "document", title: t("caseSummary"), actions: canEditSummary && !summaryEditing ? h(P.Button, { size: "sm", onClick: startSummaryEdit }, "Edit") : null },
         summaryEditing
           ? h(P.Form, { onSubmit: saveSummary, label: t("caseSummary"), noValidate: true },
-              h("div", { className: "ctm-case-edit-grid" },
+              h(P.Columns, { count: 2, collapseBelow: "wide" },
                 h(P.Field, { label: t("reasonForDivorce") }, h(P.Input, { value: summaryForm.reason, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, reason: event.target.value })) })),
                 h(P.Field, { label: t("assignedCouncilMember") }, h(P.Select, { value: summaryForm.memberId, disabled: summaryPending || !record.can_assign, onChange: (event) => setSummaryForm((old) => ({ ...old, memberId: event.target.value })), options: [{ value: "", label: bt("unassigned") }, ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id }))] })),
               ),
@@ -4129,7 +4126,7 @@ ${ar}` : en;
               summaryFailure ? h(P.Notice, { tone: "danger" }, summaryFailure) : null,
               h(P.FormActions, { sticky: false }, h(P.Button, { disabled: summaryPending, onClick: () => setSummaryEditing(false) }, bt("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: summaryPending, disabled: summaryPending }, "Save")),
             )
-          : h(CaseReadFields, { P, h, fields: summaryReadFields, values: summaryReadValues, className: "ctm-case-summary-fields" }),
+          : h(CaseReadFields, { P, h, fields: summaryReadFields, values: summaryReadValues, lang, columns: 2 }),
       ),
       h(
         P.Panel,

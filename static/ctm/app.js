@@ -659,25 +659,12 @@
       ...records.filter((row) => !members.some((member) => member.id === row.member_id)).map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, active: false })),
     ];
     return h(P.Stack, { gap: "md" },
-      h("div", { className: "ctm-hearing-attendance-table", role: "table", "aria-label": t("attendance") },
-        h("div", { className: "ctm-hearing-attendance-table__header", role: "row" },
-          h("div", { role: "columnheader" }, t("councilMember")),
-          h("div", { role: "columnheader" }, t("present")),
-          h("div", { role: "columnheader" }, t("absent")),
-        ),
-        ...roster.map((member) => {
-          const row = records.find((item) => item.member_id === member.id);
-          const disabled = pending || !session.can_record_attendance || !member.active;
-          return h("div", { key: member.id, className: "ctm-hearing-attendance-table__row", role: "row" },
-            h("div", { className: "ctm-hearing-attendance-member", role: "cell" },
-              h(P.Text, { as: "div", variant: "strong" }, member.name),
-              member.role ? h(P.Text, { as: "div", variant: "secondary" }, member.role === "president" ? "Presiding" : member.role === "secretary" ? "Secretary" : "Member") : null,
-            ),
-            h("label", { className: "ctm-hearing-attendance-choice ctm-hearing-attendance-choice--present", role: "cell" }, h("input", { type: "radio", name: `session-${sessionId}-member-${member.id}`, checked: row?.present === true, disabled, "aria-label": `${t("present")}: ${member.name}`, onChange: () => record(member.id, true) })),
-            h("label", { className: "ctm-hearing-attendance-choice", role: "cell" }, h("input", { type: "radio", name: `session-${sessionId}-member-${member.id}`, checked: row?.present === false, disabled, "aria-label": `${t("absent")}: ${member.name}`, onChange: () => record(member.id, false) })),
-          );
-        }),
-      ),
+      h(P.Table, { label: t("attendance"), index: "id", data: roster.map((member) => ({ ...member, present: records.find((item) => item.member_id === member.id)?.present })), columns: [
+        { title: t("councilMember"), field: "name", rowLabel: true, kind: "wrap", render: (row) => h(P.Stack, { gap: "none" }, h(P.Text, { as: "div", variant: "strong" }, row.name), row.role ? h(P.Text, { as: "div", variant: "secondary" }, row.role === "president" ? "Presiding" : row.role === "secretary" ? "Secretary" : "Member") : null) },
+        { title: t("attendance"), field: "present", render: (row) => h(P.SegmentedControl, { size: "sm", label: `${t("attendance")}: ${row.name}`, value: row.present === true ? "present" : row.present === false ? "absent" : undefined, readOnly: pending || !session.can_record_attendance || !row.active,
+          options: [{ value: "present", label: t("present"), icon: "check" }, { value: "absent", label: t("absent"), icon: "close" }],
+          onChange: (choice) => record(row.id, choice === "present") }) },
+      ] }),
       failed ? h(P.Notice, { tone: "danger" }, t("error")) : null,
     );
   }
