@@ -2170,29 +2170,48 @@
     const recorder = canRecordAssignment(user, data.members, data.authorities);
     const memberRows = assignableMembers(data.members);
     const transferSessions = data.sessions.filter((candidate) => candidate.id !== session.id && candidate.date > session.date && ["draft", "planned"].includes(candidate.state));
-    // EntityHeader is the default Plenix record header.  Values come from the
-    // selected session payload; a reference/state badge is deliberately not
-    // repeated here because it is not part of the session's requested header.
+    // The session header is Plenix EntityHeader, header style 2 "facts with actions" (owner 2026-10-23;
+    // CDN record-page docs): each count carries its own button, and the session's state is the status
+    // box among the facts. Buttons appear only on the current session and only for those allowed.
+    const presentCount = Array.isArray(data.attendance) ? data.attendance.filter((row) => row.present === true).length : null;
     const sessionFacts = [
-      { label: t("presiding"), value: session.presiding_member_name || t("presidingNotRecorded") },
-      { label: t("casesToAssign"), value: String(pendingAssignments), data: true },
-      { label: t("scheduledCasesForHearing"), value: String(scheduledHearings), data: true },
+      { icon: "person", label: t("presiding"), value: session.presiding_member_name || t("presidingNotRecorded") },
+      {
+        icon: "settings-users", label: t("attendance"), value: presentCount === null ? "—" : String(presentCount), data: true,
+        action: current ? { label: t("attendance"), icon: "edit", name: t("attendance"), disabled: pending, onClick: () => setDialog({ kind: "attendance" }) } : undefined,
+      },
+      {
+        icon: "folder", label: t("casesToAssign"), value: String(pendingAssignments), data: true,
+        action: current && editable && manage ? { label: t("addAssignmentCase"), icon: "folder-add", name: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) } : undefined,
+      },
+      {
+        icon: "event_available", label: t("scheduledCasesForHearing"), value: String(scheduledHearings), data: true,
+        action: current && editable ? { label: t("addHearingCase"), icon: "event_available", name: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) } : undefined,
+      },
     ];
-    // The current-session header needs labeled capability actions and its state
-    // control in the aside. EntityHeader only accepts icon-only entity actions,
-    // so this uses its documented structural classes and tokenized anatomy.
-    const sessionHeaderActions = (current ? [
-      editable && manage ? { icon: "folder-add", label: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) } : null,
-      editable ? { icon: "event_available", label: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) } : null,
-      { icon: "settings-users", label: t("attendance"), disabled: pending, onClick: () => setDialog({ kind: "attendance" }) },
-    ] : []).filter(Boolean);
     const sessionStatus = session.state === "closed" ? "adjourned" : session.state === "draft" ? "draft" : "in-session";
-    const headerFact = (fact, index) => h(
-      "div",
-      { key: `${fact.label}-${index}`, className: "plx-entity-header__fact" },
-      h("dt", { className: "plx-entity-header__fact-label" }, fact.label),
-      h("dd", { className: "plx-entity-header__fact-value" }, fact.data ? h(P.Text, { variant: "data" }, fact.value) : fact.value),
-    );
+    // The status box: Draft (yellow), In progress (green), Adjourned (red), each with its icon (owner 2026-10-25).
+    const sessionStates = {
+      label: t("statusLabel"),
+      value: sessionStatus,
+      disabled: !current || pending,
+      options: [
+        { value: "draft", label: t("sessionStatusPlanned"), icon: "pencil", tone: "waiting" },
+        { value: "in-session", label: t("sessionStatusInProgress"), icon: "clock", tone: "success" },
+        { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "do-not-disturb", tone: "negative" },
+      ],
+      onChange: (value) => {
+        if (value === "draft" && session.state === "planned" && manage)
+          run(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/plan/`, { method: "POST", body: "{}" }), "sessionReturnedToPlanned", onChanged);
+        if (value === "in-session" && session.state === "draft" && session.can_activate)
+          run(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/activate/`, { method: "POST", body: "{}" }), "sessionActivated", onChanged);
+        if (value === "adjourned" && planned && manage) {
+          setFailure(null);
+          setAdjournEnd("");
+          setDialog({ kind: "adjourn" });
+        }
+      },
+    };
 
     async function run(action, success, extra) {
       setPending(true);
@@ -2405,71 +2424,13 @@
       P.Stack,
       { gap: "lg" },
       !current && onBack ? h(P.Inline, null, h(P.Button, { variant: "ghost", onClick: onBack }, t("backSessions"))) : null,
-      h(
-        "header",
-        { className: `plx-entity-header${current ? "" : " plx-entity-header--solo"}` },
-        h(
-          "div",
-          { className: "plx-entity-header__layout" },
-          h(
-            "div",
-            { className: "plx-entity-header__main" },
-            h(
-              "div",
-              { className: "plx-entity-header__lead" },
-              h(
-                "div",
-                { className: "plx-entity-header__heading" },
-                h("span", { className: "plx-entity-header__media" }, h("span", { className: "plx-entity-header__tile", "data-plx-media-hue": "blue", "aria-hidden": true }, h(P.Icon, { name: "calendar", size: "lg" }))),
-                h("div", { className: "plx-entity-header__text" },
-                  h("h1", { className: "plx-entity-header__title" }, sessionLabel(session.date, t)),
-                  h("p", { className: "plx-entity-header__subtitle" }, formatSessionStart(session.starts_at, lang) || t("timeNotRecorded")),
-                ),
-              ),
-              h("div", { className: "plx-entity-header__rule", "aria-hidden": true }),
-              h("dl", { className: "plx-entity-header__details" }, ...sessionFacts.map(headerFact)),
-            ),
-          ),
-          current ? h(
-            "div",
-            { className: "plx-entity-header__aside" },
-            h(
-              P.Stack,
-              { gap: "sm" },
-              h(P.Stack, { gap: "xs", align: "end" },
-                ...sessionHeaderActions.map((action) => h(
-                  P.Inline,
-                  { key: action.label, justify: "end" },
-                  h(P.Button, { size: "sm", icon: action.icon, variant: action.primary ? "primary" : "secondary", disabled: action.disabled, onClick: action.onClick }, action.label),
-                )),
-              ),
-              current ? h(P.Inline, { justify: "end" },
-                h(P.SegmentedControl, {
-                  label: t("tribunalSession"),
-                  size: "sm",
-                  value: sessionStatus,
-                  options: [
-                    { value: "draft", label: t("sessionStatusPlanned"), icon: "document" },
-                    { value: "in-session", label: t("sessionStatusInProgress"), icon: "calendar" },
-                    { value: "adjourned", label: t("sessionStatusAdjourned"), icon: "stop" },
-                  ],
-                  onChange: (value) => {
-                    if (value === "draft" && session.state === "planned" && manage)
-                      run(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/plan/`, { method: "POST", body: "{}" }), "sessionReturnedToPlanned", onChanged);
-                    if (value === "in-session" && session.state === "draft" && session.can_activate)
-                      run(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/activate/`, { method: "POST", body: "{}" }), "sessionActivated", onChanged);
-                    if (value === "adjourned" && planned && manage) {
-                      setFailure(null);
-                      setAdjournEnd("");
-                      setDialog({ kind: "adjourn" });
-                    }
-                  },
-                }),
-              ) : null,
-            ),
-          ) : null,
-        ),
-      ),
+      h(P.EntityHeader, {
+        media: { icon: "calendar", hue: "blue" },
+        title: sessionLabel(session.date, t),
+        subtitle: formatSessionStart(session.starts_at, lang) || t("timeNotRecorded"),
+        facts: sessionFacts,
+        states: sessionStates,
+      }),
       !editable ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,

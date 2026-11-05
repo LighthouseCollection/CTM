@@ -223,35 +223,33 @@ test("session lifecycle changes refresh their parent destination list", () => {
   assert.match(council, /onChanged: retry/);
 });
 
-test("the current session keeps labeled actions and its status control inside the CDN header anatomy", () => {
+test("the session header is Plenix EntityHeader style 2: facts carry their actions, the state is the status box", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /mode === "current"/);
-  assert.match(council, /plx-entity-header\$\{current/);
-  assert.match(council, /className: "plx-entity-header__aside"/);
-  assert.match(council, /P\.Stack, \{ gap: "xs", align: "end" \},/);
-  assert.match(council, /P\.Inline,\s*\{ key: action\.label, justify: "end" \}/);
-  assert.match(council, /icon: "folder-add", label: t\("addAssignmentCase"\)/);
-  assert.match(council, /icon: "event_available", label: t\("addHearingCase"\)/);
+  // owner 2026-10-23 (header style 2, in the CDN record-page docs): no hand-built header, no aside
+  assert.match(council, /h\(P\.EntityHeader, \{/);
+  assert.doesNotMatch(council, /plx-entity-header__aside|className: `plx-entity-header/);
+  assert.match(council, /facts: sessionFacts,\s*states: sessionStates/);
+  assert.match(council, /action: current && editable && manage \? \{ label: t\("addAssignmentCase"\), icon: "folder-add"/);
+  assert.match(council, /action: current && editable \? \{ label: t\("addHearingCase"\), icon: "event_available"/);
+  assert.match(council, /action: current \? \{ label: t\("attendance"\)/);
   assert.match(council, /className: "ctm-session-agenda-grid"/);
   assert.match(shell, /ctm\/ctm\.css/);
-  assert.match(council, /value: "draft", label: t\("sessionStatusPlanned"\), icon: "document"/);
-  assert.match(council, /value: "adjourned", label: t\("sessionStatusAdjourned"\), icon: "stop"/);
   assert.match(council, /session\.state === "planned" && manage/);
   assert.match(council, /\/plan\//);
   assert.match(council, /session\.state === "draft" && session\.can_activate/);
   assert.match(council, /\/activate\//);
   assert.match(council, /P\.DataPill, \{ size: "md", gender: normalizedGender \}/);
-  assert.match(council, /name: "calendar", size: "lg"/);
-  assert.match(council, /sessionHeaderActions\.map/);
-  assert.match(council, /h\(P\.Button, \{ size: "sm", icon: action\.icon/);
   for (const key of ["addAssignmentCase", "addHearingCase", "attendance"])
     assert.match(council, new RegExp(`t\\("${key}"\\)`), key);
   assert.match(council, /t\("casesToAssign"\)/);
   assert.match(council, /t\("scheduledCasesForHearing"\)/);
-  const sessionFacts = council.slice(council.indexOf("const sessionFacts"), council.indexOf("const sessionHeaderActions"));
+  const sessionFacts = council.slice(council.indexOf("const sessionFacts"), council.indexOf("const sessionStatus"));
   assert.doesNotMatch(sessionFacts, /location/);
-  assert.match(council, /P\.SegmentedControl,/);
-  assert.match(council, /h\(P\.Inline, \{ justify: "end" \},\s*h\(P\.SegmentedControl,/);
+  // the status box: Draft yellow, In progress green, Adjourned red (owner 2026-10-25)
+  assert.match(council, /value: "draft", label: t\("sessionStatusPlanned"\), icon: "pencil", tone: "waiting"/);
+  assert.match(council, /value: "in-session", label: t\("sessionStatusInProgress"\), icon: "clock", tone: "success"/);
+  assert.match(council, /value: "adjourned", label: t\("sessionStatusAdjourned"\), icon: "do-not-disturb", tone: "negative"/);
   assert.match(council, /sessionStatusPlanned/);
   assert.match(council, /sessionStatusInProgress/);
   assert.match(council, /sessionStatusAdjourned/);
@@ -718,7 +716,7 @@ test("ctm3-48: delete-only rows no longer use a CTM styling class", () => {
 test("ctm3-48: council root gets direction from DirectionProvider; calendar action uses one Plenix icon", () => {
   assert.match(app, /h\(P\.ThemeProvider, null, h\(P\.DirectionProvider, \{ follow: true \}, h\(App\)\)\)/);
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
-  assert.match(council, /\{ icon: "event_available", label: t\("addHearingCase"\)/);
+  assert.match(council, /label: t\("addHearingCase"\), icon: "event_available"/);
 });
 
 // ctm3-48 part 2 (#48): Case Overview cards and the session form use Plenix layout parts instead of ctm.css grids.
