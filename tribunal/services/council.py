@@ -245,8 +245,10 @@ def update_session(actor, session_id, session_date, *, starts_at=None, presiding
     session = CouncilSession.objects.select_for_update().get(pk=session_id)
     if session.state not in {"draft", "planned"}:
         raise ValidationError("Closed sessions cannot be edited.")
-    if CouncilSession.objects.exclude(pk=session.pk).filter(date=session_date).exists():
-        raise ValidationError("A council session already exists on that date.")
+    if session_date != session.date:
+        # D-0020: moving a session to another day creates a new dated session
+        # (reschedule_session); held sessions are locked history.
+        raise ValidationError("Use reschedule to move a council session to another date.")
     if starts_at is None or not timezone.is_aware(starts_at):
         raise ValidationError("Session start time must include a UTC offset.")
     if starts_at.astimezone(ZoneInfo("America/Los_Angeles")).date() != session_date:
@@ -257,17 +259,10 @@ def update_session(actor, session_id, session_date, *, starts_at=None, presiding
     location = str(location or "").strip()
     if not location or len(location) > 300:
         raise ValidationError("Session location is required and must be at most 300 characters.")
-    session.date = session_date
     session.starts_at = starts_at
     session.presiding_member = presiding_member
     session.location = location
-    # A rescheduled in-progress session becomes a draft when moved into the
-    # future. Upcoming sessions must never be presented as in progress.
-    if session.state == "planned" and session_date > timezone.localdate():
-        session.state = "draft"
-        session.save(update_fields=["date", "starts_at", "presiding_member", "location", "state"])
-    else:
-        session.save(update_fields=["date", "starts_at", "presiding_member", "location"])
+    session.save(update_fields=["starts_at", "presiding_member", "location"])
     audit(actor, "session_updated", session)
     return session
 
