@@ -2182,10 +2182,10 @@
     const viewerItems = images.map((row) => ({ src: fileUrls(row).inline, alt: row.name, title: row.name, meta: [row.category, formatBytes(row.byte_count, lang)] }));
     const demoPreview = chosen?.demoSrc
       ? h(P.Stack, { gap: "md" },
-          chosen.demoType === "image" ? h("img", { className: "ctm-demo-file-preview", src: chosen.demoSrc, alt: chosen.name }) : h(P.Text, null, chosen.name),
+          chosen.demoType === "image" ? h(P.Preview, { ratio: "4-3", fit: "contain" }, h("img", { className: "plx-preview__media", src: chosen.demoSrc, alt: chosen.name })) : h(P.Text, null, chosen.name),
           h(P.Inline, null,
             h(P.Button, { href: chosen.demoSrc, target: "_blank", rel: "noreferrer" }, t("openDocument")),
-            h("a", { className: "plx-button plx-button--secondary", href: chosen.demoSrc, download: chosen.name }, t("downloadDocument")),
+            h(P.Button, { href: chosen.demoSrc, download: chosen.name }, t("downloadDocument")),
           ),
         )
       : null;

@@ -5,9 +5,10 @@ const fs = require("node:fs");
 const shell = fs.readFileSync("tribunal/templates/tribunal/shell.html", "utf8");
 const app = fs.readFileSync("static/ctm/app.js", "utf8");
 const shellLayout = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
+const ctmCss = () => (fs.existsSync("static/ctm/ctm.css") ? fs.readFileSync("static/ctm/ctm.css", "utf8") : "");
 
 test("static table headers retain their full label on hover", () => {
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  const css = ctmCss();
   assert.doesNotMatch(css, /\.plx-table__title > \.plx-table__type-icon/);
   assert.doesNotMatch(css, /--plx-comp-data-grid-context-hover-reserve/);
   assert.match(shellLayout, /typeIcons: false/);
@@ -83,7 +84,7 @@ test("report templates are an inline category-to-question workspace", () => {
   assert.match(councilCase, /title: t\("questionCategories"\)/);
   assert.match(councilCase, /title: t\("questionSelection"\)/);
   assert.match(councilCase, /function ReportPartySelector/);
-  assert.match(councilCase, /ctm-report-party-cards/);
+  assert.match(councilCase, /h\(P\.ChoiceList, \{/);
   assert.match(councilCase, /next\.length === eligible\.length && eligible\.length > 1 \? "both"/);
   assert.match(councilCase, /const partyIds = form\.party === "both"/);
   assert.match(councilCase, /party_ids: partyIds/);
@@ -93,13 +94,12 @@ test("report templates are an inline category-to-question workspace", () => {
 
 test("report template intake uses selectable spouse cards and keeps applicant delivery disabled", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  const css = ctmCss();
   assert.match(councilCase, /h\(P\.Avatar, \{ src: party\.photo_url/);
   assert.match(councilCase, /kind: "interview"/);
   assert.match(councilCase, /\{ value: "intake", label: t\("methodApplicant"\), disabled: true \}/);
   assert.doesNotMatch(councilCase.slice(councilCase.indexOf("function RequestComposer"), councilCase.indexOf("const interviewDraftKey")), /description: t\("interviewHelp"\)/);
-  assert.match(css, /\.ctm-report-party-cards \{/);
-  assert.match(css, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(councilCase, /control: "checkbox"/);
 });
 
 test("council case module has no stale template exports", () => {
@@ -134,11 +134,10 @@ test("report template draft action is named as a report", () => {
 
 test("Arabic report questions use an RTL reading surface", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  const css = ctmCss();
   assert.match(councilCase, /dir: form\.language === "ar" \? "rtl" : undefined/);
   // Plenix 0.75.0 follows the wrapper's dir attribute itself (plenix-platform #413); CTM keeps no RTL patch.
   assert.equal((councilCase.match(/lang: form\.language === "ar" \? "ar" : undefined/g) || []).length, 2);
-  assert.match(councilCase, /ctm-report-question-language--rtl/);
   assert.doesNotMatch(css, /\.ctm-report-question-language--rtl/);
   assert.doesNotMatch(css, /direction: rtl/);
 });
@@ -233,7 +232,6 @@ test("the current session keeps labeled actions and its status control inside th
   assert.match(council, /icon: "folder-add", label: t\("addAssignmentCase"\)/);
   assert.match(council, /icon: "event_available", label: t\("addHearingCase"\)/);
   assert.match(council, /className: "ctm-session-agenda-grid"/);
-  assert.match(shell, /ctm\/ctm\.css/);
   assert.match(council, /value: "draft", label: t\("sessionStatusPlanned"\), icon: "document"/);
   assert.match(council, /value: "adjourned", label: t\("sessionStatusAdjourned"\), icon: "stop"/);
   assert.match(council, /session\.state === "planned" && manage/);
@@ -478,7 +476,7 @@ test("active-session transfers require a reason and use the retained override en
 
 test("agenda tables reserve enough space for complete header labels", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  const css = ctmCss();
   assert.match(council, /yearsMarried"\), field: "married_years", minWidth: "7\.5rem"/);
   assert.match(council, /applicant"\), field: "applicant", kind: "name", minWidth: "10\.5rem"/);
   assert.match(council, /respondent"\), field: "respondent", minWidth: "10\.5rem"/);
@@ -519,7 +517,7 @@ test("upcoming sessions use a full table and load the selected session into the 
 
 test("new session form defaults the Bellflower location and uses a responsive two-column grid", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  const css = ctmCss();
   assert.match(council, /R\.useState\("St\. George Coptic Orthodox Church, Bellflower, California"\)/);
   assert.match(council, /h\(P\.Columns, \{ count: 2, collapseBelow: "wide" \}/);
 });
@@ -620,7 +618,7 @@ test("case hearing header is rendered above its tabs and Hearings uses the balan
 
 test("council can edit a spouse contact through a versioned case finding", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
+  const css = ctmCss();
   assert.match(councilCase, /function SpouseContactSection\(/);
   assert.match(councilCase, /fact_code: `case_card\.contact_\$\{party\.id\}`/);
   assert.match(councilCase, /h\(SpouseContactSection, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
@@ -666,8 +664,7 @@ test("home attention empty state uses a calm reassurance", () => {
 });
 
 test("neutral table pill treatment does not override CDN gender categories", () => {
-  const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
-  assert.match(css, /\.plx-data-grid \.plx-data-pill:not\(\[data-plx-category\]\),\s*\.plx-data-grid \.plx-data-pill\[data-plx-category="grey"\]/);
+  const css = ctmCss();
   assert.doesNotMatch(css, /\.plx-data-grid \.plx-data-pill\s*\{\s*background-color/);
 });
 
@@ -793,4 +790,35 @@ test("ctm3-48 part 3: timeline is Plenix Timeline grouped by year; past hearings
   assert.match(timeline, /h\(P\.Timeline, \{ label:/);
   assert.match(timeline, /dateTime: event\.timestamp/);
   assert.match(councilCase, /h\(P\.Table, \{ label: t\("pastHearings"\)/);
+});
+
+// ctm3-48 part 4 (#48, AC-1/AC-2/AC-6): ctm.css is gone; the last screens use Plenix parts.
+test("ctm3-48 AC-1: ctm.css is deleted and the shell no longer links it", () => {
+  assert.equal(fs.existsSync("static/ctm/ctm.css"), false);
+  assert.doesNotMatch(shell, /ctm\.css/);
+  const css = fs.readdirSync("static/ctm").filter((f) => f.endsWith(".css"));
+  assert.deepEqual(css, [], "no CTM stylesheet left (print layout lives in its template, PLX-010)");
+});
+
+test("ctm3-48 AC-2: no CTM styling class is left in council JavaScript", () => {
+  const hooks = new Set(["ctm-root", "ctm-config", "ctm-language", "ctm-session-form", "ctm-decree-workspace", "ctm-decision-voting-workspace",
+    "ctm-council-recordings", "ctm-session-agenda-grid", "ctm-appeals-nav-icon", "ctm-spouse-profile-edit", "ctm-no-toggle", "ctm-preview-role"]);
+  const js = fs.readdirSync("static/ctm").filter((f) => f.endsWith(".js")).map((f) => fs.readFileSync(`static/ctm/${f}`, "utf8")).join("\n");
+  const left = [...new Set(js.match(/\bctm-[a-z][a-z0-9-]*(?:__[a-z0-9-]+)?/g) || [])].filter((name) => !hooks.has(name) && !name.startsWith("ctm-language"));
+  assert.deepEqual(left, []);
+  assert.doesNotMatch(js, /className: "plx-button/, "no hand-built Plenix button classes");
+});
+
+test("ctm3-48 part 4: report recipients, decree template, media preview and My account use Plenix parts", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const selector = councilCase.slice(councilCase.indexOf("function ReportPartySelector("), councilCase.indexOf("function RequestComposer("));
+  assert.match(selector, /h\(P\.ChoiceList, \{/);
+  assert.match(selector, /control: "checkbox"/);
+  assert.match(selector, /values: selected/);
+  assert.match(fs.readFileSync("static/ctm/council-decree.js", "utf8"), /h\(P\.Stack, \{ gap: "md" \},\s*\.\.\.sections\.map/);
+  const media = fs.readFileSync("static/ctm/council-media.js", "utf8");
+  assert.match(media, /h\(P\.Preview, \{ ratio: "4-3", fit: "contain" \}/);
+  const account = fs.readFileSync("static/ctm/ui-workspaces.js", "utf8");
+  assert.match(account, /h\(P\.Avatar, \{ name: user\.name, size: "2xl" \}\)/);
+  assert.match(account, /h\(P\.Columns, \{ count: 3, collapseBelow: "wide" \}/);
 });

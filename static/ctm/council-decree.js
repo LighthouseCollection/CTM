@@ -469,7 +469,7 @@
         h(P.PropertyList.Item, { label: "Decision type" }, base.typeLabel(decision.type)),
         h(P.PropertyList.Item, { label: "Template" }, template.title),
       ),
-      h("div", { className: "ctm-decree-template" },
+      h(P.Stack, { gap: "md" },
         ...sections.map(([title, body]) => h(P.Panel, { key: title, title }, h(P.Text, { as: "p" }, body))),
       ),
     );
