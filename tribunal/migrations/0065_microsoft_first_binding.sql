@@ -7,6 +7,11 @@ CREATE TABLE public.ctm_microsoft_binding_grant(
   xact xid8 NOT NULL DEFAULT pg_current_xact_id()
 );
 REVOKE ALL ON TABLE public.ctm_microsoft_binding_grant FROM PUBLIC;
+-- Forced row security: even the definer sees only rows from its own transaction.
+ALTER TABLE public.ctm_microsoft_binding_grant ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ctm_microsoft_binding_grant FORCE ROW LEVEL SECURITY;
+CREATE POLICY ctm_microsoft_binding_grant_same_xact ON public.ctm_microsoft_binding_grant
+  USING (xact=pg_current_xact_id()) WITH CHECK (xact=pg_current_xact_id());
 
 CREATE FUNCTION public.ctm_bind_microsoft_subject(target uuid) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$

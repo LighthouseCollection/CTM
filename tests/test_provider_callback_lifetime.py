@@ -218,3 +218,13 @@ def test_binding_function_is_executable_only_by_the_app_role(granted_roles):
             WHERE oid = 'public.ctm_microsoft_binding_grant'::regclass), '{}'::aclitem[])) access
             WHERE access.grantee <> (SELECT relowner FROM pg_class WHERE oid = 'public.ctm_microsoft_binding_grant'::regclass)""")
         assert cursor.fetchone()[0] == 0
+
+
+def test_binding_grant_table_forces_row_security(granted_roles):
+    # D-0021: the guard's grant table is private even to its owner outside the binding transaction.
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT c.relrowsecurity, c.relforcerowsecurity, count(p.polname)
+            FROM pg_class c LEFT JOIN pg_policy p ON p.polrelid = c.oid
+            WHERE c.oid = 'public.ctm_microsoft_binding_grant'::regclass
+            GROUP BY c.relrowsecurity, c.relforcerowsecurity""")
+        assert cursor.fetchone() == (True, True, 1)
