@@ -211,7 +211,7 @@ decisions:
     options: [Build it (chosen), No]
     decided_by: owner
     status: active
-    review_only: Not built yet (task CTM-4); the route's test becomes the check
+    check: { kind: test, ref: tests/test_version_json.py }
 
   - id: D-0024
     date: 2026-11-03

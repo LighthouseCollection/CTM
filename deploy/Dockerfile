@@ -35,6 +35,9 @@ COPY manage.py /app/manage.py
 COPY ctm /app/ctm
 COPY tribunal /app/tribunal
 COPY static /app/static
+# D-0023: /version.json reads the version and build time from these two files.
+COPY pyproject.toml /app/pyproject.toml
+RUN date -u +%Y-%m-%dT%H:%M:%SZ > /app/BUILD_TIME
 
 RUN DJANGO_DEBUG=true DJANGO_SECRET_KEY=build-time-static-only-not-runtime python manage.py collectstatic --noinput \
     && chown -R 1000:1000 /srv/ctm/static

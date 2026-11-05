@@ -2,10 +2,12 @@ from django.urls import path, include, re_path
 from tribunal import api
 from tribunal import priest_pdf_api
 from tribunal import priest_recording_api
+from tribunal import version_api
 
 urlpatterns = [
     path("", api.shell),
     path("health/", api.health),
+    path("version.json", version_api.version),
     path("accounts/login/", api.shell),
     path("accounts/", include("allauth.urls")),
     path("api/session/", api.session),
