@@ -86,7 +86,7 @@ test("the applicant case is a RecordPage with its header, body panels unchanged 
 test("shell.html gives every static/ctm script a cache stamp, bumped after slices 1–8", () => {
   const scripts = [...shell.matchAll(/static '(ctm\/[a-z-]+\.js)' %\}(\?v=[^"]*)?"/g)];
   assert.ok(scripts.length >= 25, "every module is listed");
-  for (const [, file, stamp] of scripts) assert.equal(stamp, "?v=ctm97s8-20261105", file);
+  for (const [, file, stamp] of scripts) assert.equal(stamp, "?v=plx088-20261105", file);
 });
 
 // CTM#113 (owner: "it feels smaller than the cdn tab"): CTM renders at the CDN default density (density.md:
@@ -95,4 +95,17 @@ test("CTM#113: no app-wide compact density; tables keep their own compact rows",
   for (const file of ["tribunal/templates/tribunal/shell.html", "static/ctm/external-report.html"])
     assert.doesNotMatch(fs.readFileSync(file, "utf8"), /data-plx-density/, file);
   assert.match(fs.readFileSync("static/ctm/shell-layout.js", "utf8"), /density: "compact", cells: "pill"/);
+});
+
+// #108 (Plenix 0.88.0, pds#274): every CTM shell turns on the CDN's screen-size check, with EN and AR words.
+test("every AppShell turns on minSize with EN and AR strings", () => {
+  const fs = require("node:fs");
+  for (const file of ["static/ctm/app.js", "static/ctm/external-report.js"]) {
+    const src = fs.readFileSync(file, "utf8");
+    const shells = src.match(/h\(\s*P\.AppShell,[^]*?strings:/g) || [];
+    assert.ok(shells.length > 0, file);
+    for (const s of shells) assert.match(s, /minSize: true/, file);
+    assert.equal((src.match(/minSizeTitle:/g) || []).length, 2, file + " EN+AR title");
+    assert.equal((src.match(/minSizeText: .*\{width\} × \{height\}/g) || []).length, 2, file + " EN+AR text");
+  }
 });

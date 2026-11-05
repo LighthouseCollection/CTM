@@ -236,6 +236,9 @@
       profile: "Profile",
       council: "Council portal",
       applicant: "Applicant portal",
+      minSizeTitle: "Screen size not supported",
+      minSizeText: "Due to the amount and complexity of the information displayed, this application is not optimized for small screens. Please use a desktop or laptop computer with a minimum screen resolution of {width} × {height}. In the future we will have a dedicated design for mobile.",
+      minSizeContinue: "Continue anyway",
       skip: "Skip to main content",
       answers: "Your answers",
       payment: "Payment",
@@ -447,6 +450,9 @@
       profile: "الملف الشخصي",
       council: "بوابة المجلس",
       applicant: "بوابة مقدم الطلب",
+      minSizeTitle: "حجم الشاشة غير مدعوم",
+      minSizeText: "نظرًا لكثرة المعلومات المعروضة وتعقيدها، هذا التطبيق غير مهيّأ للشاشات الصغيرة. يُرجى استخدام جهاز كمبيوتر مكتبي أو محمول بدقة شاشة لا تقل عن {width} × {height}. سيتوفر في المستقبل تصميم مخصّص للأجهزة المحمولة.",
+      minSizeContinue: "المتابعة على أي حال",
       skip: "الانتقال إلى المحتوى الرئيسي",
       answers: "إجاباتك",
       payment: "الرسوم",
@@ -1263,8 +1269,8 @@
       const loginHeader = h(P.Show, { above: "medium", fallback: brandHeader() },
         brandHeader("plx-u-absolute plx-u-top-0 plx-u-left-0 plx-u-right-0 plx-u-z-raised"));
       // Sign-in: the Auth page with SsoButtons (sign-in.md, single-sign-on.md). SignInForm is left out on
-      // purpose: in 0.86.0 it always draws a password field, and CTM has no passwords (plenix-requests.md PLX-015).
-      return h(P.AppShell, { page: "form", strings: { skip: t("skip") } },
+      // purpose: through 0.88.0 it still always draws a password field, and CTM has no passwords (plenix-requests.md PLX-015).
+      return h(P.AppShell, { page: "form", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
         h(P.PageContent, { className: "plx-u-relative" },
           loginHeader,
           h(P.Auth, {
@@ -2000,7 +2006,7 @@
     }
     return h(
       P.AppShell,
-          { header, sideNav: nav, page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", strings: { skip: t("skip") } },
+          { header, sideNav: nav, page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       h("div", { className: "plx-page-panes" }, caseNav,
         h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },

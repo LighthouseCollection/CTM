@@ -45,6 +45,9 @@
       unsaved: "Your report has not been saved.",
       otherFormats: "To send a recording or a signed paper response instead, please contact the tribunal office.",
       retry: "Try again",
+      minSizeTitle: "Screen size not supported",
+      minSizeText: "Due to the amount and complexity of the information displayed, this application is not optimized for small screens. Please use a desktop or laptop computer with a minimum screen resolution of {width} × {height}. In the future we will have a dedicated design for mobile.",
+      minSizeContinue: "Continue anyway",
       skip: "Skip to main content",
     },
     ar: {
@@ -83,6 +86,9 @@
       unsaved: "لم يُحفظ تقريرك.",
       otherFormats: "لإرسال تسجيل صوتي أو رد ورقي موقَّع بدلًا من ذلك، يرجى التواصل مع مكتب المحكمة.",
       retry: "إعادة المحاولة",
+      minSizeTitle: "حجم الشاشة غير مدعوم",
+      minSizeText: "نظرًا لكثرة المعلومات المعروضة وتعقيدها، هذا التطبيق غير مهيّأ للشاشات الصغيرة. يُرجى استخدام جهاز كمبيوتر مكتبي أو محمول بدقة شاشة لا تقل عن {width} × {height}. سيتوفر في المستقبل تصميم مخصّص للأجهزة المحمولة.",
+      minSizeContinue: "المتابعة على أي حال",
       skip: "الانتقال إلى المحتوى الرئيسي",
     },
   };
@@ -283,7 +289,7 @@
           onCancel: () => setConfirm(false),
         }),
       );
-    return h(P.AppShell, { page: "form", header, strings: { skip: t("skip") } },
+    return h(P.AppShell, { page: "form", header, minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
       h(P.PageContent, null, h(P.Stack, { gap: "lg" }, h(P.Text, { as: "h1", variant: "title" }, t("pageTitle")), body)));
   }
 
