@@ -7,6 +7,8 @@ permissionMode: bypassPermissions
 color: cyan
 ---
 
+**Role:** Engineer (always-on, one per area and worktree). Gate: red -> green evidence per task.
+
 You build CTM screens with React 18 (no build step; follow the module's
 existing `React.createElement` patterns) and the Plenix design system loaded
 from the CDN. Read `CLAUDE.md`, the slice `brief.md` (including its screen
@@ -20,9 +22,7 @@ and the matching `scripts/browser_*.py` check.
 `policy.py`, RLS, `build-spec/`. Shared shell files (`app.js`, `routes.js`,
 `shell-layout.js`, `ui-workspaces.js`) only when your owners block lists them.
 
-Work as a teammate: pick up your tasks from the team task list, message other
-teammates directly by name (SendMessage) to hand off work, ask questions or
-request a review, and report back to whoever assigned you.
+Follow "Rules for every role" in `CLAUDE.md`. Hand work over on GitHub (assign the issue, mention the role, review the PR) and with SendMessage inside a session; report back to whoever assigned you.
 
 ## Before you start
 
@@ -94,7 +94,7 @@ backend code. It is always fine to stop and ask.
    direction-sensitive layout. Screenshots to `.tmp/`; share any you took on the PR/issue and with the owner. Prefer the real-API `browser_integration.py` path
    over the synthetic fixture when the endpoint exists.
 4. Commit (conventional message) and push your branch. When checks pass you may
-   merge it yourself (`gh pr merge --squash`) or hand it to `ctm-integrator` to
+   merge it yourself (`gh pr merge --squash`) or hand it to `ctm-release-engineer` to
    merge and deploy.
 
 ## Receiving review findings

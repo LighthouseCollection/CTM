@@ -1,0 +1,223 @@
+# CTM decision log. Never ask twice: every decision has a date, a reason and the
+# check that enforces it (or review_only with a reason). Validated by
+# scripts/check_decisions.py; shown on the pinned "CTM dashboard" issue.
+#
+# check.kind: ci-job  -> ref "<workflow file>#<job id>"
+#             workflow -> ref ".github/workflows/<file>"
+#             test     -> ref "<test file path>"
+#             hook     -> ref "<hook file path>"
+#             script   -> ref "<script path>"
+# status: active | superseded | retired
+# decided_by: owner | agent:<role>
+
+decisions:
+  - id: D-0001
+    date: 2026-11-04
+    area: process
+    decision: Full autonomy. All agents push, merge, run git clean -fdx (own worktree), deploy, run real migrations and work with real data
+    why: The owner is the product stakeholder and reporter, not an approval step
+    options: [Full autonomy (chosen), Lead-only merges with owner taps]
+    decided_by: owner
+    status: active
+    review_only: A permission setting (.claude/settings.json), enforced by the safety nets in sdlc.md section 3, not by a code rule
+
+  - id: D-0002
+    date: 2026-11-04
+    area: process
+    decision: GitHub is the only channel. Work items are issues; status is generated from GitHub (pinned dashboard and daily summary issues)
+    why: Hand-kept status files and dashboards drifted from the truth
+    options: [GitHub only (chosen), Separate status pages]
+    decided_by: owner
+    status: active
+    check: { kind: workflow, ref: .github/workflows/dashboard.yml }
+
+  - id: D-0003
+    date: 2026-11-04
+    area: process
+    decision: Agents never stop to wait for the owner. Intent questions become decision cards with the recommended option applied
+    why: Waiting for owner taps stalled the previous team
+    options: [Apply recommended and report (chosen), Wait for an answer]
+    decided_by: owner
+    status: active
+    review_only: Behaviour of agents, checked in review by ctm-delivery-lead
+
+  - id: D-0004
+    date: 2026-11-04
+    area: design
+    decision: Pictures, mock-ups and variants only when the owner asks. Every screenshot a check already took is shared on the PR, the issue and the dashboard. English desktop by default; mobile and Arabic only when the change affects them
+    why: Owner, 2026-11-04 ("not everything needs a picture")
+    options: [Pictures on request, checks' screenshots always shared (chosen), Picture before every UI change]
+    decided_by: owner
+    status: active
+    check: { kind: ci-job, ref: .github/workflows/plenix-upgrade.yml#upgrade }
+
+  - id: D-0005
+    date: 2026-11-04
+    area: release
+    decision: New Plenix CDN releases reach CTM automatically after CTM's checks pass against the real CDN; a failure opens one bug
+    why: Owner, 2026-11-04 ("any immediate update to cdn is auto update in the ctm")
+    options: [Automatic upgrade (chosen), Owner approves each version]
+    decided_by: owner
+    status: active
+    check: { kind: ci-job, ref: .github/workflows/plenix-upgrade.yml#upgrade }
+
+  - id: D-0006
+    date: 2026-11-04
+    area: design
+    decision: CTM's visual language is Plenix. CTM owns only the layer on top (DESIGN.md) and never restyles Plenix
+    why: CTM is an application that consumes the PDS design system from the CDN
+    options: [Plenix only (chosen)]
+    decided_by: owner
+    status: active
+    check: { kind: ci-job, ref: .github/workflows/quality.yml#fast-gates }
+
+  - id: D-0007
+    date: 2026-11-04
+    area: process
+    decision: build-spec/ and the question bank are protected from edits; conflicts go to GitHub issues
+    why: The specification is the owner's source of truth
+    options: [Protected (chosen)]
+    decided_by: owner
+    status: active
+    check: { kind: hook, ref: .claude/hooks/guard-protected.cjs }
+
+  - id: D-0008
+    date: 2026-11-04
+    area: process
+    decision: Only ctm-database-engineer writes migrations, RLS and grants; one owner per file
+    why: Ownership violations caused lost work and broken migrations
+    options: [Single owner (chosen)]
+    decided_by: owner
+    status: active
+    check: { kind: ci-job, ref: .github/workflows/quality.yml#fast-gates }
+
+  - id: D-0009
+    date: 2026-11-04
+    area: process
+    decision: At most 4 agent sessions run at once
+    why: Same as PDS 1.0; keeps cost and merge conflicts down
+    options: [4 (chosen), Unlimited]
+    decided_by: owner
+    status: active
+    review_only: Session count is managed by ctm-delivery-lead; no CI signal exists
+
+  - id: D-0010
+    date: 2026-11-04
+    area: process
+    decision: Tool stack as in PDS 1.0 - Opengrep (not Semgrep), drop SonarQube and PR-Agent, adopt Rulesync, zizmor, lefthook; reviewdog for presentation; every Action pinned to a SHA
+    why: PDS 1.0 tool review 2026-11-03 (license, RAM, AI-review noise, drift between Claude and Codex instructions)
+    options: [PDS 1.0 stack (chosen), Semgrep + SonarQube + PR-Agent]
+    decided_by: owner
+    status: active
+    check: { kind: ci-job, ref: .github/workflows/quality.yml#zizmor }
+
+  - id: D-0011
+    date: 2026-11-04
+    area: process
+    decision: Codex is on standby, called in only when needed; it reads AGENTS.md generated from the same source as CLAUDE.md
+    why: Same as PDS 1.0 decision 2
+    options: [Standby (chosen), Standing team member]
+    decided_by: owner
+    status: active
+    check: { kind: ci-job, ref: .github/workflows/quality.yml#fast-gates }
+
+  - id: D-0012
+    date: 2026-11-04
+    area: i18n
+    decision: New Arabic UI words are proposed by ctm-i18n-engineer from the glossary and docs/i18n/arabic.md, shipped, and listed in docs/i18n/arabic-proposals.md for the owner's batch review. Institutional text is never improvised
+    why: Keeps the PDS Arabic standard without blocking work (agents never wait)
+    options: ["A (Recommended, applied): ship and batch review - risk: a word may change after release", "B: PDS strict, owner approves every word before it ships - risk: bilingual screens wait on the owner"]
+    decided_by: agent:ctm-product-lead
+    status: active
+    check: { kind: ci-job, ref: .github/workflows/quality.yml#fast-gates }
+
+  - id: D-0013
+    date: 2026-11-04
+    area: release
+    decision: Releases are on demand, triggered by agents once all checks pass; no owner yes
+    why: Same as PDS 1.0 decision 3
+    options: [On demand (chosen), Owner approves each release]
+    decided_by: owner
+    status: active
+    review_only: No release workflow yet; ctm-release-engineer adds the deploy job with backup and rollback
+
+  - id: D-0014
+    date: 2026-11-04
+    area: process
+    decision: The dashboard is a pinned GitHub issue regenerated by CI, not a hosted page
+    why: Renders on github.com and the mobile app, needs no hosting or login, and cannot drift from GitHub
+    options: ["A (Recommended, applied): pinned issue - risk: long pages scroll", "B: GitHub Pages site - risk: one more thing to host"]
+    decided_by: agent:ctm-product-lead
+    status: active
+    check: { kind: workflow, ref: .github/workflows/dashboard.yml }
+
+  - id: D-0015
+    date: 2026-11-04
+    area: release
+    decision: Merges use branch protection with required checks and auto-merge; GitHub's merge queue is not available for a personal-account repository
+    why: CTM lives under a personal account, not an organization
+    options: [Auto-merge (chosen), Move the repo to an organization for the merge queue]
+    decided_by: agent:ctm-release-engineer
+    status: active
+    review_only: Repository setting; ctm-drift-auditor checks it weekly
+
+  - id: D-0016
+    date: 2026-11-04
+    area: security
+    decision: The repository is public, so no real case data, screenshots of real data, or secrets are ever committed
+    why: Anything in git, including the ci-screenshots branch, is public
+    options: [Synthetic data only in git (chosen)]
+    decided_by: agent:ctm-security-reviewer
+    status: active
+    check: { kind: ci-job, ref: .github/workflows/quality.yml#opengrep }
+
+  - id: D-0020
+    date: 2026-11-03
+    area: workflow
+    decision: Moving a council session to another day creates a new dated session; held sessions are locked
+    why: Approved design (transactions-and-acceptance section 36, SES01)
+    options: [Follow the approved design (chosen), Edit the date in place before the session is held, Correct the date in place even after it was held]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/test_session_reschedule.py }
+
+  - id: D-0021
+    date: 2026-11-03
+    area: identity
+    decision: A new council member's Microsoft sign-in links automatically on first sign-in - only for someone an admin already added, only with a lacopts.org account, and only once
+    why: The database guard from migration 0050 blocked first sign-in for new members
+    options: [Link automatically on first sign-in (chosen), Admin types the Microsoft ID]
+    decided_by: owner
+    status: active
+    review_only: Not built yet (one of the 4 remaining PostgreSQL failures); the fix adds the enforcing test
+
+  - id: D-0022
+    date: 2026-11-03
+    area: design
+    decision: Remove CTM's own style sheet and inline styles, replacing them with Plenix parts, all at once with one preview at the end
+    why: No application using Plenix makes its own styles (DR-003)
+    options: [One screen at a time with previews, All at once with one preview at the end (chosen), Not now]
+    decided_by: owner
+    status: active
+    check: { kind: ci-job, ref: .github/workflows/quality.yml#fast-gates }
+
+  - id: D-0023
+    date: 2026-11-03
+    area: release
+    decision: CTM shows its version at /version.json with four facts only - name, version, Plenix version, build time
+    why: The dashboard shows which CTM version runs
+    options: [Build it (chosen), No]
+    decided_by: owner
+    status: active
+    review_only: Not built yet (task CTM-4); the route's test becomes the check
+
+  - id: D-0024
+    date: 2026-11-03
+    area: release
+    decision: Wait before moving CTM to Plenix 0.76 (pull request #32)
+    why: Owner chose Wait on the CTM 2.0 status page
+    options: [Merge it, Wait (chosen)]
+    decided_by: owner
+    status: superseded
+    superseded_by: D-0005
+    review_only: Superseded; #32 merged 2026-11-04 on the owner's instruction, then automatic upgrades took CTM to 0.86.0

@@ -1,6 +1,5 @@
-# CTM custom Semgrep rules. Run with:
-#   semgrep scan --config .semgrep/ctm.yml --config p/django --config p/python \
-#     --config p/javascript --config p/secrets --baseline-commit origin/main --error
+# CTM custom Opengrep rules (Semgrep rule format). Run with:
+#   opengrep scan --config .opengrep/ctm.yml --baseline-commit origin/main --error
 # Each rule encodes a CTM rule that previously cost rework (see review-points.md).
 rules:
   # ---- Plenix design-system rules (RP-CSS-01) ----
@@ -107,3 +106,12 @@ rules:
       include: ["ctm/wsgi.py", "ctm/celery.py", "manage.py", "deploy/**"]
       exclude: ["deploy/probe-isolated-worker.py", "deploy/prepare-isolated-test-db.py", "deploy/Dockerfile.test"]
     pattern-regex: 'settings_(postgres_)?test'
+
+  # ---- Public repository: no committed secrets (D-0016) ----
+  - id: ctm-no-committed-secret
+    message: Looks like a real secret or private key. The repository is public; use environment variables or protected files (D-0016).
+    severity: ERROR
+    languages: [generic]
+    paths:
+      exclude: ["**/*.example", "tests/**", ".opengrep/**"]
+    pattern-regex: '(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|\bgh[pousr]_[A-Za-z0-9]{36,}|\bgithub_pat_[A-Za-z0-9_]{60,}|\bsk-(ant-|proj-)?[A-Za-z0-9_-]{32,}|\bAKIA[0-9A-Z]{16}\b|\bsk_live_[A-Za-z0-9]{20,}|\bxox[abp]-[A-Za-z0-9-]{20,})'

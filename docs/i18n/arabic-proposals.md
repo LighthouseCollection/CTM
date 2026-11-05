@@ -1,0 +1,8 @@
+# Arabic proposals for owner review
+
+New Arabic UI words, added by `ctm-i18n-engineer` when they ship (decision
+D-0012). The owner reviews in batches; a correction becomes a decision and a
+glossary change. Never delete rows: mark them `approved` or `corrected`.
+
+| Date | Key | English | Proposed Arabic | Why | Issue / PR | Status |
+|---|---|---|---|---|---|---|

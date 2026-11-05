@@ -1,50 +1,54 @@
 ---
 name: ctm-owner-interview
-description: Interview the CTM owner once per screen to lock layout, action, wording and state decisions before building, and record each answer as a dated row in decisions/screens.md. Run in the main session (subagents cannot ask the user). Use when a screen spec lists owner questions, or when new owner feedback would change a locked decision.
+description: Settle an open CTM owner choice (screen layout, action, wording, state, workflow intent) without stopping the work - post a decision card on the GitHub issue, apply the recommended option at once, and record it in decisions.yaml and decisions/screens.md. Use when a spec or screen spec lists an owner question, or when new owner feedback would change a locked decision.
 ---
 
-# Owner screen interview
+# Owner decision cards
 
-Adapted from JacobLinCool/ux-discovery-interviewer-skill (MIT): pacing,
-Known/Inferred/Unknown labels and the "what changed / what stays the same"
-update. Purpose: stop the flip-flops (icons and layouts toggled many times
-because owner decisions were never recorded).
+Adapted from JacobLinCool/ux-discovery-interviewer-skill (MIT): Known /
+Inferred / Unknown labels and the "what changed / what stays the same" update,
+in the PDS 1.0 form: **agents never wait for the owner**.
 
-## Before asking
+## Before a card
 
-- Read the screen spec (`ctm-screen-shape` output) and the existing rows for
-  this screen in `docs/implementation/decisions/screens.md`.
-- Ask **only** what is not already decided, and only questions whose answer
-  changes the build. At most 5 questions per round, one screen at a time, at
-  most 2 rounds.
-- Ask only about choices Plenix can actually offer: which documented pattern or
-  template, primary and destructive actions, which columns/fields the actor
-  must see, icon choice from the Plenix icon set, button and label wording in
-  EN and AR, what empty/error states say, the order of steps in a flow.
-  **Never ask about colors, spacing, fonts or styling.**
-- Describe options in words by default. Show pictures (screenshots of real
-  Plenix components, never mockups with invented styles) only when the owner
-  asks for them. Arabic pictures only on request.
+- Read `decisions.yaml`, the rows for this screen in
+  `docs/implementation/decisions/screens.md`, `DESIGN.md` and the spec.
+- No card when the answer is already recorded, is in the codebase or the build
+  spec, or the change is cheap to reverse: apply the default and say so in the
+  issue comment.
+- Cards cover only choices Plenix can offer (template, primary and destructive
+  actions, visible columns/fields, icon from the Plenix set, EN/AR wording,
+  empty/error text, step order). **Never colors, spacing, fonts or styling.**
+- Up to 3 cards per issue at once.
 
-## During
+## The card (a comment on the issue, signed by the role)
 
-1. Restate the screen's task in 1-2 sentences.
-2. Ask the batch (use the AskUserQuestion tool; recommended option first).
-3. After each answer, summarize: **Known** (owner said), **Inferred** (your
-   reading - confirm it), **Unknown** (still open).
+```
+D-0123 · <area>: <one-line question>
+Context: one sentence of what we understood.
+Known: ... · Inferred: ... · Unknown: ...
+A (Recommended) — <choice> — risk: ...
+B — <choice> — risk: ...
+Applied: A. To switch, reply B. If switched, we redo: <cost>.
+```
 
-## Recording (required)
+Options in words. Screenshots of real Plenix components only when the owner
+asked to see options; Arabic pictures only on request.
 
-Append one row per decided element to `decisions/screens.md`:
-`| YYYY-MM-DD | screen | element | decision | owner interview YYYY-MM-DD | Locked |`
-Read the new rows back to the owner for confirmation. Unknown items stay as
-open questions in the slice brief with a default assumption.
+## Record (same commit as the change)
 
-## Later feedback on a locked decision
+1. `decisions.yaml` entry: id, date, area, decision, why, options, decided_by
+   (`agent:<role>` for an applied default, `owner` once the owner answers),
+   status, and the `check` that enforces it (or `review_only` with a reason).
+2. Screen decisions also get a row in `decisions/screens.md`:
+   `| YYYY-MM-DD | screen | element | decision | D-0123 | Locked |`.
+3. Label the issue `decision`.
 
-Classify it: clarification, new need, pain point, workflow change or edge case.
-Answer with **What changed / What stays the same**, show the locked row it
-would replace, and ask for an explicit decision. If confirmed, mark the old row
-`Superseded YYYY-MM-DD` and add the new row - never edit or delete the old one.
-Without explicit confirmation nothing changes, and the UI finish gate treats an
-unrecorded reversal as an automatic HOLD.
+## When the owner replies
+
+- Owner picks another option: new decision entry, old one `superseded`
+  (linked), redo the listed work. Never edit or delete old rows.
+- Later feedback on a locked decision: classify it (clarification, new need,
+  pain point, workflow change, edge case), answer with **What changed / What
+  stays the same**, and apply it as a new card. An unrecorded reversal is an
+  automatic G5b failure.

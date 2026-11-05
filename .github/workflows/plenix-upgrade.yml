@@ -54,7 +54,8 @@ jobs:
       GH_TOKEN: ${{ secrets.CTM_BOT_TOKEN || secrets.GITHUB_TOKEN }}
       REQUESTED: ${{ github.event.inputs.version || github.event.client_payload.version || 'latest' }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      # Keeps credentials: this job pushes the upgrade and screenshot branches.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # zizmor: ignore[artipacked] (v4)
         with:
           ref: main
           fetch-depth: 0

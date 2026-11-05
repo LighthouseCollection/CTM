@@ -1,161 +1,112 @@
-<!-- GENERATED from CLAUDE.md by scripts/sync_agent_rules.cjs. Do not edit; edit CLAUDE.md and re-run. -->
+# CTM — instructions for Claude Code and Codex
 
-# CTM — instructions for coding agents (Claude, Codex, others)
-
-Read `CLAUDE-START-HERE.md` once per new stream. This file is the short operating
-manual: the rules every session and subagent follows, and the team SOP.
+Read `CLAUDE-START-HERE.md` once per new stream. This file is the operating
+manual every session and agent follows. The full delivery system (team, SDLC,
+intake, decisions, enforcement) is `docs/implementation/sdlc.md`. The design
+contract is `DESIGN.md`. Lessons from past mistakes: `docs/lessons.md`.
 
 ## Non-negotiable rules
 
 - `docs/architecture/build-spec/` and `tribunal/reference/question-bank.json` are
   protected (a hook blocks edits). Conflicts go to GitHub, never into the spec.
-- Precedence: later confirmed decisions (`docs/architecture/CTM-confirmed-decisions.md`,
-  build-spec precedence corrections) override prototype behavior.
+- Precedence: owner clarifications and `decisions.yaml` (later dates win) >
+  `docs/architecture/CTM-confirmed-decisions.md` > build-spec > prototype.
 - Permissions are server-enforced, deny by default, and also cover derivatives,
   search snippets, counts, links and downloads (`build-spec/permissions.md`).
 - Applicants never see another applicant's data, even in the same case.
   Professional Assessments never leak through documents, reports, search or AI.
-- UI: React 18 + Plenix CDN at the version pinned in `ctm/settings.py`. Documented
-  components and `--plx-sys-*`/`--plx-comp-*` tokens only. No raw colors, numeric
-  font sizes, inline styles, `!important`, copied CDN files or other UI kits.
-  The isolated RTL/Arabic bridge is the only styling exception.
-- English and Arabic for every label, help text, validation, notice and prompt; RTL works.
+- UI: React 18 + Plenix CDN at the version pinned in `ctm/settings.py`
+  (`PLENIX_BASE`, the only source of truth; older docs say 0.58.0). Documented
+  components and `--plx-sys-*`/`--plx-comp-*` tokens only. No raw colors,
+  numeric font sizes, inline styles, `!important`, copied CDN files or other UI
+  kits. The isolated RTL/Arabic bridge is the only styling exception.
+- English and Arabic for every label, help text, validation, notice and prompt;
+  RTL works. Arabic follows `docs/i18n/arabic.md`; institutional text is never
+  improvised.
 - Never fake success: no mock payment, email, scan, OCR or transcription result.
   Honest "unavailable" placeholders are fine for OCR/audio.
 - No passwords. Council = Microsoft Entra preauthorized tenant/object id.
-- **Autonomy (owner decision 2026-11-04):** all permissions are bypassed. Every
-  agent may push, merge (`gh pr merge`), run `git clean -fdx`, deploy, run
-  migrations against the real database and work with real data. Do it the
-  automated way: checks green before merge; automatic backup before migrations
-  and deploys; health check and automatic rollback after deploy; never copy real
-  case data into git or print secrets.
 - Linux PostgreSQL CI is authoritative. Windows Python crashes are not app failures.
-- Ownership: only the database owner (`ctm-database-engineer` / VM-FRM stream)
-  writes migrations, RLS and grants; services belong to the backend owner. UI
-  work never edits `tribunal/migrations/`, `tribunal/db/`, `services/` or `policy.py`. Demo/seed data goes in
-  the gated `seed_demo` command, never in a migration.
-- Older docs (including `CLAUDE-START-HERE.md`) still say Plenix 0.58.0; the pin
-  in `ctm/settings.py` (`PLENIX_BASE`) is the only source of truth.
-- Owner clarifications (`docs/implementation/reviews/owner-clarifications-*.md`)
-  override earlier text. Never revive removed workflows (replacement decrees,
-  passwords, fixed 17:00 send).
-- Integrate small and often: a slice reaches a PR the same day. Long-lived
-  branches and big merges previously lost work (see `b89e9d0`).
-- No completion claim without command output from this session. An agent's
-  report is a claim until `git log`/diff and the checks confirm it.
-- Bugs: root cause before fixes (`ctm-debug` skill); stop after 3 failed fixes.
-  New behavior is test-first (`ctm-tdd` skill).
+- Ownership: only `ctm-database-engineer` writes migrations, RLS and grants;
+  services belong to the backend owner. UI work never edits
+  `tribunal/migrations/`, `tribunal/db/`, `services/` or `policy.py`. Demo/seed
+  data goes in the gated `seed_demo` command, never in a migration.
+- Never revive removed workflows (replacement decrees, passwords, fixed 17:00 send).
+- The repository is **public**: never commit or screenshot real case data or secrets.
+
+## Rules for every role
+
+- **Autonomy (owner decision 2026-11-04, D-0001):** all permissions are bypassed.
+  Every agent may push, merge, run `git clean -fdx` (own worktree only), deploy,
+  run migrations against the real database and work with real data — the
+  automated way: required checks green before merge (`gh pr merge --auto`),
+  backup before migrations and deploys, health check and automatic rollback
+  after deploy; never copy real case data into git or print secrets.
+- **GitHub is the only channel.** Work items are issues; hand-offs are issue
+  assignments (`agent:` labels), role mentions and PR reviews. Sign every
+  GitHub comment `— <role>` until the GitHub App identities exist.
+- **Never stop to wait for the owner.** If intent can be read two ways, apply
+  the recommended option and post a decision card (`ctm-owner-interview`
+  skill); record it in `decisions.yaml` with the check that enforces it. Do
+  not ask when the answer is in `decisions.yaml`, the code, `DESIGN.md` or the
+  build spec. Church law, fees, deadlines and institutional wording are never
+  invented: park that item on a `decision` issue and continue with the rest.
+- **Artifacts are files** in `docs/implementation/slices/<id>/`, not chat.
+- **Evidence** is reported as Ran / Skipped / Planned / Manual, each with a path.
+  No completion claim without command output from this session; another
+  agent's report is a claim until `git log`, the diff and the checks confirm it.
+- **Pictures** only when the owner asks. Every screenshot a check already took
+  is shared: `ci-screenshots` branch, the PR, the linked issue, the dashboard.
+- Integrate small and often: a change reaches a PR the same day.
+- Bugs: root cause before fixes (`ctm-debug`); stop after 3 failed fixes. New
+  behavior is test-first (`ctm-tdd`).
+- At most 4 agent sessions run at once.
+
+## The team (details: `docs/implementation/sdlc.md` section 2)
+
+| Always-on | Gate | On demand | Gate |
+|---|---|---|---|
+| `ctm-product-lead` (intake, spec, decisions) | G1 | `ctm-code-reviewer` | G5a |
+| `ctm-design-director` (`DESIGN.md`, screens) | G2 | `ctm-design-critic` | G5b |
+| `ctm-solution-architect` (contracts, ADRs) | G3 | `ctm-a11y-rtl-auditor` | G5c |
+| `ctm-delivery-lead` (plan, ledger, merge order) | G4 | `ctm-qa-engineer` | G5d |
+| `ctm-database-engineer`, `ctm-backend-engineer`, `ctm-frontend-engineer` | red -> green | `ctm-security-reviewer` | G5e |
+| `ctm-i18n-engineer` (EN/AR) | G6 | `ctm-debugger` | failing test first |
+| `ctm-technical-writer` (messages, docs) | G7 | `ctm-drift-auditor` | weekly audit |
+| `ctm-release-engineer` (CI, merge, deploy, Plenix upgrade) | G8 | `ctm-media-pipeline-engineer` | parked |
+
+Run one slice end to end with **`/ctm-slice <request>`**. Owner reports come in
+as GitHub issues (templates: Bug, Feature, UI/UX, Question) and go to
+`ctm-product-lead`. Status lives on GitHub only: the pinned "CTM dashboard"
+and "Daily summary" issues are generated by `.github/workflows/dashboard.yml`.
+
+Plenix CDN updates reach CTM automatically (`.github/workflows/plenix-upgrade.yml`:
+every 30 minutes, bump every pin, verify every CDN file, run the frontend,
+PostgreSQL shell and `browser_cdn_smoke.py` checks, auto-merge; a failure opens
+one `Plenix <v> breaks CTM` bug). Hold CTM on a version with
+`"pins": {"ctm": "<v>"}` in the CDN's `cdn/latest.json`.
 
 ## Validation commands
 
 ```sh
-node scripts/check_frontend_contract.cjs          # CDN pin + styling gate (seconds)
-node scripts/check_migration_diff.cjs             # migration lint vs origin/main (seconds)
-node scripts/check_ownership.cjs --slice <id>      # changed files vs owners block + DB-owned paths
-node scripts/check_slice_trace.cjs <id>            # acceptance IDs: brief -> design -> evidence
-node scripts/sync_agent_rules.cjs                  # regenerate AGENTS.md after editing CLAUDE.md
-semgrep scan --config .semgrep/ctm.yml --baseline-commit origin/main --error   # CTM rules, new findings
-node --test tests/frontend/*.test.cjs              # frontend contracts
-uv run pytest -q                                   # fast SQLite pass
+node scripts/check_frontend_contract.cjs --base origin/main   # CDN pin + styling (changed files)
+node scripts/check_migration_diff.cjs                         # migration lint vs origin/main
+node scripts/check_ownership.cjs --slice <id>                  # changed files vs owners block
+node scripts/check_slice_trace.cjs <id>                        # acceptance IDs: brief -> design -> evidence
+node scripts/check_i18n.cjs --base origin/main                 # EN/AR keys, new problems only
+uv run --no-project --with pyyaml==6.0.3 python scripts/check_decisions.py  # every decision has a check
+opengrep scan --config .opengrep/ctm.yml --baseline-commit origin/main --error
+node --test tests/frontend/*.test.cjs                          # frontend contracts
+uv run pytest --ds=ctm.settings_postgres_test -q               # needs isolated CTM_TEST_DATABASE_URL
 uv run python manage.py makemigrations --check --dry-run --settings=ctm.settings_test
-uv run pytest --ds=ctm.settings_postgres_test -q   # needs isolated CTM_TEST_DATABASE_URL
 uv run python docs/architecture/build-spec/validate_spec.py
-uv run --group browser python scripts/browser_integration.py
+uv run --group browser python scripts/browser_cdn_smoke.py     # Plenix CDN + sign-in, EN/AR screenshots
 ```
 
-## SDLC — the lifecycle every change follows
+`CLAUDE.md` and `AGENTS.md` are generated from `.rulesync/` (`npx rulesync@43.6.0
+generate`); edit the source there. Enable local checks once per checkout with
+`npx lefthook@2.2.2 install`.
 
-Full definition: `docs/implementation/sdlc.md`. Phases and their automated gates:
-0 Intake (`ctm-intake`) → 1 Requirements (G1 Ready) → 2 Design (G2) →
-3 Build (G3 pre-commit hook `.githooks/pre-commit`) → 4 Verify (G4 Done: CI —
-fast gates, Semgrep + reviewdog, SonarQube quality gate, tests, build, PR-Agent
-and CTM reviewers; the author never reviews its own change) → 5 Stage (merge to
-`main`, auto-deploy to staging) → 6 Release (version tag, production deploy with
-backup and automatic rollback) → 7 Operate (monitoring, drift audits, dependency
-updates; incidents return to phase 0). Environments: local → CI → staging
-(synthetic data) → production (real data). Enable the hook once per checkout:
-`git config core.hooksPath .githooks`.
-
-## Owner intake — how you give the team work
-
-The team runs as a Claude Code **agent team** (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
-in `.claude/settings.json`): teammates share a task list and message each other
-directly. The main session starts the standing team (`ctm-intake` plus the
-specialists a request needs). The owner can talk to the lead, to `ctm-intake`,
-or to any teammate directly.
-
-| Owner says | Flow |
-| --- | --- |
-| A **bug** | `ctm-intake` logs a GitHub issue + backlog row (severity, repro, area) → assigns `ctm-debugger` or the owning engineer → fix, tests, merge, deploy → issue closed |
-| A **new feature** | `ctm-intake` logs it → `ctm-spec-analyst` and `ctm-solution-architect` break it into tasks → builders claim tasks → checks → merge → deploy |
-| A **UI improvement** | `ctm-intake` logs it → `ctm-ui-finish-gate` audits the screen → `ctm-frontend-engineer` fixes it → UI gate re-checks → merge → deploy |
-
-Screenshots that automated checks take are never extra work: each one is pushed
-to the `ci-screenshots` branch, embedded in the PR and linked issue, and sent to
-the owner. Nobody takes screenshots only for the owner.
-
-Plenix CDN updates reach CTM automatically: `.github/workflows/plenix-upgrade.yml`
-checks `cdn/latest.json` every 30 minutes (or on a `plenix-release` dispatch),
-moves every pin with `scripts/bump_plenix.cjs`, verifies every referenced CDN
-file exists, runs the frontend, shell and browser-smoke checks against the real
-CDN, then merges. A failing upgrade opens one `Plenix <v> breaks CTM` bug with
-logs and screenshots instead. Hold CTM on a version with `"pins": {"ctm": "<v>"}`
-in `cdn/latest.json`.
-
-Every item is tracked in GitHub issues and `docs/implementation/backlog.md`
-(logged → assigned → in progress → in review → merged → deployed → closed).
-
-## Team SOP — `Code = SOP(Team)`
-
-The main session is the **team lead**: it triages, writes complete dispatches,
-verifies reports and records rulings. Run the whole flow with **`/ctm-slice <request>`**
-(`.claude/skills/ctm-slice/SKILL.md`). Subagents cannot see the conversation;
-every dispatch carries the paths, acceptance IDs, owned files, review points
-and commands they need.
-
-| Type / size | Route |
-| --- | --- |
-| BUG | debugger reproduces as a failing test → owning engineer → qa + code review |
-| XS | engineer → fast gates → code review |
-| S | engineer → qa + code review + path gates |
-| M | full SOP |
-| L | split into M slices, backend contract first |
-
-Full SOP (artifacts in `docs/implementation/slices/<id>/`, events in `ledger.md`):
-
-1. **ctm-spec-analyst** → `brief.md` (type, permissions, acceptance IDs, screen
-   spec, question table with default assumptions).
-2. **ctm-solution-architect** → `design.md` + `contract/*.json` (owners block,
-   failure paths, test-first tasks, review focus).
-3. Builder check (fresh reviewer reads brief + design as the builder).
-4. Build: **ctm-database-engineer**, **ctm-backend-engineer**,
-   **ctm-frontend-engineer** — parallel only in separate worktrees with
-   non-overlapping owners. Reports use DONE / DONE_WITH_CONCERNS / BLOCKED /
-   NEEDS_CONTEXT and are verified against `git log` and `check_ownership`.
-5. **ctm-integrator** sync mode: rebase on `origin/main` before review.
-6. Gates (read-only, parallel): **ctm-qa-engineer** + **ctm-code-reviewer**
-   always; **ctm-security-reviewer**, **ctm-i18n-rtl-reviewer**,
-   **ctm-ui-finish-gate** chosen by changed paths. Fix rounds re-check only
-   flagged items: 2 rounds for reviews, 3 for QA, then the lead escalates.
-7. **ctm-integrator**: push, PR with evidence, merge when CI is green and QA is
-   READY, then deploy (backup -> build -> migrate -> restart -> health check ->
-   rollback on failure).
-8. **ctm-drift-auditor** slice mode: status, issue comment draft, review points,
-   screen decisions, spec gaps.
-
-On demand: **ctm-debugger** (root cause), **ctm-platform-engineer** (Compose,
-workers, CI, browser harness, server and deploys), **ctm-drift-auditor** audit mode,
-**ctm-media-pipeline-engineer** (audio/OCR, only when they stop being placeholders).
-
-UI work: screens start from the Plenix page template in
-`docs/implementation/plenix-page-templates.md`; each screen is shaped with
-`ctm-screen-shape`, and open owner choices are settled with
-`ctm-owner-interview` and locked in `decisions/screens.md`. Wording comes from
-`glossary.md`. Missing Plenix capabilities go to `plenix-requests.md`, never
-into local CSS. Payments work follows the `ctm-payments` skill. New personal,
-medical or financial data needs a row in `privacy-data-map.md`.
-
-Shared records (all in `docs/implementation/`): `review-points.md`,
+Shared records (`docs/implementation/`): `review-points.md`,
 `decisions/screens.md`, `spec-gaps.md`, `drift-registry.md`, `glossary.md`,
 `privacy-data-map.md`, `plenix-page-templates.md`, `plenix-requests.md`.
-Agent definitions: `.claude/agents/`. Rationale: `docs/implementation/agent-team.md`.
