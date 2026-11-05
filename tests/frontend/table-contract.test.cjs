@@ -26,7 +26,9 @@ test("workspaces retain native keyboard row opening and selection", () => {
   assert.equal(opened,"two");
   assert.deepEqual(Array.from(result.props.selected),["one"]);
   assert.equal(result.props.density,"compact");
-  assert.equal(result.props.typeIcons,false);
+  // 0.86.0 defaults (#97 slice 1): type icons on and the open row marked.
+  assert.equal(result.props.typeIcons,true);
+  assert.equal(result.props.openKey,"one");
 });
 test("rich custom cells retain sizing and are not wrapped", () => {
   const render=()=>({type:"Button"});
@@ -79,4 +81,134 @@ test("case numbers are id cells so Arabic pages read them 01-20261020 (Plenix 0.
   const grid=mount({label:"Cases",rows:[{id:"one",case_number:"20261020-01",code:"Q-1"}],columns:[{field:"case_number",kind:"name"},{field:"code"}]});
   assert.deepEqual([...grid.props.columns[0].kind],["data","id"]); // plain copy: the array comes from the vm sandbox realm
   assert.equal(grid.props.columns[1].kind,"data");
+});
+
+// #97 slice 1: the collection foundation on the 0.86.0 DataGrid defaults and page templates.
+const { harness, find, nameOf } = require("./harness.cjs");
+function shell(extra = {}) {
+  const h = harness();
+  const Plenix = new Proxy({}, { get: (_t, key) => { const f = function () {}; f[Symbol.for("ctm.test.plenix")] = true; f.displayName = String(key); return f; } });
+  const window = { React: h.React, Plenix, ...extra };
+  vm.runInNewContext(fs.readFileSync("static/ctm/shell-layout.js", "utf8"), { window, document: { documentElement: { lang: "en" } } });
+  return { h, S: window.CTMShell };
+}
+test("tables use the 0.86.0 narrow row cards by default and keep the fixed table as an opt-in", () => {
+  const rows=[{id:"one",name:"A"}];
+  assert.equal(mount({label:"Cases",rows,columns:[{field:"name"}]}).props.narrow,"auto");
+  assert.equal(mount({label:"Cases",rows,columns:[{field:"name"}],narrow:"table"}).props.narrow,"table");
+  assert.equal(mount({label:"Cases",rows,columns:[{field:"name"}],typeIcons:false}).props.typeIcons,false);
+});
+test("grids that still have a button column keep the fixed table so their buttons are not cut off", () => {
+  const rows=[{id:"one",name:"A"}], button=()=>({type:"Button"});
+  for (const field of ["open_action","actions","session_actions","row_action"])
+    assert.equal(mount({label:"Cases",rows,columns:[{field:"name"},{field,render:button}]}).props.narrow,"table",field);
+  assert.equal(mount({label:"Cases",rows,columns:[{field:"name"},{field:"x",kind:"actions",render:button}]}).props.narrow,"table");
+  assert.equal(mount({label:"Cases",rows,columns:[{field:"name"},{field:"open_action",render:button}],narrow:"auto"}).props.narrow,"auto");
+  assert.equal(mount({label:"Cases",rows,columns:[{field:"name"},{field:"transaction"}]}).props.narrow,"auto");
+});
+test("row menus are optional and existing button columns keep working beside them", () => {
+  const rows=[{id:"one",name:"A"}], cols=[{field:"name"},{field:"open_action",render:()=>({type:"Button"})}];
+  const plain=mount({label:"Cases",rows,columns:cols});
+  assert.equal(plain.props.rowMenu,undefined);
+  assert.equal(plain.props.rowMenuButton,false);
+  let opened;
+  const menu=[{label:"Open",icon:"open",onSelect:r=>opened=r.id}];
+  const grid=mount({label:"Cases",rows,columns:cols,rowMenu:menu});
+  assert.equal(grid.props.rowMenu,menu);
+  assert.equal(grid.props.rowMenuButton,true);
+  grid.props.rowMenu[0].onSelect(grid.props.data[0]);
+  assert.equal(opened,"one");
+  assert.equal(grid.props.columns[1].render({}).type,"Button");
+});
+test("row card slots, card count and extra documented grid props pass through", () => {
+  const cardCount={one:"{n} case",other:"{n} cases"};
+  const grid=mount({label:"Cases",rows:[],columns:[{field:"name"}],template:{title:"name"},layout:"B",keyColumns:["name"],cardCount,grid:{mode:"pages",pageSize:25}});
+  assert.equal(grid.props.template.title,"name");
+  assert.equal(grid.props.layout,"B");
+  assert.deepEqual([...grid.props.keyColumns],["name"]);
+  assert.equal(grid.props.strings.cardCount,cardCount);
+  assert.equal(grid.props.mode,"pages");
+  assert.equal(grid.props.pageSize,25);
+  assert.equal("template" in mount({label:"Cases",rows:[],columns:[]}).props,false);
+});
+test("loading tables hold their place with Skeleton rows", () => {
+  const { h, S } = shell();
+  const tree = h.render(S.Table, { label: "Cases", rows: [], columns: [], loading: true });
+  assert.equal(find(tree, n => nameOf(n.type) === "DataGrid").length, 0);
+  assert.ok(find(tree, n => nameOf(n.type) === "Skeleton").length >= 3);
+  assert.equal(find(tree, n => n.props && n.props["aria-busy"] === "true")[0].props["aria-label"], "Cases");
+});
+test("workspaces draw the SplitWorkspace body: toolbar, SplitView of the grid and a reading pane", () => {
+  const { h, S } = shell();
+  const rows=[{id:"one",title:"Case one"}];
+  const empty = h.render(S.Workspace, { label: "Cases", rows, columns: [{field:"title"}], children: r => "detail " + r.id, actions: "act", commandBar: { actions: [{ id: "new", label: "New" }] } });
+  const bar = find(empty, n => nameOf(n.type) === "CommandBar")[0];
+  assert.equal(bar.props.label, "Cases");
+  assert.equal(bar.props.actions[0].id, "new");
+  const split = find(empty, n => nameOf(n.type) === "SplitView")[0];
+  assert.equal(split.props.first.props.rowMenu, undefined);
+  const pane = split.props.second;
+  assert.equal(nameOf(pane.type), "ReadingPane");
+  assert.equal(pane.props.actions, null, "no actions while nothing is open");
+  assert.equal(nameOf(pane.props.empty.type), "EmptyState");
+  const chosen = h.render(S.Workspace, { label: "Cases", rows, selected: "one", columns: [{field:"title"}], children: r => "detail " + r.id, actions: "act" });
+  const open = find(chosen, n => nameOf(n.type) === "ReadingPane")[0];
+  assert.equal(open.props.label, "Case one");
+  assert.equal(open.props.actions, "act");
+  assert.deepEqual(open.children, ["detail one"]);
+});
+test("a plain toolbar node still sits above the workspace", () => {
+  const { h, S } = shell();
+  const tree = h.render(S.Workspace, { label: "Notes", rows: [], columns: [], toolbar: { type: "Toolbar", props: {}, children: [] } });
+  assert.equal(find(tree, n => n.type === "Toolbar").length, 1);
+  assert.equal(find(tree, n => nameOf(n.type) === "CommandBar").length, 0);
+});
+test("listings draw the full-room ListingPage body and open the domain record", () => {
+  const { h, S } = shell();
+  let opened;
+  const rows=[{id:"one",name:"A"}];
+  const tree = h.render(S.Listing, { label: "Cases", rows, columns: [{field:"name"}], onOpen: r => opened = r, rowMenu: [{label:"Open"}] });
+  const grid = find(tree, n => nameOf(n.type) === "DataGrid")[0];
+  assert.equal(grid.props.mode, "fill");
+  assert.equal(grid.props.rowMenuButton, true);
+  grid.props.onRowClick({ id: "one" });
+  assert.equal(opened, rows[0]);
+});
+test("search puts a CommandBarSearch on one collection state with the grid", () => {
+  const view = { searchProps: { value: "", onChange() {}, onClear() {} }, filterProps: { fields: [] }, tableProps: { filter: () => true, onViewChange() {} } };
+  let fields, options;
+  const { h, S } = shell();
+  // The hook is the CDN's; the test records what CTMShell asks of it.
+  const Plenix = new Proxy({}, { get: (_t, key) => { if (key === "useCollectionView") return (f, o) => { fields = f; options = o; return view; };
+    const f = function () {}; f[Symbol.for("ctm.test.plenix")] = true; f.displayName = String(key); return f; } });
+  const window = { React: h.React, Plenix };
+  vm.runInNewContext(fs.readFileSync("static/ctm/shell-layout.js", "utf8"), { window, document: { documentElement: { lang: "ar" } } });
+  const text = r => r.name;
+  const tree = h.render(window.CTMShell.Listing, { label: "القضايا", rows: [{id:"one",name:"A"}], columns: [{title:"Name",field:"name"}], search: { text, placeholder: "ابحث", filters: true } });
+  assert.equal(options.text, text);
+  assert.equal(fields[0].label, "Name");
+  const search = find(tree, n => nameOf(n.type) === "CommandBarSearch")[0];
+  assert.equal(search.props.placeholder, "ابحث");
+  assert.equal(find(tree, n => nameOf(n.type) === "FilterPanel").length, 1);
+  const grid = find(tree, n => nameOf(n.type) === "DataGrid")[0];
+  assert.equal(grid.props.filter, view.tableProps.filter);
+  assert.equal(grid.props.onViewChange, view.tableProps.onViewChange);
+});
+test("searched grids keep the same data array and row copies while the records are unchanged (PLX-013)", () => {
+  // The grid's data is also the hook's options.data; read it there (the harness copies element props).
+  let data;
+  const view = { searchProps: {}, filterProps: {}, tableProps: { filter: () => true } };
+  const h = harness();
+  const Plenix = new Proxy({}, { get: (_t, key) => { if (key === "useCollectionView") return (_f, o) => { data = o.data; return view; };
+    const f = function () {}; f[Symbol.for("ctm.test.plenix")] = true; f.displayName = String(key); return f; } });
+  const window = { React: h.React, Plenix };
+  vm.runInNewContext(fs.readFileSync("static/ctm/shell-layout.js", "utf8"), { window, document: { documentElement: { lang: "en" } } });
+  const rows = [{ id: "one", applicant: "Emma", applicant_gender: "F" }];
+  const draw = () => { h.render(window.CTMShell.Listing, { label: "Cases", rows: rows.slice(), columns: [{ field: "applicant", type: "person" }], search: { text: r => r.applicant } }); return data; };
+  const first = draw(), second = draw();
+  assert.equal(second, first);
+  rows[0] = { ...rows[0], applicant: "Emma B" };
+  const third = draw();
+  assert.notEqual(third, first);
+  assert.equal(third[0].__ctm_display_0.name, "Emma B");
 });
