@@ -79,7 +79,7 @@ merge, migrations, release and deploy. Owner QA is a follow-up, never a block.
 | Plan broken beyond a reasonable guess | Re-plan, log a ruling, continue |
 | `git clean -fdx` | Only inside the agent's own worktree |
 | Database migration | Automatic backup, reversible migration, automatic rollback |
-| Merge | `gh pr merge --auto` once required checks pass (bot PRs start `quality.yml` themselves) |
+| Merge | `gh pr merge --auto` once required checks pass (`quality.yml` jobs + `postgres`; bot PRs dispatch them themselves) |
 | Deploy | Health check after deploy; automatic rollback on failure |
 | Church law, fees, deadlines, institutional wording missing | Never invented: park that item with a `decision` issue; the rest continues |
 

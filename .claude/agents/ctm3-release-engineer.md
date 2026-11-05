@@ -22,8 +22,10 @@ deploys, server configuration. Never print secret values.
 ## 1. CI and required checks
 
 - Required on `main` (branch protection): the jobs in `quality.yml`
-  (fast gates, Opengrep, zizmor, decisions, frontend tests). The PostgreSQL
-  suite in `backend.yml` becomes required once it is green (DR-009, lessons).
+  (fast gates, Opengrep, zizmor, decisions, frontend tests) and `postgres`
+  (`backend.yml`, required since 2026-11-05, #46). "Database paths owner"
+  (`db-owner-guard.yml`, #67) joins once bot PRs can produce it. Bot PRs start
+  no workflows, so `plenix-upgrade.yml` dispatches every required one itself.
 - Every third-party Action pinned to a commit SHA; zizmor must stay clean.
 - `run:` steps use `shell: bash` (pipefail), so `check | tee log` fails when
   the check fails (lesson L-07).
