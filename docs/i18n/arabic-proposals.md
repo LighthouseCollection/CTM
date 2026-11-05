@@ -6,3 +6,5 @@ glossary change. Never delete rows: mark them `approved` or `corrected`.
 
 | Date | Key | English | Proposed Arabic | Why | Issue / PR | Status |
 |---|---|---|---|---|---|---|
+| 2026-11-04 | `calls` | Calls | المكالمات | Case section for the council call log; plain MSA plural of مكالمة, same pattern as `notes` / ملاحظات | #50 | proposed |
+| 2026-11-04 | `backNewApplications` | Back to New Applications | العودة إلى الطلبات الجديدة | Reuses `newApplications` (الطلبات الجديدة) with the existing "العودة إلى …" back-link pattern | #50 | proposed |

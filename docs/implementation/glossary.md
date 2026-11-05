@@ -26,6 +26,7 @@ label, not yet confirmed against the contract.
 | Parties (case overview) | Parties | — | Locked nav | Code shows "Spouses" / الزوجان (DR-007) |
 | Petition | Petition | الطلب | Locked nav; `petition` | Accepted |
 | Evidence | Evidence | الأدلة | Locked nav | Accepted |
+| Calls (case) | Calls | المكالمات | `calls` | Proposed (D-0012, #50) |
 | Hearings | Hearings | مناقشات القضية | Locked nav; `hearings` | Arabic reads "case discussions" - confirm |
 | Decision | Decision | القرار | Locked nav | Accepted |
 | Decree | Decree | الشهادة | Locked nav; `decree` | Arabic reads "certificate" - confirm against decree wording |
