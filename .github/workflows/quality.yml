@@ -39,6 +39,8 @@ jobs:
         run: node scripts/check_ownership.cjs --base "$BASE"
       - name: English and Arabic keys (new problems)
         run: node scripts/check_i18n.cjs --base "$BASE"
+      - name: Build-spec sources unchanged (validate_spec.py, stdlib only)
+        run: python3 docs/architecture/build-spec/validate_spec.py > /dev/null
       - name: Claude and Codex instructions in sync (Rulesync)
         run: |
           npx --yes rulesync@43.6.0 generate

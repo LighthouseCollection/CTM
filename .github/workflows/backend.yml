@@ -1,5 +1,5 @@
 name: CTM backend validation
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]   # dispatched by plenix-upgrade.yml (bot PRs start no workflows)
 permissions:
   contents: read
 jobs:

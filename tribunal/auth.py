@@ -3,10 +3,65 @@ from django.conf import settings
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from .models import Account, Person
+import base64
 import json
+import logging
+import time
 import uuid
 from contextlib import contextmanager
+from allauth.socialaccount.providers.microsoft.views import MicrosoftGraphOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView
 from tribunal.db.context import database_settings
+
+logger = logging.getLogger(__name__)
+COUNCIL_SIGN_IN_DENIED = "Council Microsoft identity must match an active enrolled council email."
+GENERIC_TENANTS = {"common", "organizations", "consumers"}
+
+
+def verified_microsoft_tenant(token_response, client_id, subject):
+    """Return the configured tenant when the id_token proves the account is in it.
+
+    The id_token comes straight from the tenant's token endpoint over TLS
+    (OIDC Core 3.1.3.7 step 6), so its claims are read without a signature
+    check. Every mismatch - other tenant, other issuer, guest from another
+    tenant, other application, other object, expired, missing - is refused.
+    """
+    tenant = (settings.MICROSOFT_TENANT_ID or "").strip().lower()
+    try:
+        payload = token_response["id_token"].split(".")[1]
+        claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+        tid = str(claims["tid"]).lower()
+        issuer = f"https://login.microsoftonline.com/{tid}/v2.0"
+        valid = (
+            tenant not in GENERIC_TENANTS | {""}
+            and tid == tenant
+            and claims.get("iss") == issuer
+            and claims.get("idp", issuer) == issuer
+            and claims.get("aud") == client_id
+            and str(claims.get("oid", "")) == str(subject)
+            and int(claims["exp"]) > time.time()
+        )
+    except (KeyError, TypeError, IndexError, ValueError, AttributeError):
+        valid = False
+    if not valid:
+        logger.warning("Microsoft sign-in refused: token is not from the council tenant")
+        raise PermissionDenied(COUNCIL_SIGN_IN_DENIED)
+    return tenant
+
+
+class CouncilMicrosoftAdapter(MicrosoftGraphOAuth2Adapter):
+    """Microsoft Graph sign-in that also proves the account's tenant (#64)."""
+
+    def complete_login(self, request, app, token, **kwargs):
+        login = super().complete_login(request, app, token, **kwargs)
+        # Kept on the in-memory login only; never stored.
+        login.ctm_verified_tenant = verified_microsoft_tenant(
+            kwargs.get("response"), app.client_id, login.account.uid
+        )
+        return login
+
+
+microsoft_callback = OAuth2CallbackView.adapter_view(CouncilMicrosoftAdapter)
 
 
 @contextmanager
@@ -31,11 +86,17 @@ def bind_first_microsoft_subject(user, subject):
     provider settings, active administrator-enrolled council account, empty
     subject, verified @lacopts.org email, unused subject) before binding.
     """
-    from django.db import connection
+    from django.db import DatabaseError, connection, transaction
 
     if connection.vendor == "postgresql":
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT public.ctm_bind_microsoft_subject(%s)", [str(user.pk)])
+        try:
+            # Savepoint: a refusal must not leave the request transaction aborted.
+            with transaction.atomic(), connection.cursor() as cursor:
+                cursor.execute("SELECT public.ctm_bind_microsoft_subject(%s)", [str(user.pk)])
+        except DatabaseError:
+            # #65: one uniform answer; the function's reason stays out of logs and pages.
+            logger.warning("Microsoft first binding refused")
+            raise PermissionDenied(COUNCIL_SIGN_IN_DENIED) from None
         user.refresh_from_db(fields=["microsoft_subject"])
         return
     user.microsoft_subject = subject
@@ -79,6 +140,9 @@ class AccountAdapter(DefaultSocialAccountAdapter):
                 raise PermissionDenied(
                     "Configure the specific council Microsoft tenant before enabling login."
                 )
+            # #64: only a login whose id_token proved the configured tenant.
+            if getattr(sociallogin, "ctm_verified_tenant", None) != tenant.strip().lower():
+                raise PermissionDenied(COUNCIL_SIGN_IN_DENIED)
             verified = [
                 email.email.lower()
                 for email in sociallogin.email_addresses
@@ -115,9 +179,7 @@ class AccountAdapter(DefaultSocialAccountAdapter):
                 or not user.microsoft_subject
                 or user.microsoft_subject != sociallogin.account.uid
             ):
-                raise PermissionDenied(
-                    "Council Microsoft identity must match an active enrolled council email."
-                )
+                raise PermissionDenied(COUNCIL_SIGN_IN_DENIED)
             if not sociallogin.is_existing:
                 sociallogin.connect(request, user)
             if not user.email_verified:

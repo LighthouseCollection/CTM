@@ -1,0 +1,42 @@
+name: CTM database paths owner
+# #67: only ctm3-database-engineer changes tribunal/migrations/, tribunal/db/ and
+# deploy/postgres/. pull_request_target runs MAIN's copy of this workflow and of
+# scripts/db_owner_guard.cjs, so a PR cannot weaken the check by editing it, and
+# the PR's code is never checked out or run. Approval = same-repository branch +
+# the 'agent:ctm3-database-engineer' label applied by someone with write access.
+on:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] main's code only; the PR head is never checked out
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: db-owner-guard-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    name: Database paths owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+          sparse-checkout: scripts/db_owner_guard.cjs
+          sparse-checkout-cone-mode: false
+      - name: Database-owned paths need the database engineer's label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/db_owner_guard.cjs
