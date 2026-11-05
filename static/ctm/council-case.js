@@ -25,6 +25,9 @@
   const DISPLAY_ONLY_TYPES = [{ code: "deferred", label: "Decision Deferred — Further Investigation Required" }];
   const ENTITLEMENTS = ["certificate", "notice_only"];
   const VOTES = ["approve", "deny", "abstain"];
+  // #48 row 19/20: interim vote matrix until Plenix ships PLX-009 (Button tone, owner vote-screen-37).
+  const VOTE_TONES = { approve: "success", deny: "danger", abstain: "neutral" };
+  const VOTE_BADGES = { approve: { tone: "success", icon: "check" }, deny: { tone: "negative", icon: "close" }, abstain: { tone: "neutral", icon: "remove" } };
   const LANGUAGES = ["en", "ar", "both"];
 
   // ---------- Pure logic ----------
@@ -2290,40 +2293,23 @@ ${ar}` : en;
     return h(
       P.Panel,
       { icon: "check-square", title: t("councilVote"), description: t("councilVoteDescription") },
-      h(
-        "div",
-        { className: "ctm-council-vote-table", role: "table", "aria-label": t("voteRecord") },
-        h("div", { className: "ctm-council-vote-table__header", role: "row" },
-          h("div", { role: "columnheader" }, t("councilMember")),
-          ...VOTES.map((choice) => h("div", { key: choice, role: "columnheader" }, t(choice))),
-        ),
-        ...rows.map((row) => {
-          const canEditRow = canVote && !pending && (manage || row.member.id === user.id);
-          return h("div", { key: row.member.id, className: "ctm-council-vote-table__row", role: "row" },
-            h("div", { className: "ctm-council-vote-member", role: "cell" },
-              h(P.Avatar, { name: row.member.name || row.member.id, size: "md" }),
-              h("div", null,
-                h(P.Text, { as: "div", variant: "strong" }, row.member.name || row.member.id),
-                h(P.Text, { as: "div", variant: "secondary" }, row.member.former ? t("formerMember") : t(row.member.role || "member")),
-              ),
-            ),
-            ...VOTES.map((choice) => h("label", { key: choice, className: "ctm-council-vote-choice", role: "cell" },
-              h("input", {
-                type: "radio",
-                name: `decision-${decision.id}-member-${row.member.id}`,
-                value: choice,
-                checked: choices[row.member.id] === choice,
-                disabled: !canEditRow,
-                "aria-label": `${t(choice)}: ${row.member.name || row.member.id}`,
-                onChange: () => setChoices((old) => ({ ...old, [row.member.id]: choice })),
-              }),
-            )),
-          );
-        }),
-        h("div", { className: "ctm-council-vote-table__summary", role: "row" },
-          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--approve" }, `${t("approve")}: ${counts.approve}`)),
-          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--deny" }, `${t("deny")}: ${counts.deny}`)),
-          h("div", { role: "cell" }, h("span", { className: "ctm-vote-total ctm-vote-total--abstain" }, `${t("abstain")}: ${counts.abstain}`)),
+      h(P.Stack, { gap: "md" },
+        h(P.Table, { label: t("voteRecord"), index: "key", data: rows.map((row) => ({ ...row, key: row.member.id })), columns: [
+          { title: t("councilMember"), field: "key", rowLabel: true, kind: "wrap", render: (row) => h(P.Inline, { gap: "sm", align: "center" },
+            h(P.Avatar, { name: row.member.name || row.member.id, size: "md" }),
+            h(P.Stack, { gap: "none" },
+              h(P.Text, { as: "div", variant: "strong" }, row.member.name || row.member.id),
+              h(P.Text, { as: "div", variant: "secondary" }, row.member.former ? t("formerMember") : t(row.member.role || "member")),
+            )) },
+          { title: t("councilVote"), field: "vote", render: (row) => {
+            const canEditRow = canVote && !pending && (manage || row.member.id === user.id);
+            return h(P.ButtonGroup, { label: `${t("councilVote")}: ${row.member.name || row.member.id}` },
+              ...VOTES.map((choice) => h(P.Button, { key: choice, size: "sm", tone: VOTE_TONES[choice], pressed: choices[row.member.id] === choice, disabled: !canEditRow,
+                onClick: () => setChoices((old) => ({ ...old, [row.member.id]: choice })) }, t(choice))));
+          } },
+        ] }),
+        h(P.Inline, { gap: "sm", wrap: true },
+          ...VOTES.map((choice) => h(P.Badge, { key: choice, tone: VOTE_BADGES[choice].tone, icon: VOTE_BADGES[choice].icon }, `${t(choice)}: ${counts[choice]}`)),
         ),
       ),
       !readAvailable ? h(P.Notice, { tone: "warning" }, t("sessionVotesNotice")) : null,
@@ -3515,7 +3501,7 @@ ${ar}` : en;
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, notice) : null,
       failure ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
     ) : h(P.EmptyState, { title: t("noHearings") });
-    const currentHeader = current ? h("header", { className: "plx-entity-header ctm-hearing-header" }, h("div", { className: "plx-entity-header__layout" },
+    const currentHeader = current ? h("header", { className: "plx-entity-header" }, h("div", { className: "plx-entity-header__layout" },
         h("div", { className: "plx-entity-header__main" }, h("div", { className: "plx-entity-header__lead" },
           h("div", { className: "plx-entity-header__heading" },
             h("span", { className: "plx-entity-header__media" }, h("span", { className: "plx-entity-header__tile", "data-plx-media-hue": "green", "aria-hidden": true }, h(P.Icon, { name: "calendar", size: "lg" }))),
@@ -3530,14 +3516,11 @@ ${ar}` : en;
     const currentContent = current ? h(P.Stack, { gap: "lg" },
       outcome,
     ) : h(P.EmptyState, { title: t("noHearings") });
-    const pastContent = past.length ? h("div", { className: "ctm-past-hearings-table", role: "table", "aria-label": t("pastHearings") },
-      h("div", { className: "ctm-past-hearings-table__header", role: "row" }, h("div", { role: "columnheader" }, t("caseLabel")), h("div", { role: "columnheader" }, bt("councilSession")), h("div", { role: "columnheader" }, t("actions"))),
-      ...past.map((row) => h("div", { key: row.item.id, className: "ctm-past-hearings-table__row", role: "row" },
-        h("div", { role: "cell" }, title(row)),
-        h("div", { role: "cell" }, row.session.date),
-        h("div", { role: "cell" }, h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open"))),
-      )),
-    ) : h(P.EmptyState, { title: t("noHearings") });
+    const pastContent = past.length ? h(P.Table, { label: t("pastHearings"), index: "key", data: past.map((row) => ({ ...row, key: row.item.id })), columns: [
+      { title: t("caseLabel"), field: "key", rowLabel: true, kind: "wrap", render: (row) => title(row) },
+      { title: bt("councilSession"), field: "date", render: (row) => row.session.date },
+      { title: t("actions"), field: "open", render: (row) => h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open")) },
+    ] }) : h(P.EmptyState, { title: t("noHearings") });
     return h(P.Stack, { gap: "lg" }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
       items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] }), attendanceDialog);
   }
@@ -3550,21 +3533,12 @@ ${ar}` : en;
     const roleLabel = (role) => t(role === "president" ? "presiding" : role === "secretary" ? "councilSecretary" : "councilMemberRole");
     const record = async (memberId, present) => { setSaving(true); setFailure(null); try { await api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }); retry(); } catch (error) { setFailure(base.serverMessage(error, bt)); } finally { setSaving(false); } };
     return state.pending ? base.loadingView(P, h, t) : state.error ? base.loadFailure(P, h, t, retry, state.error) : h(P.Stack, { gap: "md" },
-      h("div", { className: "ctm-hearing-attendance-table", role: "table", "aria-label": t("councilAttendance") },
-        h("div", { className: "ctm-hearing-attendance-table__header", role: "row" },
-          h("div", { role: "columnheader" }, t("councilMember")),
-          h("div", { role: "columnheader" }, bt("presentLabel")),
-          h("div", { role: "columnheader" }, bt("absentLabel")),
-        ),
-        ...(state.data.items || []).map((row) => h("div", { key: row.member_id, className: "ctm-hearing-attendance-table__row", role: "row" },
-          h("div", { className: "ctm-hearing-attendance-member", role: "cell" },
-            h(P.Text, { as: "div", variant: "strong" }, row.member_name),
-            h(P.Text, { as: "div", variant: "secondary" }, roleLabel(row.member_role)),
-          ),
-          h("label", { className: "ctm-hearing-attendance-choice ctm-hearing-attendance-choice--present", role: "cell" }, h("input", { type: "radio", name: `hearing-${hearingId}-member-${row.member_id}`, checked: row.present === true, disabled: readonly, "aria-label": `${bt("presentLabel")}: ${row.member_name}`, onChange: () => record(row.member_id, true) })),
-          h("label", { className: "ctm-hearing-attendance-choice", role: "cell" }, h("input", { type: "radio", name: `hearing-${hearingId}-member-${row.member_id}`, checked: row.present === false, disabled: readonly, "aria-label": `${bt("absentLabel")}: ${row.member_name}`, onChange: () => record(row.member_id, false) })),
-        )),
-      ),
+      h(P.Table, { label: t("councilAttendance"), index: "member_id", data: state.data.items || [], columns: [
+        { title: t("councilMember"), field: "member_name", rowLabel: true, kind: "wrap", render: (row) => h(P.Stack, { gap: "none" }, h(P.Text, { as: "div", variant: "strong" }, row.member_name), h(P.Text, { as: "div", variant: "secondary" }, roleLabel(row.member_role))) },
+        { title: t("councilAttendance"), field: "present", render: (row) => h(P.SegmentedControl, { size: "sm", label: `${t("councilAttendance")}: ${row.member_name}`, value: row.present === true ? "present" : row.present === false ? "absent" : undefined, readOnly: readonly,
+          options: [{ value: "present", label: bt("presentLabel"), icon: "check" }, { value: "absent", label: bt("absentLabel"), icon: "close" }],
+          onChange: (choice) => record(row.member_id, choice === "present") }) },
+      ] }),
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,
     );
   }
@@ -3893,14 +3867,16 @@ ${ar}` : en;
       if (group) group.items.push(item); else all.push({ year: parts.year, items: [item] });
       return all;
     }, []);
-    const content = visible.length ? h("div", { className: "ctm-case-timeline", role: "list" }, ...groups.map((group) => h("section", { key: group.year, className: "ctm-case-timeline__year-group" },
-      h("h2", { className: "ctm-case-timeline__year" }, group.year),
-      h("div", { className: "ctm-case-timeline__events" }, ...group.items.map((event) => h("article", { key: event.id, className: `ctm-case-timeline__event ctm-case-timeline__event--${event.category}`, role: "listitem" },
-        h("time", { className: "ctm-case-timeline__date", dateTime: event.timestamp }, event.date),
-        h("span", { className: "ctm-case-timeline__marker", "aria-hidden": true }),
-        h("div", { className: "ctm-case-timeline__body" }, h(P.Text, { as: "h3", variant: "strong" }, event.label)),
-        h(P.Badge, { tone: event.category === "case" ? "active" : "neutral", size: "sm" }, t(event.category === "case" ? "timelineCase" : "timelineMarriage")),
-      ))),
+    const content = visible.length ? h(P.Stack, { gap: "lg" }, ...groups.map((group) => h(P.Stack, { key: group.year, gap: "sm" },
+      h(P.SectionHeading, { level: 2 }, group.year),
+      h(P.Timeline, { label: `${t("timelineTitle")} ${group.year}`, items: group.items.map((event) => ({
+        id: event.id,
+        time: event.date,
+        dateTime: event.timestamp,
+        title: event.label,
+        icon: event.category === "marriage" ? "church" : "description",
+        badge: h(P.Badge, { tone: event.category === "case" ? "active" : "neutral", size: "sm" }, t(event.category === "case" ? "timelineCase" : "timelineMarriage")),
+      })) }),
     ))) : h(P.EmptyState, { title: t("noTimeline") });
     return h(P.Stack, { gap: "lg" },
       h(P.Text, { as: "h1", variant: "title" }, t("timelineTitle")),

@@ -151,9 +151,9 @@ test("Decision & Voting uses stacked decision and council-vote containers", () =
   assert.doesNotMatch(decisionWorkspace, /noDecision/);
   assert.doesNotMatch(decisionWorkspace, /title: t\(revising \? "reviseDecision" : "recordDecision"\)/);
   assert.doesNotMatch(decisionWorkspace, /window\.CTMShell\.Workspace/);
-  assert.match(councilCase, /ctm-council-vote-table/);
+  assert.match(councilCase, /h\(P\.Table, \{ label: t\("voteRecord"\)/);
   assert.match(councilCase, /recordVotesContinue/);
-  assert.match(councilCase, /ctm-vote-total/);
+  assert.match(councilCase, /VOTE_BADGES\[choice\]\.icon/);
 });
 
 test("decision version form omits the deferral helper text", () => {
@@ -613,7 +613,7 @@ test("case hearing header is rendered above its tabs and Hearings uses the balan
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   const app = fs.readFileSync("static/ctm/app.js", "utf8");
   const hearing = councilCase.slice(councilCase.indexOf("function CaseHearings"), councilCase.indexOf("function HearingAttendance"));
-  assert.match(hearing, /const currentHeader = current \? h\("header", \{ className: "plx-entity-header ctm-hearing-header" \}/);
+  assert.match(hearing, /const currentHeader = current \? h\("header", \{ className: "plx-entity-header" \}/);
   assert.match(hearing, /return h\(P\.Stack, \{ gap: "lg" \}, currentHeader, h\(P\.Tabs/);
   assert.match(app, /id === "hearings"\s*\? h\(P\.Icon, \{ name: "balance"/);
 });
@@ -757,4 +757,40 @@ test("ctm3-48 part 2: spouse photo change is Plenix AvatarUpload with EN and AR 
   assert.match(upload, /strings: \{ change: t\("changePhoto"\), add: t\("addPhoto"\), notImage: t\("photoNotImage"\), tooLarge: t\("photoTooLarge"\), picture: t\("photoOf"\) \}/);
   assert.doesNotMatch(upload, /h\("input"|h\("label"/);
   assert.match(councilCase, /size: "2xl"/);
+});
+
+// ctm3-48 part 3 (#48): vote and attendance tables (interim until PLX-009), past hearings, timeline, hearing header.
+test("ctm3-48 part 3: no CTM class left for votes, attendance, hearings or timeline", () => {
+  const js = ["app.js", "council.js", "council-case.js"].map((f) => fs.readFileSync(`static/ctm/${f}`, "utf8")).join("\n");
+  for (const name of ["ctm-council-vote", "ctm-vote-total", "ctm-hearing-attendance", "ctm-past-hearings-table", "ctm-case-timeline", "ctm-hearing-header"])
+    assert.ok(!js.includes(name), name);
+  assert.doesNotMatch(js, /type: "radio"/, "no native radio grids");
+});
+
+test("ctm3-48 part 3: council vote is a Plenix Table with tone buttons and icon badges for totals", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const vote = councilCase.slice(councilCase.indexOf("function CouncilVoteRecord("), councilCase.indexOf("async function submitVote()"));
+  assert.match(vote, /h\(P\.Table, \{ label: t\("voteRecord"\)/);
+  assert.match(vote, /h\(P\.ButtonGroup, \{ label:/);
+  assert.match(vote, /tone: VOTE_TONES\[choice\]/);
+  assert.match(vote, /pressed: choices\[row\.member\.id\] === choice/);
+  assert.match(councilCase, /const VOTE_TONES = \{ approve: "success", deny: "danger", abstain: "neutral" \}/);
+  assert.match(vote, /h\(P\.Badge, \{ key: choice, tone: VOTE_BADGES\[choice\]\.tone, icon: VOTE_BADGES\[choice\]\.icon \}/);
+});
+
+test("ctm3-48 part 3: attendance is a SegmentedControl per member in a Plenix Table (three places)", () => {
+  for (const file of ["app.js", "council.js", "council-case.js"]) {
+    const src = fs.readFileSync(`static/ctm/${file}`, "utf8");
+    assert.match(src, /h\(P\.SegmentedControl, \{/, file);
+    assert.match(src, /options: \[\{ value: "present"/, file);
+  }
+});
+
+test("ctm3-48 part 3: timeline is Plenix Timeline grouped by year; past hearings a Plenix Table", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const timeline = councilCase.slice(councilCase.indexOf("function CaseTimeline("));
+  assert.match(timeline, /h\(P\.SectionHeading, \{ level: 2 \}, group\.year\)/);
+  assert.match(timeline, /h\(P\.Timeline, \{ label:/);
+  assert.match(timeline, /dateTime: event\.timestamp/);
+  assert.match(councilCase, /h\(P\.Table, \{ label: t\("pastHearings"\)/);
 });
