@@ -1,0 +1,142 @@
+name: CTM deploy
+# D-0013: releases are on demand, no owner yes (docs/implementation/sdlc.md section 3, G8).
+#   push to main        -> staging    (Compose project ctm-staging, own database, synthetic data)
+#   tag vMAJOR.MINOR.PATCH -> production: backup -> build -> migrate -> restart
+#                          -> health check -> automatic rollback (deploy/release.sh)
+# The CTM VM is on a private network, so the deploy jobs run on a self-hosted
+# runner on the VM (labels: self-hosted, ctm-vm). Until the repository variable
+# CTM_DEPLOY_READY is "true" every run stops at "not set up yet" and passes.
+# Setup checklist: issue #49.
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: deploy-${{ github.ref_type }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Deploy plan
+    runs-on: ubuntu-latest
+    permissions:
+      checks: read
+    outputs:
+      target: ${{ steps.plan.outputs.target }}
+      ready: ${{ steps.plan.outputs.ready }}
+    steps:
+      - id: plan
+        env:
+          READY: ${{ vars.CTM_DEPLOY_READY }}
+          PROD_PROJECT: ${{ vars.CTM_PROD_PROJECT }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "$REF_TYPE" == "tag" ]]; then
+            [[ "$REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::tag $REF_NAME is not vMAJOR.MINOR.PATCH"; exit 1; }
+            target=production
+          elif [[ "$REF_NAME" == "main" ]]; then
+            target=staging
+          else
+            echo "::error::deploys run from main (staging) or a version tag (production) only"; exit 1
+          fi
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+          if [[ "$REPO" != "LighthouseCollection/CTM" || "$READY" != "true" ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Deploy not set up yet: $target skipped. Setup checklist: issue #49."
+            echo "### Deploy not set up yet — $target skipped (see issue #49)" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [[ "$target" == "production" ]]; then
+            [[ -n "$PROD_PROJECT" ]] || { echo "::error::set the repository variable CTM_PROD_PROJECT"; exit 1; }
+            # G8: the tagged commit must have every required check green.
+            for check in "Fast gates" "Decisions have checks" "Frontend tests" "Opengrep" "zizmor"; do
+              conclusion="$(gh api "repos/$REPO/commits/$SHA/check-runs" --paginate \
+                --jq "[.check_runs[] | select(.name == \"$check\")] | sort_by(.completed_at) | last | .conclusion")"
+              [[ "$conclusion" == "success" ]] || { echo "::error::required check '$check' is '${conclusion:-missing}' on $SHA"; exit 1; }
+            done
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy ${{ needs.plan.outputs.target }}
+    needs: plan
+    if: needs.plan.outputs.ready == 'true'
+    runs-on: [self-hosted, ctm-vm]
+    environment: ${{ needs.plan.outputs.target }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    outputs:
+      rolled_back: ${{ steps.release.outputs.rolled_back }}
+      failed_phase: ${{ steps.release.outputs.failed_phase }}
+      backup: ${{ steps.release.outputs.backup }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Production tags must be on main
+        if: needs.plan.outputs.target == 'production'
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$SHA" origin/main || { echo "::error::$SHA is not on main"; exit 1; }
+      - id: release
+        name: Backup, build, migrate, restart, health check (rollback on failure)
+        env:
+          TARGET: ${{ needs.plan.outputs.target }}
+          SHA: ${{ github.sha }}
+          CTM_PROD_PROJECT: ${{ vars.CTM_PROD_PROJECT }}
+          CTM_PROD_ENV_FILE: ${{ vars.CTM_PROD_ENV_FILE }}
+          CTM_STAGING_ENV_FILE: ${{ vars.CTM_STAGING_ENV_FILE }}
+        run: |
+          # Empty repository variables fall back to the script defaults.
+          for v in CTM_PROD_PROJECT CTM_PROD_ENV_FILE CTM_STAGING_ENV_FILE; do [[ -n "${!v}" ]] || unset "$v"; done
+          bash deploy/release.sh "$TARGET" "$SHA" 2>&1 | tee "$RUNNER_TEMP/release.log"
+
+  report:
+    name: Report deploy failure
+    needs: [plan, deploy]
+    if: always() && needs.deploy.result == 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TARGET: ${{ needs.plan.outputs.target }}
+          SHA: ${{ github.sha }}
+          REF_NAME: ${{ github.ref_name }}
+          ROLLED_BACK: ${{ needs.deploy.outputs.rolled_back }}
+          PHASE: ${{ needs.deploy.outputs.failed_phase }}
+          BACKUP: ${{ needs.deploy.outputs.backup }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          sev="sev:S1"; [[ "$TARGET" == "staging" ]] && sev="sev:S2"
+          body="$(printf '%s\n' \
+            "The $TARGET deploy of \`$REF_NAME\` (\`$SHA\`) failed during **${PHASE:-unknown}**." \
+            "" \
+            "| | |" "|---|---|" \
+            "| Rollback | ${ROLLED_BACK:-unknown} |" \
+            "| Pre-deploy backup | \`${BACKUP:-none}\` |" \
+            "| Run | $RUN_URL |" \
+            "" \
+            "For \`ctm3-debugger\`: root cause first (ctm-debug), failing test before the fix." \
+            "" \
+            "— ctm3-release-engineer (deploy.yml)")"
+          gh issue create --repo "$REPO" --title "Deploy failed: $TARGET $REF_NAME" \
+            --label type:bug --label "$sev" --label area:release --body "$body"

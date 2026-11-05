@@ -141,7 +141,7 @@ decisions:
     options: [On demand (chosen), Owner approves each release]
     decided_by: owner
     status: active
-    review_only: No release workflow yet; ctm3-release-engineer adds the deploy job with backup and rollback
+    check: { kind: workflow, ref: .github/workflows/deploy.yml }
 
   - id: D-0014
     date: 2026-11-04
