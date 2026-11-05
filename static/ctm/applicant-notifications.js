@@ -27,21 +27,15 @@
   unread:'غير مقروء',read:'مقروء',count:'الإشعارات غير المقروءة',update:'تحديث القضية',mark:'تأكيد قراءة الإشعار',open:'فتح القضية',
   unavailable:'الإشعارات غير متاحة أو تغيّرت القائمة. حدّثها لتحميل القائمة الخاصة الحالية.',refreshRequired:'لم يتم تأكيد حالة القراءة. حدّث الإشعارات للتحقق من الحالة الحالية.',
   uncertain:'لم يتم تأكيد الاستلام. حدّث القائمة قبل إعادة المحاولة.',help:'يؤكد هذا الإجراء إشعار البوابة، ولا يؤكد قراءة الرسالة أو تسليم البريد الإلكتروني.'}};
- function NoticeRow({row,api,t,disabled,onStart,onEnd,onOpen}){
-  const R=window.React,P=window.Plenix,h=R.createElement,[,render]=R.useReducer(n=>n+1,0);
-  const session=R.useMemo(()=>createReadSession(api,render),[row.id,api]);
-  return h(P.Panel,{title:row.case_number||t('update')},h(P.Stack,null,h(P.Text,null,t('update')),h(P.Text,null,h('bdi',{dir:'ltr'},row.timestamp)),
-   h(P.Text,{role:'status'},t(row.read||session.state.confirmed?'read':'unread')),
-   session.state.error?h(P.Notice,{tone:'warning',role:'alert'},t(session.state.error)):null,
-   h(P.Inline,{wrap:true},row.case_id?h(P.Button,{disabled,onClick:()=>onOpen(row.case_id)},t('open')):null,
-    !row.read&&!session.state.confirmed?h(P.Button,{disabled:disabled||session.state.attempted,onClick:async()=>{onStart();try{await session.send(row,true);}finally{onEnd();}}},t('mark')):null)));
- }
  function Inbox({api,lang='en',onCase,onNavigationGuard}){
   const R=window.React,P=window.Plenix,h=R.createElement,t=k=>words[lang==='ar'?'ar':'en'][k];
   const [rows,setRows]=R.useState([]),[next,setNext]=R.useState(null),[count,setCount]=R.useState(null),[loading,setLoading]=R.useState(true),[error,setError]=R.useState(false),[busy,setBusy]=R.useState(0);
   const ticket=R.useRef(0),current=R.useRef([]),[epoch,reset]=R.useState(0);
+  // One read session per listed row and list load (a refresh starts a new list, so new sessions).
+  const sessions=R.useRef(new Map()),[,rerender]=R.useReducer(n=>n+1,0);
+  const sessionFor=row=>{const key=row.id+":"+epoch;if(!sessions.current.has(key))sessions.current.set(key,createReadSession(api,rerender));return sessions.current.get(key);};
   async function load(offset=0){const request=++ticket.current;setLoading(true);setError(false);
-   if(offset===0){current.current=[];setRows([]);setNext(null);setCount(null);reset(n=>n+1);}
+   if(offset===0){sessions.current=new Map();current.current=[];setRows([]);setNext(null);setCount(null);reset(n=>n+1);}
    try{const page=await api(`/api/notifications/?offset=${offset}`);if(request!==ticket.current)return;
     if(!validPage(page,offset))throw Error('Invalid own notifications');const combined=offset===0?page.items:[...current.current,...page.items];
     if(new Set(combined.map(row=>row.id)).size!==combined.length)throw Error('Notification pages changed');
@@ -53,11 +47,21 @@
   R.useEffect(()=>{if(!busy)return;const warn=event=>{event.preventDefault();event.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[busy]);
   return h(P.LocaleProvider,{locale:lang==='ar'?'ar':'en',dir:lang==='ar'?'rtl':'ltr'},h(P.Stack,{as:'section',lang,dir:lang==='ar'?'rtl':'ltr'},
    h(P.Text,{as:'h1',variant:'display'},t('title')),h(P.Text,null,t('help')),
-   h(P.Button,{disabled:loading||busy>0,onClick:()=>load(0)},t('refresh')),
+   h(P.Inline,{wrap:true},h(P.Button,{disabled:loading||busy>0,onClick:()=>load(0)},t('refresh'))),
    loading?h(P.Text,{role:'status'},t('loading')):null,error?h(P.Notice,{tone:'warning',role:'alert'},t('unavailable')):null,
    count!==null?h(P.Text,null,t('count'),': ',h('bdi',{dir:'ltr'},String(count))):null,
-   !rows.length&&!loading&&!error?h(P.Text,null,t('empty')):null,
-   ...rows.map(row=>h(NoticeRow,{key:row.id+':'+epoch,row,api,t,disabled:loading||busy>0,onStart:()=>setBusy(n=>n+1),onEnd:()=>{setBusy(n=>Math.max(0,n-1));setCount(null);},onOpen:id=>onCase?.(id)})),
+   ...rows.filter(row=>sessionFor(row).state.error).map(row=>h(P.Notice,{key:"error-"+row.id,tone:'warning',role:'alert'},
+    h('bdi',{dir:'ltr'},row.case_number||t('update')),': ',t(sessionFor(row).state.error))),
+   // The private list is a Plenix ResourceList (resource-list.md): read state and time at the row end, its actions after.
+   h(P.ResourceList,{label:t('title'),
+    emptyState:!loading&&!error?h(P.EmptyState,{title:t('empty')}):null,
+    items:rows.map(row=>{const session=sessionFor(row),read=row.read||session.state.confirmed,disabled=loading||busy>0;
+     return {id:row.id,name:row.case_number||t('update'),description:t('update'),
+      meta:h(P.Inline,{gap:'sm',wrap:true},h(P.Text,{variant:'data'},h('bdi',{dir:'ltr'},row.timestamp)),
+       h(P.Badge,{tone:read?'neutral':'info',role:'status'},t(read?'read':'unread'))),
+      actions:h(P.Inline,{wrap:true},row.case_id?h(P.Button,{size:'sm',disabled,onClick:()=>onCase?.(row.case_id)},t('open')):null,
+       !read?h(P.Button,{size:'sm',disabled:disabled||session.state.attempted,onClick:async()=>{setBusy(n=>n+1);
+        try{await session.send(row,true);}finally{setBusy(n=>Math.max(0,n-1));setCount(null);}}},t('mark')):null)};})}),
    next!==null?h(P.Button,{disabled:loading||busy>0,onClick:()=>load(next)},t('more')):null));
  }
  window.CTMApplicantNotifications={validPage,createReadSession,Inbox};

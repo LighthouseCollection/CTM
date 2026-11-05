@@ -63,6 +63,7 @@
       expired:"Your session has expired. Sign in again to continue.", denied:"Document access is no longer available.",
       size:"Up to 25 MB. The server checks the file format and safety.",
       savedContext:"Uploads are paused while answers are being edited or a filing action is in progress.", additional:"Additional uploaded originals",
+      file:"File", safety:"Safety check",
     },
     ar: {title:"مستندات الطلب", loading:"جارٍ تحميل المستندات…", unavailable:"مستندات الطلب غير متاحة. يرجى إعادة المحاولة أو التواصل مع المجلس.",
       refresh:"تحديث المستندات", required:"مطلوب", optional:"اختياري", missing:"لم يتم الرفع",
@@ -74,6 +75,7 @@
       expired:"انتهت جلستك. سجّل الدخول مجددًا للمتابعة.", denied:"لم يعد الوصول إلى المستندات متاحًا.",
       size:"حتى ٢٥ ميغابايت. يتحقق الخادم من صيغة الملف وسلامته.",
       savedContext:"رفع الملفات متوقف أثناء تعديل الإجابات أو تنفيذ إجراء لتقديم الطلب.", additional:"أصول إضافية مرفوعة",
+      file:"الملف", safety:"فحص السلامة",
     },
   };
   function ApplicationFiles({applicationId, answerVersion, savedApplication, api, lang="en", disabled=false, onBusyChange, onChanged, onReadyChange, onProjectionRefresh}) {
@@ -116,9 +118,14 @@
     };
     const accept=category=>["PHOTO","SPOUSE_PHOTO"].includes(category)?".jpg,.jpeg,.png,.gif,.webp":
       category==="PET"?".pdf,.doc,.docx":".pdf,.jpg,.jpeg,.png,.gif,.webp";
-    const renderRow=row=>h(P.Stack,{key:row.id},
-      h(P.Text,null,`${row.name} · ${t(["clean","pending","rejected"].includes(row.scan_state)?row.scan_state:"unknown")}`),
-      downloadURL(row)?h(P.Button,{href:downloadURL(row)},t("download")):null);
+    // Uploaded originals are a Plenix FileList (file-list.md): the safety check is the row status, and the name links
+    // to the original only when the server marks it clean (the same link the Download button was).
+    const tones={clean:"success",pending:"warning",rejected:"danger"};
+    const fileList=(rows,label)=>h(P.FileList,{label,view:"table",columns:["status"],
+      files:rows.map(row=>{const scan=["clean","pending","rejected"].includes(row.scan_state)?row.scan_state:"unknown";
+        return {id:row.id,name:row.name,kind:"file",status:{tone:tones[scan]||"neutral",label:t(scan)},href:downloadURL(row)};}),
+      hrefFor:file=>file.href||undefined,
+      strings:{name:t("file"),status:t("safety"),download:t("download"),empty:t("missing")}});
     const additional=(data?.items||[]).filter(row=>!data.requirements.some(r=>r.category===row.category&&r.context===row.context));
     return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
       error?h(P.Notice,{tone:"danger",role:"alert"},t(error)):null,
@@ -139,7 +146,7 @@
             .map((field,index)=>h(P.Text,{key:index},`${field[lang==="ar"?"label_ar":"label_en"]}: `,
               h("bdi",{dir:"auto"},field.value))),
           !rows.length?h(P.Text,null,t("missing")):null,
-          ...rows.map(renderRow),
+          rows.length?fileList(rows,requirement[lang==="ar"?"label_ar":"label_en"]):null,
           data.can_upload===true?h(P.Stack,null,
             h(P.Field,{label:requirement[lang==="ar"?"label_ar":"label_en"],description:`${accept(requirement.category)}. ${t("size")}`},
               h(P.FileInput,{key:pickerRevision,accept:accept(requirement.category),disabled:controlsDisabled,
@@ -148,7 +155,7 @@
             h(P.Button,{disabled:controlsDisabled||!selected[key],onClick:()=>send(requirement,replacement,key)},
               t(busy?"busy":replacement?"replace":"upload"))) : null));
       }),
-      additional.length?h(P.Panel,{ icon: "doc-text",title:t("additional")},h(P.Stack,null,...additional.map(renderRow))):null));
+      additional.length?h(P.Panel,{ icon: "doc-text",title:t("additional")},fileList(additional,t("additional"))):null));
   }
   window.CTMApplicantFiles={savedOrderDetails,validRequirement,validListing,downloadURL,uploadFile,ApplicationFiles};
 })();

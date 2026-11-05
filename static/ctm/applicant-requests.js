@@ -22,18 +22,20 @@
       intake:"Written response request",medical:"Medical assessment request",psychological:"Psychological assessment request",
       sent:"Awaiting response",completed:"Completed",cancelled:"Cancelled",closed:"Closed",instructions:"Instructions",questions:"Requested questions",sentAt:"Sent",
       open:"Open request",respond:"Respond to request",response:"Online response submission is not available here yet. Contact the tribunal about responding to this request.",
+      request:"Request",kind:"Request type",status:"Status",
       release:"An assessment report and its signed, scoped release are separate requirements. Uploading a report does not grant disclosure consent. Contact the tribunal for the approved release and submission process."},
     ar:{title:"طلباتي من المجلس",refresh:"تحديث طلباتي",loading:"جارٍ تحميل طلباتك…",
       unavailable:"طلباتك غير متاحة حاليًا. حدّث الصفحة أو تواصل مع المجلس.",empty:"لا توجد طلبات مدرجة لك حاليًا.",
       intake:"طلب إجابة مكتوبة",medical:"طلب تقييم طبي",psychological:"طلب تقييم نفسي",
       sent:"بانتظار الإجابة",completed:"مكتمل",cancelled:"ملغى",closed:"مغلق",instructions:"التعليمات",questions:"الأسئلة المطلوبة",sentAt:"تاريخ الإرسال",
       open:"فتح الطلب",respond:"الإجابة عن الطلب",response:"تقديم الإجابات عبر هذه الصفحة غير متاح بعد. تواصل مع المجلس لمعرفة كيفية الإجابة عن هذا الطلب.",
+      request:"الطلب",kind:"نوع الطلب",status:"الحالة",
       release:"تقرير التقييم والتفويض الموقّع المحدد النطاق متطلبان منفصلان. رفع التقرير لا يعني الموافقة على الإفصاح. تواصل مع المجلس للحصول على التفويض المعتمد وطريقة التقديم."}
   };
   function Requests({caseId,api,lang="en",onNavigationGuard}) {
     const R=window.React,P=window.Plenix,h=R.createElement,t=key=>words[lang==="ar"?"ar":"en"][key];
     const [data,setData]=R.useState(null),[loading,setLoading]=R.useState(true),[error,setError]=R.useState(false),[revision,reload]=R.useState(0);
-    const [selected,select]=R.useState(null);
+    const [selected,select]=R.useState(null),[openId,setOpenId]=R.useState(null);
     R.useEffect(()=>{
       let active=true;setData(null);setLoading(true);setError(false);
       api(`/api/cases/${encodeURIComponent(caseId)}/requests/`).then(result=>{
@@ -46,23 +48,30 @@
       key:selected.id,request:selected,caseId,api,lang,onNavigationGuard,onBack:()=>{select(null);reload(n=>n+1);}});
     if(selected&&window.CTMApplicantResponses)return h(window.CTMApplicantResponses.ResponseEditor,{
       key:selected.id,request:selected,api,lang,onNavigationGuard,onBack:()=>{select(null);reload(n=>n+1);}});
+    const rows=data?.items||[];
+    const chosen=rows.find(row=>row.id===openId)||rows[0]||null;
+    const detail=row=>h(P.Stack,null,
+      h(P.Text,null,t(row.kind)," · ",t(row.state)),
+      h(P.Text,null,t("sentAt"),": ",h("bdi",{dir:"ltr"},row.sent_at)),
+      row.instructions?h(P.Panel,{ icon: "doc-text",title:t("instructions")},h(P.Text,{dir:"auto"},row.instructions)):null,
+      row.questions.length?h(P.Panel,{ icon: "doc-text",title:t("questions")},h(P.List,{variant:"bullets",items:row.questions.map(q=>({
+        children:h("span",{lang:row.language==="both"?lang:row.language,dir:row.language==="ar"||row.language==="both"&&lang==="ar"?"rtl":"ltr"},questionText(q,row,lang))
+      }))})):null,
+      window.CTMApplicantAssessments?.validOwnRequest(row)?h(P.Button,{variant:"primary",onClick:()=>select(row)},t("open")):
+      window.CTMApplicantResponses?.canRespond(row)
+        ?h(P.Button,{variant:"primary",onClick:()=>select(row)},t("respond"))
+        :row.state==="sent"?h(P.Notice,null,t(row.kind==="intake"?"response":"release")):null);
+    // My requests as a CTMShell workspace (master-detail-workspace.md): the list, and the chosen request with its
+    // instructions, questions and next step beside it. Only this applicant's own requests reach this list.
     return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
-      h(P.Button,{disabled:loading,onClick:()=>reload(n=>n+1)},t("refresh")),
-      loading?h(P.Text,{role:"status"},t("loading")):null,
-      error?h(P.Notice,{tone:"danger",role:"alert"},t("unavailable")):null,
-      data&&!data.items.length?h(P.Text,null,t("empty")):null,
-      ...(data?.items||[]).map(row=>h(P.Panel,{ icon: "doc-text",key:row.id,title:row.title},h(P.Stack,null,
-        h(P.Text,null,t(row.kind)," · ",t(row.state)),
-        h(P.Text,null,t("sentAt"),": ",h("bdi",{dir:"ltr"},row.sent_at)),
-        row.instructions?h(P.Panel,{ icon: "doc-text",title:t("instructions")},h(P.Text,{dir:"auto"},row.instructions)):null,
-        row.questions.length?h(P.Panel,{ icon: "doc-text",title:t("questions")},h(P.List,{variant:"bullets",items:row.questions.map(q=>({
-          children:h("span",{lang:row.language==="both"?lang:row.language,dir:row.language==="ar"||row.language==="both"&&lang==="ar"?"rtl":"ltr"},questionText(q,row,lang))
-        }))})):null,
-        window.CTMApplicantAssessments?.validOwnRequest(row)?h(P.Button,{onClick:()=>select(row)},t("open")):
-        window.CTMApplicantResponses?.canRespond(row)
-          ?h(P.Button,{onClick:()=>select(row)},t("respond"))
-          :row.state==="sent"?h(P.Notice,null,t(row.kind==="intake"?"response":"release")):null
-      )))
+      h(P.Inline,{wrap:true},h(P.Button,{disabled:loading,onClick:()=>reload(n=>n+1)},t("refresh"))),
+      error?h(P.Notice,{tone:"danger",role:"alert"},t("unavailable")):data&&!rows.length?h(P.EmptyState,{title:t("empty")}):h(window.CTMShell.Workspace,{label:t("title"),rows,loading,empty:t("empty"),
+        selected:chosen?.id,onSelect:setOpenId,
+        columns:[{title:t("request"),field:"title",render:row=>row.title},
+          {title:t("kind"),field:"kind",render:row=>t(row.kind)},
+          {title:t("status"),field:"state",render:row=>t(row.state)},
+          {title:t("sentAt"),field:"sent_at",render:row=>row.sent_at}]},
+        chosen?detail(chosen):null)
     ));
   }
   window.CTMApplicantRequests={validProjection,questionText,Requests};

@@ -47,7 +47,7 @@
       closed:"This invitation is not accepting responses.",ack:"Your response was received. Refresh invitations to see its current status.",
       stale:"This invitation has changed. Refresh and review the current invitation before responding.",
       denied:"Invitation access is unavailable. Refresh or sign in again.",
-      uncertain:"Your response was not confirmed. Refresh invitations before responding again."},
+      uncertain:"Your response was not confirmed. Refresh invitations before responding again.",response:"Your response"},
     ar:{title:"مواعيدي",loading:"جارٍ تحميل دعواتك…",empty:"لا توجد لديك دعوات لمواعيد.",
       unavailable:"دعواتك غير متاحة. حدّث القائمة أو تواصل مع المجلس.",refresh:"تحديث الدعوات",
       case:"مرجع القضية",invitation:"دعوة لموعد",start:"البداية",end:"النهاية",instructions:"التعليمات",version:"نسخة الدعوة",
@@ -57,15 +57,14 @@
       closed:"هذه الدعوة لا تقبل الردود حالياً.",ack:"تم استلام ردك. حدّث الدعوات للاطلاع على الحالة الحالية.",
       stale:"تغيّرت هذه الدعوة. حدّث الدعوات وراجع الدعوة الحالية قبل الرد.",
       denied:"الوصول إلى الدعوة غير متاح. حدّث الدعوات أو سجّل الدخول مجدداً.",
-      uncertain:"لم يتم تأكيد ردك. حدّث الدعوات قبل الرد مجدداً."}
+      uncertain:"لم يتم تأكيد ردك. حدّث الدعوات قبل الرد مجدداً.",response:"ردك"}
   };
-  function Invitation({row,api,lang,onBusyChange}) {
+  // The chosen invitation in the reading pane. Its response session and typed reason live in Appointments, so moving
+  // between invitations never resets an acknowledged or locked response (a refresh starts new sessions, as before).
+  function Invitation({row,session,explanation,setExplanation,lang}) {
     const R=window.React,P=window.Plenix,h=R.createElement,t=key=>words[lang === "ar" ? "ar" : "en"][key];
-    const [,render]=R.useReducer(n=>n+1,0),[explanation,setExplanation]=R.useState("");
-    const session=R.useMemo(()=>createResponseSession(row,api,render),[row,api]);
     const s=session.state,disabled=!row.can_respond || s.busy || s.locked || s.acknowledged;
-    R.useEffect(()=>{onBusyChange(row.id,s.busy);return()=>onBusyChange(row.id,false);},[row.id,s.busy,onBusyChange]);
-    return h(P.Panel,{ icon: "doc-text",title:row.case_number ? `${t("case")}: ${row.case_number}` : t("invitation")},h(P.Stack,null,
+    return h(P.Stack,null,
       h(P.Text,null,`${t("version")}: ${row.version}`),h(P.Text,null,t("time")),
       h(P.Text,null,`${t("start")}: `,h("bdi",{dir:"ltr"},row.starts_at)),
       h(P.Text,null,`${t("end")}: `,h("bdi",{dir:"ltr"},row.ends_at)),
@@ -78,29 +77,43 @@
         h(P.Field,{label:t("explanation")},h(P.Textarea,{value:explanation,disabled,rows:3,
           onChange:e=>setExplanation(e.target.value)})),
         h(P.Inline,{wrap:true},
-          h(P.Button,{disabled,onClick:()=>session.send("confirm")},t(s.busy ? "busy" : "confirm")),
-          h(P.Button,{disabled,variant:"secondary",onClick:()=>session.send("reject",explanation)},t(s.busy ? "busy" : "reject")))) : null));
+          h(P.Button,{disabled,variant:"primary",onClick:()=>session.send("confirm")},t(s.busy ? "busy" : "confirm")),
+          h(P.Button,{disabled,variant:"secondary",onClick:()=>session.send("reject",explanation)},t(s.busy ? "busy" : "reject")))) : null);
   }
   function Appointments({api,lang="en"}) {
-    const R=window.React,P=window.Plenix,h=R.createElement,t=key=>words[lang === "ar" ? "ar" : "en"][key];
+    const R=window.React,P=window.Plenix,Shell=window.CTMShell,h=R.createElement,t=key=>words[lang === "ar" ? "ar" : "en"][key];
     const [data,setData]=R.useState(null),[error,setError]=R.useState(false),[revision,reload]=R.useState(0);
-    const [busyIds,setBusyIds]=R.useState({}),[loading,setLoading]=R.useState(true);
-    const onBusyChange=R.useCallback((id,busy)=>setBusyIds(old=>old[id]===busy ? old : {...old,[id]:busy}),[]);
-    const busy=Object.values(busyIds).some(Boolean);
+    const [loading,setLoading]=R.useState(true),[selected,select]=R.useState(null),[reasons,setReasons]=R.useState({});
+    const sessions=R.useRef(new Map()),[,rerender]=R.useReducer(n=>n+1,0);
+    const sessionFor=row=>{const key=`${revision}:${row.id}`;if(!sessions.current.has(key))sessions.current.set(key,createResponseSession(row,api,rerender));return sessions.current.get(key);};
+    const busy=(data?.items||[]).some(row=>sessionFor(row).state.busy);
     R.useEffect(()=>{
-      let active=true;setLoading(true);setData(null);setError(false);
+      let active=true;setLoading(true);setData(null);setError(false);sessions.current=new Map();setReasons({});
       api("/api/appointments/").then(result=>{
         if(!validListing(result))throw new Error("Invalid invitation projection");
         if(active)setData(result);
       }).catch(()=>{if(active)setError(true);}).finally(()=>{if(active)setLoading(false);});
       return()=>{active=false;};
     },[api,revision]);
-    return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
-      h(P.Button,{disabled:busy || loading,onClick:()=>reload(n=>n+1)},t("refresh")),
-      loading ? h(P.Text,{role:"status"},t("loading")) : null,
+    const rows=data?.items||[];
+    const chosen=rows.find(row=>row.id===selected)||rows[0]||null;
+    const caseLabel=row=>row.case_number||t("invitation");
+    const answer=row=>t(row.response === "confirm" ? "confirmResponse" : row.response === "reject" ? "rejectResponse" : "noResponse");
+    // My invitations as a CTMShell workspace (master-detail-workspace.md): the list, and the chosen invitation beside it.
+    return h(P.Stack,{as:"section",gap:"md"},
+      h(P.Text,{as:"h1",variant:"display"},t("title")),
+      h(P.Inline,{wrap:true},h(P.Button,{disabled:busy || loading,onClick:()=>reload(n=>n+1)},t("refresh"))),
       error ? h(P.Notice,{role:"alert",tone:"danger"},t("unavailable")) : null,
-      data?.items.length === 0 ? h(P.Text,null,t("empty")) : null,
-      ...(data?.items || []).map(row=>h(Invitation,{key:`${revision}:${row.id}`,row,api,lang,onBusyChange}))));
+      // Nothing listed: one EmptyState (empty-state.md) instead of an empty list beside an empty reading pane.
+      !error && data && !rows.length ? h(P.EmptyState,{title:t("empty")}) : null,
+      error || (data && !rows.length) ? null : h(Shell.Workspace,{label:t("title"),rows:rows.map(row=>({...row,title:caseLabel(row)})),loading,empty:t("empty"),
+        selected:chosen?.id,onSelect:id=>{if(!busy)select(id);},
+        columns:[{title:t("case"),field:"case_number",render:row=>caseLabel(row)},
+          {title:t("start"),field:"starts_at",render:row=>row.starts_at},
+          {title:t("response"),field:"response",render:row=>answer(row)}],
+        actions:null},
+        chosen?h(Invitation,{key:`${revision}:${chosen.id}`,row:chosen,lang,session:sessionFor(chosen),
+          explanation:reasons[chosen.id]||"",setExplanation:value=>setReasons(old=>({...old,[chosen.id]:value}))}):null));
   }
   window.CTMApplicantAppointments={validListing,createResponseSession,Appointments};
 })();

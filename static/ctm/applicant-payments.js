@@ -25,7 +25,8 @@
       version:"Answer version",pending:"Checkout pending",processing:"Payment processing",needs_review:"Payment requires tribunal reconciliation",
       finalized:"Payment applied to filing",expired:"Checkout expired",failed:"Checkout failed",refunded:"Refund recorded",
       chargeback:"Payment dispute opened",dispute_won:"Payment dispute resolved in tribunal’s favour",dispute_lost:"Payment dispute lost",
-      cumulative:"Cumulative refunded total",unknown:"Status unavailable"},
+      cumulative:"Cumulative refunded total",unknown:"Status unavailable",
+      state:"Checkout status",time:"Server time",event:"Payment event",amount:"Amount",basis:"Amount basis",single:"This event"},
     ar:{title:"حالة الدفع وسجله",refresh:"تحديث سجل الدفع",loading:"جارٍ تحميل سجل الدفع…",
       unavailable:"سجل الدفع غير متاح. حدّث السجل أو تواصل مع المجلس.",fee:"رسوم الطلب",
       due:"الدفع مطلوب",paid:"تم تسجيل دفعة موثّقة",waived:"إعفاء معتمد من الرسوم",historical_exempt:"إعفاء لطلب تاريخي",
@@ -35,10 +36,11 @@
       version:"نسخة الإجابات",pending:"محاولة الدفع قيد الانتظار",processing:"الدفع قيد المعالجة",needs_review:"تتطلب الدفعة مراجعة وتسوية لدى المجلس",
       finalized:"تم تطبيق الدفعة على تقديم الطلب",expired:"انتهت صلاحية محاولة الدفع",failed:"فشلت محاولة الدفع",refunded:"تم تسجيل استرداد",
       chargeback:"تم فتح نزاع على الدفعة",dispute_won:"تم حسم نزاع الدفع لصالح المجلس",dispute_lost:"تم حسم نزاع الدفع ضد المجلس",
-      cumulative:"إجمالي المبلغ المسترد التراكمي",unknown:"الحالة غير متاحة"}
+      cumulative:"إجمالي المبلغ المسترد التراكمي",unknown:"الحالة غير متاحة",
+      state:"حالة محاولة الدفع",time:"وقت الخادم",event:"حدث الدفع",amount:"المبلغ",basis:"أساس المبلغ",single:"هذا الحدث"}
   };
   function PaymentHistory({applicationId,api,lang="en",refreshKey=0}) {
-    const R=window.React,P=window.Plenix,h=R.createElement,t=key=>words[lang==="ar"?"ar":"en"][key];
+    const R=window.React,P=window.Plenix,Shell=window.CTMShell,h=R.createElement,t=key=>words[lang==="ar"?"ar":"en"][key];
     const [data,setData]=R.useState(null),[loading,setLoading]=R.useState(true),[error,setError]=R.useState(false),[revision,reload]=R.useState(0);
     R.useEffect(()=>{
       let active=true;setData(null);setError(false);setLoading(true);
@@ -50,20 +52,23 @@
     },[applicationId,api,revision,refreshKey]);
     const money=row=>new Intl.NumberFormat(lang==="ar"?"ar":"en",{style:"currency",currency:"USD"}).format(row.amount_minor/100);
     return h(P.Panel,{ icon: "doc-text",title:t("title")},h(P.Stack,null,
-      h(P.Button,{disabled:loading,onClick:()=>reload(n=>n+1)},t("refresh")),
+      h(P.Inline,{wrap:true},h(P.Button,{disabled:loading,onClick:()=>reload(n=>n+1)},t("refresh"))),
       loading?h(P.Text,{role:"status"},t("loading")):null,
       error?h(P.Notice,{tone:"danger",role:"alert"},t("unavailable")):null,
       data?h(P.Stack,null,
         h(P.Text,null,`${t("fee")}: ${money(data.fee)} · ${t(statusKey(data.fee.status,"fee"))}`),
         h(P.Text,null,t(data.verified_payment?"verified":"unverified")),h(P.Notice,null,t("separate")),
         !data.events.length&&!data.checkouts.length?h(P.Text,null,t("none")):null,
-        data.checkouts.length?h(P.Panel,{ icon: "doc-text",title:t("attempts")},h(P.Stack,null,...data.checkouts.map(row=>
-          h(P.Stack,{key:row.id},h(P.Text,null,`${t(statusKey(row.state,"checkout"))} · ${t("version")}: ${row.version}`),
-            h(P.Text,null,h("bdi",{dir:"ltr"},row.timestamp)))))):null,
-        data.events.length?h(P.Panel,{ icon: "doc-text",title:t("events")},h(P.Stack,null,...data.events.map(row=>
-          h(P.Stack,{key:row.id},h(P.Text,null,`${t(statusKey(row.kind,"event"))} · ${money(row)}`),
-            row.amount_basis==="cumulative_refunded"?h(P.Text,null,t("cumulative")):null,
-            h(P.Text,null,h("bdi",{dir:"ltr"},row.timestamp)))))):null):null));
+        // Checkout attempts and payment events are read-only CTMShell tables (data-grid.md); times keep the server offset.
+        data.checkouts.length?h(Shell.Table,{label:t("attempts"),rows:data.checkouts,narrow:"auto",columns:[
+          {title:t("state"),field:"state",render:row=>t(statusKey(row.state,"checkout"))},
+          {title:t("version"),field:"version",type:"number",render:row=>row.version},
+          {title:t("time"),field:"timestamp",render:row=>row.timestamp}]}):null,
+        data.events.length?h(Shell.Table,{label:t("events"),rows:data.events,narrow:"auto",columns:[
+          {title:t("event"),field:"kind",render:row=>t(statusKey(row.kind,"event"))},
+          {title:t("amount"),field:"amount_minor",type:"number",render:row=>money(row)},
+          {title:t("basis"),field:"amount_basis",render:row=>row.amount_basis==="cumulative_refunded"?t("cumulative"):t("single")},
+          {title:t("time"),field:"timestamp",render:row=>row.timestamp}]}):null):null));
   }
   window.CTMApplicantPayments={validProjection,statusKey,PaymentHistory};
 })();
