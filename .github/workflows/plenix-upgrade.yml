@@ -13,7 +13,7 @@ on:
         description: 'Plenix version (default: latest)'
         required: false
   repository_dispatch:
-    types: [plenix-release]   # PDS release workflow can call this for an instant upgrade
+    types: [plenix-release]   # sent by the PDS release agent through the PDS GitHub App (D-0027)
 
 permissions:
   contents: write
@@ -50,6 +50,9 @@ jobs:
     env:
       CTM_TEST_DATABASE_URL: postgres://ctm_validation:ci-isolated-only@localhost:5432/ctm_validation
       DJANGO_SECRET_KEY: ci-only-not-production
+      # PDS GitHub App (D-0027). The app id is not secret; it only tells the
+      # report step whether the app is set up yet.
+      PDS_APP_ID: ${{ secrets.PDS_APP_ID }}
       # A bot token makes the merge trigger the normal CI/deploy workflows;
       # GITHUB_TOKEN works but its pushes do not start other workflows.
       GH_TOKEN: ${{ secrets.CTM_BOT_TOKEN || secrets.GITHUB_TOKEN }}
@@ -197,17 +200,28 @@ jobs:
           echo "ctm_issue=$ctm_issue" >> "$GITHUB_OUTPUT"
         id: report
 
-      - name: Tell the PDS team (issue in plenix-ds/pds)
-        if: steps.report.outputs.ctm_issue != ''
+      - name: PDS GitHub App not set up yet
+        if: steps.report.outputs.ctm_issue != '' && env.PDS_APP_ID == ''
         env:
-          PDS_TOKEN: ${{ secrets.PDS_ISSUE_TOKEN }}
+          CTM_ISSUE: ${{ steps.report.outputs.ctm_issue }}
+        run: echo "::warning::PDS_APP_ID / PDS_APP_PRIVATE_KEY are not set, so no issue was opened in plenix-ds/pds. The CTM issue is $CTM_ISSUE."
+      - name: Mint a PDS app token (plenix-ds/pds, issues only)
+        id: pds-app
+        if: steps.report.outputs.ctm_issue != '' && env.PDS_APP_ID != ''
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ secrets.PDS_APP_ID }}
+          private-key: ${{ secrets.PDS_APP_PRIVATE_KEY }}
+          owner: plenix-ds
+          repositories: pds
+          permission-issues: write
+      - name: Tell the PDS team (issue in plenix-ds/pds)
+        if: steps.pds-app.outputs.token != ''
+        env:
+          PDS_TOKEN: ${{ steps.pds-app.outputs.token }}
           CTM_ISSUE: ${{ steps.report.outputs.ctm_issue }}
           NEW: ${{ steps.bump.outputs.new }}
         run: |
-          if [ -z "$PDS_TOKEN" ]; then
-            echo "::warning::PDS_ISSUE_TOKEN is not set, so no issue was opened in plenix-ds/pds. The CTM issue is $CTM_ISSUE."
-            exit 0
-          fi
           title="CTM: Plenix $NEW breaks CTM"
           { echo "CTM's automatic upgrade to Plenix **$NEW** failed. Logs, check results and screenshots: $CTM_ISSUE"; echo; cat .issue.md; } > .pds.md
           existing=$(GH_TOKEN="$PDS_TOKEN" gh issue list --repo plenix-ds/pds --state open --search "\"$title\" in:title" --json url --jq '.[0].url // empty')
