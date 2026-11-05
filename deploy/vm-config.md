@@ -142,3 +142,21 @@ The current validation container remains private and uses test settings. It is n
 Application static assets now live in the versioned image at `/srv/ctm/static`; no persistent static volume masks upgrades. Only media persists through the existing uploads bind volume. The no-network init-storage service adjusts the root media directory to UID/GID1000 and0700 before media writers start, without recursively changing existing file owners. Backups restore private media plus the database; static assets are rebuilt from the pinned application image. Inspect existing file ownership separately before adopting any older media tree. No operational volume or database was changed by these source updates.
 
 Tus protocol reference: https://tus.io/protocols/resumable-upload . WebSocket support alone does not implement resumable upload handling; that application endpoint remains planned.
+
+## Releases (D-0013, `.github/workflows/deploy.yml`)
+
+- **Staging** on every merge to `main`: `docker compose -p ctm-staging` with
+  `docker-compose.release.yml` + `docker-compose.staging.yml`, env file
+  `/srv/ctm-staging/.env` (own passwords, no production identity/payment/email
+  secrets), media `/srv/ctm-staging/media`, port `10.0.0.40:8001`, synthetic
+  accounts from `seed_demo` only.
+- **Production** on a tag `vMAJOR.MINOR.PATCH` whose commit is on `main` with
+  every required check green.
+- `deploy/release.sh <staging|production> <sha>`: `pg_dump` to
+  `<state>/backups/pre-deploy-<UTC>.sql.gz` (+ restic media snapshot for
+  production; abort if either fails) -> build images tagged with the commit ->
+  `migrate` as `ctm_owner` -> `up -d` -> health check and running-image check ->
+  on any failure restore the dump and restart the images that were running
+  before (tagged `rollback-<UTC>`). A failed deploy opens a bug for `ctm3-debugger`.
+- Runs on a self-hosted runner on this VM (labels `self-hosted`, `ctm-vm`),
+  guarded by the repository variable `CTM_DEPLOY_READY=true`. Setup checklist: issue #49.

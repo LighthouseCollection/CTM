@@ -1,0 +1,23 @@
+# Staging overlay: `docker compose -p ctm-staging` on the same VM as production.
+# Own database, Redis, search and media (Compose prefixes volumes and networks
+# with the project name), synthetic data only (seed_demo), no host port clashes.
+# Env file: /srv/ctm-staging/.env with its OWN passwords and no production
+# identity, payment or email secrets.
+services:
+  django:
+    ports: !override
+      - "${CTM_STAGING_BIND:-10.0.0.40}:8001:8000"
+    environment:
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,10.0.0.40}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-http://10.0.0.40:8001}
+
+  clamav:
+    ports: !reset []
+
+volumes:
+  uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /srv/ctm-staging/media

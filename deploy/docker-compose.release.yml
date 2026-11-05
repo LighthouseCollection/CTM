@@ -1,0 +1,38 @@
+# Release overlay used by deploy/release.sh (staging and production).
+# Tags every built image with the commit being deployed, so a rollback can
+# restart the previous commit's images without rebuilding.
+services:
+  init-storage:
+    image: ctm-app:${CTM_IMAGE_TAG:?Set CTM_IMAGE_TAG}
+  django:
+    image: ctm-app:${CTM_IMAGE_TAG:?Set CTM_IMAGE_TAG}
+  celery-default:
+    image: ctm-app:${CTM_IMAGE_TAG:?Set CTM_IMAGE_TAG}
+  celery-beat:
+    image: ctm-app:${CTM_IMAGE_TAG:?Set CTM_IMAGE_TAG}
+  celery-documents:
+    image: ctm-docworker:${CTM_IMAGE_TAG:?Set CTM_IMAGE_TAG}
+  celery-media:
+    image: ctm-mediaworker:${CTM_IMAGE_TAG:?Set CTM_IMAGE_TAG}
+
+  # One-off: `docker compose --profile release run --rm migrate`.
+  # Migrations run as the owner role; the runtime roles are RLS-subject.
+  migrate:
+    profiles: [release]
+    image: ctm-app:${CTM_IMAGE_TAG:?Set CTM_IMAGE_TAG}
+    restart: "no"
+    user: "1000:1000"
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER:-ctm_owner}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ctm}"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ctm-internal
