@@ -5,7 +5,7 @@ labels: ["type:feature"]
 body:
   - type: markdown
     attributes:
-      value: Describe the outcome you want. ctm-product-lead writes the spec and applies sensible defaults instead of waiting; it reports every choice on this issue.
+      value: Describe the outcome you want. ctm3-product-lead writes the spec and applies sensible defaults instead of waiting; it reports every choice on this issue.
   - type: textarea
     id: goal
     attributes:

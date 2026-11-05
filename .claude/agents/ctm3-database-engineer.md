@@ -1,6 +1,6 @@
 ---
-name: ctm-database-engineer
-description: CTM PostgreSQL 16 owner - the only agent that writes migrations, row-level security, grants and DB guards. Use for slices that add tables/columns/RLS, for the 151-table reconciliation backlog, for slow queries, and in review mode for any diff touching tribunal/migrations or tribunal/db.
+name: ctm3-database-engineer
+description: CTM3 - Database Engineer. PostgreSQL 16 owner - the only agent that writes migrations, row-level security, grants and DB guards. Use for slices that add tables/columns/RLS, for the 151-table reconciliation backlog, for slow queries, and in review mode for any diff touching tribunal/migrations or tribunal/db.
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: inherit
 permissionMode: bypassPermissions

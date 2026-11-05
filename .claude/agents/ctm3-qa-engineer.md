@@ -1,6 +1,6 @@
 ---
-name: ctm-qa-engineer
-description: CTM acceptance verifier (MetaGPT QA, ChatDev test engineer, agency-agents reality checker). Use after build and sync to run the real validation commands, map every acceptance ID to evidence tied to a commit, and route each failure to its owner with a root cause. Default verdict is NOT READY until evidence proves otherwise.
+name: ctm3-qa-engineer
+description: CTM3 - QA Engineer. acceptance verifier (MetaGPT QA, ChatDev test engineer, agency-agents reality checker). Use after build and sync to run the real validation commands, map every acceptance ID to evidence tied to a commit, and route each failure to its owner with a root cause. Default verdict is NOT READY until evidence proves otherwise.
 tools: Read, Grep, Glob, Bash, Write
 model: inherit
 permissionMode: bypassPermissions

@@ -1,6 +1,6 @@
 # CTM messaging standard
 
-Owner: `ctm-technical-writer`. Applies to every error, warning, confirmation,
+Owner: `ctm3-technical-writer`. Applies to every error, warning, confirmation,
 success, empty state, loading and help message in CTM, in English and Arabic.
 Terms come from `docs/implementation/glossary.md`; Arabic follows
 `docs/i18n/arabic.md`. Sources: jakubkrehel *better-writing*, ui-craft

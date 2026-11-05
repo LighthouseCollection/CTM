@@ -2,7 +2,7 @@
 contract: CTM design contract
 version: 1.0
 date: 2026-11-04
-owner: ctm-design-director
+owner: ctm3-design-director
 visual_language: Plenix (PDS) from the CDN, version pinned in ctm/settings.py
 languages: [en, ar]
 directions: [ltr, rtl]

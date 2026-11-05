@@ -8,8 +8,8 @@ it must be written down.
 
 **Rule:** a new field, store, queue, log, index, cache or outside service that
 holds such data needs a row here before merge (checked by
-`ctm-security-reviewer`, rule 11a). Rows are filled from code at a named
-commit; `ctm-database-engineer` and `ctm-drift-auditor` keep it current.
+`ctm3-security-reviewer`, rule 11a). Rows are filled from code at a named
+commit; `ctm3-database-engineer` and `ctm3-drift-auditor` keep it current.
 
 | Data | Category | Stores (incl. derived) | Purpose | Who can read | Retention | Leaves CTM? | Status |
 |---|---|---|---|---|---|---|---|

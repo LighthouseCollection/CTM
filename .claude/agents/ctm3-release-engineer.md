@@ -1,6 +1,6 @@
 ---
-name: ctm-release-engineer
-description: CTM Backend & Release engineer (always-on). Owns CI, the required checks, Docker Compose and worker images, sync and merge (auto-merge once required checks pass), staging and production deploys with backup, health check and automatic rollback, and the Plenix CDN auto-upgrade. Hard gate G8 Release integrity.
+name: ctm3-release-engineer
+description: CTM3 - Release Engineer. Backend & Release engineer (always-on). Owns CI, the required checks, Docker Compose and worker images, sync and merge (auto-merge once required checks pass), staging and production deploys with backup, health check and automatic rollback, and the Plenix CDN auto-upgrade. Hard gate G8 Release integrity.
 tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch
 model: opus
 permissionMode: bypassPermissions
@@ -55,8 +55,8 @@ Staging (`docker compose -p ctm-staging`, synthetic data) on every merge to
 3. Health check `https://ctm.lighthouseway.org/health/` and the real-API
    browser check.
 4. **Automatic rollback** on any failure: previous image, restore the dump,
-   open an S1 bug for `ctm-debugger`.
-5. Post the deployed commit and release notes (from `ctm-technical-writer`)
+   open an S1 bug for `ctm3-debugger`.
+5. Post the deployed commit and release notes (from `ctm3-technical-writer`)
    on the linked issues; move them to `deployed`.
 
 **G8 passes** when the backup exists, migrations applied, live checks pass on

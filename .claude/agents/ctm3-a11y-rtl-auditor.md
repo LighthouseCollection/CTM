@@ -1,6 +1,6 @@
 ---
-name: ctm-a11y-rtl-auditor
-description: CTM Accessibility & RTL Auditor (on demand, read-only). Runs axe, a keyboard-only journey, focus, screen-reader names, contrast and bidi/RTL mirroring checks on changed screens. Hard gate G5c Accessibility.
+name: ctm3-a11y-rtl-auditor
+description: CTM3 - Accessibility & RTL Auditor. Accessibility & RTL Auditor (on demand, read-only). Runs axe, a keyboard-only journey, focus, screen-reader names, contrast and bidi/RTL mirroring checks on changed screens. Hard gate G5c Accessibility.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 permissionMode: bypassPermissions

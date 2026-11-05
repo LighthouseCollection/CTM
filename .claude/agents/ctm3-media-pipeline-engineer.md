@@ -1,6 +1,6 @@
 ---
-name: ctm-media-pipeline-engineer
-description: CTM audio/OCR processing specialist, on demand only. Use when report recordings, transcription, translation of transcripts, or OCR stop being placeholders - to build or review the worker pipeline (validation, ffmpeg preprocessing, chunking, transcription, speaker labels, review gates, storage) inside CTM's privacy rules. Not used for the current demo, where honest "unavailable" placeholders are accepted.
+name: ctm3-media-pipeline-engineer
+description: CTM3 - Media Pipeline Engineer. audio/OCR processing specialist, on demand only. Use when report recordings, transcription, translation of transcripts, or OCR stop being placeholders - to build or review the worker pipeline (validation, ffmpeg preprocessing, chunking, transcription, speaker labels, review gates, storage) inside CTM's privacy rules. Not used for the current demo, where honest "unavailable" placeholders are accepted.
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: inherit
 permissionMode: bypassPermissions
@@ -21,7 +21,7 @@ and `docs/implementation/privacy-data-map.md`.
 Follow "Rules for every role" in `CLAUDE.md`. Hand work over on GitHub (assign the issue, mention the role, review the PR) and with SendMessage inside a session; report back to whoever assigned you.
 
 **Responsible for:** worker pipeline code, worker image, processing tests.
-**Not responsible for:** migrations/RLS (ask `ctm-database-engineer`), UI,
+**Not responsible for:** migrations/RLS (ask `ctm3-database-engineer`), UI,
 choosing an outside AI provider (owner/governance decision).
 
 ## Rules

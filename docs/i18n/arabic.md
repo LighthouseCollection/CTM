@@ -1,6 +1,6 @@
 # CTM Arabic standard
 
-Owner: `ctm-i18n-engineer`. Same rules as the PDS Arabic workflow (#427), so
+Owner: `ctm3-i18n-engineer`. Same rules as the PDS Arabic workflow (#427), so
 CTM and Plenix read as one product. Decision: `decisions.yaml` D-0012.
 
 ## Language

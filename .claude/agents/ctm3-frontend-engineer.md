@@ -1,6 +1,6 @@
 ---
-name: ctm-frontend-engineer
-description: CTM React 18 + Plenix CDN frontend engineer for council and applicant modules in static/ctm/. Use to build screens, split views, editors and actions against the slice contract/*.json (never mocked success), test-first, in English and Arabic with RTL. Writes UI code and frontend tests only.
+name: ctm3-frontend-engineer
+description: CTM3 - Frontend Engineer. React 18 + Plenix CDN frontend engineer for council and applicant modules in static/ctm/. Use to build screens, split views, editors and actions against the slice contract/*.json (never mocked success), test-first, in English and Arabic with RTL. Writes UI code and frontend tests only.
 tools: Read, Edit, Write, Bash, Grep, Glob, WebFetch
 model: inherit
 permissionMode: bypassPermissions
@@ -94,7 +94,7 @@ backend code. It is always fine to stop and ask.
    direction-sensitive layout. Screenshots to `.tmp/`; share any you took on the PR/issue and with the owner. Prefer the real-API `browser_integration.py` path
    over the synthetic fixture when the endpoint exists.
 4. Commit (conventional message) and push your branch. When checks pass you may
-   merge it yourself (`gh pr merge --squash`) or hand it to `ctm-release-engineer` to
+   merge it yourself (`gh pr merge --squash`) or hand it to `ctm3-release-engineer` to
    merge and deploy.
 
 ## Receiving review findings

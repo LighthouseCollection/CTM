@@ -9,10 +9,10 @@ Full lifecycle: `docs/implementation/sdlc.md`. Sources: MetaGPT (artifact
 schemas), ChatDev (loop caps, lessons file), obra/superpowers (writing-plans,
 subagent-driven development, verification), agency-agents (roles).
 
-## Rules for whoever runs this (lead session or `ctm-delivery-lead`)
+## Rules for whoever runs this (lead session or `ctm3-delivery-lead`)
 
 - **Never stop to wait for the owner.** Intent questions become a decision card
-  with the recommended option applied (`ctm-product-lead`, `decisions.yaml`).
+  with the recommended option applied (`ctm3-product-lead`, `decisions.yaml`).
   Church law, fees, deadlines and institutional wording are never invented:
   if no source exists, the item is parked with a decision issue and the rest
   continues.
@@ -31,8 +31,8 @@ subagent-driven development, verification), agency-agents (roles).
 
 | Type / size | Route |
 |---|---|
-| BUG | `ctm-debugger` reproduces as a failing test -> owning engineer -> G5 gates by path |
-| XS (copy, one-liner) | engineer -> fast gates -> `ctm-code-reviewer` |
+| BUG | `ctm3-debugger` reproduces as a failing test -> owning engineer -> G5 gates by path |
+| XS (copy, one-liner) | engineer -> fast gates -> `ctm3-code-reviewer` |
 | S (one control on an existing API) | engineer -> QA + code review + path gates |
 | M (workflow slice) | phases 1-8 below |
 | L (new domain or schema) | split into M slices, backend contract first |
@@ -43,41 +43,41 @@ subagent-driven development, verification), agency-agents (roles).
    `origin/main`; `docs/implementation/slices/<id>/ledger.md`; baseline the
    fast gates so pre-existing failures are recorded; read `docs/lessons.md`
    and the matching `review-points.md` entries.
-1. **Spec (G1)** `ctm-product-lead` -> `brief.md` (P0/P1/P2, non-goals,
+1. **Spec (G1)** `ctm3-product-lead` -> `brief.md` (P0/P1/P2, non-goals,
    acceptance IDs, no open "Anything unclear").
-2. **Design (G2)** `ctm-design-director` with `ctm-screen-shape` -> screen spec
+2. **Design (G2)** `ctm3-design-director` with `ctm-screen-shape` -> screen spec
    fitting `DESIGN.md`, template and state matrix. Pictures only if the owner asked.
-3. **Contract + plan (G3, G4)** `ctm-solution-architect` -> `design.md`,
+3. **Contract + plan (G3, G4)** `ctm3-solution-architect` -> `design.md`,
    `contract/*.json`, ADR for any new table, permission row or public API
-   field; `ctm-delivery-lead` -> `plan.md` with owners, conflict pre-scan and
+   field; `ctm3-delivery-lead` -> `plan.md` with owners, conflict pre-scan and
    merge order. Run `check_slice_trace.cjs <id>`. Builder check: a fresh
-   `ctm-code-reviewer` (sonnet) lists what a builder would have to guess; every
+   `ctm3-code-reviewer` (sonnet) lists what a builder would have to guess; every
    item gets an answer or a ruling.
 4. **Build.** One engineer per area in its own worktree (database -> backend ->
    frontend; frontend may start against `contract/*.json`). Test-first
    (`ctm-tdd`). Statuses DONE / DONE_WITH_CONCERNS / BLOCKED / NEEDS_CONTEXT;
-   BLOCKED gets more context, a stronger model, a split, `ctm-debugger` or a
+   BLOCKED gets more context, a stronger model, a split, `ctm3-debugger` or a
    design fix, never an unchanged retry. Review after each task.
-5. **Verify (G5).** Sync on `origin/main` first (`ctm-release-engineer`). Then in
+5. **Verify (G5).** Sync on `origin/main` first (`ctm3-release-engineer`). Then in
    parallel, read-only:
 
    | Gate | Role | When |
    |---|---|---|
-   | G5a code | `ctm-code-reviewer` | always |
-   | G5b visual | `ctm-design-critic` | `static/ctm/*`, `tribunal/templates/` |
-   | G5c a11y + RTL | `ctm-a11y-rtl-auditor` | any UI change |
-   | G5d behaviour | `ctm-qa-engineer` | always |
-   | G5e security + privacy | `ctm-security-reviewer` | policy, auth, db, migrations, services, APIs, files, search, messages, medical, identity, payments |
-   | DB review | `ctm-database-engineer` | migrations, RLS, grants |
+   | G5a code | `ctm3-code-reviewer` | always |
+   | G5b visual | `ctm3-design-critic` | `static/ctm/*`, `tribunal/templates/` |
+   | G5c a11y + RTL | `ctm3-a11y-rtl-auditor` | any UI change |
+   | G5d behaviour | `ctm3-qa-engineer` | always |
+   | G5e security + privacy | `ctm3-security-reviewer` | policy, auth, db, migrations, services, APIs, files, search, messages, medical, identity, payments |
+   | DB review | `ctm3-database-engineer` | migrations, RLS, grants |
 
    Fix loop: one brief per engineer listing every blocker
    (`Attempt n/limit | ID | expected | actual | evidence | files`); re-run only
    the gates that raised blockers, in re-review mode. Limits: 2 rounds for
-   reviews, 3 for QA, 5 per task, then `ctm-delivery-lead` re-plans. ENV
+   reviews, 3 for QA, 5 per task, then `ctm3-delivery-lead` re-plans. ENV
    failures never consume a round. Minor findings go to the ledger.
-6. **Localize + document (G6, G7)** `ctm-i18n-engineer` (EN/AR, proposals file)
-   and `ctm-technical-writer` (messages, guides, release notes). Overlaps 4-5.
-7. **Integrate.** `ctm-release-engineer`: PR with the evidence table and the
+6. **Localize + document (G6, G7)** `ctm3-i18n-engineer` (EN/AR, proposals file)
+   and `ctm3-technical-writer` (messages, guides, release notes). Overlaps 4-5.
+7. **Integrate.** `ctm3-release-engineer`: PR with the evidence table and the
    check screenshots, `check_slice_trace.cjs <id> --require-evidence`,
    `gh pr merge --squash --auto --delete-branch`.
 8. **Release (G8).** Staging on merge; production on tag: backup -> build ->
@@ -85,7 +85,7 @@ subagent-driven development, verification), agency-agents (roles).
 
 ## Record
 
-`ctm-drift-auditor` (sonnet) in slice mode: status entry, review points from
+`ctm3-drift-auditor` (sonnet) in slice mode: status entry, review points from
 confirmed blockers, screen decisions, spec gaps, glossary, privacy rows,
 Plenix requests. Lessons that cost a round go to `docs/lessons.md`.
 
