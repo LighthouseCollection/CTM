@@ -30,7 +30,9 @@ def test_workflow_demo_is_repeatable_private_and_delivery_free(
     count = Case.objects.count()
     file_count = FileVersion.objects.count()
     call_command("seed_workflow_demo")
-    assert Case.objects.count() == count == 11
+    from tribunal.management.commands.seed_workflow_demo import AGENDA_COUPLES, COUPLES
+
+    assert Case.objects.count() == count == len(COUPLES) + len(AGENDA_COUPLES)
     assert FileVersion.objects.count() == file_count
     assert Account.objects.filter(
         role="president", email="bishopserapion@lacopts.org"
@@ -160,3 +162,87 @@ def test_workflow_demo_rerun_supersedes_broken_select_schema_for_drafts(
     assert current.pk == draft.questionnaire_id and current.number == broken.number + 1
     call_command("seed_workflow_demo")
     assert QuestionnaireVersion.objects.filter(purpose="petition").count() == current.number
+
+
+def _run_seed(monkeypatch):
+    """Use the guarded live path on PostgreSQL and the isolated path on SQLite."""
+    if connection.vendor == "postgresql":
+        call_command(
+            "seed_workflow_demo",
+            live_fictitious=True,
+            confirmation="FICTITIOUS-DEMO-DATA-ONLY",
+        )
+    else:
+        monkeypatch.setenv("CTM_SYNTHETIC_DEMO", "true")
+        call_command("seed_workflow_demo")
+
+
+@pytest.mark.django_db
+def test_seed_adds_agenda_cases_and_case_text_to_an_already_seeded_database(
+    monkeypatch, settings, tmp_path
+):
+    from tribunal import models as m
+    from tribunal.management.commands import seed_workflow_demo as seed
+
+    settings.MEDIA_ROOT = tmp_path
+    extras = list(seed.AGENDA_COUPLES)
+    # First run reproduces a database seeded before the extra agenda cases existed.
+    monkeypatch.setattr(seed, "AGENDA_COUPLES", [])
+    _run_seed(monkeypatch)
+    numbers = [f"20261020-{len(seed.COUPLES) + 1 + i:02d}" for i in range(len(extras))]
+    assert not Case.objects.filter(number__in=numbers).exists()
+    today = timezone.localdate()
+    archived = CouncilSession.objects.filter(state="closed")
+    archived_agenda = sorted(
+        AgendaItem.objects.filter(session__in=archived).values_list("id", "part", "position", "state")
+    )
+
+    monkeypatch.setattr(seed, "AGENDA_COUPLES", extras)
+    _run_seed(monkeypatch)
+    current = CouncilSession.objects.get(date=today, state="planned")
+    upcoming = list(CouncilSession.objects.filter(state="draft", date__gt=today).order_by("date")[:2])
+    new_items = AgendaItem.objects.filter(case__number__in=numbers).select_related("case")
+    assert new_items.count() == len(extras) == 22
+    on_current = new_items.filter(session=current)
+    assert on_current.filter(part=2).count() == 8
+    assert on_current.filter(part=2, case__assigned_member__isnull=False).count() == 8
+    assert on_current.filter(part=1).count() == 6
+    assert on_current.filter(part=1, case__assigned_member__isnull=True).count() == 6
+    for session in upcoming:
+        assert 3 <= new_items.filter(session=session).count() <= 5
+        assert {1, 2} == set(new_items.filter(session=session).values_list("part", flat=True))
+    assert sorted(
+        AgendaItem.objects.filter(session__in=archived).values_list("id", "part", "position", "state")
+    ) == archived_agenda
+
+    # Every new case carries a long, case-specific statement and filled tabs.
+    paragraphs = []
+    for case in Case.objects.filter(number__in=numbers):
+        app = case.applications.get(kind="petition")
+        assert app.status == "accepted" and app.attachments.count() == 5
+        answers = app.revisions.get(number=1).answers
+        statement = answers["statement"].split("\n\n")
+        assert len(statement) >= 5
+        assert set(answers["grounds"]) <= {"infidelity", "abandonment", "abuse", "faith", "addiction", "concealment"}
+        paragraphs.extend(statement)
+        notes = m.NoteRevision.objects.filter(note__proceeding__case=case)
+        messages = m.Message.objects.filter(case=case)
+        assert notes.count() >= 1 and messages.count() >= 4
+        assert messages.filter(sender__role="applicant").exists()
+        assert messages.exclude(sender__role="applicant").exists()
+        assert m.CallRecord.objects.filter(case=case).exists()
+        if case.assigned_member_id:
+            assert notes.filter(actor=case.assigned_member).count() >= 2
+            assert m.ReportRevision.objects.filter(report__request__case=case).exclude(observations="").exists()
+    assert len(paragraphs) == len(set(paragraphs))
+
+    # The original open cases gained notes, messages and fuller hearing outcomes.
+    original = Case.objects.get(number="20261020-05")
+    assert m.NoteRevision.objects.filter(note__proceeding__case=original).count() >= 3
+    assert m.Message.objects.filter(case=original).count() >= 4
+    assert m.HearingOutcome.objects.filter(hearing__agenda__case=original).count() >= 2
+
+    counted = [m.Case, m.Message, m.NoteRevision, m.CallRecord, m.HearingOutcome, m.ReportRevision, AgendaItem]
+    before = [model.objects.count() for model in counted]
+    _run_seed(monkeypatch)
+    assert [model.objects.count() for model in counted] == before
