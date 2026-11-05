@@ -1,21 +1,67 @@
-/* Shared integration of the documented Plenix table and split-view components. */
+/* CTMShell: the shared collection foundation on the Plenix 0.86.0 page templates (#97 slice 1, D-0034).
+ *
+ * Every CTM list goes through these three components. Names and props of the earlier API are unchanged;
+ * everything listed under "new" is optional, so existing callers keep working as they are.
+ *
+ * CTMShell.Table — one DataGrid (docs: data-grid.md).
+ *   label, rows, columns, selected, onSelect, empty, className, isStatic  (unchanged)
+ *   new:
+ *   rowMenu     [{ label, icon, onSelect(row), danger, disabled, separator }] or (row) => that list: the row's
+ *               menu (its button at the row end, or right-click). Button columns (field "open_action"/"actions",
+ *               kind "actions") keep working beside it, so callers can move to the menu one table at a time.
+ *   narrow      "auto" (default now: a table while the columns fit, else the row cards) | "table" (the old fixed
+ *               table, the escape hatch for a dense specialist grid) | "list". Unset, a grid that still has a
+ *               button column (kind "actions" or a field named actions / *_action(s)) stays "table", because
+ *               0.86.0 cannot measure buttons and would cut them off; move them to rowMenu to get the row cards.
+ *   typeIcons   the column type icon before each header title (default now: true)
+ *   loading     true: Skeleton rows hold the grid's place while its data loads
+ *   openKey     the open row (aria-current); default: selected
+ *   template, layout, keyColumns   the row card slots (data-grid.md "Row cards")
+ *   cardCount   the plural count over the row cards, e.g. { one: "{n} case", other: "{n} cases" } (EN/AR from callers)
+ *   grid        more documented DataGrid props, passed as given (mode, pageSize, selectable, onSelectionChange,
+ *               storageKey, strings, unread, …); they win over the defaults above
+ *
+ * CTMShell.Workspace — the list and the chosen item side by side: the SplitWorkspace template
+ * (listing-page.md "SplitWorkspace", master-detail-workspace.md).
+ *   label, rows, columns, children, empty, selectionPrompt, selected, onSelect, showDetailWhenEmpty,
+ *   orientation, toolbar  (unchanged; toolbar is any node above both panes)
+ *   new: actions (the reading pane's actions row, shown while an item is open), commandBar, search, and the
+ *   Table props above (rowMenu, narrow, typeIcons, loading, template, layout, keyColumns, cardCount, grid).
+ *
+ * CTMShell.Listing — a full-room list: the ListingPage template (listing-page.md "ListingPage").
+ *   label, rows, columns, empty, className, onOpen(row), toolbar, commandBar, search, and the Table props above.
+ *
+ * Shared new props of Workspace and Listing:
+ *   commandBar  CommandBar props (command-bar.md): { actions, quickFilters, count, status, end, selection,
+ *               strings, … }; label defaults to the list's label. Drawn above the list (and the detail).
+ *   search      { text(row) => string, placeholder, filters, quick, storageKey, sort }: a CommandBarSearch (and
+ *               a FilterPanel when filters is true) on one useCollectionView state with the grid
+ *               (use-collection-view.md). placeholder and every visible word come from the caller (EN/AR).
+ *
+ * Why the template bodies and not <SplitWorkspace>/<ListingPage> themselves: in 0.86.0 both render their own
+ * AppShell (a 100dvh frame with a second <main> and skip link). CTM already sits inside one AppShell (app.js),
+ * so CTMShell draws the same parts the templates draw inside it: toolbar, then SplitView(DataGrid,
+ * ReadingPane with an EmptyState), or toolbar then the full-room DataGrid. Request: plenix-requests.md PLX-012.
+ */
 (() => {
   const R = window.React, P = window.Plenix, h = R.createElement;
-  function Table({ label, rows, columns, selected, onSelect, empty, className, isStatic = true }) {
-    // Every CTM collection keeps native grid controls, including read-only records.
-    // Read-only data must not disable column resizing, sorting or header menus.
-    let gridRows = rows;
+
+  // Keeps domain fields intact for callbacks; scalar and person cells are projected into native pill fields.
+  // cache (optional, { records: WeakMap, last }): reuses the projected copy of a record while its values are
+  // unchanged, and the previous data array while its rows are unchanged, because the 0.86.0 grid does not
+  // re-apply a changed filter (useCollectionView search) when its data array is new (plenix-requests PLX-013).
+  function project(rows, columns, cache) {
+    let gridRows = rows || [];
     const gridColumns = (columns || []).map((column, index) => {
       const render = column.render;
       const isAction = column.kind === "actions" || /^(open_action|actions?)$/.test(column.field);
       const type = column.type || (/^(applicant|respondent|manager|.*_name)$/.test(column.field) ? "person"
         : /^(.*_count|count|total|position|married_years)$/.test(column.field) ? "number" : "text");
-      const values = render && !isAction ? rows.map(record => render(record)) : null;
+      const values = render && !isAction ? gridRows.map(record => render(record)) : null;
       const scalar = values && values.every(value => value == null || ["string", "number", "boolean"].includes(typeof value));
       const native = !isAction && (scalar || (!render && type === "person"));
       let projected = {};
       if (native) {
-        // Keep domain fields intact for callbacks and richer neighboring cells.
         const field = "__ctm_display_" + index;
         gridRows = gridRows.map((record, rowIndex) => {
           let value = scalar ? values[rowIndex] : record[column.field];
@@ -52,36 +98,123 @@
         resizable: column.resizable !== false,
       };
     });
-    const common = {
-      label, data: gridRows, columns: gridColumns, index: "id", className,
-      density: "compact", cells: "pill", typeIcons: false, wrapHeaders: false,
-      narrow: "table", empty,
-    };
+    if (cache && gridRows !== rows) gridRows = gridRows.map((row, i) => {
+      const source = rows[i], old = source && typeof source === "object" ? cache.records.get(source) : undefined;
+      const same = (a, b) => Object.is(a, b) || (a && b && typeof a === "object" && typeof b === "object" && a.name === b.name && a.gender === b.gender);
+      if (old && Object.keys(row).length === Object.keys(old).length && Object.keys(row).every((k) => same(row[k], old[k]))) return old;
+      if (source && typeof source === "object") cache.records.set(source, row);
+      return row;
+    });
+    if (cache) {
+      const last = cache.last;
+      if (last && last.length === gridRows.length && gridRows.every((row, i) => row === last[i])) gridRows = last;
+      cache.last = gridRows;
+    }
+    return { gridRows, gridColumns };
+  }
+
+  // A column of row buttons (Open, Edit, Delete): the actions column kinds and fields named *_action(s).
+  const buttonColumn = (column) => column.kind === "actions" || /(^|_)actions?$/.test(column.field || "");
+
+  // Skeleton rows in the grid's place while its data loads (skeleton.md); the label names what is loading.
+  function Loading({ label, className }) {
+    return h(P.Stack, { gap: "sm", className, role: "status", "aria-busy": "true", "aria-label": label },
+      [0, 1, 2, 3, 4, 5].map(key => h(P.Skeleton, { key, height: "36px" })));
+  }
+
+  function Table({ label, rows, columns, selected, onSelect, empty, className, isStatic = true,
+    rowMenu, narrow, typeIcons = true, loading = false, openKey, template, layout, keyColumns, cardCount,
+    grid, projected }) {
+    // Every CTM collection keeps native grid controls, including read-only records (isStatic is kept for
+    // callers; read-only data must not disable column resizing, sorting or header menus).
+    if (loading) return h(Loading, { label, className });
+    const { gridRows, gridColumns } = projected || project(rows, columns);
+    // 0.86.0 sizes "auto" columns from their measured text; a column of row buttons has no text to measure, so
+    // the title takes its room and the buttons are cut off. Such grids keep the fixed table until their
+    // buttons move to rowMenu (then they get the row cards); an explicit narrow always wins.
+    const layoutMode = narrow || ((columns || []).some(buttonColumn) ? "table" : "auto");
+    const open = openKey !== undefined ? openKey : selected === undefined ? undefined : selected ?? null;
     return h(P.DataGrid, {
-      ...common, mode: "fill",
-      headerMenu: true, rowMenuButton: false,
+      label, data: gridRows, columns: gridColumns, index: "id", className,
+      density: "compact", cells: "pill", typeIcons, wrapHeaders: false,
+      narrow: layoutMode, empty, mode: "fill", headerMenu: true,
+      rowMenu, rowMenuButton: !!rowMenu,
+      ...(open !== undefined ? { openKey: open } : {}),
+      ...(template ? { template } : {}), ...(layout ? { layout } : {}), ...(keyColumns ? { keyColumns } : {}),
+      ...(cardCount ? { strings: { cardCount } } : {}),
       selected: selected ? [selected] : [],
       onRowClick: onSelect ? (row) => onSelect(row.id) : undefined,
+      ...grid,
     });
   }
 
-  function Workspace({ label, rows, columns, children, empty, selectionPrompt, selected, onSelect, showDetailWhenEmpty = false, orientation = "side-by-side", toolbar = null }) {
+  const tableProps = ({ rowMenu, narrow, typeIcons, loading, openKey, template, layout, keyColumns, cardCount, grid }) =>
+    ({ rowMenu, narrow, typeIcons, loading, openKey, template, layout, keyColumns, cardCount, grid });
+
+  // The command bar above a collection: the caller's commands, and the search and filters on one
+  // useCollectionView state with the grid. Rendered only when a search is asked for, so the hook always runs.
+  function SearchedCollection({ label, search, commandBar, rows, columns, render }) {
+    const cache = R.useRef(null);
+    if (!cache.current) cache.current = { records: new WeakMap(), last: null };
+    const projected = project(rows, columns, cache.current);
+    const fields = projected.gridColumns.map(column => ({
+      value: column.field, label: column.title, kind: column.type, groupable: column.groupable,
+      get: row => { const value = row[column.field]; return value && typeof value === "object" ? value.name ?? value.label : value; },
+    }));
+    const view = P.useCollectionView(fields, {
+      text: search.text, quick: search.quick, storageKey: search.storageKey, sort: search.sort, data: projected.gridRows,
+    });
+    const bar = h(P.CommandBar, {
+      label,
+      ...commandBar,
+      find: h(R.Fragment, null,
+        h(P.CommandBarSearch, { ...view.searchProps, placeholder: search.placeholder }),
+        search.filters ? h(P.FilterPanel, view.filterProps) : null,
+        commandBar?.find || null),
+    });
+    return render(bar, { projected, grid: view.tableProps });
+  }
+
+  function collection({ label, search, commandBar, toolbar, rows, columns }, draw) {
+    if (search) return h(SearchedCollection, { label, search, commandBar, rows, columns,
+      render: (bar, extra) => draw(toolbar ? h(R.Fragment, null, toolbar, bar) : bar, extra) });
+    const bar = toolbar || (commandBar ? h(P.CommandBar, { label, ...commandBar }) : null);
+    return draw(bar, {});
+  }
+
+  function Workspace(props) {
+    const { label, rows: allRows, columns, children, empty, selectionPrompt, selected, onSelect, showDetailWhenEmpty = false,
+      orientation = "side-by-side", toolbar = null, actions = null } = props;
+    const rows = allRows || [];
     const [own, select] = R.useState(null);
     const id = selected === undefined ? own : selected;
     const chosen = rows.find((row) => row.id === id);
     const emptyDetail = rows.length
       ? selectionPrompt || (document.documentElement.lang === "ar" ? "اختر عنصرًا" : "Select an item")
       : empty || label;
-    return h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
-      toolbar,
+    const showing = !!chosen || showDetailWhenEmpty;
+    return collection({ ...props, toolbar, rows }, (bar, extra) => h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
+      bar,
       h(P.SplitView, {
-      label, firstLabel: label, orientation, defaultSize: orientation === "stacked" ? 320 : undefined,
-      first: h(Table, { label, rows, columns, selected: id, onSelect: onSelect || select, empty }),
-      second: h(P.ReadingPane, { label: chosen?.title || chosen?.name || label },
-        (chosen || showDetailWhenEmpty) ? (typeof children === "function" ? children(chosen) : children) : h(P.EmptyState, { title: emptyDetail }),
-      ),
-    }),
-    );
+        label, firstLabel: label, orientation, defaultSize: orientation === "stacked" ? 320 : undefined,
+        first: h(Table, { ...tableProps(props), label, rows, columns, selected: id, onSelect: onSelect || select, empty,
+          projected: extra.projected, grid: extra.grid ? { ...extra.grid, ...props.grid } : props.grid }),
+        second: h(P.ReadingPane, { label: chosen?.title || chosen?.name || label, actions: showing ? actions : null,
+          empty: h(P.EmptyState, { title: emptyDetail }) },
+          showing ? (typeof children === "function" ? children(chosen) : children) : null),
+      }),
+    ));
   }
-  window.CTMShell = Object.freeze({ Table, Workspace });
+
+  function Listing(props) {
+    const { label, rows, columns, empty, className, onOpen, selected } = props;
+    return collection(props, (bar, extra) => h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
+      bar,
+      h(Table, { ...tableProps(props), label, rows, columns, empty, className, selected,
+        onSelect: onOpen ? (rowId) => onOpen((rows || []).find((row) => row.id === rowId)) : undefined,
+        projected: extra.projected, grid: extra.grid ? { ...extra.grid, ...props.grid } : props.grid }),
+    ));
+  }
+
+  window.CTMShell = Object.freeze({ Table, Workspace, Listing });
 })();

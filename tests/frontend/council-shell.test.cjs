@@ -10,7 +10,9 @@ test("static table headers retain their full label on hover", () => {
   const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
   assert.doesNotMatch(css, /\.plx-table__title > \.plx-table__type-icon/);
   assert.doesNotMatch(css, /--plx-comp-data-grid-context-hover-reserve/);
-  assert.match(shellLayout, /typeIcons: false/);
+  // 0.86.0 DataGrid defaults (#97 slice 1): type icons on, row cards on phones.
+  assert.match(shellLayout, /typeIcons = true/);
+  assert.match(shellLayout, /buttonColumn\) \? "table" : "auto"/);
 });
 
 test("shared person pills prefer recorded gender over the generic person treatment", () => {
