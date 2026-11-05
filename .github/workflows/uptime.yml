@@ -2,6 +2,7 @@ name: CTM live site check
 # Catches an outage between deploys (#63): every 30 minutes a GitHub runner
 # asks the public site for /, /health/ and /version.json. While any of them
 # fails, one open issue labelled `site-down` tracks it; it closes on recovery.
+# /version.json only warns on 404 (a release older than #59); 5xx or no answer fails.
 on:
   schedule:
     - cron: '7,37 * * * *'
@@ -40,6 +41,11 @@ jobs:
               sleep 10
             done
             echo "$path -> $code" | tee -a "$GITHUB_STEP_SUMMARY"
+            # A 404 on /version.json means the live release predates it (#59), not an outage.
+            if [[ "$path" == /version.json && "$code" == 404 ]]; then
+              echo "::warning::/version.json 404: the live release predates it; deploy to fix"
+              continue
+            fi
             [[ "$code" == 200 ]] || failed="$failed \`$path\` $code,"
           done
           echo "failed=${failed%,}" >> "$GITHUB_OUTPUT"
@@ -61,6 +67,6 @@ jobs:
             echo "::error::live site failing:$FAILED"
             exit 1
           elif [[ -n "$open" ]]; then
-            gh issue comment "$open" --repo "$REPO" --body "Live site answers 200 on \`/\`, \`/health/\` and \`/version.json\` again ($RUN_URL). Closing. — ctm3-release-engineer (uptime.yml)"
+            gh issue comment "$open" --repo "$REPO" --body "Live site answers 200 on \`/\` and \`/health/\` again ($RUN_URL). Closing. — ctm3-release-engineer (uptime.yml)"
             gh issue close "$open" --repo "$REPO"
           fi
