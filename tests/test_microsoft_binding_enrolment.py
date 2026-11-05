@@ -132,3 +132,28 @@ def test_every_refusal_is_the_same_uniform_denial(granted_roles, people, scenari
         return
     cause = refusal(granted_roles, account, values)
     assert (cause.sqlstate, cause.diag.message_primary, cause.diag.message_detail) == ("42501", UNIFORM, None)
+
+
+def test_tables_outside_django_never_block_test_database_flush():
+    # Django's flush truncates only its own tables, so a foreign key from a
+    # database-only table into one of them makes every transactional test
+    # teardown fail (backend.yml after #74).
+    from django.apps import apps
+    django_tables = {m._meta.db_table for m in apps.get_models(include_auto_created=True)}
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT c.conrelid::regclass::text, c.confrelid::regclass::text FROM pg_constraint c
+            JOIN pg_namespace n ON n.oid = (SELECT relnamespace FROM pg_class WHERE oid = c.conrelid)
+            WHERE c.contype = 'f' AND n.nspname = 'public'""")
+        blocking = [(src, dst) for src, dst in cursor.fetchall()
+                    if dst.removeprefix("public.") in django_tables and src.removeprefix("public.") not in django_tables]
+    assert blocking == []
+
+
+def test_an_account_delete_also_removes_its_enrolment_record():
+    # Accounts with history are removed only by an admin purge (history guards
+    # refuse other deletes), so check the cleanup trigger itself.
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT t.tgtype & 1 = 1 AND t.tgtype & 2 = 0 AND t.tgtype & 8 = 8, p.proname, p.prosecdef
+            FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid
+            WHERE t.tgrelid = 'public.tribunal_account'::regclass AND t.tgname = 'ctm_council_enrolment_forget'""")
+        assert cursor.fetchone() == (True, "ctm_forget_council_enrolment", True)
