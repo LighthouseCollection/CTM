@@ -4,9 +4,18 @@ name: CTM database paths owner
 # scripts/db_owner_guard.cjs, so a PR cannot weaken the check by editing it, and
 # the PR's code is never checked out or run. Approval = same-repository branch +
 # the 'agent:ctm3-database-engineer' label applied by someone with write access.
+# workflow_dispatch (write access only) covers bot PRs, which start no workflows:
+# plenix-upgrade.yml dispatches it on its branch with the PR number; the script
+# then requires that PR's head to be the dispatched commit.
 on:
   pull_request_target: # zizmor: ignore[dangerous-triggers] main's code only; the PR head is never checked out
     types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number whose head is the dispatched commit
+        required: true
+        type: number
 
 permissions: {}
 
@@ -15,7 +24,7 @@ defaults:
     shell: bash
 
 concurrency:
-  group: db-owner-guard-${{ github.event.pull_request.number }}
+  group: db-owner-guard-${{ github.event.pull_request.number || inputs.pr }}
   cancel-in-progress: true
 
 jobs:
@@ -30,7 +39,8 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          # Always main's code: the PR base on pull_request_target, main on dispatch.
+          ref: ${{ github.event.pull_request.base.sha || 'main' }}
           persist-credentials: false
           sparse-checkout: scripts/db_owner_guard.cjs
           sparse-checkout-cone-mode: false
@@ -38,5 +48,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr }}
+          EXPECT_HEAD_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || '' }}
         run: node scripts/db_owner_guard.cjs
