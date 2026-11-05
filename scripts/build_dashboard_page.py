@@ -1,7 +1,8 @@
 """Build the CTM 3.0 dashboard web page (GitHub Pages) from GitHub only (D-0031).
 
 Writes a static site: index.html (Plenix from the CDN at the version pinned in
-ctm/settings.py), app.js, data.js (window.CTM_DATA) and the latest CI screenshots.
+ctm/settings.py), app.js, data.js (window.CTM_DATA), data.json (the same, fetched by the open page)
+and the latest CI screenshots.
 The owner's answers come back as "**Answer to <id>: <choice>**" comments in the
 decision's own issue; this script reads them so answered decisions leave "To decide".
 
@@ -199,6 +200,8 @@ def build(out):
         "sites": sites,
     }
     (out / "data.js").write_text("window.CTM_DATA = " + json.dumps(data, ensure_ascii=False, indent=1) + ";\n", encoding="utf-8")
+    # the open page fetches data.json every 30 seconds to show each rebuild without a reload
+    (out / "data.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     (out / "index.html").write_text((PAGE / "index.html").read_text(encoding="utf-8").replace("__PLENIX_BASE__", plenix_base()), encoding="utf-8")
     shutil.copyfile(PAGE / "app.js", out / "app.js")
     (out / ".nojekyll").write_text("", encoding="utf-8")
