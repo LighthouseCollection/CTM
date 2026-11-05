@@ -20,7 +20,7 @@ Built from superpowers (workflow, gates), agency-agents (roles), MetaGPT
 (artifact schemas), ChatDev (loop caps, lessons file) and the design-skill
 sources. Definitions: `.claude/agents/`.
 
-### Always-on (max 4 running at once; the Delivery Lead starts them as needed)
+### Always-on (the Delivery Lead starts them by `agent-limits.yaml`: 4 long-work slots plus short tasks)
 
 | Role | Model | Owns | Hard gate |
 |---|---|---|---|
@@ -188,3 +188,4 @@ only).
 2. Stop the old CTM 2.0 team and its cron/tmux lines.
 3. Staging Compose project, database and DNS.
 4. Optional `CTM_BOT_TOKEN` secret so bot merges start the other workflows.
+5. `PDS_ISSUE_TOKEN` secret (fine-grained, Issues: read and write on `plenix-ds/pds`) so a failed Plenix upgrade also opens an issue for the PDS team.

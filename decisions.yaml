@@ -7,6 +7,7 @@
 #             test     -> ref "<test file path>"
 #             hook     -> ref "<hook file path>"
 #             script   -> ref "<script path>"
+#             config   -> ref "<config file path>"
 # status: active | superseded | retired
 # decided_by: owner | agent:<role>
 
@@ -98,8 +99,9 @@ decisions:
     why: Same as PDS 1.0; keeps cost and merge conflicts down
     options: [4 (chosen), Unlimited]
     decided_by: owner
-    status: active
-    review_only: Session count is managed by ctm-delivery-lead; no CI signal exists
+    status: superseded
+    superseded_by: D-0025
+    review_only: Superseded by D-0025 (long work vs small tasks)
 
   - id: D-0010
     date: 2026-11-04
@@ -221,3 +223,13 @@ decisions:
     status: superseded
     superseded_by: D-0005
     review_only: Superseded; #32 merged 2026-11-04 on the owner's instruction, then automatic upgrades took CTM to 0.86.0
+
+  - id: D-0025
+    date: 2026-11-04
+    area: process
+    decision: Up to 4 agents on long work (a screen or service, a design, a migration, a release), plus any number of small tasks (a review, a lint or typo fix, one test, triage, a GitHub reply, the daily summary) capped at about 15 minutes each; longer ones queue for a long-work slot. Memory sets the real limit. The numbers live in agent-limits.yaml and can be adjusted as needed
+    why: Owner correction, same as PDS 1.0 ("as long as it can be adjusted as needed")
+    options: [4 long-work slots + unlimited short tasks, adjustable (chosen), Hard cap of 4 sessions]
+    decided_by: owner
+    status: active
+    check: { kind: config, ref: agent-limits.yaml }
