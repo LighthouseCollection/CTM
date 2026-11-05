@@ -310,10 +310,8 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /function spouseProfileSection\(P, h, t, title, icon, values, twoColumns = false\)/);
   assert.match(councilCase, /function SpouseContactSection\(\{ api, P, h, t, user, record, party, onSaved \}\)/);
   assert.match(councilCase, /h\(SpouseContactSection, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
-  const councilCss = fs.readFileSync("static/ctm/ctm.css", "utf8");
-  assert.match(councilCss, /ctm-spouse-profile-section--two-columns/);
-  assert.match(councilCss, /grid-column: 1 \/ -1/);
-  assert.match(councilCss, /inline-size: 68px/);
+  assert.match(councilCase, /twoColumns\s*\? caseColumns\(P, h, fields\.map/);
+  assert.match(councilCase, /size: "2xl",\s*label: party\.name/);
   assert.match(councilCase, /t\("personalDetails"\), "person", \[/);
   assert.doesNotMatch(councilCase, /t\("personalDetails"\), "user", \[/);
   assert.match(councilCase, /P\.SectionHeading, \{ level: 2 \}/);
@@ -333,7 +331,7 @@ test("marriage card saves council-owned edits through the shared card finding la
   assert.match(councilCase, /function councilCardValues\(record, scope, submitted\)/);
   assert.match(councilCase, /fact_code: "case_card\.marriage"/);
   assert.match(councilCase, /\/findings\//);
-  assert.match(councilCase, /ctm-case-edit-grid/);
+  assert.match(councilCase, /caseColumns\(P, h, fields\.map/);
 });
 
 test("case back navigation retains the workspace that opened the case", () => {
@@ -350,10 +348,7 @@ test("case summary shows case details and recorded key-date milestones", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   const api = fs.readFileSync("tribunal/api.py", "utf8");
   assert.match(councilCase, /caseSummary: "Case Summary"/);
-  assert.match(councilCase, /CaseReadFields, \{ P, h, fields: summaryReadFields, values: summaryReadValues, className: "ctm-case-summary-fields" \}/);
-  assert.match(councilCase, /ctm-case-edit-grid ctm-case-read-grid/);
-  const councilCss = fs.readFileSync("static/ctm/ctm.css", "utf8");
-  assert.match(councilCss, /\.ctm-case-read-grid input\[readonly\]/);
+  assert.match(councilCase, /CaseReadFields, \{ P, h, fields: summaryReadFields, values: summaryReadValues, lang, columns: 2 \}/);
   assert.match(councilCase, /reasonForDivorce: "Reason Seeking Divorce"/);
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
   assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
@@ -526,8 +521,7 @@ test("new session form defaults the Bellflower location and uses a responsive tw
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const css = fs.readFileSync("static/ctm/ctm.css", "utf8");
   assert.match(council, /R\.useState\("St\. George Coptic Orthodox Church, Bellflower, California"\)/);
-  assert.match(council, /className: "ctm-session-form-grid"/);
-  assert.match(css, /\.ctm-session-form-grid[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(council, /h\(P\.Columns, \{ count: 2, collapseBelow: "wide" \}/);
 });
 
 
@@ -725,4 +719,42 @@ test("ctm3-48: council root gets direction from DirectionProvider; calendar acti
   assert.match(app, /h\(P\.ThemeProvider, null, h\(P\.DirectionProvider, \{ follow: true \}, h\(App\)\)\)/);
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /\{ icon: "event_available", label: t\("addHearingCase"\)/);
+});
+
+// ctm3-48 part 2 (#48): Case Overview cards and the session form use Plenix layout parts instead of ctm.css grids.
+test("ctm3-48 part 2: case cards and session form use no CTM layout class", () => {
+  const js = ["council.js", "council-case.js"].map((f) => fs.readFileSync(`static/ctm/${f}`, "utf8")).join("\n");
+  for (const name of ["ctm-spouse-header", "ctm-petition-header", "ctm-spouse-profile-section--two-columns", "ctm-spouse-photo",
+    "ctm-case-summary-fields", "ctm-case-edit-grid", "ctm-case-read-grid", "ctm-session-form-grid"])
+    assert.ok(!js.includes(name), name);
+});
+
+test("ctm3-48 part 2: grids are Plenix Columns that collapse to one column on narrow windows", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(councilCase, /function caseColumns\(P, h, items, count, collapseBelow\)/);
+  assert.match(councilCase, /h\(P\.Columns, \{ count, collapseBelow \}/);
+  assert.match(councilCase, /, 3, "wide"\)/, "#13 edit forms: three columns");
+  assert.match(councilCase, /, 2, "medium"\)/, "#8 spouse profile: two columns");
+  assert.match(council, /h\(P\.Columns, \{ count: 2, collapseBelow: "wide" \}/, "#16 session form");
+});
+
+test("ctm3-48 part 2: read mode is a PropertyList, never a read-only input", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const read = councilCase.slice(councilCase.indexOf("function CaseReadFields("), councilCase.indexOf("function CaseMarriage("));
+  assert.match(read, /P\.PropertyList, \{ layout: "stacked"/);
+  assert.doesNotMatch(read, /readOnly: true|P\.Input/);
+  assert.match(read, /timeZone: "UTC"/, "date-only values never shift a day");
+});
+
+test("ctm3-48 part 2: spouse photo change is Plenix AvatarUpload with EN and AR words", () => {
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const upload = councilCase.slice(councilCase.indexOf("function SpousePhotoUpload("), councilCase.indexOf("function spouseHeaderTitle("));
+  assert.match(upload, /h\(P\.AvatarUpload, \{/);
+  assert.match(upload, /size: "2xl"/);
+  assert.match(upload, /crop: false/);
+  assert.match(upload, /removable: false/);
+  assert.match(upload, /strings: \{ change: t\("changePhoto"\), add: t\("addPhoto"\), notImage: t\("photoNotImage"\), tooLarge: t\("photoTooLarge"\), picture: t\("photoOf"\) \}/);
+  assert.doesNotMatch(upload, /h\("input"|h\("label"/);
+  assert.match(councilCase, /size: "2xl"/);
 });

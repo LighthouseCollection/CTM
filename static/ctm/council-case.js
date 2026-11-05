@@ -514,7 +514,11 @@ ${ar}` : en;
       saveContact: "Save contact",
       editProfile: "Edit profile",
       saveProfile: "Save profile",
-      changePhoto: "Change",
+      changePhoto: "Change photo",
+      addPhoto: "Add photo",
+      photoNotImage: "Choose an image file: JPEG, PNG, GIF or WebP.",
+      photoTooLarge: "The picture is larger than {max}.",
+      photoOf: "{name}’s photo",
       photoUploadFailed: "The photo could not be uploaded.",
       career: "Career",
       churchAffiliation: "Church Affiliation",
@@ -974,7 +978,11 @@ ${ar}` : en;
       saveContact: "حفظ بيانات التواصل",
       editProfile: "تعديل الملف الشخصي",
       saveProfile: "حفظ الملف الشخصي",
-      changePhoto: "تغيير",
+      changePhoto: "تغيير الصورة",
+      addPhoto: "إضافة صورة",
+      photoNotImage: "اختر ملف صورة: JPEG أو PNG أو GIF أو WebP.",
+      photoTooLarge: "الصورة أكبر من {max}.",
+      photoOf: "صورة {name}",
       photoUploadFailed: "تعذر رفع الصورة.",
       career: "العمل والتعليم",
       churchAffiliation: "الانتماء الكنسي",
@@ -3079,12 +3087,23 @@ ${ar}` : en;
     return null;
   }
 
+  // #48: equal Plenix columns; each column is a Stack, filled in reading order (first part, then the next).
+  function caseColumns(P, h, items, count, collapseBelow) {
+    const size = Math.ceil(items.length / count) || 1;
+    const columns = Array.from({ length: count }, (_, index) => items.slice(index * size, (index + 1) * size));
+    return h(P.Columns, { count, collapseBelow }, ...columns.map((column, index) => h(P.Stack, { gap: "md", key: index }, ...column)));
+  }
+
+  function profileList(P, h, items) {
+    return h(P.PropertyList, { layout: "stacked" }, ...items);
+  }
+
   function spouseProfileSection(P, h, t, title, icon, values, twoColumns = false) {
     const fields = values.filter(([, value]) => value);
     if (!fields.length) return null;
     return h(
       P.Stack,
-      { gap: "sm", key: title, ...(twoColumns ? { className: "ctm-spouse-profile-section--two-columns" } : {}) },
+      { gap: "sm", key: title },
       h(
         P.Inline,
         { gap: "sm", align: "center" },
@@ -3092,11 +3111,9 @@ ${ar}` : en;
         h(P.SectionHeading, { level: 2 }, title),
         h(P.Divider),
       ),
-      h(
-        P.PropertyList,
-        { layout: "stacked" },
-        ...fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value)),
-      ),
+      twoColumns
+        ? caseColumns(P, h, fields.map(([label, value]) => profileList(P, h, [h(P.PropertyList.Item, { key: label, label: t(label) }, value)])), 2, "medium")
+        : profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value))),
     );
   }
 
@@ -3147,10 +3164,10 @@ ${ar}` : en;
         P.Stack,
         { gap: "sm", key: scope },
         h(P.SectionHeading, { level: 2 }, title),
-        h(
-          "div",
-          { className: "ctm-case-edit-grid" },
-          ...fields.map(([key, label]) => h(
+        caseColumns(
+          P,
+          h,
+          fields.map(([key, label]) => h(
             P.Field,
             { key, label },
             h(P.Input, {
@@ -3159,6 +3176,8 @@ ${ar}` : en;
               onChange: (event) => setForm((current) => ({ ...current, [`${scope}.${key}`]: event.target.value })),
             }),
           )),
+          3,
+          "wide",
         ),
       )),
       failure ? h(P.Notice, { tone: "danger" }, failure) : null,
@@ -3208,7 +3227,7 @@ ${ar}` : en;
     };
     return h(
       P.Stack,
-      { gap: "sm", className: "ctm-spouse-profile-section--two-columns" },
+      { gap: "sm" },
       h(
         P.Inline,
         { gap: "sm", align: "center" },
@@ -3220,11 +3239,11 @@ ${ar}` : en;
         ? h(
             P.Form,
             { onSubmit: save, label: t("contact"), noValidate: true },
-            h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+            caseColumns(P, h, fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) }))), 3, "wide"),
             failure ? h(P.Notice, { tone: "danger" }, failure) : null,
             h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveContact"))),
           )
-        : h(P.PropertyList, { layout: "stacked" }, ...fields.map(([key, label]) => h(P.PropertyList.Item, { key, label }, values[key] || "—"))),
+        : caseColumns(P, h, fields.map(([key, label]) => profileList(P, h, [h(P.PropertyList.Item, { key, label }, values[key] || "—")])), 2, "medium"),
     );
   }
 
@@ -3234,9 +3253,8 @@ ${ar}` : en;
     return h(P.Avatar, {
       src: party.photo_url || undefined,
       name: party.name,
-      size: "xl",
+      size: "2xl",
       label: party.name,
-      className: "ctm-spouse-photo",
     });
   }
 
@@ -3245,8 +3263,8 @@ ${ar}` : en;
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const canWrite = writerFor(user, null, record);
-    const upload = async (event) => {
-      const file = event.target.files?.[0];
+    const upload = async (picture) => {
+      const file = picture && (picture.file || picture.blob);
       if (!file || !canWrite || pending) return;
       setPending(true);
       setFailure(null);
@@ -3258,7 +3276,6 @@ ${ar}` : en;
         form.append("case_id", record.id);
         form.append("visibility", "council");
         await api("/api/files/", { method: "POST", body: form });
-        event.target.value = "";
         onSaved();
       } catch (error) {
         setFailure(base.serverMessage(error, t) || t("photoUploadFailed"));
@@ -3267,35 +3284,36 @@ ${ar}` : en;
       }
     };
     if (!canWrite) return spousePhoto(P, h, party);
-    const inputId = `ctm-photo-upload-${party.id}`;
+    // data-ctm-no-toggle: a click on the photo control does not open or close the spouse card.
     return h(
-      "span",
-      { className: "ctm-spouse-photo-control" },
-      spousePhoto(P, h, party),
-      h("input", {
-        id: inputId,
-        className: "ctm-spouse-photo-control__input",
-        type: "file",
+      P.Stack,
+      { gap: "xs", "data-ctm-no-toggle": "" },
+      h(P.AvatarUpload, {
+        name: party.name,
+        src: party.photo_url || undefined,
+        size: "2xl",
+        crop: false,
+        removable: false,
         accept: "image/jpeg,image/png,image/gif,image/webp",
         disabled: pending,
         onChange: upload,
+        strings: { change: t("changePhoto"), add: t("addPhoto"), notImage: t("photoNotImage"), tooLarge: t("photoTooLarge"), picture: t("photoOf") },
       }),
-      h("label", { htmlFor: inputId, className: "ctm-spouse-photo-control__change" }, pending ? "…" : t("changePhoto")),
-      failure ? h("span", { className: "ctm-spouse-photo-control__error", role: "alert" }, failure) : null,
+      failure ? h(P.Text, { as: "span", variant: "danger", role: "alert" }, failure) : null,
     );
   }
 
   function spouseHeaderTitle(P, h, t, party) {
     const fact = (label, value, data) => h(
-      "span",
-      { className: "ctm-spouse-header__fact" },
+      P.Inline,
+      { gap: "xs", align: "center" },
       h(P.Text, { as: "span", variant: "caption" }, label),
       data ? h(P.Text, { as: "span", variant: "data" }, value) : value,
     );
     return h(
-      "span",
-      { className: "ctm-spouse-header" },
-      h(P.Text, { as: "span", variant: "strong", className: "ctm-spouse-header__name" }, party.name),
+      P.Inline,
+      { gap: "md", align: "center", wrap: true },
+      h(P.Text, { as: "span", variant: "strong" }, party.name),
       party.reference ? fact(t("ctmId"), party.reference, true) : null,
       fact(
         t("portalAccount"),
@@ -3374,7 +3392,7 @@ ${ar}` : en;
             onToggle: (next) => setExpandedParties((current) => ({ ...current, [party.id]: next })),
             onClick: (event) => {
               if (!event.target.closest(".plx-panel__header")) return;
-              if (event.target.closest(".plx-panel__toggle, .ctm-spouse-photo-control__change, .ctm-spouse-photo-control__input, .ctm-spouse-profile-edit")) return;
+              if (event.target.closest(".plx-panel__toggle, [data-ctm-no-toggle], .ctm-spouse-profile-edit")) return;
               setExpandedParties((current) => ({ ...current, [party.id]: !current[party.id] }));
             },
             actions: canEditProfile ? h(P.Button, { size: "sm", className: "ctm-spouse-profile-edit", onClick: startEditingProfile }, t("editProfile")) : null,
@@ -3608,12 +3626,12 @@ ${ar}` : en;
       ...petitions.map((row) => {
         const answers = petitionAnswers(row.answers);
         const filingParty = row.filing_party_name ? h(
-          "span",
-          { className: "ctm-petition-header__party" },
-          h(P.Text, { as: "span", variant: "strong", className: "ctm-petition-header__name" }, row.filing_party_name),
+          P.Inline,
+          { gap: "xs", align: "center" },
+          h(P.Text, { as: "span", variant: "strong" }, row.filing_party_name),
           row.filing_party_role ? h(P.Badge, { tone: row.filing_party_role === "applicant" ? "info" : "waiting" }, t(row.filing_party_role)) : null,
         ) : null;
-        return h(P.Panel, { icon: "doc-text", key: row.id, title: h("span", { className: "ctm-petition-header" }, h("span", { className: "ctm-petition-header__title" }, t("petition")), filingParty), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
+        return h(P.Panel, { icon: "doc-text", key: row.id, title: h(P.Inline, { gap: "md", align: "center", wrap: true }, h(P.Text, { as: "span" }, t("petition")), filingParty), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
           h(P.Stack, { gap: "sm" },
             answers.length ? h(P.PropertyList, { layout: "stacked" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
           ),
@@ -3688,14 +3706,17 @@ ${ar}` : en;
 
   // Council cards use the same field grid in read and edit modes. Read controls
   // intentionally preserve the form layout while preventing direct changes.
-  function CaseReadFields({ P, h, fields, values, className = "" }) {
-    return h("div", { className: `ctm-case-edit-grid ctm-case-read-grid ${className}`.trim() },
-      ...fields.map(([key, label, type = "text"]) => {
-        const value = values[key];
-        const validDate = type === "date" && /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
-        return h(P.Field, { key, label }, h(P.Input, { type: validDate ? "date" : "text", value: value === undefined || value === null || value === "" ? "—" : String(value), readOnly: true, tabIndex: -1 }));
-      }),
-    );
+  // #48 row 14: read mode is a PropertyList, not a disabled-looking input. A date-only value is shown in the
+  // page language and read as UTC so it never moves a day.
+  function CaseReadFields({ P, h, fields, values, lang, columns = 3 }) {
+    const language = lang || window.document.documentElement.lang;
+    const show = (value, type) => {
+      if (value === undefined || value === null || value === "") return "—";
+      if (type === "date" && /^\d{4}-\d{2}-\d{2}$/.test(String(value)))
+        return new Intl.DateTimeFormat(language === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(String(value) + "T00:00:00Z"));
+      return String(value);
+    };
+    return caseColumns(P, h, fields.map(([key, label, type = "text"]) => h(P.PropertyList, { layout: "stacked", key }, h(P.PropertyList.Item, { label }, show(values[key], type)))), columns, "wide");
   }
 
   function CaseMarriage({ api, lang, user, caseId }) {
@@ -3738,7 +3759,7 @@ ${ar}` : en;
       h(P.Panel, { icon: "settings-users", title: t("churchMarriage"), actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, "Edit") : null },
         h(P.Stack, { gap: "md" },
           editing ? h(P.Form, { onSubmit: save, label: t("churchMarriage"), noValidate: true },
-            h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+            caseColumns(P, h, fields.map(([key, label, type]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) }))), 3, "wide"),
             failure ? h(P.Notice, { tone: "danger" }, failure) : null,
             h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
           ) : h(CaseReadFields, { P, h, fields: [
@@ -3773,7 +3794,7 @@ ${ar}` : en;
     };
     return h(P.Panel, { title, icon, actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, "Edit") : null }, h(P.Stack, { gap: "md" },
       editing ? h(P.Form, { onSubmit: save, label: title, noValidate: true },
-        h("div", { className: "ctm-case-edit-grid" }, ...fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })))),
+        caseColumns(P, h, fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) }))), 3, "wide"),
         failure ? h(P.Notice, { tone: "danger" }, failure) : null,
         h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
       ) : h(CaseReadFields, { P, h, fields, values }),
@@ -4121,7 +4142,7 @@ ${ar}` : en;
         { icon: "document", title: t("caseSummary"), actions: canEditSummary && !summaryEditing ? h(P.Button, { size: "sm", onClick: startSummaryEdit }, "Edit") : null },
         summaryEditing
           ? h(P.Form, { onSubmit: saveSummary, label: t("caseSummary"), noValidate: true },
-              h("div", { className: "ctm-case-edit-grid" },
+              h(P.Columns, { count: 2, collapseBelow: "wide" },
                 h(P.Field, { label: t("reasonForDivorce") }, h(P.Input, { value: summaryForm.reason, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, reason: event.target.value })) })),
                 h(P.Field, { label: t("assignedCouncilMember") }, h(P.Select, { value: summaryForm.memberId, disabled: summaryPending || !record.can_assign, onChange: (event) => setSummaryForm((old) => ({ ...old, memberId: event.target.value })), options: [{ value: "", label: bt("unassigned") }, ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id }))] })),
               ),
@@ -4129,7 +4150,7 @@ ${ar}` : en;
               summaryFailure ? h(P.Notice, { tone: "danger" }, summaryFailure) : null,
               h(P.FormActions, { sticky: false }, h(P.Button, { disabled: summaryPending, onClick: () => setSummaryEditing(false) }, bt("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: summaryPending, disabled: summaryPending }, "Save")),
             )
-          : h(CaseReadFields, { P, h, fields: summaryReadFields, values: summaryReadValues, className: "ctm-case-summary-fields" }),
+          : h(CaseReadFields, { P, h, fields: summaryReadFields, values: summaryReadValues, lang, columns: 2 }),
       ),
       h(
         P.Panel,

@@ -1507,8 +1507,8 @@
             { icon: "calendar", title: t(editing ? "editSession" : "newSession") },
             h(
               P.Form,
-              { id: "ctm-session-form", onSubmit: create, label: t("newSession"), noValidate: true, className: "ctm-session-form" },
-              h("div", { className: "ctm-session-form-grid" },
+              { id: "ctm-session-form", onSubmit: create, label: t("newSession"), noValidate: true },
+              h(P.Columns, { count: 2, collapseBelow: "wide" },
               h(
                 P.Field,
                 { label: t("sessionDate"), required: true, error: problem === "dateRequired" || problem === "dateTaken" ? t(problem) : undefined },
