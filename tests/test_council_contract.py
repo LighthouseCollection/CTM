@@ -667,3 +667,31 @@ def test_draft_session_with_agenda_is_retained(people, filed):
 
     with pytest.raises(ValidationError, match="agenda"):
         delete_draft_session(people["admin"], session.pk)
+
+
+def test_legacy_desertion_ground_is_valid_and_read_as_abandonment(client, ready_application, people):
+    """D-0035 (#120): the ground is called Abandonment; filings saved with the old code stay valid."""
+    from tribunal.services.applications import GROUNDS, canonical_ground, validate_petition
+    assert "abandonment" in GROUNDS and "desertion" not in GROUNDS
+    assert canonical_ground("desertion") == "abandonment"
+    app = ready_application
+    answers = app.revisions.get(number=app.current_version).answers
+    validate_petition({**answers, "grounds": ["abandonment"]})
+    with pytest.raises(ValidationError):
+        validate_petition({**answers, "grounds": ["imprisonment"]})
+    save_answers(app.owner, app.pk, {**answers, "grounds": ["desertion", "abuse"]}, app.current_version)
+    app.refresh_from_db()
+    submit_application(app.owner, app.pk, "legacy-ground", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    login(client, people["secretary"])
+    row = next(row for row in client.get("/api/cases/").json()["items"] if row["id"] == str(app.case_id))
+    assert row["grounds"] == ["abandonment", "abuse"]
+    assert row["reason"] == "abandonment; abuse"
+    record = client.get(f"/api/cases/{app.case_id}/").json()
+    assert record["summary"]["grounds"] == ["abandonment", "abuse"]
+    assert record["separation"]["grounds"] == ["abandonment", "abuse"]
+    session = create_session(people["admin"], date(2030, 1, 2))
+    place_agenda(people["admin"], session.pk, app.case_id, part=1)
+    item = client.get(f"/api/sessions/{session.pk}/agenda/").json()["items"][0]
+    assert item["grounds"] == ["abandonment", "abuse"]
+    assert "desertion" not in json.dumps([row, record["summary"], record["separation"], item])

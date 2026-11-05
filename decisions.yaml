@@ -326,3 +326,13 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: ci-job, ref: ".github/workflows/quality.yml#frontend-tests" }
+
+  - id: D-0035
+    date: 2026-11-05
+    area: content
+    decision: The separation ground formerly called "desertion" is called "Abandonment" everywhere users see it; its code is "abandonment". Filings saved with the old code "desertion" stay valid and are shown as Abandonment. Every ground is shown as its English or Arabic label, never as its code
+    why: Owner 2026-11-05 (Product Lead session) "Change desertion to abandonment". Saved revisions are immutable, so the old code is read, not rewritten (no migration). Arabic labels are proposals in docs/i18n/arabic-proposals.md until the institution confirms them (#120)
+    options: [Abandonment (chosen)]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/council-lists.test.cjs }

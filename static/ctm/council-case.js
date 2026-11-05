@@ -3834,7 +3834,7 @@ ${ar}` : en;
     const record = state.data, separation = record.separation || {};
     const initiator = separation.initiated_by;
     const initiatorValue = initiator?.party ? `${initiator.party.name} (${initiator.party.slot === "A" ? "Applicant" : "Spouse"})` : initiator?.value;
-    const details = councilCardValues(record, "separation_details", { marital_status: separation.marital_status, separation_date: separation.separation_date, initiated_by: initiatorValue, reason: separation.reason });
+    const details = councilCardValues(record, "separation_details", { marital_status: separation.marital_status, separation_date: separation.separation_date, initiated_by: initiatorValue, reason: base.groundsText(separation.grounds, separation.reason, t) });
     const civil = councilCardValues(record, "civil_divorce", separation.civil_divorce || {});
     const reconciliation = councilCardValues(record, "reconciliation", separation.reconciliation || {});
     const order = councilCardValues(record, "restraining_order", separation.restraining_orders?.[0] || {});
@@ -4072,7 +4072,7 @@ ${ar}` : en;
         ? record.assignment_history[record.assignment_history.length - 1].member
         : record.assigned_member || null;
     const eligibleMembers = base.assignableMembers(members);
-    const submittedSummary = record.summary || {};
+    const submittedSummary = { ...(record.summary || {}), reason: base.groundsText(record.summary?.grounds, record.summary?.reason, bt) };
     const summary = councilCardValues(record, "summary", submittedSummary);
     const applicant = record.parties.find((party) => party.slot === "A") || record.parties[0] || null;
     const respondent = record.parties.find((party) => party.slot === "B") || record.parties[1] || null;

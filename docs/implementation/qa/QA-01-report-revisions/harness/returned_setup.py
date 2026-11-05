@@ -44,7 +44,7 @@ for key, first, last, birth, spouse_known in [("hannah", "Hannah", "Brooks", "19
     owner = Account.objects.create_user(email=f"{key}@qa01.test", first_name=first, last_name=last, email_verified=True)
     app = start_application(owner)
     answers = {"first_name": first, "last_name": last, "birth_date": birth, "gender": "F",
-               "marriage_date": "2011-06-18", "grounds": ["desertion"], "statement": "Fictional QA statement."}
+               "marriage_date": "2011-06-18", "grounds": ["abandonment"], "statement": "Fictional QA statement."}
     if spouse_known:
         answers["spouse_birth_date"] = "1983-09-05"
     save_answers(owner, app.pk, answers, 0)

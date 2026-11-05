@@ -24,7 +24,26 @@ from tribunal.policy import active, administrator, application_for, open_proceed
 from .common import audit, lock_key, notify, notify_manager
 from .closed_filings import CLOSED_INTAKE, council_filing, linked_never_filer, require_new_information
 
-GROUNDS = {"infidelity", "desertion", "abuse", "faith", "addiction", "concealment"}
+GROUNDS = {"infidelity", "abandonment", "abuse", "faith", "addiction", "concealment"}
+# Earlier filings stored "desertion"; saved revisions are immutable, so the old
+# code stays valid on input and is read as "abandonment" (owner decision D-0035).
+LEGACY_GROUNDS = {"desertion": "abandonment"}
+
+
+def canonical_ground(code):
+    """Return the current ground code for a stored or submitted value."""
+    return LEGACY_GROUNDS.get(code, code) if isinstance(code, str) else code
+
+
+def submitted_grounds(answers):
+    """Ground codes selected in a filing's answers, legacy codes read as current ones."""
+    answers = answers if isinstance(answers, dict) else {}
+    grounds = answers.get("grounds") or answers.get("reason") or []
+    if isinstance(grounds, str):
+        grounds = [grounds]
+    if not isinstance(grounds, list):
+        return []
+    return [canonical_ground(str(value).strip()) for value in grounds if str(value or "").strip()]
 
 
 def check_filing_version(app, expected_version):
@@ -279,7 +298,7 @@ def validate_petition(answers):
             or not isinstance(answers["grounds"], list)
             or any(not isinstance(item, str) for item in answers["grounds"])):
         raise ValidationError("Identity fields must be text and grounds must be a list of codes.")
-    if answers["gender"] not in {"M", "F"} or not set(answers["grounds"]) <= GROUNDS:
+    if answers["gender"] not in {"M", "F"} or not {canonical_ground(item) for item in answers["grounds"]} <= GROUNDS:
         raise ValidationError("Invalid gender or selected grounds.")
     date_fields = ["birth_date", "marriage_date"]
     if answers.get("spouse_birth_date") not in (None, ""):

@@ -566,6 +566,13 @@
       caseApplicant: "Applicant",
       caseRespondent: "Respondent",
       caseReason: "Reason for divorce",
+      ground_infidelity: "Infidelity",
+      ground_abandonment: "Abandonment",
+      ground_abuse: "Abuse",
+      ground_faith: "Leaving or changing the faith",
+      ground_addiction: "Addiction",
+      ground_concealment: "Misrepresentation or concealment before marriage",
+      groundsSeparator: "; ",
       caseAssignee: "Assigned council member",
       caseClosedDate: "Closed date",
       noMatchingCases: "No cases match.",
@@ -886,6 +893,13 @@
       caseApplicant: "الطالب",
       caseRespondent: "المدعى عليه",
       caseReason: "سبب الطلاق",
+      ground_infidelity: "الخيانة الزوجية",
+      ground_abandonment: "الهجر",
+      ground_abuse: "الإساءة",
+      ground_faith: "ترك الإيمان أو تغييره",
+      ground_addiction: "الإدمان",
+      ground_concealment: "التحريف أو الإخفاء قبل الزواج",
+      groundsSeparator: "؛ ",
       caseAssignee: "عضو المجلس المعيَّن",
       caseClosedDate: "تاريخ الإغلاق",
       noMatchingCases: "لا توجد قضايا مطابقة.",
@@ -1554,7 +1568,7 @@
         archiveAgendaState.error ? h(P.Notice, { tone: "danger" }, serverMessage(archiveAgendaState.error, t)) : null,
         !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { title: t("assignedCases") },
           archiveTable(t("assignedCases"), archivedItems.assigned, t("part1Empty"), caseColumns([
-            { title: t("reason"), field: "reason", minWidth: "9rem", pill: false, render: (row) => row.reason || t("notRecorded") },
+            { title: t("reason"), field: "reason", minWidth: "9rem", pill: false, render: (row) => groundsText(row.grounds, row.reason, t) || t("notRecorded") },
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
             { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
           ])),
@@ -2414,6 +2428,7 @@
         ...row,
         // Hearing numbers are scoped to the cases presented in this session.
         hearing_number: first ? null : index + 1,
+        reason: groundsText(row.grounds, row.reason, t),
         applicant: { name: row.applicant_name, gender: row.applicant_gender === "M" ? "male" : row.applicant_gender === "F" ? "female" : undefined },
         respondent: { name: row.respondent_name, gender: row.respondent_gender === "M" ? "male" : row.respondent_gender === "F" ? "female" : undefined },
       }));
@@ -2888,6 +2903,21 @@
     );
   }
 
+  // Separation grounds (issue 120, D-0035): a filing stores codes; screens show the EN/AR label. Earlier filings
+  // stored "desertion", read as "abandonment". A value that is not a ground code (older free text) is shown as is.
+  const GROUND_CODES = ["infidelity", "abandonment", "abuse", "faith", "addiction", "concealment"];
+  const LEGACY_GROUNDS = { desertion: "abandonment" };
+  function groundsText(grounds, fallback, t) {
+    const list = Array.isArray(grounds) ? grounds : [];
+    if (!list.length) return fallback || "";
+    return list
+      .map((value) => {
+        const code = LEGACY_GROUNDS[value] || value;
+        return GROUND_CODES.includes(code) ? t(`ground_${code}`) : String(value);
+      })
+      .join(t("groundsSeparator"));
+  }
+
   // Cases workspace table (open or archived). Built-in header/row menus are off so
   // no untranslated table chrome appears in the Arabic interface.
   function caseRows(cases, archived, query, includeClosed = false) {
@@ -2933,7 +2963,7 @@
       number: row.number,
       applicant: { name: row.applicant_name || "—", gender: row.applicant_gender === "M" ? "male" : row.applicant_gender === "F" ? "female" : undefined },
       respondent: { name: row.respondent_name || "—", gender: row.respondent_gender === "M" ? "male" : row.respondent_gender === "F" ? "female" : undefined },
-      reason: row.reason || "—",
+      reason: groundsText(row.grounds, row.reason, t) || "—",
       manager: row.assigned_member || t("unassigned"),
       status: t(row.status === "closed" ? "closed" : "open"),
       closedAt: row.closed_at ? row.closed_at.slice(0, 10) : "—",
@@ -3080,6 +3110,7 @@
   window.CTMCouncil = {
     words,
     translator,
+    groundsText,
     canManage,
     isolate,
     unsavedDrafts,

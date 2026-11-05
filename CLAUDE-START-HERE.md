@@ -203,7 +203,7 @@ approved. Restraining orders are repeatable with required copies. Children colle
 approved details with Unknown where allowed. Baptism certificates are not required.
 Use the contract for exact field/conditional requirements, not this summary alone.
 
-Grounds are multi-select: Infidelity; Desertion/abandonment; Abuse; Leaving or
+Grounds are multi-select: Infidelity; Abandonment; Abuse; Leaving or
 changing the faith; Addiction; Misrepresentation/concealment prior to marriage.
 No imprisonment ground. Preserve each party's independent answers.
 

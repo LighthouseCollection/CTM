@@ -35,7 +35,7 @@ async function rendered(h, C, component, props) {
 }
 
 const cases = [
-  { id: "c1", number: "20261020-01", status: "open", applicant_name: "James Carter", respondent_name: "Emily Carter", reason: "desertion", assigned_member: "Fr. David" },
+  { id: "c1", number: "20261020-01", status: "open", applicant_name: "James Carter", respondent_name: "Emily Carter", grounds: ["abandonment", "abuse"], reason: "abandonment; abuse", assigned_member: "Fr. David" },
   { id: "c2", number: "20261020-02", status: "closed", applicant_name: "Daniel Brooks", respondent_name: "Olivia Brooks", closed_at: "2026-10-30T10:00:00Z" },
 ];
 
@@ -79,6 +79,42 @@ test("case lists are a Listing with a searched command bar, row menu actions and
   one(tree, Listing).props.rowMenu[2].onSelect({ id: "c1" });
   tree = h.render(C.CasesTable, { api: async () => ({}), user: admin, cases, archived: false, view: "active", title: "All Active Cases", lang: "en", onOpen() {} });
   assert.equal(byName(tree, "ConfirmDialog")[0].props.open, true);
+});
+
+// #120, D-0035: a case's grounds are shown as their EN/AR labels, never the stored code; the old code
+// "desertion" from earlier filings reads as Abandonment; text that is not a ground code is shown as is.
+test("case grounds show their English and Arabic labels, and the legacy desertion code reads as Abandonment", () => {
+  const [h, C] = boot();
+  const rows = [
+    { ...cases[0] },
+    { id: "c3", number: "20261020-03", status: "open", applicant_name: "A", respondent_name: "B", grounds: ["desertion", "infidelity", "faith", "addiction", "concealment"], reason: "desertion; infidelity; faith; addiction; concealment" },
+    { id: "c4", number: "20261020-04", status: "open", applicant_name: "C", respondent_name: "D", grounds: [], reason: "Typed by an earlier filing" },
+  ];
+  const reasons = (lang) => {
+    const tree = h.render(C.CasesTable, { api: async () => ({}), user: admin, cases: rows, archived: false, view: "active", title: "x", lang, onOpen() {} });
+    return one(tree, Listing).props.rows.map((row) => row.reason);
+  };
+  same(reasons("en"), [
+    "Abandonment; Abuse",
+    "Abandonment; Infidelity; Leaving or changing the faith; Addiction; Misrepresentation or concealment before marriage",
+    "Typed by an earlier filing",
+  ]);
+  same(reasons("ar"), [
+    "الهجر؛ الإساءة",
+    "الهجر؛ الخيانة الزوجية؛ ترك الإيمان أو تغييره؛ الإدمان؛ التحريف أو الإخفاء قبل الزواج",
+    "Typed by an earlier filing",
+  ]);
+  for (const lang of ["en", "ar"]) for (const reason of reasons(lang)) assert.doesNotMatch(reason, /desertion|abandonment/);
+  // the row is found by the words on screen
+  const tree = h.render(C.CasesTable, { api: async () => ({}), user: admin, cases: rows, archived: false, view: "active", title: "x", lang: "ar", onOpen() {} });
+  const list = one(tree, Listing);
+  assert.match(list.props.search.text(list.props.rows[0]), /الهجر/);
+  // every ground code has a distinct, non-English Arabic label
+  const en = C.translator("en"), ar = C.translator("ar");
+  for (const code of ["infidelity", "abandonment", "abuse", "faith", "addiction", "concealment"]) {
+    assert.notEqual(ar(`ground_${code}`), `ground_${code}`);
+    assert.notEqual(ar(`ground_${code}`), en(`ground_${code}`));
+  }
 });
 
 test("members get Open only; archived cases are read-only and Arabic card counts use the six forms", () => {

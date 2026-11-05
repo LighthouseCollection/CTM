@@ -237,8 +237,9 @@ def agenda_item_data(item, actor, attendance):
     if application and actor.pk != application.owner_id and (revision is None or not revision_visible(revision)):
         formal = application.submissions.select_related("revision").order_by("-created_at", "-id").first()
         revision = formal.revision if formal else None
-    grounds = revision.answers.get("grounds") if revision else None
-    reason = ", ".join(str(value) for value in grounds) if isinstance(grounds, list) else str(grounds or "")
+    from tribunal.services.applications import submitted_grounds
+    grounds = submitted_grounds({"grounds": revision.answers.get("grounds")}) if revision else []
+    reason = ", ".join(grounds)
     parties = list(case.parties.select_related("person", "account__person").order_by("slot"))
     applicant_party = application.party if application and application.party_id else (
         next((party for party in parties if party.slot == "A"), parties[0] if parties else None)
@@ -287,6 +288,8 @@ def agenda_item_data(item, actor, attendance):
             "respondent_name": respondent.name if respondent else None,
             "respondent_gender": respondent_gender,
             "reason": reason or None,
+            # Ground codes; the agenda shows them as EN/AR labels (D-0035).
+            "grounds": grounds,
             "married_years": married_years,
             "submitted_at": application.submitted_at.isoformat() if application and application.submitted_at else None,
             "assignment_status": "assigned" if case.assigned_member_id else "unassigned",

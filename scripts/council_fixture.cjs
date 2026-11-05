@@ -48,7 +48,7 @@ const state = {
   applications: [
     {
       id: "a-1", kind: "petition", status: "submitted", case_id: "c-1", case_number: "20261020-01", version: 2,
-      answers: { first_name_en: "Test", last_name_en: "Applicant", grounds: ["desertion"] },
+      answers: { first_name_en: "Test", last_name_en: "Applicant", grounds: ["abandonment"] },
       fee: { amount_minor: 25000, currency: "usd", status: "paid" },
     },
     {
