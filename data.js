@@ -1,6 +1,6 @@
 window.CTM_DATA = {
- "generatedAt": "2026-11-05T06:57+00:00",
- "mainSha": "3cd638b",
+ "generatedAt": "2026-11-05T07:19+00:00",
+ "mainSha": "fb518c9",
  "tasks": [
   {
    "number": 63,
@@ -21,25 +21,6 @@ window.CTM_DATA = {
    "rank": 1
   },
   {
-   "number": 46,
-   "title": "CI: make the PostgreSQL suite green and a required check",
-   "url": "https://github.com/LighthouseCollection/CTM/issues/46",
-   "sev": "S2",
-   "type": "bug",
-   "areas": [
-    "ci"
-   ],
-   "owners": [
-    "backend-engineer",
-    "release-engineer"
-   ],
-   "decision": false,
-   "next": "Root-cause the session-reschedule failures, then make postgres a required check",
-   "waiting": "",
-   "updated": "2026-11-05T03:57:39Z",
-   "rank": 2
-  },
-  {
    "number": 8,
    "title": "Perplexity acceptance: identity, finance and cross-surface security",
    "url": "https://github.com/LighthouseCollection/CTM/issues/8",
@@ -58,7 +39,7 @@ window.CTM_DATA = {
    "next": "Mark F01-F31 addressed / superseded / remaining against main",
    "waiting": "",
    "updated": "2026-11-05T04:00:21Z",
-   "rank": 3
+   "rank": 2
   },
   {
    "number": 9,
@@ -79,7 +60,7 @@ window.CTM_DATA = {
    "next": "Link the F08/F09/F25 tests already on main, mark the rest",
    "waiting": "",
    "updated": "2026-11-05T04:00:22Z",
-   "rank": 4
+   "rank": 3
   },
   {
    "number": 61,
@@ -97,7 +78,7 @@ window.CTM_DATA = {
    "next": "Publish this dashboard as a GitHub Pages page from dashboard.yml",
    "waiting": "",
    "updated": "2026-11-05T06:45:04Z",
-   "rank": 5
+   "rank": 4
   },
   {
    "number": 51,
@@ -115,7 +96,7 @@ window.CTM_DATA = {
    "next": "Repair or remove the stale browser scripts; add a CI job with screenshots",
    "waiting": "",
    "updated": "2026-11-05T03:57:58Z",
-   "rank": 6
+   "rank": 5
   },
   {
    "number": 10,
@@ -134,8 +115,8 @@ window.CTM_DATA = {
    "decision": true,
    "next": "Mark F16-F23 against main",
    "waiting": "",
-   "updated": "2026-11-05T04:00:24Z",
-   "rank": 7
+   "updated": "2026-11-05T07:19:43Z",
+   "rank": 6
   },
   {
    "number": 11,
@@ -154,7 +135,7 @@ window.CTM_DATA = {
    "next": "Link the merged F12/F15 work, mark F26-F33",
    "waiting": "",
    "updated": "2026-11-05T04:00:25Z",
-   "rank": 8
+   "rank": 7
   },
   {
    "number": 48,
@@ -171,8 +152,8 @@ window.CTM_DATA = {
    "decision": false,
    "next": "Plenix requests first (RTL, vote table, A4 print); one preview at the end",
    "waiting": "",
-   "updated": "2026-11-05T04:00:18Z",
-   "rank": 9
+   "updated": "2026-11-05T06:58:53Z",
+   "rank": 8
   },
   {
    "number": 54,
@@ -191,7 +172,7 @@ window.CTM_DATA = {
    "next": "After the site is back: one dated result per provider",
    "waiting": "",
    "updated": "2026-11-05T03:58:31Z",
-   "rank": 10
+   "rank": 9
   },
   {
    "number": 14,
@@ -211,7 +192,7 @@ window.CTM_DATA = {
    "next": "Split the P1 rows into slice issues with briefs",
    "waiting": "",
    "updated": "2026-11-05T04:00:43Z",
-   "rank": 11
+   "rank": 10
   },
   {
    "number": 12,
@@ -228,26 +209,8 @@ window.CTM_DATA = {
    "decision": true,
    "next": "List each missing institutional text; one decision issue per item",
    "waiting": "Church wording and templates",
-   "updated": "2026-11-05T04:00:26Z",
-   "rank": 12
-  },
-  {
-   "number": 64,
-   "title": "Bug: Microsoft first binding never asserts the tenant id (tid/issuer) of the signed-in account",
-   "url": "https://github.com/LighthouseCollection/CTM/issues/64",
-   "sev": "S2",
-   "type": "bug",
-   "areas": [
-    "security"
-   ],
-   "owners": [
-    "backend-engineer"
-   ],
-   "decision": false,
-   "next": "See the issue",
-   "waiting": "",
-   "updated": "2026-11-05T06:52:41Z",
-   "rank": 13
+   "updated": "2026-11-05T07:19:30Z",
+   "rank": 11
   },
   {
    "number": 65,
@@ -264,44 +227,29 @@ window.CTM_DATA = {
    "decision": false,
    "next": "See the issue",
    "waiting": "",
-   "updated": "2026-11-05T06:52:42Z",
-   "rank": 14
+   "updated": "2026-11-05T07:10:20Z",
+   "rank": 12
   },
   {
-   "number": 66,
-   "title": "Bug: 'administrator-enrolled' proof in ctm_bind_microsoft_subject is any past audit row by a currently-admin actor",
-   "url": "https://github.com/LighthouseCollection/CTM/issues/66",
+   "number": 81,
+   "title": "Institutional texts: Admin, President and Secretary enter and approve EN/AR texts in CTM (D-0032)",
+   "url": "https://github.com/LighthouseCollection/CTM/issues/81",
    "sev": "S3",
-   "type": "bug",
+   "type": "feature",
    "areas": [
-    "security"
+    "frontend",
+    "backend",
+    "i18n"
    ],
    "owners": [
-    "database-engineer"
+    "product-lead",
+    "solution-architect"
    ],
    "decision": false,
    "next": "See the issue",
    "waiting": "",
-   "updated": "2026-11-05T06:52:43Z",
-   "rank": 15
-  },
-  {
-   "number": 67,
-   "title": "Bug: check_ownership.cjs trusts GITHUB_HEAD_REF so a branch name can bypass database-owned path protection",
-   "url": "https://github.com/LighthouseCollection/CTM/issues/67",
-   "sev": "S3",
-   "type": "bug",
-   "areas": [
-    "security"
-   ],
-   "owners": [
-    "backend-engineer"
-   ],
-   "decision": false,
-   "next": "See the issue",
-   "waiting": "",
-   "updated": "2026-11-05T06:52:45Z",
-   "rank": 16
+   "updated": "2026-11-05T07:19:06Z",
+   "rank": 13
   }
  ],
  "ownerDecisions": [
@@ -326,7 +274,21 @@ window.CTM_DATA = {
    "url": "https://github.com/LighthouseCollection/CTM/issues/12",
    "replied": "",
    "at": "",
-   "sent": []
+   "answer": {
+    "choice": "Other",
+    "text": "Admin, President, secretary",
+    "at": "2026-11-05T07:18:04Z",
+    "url": "https://github.com/LighthouseCollection/CTM/issues/12#issuecomment-6652167468"
+   },
+   "sent": [
+    {
+     "createdAt": "2026-11-05T07:03:11Z",
+     "number": 72,
+     "state": "OPEN",
+     "title": "Answer #12: Other",
+     "url": "https://github.com/LighthouseCollection/CTM/issues/72"
+    }
+   ]
   },
   {
    "id": "D-0030",
@@ -347,8 +309,14 @@ window.CTM_DATA = {
     }
    ],
    "applied": "A",
-   "replied": "",
+   "replied": "**Answer to D-0030: Other**\n\nIt can be sent via text or email\n\n_Sent from the CTM 3.0 dashboard._",
    "at": "2026-11-05T03:59:32Z",
+   "answer": {
+    "choice": "Other",
+    "text": "It can be sent via text or email",
+    "at": "2026-11-05T07:19:43Z",
+    "url": "https://github.com/LighthouseCollection/CTM/issues/10#issuecomment-6652194320"
+   },
    "sent": []
   },
   {
@@ -372,11 +340,101 @@ window.CTM_DATA = {
    "applied": "A",
    "replied": "",
    "at": "2026-11-05T04:05:29Z",
+   "answer": null,
+   "sent": []
+  },
+  {
+   "id": "D-0032",
+   "title": "Institutional texts: how do Admin, President and Secretary supply them?",
+   "issue": 12,
+   "url": "https://github.com/LighthouseCollection/CTM/issues/12",
+   "context": "you answered \"Admin, President, secretary\" (comment above). That can mean they work inside CTM, or that they send texts to the team.",
+   "options": [
+    {
+     "key": "A",
+     "recommended": true,
+     "text": "those three roles enter and approve each text (EN and AR) inside CTM; one of them approves a version before it shows; unsupplied texts show \"not yet supplied\" — risk: a small editing screen to build first (#81)."
+    },
+    {
+     "key": "B",
+     "recommended": false,
+     "text": "those three people send the texts to the team, which loads them — risk: every wording change goes through the team."
+    }
+   ],
+   "applied": "A",
+   "replied": "",
+   "at": "2026-11-05T07:19:30Z",
+   "answer": null,
    "sent": []
   }
  ],
- "openPrs": [],
+ "openPrs": [
+  {
+   "headRefName": "ctm3/d0032-institutional-texts",
+   "isDraft": false,
+   "number": 82,
+   "title": "Record D-0032: institutional texts entered and approved in CTM by Admin, President and Secretary",
+   "url": "https://github.com/LighthouseCollection/CTM/pull/82"
+  },
+  {
+   "headRefName": "ctm3/required-checks-doc",
+   "isDraft": false,
+   "number": 80,
+   "title": "Record postgres as a required check on main (#46)",
+   "url": "https://github.com/LighthouseCollection/CTM/pull/80"
+  },
+  {
+   "headRefName": "ctm3/database-enrolment-flush",
+   "isDraft": false,
+   "number": 79,
+   "title": "Drop the enrolment table's foreign key so Django's test flush works again",
+   "url": "https://github.com/LighthouseCollection/CTM/pull/79"
+  },
+  {
+   "headRefName": "ctm3/guard-dispatch",
+   "isDraft": false,
+   "number": 78,
+   "title": "Let bot PRs produce the Database paths owner check too (#67)",
+   "url": "https://github.com/LighthouseCollection/CTM/pull/78"
+  }
+ ],
  "mergedPrs": [
+  {
+   "mergedAt": "2026-11-05T07:16:22Z",
+   "number": 77,
+   "title": "Let plenix-upgrade start backend.yml so postgres can be a required check (#46)",
+   "url": "https://github.com/LighthouseCollection/CTM/pull/77"
+  },
+  {
+   "mergedAt": "2026-11-05T07:11:59Z",
+   "number": 76,
+   "title": "Approve database-owned paths by label and repository, not branch name (#67)",
+   "url": "https://github.com/LighthouseCollection/CTM/pull/76"
+  },
+  {
+   "mergedAt": "2026-11-05T07:11:33Z",
+   "number": 75,
+   "title": "Microsoft sign-in must prove the council tenant; refused binding is a plain denial (#64, #65)",
+   "url": "https://github.com/LighthouseCollection/CTM/pull/75"
+  },
+  {
+   "mergedAt": "2026-11-05T07:10:48Z",
+   "number": 74,
+   "title": "Prove a council member's enrolment with a record and refuse first bindings uniformly (#65, #66)",
+   "url": "https://github.com/LighthouseCollection/CTM/pull/74"
+  },
+  {
+   "mergedAt": "2026-11-05T07:09:33Z",
+   "number": 73,
+   "title": "Restore the 5 registered spec sources so validate_spec passes again (#46)",
+   "url": "https://github.com/LighthouseCollection/CTM/pull/73"
+  },
+  {
+   "mergedAt": "2026-11-05T06:59:07Z",
+   "number": 71,
+   "title": "UI: drop CTM styling classes that Plenix defaults replace (#48, part 1 of 4)",
+   "url": "https://github.com/LighthouseCollection/CTM/pull/71"
+  },
   {
    "mergedAt": "2026-11-05T06:56:58Z",
    "number": 70,
@@ -512,6 +570,24 @@ window.CTM_DATA = {
  ],
  "closedIssues": [
   {
+   "closedAt": "2026-11-05T07:12:01Z",
+   "number": 67,
+   "title": "Bug: check_ownership.cjs trusts GITHUB_HEAD_REF so a branch name can bypass database-owned path protection",
+   "url": "https://github.com/LighthouseCollection/CTM/issues/67"
+  },
+  {
+   "closedAt": "2026-11-05T07:10:50Z",
+   "number": 66,
+   "title": "Bug: 'administrator-enrolled' proof in ctm_bind_microsoft_subject is any past audit row by a currently-admin actor",
+   "url": "https://github.com/LighthouseCollection/CTM/issues/66"
+  },
+  {
+   "closedAt": "2026-11-05T07:11:34Z",
+   "number": 64,
+   "title": "Bug: Microsoft first binding never asserts the tenant id (tid/issuer) of the signed-in account",
+   "url": "https://github.com/LighthouseCollection/CTM/issues/64"
+  },
+  {
    "closedAt": "2026-11-05T06:54:23Z",
    "number": 55,
    "title": "UI: stop showing the priest's private link to copy by hand (D-0030)",
@@ -534,6 +610,12 @@ window.CTM_DATA = {
    "number": 47,
    "title": "Feature: show CTM's version at /version.json",
    "url": "https://github.com/LighthouseCollection/CTM/issues/47"
+  },
+  {
+   "closedAt": "2026-11-05T07:17:44Z",
+   "number": 46,
+   "title": "CI: make the PostgreSQL suite green and a required check",
+   "url": "https://github.com/LighthouseCollection/CTM/issues/46"
   },
   {
    "closedAt": "2026-11-05T03:59:26Z",
@@ -608,8 +690,8 @@ window.CTM_DATA = {
    "superseded_by": "",
    "check": ".github/workflows/dashboard.yml",
    "kind": "workflow",
-   "state": "cancelled",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824067"
+   "state": "success",
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986115827"
   },
   {
    "id": "D-0003",
@@ -634,8 +716,8 @@ window.CTM_DATA = {
    "superseded_by": "",
    "check": ".github/workflows/plenix-upgrade.yml#upgrade",
    "kind": "ci-job",
-   "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41962866309/job/127033062496"
+   "state": "no run yet",
+   "url": null
   },
   {
    "id": "D-0005",
@@ -647,8 +729,8 @@ window.CTM_DATA = {
    "superseded_by": "",
    "check": ".github/workflows/plenix-upgrade.yml#upgrade",
    "kind": "ci-job",
-   "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41962866309/job/127033062496"
+   "state": "no run yet",
+   "url": null
   },
   {
    "id": "D-0006",
@@ -661,7 +743,7 @@ window.CTM_DATA = {
    "check": ".github/workflows/quality.yml#fast-gates",
    "kind": "ci-job",
    "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824375/job/127099810071"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065864/job/127106949556"
   },
   {
    "id": "D-0007",
@@ -687,7 +769,7 @@ window.CTM_DATA = {
    "check": ".github/workflows/quality.yml#fast-gates",
    "kind": "ci-job",
    "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824375/job/127099810071"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065864/job/127106949556"
   },
   {
    "id": "D-0009",
@@ -713,7 +795,7 @@ window.CTM_DATA = {
    "check": ".github/workflows/quality.yml#zizmor",
    "kind": "ci-job",
    "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824375/job/127099810195"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065864/job/127106949559"
   },
   {
    "id": "D-0011",
@@ -726,7 +808,7 @@ window.CTM_DATA = {
    "check": ".github/workflows/quality.yml#fast-gates",
    "kind": "ci-job",
    "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824375/job/127099810071"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065864/job/127106949556"
   },
   {
    "id": "D-0012",
@@ -739,7 +821,7 @@ window.CTM_DATA = {
    "check": ".github/workflows/quality.yml#fast-gates",
    "kind": "ci-job",
    "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824375/job/127099810071"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065864/job/127106949556"
   },
   {
    "id": "D-0013",
@@ -752,7 +834,7 @@ window.CTM_DATA = {
    "check": ".github/workflows/deploy.yml",
    "kind": "workflow",
    "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824170"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065872"
   },
   {
    "id": "D-0014",
@@ -764,8 +846,8 @@ window.CTM_DATA = {
    "superseded_by": "D-0031",
    "check": ".github/workflows/dashboard.yml",
    "kind": "workflow",
-   "state": "cancelled",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824067"
+   "state": "success",
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986115827"
   },
   {
    "id": "D-0015",
@@ -791,7 +873,7 @@ window.CTM_DATA = {
    "check": ".github/workflows/quality.yml#opengrep",
    "kind": "ci-job",
    "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824375/job/127099809992"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065864/job/127106949536"
   },
   {
    "id": "D-0020",
@@ -804,7 +886,7 @@ window.CTM_DATA = {
    "check": "tests/test_session_reschedule.py",
    "kind": "test",
    "state": "failure",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983541879/job/127098902738"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065865/job/127106949048"
   },
   {
    "id": "D-0021",
@@ -817,7 +899,7 @@ window.CTM_DATA = {
    "check": "tests/test_provider_callback_lifetime.py",
    "kind": "test",
    "state": "failure",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983541879/job/127098902738"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065865/job/127106949048"
   },
   {
    "id": "D-0022",
@@ -830,7 +912,7 @@ window.CTM_DATA = {
    "check": ".github/workflows/quality.yml#fast-gates",
    "kind": "ci-job",
    "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824375/job/127099810071"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065864/job/127106949556"
   },
   {
    "id": "D-0023",
@@ -843,7 +925,7 @@ window.CTM_DATA = {
    "check": "tests/test_version_json.py",
    "kind": "test",
    "state": "failure",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983541879/job/127098902738"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065865/job/127106949048"
   },
   {
    "id": "D-0024",
@@ -894,8 +976,8 @@ window.CTM_DATA = {
    "superseded_by": "",
    "check": ".github/workflows/plenix-upgrade.yml#upgrade",
    "kind": "ci-job",
-   "state": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41962866309/job/127033062496"
+   "state": "no run yet",
+   "url": null
   },
   {
    "id": "D-0028",
@@ -934,7 +1016,7 @@ window.CTM_DATA = {
    "check": "tests/frontend/council-external.test.cjs",
    "kind": "test",
    "state": "failure",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983541879/job/127098902738"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065865/job/127106949048"
   },
   {
    "id": "D-0031",
@@ -955,36 +1037,29 @@ window.CTM_DATA = {
    "name": "CTM backend validation",
    "file": "backend.yml",
    "conclusion": "failure",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983541879",
-   "at": "2026-11-05T06:58:00Z"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065865",
+   "at": "2026-11-05T07:19:29Z"
   },
   {
    "name": "CTM dashboard and daily summary",
    "file": "dashboard.yml",
-   "conclusion": "cancelled",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824067",
-   "at": "2026-11-05T06:57:23Z"
+   "conclusion": "success",
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986115827",
+   "at": "2026-11-05T07:17:39Z"
   },
   {
    "name": "CTM deploy",
    "file": "deploy.yml",
    "conclusion": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824170",
-   "at": "2026-11-05T06:57:07Z"
-  },
-  {
-   "name": "Plenix CDN auto-upgrade",
-   "file": "plenix-upgrade.yml",
-   "conclusion": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41962866309",
-   "at": "2026-11-05T03:38:58Z"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065872",
+   "at": "2026-11-05T07:16:33Z"
   },
   {
    "name": "CTM quality gates",
    "file": "quality.yml",
    "conclusion": "success",
-   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41983824375",
-   "at": "2026-11-05T06:57:20Z"
+   "url": "https://github.com/LighthouseCollection/CTM/actions/runs/41986065864",
+   "at": "2026-11-05T07:16:47Z"
   }
  ],
  "shots": [

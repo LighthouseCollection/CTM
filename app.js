@@ -37,7 +37,7 @@
 
   /* ---- Owner decisions: the questions waiting for the owner, kept apart from the team's to-do list ---- */
   var owner = (D.ownerDecisions || []).map(function (d) {
-    var status = d.sent && d.sent.length ? 'sent' : d.replied ? 'replied' : d.applied ? 'applied' : 'open';
+    var status = d.answer ? 'answered' : d.applied ? 'applied' : 'open';
     return Object.assign({}, d, { status: status });
   });
   var ownerIssues = {};
@@ -45,8 +45,7 @@
   var STATUS = {
     open: ['action-required', 'Needs your answer'],
     applied: ['waiting', 'Applied for now'],
-    sent: ['success', 'Answer sent'],
-    replied: ['info', 'You replied on GitHub'],
+    answered: ['success', 'You answered'],
   };
   function statusBadge(d) { var v = STATUS[d.status]; return h(P.Badge, { tone: v[0], size: 'sm' }, v[1]); }
   function plain(t) { return String(t || '').replace(/\*\*/g, '').replace(/`/g, ''); }
@@ -149,6 +148,10 @@
   var tasks = D.tasks.filter(function (t) { return !t.waiting; });
   var active = D.decisions.filter(function (d) { return d.status === 'active'; });
   var needAnswer = owner.filter(function (d) { return d.status === 'open'; });
+  var toDecide = owner.filter(function (d) { return d.status !== 'answered'; });
+  var answered = owner.filter(function (d) { return d.status === 'answered'; });
+  var answerOf = {};
+  answered.forEach(function (d) { answerOf[d.id] = d; });
   var noCheck = active.filter(function (d) { return d.kind === 'review only'; });
   var failing = active.filter(function (d) { return d.state === 'failure'; });
   var urgent = tasks.filter(function (t) { return t.sev === 'S1' || t.sev === 'S2'; });
@@ -167,7 +170,17 @@
   var byRole = {};
   tasks.forEach(function (t) { t.owners.forEach(function (o) { (byRole[o] = byRole[o] || []).push(t); }); });
   var teamRows = Object.keys(byRole).sort().map(function (o) { return { id: o, agent: 'CTM3 - ' + role(o), items: byRole[o], count: byRole[o].length }; });
-  var decisionRows = D.decisions.slice().reverse();
+  var known = {};
+  D.decisions.forEach(function (d) { known[d.id] = true; });
+  var decisionRows = answered.filter(function (d) { return !known[d.id]; }).map(function (d) {
+    return { id: d.id, date: (d.answer.at || '').slice(0, 10), area: '', decision: plain(d.title), by: 'owner', status: 'answered',
+      check: 'Your answer is being applied; the team records it in decisions.yaml.', kind: 'review only', state: 'review', url: null };
+  }).concat(D.decisions.slice().reverse()).map(function (d) { return Object.assign({}, d, { owner: answerOf[d.id] || null }); });
+  function decisionStatus(d) {
+    if (d.status === 'answered') return h(P.Badge, { tone: 'success', size: 'sm' }, 'You answered');
+    if (d.status === 'active') return h(P.Badge, { tone: 'active', size: 'sm' }, d.owner ? 'Active · you answered' : 'Active');
+    return h(P.Badge, { tone: 'neutral', size: 'sm' }, d.superseded_by ? 'Replaced' : d.status);
+  }
 
   var SECTIONS = [
     {
@@ -196,7 +209,7 @@
       },
     },
     {
-      id: 'owner', label: 'To decide', icon: 'flag', title: 'Decisions waiting on you', rows: owner,
+      id: 'owner', label: 'To decide', icon: 'flag', title: 'Decisions waiting on you', rows: toDecide,
       toolbar: h(P.Text, { variant: 'secondary' }, 'Your decisions, apart from the team’s to-do list. Where the team could not wait, it applied the recommended option and keeps working; you can still change it. Choose a row to answer.'),
       columns: [
         { title: 'Decision', field: 'id', kind: 'data', width: 88 },
@@ -209,7 +222,6 @@
           h(P.Inline, { gap: 'sm', wrap: true }, statusBadge(d), link(d.url, 'Open #' + d.issue)),
           d.context ? h(Field, { label: 'Context' }, h(P.Text, null, plain(d.context))) : null,
           d.applied ? h(P.Banner, { tone: 'info', title: 'Applied for now: ' + d.applied }, 'The team went ahead with the recommended option so work did not stop. Pick another option to change it.') : null,
-          d.sent && d.sent.length ? h(Field, { label: 'Answers you sent' }, h(P.Stack, { gap: 'xs' }, d.sent.map(function (a) { return h(P.Text, { key: a.number }, link(a.url, '#' + a.number + ' ' + a.title), a.state === 'CLOSED' ? ' (applied)' : ' (with the team)'); }))) : null,
           h(AnswerForm, { d: d, key: d.id }));
       },
     },
@@ -237,13 +249,15 @@
       columns: [
         { title: 'Id', field: 'id', kind: 'data', width: 88 },
         { title: 'Decision', field: 'decision', kind: 'name' },
-        { title: 'Status', field: 'status', kind: 'center', width: 120, render: function (d) { return d.status === 'active' ? h(P.Badge, { tone: 'active', size: 'sm' }, 'Active') : h(P.Badge, { tone: 'neutral', size: 'sm' }, d.superseded_by ? 'Replaced' : d.status); } },
+        { title: 'Status', field: 'status', kind: 'center', width: 168, render: decisionStatus },
         { title: 'Check', field: 'state', kind: 'center', width: 120, render: function (d) { return stateBadge(d.state); } },
       ],
       detail: function (d) {
         return h(Detail, null,
           h(P.Heading, { level: 2, size: 4 }, d.id),
           h(P.Text, null, d.decision),
+          d.owner ? h(P.Banner, { tone: 'success', title: 'Your answer: ' + d.owner.answer.choice },
+            d.owner.answer.text, ' ', link(d.owner.answer.url, 'See it on #' + d.owner.issue), '.') : null,
           h(Field, { label: 'Decided by' }, h(P.Text, null, (d.by === 'owner' ? 'Owner' : role(String(d.by).replace('agent:ctm3-', ''))) + ', ' + d.date)),
           h(Field, { label: 'Area' }, h(P.Text, null, d.area || '—')),
           h(Field, { label: 'Status' }, h(P.Text, null, d.status + (d.superseded_by ? ', replaced by ' + d.superseded_by : ''))),
@@ -333,7 +347,7 @@
     }, h(P.NavList, {
       label: 'Sections', value: current,
       onSelect: function (id) { location.hash = id; setCurrent(id); },
-      items: SECTIONS.map(function (x) { return { id: x.id, label: x.label, icon: x.icon, count: x.id === 'overview' ? undefined : x.id === 'owner' ? needAnswer.length || undefined : x.rows.length }; }),
+      items: SECTIONS.map(function (x) { return { id: x.id, label: x.label, icon: x.icon, count: x.id === 'overview' ? undefined : x.rows.length }; }),
     }));
 
     return h(P.SplitWorkspace, {
