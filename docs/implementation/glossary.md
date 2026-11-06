@@ -6,7 +6,10 @@ copied from the existing CTM dictionaries (`static/ctm/*.js`, main `9fa6386`);
 do not improvise Arabic for institutional or doctrinal wording - new terms go
 through the approved translation workflow and the institutional prompt.
 Status `Accepted` = from the contract/decisions; `In code` = current code
-label, not yet confirmed against the contract.
+label, not yet confirmed against the contract. Decision D-0037: a UI word that is
+the term of the first standard that covers it (1 Microsoft, 2 IBM, 3 Adobe, SAP,
+GitHub, Atlassian or ISO) is accepted without the owner; church, legal, tribunal
+and institutional terms still go to the owner or the institution.
 
 | Concept | English | Arabic | Source | Status / note |
 |---|---|---|---|---|
@@ -41,6 +44,13 @@ label, not yet confirmed against the contract.
 | Separation ground | Misrepresentation or concealment before marriage | التحريف أو الإخفاء قبل الزواج | Question bank category; `ground_concealment` | Proposed (#120) |
 | Case number | YYYYMMDD-## | (Latin digits, isolated in RTL) | Contract | Accepted |
 | Decree id | DCR-YYYYMMDD-## (appeal: -A1) | (Latin, isolated in RTL) | Contract | Accepted |
+| Link (private / shared link) | Link | ارتباط (الارتباط، ارتباطًا، الارتباطات) | Microsoft (OneDrive "نسخ الارتباط"); `issueLink`, `externalLinkTitle` | Accepted - Microsoft (D-0037); was رابط |
+| Edit (action) | Edit, Keep editing | تحرير، متابعة التحرير | Microsoft (Office/Windows Edit, OneDrive "يمكنه التحرير"); `edit`, `editSession`, `editNote` | Accepted - Microsoft (D-0037); was تعديل |
+| Revise / revision (report, outcome) | Revise, Revision history | تعديل، سجل التعديلات | `revise`, `saveRevision`, `history` | In code - a different English term from Edit, so it keeps تعديل |
+| Profile (account and person) | Profile | ملف التعريف | Microsoft (Edge, Microsoft 365 profile card); `profile`, `profileSection`, `editProfile` | Accepted - Microsoft (D-0037); was الملف الشخصي |
+| Permissions | Permissions | الأذونات | Microsoft (OneDrive "أذونات المشاركة"); `permissions` | Accepted - Microsoft (D-0037); was الصلاحيات |
+| Save status | Saved / Not saved | تم الحفظ / لم يتم الحفظ | Microsoft Office save status; `savedShort`, `notSaved` | Accepted - Microsoft (D-0037); was محفوظ / غير محفوظ |
+| More actions | More actions | المزيد من الإجراءات | Microsoft "المزيد من …" pattern; `moreActions` | Accepted - Microsoft (D-0037); was مزيد من الإجراءات |
 
 ## Tone
 
