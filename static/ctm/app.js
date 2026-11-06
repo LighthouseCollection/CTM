@@ -447,7 +447,7 @@
       status: "الحالة",
       members: "الزوجان",
       view: "فتح",
-      profile: "الملف الشخصي",
+      profile: "ملف التعريف",
       council: "بوابة المجلس",
       applicant: "بوابة مقدم الطلب",
       minSizeTitle: "حجم الشاشة غير مدعوم",

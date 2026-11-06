@@ -776,7 +776,7 @@
       dateTaken: "توجد جلسة مجلس بالفعل في هذا التاريخ.",
       sessionCreated: "تم إنشاء جلسة المجلس.",
       sessionUpdated: "تم تحديث جلسة المجلس.",
-      editSession: "تعديل جلسة المجلس",
+      editSession: "تحرير جلسة المجلس",
       saveSession: "حفظ التغييرات",
       planned: "مجدولة",
       closed: "مغلقة",

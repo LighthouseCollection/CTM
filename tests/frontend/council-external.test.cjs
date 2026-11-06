@@ -104,9 +104,9 @@ test("completed or cancelled requests offer no link controls", async () => {
 
 test("Arabic wording for the link panel", async () => {
   const ui = panel(draft, () => ({ id: "req-1", token: "never-shown" }), { lang: "ar" });
-  assert.match(ui.text(), /الرابط الخاص بالكاهن/);
-  assert.ok(buttons(ui.tree, "إصدار رابط خاص")[0]);
-  await ui.click("إصدار رابط خاص");
+  assert.match(ui.text(), /الارتباط الخاص بالكاهن/);
+  assert.ok(buttons(ui.tree, "إصدار ارتباط خاص")[0]);
+  await ui.click("إصدار ارتباط خاص");
   await ui.confirm();
   assert.match(notices(ui.tree).join(" "), /البريد الإلكتروني غير متاح بعد/);
   assertNoToken(ui, "never-shown");
@@ -168,7 +168,7 @@ test("projected terminal and unavailable states show no controls", () => {
 test("Arabic link states", () => {
   const ui = panel(projected({ state: "active", can_reissue: true }), () => ({}), { lang: "ar" });
   assert.match(ui.text(), /نشط/);
-  assert.ok(buttons(ui.tree, "إصدار رابط جديد")[0]);
+  assert.ok(buttons(ui.tree, "إصدار ارتباط جديد")[0]);
 });
 
 test("expiry is shown only for an active or expired link (real-backend finding)", () => {

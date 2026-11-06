@@ -59,7 +59,7 @@
   attachments:'This message references case documents. Use the authorized document workspace to access originals.',discardHelp:'Your local message has not been confirmed. Leaving will discard this local attempt.',
   discard:'Discard local message',keep:'Keep editing',working:'Processing…'},
  ar:{title:'رسائل القضية الخاصة',refresh:'تحديث المحادثة',more:'تحميل المزيد من الرسائل',loading:'جارٍ تحميل الرسائل الخاصة…',empty:'لا توجد رسائل مدرجة.',
-  unavailable:'هذه المحادثة الخاصة غير متاحة. حدّث الصفحة أو سجّل الدخول مجددًا.',message:'رسالتك',review:'مراجعة الرسالة',edit:'متابعة تعديل الرسالة',send:'إرسال رسالة خاصة',
+  unavailable:'هذه المحادثة الخاصة غير متاحة. حدّث الصفحة أو سجّل الدخول مجددًا.',message:'رسالتك',review:'مراجعة الرسالة',edit:'متابعة تحرير الرسالة',send:'إرسال رسالة خاصة',
   uncertain:'لم يتم تأكيد الإرسال. حدّث المحادثة للتحقق من رسالتك الأصلية قبل إعادة المحاولة.',denied:'الوصول إلى الرسائل غير متاح. حدّث الصفحة أو سجّل الدخول مجددًا.',
   sent:'استلم الخادم رسالتك.',frozen:'تحتفظ هذه المحاولة بالنص الأصلي والمستلم ومفتاح إعادة المحاولة.',retry:'إعادة محاولة الرسالة الأصلية',fresh:'بدء رسالة جديدة',
   readonly:'هذه القضية لا تقبل رسائل جديدة.',read:'تأكيد قراءة نسختي',readTitle:'نسختك في البوابة',unread:'لا يوجد تأكيد قراءة مسجّل لنسختك في البوابة.',readAt:'تم تأكيد قراءة نسختك في',

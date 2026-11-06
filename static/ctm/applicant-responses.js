@@ -36,7 +36,7 @@
     uncertain:"The result is uncertain. Your local response is preserved. Refresh the request list before another submission.",
     denied:"This request is no longer available for response. Your local response is preserved.",empty:"No response entered",busy:"Submitting…",evidence:"Select report evidence",
     evidenceChanged:"Some selected evidence is no longer eligible. Refresh or remove those local selections before review.",removeEvidence:"Remove unavailable evidence selections"},
-    ar:{respond:"الإجابة عن الطلب",back:"العودة إلى الطلبات",review:"مراجعة الإجابة",edit:"تعديل الإجابة",submit:"تقديم الإجابة",
+    ar:{respond:"الإجابة عن الطلب",back:"العودة إلى الطلبات",review:"مراجعة الإجابة",edit:"تحرير الإجابة",submit:"تقديم الإجابة",
       discard:"تجاهل الإجابة المحلية",keep:"متابعة التحرير",unsaved:"لم تُقدّم إجابتك المحلية. هل تريد تجاهلها قبل المغادرة؟",
       received:"أقرّ الخادم باستلام التقرير. حدّث قائمة الطلبات للتحقق من حالته الحالية.",
       uncertain:"نتيجة التقديم غير مؤكدة. حُفظت إجابتك محليًا. حدّث قائمة الطلبات قبل محاولة تقديم أخرى.",
