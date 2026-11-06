@@ -160,7 +160,8 @@ jobs:
     permissions:
       issues: write
     steps:
-      - env:
+      - name: Open the deploy-failure bug
+        env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           TARGET: ${{ needs.plan.outputs.target }}

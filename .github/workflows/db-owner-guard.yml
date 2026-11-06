@@ -23,9 +23,9 @@ defaults:
   run:
     shell: bash
 
-concurrency:
-  group: db-owner-guard-${{ github.event.pull_request.number || inputs.pr }}
-  cancel-in-progress: true
+# No concurrency group: this check becomes required, and a run cancelled on the
+# same commit (e.g. a label event during a sync) would block the merge (L-12).
+# Each run is a short read-only API check, so letting them all finish is cheap.
 
 jobs:
   guard:

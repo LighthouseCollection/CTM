@@ -1,0 +1,29 @@
+{
+  "_about": "Template v2.4 check 16 (scripts/check_handoffs.cjs). Steps that open a PR, merge, push or add a label with GITHUB_TOKEN and do NOT end in `gh workflow run` / repository_dispatch, because no workflow has to start from them. Every entry needs a reason; an entry that matches nothing fails the check.",
+  "allow": [
+    {
+      "workflow": "deploy.yml",
+      "job": "report",
+      "step": "Open the deploy-failure bug",
+      "reason": "Report issue for people and agents to read. No workflow has to react to its labels; the dashboard web page (dashboard.yml) picks it up on its 15-minute run."
+    },
+    {
+      "workflow": "uptime.yml",
+      "job": "check",
+      "step": "Open, keep or close the site-down issue",
+      "reason": "Report issue for people and agents to read. No workflow has to react to its labels; the dashboard web page (dashboard.yml) picks it up on its 15-minute run."
+    },
+    {
+      "workflow": "plenix-upgrade.yml",
+      "job": "upgrade",
+      "step": "Report a breaking upgrade as a bug",
+      "reason": "Report issue for the frontend engineer. No workflow has to react to its labels; the dashboard web page (dashboard.yml) picks it up on its 15-minute run."
+    },
+    {
+      "workflow": "plenix-upgrade.yml",
+      "job": "upgrade",
+      "step": "Publish screenshots to the dashboard branch",
+      "reason": "Pushes images to the ci-screenshots data branch, which needs no checks."
+    }
+  ]
+}
