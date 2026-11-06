@@ -1,4 +1,4 @@
-# Dispatcher, mode P (template v2.4 §6; gaps G-5, G-10, G-11; decision D-0039)
+# Dispatcher, mode P (template v2.4 §6; gaps G-5, G-10, G-11; decision D-0040)
 
 **Problem.** Sessions start only when the owner or another session starts them,
 so Ready work waits (template §6.4: a nudge is a dispatcher failure).
@@ -29,11 +29,11 @@ running role.
 6. Ready depth under `ready_min` in the build lanes, or Backlog and Ready both empty → wake `refill_role` (at most once per `stall_min`).
 7. A Ready issue with no registered role label → one `process` issue. A registry problem (`check_registry.cjs` fails) → one `process` issue, nothing starts.
 
-**Tokens (lesson L-18).** The poller acts with the host's `gh` login (a user token), so its label changes wake nothing on GitHub by design: it starts the sessions itself. The watchdog only opens an issue; it hands nothing off.
+**Tokens (lesson L-18).** The poller acts with the host's `gh` login (a user token), so its label changes wake nothing on GitHub by design: it starts the sessions itself. The watchdog only opens an issue; it hands nothing off. The GitHub App (gap G-7) is deferred by the owner (2026-11-06), so any workflow hand-off stays an explicit `workflow_dispatch`; nothing here waits on an App token.
 
 **Not built:** mode R, the lane Stop hook that blocks exit while Ready items exist, the board Project field moves (no `project` scope yet, see `sdlc.md` §9).
 
-**Done when:** `decide` tests pass, `poll.cjs --dry-run` and `--launch-test` run against the live repository, the watchdog passes zizmor, and D-0039 points at the watchdog job.
+**Done when:** `decide` tests pass, `poll.cjs --dry-run` and `--launch-test` run against the live repository, the watchdog passes zizmor, and D-0040 points at the watchdog job.
 
 **Install (owner, once; until then sessions are started by hand as today).**
 `bash scripts/dispatcher/install.sh` from Git Bash: creates the `ctm3-wt/dispatcher`

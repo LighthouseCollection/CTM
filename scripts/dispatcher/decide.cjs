@@ -1,4 +1,4 @@
-// Dispatcher rules (template v2.4 §6.2, D-0039). Pure: state in, actions out.
+// Dispatcher rules (template v2.4 §6.2, D-0040). Pure: state in, actions out.
 "use strict";
 
 const LANE_PRIORITY = { release: "release", build: "build", design: "design", architecture: "design", plan: "design", spec: "spec", locale: "verify", docs: "verify" };

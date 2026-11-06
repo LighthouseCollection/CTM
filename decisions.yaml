@@ -377,7 +377,7 @@ decisions:
     status: active
     check: { kind: script, ref: scripts/check_registry.cjs }
 
-  - id: D-0039
+  - id: D-0040
     date: 2026-11-06
     area: process
     decision: The dispatcher runs in mode P - a poller on the Windows agent host, started by Task Scheduler every heartbeat_min, reads agents.config.yaml and current GitHub state and starts or stops headless claude sessions per role by the template v2.4 §6.2 rules; it updates a pinned "Dispatcher heartbeat" issue, and a daily GitHub-hosted watchdog opens a process issue when the heartbeat is stale. No self-hosted runner (mode R needs a private repository). Design in docs/implementation/slices/dispatcher/brief.md

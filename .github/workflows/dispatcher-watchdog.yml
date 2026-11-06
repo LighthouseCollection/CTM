@@ -1,5 +1,5 @@
 name: Dispatcher watchdog
-# Template v2.4 §6.1 and check 14, decision D-0039. The poller on the agent host
+# Template v2.4 §6.1 and check 14, decision D-0040. The poller on the agent host
 # updates the pinned "Dispatcher heartbeat" issue every heartbeat_min. This daily
 # job, on a GitHub-hosted runner, opens one `process` issue when that heartbeat is
 # older than 2 x heartbeat_min (this also catches an offline host). It hands

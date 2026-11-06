@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// CTM dispatcher, mode P (template v2.4 §6, D-0039). Task Scheduler runs it every
+// CTM dispatcher, mode P (template v2.4 §6, D-0040). Task Scheduler runs it every
 // heartbeat_min from the dispatcher worktree; design: docs/implementation/slices/dispatcher/brief.md.
 //   node scripts/dispatcher/poll.cjs                one poll: decide and act
 //   node scripts/dispatcher/poll.cjs --dry-run      print the plan, change nothing
@@ -44,7 +44,7 @@ function hookSettings() {
 
 function launchArgs(role, settings, item, reason) {
   const prompt = [
-    `You are ${role.id}, started by the CTM dispatcher (D-0039). Reason: ${reason}.`,
+    `You are ${role.id}, started by the CTM dispatcher (D-0040). Reason: ${reason}.`,
     item
       ? `Work item: https://github.com/${REPO}/issues/${item}.`
       : "No work item: refill the Ready queue from docs/MASTER_PLAN.md (template v2.4 §4.4), or run a plan review if Backlog is empty.",
@@ -120,7 +120,7 @@ function heartbeat(state, actions, memo) {
     lanes[r.lane] = (lanes[r.lane] || 0) + state.issues.filter((i) => i.labels.includes(r.label) && i.labels.includes(state.settings.ready_label)).length;
   }
   const body = [
-    "Updated by the CTM dispatcher (mode P, D-0039) on every poll. The daily watchdog (`dispatcher-watchdog.yml`) opens a `process` issue when this is older than 2 × `heartbeat_min`.",
+    "Updated by the CTM dispatcher (mode P, D-0040) on every poll. The daily watchdog (`dispatcher-watchdog.yml`) opens a `process` issue when this is older than 2 × `heartbeat_min`.",
     "",
     `**Last poll:** ${new Date().toISOString()} on ${os.hostname()}`,
     `**Health:** sessions running ${running}, stalled ${stalled}; Ready per lane: ${Object.entries(lanes).map(([k, v]) => `${k} ${v}`).join(", ")}; roles launched in 24 h: ${(memo.launches || []).filter((t) => t > day).length}; nudges in 24 h: ${(memo.nudges || []).filter((t) => t > day).length} (target 0); free memory ${state.freeGb.toFixed(1)} GB.`,

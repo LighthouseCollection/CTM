@@ -1,4 +1,4 @@
-// Dispatcher rules (template v2.4 §6.2, D-0039): scripts/dispatcher/decide.cjs.
+// Dispatcher rules (template v2.4 §6.2, D-0040): scripts/dispatcher/decide.cjs.
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert");

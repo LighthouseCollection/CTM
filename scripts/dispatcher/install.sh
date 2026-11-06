@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs the CTM dispatcher, mode P (D-0039), on this Windows agent host.
+# Installs the CTM dispatcher, mode P (D-0040), on this Windows agent host.
 # Owner runs it once from Git Bash in any CTM checkout:
 #   bash scripts/dispatcher/install.sh            install (worktree + Task Scheduler task)
 #   bash scripts/dispatcher/install.sh --remove   remove the task (the worktree stays)
@@ -21,7 +21,7 @@ if [ ! -d "$wt" ]; then
 fi
 node "$wt/scripts/check_registry.cjs"
 node "$wt/scripts/dispatcher/poll.cjs" --launch-test
-for l in "gates:assigned|All applicable gate roles were labelled on this PR (D-0039)" "process|Process defect: dispatcher, registry or nudge (template v2.4 §6.4)"; do
+for l in "gates:assigned|All applicable gate roles were labelled on this PR (D-0040)" "process|Process defect: dispatcher, registry or nudge (template v2.4 §6.4)"; do
   gh label create "${l%%|*}" --description "${l#*|}" --color ededed 2>/dev/null || true
 done
 
