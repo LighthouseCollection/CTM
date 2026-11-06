@@ -24,7 +24,7 @@ subagent-driven development, verification), agency-agents (roles).
   mechanical tasks.
 - **A report is a claim** until `git log <BASE>..HEAD --stat`,
   `check_ownership.cjs` and the RED/GREEN evidence confirm it.
-- **Concurrency from `agent-limits.yaml`** (adjustable): 4 long-work sessions, plus any number of small tasks capped at about 15 minutes each.
+- **Concurrency from `agents.config.yaml`** (adjustable): `slots` long-work sessions, plus `short_tasks_max` small tasks, each capped at `short_task_cap_min`.
 - Evidence is reported as **Ran / Skipped / Planned / Manual** with a path.
 
 ## Size and route
