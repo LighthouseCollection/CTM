@@ -124,3 +124,20 @@ def test_pdf_http_contract_across_adapters(priest_request, people, client):
     client.force_login(people['admin'])
     response = client.get(f'/api/requests/{row.pk}/print.pdf')
     assert response.status_code == 200 and response.content.startswith(b'%PDF-')
+
+
+def test_f34_arabic_pdf_keeps_a_digit_first_request_id_in_order(tmp_path):
+    """#167 / F34: an identifier is never reordered by the RTL paragraph around it."""
+    import shutil
+    from tribunal.services.priest_pdf import priest_request_pdf
+    if not shutil.which('pdftotext'):
+        pytest.skip('pdftotext not installed')
+    request_id = '13528127-de35-46c2-88c1-5e7b742c5a84'  # synthetic, starts with digits
+    projection = {'request_id': request_id, 'title': 'طلب تقرير كاهن', 'title_direction': 'rtl',
+                  'subject_name': 'John Smith', 'subject_name_direction': 'ltr',
+                  'priest_name': '', 'instructions': '', 'language': 'ar', 'lines': range(1)}
+    with patch('tribunal.services.priest_pdf.printable_priest_request', return_value=projection):
+        pdf = priest_request_pdf(None, request_id)
+    file = tmp_path / 'ar.pdf'; file.write_bytes(pdf)
+    text = subprocess.run(['pdftotext', str(file), '-'], check=True, capture_output=True).stdout.decode()
+    assert request_id in text
