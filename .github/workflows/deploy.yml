@@ -7,6 +7,11 @@ name: CTM deploy
 # runner on the VM (labels: self-hosted, ctm-vm). Until the repository variable
 # CTM_DEPLOY_READY is "true" every run stops at "not set up yet" and passes.
 # Setup checklist: issue #49.
+# CTM_DEPLOY_MODE=live-update (#90, today's VM): every push to main deploys the
+# live site with deploy/live-update.sh through the root-owned
+# /usr/local/sbin/ctm-live-update (installed by deploy/install-runner.sh), after
+# the required checks pass on that commit. Backup, checks and rollback are in
+# live-update.sh. Tags are skipped in this mode.
 on:
   push:
     branches: [main]
@@ -36,6 +41,7 @@ jobs:
       - id: plan
         env:
           READY: ${{ vars.CTM_DEPLOY_READY }}
+          MODE: ${{ vars.CTM_DEPLOY_MODE }}
           PROD_PROJECT: ${{ vars.CTM_PROD_PROJECT }}
           REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.ref_name }}
@@ -43,7 +49,13 @@ jobs:
           SHA: ${{ github.sha }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ "$REF_TYPE" == "tag" ]]; then
+          if [[ "$MODE" == "live-update" && "$REF_TYPE" == "tag" ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::live-update mode: every merge to main already deploys; tag $REF_NAME skipped."
+            exit 0
+          elif [[ "$MODE" == "live-update" && "$REF_NAME" == "main" ]]; then
+            target=live
+          elif [[ "$REF_TYPE" == "tag" ]]; then
             [[ "$REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::tag $REF_NAME is not vMAJOR.MINOR.PATCH"; exit 1; }
             target=production
           elif [[ "$REF_NAME" == "main" ]]; then
@@ -57,6 +69,18 @@ jobs:
             echo "::notice::Deploy not set up yet: $target skipped. Setup checklist: issue #49."
             echo "### Deploy not set up yet — $target skipped (see issue #49)" >> "$GITHUB_STEP_SUMMARY"
             exit 0
+          fi
+          if [[ "$target" == "live" ]]; then
+            # The required checks run on this same commit; wait for them (up to 40 minutes).
+            for check in "Fast gates" "Decisions have checks" "Frontend tests" "Opengrep" "zizmor"; do
+              for i in $(seq 1 80); do
+                conclusion="$(gh api "repos/$REPO/commits/$SHA/check-runs" --paginate                   --jq "[.check_runs[] | select(.name == \"$check\")] | sort_by(.started_at) | last | (.conclusion // .status // \"\")")"
+                [[ "$conclusion" == "success" ]] && break
+                [[ "$conclusion" =~ ^(failure|cancelled|timed_out|action_required|startup_failure)$ ]] && { echo "::error::required check '$check' is '$conclusion' on $SHA; not deploying"; exit 1; }
+                sleep 30
+              done
+              [[ "$conclusion" == "success" ]] || { echo "::error::required check '$check' did not finish on $SHA"; exit 1; }
+            done
           fi
           if [[ "$target" == "production" ]]; then
             [[ -n "$PROD_PROJECT" ]] || { echo "::error::set the repository variable CTM_PROD_PROJECT"; exit 1; }
@@ -74,16 +98,36 @@ jobs:
     needs: plan
     if: needs.plan.outputs.ready == 'true'
     runs-on: [self-hosted, ctm-vm]
-    environment: ${{ needs.plan.outputs.target }}
+    environment: ${{ needs.plan.outputs.target == 'live' && 'production' || needs.plan.outputs.target }}
     timeout-minutes: 60
     permissions:
       contents: read
     outputs:
-      rolled_back: ${{ steps.release.outputs.rolled_back }}
-      failed_phase: ${{ steps.release.outputs.failed_phase }}
-      backup: ${{ steps.release.outputs.backup }}
+      rolled_back: ${{ steps.live.outputs.rolled_back || steps.release.outputs.rolled_back }}
+      failed_phase: ${{ steps.live.outputs.failed_phase || steps.release.outputs.failed_phase }}
+      backup: ${{ steps.live.outputs.backup || steps.release.outputs.backup }}
     steps:
+      - id: live
+        name: Deploy the live site (backup, build, migrate, checks, switch; rollback on failure)
+        if: needs.plan.outputs.target == 'live'
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          set -o pipefail
+          log="$RUNNER_TEMP/live-update.log"
+          if sudo -n /usr/local/sbin/ctm-live-update "$SHA" 2>&1 | tee "$log"; then
+            echo "rolled_back=no" >> "$GITHUB_OUTPUT"
+          else
+            code=$?
+            grep -q "ROLLED BACK" "$log" && echo "rolled_back=yes" >> "$GITHUB_OUTPUT" || echo "rolled_back=unknown" >> "$GITHUB_OUTPUT"
+            phase="$(grep -oE "FAILED during '[a-z]+'" "$log" | tail -1 | grep -oE "'[a-z]+'" | tr -d "'")"
+            echo "failed_phase=${phase:-unknown}" >> "$GITHUB_OUTPUT"
+            exit "$code"
+          fi
+          backup="$(grep -oE '/opt/ctm/backups/[^ )]+\.sql\.gz' "$log" | head -1)"
+          echo "backup=${backup:-none}" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: needs.plan.outputs.target != 'live'
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -96,6 +140,7 @@ jobs:
           git merge-base --is-ancestor "$SHA" origin/main || { echo "::error::$SHA is not on main"; exit 1; }
       - id: release
         name: Backup, build, migrate, restart, health check (rollback on failure)
+        if: needs.plan.outputs.target != 'live'
         env:
           TARGET: ${{ needs.plan.outputs.target }}
           SHA: ${{ github.sha }}
@@ -126,7 +171,7 @@ jobs:
           BACKUP: ${{ needs.deploy.outputs.backup }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          sev="sev:S1"; [[ "$TARGET" == "staging" ]] && sev="sev:S2"
+          sev="sev:S1"; [[ "$TARGET" == "staging" ]] && sev="sev:S2"  # live counts as production
           body="$(printf '%s\n' \
             "The $TARGET deploy of \`$REF_NAME\` (\`$SHA\`) failed during **${PHASE:-unknown}**." \
             "" \
