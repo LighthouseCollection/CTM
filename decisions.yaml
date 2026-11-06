@@ -336,3 +336,13 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: test, ref: tests/frontend/council-lists.test.cjs }
+
+  - id: D-0036
+    date: 2026-11-06
+    area: design
+    decision: Buttons use Plenix variants by role - one primary per area, secondary by default (Edit, Cancel), ghost in toolbars and rows, danger-secondary for a visible destructive action, filled danger only as the confirm button inside a dialog footer, tertiary not used; shadow and glow come from Plenix and CTM never restyles them
+    why: Owner 2026-11-05 (#115) "Buttons are not consistent ... make buttons look consistent". Plenix 0.88.0 gave all outline variants one lighter elevation (plenix-ds/pds#269); this rule keeps CTM's choice of variants consistent
+    options: [Role-based variant rule (chosen)]
+    decided_by: agent:ctm3-design-director
+    status: active
+    check: { kind: test, ref: tests/frontend/button-variants.test.cjs }
