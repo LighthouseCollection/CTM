@@ -10,6 +10,10 @@
   const R = window.React,
     P = window.Plenix,
     h = R.createElement;
+  // #144: a picture drawn at a set width without size utilities. Image srcSet with a density descriptor
+  // (image.md) makes the browser draw the file at its natural width / density, and the Image frame
+  // takes that size. Natural widths: tribunal-logo-cropped.svg 1104, diocese-seal.png 456.
+  const drawnAt = (src, naturalWidth, width) => `${src} ${+(naturalWidth / width).toFixed(4)}x`;
   const config = JSON.parse(document.getElementById("ctm-config").textContent);
   const routes = window.CTMRoutes || null;
   // Separately loaded council workspace module (static/ctm/council.js), if present.
@@ -1246,17 +1250,18 @@
         failure ? errorView() : text(t("loading")),
       );
     if (user === null) {
-      // The diocese header lies over the top of the Auth page from Medium up, so the card stays centered in
-      // the window; under Medium the Auth page starts at the top (auth.css), so the header joins the flow.
-      const brandHeader = (className) => h(P.Center, { maxWidth: "lg", className },
+      // The diocese header sits above the Auth card in the page flow (#144: Plenix 0.91.0 drops the
+      // positioning and size utilities that laid it over the page); the card is centered in the room below.
+      // Each picture gets its drawn size from drawnAt (srcSet density), and no fit="contain", whose frame
+      // fill the transparent seal and logo do not want.
+      const brandHeader = () => h(P.Center, { maxWidth: "lg" },
         h(P.Stack, { inset: "lg" },
               h("header", null,
                 h(P.Inline, { justify: "center", align: "center", wrap: true, gap: "lg" },
                   h(P.Image, {
                     src: "/static/ctm/diocese-seal.png", alt: "Diocese of Los Angeles seal",
-                    width: 458, height: 458, className: "plx-u-w-100px plx-u-bg-transparent",
-                    fit: "contain", placeholder: "none", priority: true,
-                    fallback: h(P.Image, { src: "/static/ctm/diocese-seal.svg", alt: "Diocese of Los Angeles seal", width: 458, height: 458, fit: "contain", placeholder: "none" }),
+                    srcSet: drawnAt("/static/ctm/diocese-seal.png", 456, 100), width: 100, height: 100, placeholder: "none", priority: true,
+                    fallback: h(P.Image, { src: "/static/ctm/diocese-seal.svg", alt: "Diocese of Los Angeles seal", width: 100, height: 100, placeholder: "none" }),
                   }),
                   h(P.Stack, { gap: "sm" },
                     text("Coptic Orthodox Church - Diocese of Los Angeles", { as: "h1", variant: "title" }),
@@ -1266,15 +1271,13 @@
               )
         ),
       );
-      const loginHeader = h(P.Show, { above: "medium", fallback: brandHeader() },
-        brandHeader("plx-u-absolute plx-u-top-0 plx-u-left-0 plx-u-right-0 plx-u-z-raised"));
+      const loginHeader = brandHeader();
       // Sign-in: the Auth page with SsoButtons (sign-in.md, single-sign-on.md). SignInForm is left out on
       // purpose: through 0.88.0 it still always draws a password field, and CTM has no passwords (plenix-requests.md PLX-015).
       return h(P.AppShell, { page: "form", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
-        h(P.PageContent, { className: "plx-u-relative" },
+        h(P.PageContent, null, h(P.Stack, { gap: "none", grow: true },
           loginHeader,
-          h(P.Auth, {
-            page: true,
+          h(P.Stack, { grow: true, justify: "center", align: "center", inset: "lg" }, h(P.Auth, {
             title: t("signIn"),
             headingLevel: 2,
           },
@@ -1282,8 +1285,8 @@
               h(P.Center, { intrinsic: true, text: true },
                 h(P.Image, {
                   src: "/static/ctm/tribunal-logo-cropped.svg", alt: "CTM",
-                  width: 1104, height: 1050, className: "plx-u-w-72px plx-u-bg-transparent",
-                  fit: "contain", placeholder: "none", priority: true,
+                  // The logo is 1104 x 1050: 72 px wide.
+                  srcSet: drawnAt("/static/ctm/tribunal-logo-cropped.svg", 1104, 72), width: 72, height: 68, placeholder: "none", priority: true,
                 }),
               ),
               config.providers.length
@@ -1294,8 +1297,8 @@
                   })
                 : h(P.Notice, { tone: "warning" }, t("noProviders")),
             ),
-          ),
-        ),
+          )),
+        )),
       );
     }
     const council = user.portal === "council";
@@ -1559,9 +1562,7 @@
       brand: h(R.Fragment, null,
         h(P.Image, {
           src: "/static/ctm/tribunal-logo-cropped.svg",
-          alt: "", width: 36, height: 36,
-          className: "plx-u-w-36px plx-u-bg-transparent",
-          fit: "contain", placeholder: "none", priority: true,
+          alt: "", srcSet: drawnAt("/static/ctm/tribunal-logo-cropped.svg", 1104, 36), width: 36, height: 34, placeholder: "none", priority: true,
         }),
         h("span", { className: "plx-app-header__name" },
           h("strong", { className: "plx-app-header__product" }, "DIOCESE OF LOS ANGELES"),

@@ -9,7 +9,9 @@ const between = (start, end) => app.slice(app.indexOf(start), app.indexOf(end, a
 const signIn = between("if (user === null) {", "const council = user.portal");
 
 test("sign-in is the Auth page with SsoButtons for the configured providers only (sign-in.md, single-sign-on.md)", () => {
-  assert.match(signIn, /h\(P\.Auth, \{\s*page: true,/);
+  // #144: the Auth card is centered in a growing Stack below the diocese header (no overlay utilities), so
+  // the page never scrolls; Auth page mode would add a full window height under the header.
+  assert.match(signIn, /h\(P\.Stack, \{ grow: true, justify: "center", align: "center", inset: "lg" \}, h\(P\.Auth, \{/);
   assert.match(signIn, /title: t\("signIn"\)/);
   assert.match(signIn, /h\(P\.SsoButtons, \{/);
   assert.match(signIn, /providers: config\.providers\.map\(\(name\) => \(\{ id: name, label: t\(name\) \}\)\)/);
