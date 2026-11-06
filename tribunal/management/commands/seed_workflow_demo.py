@@ -286,17 +286,17 @@ class Command(BaseCommand):
         roster = []
         for first, last, email, role in ROSTER:
             account = m.Account.objects.filter(email__iexact=email).first()
-            if account and account.role != role and not live_fictitious:
+            # The roster is the real council: never change a role set on a real
+            # account, live or local. A changed role stops the seed before any write.
+            if account and account.role != role:
                 raise CommandError(
-                    f"Existing staff role conflict: {email}; no automatic role changes."
+                    f"Existing staff role conflict: {email} is {account.role}, roster says {role}; "
+                    "no automatic role changes."
                 )
             if account is None:
                 account = m.Account.objects.create_user(
                     email=email, first_name=first, last_name=last, role=role
                 )
-            elif account.role != role:
-                account.role = role
-                account.save(update_fields=["role"])
             roster.append(account)
         president, secretary = roster[:2]
         admin = roster[-1]
