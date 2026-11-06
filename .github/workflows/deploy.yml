@@ -71,15 +71,23 @@ jobs:
             exit 0
           fi
           if [[ "$target" == "live" ]]; then
-            # The required checks run on this same commit; wait for them (up to 40 minutes).
+            # The required checks run on this commit, or - when a bot merged it with GITHUB_TOKEN,
+            # which starts no push workflows (L-18) - on the head of the pull request it came from.
+            # Wait for them (up to 40 minutes).
+            pr_head="$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '[.[] | select(.merged_at != null)] | first | .head.sha // empty' 2>/dev/null || true)"
             for check in "Fast gates" "Decisions have checks" "Frontend tests" "Opengrep" "zizmor"; do
+              conclusion=""
               for i in $(seq 1 80); do
-                conclusion="$(gh api "repos/$REPO/commits/$SHA/check-runs" --paginate                   --jq "[.check_runs[] | select(.name == \"$check\")] | sort_by(.started_at) | last | (.conclusion // .status // \"\")")"
+                for ref in "$SHA" $pr_head; do
+                  c="$(gh api "repos/$REPO/commits/$ref/check-runs" --paginate                     --jq "[.check_runs[] | select(.name == \"$check\")] | sort_by(.started_at) | last | (.conclusion // .status // \"\")")"
+                  [[ "$c" == "success" ]] && { conclusion=success; break; }
+                  [[ -n "$c" ]] && conclusion="$c"
+                done
                 [[ "$conclusion" == "success" ]] && break
                 [[ "$conclusion" =~ ^(failure|cancelled|timed_out|action_required|startup_failure)$ ]] && { echo "::error::required check '$check' is '$conclusion' on $SHA; not deploying"; exit 1; }
                 sleep 30
               done
-              [[ "$conclusion" == "success" ]] || { echo "::error::required check '$check' did not finish on $SHA"; exit 1; }
+              [[ "$conclusion" == "success" ]] || { echo "::error::required check '$check' did not finish on $SHA${pr_head:+ or its pull request head $pr_head}"; exit 1; }
             done
           fi
           if [[ "$target" == "production" ]]; then
