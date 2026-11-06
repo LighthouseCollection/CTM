@@ -30,6 +30,7 @@ def granted_roles():
     import_module('tribunal.migrations.0051_runtime_settings_consumers').grant_runtime(apps,editor)
     import_module('tribunal.migrations.0064_repair_purge_and_session_delete_guards').grant_runtime(apps,editor)
     import_module('tribunal.migrations.0065_microsoft_first_binding').grant_runtime(apps,editor)
+    import_module('tribunal.migrations.0069_session_response_guards').grant_runtime(apps,editor)
     @contextmanager
     def enter(role,actor=None,*,session=False):
         with transaction.atomic():
