@@ -1,0 +1,55 @@
+name: Dispatcher watchdog
+# Template v2.4 §6.1 and check 14, decision D-0039. The poller on the agent host
+# updates the pinned "Dispatcher heartbeat" issue every heartbeat_min. This daily
+# job, on a GitHub-hosted runner, opens one `process` issue when that heartbeat is
+# older than 2 x heartbeat_min (this also catches an offline host). It hands
+# nothing off: opening an issue needs no other workflow to start (L-18).
+# Not a required check: a scheduled job cannot report on the commit being merged.
+on:
+  schedule:
+    - cron: '30 15 * * *'   # 07:30 Los Angeles (PST)
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  watchdog:
+    name: Dispatcher heartbeat age
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check the heartbeat issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          minutes=$(node -e 'console.log(require("./scripts/lib/registry.cjs").load().settings.heartbeat_min)')
+          limit=$(( 2 * minutes * 60 ))
+          updated=$(gh issue list --repo "$REPO" --state open --search '"Dispatcher heartbeat" in:title' \
+            --json title,updatedAt --jq '[.[] | select(.title == "Dispatcher heartbeat")][0].updatedAt // empty')
+          if [ -z "$updated" ]; then
+            echo "::notice::No Dispatcher heartbeat issue yet: the poller is not installed (scripts/dispatcher/install.sh)."
+            exit 0
+          fi
+          age=$(( $(date -u +%s) - $(date -u -d "$updated" +%s) ))
+          echo "Heartbeat updated $updated, ${age}s ago (limit ${limit}s = 2 x heartbeat_min)"
+          [ "$age" -le "$limit" ] && exit 0
+          title="Dispatcher heartbeat is stale"
+          open=$(gh issue list --repo "$REPO" --state open --search "\"$title\" in:title" --json title --jq "[.[] | select(.title == \"$title\")] | length")
+          if [ "$open" = "0" ]; then
+            gh issue create --repo "$REPO" --title "$title" --label process --label sev:S1 --body "$(printf '%s\n\n%s\n\n%s' \
+              "The pinned Dispatcher heartbeat issue was last updated $updated, more than 2 x \`heartbeat_min\` ago. The poller on the agent host is not running, so Ready work is not being picked up (template v2.4 §6.4)." \
+              "ctm3-delivery-lead: check Task Scheduler task \"CTM3 Dispatcher\" and the log under %LOCALAPPDATA%\\ctm-dispatcher\\logs, fix the root cause and add it to docs/lessons.md." \
+              "— ctm3-dispatcher watchdog")"
+          fi
+          echo "::error::Dispatcher heartbeat is stale (${age}s)"
+          exit 1

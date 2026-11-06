@@ -34,3 +34,10 @@ running role.
 **Not built:** mode R, the lane Stop hook that blocks exit while Ready items exist, the board Project field moves (no `project` scope yet, see `sdlc.md` §9).
 
 **Done when:** `decide` tests pass, `poll.cjs --dry-run` and `--launch-test` run against the live repository, the watchdog passes zizmor, and D-0039 points at the watchdog job.
+
+**Install (owner, once; until then sessions are started by hand as today).**
+`bash scripts/dispatcher/install.sh` from Git Bash: creates the `ctm3-wt/dispatcher`
+worktree, runs the registry check and `--launch-test`, and registers the Task
+Scheduler task "CTM3 Dispatcher" every `heartbeat_min` (while logged on). Each
+poll may start headless sessions, which use the account's Claude usage.
+Try `node scripts/dispatcher/poll.cjs --dry-run` first. Remove with `--remove`.
