@@ -1532,14 +1532,14 @@
 
     const manage = mode === "upcoming" && canManage(user);
     const columns = [
-      { title: t("sessionDate"), field: "date", kind: "name", minWidth: "8rem" },
-      { title: t("sessionTime"), field: "session_time", minWidth: "8rem" },
+      { title: t("sessionDate"), field: "date", kind: "name", width: "8rem" },
+      { title: t("sessionTime"), field: "session_time", width: "8rem" },
       ...(mode === "archived" ? [
-        { title: t("adjournEndTime"), field: "adjourned_time", minWidth: "8rem" },
-        { title: t("assignedCases"), field: "assigned_case_count", minWidth: "8rem" },
-        { title: t("caseHearings"), field: "hearing_case_count", minWidth: "8rem" },
+        { title: t("adjournEndTime"), field: "adjourned_time", width: "10rem" },
+        { title: t("assignedCases"), field: "assigned_case_count", width: "9rem" },
+        { title: t("caseHearings"), field: "hearing_case_count", width: "9rem" },
       ] : []),
-      { title: t("statusLabel"), field: "state", minWidth: "8rem", pill: false, render: (row) => h(P.Badge, { tone: sessionStatusTone(row.state) }, t(sessionStatusKey(row.state))) },
+      { title: t("statusLabel"), field: "state", pill: false, render: (row) => h(P.Badge, { tone: sessionStatusTone(row.state) }, t(sessionStatusKey(row.state))) },
     ];
     const listProps = {
       label: t(titleKey), rows: tableRows, empty: t(emptyKey), columns,
@@ -2435,22 +2435,22 @@
       const title = first ? t("casesToAssign") : t("scheduledCasesForHearing");
       const columns = first
         ? [
-            { title: t("applicant"), field: "applicant", kind: "name", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
-            { title: t("respondent"), field: "respondent", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
+            { title: t("applicant"), field: "applicant", kind: "name", width: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
+            { title: t("respondent"), field: "respondent", width: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("reason"), field: "reason", minWidth: "6.5rem" },
             { title: t("yearsMarried"), field: "married_years", minWidth: "7.5rem", pill: false, render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
-            { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: t("actions"), field: "open_action", minWidth: "7rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
+            { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
+            { title: t("actions"), field: "open_action", minWidth: "9rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ]
         : [
-            { title: "#", field: "hearing_number", kind: "name", width: "3rem" },
-            { title: t("applicant"), field: "applicant", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
-            { title: t("respondent"), field: "respondent", minWidth: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
-            { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "11rem", pill: false, render: (row) => h(PreviousRecommendationCell, { value: row.previous_recommendation, lang }) },
-            { title: t("actions"), field: "open_action", minWidth: "7rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
+            { title: "#", field: "hearing_number", kind: "name", width: "5rem" },
+            { title: t("applicant"), field: "applicant", width: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
+            { title: t("respondent"), field: "respondent", width: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
+            { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
+            { title: t("previousRecommendation"), field: "previous_recommendation", width: "12rem", pill: false, render: (row) => h(PreviousRecommendationCell, { value: row.previous_recommendation, lang }) },
+            { title: t("actions"), field: "open_action", minWidth: "9rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ];

@@ -491,9 +491,9 @@ test("agenda tables reserve enough space for complete header labels", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const css = ctmCss();
   assert.match(council, /yearsMarried"\), field: "married_years", minWidth: "7\.5rem"/);
-  assert.match(council, /applicant"\), field: "applicant", kind: "name", minWidth: "10\.5rem"/);
-  assert.match(council, /respondent"\), field: "respondent", minWidth: "10\.5rem"/);
-  assert.match(council, /assignedTo"\), field: "assigned_member_name", minWidth: "12rem"/);
+  assert.match(council, /applicant"\), field: "applicant", kind: "name", width: "10\.5rem"/);
+  assert.match(council, /respondent"\), field: "respondent", width: "10\.5rem"/);
+  assert.match(council, /assignedTo"\), field: "assigned_member_name", width: "12rem"/);
   assert.doesNotMatch(css, /ctm-session-agenda-grid[\s\S]*min-block-size/);
   assert.match(council, /className: "ctm-session-agenda-grid"[\s\S]*isStatic: true/);
   assert.match(council, /h\(P\.DataPill, \{ size: "md", gender: normalizedGender \}, value\)/);
@@ -523,7 +523,7 @@ test("upcoming sessions use a full listing and load the selected session into th
   assert.match(source, /const \[formOpen, setFormOpen\] = R\.useState\(false\)/);
   assert.match(source, /onSelect: startCreate/);
   assert.match(source, /h\(P\.FormFlow, \{\s*open: formOpen, surface: "dialog", mode: editing \? "edit" : "create"/);
-  assert.match(source, /title: t\("sessionTime"\), field: "session_time", minWidth: "8rem"/);
+  assert.match(source, /title: t\("sessionTime"\), field: "session_time", width: "8rem"/);
   assert.match(source, /h\(P\.Badge, \{ tone: sessionStatusTone\(row\.state\) \}/);
   const columns = source.slice(source.indexOf("const columns = ["), source.indexOf("const listProps"));
   assert.doesNotMatch(columns, /presiding_member_name/);
