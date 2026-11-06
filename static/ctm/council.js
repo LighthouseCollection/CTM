@@ -504,8 +504,8 @@
       adjournSessionAction: "Adjourn session",
       addAssignmentCase: "Case to be Assigned",
       addHearingCase: "Case to Hearings",
-      attendance: "Council Attendance",
-      scheduledCasesForHearing: "Scheduled Cases for Hearing",
+      attendance: "Attendance",
+      scheduledCasesForHearing: "Hearings",
       collapse: "Collapse {title}",
       expand: "Expand {title}",
       respondent: "Respondent",
@@ -534,7 +534,7 @@
       backSessions: "Back to sessions",
       sessionHeaderDescription: "Manage attendance, case assignments, and hearings for this session.",
       sessionSummary: "Session summary",
-      casesToAssign: "Cases to assign",
+      casesToAssign: "To assign",
       scheduledHearings: "Scheduled hearings",
       agenda: "Agenda",
       part1: "Part 1 — New case assignments",
@@ -858,8 +858,8 @@
       adjournSessionAction: "تأجيل الجلسة",
       addAssignmentCase: "قضية للتعيين",
       addHearingCase: "قضية لجلسات النظر",
-      attendance: "حضور أعضاء المجلس",
-      scheduledCasesForHearing: "القضايا المجدولة للنظر",
+      attendance: "الحضور",
+      scheduledCasesForHearing: "مناقشات القضية",
       collapse: "طي {title}",
       expand: "توسيع {title}",
       respondent: "الطرف الآخر",
@@ -2384,7 +2384,6 @@
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     const [adjournEnd, setAdjournEnd] = R.useState("");
-    const [agendaTab, setAgendaTab] = R.useState("scheduled");
 
     if (state.pending && !state.data) return loadingView(P, h, t);
     if (state.error) return loadFailure(P, h, t, retry, state.error);
@@ -2670,12 +2669,12 @@
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
       editable && session.starts_at && new Date(session.starts_at).getTime() > Date.now()
         ? h(SessionAnswers, { key: session.id, api, lang, user, session }) : null,
-      current ? h(P.Tabs, { variant: "folder", label: t("agenda"), value: agendaTab, onChange: setAgendaTab,
-        items: [
-          { value: "scheduled", label: t("scheduledCasesForHearing"), content: agendaTable(2) },
-          { value: "assign", label: t("casesToAssign"), content: agendaTable(1) },
-        ],
-      }) : h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
+      // D-0042 (owner, issue 171): no agenda tabs. Two full-width sections, one below the other, each with
+      // its heading and its own table: Hearings, then To assign (peer sections, stack.md gap "section").
+      current ? h(P.Stack, { gap: "section" },
+        h(P.Stack, { gap: "sm" }, h(P.Text, { as: "h2", variant: "heading" }, t("scheduledCasesForHearing")), agendaTable(2)),
+        h(P.Stack, { gap: "sm" }, h(P.Text, { as: "h2", variant: "heading" }, t("casesToAssign")), agendaTable(1)),
+      ) : h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
       current ? null : part(1),
       current ? null : part(2),
       data.items.length && !data.items.some((row) => "hearing_id" in row) ? h(P.Notice, { tone: "info" }, t("outcomeDependency")) : null,

@@ -277,10 +277,11 @@ test("the session header is Plenix EntityHeader style 2: facts carry their actio
   const agendaTable = council.slice(council.indexOf("const agendaTable"), council.indexOf("return h(", council.indexOf("const agendaTable")));
   assert.doesNotMatch(agendaTable, /P\.SplitView/);
   const sessionWorkspace = council.slice(council.indexOf("function SessionWorkspace"), council.indexOf("function searchProblem"));
-  assert.match(sessionWorkspace, /const \[agendaTab, setAgendaTab\] = R\.useState\("scheduled"\)/);
-  assert.match(sessionWorkspace, /h\(P\.Tabs, \{ variant: "folder", label: t\("agenda"\), value: agendaTab, onChange: setAgendaTab,/);
-  assert.match(sessionWorkspace, /\{ value: "scheduled", label: t\("scheduledCasesForHearing"\), content: agendaTable\(2\) \}/);
-  assert.match(sessionWorkspace, /\{ value: "assign", label: t\("casesToAssign"\), content: agendaTable\(1\) \}/);
+  // D-0042 (owner, issue 171): no agenda tabs; Hearings, then To assign, stacked, each with its heading and table.
+  assert.doesNotMatch(sessionWorkspace, /\bagendaTab\b|h\(P\.Tabs, \{[^}]*label: t\("agenda"\)/);
+  const sections = sessionWorkspace.match(/h\(P\.Stack, \{ gap: "sm" \}, h\(P\.Text, \{ as: "h2", variant: "heading" \}, t\("(\w+)"\)\), agendaTable\((\d)\)\)/g) || [];
+  assert.deepEqual(sections.map((s) => s.match(/t\("(\w+)"\)\), agendaTable\((\d)\)/).slice(1).join(":")), ["scheduledCasesForHearing:2", "casesToAssign:1"]);
+  assert.match(sessionWorkspace, /current \? h\(P\.Stack, \{ gap: "section" \},/);
   assert.doesNotMatch(agendaTable, /P\.Panel/);
   assert.match(agendaTable, /previousRecommendation/);
   assert.match(agendaTable, /h\(PreviousRecommendationCell, \{ value: row\.previous_recommendation, lang \}\)/);
@@ -816,11 +817,28 @@ test("ctm3-48 part 3: timeline is Plenix Timeline grouped by year; past hearings
   assert.match(councilCase, /h\(P\.Table, \{ label: t\("pastHearings"\)/);
 });
 
-// #113: the agenda tabs are Plenix Tabs; their panel holds a framed DataGrid, so they use the documented
-// "folder" variant (the tab strip alone, the content unframed) instead of a frame around the grid's frame.
-test("session agenda uses Plenix folder tabs around its table (#113)", () => {
+// D-0042 (owner, issue 171) reverses the #113 agenda tabs: "should be full container table". The current
+// session shows Hearings, then To assign, as two stacked full-width tables; tabs must not come back.
+test("current session agenda is two stacked full-width tables, never tabs (D-0042, issue 171)", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
-  assert.match(council, /current \? h\(P\.Tabs, \{ variant: "folder", label: t\("agenda"\)/);
+  const workspace = council.slice(council.indexOf("function SessionWorkspace"), council.indexOf("function searchProblem"));
+  assert.doesNotMatch(workspace, /\bagendaTab\b/);
+  assert.doesNotMatch(workspace, /h\(P\.Tabs, \{[^}]*label: t\("agenda"\)/);
+  assert.doesNotMatch(workspace, /content: agendaTable\(/);
+  const order = [...workspace.matchAll(/t\("(\w+)"\)\), agendaTable\((\d)\)\)/g)].map((m) => m[1] + ":" + m[2]);
+  assert.deepEqual(order, ["scheduledCasesForHearing:2", "casesToAssign:1"]);
+});
+
+test("summary labels are short: Attendance, To assign, Hearings (EN and AR, issue 171)", () => {
+  const context = { window: {} };
+  require("node:vm").runInNewContext(fs.readFileSync("static/ctm/council.js", "utf8"), context);
+  const en = context.window.CTMCouncil.translator("en"), ar = context.window.CTMCouncil.translator("ar");
+  assert.equal(en("attendance"), "Attendance");
+  assert.equal(en("casesToAssign"), "To assign");
+  assert.equal(en("scheduledCasesForHearing"), "Hearings");
+  assert.equal(ar("attendance"), "الحضور");
+  assert.equal(ar("scheduledCasesForHearing"), "مناقشات القضية");
+  assert.equal(ar("casesToAssign"), "قضايا للتعيين");
 });
 
 // #117: the session form's rows had no space between a field and the next row's label, and the date and time
