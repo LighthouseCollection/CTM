@@ -356,3 +356,13 @@ decisions:
     decided_by: owner
     status: active
     review_only: "Each arabic-proposals.md row approved under this rule names the standard it follows; checked in review by ctm3-i18n-engineer"
+
+  - id: D-0038
+    date: 2026-11-06
+    area: release
+    decision: Every merge to main deploys the live site directly (deploy.yml with CTM_DEPLOY_MODE=live-update, runner ctm-vm, deploy/live-update.sh - backup, build, migrate, checks, switch, automatic rollback). This is a recorded deviation from the template v2.4 Application profile (merge to staging, tag to production) until a staging stack exists on VM 107; version tags are skipped in this mode
+    why: Owner 2026-11-05 on #95 "local copy and live should be the same!" and 2026-11-06 "do Automatic deploys (#90)". VM 107 has 16 GB and no staging stack; the pre-deploy database backup and automatic rollback are the safety net
+    options: [Merge deploys live directly (chosen), Merge to staging and tag to production (template default; needs a staging stack)]
+    decided_by: owner
+    status: active
+    check: { kind: workflow, ref: .github/workflows/deploy.yml }
