@@ -9,7 +9,9 @@ const between = (start, end) => app.slice(app.indexOf(start), app.indexOf(end, a
 const signIn = between("if (user === null) {", "const council = user.portal");
 
 test("sign-in is the Auth page with SsoButtons for the configured providers only (sign-in.md, single-sign-on.md)", () => {
-  assert.match(signIn, /h\(P\.Auth, \{\s*page: true,/);
+  // #144: the Auth card is centered in a growing Stack below the diocese header (no overlay utilities), so
+  // the page never scrolls; Auth page mode would add a full window height under the header.
+  assert.match(signIn, /h\(P\.Stack, \{ grow: true, justify: "center", align: "center", inset: "lg" \}, h\(P\.Auth, \{/);
   assert.match(signIn, /title: t\("signIn"\)/);
   assert.match(signIn, /h\(P\.SsoButtons, \{/);
   assert.match(signIn, /providers: config\.providers\.map\(\(name\) => \(\{ id: name, label: t\(name\) \}\)\)/);
@@ -86,7 +88,8 @@ test("the applicant case is a RecordPage with its header, body panels unchanged 
 test("shell.html gives every static/ctm script a cache stamp, bumped after slices 1–8", () => {
   const scripts = [...shell.matchAll(/static '(ctm\/[a-z-]+\.js)' %\}(\?v=[^"]*)?"/g)];
   assert.ok(scripts.length >= 25, "every module is listed");
-  for (const [, file, stamp] of scripts) assert.equal(stamp, "?v=plx088-20261105", file);
+  // Bumped for #116 and #144 (2026-11-06): the live site kept serving the old stamp after the reminders UI.
+  for (const [, file, stamp] of scripts) assert.equal(stamp, "?v=ctm-20261106a", file);
 });
 
 // CTM#113 (owner: "it feels smaller than the cdn tab"): CTM renders at the CDN default density (density.md:
