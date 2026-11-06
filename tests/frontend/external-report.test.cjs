@@ -193,8 +193,9 @@ test("no browser storage, cookies or token logging in the page module; boot page
   assert.match(src, /history\.replaceState\(null, "", window\.location\.pathname \+ window\.location\.search\)/, "token removed from the address bar");
   const html = fs.readFileSync("static/ctm/external-report.html", "utf8");
   assert.match(html, /<meta name="referrer" content="no-referrer">/);
-  assert.match(html, /cdn\/0.88.0\/plenix\.js/);
-  assert.doesNotMatch(html, /cdn\/(?!0.88.0)\d+\.\d+\.\d+/);
+  const pin = fs.readFileSync("ctm/settings.py", "utf8").match(/cdn\/(\d+\.\d+\.\d+)\//)[1]; // #124: never spell the pin
+  assert.ok(html.includes(`cdn/${pin}/plenix.js`));
+  assert.doesNotMatch(html, new RegExp(`cdn\\/(?!${pin.replace(/\./g, "\\.")}\\/)\\d+\\.\\d+\\.\\d+`));
   assert.doesNotMatch(html, /\{\{|\{%|case_number|token=/);
   assert.doesNotMatch(src, /style\s*:/);
 });

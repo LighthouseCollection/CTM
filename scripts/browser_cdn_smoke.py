@@ -3,7 +3,7 @@
 Starts CTM locally (synthetic settings, no identity provider), opens the sign-in
 page against the real CDN and fails on: any CDN file that does not load, any
 browser error, Plenix not loading, the sign-in page not rendering, or Arabic not
-switching to right-to-left. Saves screenshots to .tmp/ (EN desktop, EN mobile, AR).
+switching to right-to-left. Saves screenshots to .tmp/ (EN and AR, desktop width only).
 
 Run: uv run --group browser python scripts/browser_cdn_smoke.py
 Optional CTM_CDN_LAN_IP bypasses public hairpin DNS with normal TLS validation.
@@ -80,9 +80,8 @@ with sync_playwright() as p:
     watch(page)
     check_page(page, "signin-en-desktop", heading="Sign in")
 
-    mobile = browser.new_page(reduced_motion="reduce", viewport={"width": 390, "height": 844})
-    watch(mobile)
-    check_page(mobile, "signin-en-mobile", heading="Sign in")
+    # Desktop width only (owner, 2026-11-05). Since Plenix 0.89.0 a phone-sized window shows the CDN's
+    # "Screen size not supported" notice on every page, sign-in included (#108, #124), so there is no phone sign-in to check.
 
     arabic = browser.new_page(reduced_motion="reduce", viewport={"width": 1440, "height": 1000})
     watch(arabic)

@@ -5,6 +5,11 @@ const fs = require("node:fs");
 const shell = fs.readFileSync("tribunal/templates/tribunal/shell.html", "utf8");
 const app = fs.readFileSync("static/ctm/app.js", "utf8");
 const shellLayout = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
+// The pinned Plenix version, read from its single source of truth (ctm/settings.py PLENIX_BASE), so the
+// auto-upgrade's bump never has to rewrite these tests (#124).
+const PIN = fs.readFileSync("ctm/settings.py", "utf8").match(/PLENIX_BASE = "https:\/\/design-system\.lighthouseway\.org\/cdn\/(\d+\.\d+\.\d+)\/"/)[1];
+const PIN_RE = PIN.replace(/\./g, "\\.");
+const otherPin = new RegExp(String.raw`cdn\/(?!${PIN_RE}\/)\d+\.\d+\.\d+`);
 // #97 slice 8 (#48, D-0022/D-0034): ctm.css is gone; the CSS halves of older tests read "" and still hold.
 const ctmCss = () => (fs.existsSync("static/ctm/ctm.css") ? fs.readFileSync("static/ctm/ctm.css", "utf8") : "");
 
@@ -31,15 +36,15 @@ test("session layout assets use a current cache version", () => {
   assert.match(shell, /ctm\/council\.js\x27 %\}\?v=[a-z0-9-]+/);
 });
 test("council modules load in order before app.js with the pinned Plenix CDN", () => {
-  const order = ["cdn/0.88.0/plenix.js", "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
+  const order = [`cdn/${PIN}/plenix.js`, "ctm/council.js", "ctm/council-case.js", "ctm/council-decree.js", "ctm/council-media.js", "ctm/app.js"].map((s) => shell.indexOf(s));
   for (const index of order) assert.ok(index > 0);
   assert.deepEqual([...order].sort((a, b) => a - b), order);
-  assert.doesNotMatch(shell, /cdn\/(?!0.88.0)\d+\.\d+\.\d+/);
+  assert.doesNotMatch(shell, otherPin);
 });
 
 test("shell draws Material navigation symbols through Icon, without the retired icons-all.css (Plenix 0.74.0)", () => {
   assert.doesNotMatch(shell, /icons-all\.css/);
-  assert.match(shell, /cdn\/0.88.0\/plenix\.js"><\/script>\s*<script defer src="https:\/\/design-system\.lighthouseway\.org\/cdn\/0.88.0\/plenix-icons-plenix\.js"><\/script>\s*<script defer src="https:\/\/design-system\.lighthouseway\.org\/cdn\/0.88.0\/plenix-engines\.js">/);
+  assert.match(shell, new RegExp(String.raw`cdn\/${PIN_RE}\/plenix\.js"><\/script>\s*<script defer src="https:\/\/design-system\.lighthouseway\.org\/cdn\/${PIN_RE}\/plenix-icons-plenix\.js"><\/script>\s*<script defer src="https:\/\/design-system\.lighthouseway\.org\/cdn\/${PIN_RE}\/plenix-engines\.js">`));
   assert.match(app, /name: "document_search"/);
   assert.match(app, /name: "person_cancel"/);
 });
