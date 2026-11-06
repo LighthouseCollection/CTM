@@ -11,7 +11,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = "https://design-system.lighthouseway.org/cdn/0.88.0/"
+BASE = "https://design-system.lighthouseway.org/cdn/0.90.1/"
 OUT = ROOT / ".tmp" / "applicant-browser"
 OUT.mkdir(parents=True, exist_ok=True)
 
