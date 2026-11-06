@@ -822,3 +822,13 @@ test("session agenda uses Plenix folder tabs around its table (#113)", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.match(council, /current \? h\(P\.Tabs, \{ variant: "folder", label: t\("agenda"\)/);
 });
+
+// #117: the session form's rows had no space between a field and the next row's label, and the date and time
+// fields were narrower than the others. Two rows of Columns in a Stack, every field filling its column.
+test("session form rows are spaced and its fields fill their columns (#117)", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const form = council.slice(council.indexOf("h(P.FormFlow, {"), council.indexOf("h(P.ConfirmDialog, {", council.indexOf("h(P.FormFlow, {")));
+  assert.match(form, /h\(P\.Stack, \{ gap: "xl" \},\s*h\(P\.Columns, \{ count: 2, collapseBelow: "wide" \},\s*h\(P\.Field, \{ label: t\("sessionDate"\)/);
+  assert.equal((form.match(/h\(P\.Columns, \{ count: 2, collapseBelow: "wide" \}/g) || []).length, 2, "one Columns per row");
+  assert.doesNotMatch(form, /width: "sm"/);
+});
