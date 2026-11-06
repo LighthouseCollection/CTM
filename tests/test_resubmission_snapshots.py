@@ -125,3 +125,38 @@ def test_f25_reader_binds_exact_submitted_file_versions(client, ready_applicatio
     assert str(replacement.pk) in {row["file_id"] for row in data["manifest"]}
     formal.refresh_from_db()
     assert [row["id"] for row in formal.manifest] == formal_ids  # first snapshot unchanged
+
+
+@pytest.mark.django_db
+def test_f36_returned_filing_never_auto_expires(ready_application, people):
+    from django.utils import timezone
+    from tribunal.services.retention import process_drafts
+
+    app = ready_application
+    submit_application(app.owner, app.pk, "f36-first", ATTESTATION)
+    review_application(people["secretary"], app.pk, "reject", "Correct the dates.")
+    m.Application.objects.filter(pk=app.pk).update(last_activity=timezone.now() - timezone.timedelta(days=500))
+    process_drafts()
+    app.refresh_from_db()
+    assert app.status == "returned"
+    assert app.submissions.count() == 1 and app.revisions.count() == 1
+    assert not m.Notification.objects.filter(recipient=app.owner, kind="draft_expiring").exists()
+
+
+@pytest.mark.django_db
+def test_f35_identity_hold_blocks_payment_and_submission_not_draft_saves(unpaid_application):
+    from tribunal.services.applications import save_answers
+    from tribunal.services.payments import prepare_checkout
+
+    app = unpaid_application
+    m.Application.objects.filter(pk=app.pk).update(duplicate_hold=True)
+    answers = app.revisions.get(number=app.current_version).answers
+    saved = save_answers(app.owner, app.pk, {**answers, "statement": "Saved during hold"}, app.current_version)
+    app.refresh_from_db()
+    assert app.current_version == saved.number
+    with pytest.raises(ValidationError):
+        prepare_checkout(app.owner, app.pk, ATTESTATION, expected_version=app.current_version)
+    assert not m.CheckoutIntent.objects.filter(application=app).exists()
+    with pytest.raises(ValidationError, match="Duplicate identity review"):
+        submit_application(app.owner, app.pk, "f35-submit", ATTESTATION, expected_version=app.current_version)
+    assert not app.submissions.exists()
