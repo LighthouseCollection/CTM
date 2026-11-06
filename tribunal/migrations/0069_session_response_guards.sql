@@ -31,6 +31,17 @@ BEGIN
  RETURN NEW;
 END $$;
 
+-- Answers are never changed. They are removed only with their session during an
+-- authorized planned reschedule (as attendance is, 0016) or an admin purge.
+CREATE FUNCTION public.ctm_guard_session_response_history() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF TG_OP='DELETE' AND (public.ctm_admin_case_purge_active() OR public.ctm_session_transfer_context(OLD.session_id)) THEN
+  RETURN OLD;
+ END IF;
+ RAISE EXCEPTION 'CTM historical records cannot be overwritten' USING ERRCODE='23514';
+END $$;
+
 -- RFC 5545: a calendar file's SEQUENCE only goes up.
 CREATE FUNCTION public.ctm_session_ics_sequence_rises() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$

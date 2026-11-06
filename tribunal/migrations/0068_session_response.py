@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
                 ('answer', models.CharField(choices=[('attend', 'attend'), ('not_attend', 'not_attend')], max_length=12)),
                 ('member', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='session_responses', to=settings.AUTH_USER_MODEL)),
-                ('session', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='responses', to='tribunal.councilsession')),
+                ('session', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='responses', to='tribunal.councilsession')),
             ],
             options={
                 'indexes': [models.Index(fields=['session', 'member', '-created_at'], name='session_response_latest')],

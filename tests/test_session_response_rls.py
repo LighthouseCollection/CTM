@@ -105,12 +105,30 @@ def test_answer_time_is_the_database_clock(granted_roles, people, session):
 def test_answers_are_append_only(granted_roles, people, session, statement):
     member = people["member"]
     answer(granted_roles, member, session, "attend")
-    with pytest.raises(DatabaseError):
-        with granted_roles("ctm_app", member) as _, connection.cursor() as cursor:
+    for actor in [member, people["admin"]]:
+        # Row security gives the runtime role no row to change or remove.
+        with granted_roles("ctm_app", actor) as _, connection.cursor() as cursor:
             cursor.execute(statement, [str(member.pk)])
-    with connection.cursor() as cursor:  # even the owner cannot rewrite history
-        with pytest.raises(DatabaseError):
-            cursor.execute(statement, [str(member.pk)])
+            assert cursor.rowcount == 0
+    with pytest.raises(DatabaseError), transaction.atomic(), connection.cursor() as cursor:
+        cursor.execute(statement, [str(member.pk)])  # even the owner is refused by the history guard
+    assert visible(granted_roles, people["admin"], session) == [(str(member.pk), "attend")]
+
+
+def test_moving_a_session_removes_its_answers_through_the_planned_reschedule(granted_roles, people):
+    from tribunal.services import council
+    admin = people["admin"]
+    with granted_roles("ctm_app", admin):
+        source = council.create_session(admin, date(2031, 5, 6))
+    CouncilSession.objects.filter(pk=source.pk).update(starts_at=timezone.now() + timedelta(days=5))
+    answer(granted_roles, people["member"], source, "attend")
+    with granted_roles("ctm_app", admin):
+        target = council.reschedule_session(admin, source.pk, date(2031, 5, 7), {}, "Move meeting")
+    assert not CouncilSession.objects.filter(pk=source.pk).exists()
+    assert visible(granted_roles, admin, target) == []
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT count(*) FROM public.tribunal_sessionresponse WHERE session_id=%s", [str(source.pk)])
+        assert cursor.fetchone()[0] == 0
 
 
 def test_table_forces_row_security():

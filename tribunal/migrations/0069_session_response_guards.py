@@ -5,7 +5,8 @@ from django.db import migrations
 
 TABLE = "tribunal_sessionresponse"
 ENTRYPOINTS = ["ctm_session_response_readable(jsonb)", "ctm_session_response_writable(jsonb)"]
-FUNCTIONS = ENTRYPOINTS + ["ctm_session_response_stamp()", "ctm_session_ics_sequence_rises()"]
+FUNCTIONS = ENTRYPOINTS + ["ctm_session_response_stamp()", "ctm_session_ics_sequence_rises()",
+             "ctm_guard_session_response_history()"]
 
 
 def grant_runtime(apps, schema_editor):
@@ -14,8 +15,8 @@ def grant_runtime(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
         cursor.execute("SELECT 1 FROM pg_roles WHERE rolname='ctm_app'")
         if cursor.fetchone():
-            # Append-only: no UPDATE or DELETE for the runtime role.
-            cursor.execute(f"GRANT SELECT, INSERT ON TABLE public.{TABLE} TO ctm_app")
+            # No UPDATE. DELETE only reaches rows inside a planned reschedule (policy + trigger).
+            cursor.execute(f"GRANT SELECT, INSERT, DELETE ON TABLE public.{TABLE} TO ctm_app")
             for signature in ENTRYPOINTS:
                 cursor.execute(f"GRANT EXECUTE ON FUNCTION public.{signature} TO ctm_app")
 
@@ -37,8 +38,8 @@ def install(apps, schema_editor):
     schema_editor.execute(f"CREATE POLICY response_select ON {TABLE} FOR SELECT USING (public.ctm_session_response_readable(to_jsonb({TABLE})))")
     schema_editor.execute(f"CREATE POLICY response_insert ON {TABLE} FOR INSERT WITH CHECK (public.ctm_session_response_writable(to_jsonb({TABLE})))")
     schema_editor.execute(f"CREATE TRIGGER response_stamp BEFORE INSERT ON {TABLE} FOR EACH ROW EXECUTE FUNCTION public.ctm_session_response_stamp()")
-    # Same history guard as the other append-only tables: refused except during an authorized admin purge.
-    schema_editor.execute(f"CREATE TRIGGER response_history BEFORE UPDATE OR DELETE ON {TABLE} FOR EACH ROW EXECUTE FUNCTION public.ctm_reject_history_update()")
+    schema_editor.execute(f"CREATE POLICY response_transfer_delete ON {TABLE} FOR DELETE USING (public.ctm_session_transfer_context(session_id))")
+    schema_editor.execute(f"CREATE TRIGGER response_history BEFORE UPDATE OR DELETE ON {TABLE} FOR EACH ROW EXECUTE FUNCTION public.ctm_guard_session_response_history()")
     schema_editor.execute("CREATE TRIGGER ics_sequence_rises BEFORE UPDATE OF ics_sequence ON tribunal_councilsession "
                           "FOR EACH ROW EXECUTE FUNCTION public.ctm_session_ics_sequence_rises()")
     grant_runtime(apps, schema_editor)
@@ -50,7 +51,7 @@ def uninstall(apps, schema_editor):
     schema_editor.execute("DROP TRIGGER ics_sequence_rises ON tribunal_councilsession")
     for trigger in ["response_stamp", "response_history"]:
         schema_editor.execute(f"DROP TRIGGER {trigger} ON {TABLE}")
-    for policy in ["migration_owner", "response_select", "response_insert"]:
+    for policy in ["migration_owner", "response_select", "response_insert", "response_transfer_delete"]:
         schema_editor.execute(f"DROP POLICY {policy} ON {TABLE}")
     schema_editor.execute(f"ALTER TABLE {TABLE} NO FORCE ROW LEVEL SECURITY")
     schema_editor.execute(f"ALTER TABLE {TABLE} DISABLE ROW LEVEL SECURITY")

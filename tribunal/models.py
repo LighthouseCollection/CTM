@@ -534,7 +534,8 @@ class SessionResponse(Immutable):
     database sets created_at.
     """
     ANSWERS = [("attend", "attend"), ("not_attend", "not_attend")]
-    session = models.ForeignKey(CouncilSession, on_delete=models.PROTECT, related_name="responses")
+    # A moved session is deleted by the planned reschedule; its answers go with it (guarded in 0069).
+    session = models.ForeignKey(CouncilSession, on_delete=models.CASCADE, related_name="responses")
     member = models.ForeignKey(Account, on_delete=models.PROTECT, related_name="session_responses")
     answer = models.CharField(max_length=12, choices=ANSWERS)
 
