@@ -173,6 +173,25 @@ jobs:
           gh workflow run db-owner-guard.yml --ref "${{ steps.bump.outputs.branch }}" -f pr="${url##*/}"   # required too (issue 67)
           gh pr merge "$url" --squash --auto --delete-branch
           echo "Auto-merge set on $url (merges when the required checks pass)" >> "$GITHUB_STEP_SUMMARY"
+          # GitHub holds pull_request runs on a bot-opened PR as "action_required", which blocks the
+          # merge; approve our own branch's runs. A merge made with GITHUB_TOKEN also starts no push
+          # workflows, so start the live deploy ourselves once it has merged (#90).
+          branch="${{ steps.bump.outputs.branch }}"
+          for i in $(seq 1 90); do
+            for id in $(gh run list --branch "$branch" --event pull_request --json databaseId,conclusion,status                 --jq '.[] | select(.conclusion == "action_required" or .status == "waiting") | .databaseId'); do
+              gh api -X POST "repos/${{ github.repository }}/actions/runs/$id/approve" >/dev/null 2>&1                 || gh run rerun "$id" >/dev/null 2>&1 || true
+            done
+            state=$(gh pr view "$url" --json state --jq .state)
+            [ "$state" = MERGED ] && break
+            [ "$state" = CLOSED ] && { echo "::warning::$url was closed without merging"; exit 0; }
+            sleep 30
+          done
+          if [ "$state" = MERGED ]; then
+            gh workflow run deploy.yml --ref main
+            echo "Merged; live deploy started" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::$url has not merged after 45 minutes; the next push to main deploys it"
+          fi
 
       - name: Report a breaking upgrade as a bug
         if: steps.bump.outputs.changed == 'true' && !(steps.files.outcome == 'success' && steps.contract.outcome == 'success' && steps.node.outcome == 'success' && steps.shell.outcome == 'success' && steps.smoke.outcome == 'success')
