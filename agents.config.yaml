@@ -1,4 +1,4 @@
-# CTM role registry (project-plan template v2.4 §5.1; decisions D-0025, D-0040).
+# CTM role registry (project-plan template v2.4 §5.1; decisions D-0025, D-0041).
 # The one source for the launcher, the dispatcher and CI. Replaces agent-limits.yaml.
 # Documents name a setting (`slots`), never its value (check 15). Adjust values
 # here only; the Delivery Lead logs a change on a `decision` issue, and the owner
@@ -16,10 +16,10 @@ settings:
   short_task_cap_min: 15       # D-0025: longer -> stop and queue for a long-work slot
   memory_limit_default: 1.5G   # D-0025: each session's own limit
   start_new_below_free_gb: 2   # D-0025: no new session while free host memory is below this
-  # D-0040: template v2.4 defaults.
+  # D-0041: template v2.4 defaults.
   idle_exit_min: 5             # an idle session exits and frees its slot
   stall_min: 15                # no activity while work is assigned = stalled
-  heartbeat_min: 10            # poller interval (mode P, D-0039)
+  heartbeat_min: 10            # poller interval (mode P, D-0040)
   ready_min: 3                 # Ready items per active lane
   ready_label: status:ready
   in_progress_label: status:in-progress

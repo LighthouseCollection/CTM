@@ -63,7 +63,7 @@ contract is `DESIGN.md`. Lessons from past mistakes: `docs/lessons.md`.
 - Bugs: root cause before fixes (`ctm-debug`); stop after 3 failed fixes. New
   behavior is test-first (`ctm-tdd`).
 - Roles and concurrency come from the role registry `agents.config.yaml`
-  (D-0025, D-0040, adjustable): at most `slots` sessions on long work, plus
+  (D-0025, D-0041, adjustable): at most `slots` sessions on long work, plus
   `short_tasks_max` small tasks, each capped at `short_task_cap_min` (then it
   queues for a long-work slot). Memory sets the real limit. Documents name a
   setting, never its value (`scripts/check_registry.cjs`).

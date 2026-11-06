@@ -228,7 +228,7 @@ decisions:
   - id: D-0025
     date: 2026-11-04
     area: process
-    decision: Up to 4 agents on long work (a screen or service, a design, a migration, a release), plus any number of small tasks (a review, a lint or typo fix, one test, triage, a GitHub reply, the daily summary) capped at about 15 minutes each; longer ones queue for a long-work slot. Memory sets the real limit. The numbers live in agent-limits.yaml (agents.config.yaml since D-0040) and can be adjusted as needed
+    decision: Up to 4 agents on long work (a screen or service, a design, a migration, a release), plus any number of small tasks (a review, a lint or typo fix, one test, triage, a GitHub reply, the daily summary) capped at about 15 minutes each; longer ones queue for a long-work slot. Memory sets the real limit. The numbers live in agent-limits.yaml (agents.config.yaml since D-0041) and can be adjusted as needed
     why: Owner correction, same as PDS 1.0 ("as long as it can be adjusted as needed")
     options: [4 long-work slots + unlimited short tasks, adjustable (chosen), Hard cap of 4 sessions]
     decided_by: owner
@@ -367,7 +367,7 @@ decisions:
     status: active
     check: { kind: workflow, ref: .github/workflows/deploy.yml }
 
-  - id: D-0040
+  - id: D-0041
     date: 2026-11-06
     area: process
     decision: The role registry agents.config.yaml (template v2.4 §5.1) replaces agent-limits.yaml - one entry per ctm3-* role (kind, lane, agent label, wakes_on, parked, source, model, definition, skills, memory_limit) and the settings slots, reserved_gate_slots, idle_exit_min, stall_min, heartbeat_min, ready_min, short_task_cap_min, ready_label, in_progress_label, refill_role. D-0025's numbers move in unchanged; gate and short tasks still run on top of slots, so reserved_gate_slots is 0; the new timers use the template defaults. ctm3-media-pipeline-engineer is parked. Documents name settings, never values

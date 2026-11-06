@@ -33,7 +33,7 @@ has two owners. You approve it yourself and post the plan link on the issue.
 
 ## Running the work
 
-- Schedule by the role registry `agents.config.yaml` (D-0025, D-0040,
+- Schedule by the role registry `agents.config.yaml` (D-0025, D-0041,
   adjustable; you own it): at most `slots` sessions on long work (a screen or
   service, a design, a migration, a release); small tasks (a review, a lint or
   typo fix, one test, triage, a GitHub reply, the daily summary) run on top of

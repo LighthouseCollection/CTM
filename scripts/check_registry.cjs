@@ -15,7 +15,7 @@ const { ROOT, load } = require("./lib/registry.cjs");
 const problems = [];
 const rel = (p) => path.relative(ROOT, p).split(path.sep).join("/");
 
-// Triggers the dispatcher understands (scripts/dispatcher, D-0039).
+// Triggers the dispatcher understands (scripts/dispatcher, D-0040).
 const TRIGGERS = new Set([
   "ready_item", "issue_opened", "comment_mention", "ready_below_min", "release_done",
   "heartbeat", "type_ui_issue", "api_change", "stall_alert", "daily", "weekly",

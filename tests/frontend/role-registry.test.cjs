@@ -1,4 +1,4 @@
-// Role registry loader and check (template v2.4 §5.1, §9 checks 13 and 15; D-0040).
+// Role registry loader and check (template v2.4 §5.1, §9 checks 13 and 15; D-0041).
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert");
