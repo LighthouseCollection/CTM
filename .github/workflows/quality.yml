@@ -37,6 +37,8 @@ jobs:
         run: node scripts/check_migration_diff.cjs "$BASE"
       - name: Ownership
         run: node scripts/check_ownership.cjs --base "$BASE"
+      - name: Role registry (template checks 13 and 15)
+        run: node scripts/check_registry.cjs
       - name: English and Arabic keys (new problems)
         run: node scripts/check_i18n.cjs --base "$BASE"
       - name: No GITHUB_TOKEN hand-off without a dispatch (template check 16)

@@ -1,0 +1,262 @@
+# CTM role registry (project-plan template v2.4 §5.1; decisions D-0025, D-0040).
+# The one source for the launcher, the dispatcher and CI. Replaces agent-limits.yaml.
+# Documents name a setting (`slots`), never its value (check 15). Adjust values
+# here only; the Delivery Lead logs a change on a `decision` issue, and the owner
+# can change them any time by commenting there.
+# Checked by scripts/check_registry.cjs (fast gates). Syntax is a plain YAML
+# subset (maps, lists of maps, [inline, lists], scalars) so Node reads it with
+# scripts/lib/registry.cjs and no package install.
+
+settings:
+  # D-0025 (owner, unchanged): long work = a screen or service, a design, a migration, a release.
+  slots: 4                     # concurrent long-work sessions
+  # D-0025: gate and short tasks run on top of slots, so no slot is held back for them.
+  reserved_gate_slots: 0
+  short_tasks_max: unlimited   # D-0025: any number of short tasks (or a number)
+  short_task_cap_min: 15       # D-0025: longer -> stop and queue for a long-work slot
+  memory_limit_default: 1.5G   # D-0025: each session's own limit
+  start_new_below_free_gb: 2   # D-0025: no new session while free host memory is below this
+  # D-0040: template v2.4 defaults.
+  idle_exit_min: 5             # an idle session exits and frees its slot
+  stall_min: 15                # no activity while work is assigned = stalled
+  heartbeat_min: 10            # poller interval (mode P, D-0039)
+  ready_min: 3                 # Ready items per active lane
+  ready_label: status:ready
+  in_progress_label: status:in-progress
+  refill_role: ctm3-product-lead
+  priority: [release, integrate, verify, build, design, spec, evergreen]
+
+roles:
+  # ---- Lane agents (template §5.3) ----
+  - id: ctm3-product-lead
+    kind: lane
+    lane: spec
+    label: agent:ctm3-product-lead
+    instances: 1
+    parked: false
+    source: charter
+    model: opus
+    definition: .claude/agents/ctm3-product-lead.md
+    skills: [ctm-slice, ctm-owner-interview]
+    wakes_on: [issue_opened, comment_mention, ready_below_min, release_done, heartbeat]
+    memory_limit: 1.5G
+  - id: ctm3-design-director
+    kind: lane
+    lane: design
+    label: agent:ctm3-design-director
+    instances: 1
+    parked: false
+    source: charter
+    model: opus
+    definition: .claude/agents/ctm3-design-director.md
+    skills: [ctm-screen-shape]
+    wakes_on: [ready_item, type_ui_issue]
+    memory_limit: 1.5G
+  - id: ctm3-solution-architect
+    kind: lane
+    lane: architecture
+    label: agent:ctm3-solution-architect
+    instances: 1
+    parked: false
+    source: charter
+    model: inherit
+    definition: .claude/agents/ctm3-solution-architect.md
+    skills: [ctm-slice]
+    wakes_on: [ready_item, api_change]
+    memory_limit: 1.5G
+  - id: ctm3-delivery-lead
+    kind: lane
+    lane: plan
+    label: agent:ctm3-delivery-lead
+    instances: 1
+    parked: false
+    source: charter
+    model: sonnet
+    definition: .claude/agents/ctm3-delivery-lead.md
+    skills: [ctm-slice]
+    wakes_on: [ready_item, stall_alert, daily]
+    memory_limit: 1.5G
+  - id: ctm3-database-engineer
+    kind: lane
+    lane: build
+    label: agent:ctm3-database-engineer
+    instances: 1
+    parked: false
+    source: charter
+    model: inherit
+    definition: .claude/agents/ctm3-database-engineer.md
+    skills: [ctm-tdd, ctm-debug]
+    wakes_on: [ready_item]
+    memory_limit: 1.5G
+  - id: ctm3-backend-engineer
+    kind: lane
+    lane: build
+    label: agent:ctm3-backend-engineer
+    instances: 1
+    parked: false
+    source: charter
+    model: inherit
+    definition: .claude/agents/ctm3-backend-engineer.md
+    skills: [ctm-tdd, ctm-debug, ctm-payments]
+    wakes_on: [ready_item]
+    memory_limit: 1.5G
+  - id: ctm3-frontend-engineer
+    kind: lane
+    lane: build
+    label: agent:ctm3-frontend-engineer
+    instances: 1
+    parked: false
+    source: charter
+    model: inherit
+    definition: .claude/agents/ctm3-frontend-engineer.md
+    skills: [ctm-tdd, ctm-screen-shape]
+    wakes_on: [ready_item]
+    memory_limit: 1.5G
+  - id: ctm3-i18n-engineer
+    kind: lane
+    lane: locale
+    label: agent:ctm3-i18n-engineer
+    gate: true
+    instances: 1
+    parked: false
+    source: charter
+    model: opus
+    definition: .claude/agents/ctm3-i18n-engineer.md
+    skills: []
+    wakes_on: [ready_item, pr_touches_text]
+    applies_to_paths: [static/ctm/**, docs/i18n/**, templates/**]
+    memory_limit: 1.5G
+  - id: ctm3-technical-writer
+    kind: lane
+    lane: docs
+    label: agent:ctm3-technical-writer
+    gate: true
+    instances: 1
+    parked: false
+    source: charter
+    model: sonnet
+    definition: .claude/agents/ctm3-technical-writer.md
+    skills: []
+    wakes_on: [ready_item, public_api_changed]
+    memory_limit: 1.5G
+  - id: ctm3-release-engineer
+    kind: lane
+    lane: release
+    label: agent:ctm3-release-engineer
+    gate: true
+    instances: 1
+    parked: false
+    source: charter
+    model: opus
+    definition: .claude/agents/ctm3-release-engineer.md
+    skills: [ctm-debug]
+    wakes_on: [ready_item, pr_integrate_ready, release_batch_ready]
+    memory_limit: 1.5G
+
+  # ---- Task agents (template §5.4) ----
+  - id: ctm3-code-reviewer
+    kind: task
+    label: agent:ctm3-code-reviewer
+    priority: verify
+    gate: true
+    always: true
+    instances: 1
+    parked: false
+    source: charter
+    model: inherit
+    definition: .claude/agents/ctm3-code-reviewer.md
+    skills: []
+    wakes_on: [pr_ready_for_review]
+    memory_limit: 1.5G
+  - id: ctm3-qa-engineer
+    kind: task
+    label: agent:ctm3-qa-engineer
+    priority: verify
+    gate: true
+    always: true
+    instances: 1
+    parked: false
+    source: charter
+    model: inherit
+    definition: .claude/agents/ctm3-qa-engineer.md
+    skills: [ctm-tdd]
+    wakes_on: [pr_ready_for_review]
+    memory_limit: 1.5G
+  - id: ctm3-design-critic
+    kind: task
+    label: agent:ctm3-design-critic
+    priority: verify
+    gate: true
+    instances: 1
+    parked: false
+    source: charter
+    model: inherit
+    definition: .claude/agents/ctm3-design-critic.md
+    skills: []
+    wakes_on: [pr_ready_for_review]
+    applies_to_paths: [static/ctm/**, templates/**, DESIGN.md]
+    memory_limit: 1.5G
+  - id: ctm3-a11y-rtl-auditor
+    kind: task
+    label: agent:ctm3-a11y-rtl-auditor
+    priority: verify
+    gate: true
+    instances: 1
+    parked: false
+    source: charter
+    model: sonnet
+    definition: .claude/agents/ctm3-a11y-rtl-auditor.md
+    skills: []
+    wakes_on: [pr_ready_for_review]
+    applies_to_paths: [static/ctm/**, templates/**]
+    memory_limit: 1.5G
+  - id: ctm3-security-reviewer
+    kind: task
+    label: agent:ctm3-security-reviewer
+    priority: verify
+    gate: true
+    instances: 1
+    parked: false
+    source: charter
+    model: inherit
+    definition: .claude/agents/ctm3-security-reviewer.md
+    skills: []
+    wakes_on: [pr_ready_for_review]
+    applies_to_paths: [tribunal/auth.py, tribunal/policy.py, tribunal/services/**, tribunal/migrations/**, tribunal/db/**, ctm/settings*.py, .github/workflows/**, deploy/**]
+    memory_limit: 1.5G
+  - id: ctm3-debugger
+    kind: task
+    label: agent:ctm3-debugger
+    priority: build
+    instances: 1
+    parked: false
+    source: charter
+    model: inherit
+    definition: .claude/agents/ctm3-debugger.md
+    skills: [ctm-debug]
+    wakes_on: [bug_ready, fix_round_3]
+    memory_limit: 1.5G
+  - id: ctm3-drift-auditor
+    kind: task
+    label: agent:ctm3-drift-auditor
+    priority: evergreen
+    instances: 1
+    parked: false
+    source: charter
+    model: sonnet
+    definition: .claude/agents/ctm3-drift-auditor.md
+    skills: []
+    wakes_on: [weekly]
+    memory_limit: 1.5G
+  - id: ctm3-media-pipeline-engineer
+    kind: task
+    label: agent:ctm3-media-pipeline-engineer
+    priority: build
+    instances: 1
+    parked: true                 # audio/OCR stay honest placeholders until the owner brings them in scope
+    source: charter
+    model: inherit
+    definition: .claude/agents/ctm3-media-pipeline-engineer.md
+    skills: []
+    wakes_on: [ready_item]
+    memory_limit: 1.5G

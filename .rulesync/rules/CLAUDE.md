@@ -69,9 +69,11 @@ contract is `DESIGN.md`. Lessons from past mistakes: `docs/lessons.md`.
 - Integrate small and often: a change reaches a PR the same day.
 - Bugs: root cause before fixes (`ctm-debug`); stop after 3 failed fixes. New
   behavior is test-first (`ctm-tdd`).
-- Concurrency comes from `agent-limits.yaml` (D-0025, adjustable): at most 4
-  sessions on long work, plus any number of small tasks (about 15 minutes
-  each, then they queue for a long-work slot). Memory sets the real limit.
+- Roles and concurrency come from the role registry `agents.config.yaml`
+  (D-0025, D-0040, adjustable): at most `slots` sessions on long work, plus
+  `short_tasks_max` small tasks, each capped at `short_task_cap_min` (then it
+  queues for a long-work slot). Memory sets the real limit. Documents name a
+  setting, never its value (`scripts/check_registry.cjs`).
 
 ## The team (details: `docs/implementation/sdlc.md` section 2)
 
@@ -106,6 +108,7 @@ node scripts/check_ownership.cjs --slice <id>                  # changed files v
 node scripts/check_slice_trace.cjs <id>                        # acceptance IDs: brief -> design -> evidence
 node scripts/check_i18n.cjs --base origin/main                 # EN/AR keys, new problems only
 uv run --no-project --with pyyaml==6.0.3 python scripts/check_decisions.py  # every decision has a check
+node scripts/check_registry.cjs                               # role registry + no setting values in docs
 opengrep scan --config .opengrep/ctm.yml --baseline-commit origin/main --error
 node --test tests/frontend/*.test.cjs                          # frontend contracts
 uv run pytest --ds=ctm.settings_postgres_test -q               # needs isolated CTM_TEST_DATABASE_URL
