@@ -219,6 +219,8 @@ def create_session(actor, session_date, *, starts_at=None, presiding_member=None
         state=state,
     )
     audit(actor, "session_created", session)
+    from tribunal.services.session_reminders import announce_session
+    announce_session(session)
     return session
 
 
@@ -259,11 +261,22 @@ def update_session(actor, session_id, session_date, *, starts_at=None, presiding
     location = str(location or "").strip()
     if not location or len(location) > 300:
         raise ValidationError("Session location is required and must be at most 300 characters.")
+    # #116: a time or location change raises the calendar SEQUENCE in the same
+    # transaction and sends an update (an invite if there was no time before).
+    had_time = session.starts_at is not None
+    changed = session.starts_at != starts_at or session.location != location
     session.starts_at = starts_at
     session.presiding_member = presiding_member
     session.location = location
-    session.save(update_fields=["starts_at", "presiding_member", "location"])
+    fields = ["starts_at", "presiding_member", "location"]
+    if changed and had_time:
+        session.ics_sequence += 1
+        fields.append("ics_sequence")
+    session.save(update_fields=fields)
     audit(actor, "session_updated", session)
+    if changed:
+        from tribunal.services.session_reminders import announce_session
+        announce_session(session, changed=had_time)
     return session
 
 
@@ -279,6 +292,8 @@ def activate_session(actor, session_id):
     session.state = "planned"
     session.save(update_fields=["state"])
     audit(actor, "session_activated", session)
+    from tribunal.services.session_reminders import announce_session
+    announce_session(session)
     return session
 
 
@@ -788,6 +803,9 @@ def reschedule_session(actor, session_id, new_date, replacement_times, reason):
             event.save(update_fields=["payload"])
         Attendance.objects.filter(session=source, hearing__isnull=True).delete()
         source.agenda.all().delete()
+        # #116: same UID, METHOD:CANCEL, before the moved session is deleted.
+        from tribunal.services.session_reminders import cancel_session_calendar
+        cancel_session_calendar(source)
         source.delete()
     audit(actor, "session_rescheduled", target, metadata={"from": snapshot, "reason": reason})
     return target

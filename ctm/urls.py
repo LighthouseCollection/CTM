@@ -1,5 +1,6 @@
 from django.urls import path, include, re_path
 from tribunal import api
+from tribunal import session_reminder_api
 from tribunal import auth
 from tribunal import priest_pdf_api
 from tribunal import priest_recording_api
@@ -55,6 +56,9 @@ urlpatterns = [
     path("api/sessions/<uuid:session_id>/plan/", api.return_session_to_planned),
     path("api/sessions/<uuid:session_id>/adjourn/", api.adjourn_session),
     path("api/sessions/<uuid:session_id>/reschedule/", api.reschedule_session),
+    path("api/sessions/<uuid:session_id>/answer/", session_reminder_api.answer),
+    path("api/sessions/<uuid:session_id>/answers/", session_reminder_api.answers),
+    path("api/sessions/<uuid:session_id>/reminders/", session_reminder_api.reminders),
     path("api/agenda/<uuid:item_id>/transfer/", api.transfer_agenda),
     path("api/agenda/<uuid:item_id>/hear/", api.hear),
     path("api/cases/<uuid:case_id>/messages/", api.messages),
