@@ -177,3 +177,18 @@ def test_refused_first_binding_is_a_uniform_denial_not_a_server_error(granted_ro
             assert cursor.fetchone() == (1,)
     assert "_auth_user_id" not in client.session
     assert Account.objects.get(pk=stranger.pk).microsoft_subject == ""
+
+
+def test_refusal_log_names_only_the_failed_checks(tenant, caplog):
+    guest = id_token(idp=f"https://sts.windows.net/{FOREIGN}/", aud="another-application")
+    with caplog.at_level("WARNING", logger="tribunal.auth"), pytest.raises(PermissionDenied):
+        verified_microsoft_tenant({"id_token": guest}, CLIENT, SUBJECT)
+    message = caplog.records[-1].getMessage()
+    assert message.endswith("(failed: idp,aud)")
+    assert FOREIGN not in message and SUBJECT not in message
+
+
+def test_refusal_log_names_an_unreadable_token(tenant, caplog):
+    with caplog.at_level("WARNING", logger="tribunal.auth"), pytest.raises(PermissionDenied):
+        verified_microsoft_tenant({"access_token": "only"}, CLIENT, SUBJECT)
+    assert "unreadable-id-token:KeyError" in caplog.records[-1].getMessage()
