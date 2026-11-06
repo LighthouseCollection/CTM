@@ -15,7 +15,7 @@
 # running container into a root-only file; no value is ever printed.
 #
 # Run as root on the VM:  bash deploy/live-update.sh [commit]   (default: main)
-set -Eeuo pipefail
+set -euo pipefail   # no -E: the ERR trap must not fire inside $(...) or functions
 
 REPO="https://github.com/LighthouseCollection/CTM.git"
 NET_INT="deploy_ctm-internal"
@@ -84,7 +84,8 @@ FREE_GB="$(df -BG --output=avail / | tail -1 | tr -dc 0-9)"
 PHASE="backup"
 install -d -m 0700 "$BACKUP_DIR"
 docker exec "$PG" sh -c 'export PGPASSWORD="$POSTGRES_PASSWORD"; pg_dump --create -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip >"$DUMP"
-[[ "$(gunzip -c "$DUMP" | head -c 100000 | grep -c 'CREATE DATABASE')" -ge 1 ]]
+gzip -t "$DUMP"
+[[ "$(stat -c%s "$DUMP")" -gt 10000 ]]
 log "database backup: $DUMP ($(du -h "$DUMP" | cut -f1))"
 
 # --- 3. fetch code + build ----------------------------------------------------
@@ -96,7 +97,8 @@ if [[ ! -d "$SRC/.git" ]]; then
 fi
 git -C "$SRC" fetch -q origin
 git -C "$SRC" checkout -q "$SHA"
-CDN="$(grep -oE 'cdn/[0-9]+\.[0-9]+\.[0-9]+/' "$SRC/ctm/settings.py" | head -1)"
+CDN="$(grep -m1 -oE 'cdn/[0-9]+\.[0-9]+\.[0-9]+/' "$SRC/ctm/settings.py")"
+[[ -n "$CDN" ]]
 log "building $IMAGE (design system $CDN); this takes a few minutes"
 docker build -q -f "$SRC/deploy/Dockerfile" -t "$IMAGE" "$SRC" >/dev/null
 log "built $IMAGE"
@@ -177,8 +179,10 @@ docker network connect --ip "$LIVE_IP" "$NET_INT" "$NEW"
 PHASE="health"
 ok=""
 for i in $(seq 1 20); do
-  if curl -fsS --max-time 5 -H "Host: $HOST_HDR" -H "X-Forwarded-Proto: https" "$FRONT/health/" | grep -q '"status": *"ok"' \
-    && curl -fsS --max-time 10 -H "Host: $HOST_HDR" -H "X-Forwarded-Proto: https" "$FRONT/" | grep -q "$CDN"; then
+  # Bodies go to files first: `curl | grep -q` can fail on a broken pipe.
+  if curl -fsS --max-time 5 -H "Host: $HOST_HDR" -H "X-Forwarded-Proto: https" -o /tmp/ctm-health "$FRONT/health/" \
+    && curl -fsS --max-time 10 -H "Host: $HOST_HDR" -H "X-Forwarded-Proto: https" -o /tmp/ctm-home "$FRONT/" \
+    && grep -qE '"status": *"ok"' /tmp/ctm-health && grep -qF "$CDN" /tmp/ctm-home; then
     ok=1; break
   fi
   sleep 3
