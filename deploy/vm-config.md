@@ -160,3 +160,14 @@ Tus protocol reference: https://tus.io/protocols/resumable-upload . WebSocket su
   before (tagged `rollback-<UTC>`). A failed deploy opens a bug for `ctm3-debugger`.
 - Runs on a self-hosted runner on this VM (labels `self-hosted`, `ctm-vm`),
   guarded by the repository variable `CTM_DEPLOY_READY=true`. Setup checklist: issue #49.
+
+## Live today (2026-11-05): hand-started container
+
+Production is not yet the Compose `django` service. It is one container started
+by hand (`ctm-test-candidate-b140f5b`, later `ctm-live-<sha>`) on the `deploy`
+project's networks with fixed IP `172.20.1.8` on `deploy_ctm-internal`; the
+`10.0.0.40:8000` listener forwards there. Its uploads lived inside the container;
+from the first `deploy/live-update.sh` run they live in `/opt/ctm/media-live`.
+Update it with `bash deploy/live-update.sh [commit]` as root on the VM (backup,
+build, owner-role migrate, checks, swap, rollback). Moving it under
+`deploy/release.sh` is issue #90.
