@@ -2006,6 +2006,15 @@
     );
   }
 
+  // The current Los Angeles wall-clock time as HH:MM (24-hour, a time input's value), for the Adjourn end time (issue 112).
+  function laNowTime(now = new Date()) {
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hourCycle: "h23", hour: "2-digit", minute: "2-digit" })
+        .formatToParts(now).map((part) => [part.type, part.value]),
+    );
+    return `${parts.hour}:${parts.minute}`;
+  }
+
   // Los Angeles wall-clock time on a date as an ISO timestamp with its UTC offset
   // (daylight saving aware), e.g. laIso("2026-11-05", "10:30") -> "2026-11-05T10:30:00-08:00".
   function laIso(date, time) {
@@ -2243,7 +2252,7 @@
           run(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/activate/`, { method: "POST", body: "{}" }), "sessionActivated", onChanged);
         if (value === "adjourned" && planned && manage) {
           setFailure(null);
-          setAdjournEnd("");
+          setAdjournEnd(laNowTime());
           setDialog({ kind: "adjourn" });
         }
       },
@@ -3108,6 +3117,7 @@
   }
 
   window.CTMCouncil = {
+    laNowTime,
     words,
     translator,
     groundsText,

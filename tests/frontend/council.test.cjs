@@ -477,3 +477,12 @@ test("archived session detail separates assigned cases from case hearings", () =
   assert.deepEqual([...groups.assigned].map((row) => row.id), ["assignment"]);
   assert.deepEqual([...groups.presented].map((row) => row.id), ["hearing"]);
 });
+
+// #112: opening Adjourn fills "Session end time" with the current Los Angeles wall-clock time (HH:MM), still editable.
+test("adjourn end time defaults to the current Los Angeles time (#112)", () => {
+  assert.equal(C.laNowTime(new Date("2026-11-06T20:05:00Z")), "12:05", "PST, UTC-8");
+  assert.equal(C.laNowTime(new Date("2026-07-01T06:45:00Z")), "23:45", "PDT, UTC-7, the evening before");
+  assert.equal(C.laNowTime(new Date("2026-03-01T08:00:00Z")), "00:00", "midnight is 00, never 24");
+  assert.match(source, /setAdjournEnd\(laNowTime\(\)\);\s*setDialog\(\{ kind: "adjourn" \}\)/);
+  assert.match(source, /h\(P\.Input, \{ type: "time", value: adjournEnd, disabled: pending, onChange: \(event\) => setAdjournEnd\(event\.target\.value\) \}\)/, "still editable");
+});
