@@ -486,3 +486,74 @@ test("adjourn end time defaults to the current Los Angeles time (#112)", () => {
   assert.match(source, /setAdjournEnd\(laNowTime\(\)\);\s*setDialog\(\{ kind: "adjourn" \}\)/);
   assert.match(source, /h\(P\.Input, \{ type: "time", value: adjournEnd, disabled: pending, onChange: \(event\) => setAdjournEnd\(event\.target\.value\) \}\)/, "still editable");
 });
+
+// Issue 116 AC-6 / AC-7 (D-0039): attendance answers, Confirmed n of m, Send reminder now.
+test("Send reminder now is for the secretary, president and admin only", () => {
+  assert.equal(C.canSendReminders(admin), true);
+  assert.equal(C.canSendReminders({ ...member, role: "president" }), true);
+  assert.equal(C.canSendReminders({ ...admin, role: "admin" }), true);
+  assert.equal(C.canSendReminders(member), false);
+  assert.equal(C.canSendReminders(applicant), false);
+  assert.equal(C.canSendReminders({ portal: "applicant", role: "admin" }), false);
+  assert.equal(C.canSendReminders(null), false);
+});
+
+test("answers are open on an in-progress session until its start time", () => {
+  const now = Date.parse("2026-11-06T18:00:00Z");
+  assert.equal(C.sessionAnswerable({ state: "planned", starts_at: "2026-11-08T18:00:00Z" }, now), true);
+  assert.equal(C.sessionAnswerable({ state: "planned", starts_at: "2026-11-06T17:59:00Z" }, now), false);
+  assert.equal(C.sessionAnswerable({ state: "draft", starts_at: "2026-11-08T18:00:00Z" }, now), false);
+  assert.equal(C.sessionAnswerable({ state: "planned", starts_at: null }, now), false);
+  assert.equal(C.sessionAnswerable(null, now), false);
+});
+
+test("the signed-in member's own answer comes from mine or from their row", () => {
+  const plain = (value) => JSON.parse(JSON.stringify(value));
+  const answered = { answer: "attend", answered_at: "2026-11-06T17:00:00Z" };
+  assert.deepEqual(plain(C.ownAnswer({ mine: answered }, member)), answered);
+  assert.equal(C.ownAnswer({ mine: null }, member), null);
+  const all = { members: [{ member_id: "a", answer: "not_attend", answered_at: "2026-11-06T16:00:00Z" }, { member_id: "x", answer: null, answered_at: null }] };
+  assert.deepEqual(plain(C.ownAnswer(all, admin)), { answer: "not_attend", answered_at: "2026-11-06T16:00:00Z" });
+  assert.equal(C.ownAnswer(all, { ...admin, id: "x" }), null);
+  assert.equal(C.ownAnswer(null, member), null);
+});
+
+test("answer words and tones: Attending, Not attending, No answer", () => {
+  assert.equal(t(C.answerKey("attend")), "Attending");
+  assert.equal(t(C.answerKey("not_attend")), "Not attending");
+  assert.equal(t(C.answerKey(null)), "No answer");
+  assert.equal(C.answerTone("attend"), "success");
+  assert.equal(C.answerTone("not_attend"), "negative");
+  assert.equal(C.answerTone(undefined), "neutral");
+  const ar = C.translator("ar");
+  for (const key of ["answerAttending", "answerNotAttending", "answerNone", "willAttend", "willNotAttend", "sendReminderNow", "emailNotSetUp", "confirmedOf", "sessionAnswers"])
+    assert.notEqual(ar(key), t(key), key);
+});
+
+test("Confirmed n of m shows only when the server sends both counts", () => {
+  assert.equal(C.confirmedText({ confirmed: 3, total: 7 }, t), "Confirmed 3 of 7");
+  assert.equal(C.confirmedText({ confirmed: 0, total: 0 }, t), "Confirmed 0 of 0");
+  assert.equal(C.confirmedText({ confirmed: 3, total: 7 }, t, "confirmedCount"), "3 of 7");
+  assert.equal(C.confirmedText({ mine: null }, t), null);
+  assert.equal(C.confirmedText(null, t), null);
+  assert.equal(C.confirmedText({ confirmed: 3, total: 7 }, C.translator("ar")), "أكّد 3 من 7");
+});
+
+test("reminder refusals from the server read in EN and AR", () => {
+  const refusal = (text) => ({ status: 422, data: { error: "validation", messages: [text] } });
+  const ar = C.translator("ar");
+  assert.equal(C.reminderProblem(refusal("Email is not set up, so reminders cannot be sent."), t), "Email is not set up, so reminders cannot be sent.");
+  assert.equal(C.reminderProblem(refusal("Email is not set up, so reminders cannot be sent."), ar), ar("emailNotSetUp"));
+  assert.equal(C.reminderProblem(refusal("A reminder was already sent in the last hour."), ar), ar("reminderHourLimit"));
+  assert.equal(C.reminderProblem(refusal("Answers close when the session starts."), ar), ar("answersClosed"));
+  assert.equal(C.reminderProblem(refusal("Something else."), t), "Something else.");
+  assert.equal(C.reminderProblem({ status: 403, data: {} }, t), t("forbidden"));
+});
+
+test("the session page and Upcoming list wire the answers endpoints", () => {
+  assert.match(source, /\/answers\//);
+  assert.match(source, /url\("answer"\)/);
+  assert.match(source, /url\("reminders"\)/);
+  assert.match(source, /showConfirmed \? \[\{ title: t\("confirmedColumn"\)/);
+  assert.match(source, /h\(SessionAnswers, \{ key: session\.id/);
+});
