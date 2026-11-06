@@ -58,9 +58,11 @@ function assertCaseHeader(tree, record) {
   const headers = caseHeaders(tree);
   assert.equal(headers.length, 1, "one case header");
   const header = headers[0].props;
-  assert.match(String(header.title), new RegExp(record.number));
-  assert.match(String(header.subtitle), /Applicant Synthetic/);
-  assert.match(String(header.subtitle), /Respondent Synthetic/);
+  // #109 (owner): the names are the title, the case number the small line under it, the icon in its box.
+  assert.match(String(header.title), /Applicant Synthetic/);
+  assert.match(String(header.title), /Respondent Synthetic/);
+  assert.match(String(header.subtitle), new RegExp(record.number));
+  assert.deepEqual(JSON.parse(JSON.stringify(header.media)), { icon: "folder", hue: "purple", box: true });
   assert.equal(header.status.label, record.status === "open" ? "Active" : "Closed");
   assert.ok(header.facts.some((fact) => fact.value === "Synthetic Manager"), "the case manager is a fact");
   return header;
@@ -97,10 +99,10 @@ test("Arabic case header: status and manager words in Arabic; the case number st
   const { api } = server(routesFor(record));
   const { tree } = await mount("CaseMarriage", { api, lang: "ar", user: secretary, caseId: record.id });
   const header = caseHeaders(tree)[0].props;
-  assert.equal(header.title, "⁨20261020-04⁩");
+  assert.equal(header.subtitle, "⁨20261020-04⁩");
   assert.equal(header.status.label, "نشطة");
   assert.ok(header.facts.some((fact) => fact.value === "لم يُعيَّن بعد"));
-  assert.match(header.subtitle, / ضد /);
+  assert.match(header.title, / ضد /);
   assert.equal(header.strings.status, "الحالة");
 });
 

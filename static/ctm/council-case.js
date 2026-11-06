@@ -3080,9 +3080,11 @@ ${ar}` : en;
     const names = [applicant, respondent].filter(Boolean).map((party) => base.isolate(party.name));
     const open = record.status === "open";
     return {
-      media: { icon: "folder", hue: "purple" },
-      title: base.isolate(record.number),
-      subtitle: names.length ? names.join(` ${bt("versus")} `) : undefined,
+      // Issue 109 (owner, 2026-11-05): the decided icon box (record-page.md media box), the spouses' names as the
+      // title and the case number as the small line under it. Without names the case number is the title.
+      media: { icon: "folder", hue: "purple", box: true },
+      title: names.length ? names.join(` ${bt("versus")} `) : base.isolate(record.number),
+      subtitle: names.length ? base.isolate(record.number) : undefined,
       status: { tone: open ? "success" : "neutral", label: open ? t("active") : bt("closed") },
       facts: [{ icon: "person", label: t("assignedCouncilMember"), value: caseManager(record) || bt("unassigned") }, ...(facts || [])],
       strings: { status: bt("statusLabel"), more: t("moreActions") },
