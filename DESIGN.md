@@ -38,6 +38,28 @@ follow it instead of improvising. Changing the look needs a new decision
 - Plenix upgrades arrive automatically (`plenix-upgrade.yml`); CTM adapts to
   Plenix, not the reverse.
 
+### Buttons (D-0036, #115)
+
+Buttons only use Plenix `Button` variants. The look of each variant
+(fill, border, shadow, glow) comes from Plenix. Since 0.88.0, secondary and
+danger-secondary have the same light elevation (plenix-ds/pds#269).
+CTM never restyles a button. If two variants look inconsistent, that goes to
+`plenix-ds/pds`, not into CTM.
+
+| Variant | Use in CTM |
+|---|---|
+| `primary` | The one main action of an area (page header, card, dialog footer) |
+| `secondary` (default) | Every other visible action, including Edit and Cancel |
+| `ghost` | Icon-only or low-emphasis actions in toolbars and table rows |
+| `danger-secondary` | A destructive action that must stay visible beside other buttons; it opens a confirmation |
+| `danger` | Only the confirm button inside a confirmation `Dialog` / `ConfirmDialog` footer |
+| `tertiary` | Not used |
+| `tone` | Only for a chosen state (vote Approve / Deny / Abstain), never at rest |
+
+Destructive actions on a record or row go in its action menu (`ActionMenu`,
+`rowMenu` item with `danger: true`) when the area already has a menu (#103).
+A row of buttons never mixes `primary` with `danger`.
+
 ## 2. Pages
 
 - Every new or reworked page starts from its Plenix page template in
