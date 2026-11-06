@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-BASE="https://design-system.lighthouseway.org/cdn/0.90.1/"
+BASE="https://design-system.lighthouseway.org/cdn/0.90.2/"
 with sync_playwright() as p:
     browser=p.chromium.launch()
     page=browser.new_page(viewport={"width":1280,"height":900})
