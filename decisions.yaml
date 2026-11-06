@@ -356,3 +356,13 @@ decisions:
     decided_by: owner
     status: active
     review_only: "Each arabic-proposals.md row approved under this rule names the standard it follows; checked in review by ctm3-i18n-engineer"
+
+  - id: D-0039
+    date: 2026-11-06
+    area: workflow
+    decision: Council session reminders (#116) - an invite with a .ics file (METHOD:PUBLISH, stable UID, rising SEQUENCE, updates and cancellations) to every active verified council account when a planned session has a start time; an automatic reminder 2 days before to anyone without an answer, plus "Send reminder now" for secretary/president/admin at most once an hour; members confirm Attend or Not attend only after signing in to CTM (no bearer action links, no calendar RSVP); the secretary sees "Confirmed n of m" and each member's latest answer; emails and .ics carry no case or applicant data; nothing shows as sent unless the Outbox row was delivered
+    why: Owner review deck slide 9 (2026-11-05) "Send out reminders to council members. Send out ics (add to calendar). Get confirmation." Product lead applied the recommended option without waiting (D-0001); calendar replies cannot be read by CTM, so confirmation is in CTM. Spec in docs/implementation/slices/ctm3-116-session-reminders/brief.md; the owner can change it on #116
+    options: [Invite + 2-day reminder + in-CTM confirmation (chosen), Manual send only, Calendar RSVP replies]
+    decided_by: agent:ctm3-product-lead
+    status: active
+    review_only: "Enforced by the #116 backend and frontend tests named in the brief once they land"
