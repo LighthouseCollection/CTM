@@ -226,3 +226,32 @@ test("plenix-requests.md has one row per PLX id", () => {
   assert.ok(ids.length >= 23);
   assert.deepEqual(ids.filter((id, i) => ids.indexOf(id) !== i), []);
 });
+
+// #111: in the fixed table (a grid with row buttons) a button column without a width was drawn at its 240px
+// cap, so the session agenda overflowed at 1280px and its overlay scrollbar sat on the rows. A button column
+// now takes the width its caller asks for (width, else minWidth).
+test("button columns are as wide as the caller asks, not their 240px cap (#111)", () => {
+  const sized = mount({ label: "Agenda", rows: [], columns: [{ field: "open_action", minWidth: "9rem", render: () => ({ type: "Button" }) }] });
+  assert.equal(sized.props.columns[0].width, "9rem");
+  const explicit = mount({ label: "Agenda", rows: [], columns: [{ field: "open_action", width: "10rem", minWidth: "9rem", render: () => ({ type: "Button" }) }] });
+  assert.equal(explicit.props.columns[0].width, "10rem");
+  const plain = mount({ label: "Cases", rows: [], columns: [{ field: "name", minWidth: "9rem" }] });
+  assert.equal("width" in plain.props.columns[0], false, "text columns keep Plenix's content sizing");
+});
+
+// #118 / #114: short values are content-sized so the spare room is not given to the first column.
+test("session list and agenda columns are fitted to their content (#118, #114, #111)", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const list = council.slice(council.indexOf('const manage = mode === "upcoming" && canManage(user);'), council.indexOf("const listProps = {"));
+  // Status keeps no width: it is the last content-sized column, so it (capped at 240px) and the row menu take the spare room.
+  for (const field of ["date", "session_time", "adjourned_time", "assigned_case_count", "hearing_case_count"])
+    assert.match(list, new RegExp(`field: "${field}",[^\n]*width: "`), field);
+  assert.doesNotMatch(list, /minWidth/);
+  const agenda = council.slice(council.indexOf("const title = first ? t(\"casesToAssign\")"), council.indexOf("ctm-session-agenda-grid"));
+  assert.equal((agenda.match(/title: t\("actions"\), field: "open_action", minWidth: "9rem"/g) || []).length, 2);
+  // Every hearings-agenda column has a width, so Plenix's fixed table does not stretch one past the room (PLX-025).
+  const hearings = agenda.slice(agenda.indexOf('title: "#"'));
+  for (const field of ["hearing_number", "applicant", "respondent", "assigned_member_name", "previous_recommendation"])
+    assert.match(hearings, new RegExp(`field: "${field}",[^\\n]*width: "`), field);
+  assert.match(hearings, /title: "#", field: "hearing_number", kind: "name", width: "5rem"/, "#110: the 80px floor (PLX-024)");
+});

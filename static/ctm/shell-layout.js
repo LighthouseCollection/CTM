@@ -88,7 +88,9 @@
       }
       return {
         ...column, type, ...projected,
-        ...(isAction ? { kind: "center", maxWidth: column.maxWidth || "--plx-ref-size-240px", sortable: false, groupable: false } : {}),
+        ...(isAction ? { kind: "center", maxWidth: column.maxWidth || "--plx-ref-size-240px", sortable: false, groupable: false,
+          // #111: the fixed table draws a button column without a width at its cap; use the width the caller asks for.
+          ...(column.width || column.minWidth ? { width: column.width || column.minWidth } : {}) } : {}),
         ...(/^(status|state)$/.test(column.field) ? { maxWidth: column.maxWidth || "--plx-ref-size-240px" } : {}),
         // Case numbers and codes are data values that read left to right in Arabic too (#97 slice 8): kind "data"
         // (data-grid.md) gives the pill an auto direction that resolves to LTR for DEMO-NEW-09 and 20261020-04.
