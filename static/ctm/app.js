@@ -10,10 +10,9 @@
   const R = window.React,
     P = window.Plenix,
     h = R.createElement;
-  // #144: a picture drawn at a set width without size utilities. Image srcSet with a density descriptor
-  // (image.md) makes the browser draw the file at its natural width / density, and the Image frame
-  // takes that size. Natural widths: tribunal-logo-cropped.svg 1104, diocese-seal.png 456.
-  const drawnAt = (src, naturalWidth, width) => `${src} ${+(naturalWidth / width).toFixed(4)}x`;
+  // Issue 144 hotfix: a Plenix Image frame takes its file's natural size, so each logo is a file whose
+  // svg width/height is the size it is drawn at (tribunal-logo-36/-72.svg, diocese-seal-100.svg).
+  // An image density descriptor did not work: on screens above 1x the browser chose src (1x) and drew 1104 px.
   const config = JSON.parse(document.getElementById("ctm-config").textContent);
   const routes = window.CTMRoutes || null;
   // Separately loaded council workspace module (static/ctm/council.js), if present.
@@ -1252,16 +1251,15 @@
     if (user === null) {
       // The diocese header sits above the Auth card in the page flow (#144: Plenix 0.91.0 drops the
       // positioning and size utilities that laid it over the page); the card is centered in the room below.
-      // Each picture gets its drawn size from drawnAt (srcSet density), and no fit="contain", whose frame
+      // Each picture is a file drawn at its own svg size (see the note at the top), and no fit="contain", whose frame
       // fill the transparent seal and logo do not want.
       const brandHeader = () => h(P.Center, { maxWidth: "lg" },
         h(P.Stack, { inset: "lg" },
               h("header", null,
                 h(P.Inline, { justify: "center", align: "center", wrap: true, gap: "lg" },
                   h(P.Image, {
-                    src: "/static/ctm/diocese-seal.png", alt: "Diocese of Los Angeles seal",
-                    srcSet: drawnAt("/static/ctm/diocese-seal.png", 456, 100), width: 100, height: 100, placeholder: "none", priority: true,
-                    fallback: h(P.Image, { src: "/static/ctm/diocese-seal.svg", alt: "Diocese of Los Angeles seal", width: 100, height: 100, placeholder: "none" }),
+                    src: "/static/ctm/diocese-seal-100.svg", alt: "Diocese of Los Angeles seal",
+                    width: 100, height: 100, placeholder: "none", priority: true,
                   }),
                   h(P.Stack, { gap: "sm" },
                     text("Coptic Orthodox Church - Diocese of Los Angeles", { as: "h1", variant: "title" }),
@@ -1284,9 +1282,9 @@
             h(P.Stack, { gap: "lg" },
               h(P.Center, { intrinsic: true, text: true },
                 h(P.Image, {
-                  src: "/static/ctm/tribunal-logo-cropped.svg", alt: "CTM",
+                  src: "/static/ctm/tribunal-logo-72.svg", alt: "CTM",
                   // The logo is 1104 x 1050: 72 px wide.
-                  srcSet: drawnAt("/static/ctm/tribunal-logo-cropped.svg", 1104, 72), width: 72, height: 68, placeholder: "none", priority: true,
+                  width: 72, height: 68, placeholder: "none", priority: true,
                 }),
               ),
               config.providers.length
@@ -1561,8 +1559,8 @@
       appName: "CTM",
       brand: h(R.Fragment, null,
         h(P.Image, {
-          src: "/static/ctm/tribunal-logo-cropped.svg",
-          alt: "", srcSet: drawnAt("/static/ctm/tribunal-logo-cropped.svg", 1104, 36), width: 36, height: 34, placeholder: "none", priority: true,
+          src: "/static/ctm/tribunal-logo-36.svg",
+          alt: "", width: 36, height: 34, placeholder: "none", priority: true,
         }),
         h("span", { className: "plx-app-header__name" },
           h("strong", { className: "plx-app-header__product" }, "DIOCESE OF LOS ANGELES"),

@@ -93,10 +93,9 @@
     },
   };
   // Unicode first-strong isolate: names and titles keep their own direction inside the other language.
-  // #144: a picture drawn at a set width without size utilities. Image srcSet with a density descriptor
-  // (image.md) makes the browser draw the file at its natural width / density, and the Image frame
-  // takes that size. Natural widths: tribunal-logo-cropped.svg 1104, diocese-seal.png 456.
-  const drawnAt = (src, naturalWidth, width) => `${src} ${+(naturalWidth / width).toFixed(4)}x`;
+  // Issue 144 hotfix: a Plenix Image frame takes its file's natural size, so each logo is a file whose
+  // svg width/height is the size it is drawn at (tribunal-logo-36/-72.svg, diocese-seal-100.svg).
+  // An image density descriptor did not work: on screens above 1x the browser chose src (1x) and drew 1104 px.
   const isolate = (value) => (value ? `\u2068${value}\u2069` : "");
   const translator = (lang) => (key) => (words[lang] || words.en)[key] ?? words.en[key] ?? key;
 
@@ -226,7 +225,7 @@
       appName: "CTM",
       brand: h(R.Fragment, null,
         h(P.Image, {
-          src: "/static/ctm/tribunal-logo-cropped.svg", alt: "", srcSet: drawnAt("/static/ctm/tribunal-logo-cropped.svg", 1104, 36), width: 36, height: 34, placeholder: "none", priority: true,
+          src: "/static/ctm/tribunal-logo-36.svg", alt: "", width: 36, height: 34, placeholder: "none", priority: true,
         }),
         h("span", { className: "plx-app-header__name" },
           h("strong", { className: "plx-app-header__product" }, "DIOCESE OF LOS ANGELES"),

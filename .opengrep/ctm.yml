@@ -9,7 +9,8 @@ rules:
     languages: [generic]
     paths:
       include: ["static/ctm/**", "tribunal/templates/**"]
-      exclude: ["**/*rtl*", "**/*arabic-styling*", "**/*_print.html", "**/*_pdf.html"]
+      # Image files (logos, seals) carry their own artwork colours; they are pictures, not styling.
+      exclude: ["**/*rtl*", "**/*arabic-styling*", "**/*_print.html", "**/*_pdf.html", "static/ctm/**/*.svg"]
     patterns:
       - pattern-regex: '(?i)(#[0-9a-f]{6}\b|#[0-9a-f]{3}\b(?=["''`;\s)])|\brgba?\(\s*\d|\bhsla?\(\s*\d)'
 
@@ -37,6 +38,7 @@ rules:
     languages: [generic]
     paths:
       include: ["static/ctm/**"]
+      exclude: ["static/ctm/**/*.svg"]
     pattern-regex: '(?i)font-?size\s*:\s*[''"]?\d'
 
   - id: ctm-no-dangerous-html
