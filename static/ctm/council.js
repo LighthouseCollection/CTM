@@ -95,6 +95,59 @@
     return "waiting";
   }
 
+  // Issue 116 (D-0039): who may press Send reminder now; the server checks the same roles.
+  const REMINDER_ROLES = new Set(["secretary", "president", "admin"]);
+  function canSendReminders(user) {
+    return Boolean(user && user.portal === "council" && REMINDER_ROLES.has(user.role));
+  }
+
+  // Answers are open on an in-progress (planned) session until its start time.
+  function sessionAnswerable(session, now = Date.now()) {
+    if (!session || session.state !== "planned" || !session.starts_at) return false;
+    const start = new Date(session.starts_at).getTime();
+    return !Number.isNaN(start) && start > now;
+  }
+
+  // The signed-in member's latest answer: "mine" for members, their row in "members" for the secretary.
+  function ownAnswer(data, user) {
+    if (!data) return null;
+    if ("mine" in data) return data.mine || null;
+    const row = (data.members || []).find((item) => item.member_id === String(user?.id ?? ""));
+    return row && row.answer ? { answer: row.answer, answered_at: row.answered_at } : null;
+  }
+
+  function answerKey(answer) {
+    if (answer === "attend") return "answerAttending";
+    if (answer === "not_attend") return "answerNotAttending";
+    return "answerNone";
+  }
+
+  function answerTone(answer) {
+    if (answer === "attend") return "success";
+    if (answer === "not_attend") return "negative";
+    return "neutral";
+  }
+
+  // "Confirmed n of m" only when the server sent both counts (secretary, president, admin).
+  function confirmedText(data, t, key = "confirmedOf") {
+    return data && Number.isInteger(data.confirmed) && Number.isInteger(data.total)
+      ? t(key, { n: data.confirmed, m: data.total }) : null;
+  }
+
+  // The reminder endpoints answer in English; known refusals get their EN/AR words.
+  const REMINDER_REFUSALS = {
+    "Email is not set up, so reminders cannot be sent.": "emailNotSetUp",
+    "A reminder was already sent in the last hour.": "reminderHourLimit",
+    "Answers close when the session starts.": "answersClosed",
+    "Reminders can be sent only before a planned session starts.": "remindersClosed",
+    "Choose I will attend or I will not attend.": "answerChoose",
+  };
+  function reminderProblem(error, t) {
+    const messages = error && error.data && Array.isArray(error.data.messages) ? error.data.messages : [];
+    const key = messages.length === 1 ? REMINDER_REFUSALS[messages[0]] : null;
+    return key ? t(key) : serverMessage(error, t);
+  }
+
   function agendaDisplayStatus(row) {
     if (row?.state === "heard") return "closed";
     if (row?.part === 1 && !row?.assigned_member_id) return "toBeAssigned";
@@ -404,6 +457,31 @@
       hearingResumedNotice: "The hearing has resumed.",
       sessionStatusPlanned: "Draft",
       sessionStatusInProgress: "In progress",
+      sessionAnswers: "Attendance answers",
+      sessionAnswersHelp: "Who has said they will attend. Recorded attendance on the day is separate.",
+      yourAnswer: "Your answer",
+      willAttend: "I will attend",
+      willNotAttend: "I will not attend",
+      answerAttending: "Attending",
+      answerNotAttending: "Not attending",
+      answerNone: "No answer",
+      answerColumn: "Answer",
+      answeredAt: "Answered",
+      answeredOn: "Answered {when}",
+      answerSaved: "Your answer is saved.",
+      answerChoose: "Choose I will attend or I will not attend.",
+      answersClosed: "Answers close when the session starts.",
+      answersNotOpen: "Members can answer once the session is In progress.",
+      confirmedColumn: "Confirmed",
+      confirmedOf: "Confirmed {n} of {m}",
+      confirmedCount: "{n} of {m}",
+      sendReminderNow: "Send reminder now",
+      reminderHelp: "Goes to members who have not answered, at most once an hour.",
+      reminderQueued: "A reminder is queued for {n} members who have not answered.",
+      reminderHourLimit: "A reminder was already sent in the last hour.",
+      remindersClosed: "Reminders can be sent only before a planned session starts.",
+      emailNotSetUp: "Email is not set up, so reminders cannot be sent.",
+      noMembers: "No active council members.",
       sessionStatusAdjourned: "Adjourned",
       sessionActivated: "The tribunal session is now in session.",
       sessionReturnedToPlanned: "The tribunal session is planned.",
@@ -733,6 +811,31 @@
       hearingResumedNotice: "تم استئناف الجلسة.",
       sessionStatusPlanned: "مسودة",
       sessionStatusInProgress: "قيد التنفيذ",
+      sessionAnswers: "تأكيدات الحضور",
+      sessionAnswersHelp: "من أكّد أنه سيحضر. الحضور المسجَّل يوم الجلسة منفصل.",
+      yourAnswer: "إجابتك",
+      willAttend: "سأحضر",
+      willNotAttend: "لن أحضر",
+      answerAttending: "سيحضر",
+      answerNotAttending: "لن يحضر",
+      answerNone: "لا توجد إجابة",
+      answerColumn: "الإجابة",
+      answeredAt: "وقت الإجابة",
+      answeredOn: "أُجيب في {when}",
+      answerSaved: "تم حفظ إجابتك.",
+      answerChoose: "اختر سأحضر أو لن أحضر.",
+      answersClosed: "تُغلق الإجابات عند بدء الجلسة.",
+      answersNotOpen: "يمكن للأعضاء الإجابة عندما تصبح الجلسة قيد التنفيذ.",
+      confirmedColumn: "التأكيدات",
+      confirmedOf: "أكّد {n} من {m}",
+      confirmedCount: "{n} من {m}",
+      sendReminderNow: "أرسل تذكيرًا الآن",
+      reminderHelp: "يُرسل إلى الأعضاء الذين لم يجيبوا، مرة واحدة في الساعة على الأكثر.",
+      reminderQueued: "التذكير في قائمة الإرسال إلى {n} من الأعضاء الذين لم يجيبوا.",
+      reminderHourLimit: "أُرسل تذكير خلال الساعة الماضية.",
+      remindersClosed: "لا يمكن إرسال التذكيرات إلا قبل بدء جلسة قيد التنفيذ.",
+      emailNotSetUp: "البريد الإلكتروني غير مُعدّ، لذلك لا يمكن إرسال التذكيرات.",
+      noMembers: "لا يوجد أعضاء نشطون في المجلس.",
       sessionStatusAdjourned: "مؤجلة",
       sessionActivated: "جلسة المجلس الآن قيد الانعقاد.",
       sessionReturnedToPlanned: "جلسة المجلس مخططة.",
@@ -1439,8 +1542,18 @@
     const today = todayInLosAngeles();
     const buckets = sessionBuckets(loaded, today);
     const rows = buckets[mode] || [];
+    // Issue 116: the answer counts come from each session's answers (secretary, president, admin only).
+    const showConfirmed = mode === "upcoming" && canSendReminders(user);
+    const [answerState] = useLoad(
+      () => showConfirmed && rows.length
+        ? Promise.all(rows.map((row) => api(`/api/sessions/${encodeURIComponent(row.id)}/answers/`).then((data) => [row.id, data], () => [row.id, null])))
+            .then((pairs) => Object.fromEntries(pairs))
+        : Promise.resolve({}),
+      [showConfirmed, rows.map((row) => row.id).join(",")],
+    );
     const tableRows = rows.map((row) => ({
       ...row,
+      confirmed: confirmedText(answerState.data?.[row.id], t, "confirmedCount") || "—",
       title: sessionLabel(row.date, t),
       session_time: formatTime(row.starts_at, lang) || t("timeNotRecorded"),
       adjourned_time: formatTime(row.adjourned_at, lang) || t("timeNotRecorded"),
@@ -1539,6 +1652,7 @@
         { title: t("assignedCases"), field: "assigned_case_count", width: "9rem" },
         { title: t("caseHearings"), field: "hearing_case_count", width: "9rem" },
       ] : []),
+      ...(showConfirmed ? [{ title: t("confirmedColumn"), field: "confirmed", width: "11rem" }] : []),
       { title: t("statusLabel"), field: "state", pill: false, render: (row) => h(P.Badge, { tone: sessionStatusTone(row.state) }, t(sessionStatusKey(row.state))) },
     ];
     const listProps = {
@@ -2167,6 +2281,77 @@
 
   // renderAttendance({ session, members, attendance, key }) lets the shell keep its
   // existing attendance component while this module supplies fresh data after each action.
+  // Issue 116 AC-6: the member's own answer, and for the secretary, president and admin every
+  // member's latest answer with its time, "Confirmed n of m" and Send reminder now (D-0039).
+  function SessionAnswers({ api, lang, user, session }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const url = (part) => `/api/sessions/${encodeURIComponent(session.id)}/${part}/`;
+    const [state, retry] = useLoad(() => api(url("answers")), [session.id]);
+    const [saved, setSaved] = R.useState(null);
+    const [pending, setPending] = R.useState(false);
+    const [problem, setProblem] = R.useState(null);
+    const [notice, setNotice] = R.useState(null);
+    const [reminded, setReminded] = R.useState(false);
+    const data = saved || state.data;
+    if (state.pending && !data) return loadingView(P, h, t);
+    if (state.error && !data) return loadFailure(P, h, t, retry, state.error);
+    const open = sessionAnswerable(session);
+    const mine = ownAnswer(data, user);
+    const sender = canSendReminders(user) && Array.isArray(data.members);
+    async function act(work) {
+      setPending(true);
+      setProblem(null);
+      setNotice(null);
+      try {
+        await work();
+      } catch (error) {
+        setProblem(reminderProblem(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    const answer = (value) => act(async () => {
+      setSaved(await api(url("answer"), { method: "POST", body: JSON.stringify({ answer: value }) }));
+      setNotice(t("answerSaved"));
+    });
+    const remind = () => act(async () => {
+      const result = await api(url("reminders"), { method: "POST", body: "{}" });
+      setReminded(true);
+      setNotice(t("reminderQueued", { n: result?.queued ?? 0 }));
+    });
+    const byName = new Intl.Collator(lang === "ar" ? "ar" : "en");
+    const rows = sender ? data.members.map((row) => ({ ...row, id: row.member_id,
+      answered: row.answered_at ? formatWhen(row.answered_at, lang) : "—" })).sort((a, b) => byName.compare(a.name || "", b.name || "")) : [];
+    return h(P.Panel, {
+      title: t("sessionAnswers"), icon: "event_available", description: t("sessionAnswersHelp"),
+      actions: sender ? h(P.Button, { icon: "notifications", disabled: pending || reminded || !data.email_ready || !open, onClick: remind }, t("sendReminderNow")) : undefined,
+    },
+      h(P.Stack, { gap: "md" },
+        sender && !data.email_ready ? h(P.Notice, { tone: "warning" }, t("emailNotSetUp")) : null,
+        notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, notice) : null,
+        problem ? h(P.Notice, { tone: "danger", onDismiss: () => setProblem(null) }, problem) : null,
+        h(P.Field, { label: t("yourAnswer"),
+          description: !open ? t(session.state === "planned" ? "answersClosed" : "answersNotOpen")
+            : mine ? t("answeredOn", { when: formatWhen(mine.answered_at, lang) }) : t("answerNone") },
+          h(P.SegmentedControl, { label: t("yourAnswer"), value: mine?.answer, readOnly: pending || !open,
+            onChange: (value) => value !== mine?.answer && answer(value),
+            options: [{ value: "attend", label: t("willAttend"), icon: "check" }, { value: "not_attend", label: t("willNotAttend"), icon: "close" }] })),
+        sender ? h(P.Stack, { gap: "sm" },
+          h(P.Inline, { gap: "sm", align: "center" },
+            h(P.Text, { as: "h3", variant: "heading" }, confirmedText(data, t)),
+            h(P.Text, { variant: "secondary" }, t("reminderHelp"))),
+          h(window.CTMShell.Table, { label: t("sessionAnswers"), rows, isStatic: true, empty: t("noMembers"),
+            columns: [
+              { title: t("councilMember"), field: "name", kind: "name", rowLabel: true },
+              { title: t("answerColumn"), field: "answer", minWidth: "9rem", pill: false, render: (row) => h(P.Badge, { tone: answerTone(row.answer) }, t(answerKey(row.answer))) },
+              { title: t("answeredAt"), field: "answered", minWidth: "12rem" },
+            ] })) : null,
+      ));
+  }
+
   function SessionWorkspace({ api, lang, user, sessionId, renderAttendance, onCase, onBack, onSession, onChanged, compact = false, current = false }) {
     const R = window.React,
       P = window.Plenix,
@@ -2483,6 +2668,8 @@
       !editable ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
+      editable && session.starts_at && new Date(session.starts_at).getTime() > Date.now()
+        ? h(SessionAnswers, { key: session.id, api, lang, user, session }) : null,
       current ? h(P.Tabs, { variant: "folder", label: t("agenda"), value: agendaTab, onChange: setAgendaTab,
         items: [
           { value: "scheduled", label: t("scheduledCasesForHearing"), content: agendaTable(2) },
@@ -3170,6 +3357,14 @@
     ReviewWorkspace: guarded(ReviewWorkspace),
     SessionList: guarded(SessionList),
     SessionWorkspace: guarded(SessionWorkspace),
+    SessionAnswers: guarded(SessionAnswers),
+    canSendReminders,
+    sessionAnswerable,
+    ownAnswer,
+    answerKey,
+    answerTone,
+    confirmedText,
+    reminderProblem,
     searchProblem,
     runSearch,
     SearchWorkspace: guarded(SearchWorkspace),
