@@ -20,7 +20,7 @@ Built from superpowers (workflow, gates), agency-agents (roles), MetaGPT
 (artifact schemas), ChatDev (loop caps, lessons file) and the design-skill
 sources. Definitions: `.claude/agents/`.
 
-### Always-on (the Delivery Lead starts them by `agent-limits.yaml`: 4 long-work slots plus short tasks)
+### Always-on (started from the role registry `agents.config.yaml`: `slots` long-work sessions plus short tasks)
 
 | Role | Model | Owns | Hard gate |
 |---|---|---|---|
