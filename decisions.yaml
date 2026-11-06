@@ -376,3 +376,13 @@ decisions:
     decided_by: agent:ctm3-delivery-lead
     status: active
     check: { kind: script, ref: scripts/check_registry.cjs }
+
+  - id: D-0042
+    date: 2026-11-06
+    area: design
+    decision: The current session page shows its agenda as two full-width sections, one below the other - Hearings, then To assign - each with its heading and its own table, never tabs. This reverses the folder tabs of issue 113. The summary labels are Attendance, To assign and Hearings (EN), and the Arabic uses the glossary's existing terms
+    why: Owner 2026-11-06 on /sessions/current (issue 171) "the tabs Scheduled Cases for Hearing | Cases to assign - this is wrong tabs, should be full container table" and "find a simpler way to write less word"
+    options: [Two stacked full-width sections (chosen), Keep the folder tabs]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/council-shell.test.cjs }
