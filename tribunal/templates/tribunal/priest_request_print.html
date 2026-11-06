@@ -17,7 +17,7 @@
 </head>
 <body>
   <h1 dir="{{ title_direction }}">{{ title }}</h1>
-  <p class="identifier"><bdi>{{ request_id }}</bdi></p>
+  <p class="identifier" dir="ltr"><bdi dir="ltr">{{ request_id }}</bdi></p>
   <p dir="{{ subject_name_direction }}">{{ subject_name }}</p>
   {% if priest_name %}<p dir="{{ priest_name_direction }}">{{ priest_name }}</p>{% endif %}
   {% if instructions %}<p class="instructions" dir="{{ instructions_direction }}">{{ instructions }}</p>{% endif %}
