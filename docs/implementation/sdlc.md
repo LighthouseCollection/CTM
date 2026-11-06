@@ -196,3 +196,11 @@ only).
    `repository_dispatch` from a token with **Contents: write** on CTM. With
    Contents read only, the instant trigger is refused and CTM still upgrades
    within 30 minutes through the schedule.
+6. **Board (template v2.4 §4.3, gap G-2).** The labels exist: `status:ready`,
+   `status:in-progress`, `size:BUG/XS/S/M/L` and one `agent:ctm3-*` per role, so
+   Ready = role label + `status:ready` already works. The GitHub Project needs a
+   token with the `project` scope, which the agents' `gh` login does not have.
+   Owner, once: `gh auth refresh -s project`, then `bash scripts/setup_board.sh`
+   (creates "CTM 3.0 board" with Stage Backlog → Ready → In progress → Verify →
+   Integrate → Done, Lane, Priority, Size, Epic, Owner) and set its board view to
+   group by Stage. Until then the labels are the board.
