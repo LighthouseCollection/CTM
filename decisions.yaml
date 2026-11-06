@@ -346,3 +346,13 @@ decisions:
     decided_by: agent:ctm3-design-director
     status: active
     check: { kind: test, ref: tests/frontend/button-variants.test.cjs }
+
+  - id: D-0037
+    date: 2026-11-06
+    area: i18n
+    decision: Standards are accepted by default, in this order - 1 Microsoft (Arabic terminology from the Microsoft Language Portal and style guide; Windows, Office and Fluent 2 conventions); 2 IBM; 3 any of Adobe, SAP, GitHub, Atlassian or ISO. An Arabic UI word that is a term of the first standard that covers it is approved without the owner - ctm3-i18n-engineer applies it, corrects any CTM proposal that differs, and cites the source in arabic-proposals.md. This narrows D-0012. The owner (or the institution) is asked only when no standard covers the word - church, legal and tribunal terms such as separation grounds, diocese and bishop titles, canonical reasons - and institutional text stays under its approved source. The owner's own explicit decisions still win
+    why: Owner 2026-11-06, same rule as plenix-ds/pds D-0078 (PR plenix-ds/pds#681, resolution of plenix-ds/pds#476) "Use b Microsoft's standard. As a default from now on. Anything that is a Microsoft standard to accept it by default." and "When it comes to international the order to follow is always 1 Microsoft 2 IBM 3 Adobe or SaaS or Github or Altaisaan or iso"; the owner asked for it to be applied to CTM's Arabic list first
+    options: [Microsoft then IBM then Adobe/SAP/GitHub/Atlassian/ISO accepted by default (chosen), Owner approves each word]
+    decided_by: owner
+    status: active
+    review_only: "Each arabic-proposals.md row approved under this rule names the standard it follows; checked in review by ctm3-i18n-engineer"
