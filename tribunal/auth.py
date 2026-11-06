@@ -32,19 +32,24 @@ def verified_microsoft_tenant(token_response, client_id, subject):
         claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
         tid = str(claims["tid"]).lower()
         issuer = f"https://login.microsoftonline.com/{tid}/v2.0"
-        valid = (
-            tenant not in GENERIC_TENANTS | {""}
-            and tid == tenant
-            and claims.get("iss") == issuer
-            and claims.get("idp", issuer) == issuer
-            and claims.get("aud") == client_id
-            and str(claims.get("oid", "")) == str(subject)
-            and int(claims["exp"]) > time.time()
+        checks = {
+            "configured-tenant": tenant not in GENERIC_TENANTS | {""},
+            "tid": tid == tenant,
+            "iss": claims.get("iss") == issuer,
+            "idp": claims.get("idp", issuer) == issuer,
+            "aud": claims.get("aud") == client_id,
+            "oid": str(claims.get("oid", "")) == str(subject),
+            "exp": int(claims["exp"]) > time.time(),
+        }
+        failed = [name for name, ok in checks.items() if not ok]
+    except (KeyError, TypeError, IndexError, ValueError, AttributeError) as exc:
+        failed = [f"unreadable-id-token:{type(exc).__name__}"]
+    if failed:
+        # Names of the failed checks only; never claim values or identities.
+        logger.warning(
+            "Microsoft sign-in refused: token is not from the council tenant (failed: %s)",
+            ",".join(failed),
         )
-    except (KeyError, TypeError, IndexError, ValueError, AttributeError):
-        valid = False
-    if not valid:
-        logger.warning("Microsoft sign-in refused: token is not from the council tenant")
         raise PermissionDenied(COUNCIL_SIGN_IN_DENIED)
     return tenant
 
