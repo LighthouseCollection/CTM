@@ -518,10 +518,31 @@ class CouncilSession(Root):
     adjourned_at = models.DateTimeField(null=True, blank=True)
     state = models.CharField(max_length=12, default="planned")
     closed_at = models.DateTimeField(null=True)
+    # RFC 5545 SEQUENCE for this session's calendar file; the database refuses a decrease (#116).
+    ics_sequence = models.PositiveIntegerField(default=0)
 
     @property
     def reference(self):
         return self.date.strftime("CS%Y%m%d")
+
+
+class SessionResponse(Immutable):
+    """A council member's expected-attendance answer (#116). Append-only; the latest counts.
+
+    Row security: a member reads and writes only their own answers until the session
+    starts; secretary, president and admin read all; applicants get nothing. The
+    database sets created_at.
+    """
+    ANSWERS = [("attend", "attend"), ("not_attend", "not_attend")]
+    # A moved session is deleted by the planned reschedule; its answers go with it (guarded in 0069).
+    session = models.ForeignKey(CouncilSession, on_delete=models.CASCADE, related_name="responses")
+    member = models.ForeignKey(Account, on_delete=models.PROTECT, related_name="session_responses")
+    answer = models.CharField(max_length=12, choices=ANSWERS)
+
+    class Meta:
+        indexes = [models.Index(fields=["session", "member", "-created_at"], name="session_response_latest")]
+        constraints = [models.CheckConstraint(condition=models.Q(answer__in=["attend", "not_attend"]),
+                                              name="session_response_answer")]
 
 
 class AgendaItem(Root):
