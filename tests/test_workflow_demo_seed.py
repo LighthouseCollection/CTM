@@ -246,3 +246,17 @@ def test_seed_adds_agenda_cases_and_case_text_to_an_already_seeded_database(
     before = [model.objects.count() for model in counted]
     _run_seed(monkeypatch)
     assert [model.objects.count() for model in counted] == before
+
+
+@pytest.mark.django_db
+@pytest.mark.skipif(connection.vendor != "postgresql", reason="Live fictitious path requires PostgreSQL")
+def test_live_seed_never_changes_an_existing_staff_role():
+    """The roster is the real council: a role changed on live is never reset by the demo seed."""
+    staff = Account.objects.create_user(
+        email="frjonahlabib@lacopts.org", first_name="Jonah", last_name="Labib", role="secretary"
+    )
+    with pytest.raises(CommandError, match="frjonahlabib@lacopts.org"):
+        call_command("seed_workflow_demo", live_fictitious=True, confirmation="FICTITIOUS-DEMO-DATA-ONLY")
+    staff.refresh_from_db()
+    assert staff.role == "secretary"
+    assert not Case.objects.exists()
