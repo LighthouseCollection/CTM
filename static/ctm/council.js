@@ -2471,7 +2471,7 @@
       !editable ? h(P.Notice, { tone: "info" }, t("closedReadOnly")) : null,
       notice ? h(P.Notice, { tone: notice === "absentNotice" ? "warning" : "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       failure && !dialog ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
-      current ? h(P.Tabs, { variant: "contained", label: t("agenda"), value: agendaTab, onChange: setAgendaTab,
+      current ? h(P.Tabs, { variant: "folder", label: t("agenda"), value: agendaTab, onChange: setAgendaTab,
         items: [
           { value: "scheduled", label: t("scheduledCasesForHearing"), content: agendaTable(2) },
           { value: "assign", label: t("casesToAssign"), content: agendaTable(1) },
