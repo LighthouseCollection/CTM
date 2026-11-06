@@ -22,15 +22,19 @@ test("no CTM page uses a Plenix utility class that is going away", () => {
   }
 });
 
-test("the logos get their drawn width from Image srcSet density, not a size class", () => {
-  for (const file of ["static/ctm/app.js", "static/ctm/external-report.js"]) {
-    const text = fs.readFileSync(file, "utf8");
-    assert.match(text, /const drawnAt = \(src, naturalWidth, width\) =>/);
-    assert.doesNotMatch(text, /tribunal-logo-cropped\.svg"[^}]*fit: "contain"/);
+// #144 hotfix: a Plenix Image frame takes the file's natural size. A srcSet density (the first fix) failed on
+// screens above 1x: the browser chose src as the 1x candidate and drew the logo at 1104 px over the page.
+// Each logo is therefore a file whose own svg width/height is the size it is drawn at, and no srcSet.
+test("each logo is a file sized to where it is drawn, never a srcSet density", () => {
+  const sized = { "tribunal-logo-36.svg": ["36", "34"], "tribunal-logo-72.svg": ["72", "68"], "diocese-seal-100.svg": ["100", "100"] };
+  for (const [name, [w, ht]] of Object.entries(sized))
+    assert.match(fs.readFileSync(`static/ctm/${name}`, "utf8"), new RegExp(`<svg[^>]* width="${w}" height="${ht}"`), name);
+  const app = fs.readFileSync("static/ctm/app.js", "utf8"), report = fs.readFileSync("static/ctm/external-report.js", "utf8");
+  for (const text of [app, report]) {
+    assert.doesNotMatch(text, /srcSet|drawnAt/);
+    assert.doesNotMatch(text, /tribunal-logo-cropped\.svg|diocese-seal\.png/, "unsized files would draw at their natural size");
+    assert.match(text, /src: "\/static\/ctm\/tribunal-logo-36\.svg"/);
   }
-  const drawnAt = (src, naturalWidth, width) => `${src} ${+(naturalWidth / width).toFixed(4)}x`;
-  assert.equal(drawnAt("/l.svg", 1104, 36), "/l.svg 30.6667x");
-  assert.equal(drawnAt("/s.png", 456, 100), "/s.png 4.56x");
-  // The SVG needs a natural size for the density to apply.
-  assert.match(fs.readFileSync("static/ctm/tribunal-logo-cropped.svg", "utf8"), /<svg[^>]* width="1104" height="1050"/);
+  assert.match(app, /src: "\/static\/ctm\/tribunal-logo-72\.svg"/);
+  assert.match(app, /src: "\/static\/ctm\/diocese-seal-100\.svg"/);
 });
