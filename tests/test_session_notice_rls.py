@@ -76,8 +76,19 @@ def test_sequence_must_match_the_session_and_the_key(granted_roles, people, sess
     refused(granted_roles, secretary, session, member, key=f"session_invite:{uuid.uuid4()}:2:{member.pk}")
 
 
-def test_case_bound_session_email_is_refused(granted_roles, people, session, ready_application):
-    refused(granted_roles, people["secretary"], session, people["member"], case=ready_application.case)
+def test_case_bound_session_email_is_refused(granted_roles, people, session):
+    # Checked on the policy function itself: the only difference is case_id.
+    import json
+    secretary, member = people["secretary"], people["member"]
+    row = {"queued_by_id": str(secretary.pk), "case_id": None, "kind": "session_invite",
+           "recipient_id": str(member.pk), "key": f"session_invite:{session.pk}:2:{member.pk}",
+           "payload": {"session": str(session.pk), "sequence": 2}}
+    results = []
+    for case_id in [None, str(uuid.uuid4())]:
+        with granted_roles("ctm_app", secretary), connection.cursor() as cursor:
+            cursor.execute("SELECT public.ctm_session_notice_allowed(%s::jsonb)", [json.dumps({**row, "case_id": case_id})])
+            results.append(cursor.fetchone()[0])
+    assert results == [True, False]
 
 
 def test_unknown_session_is_refused(granted_roles, people, session):
@@ -139,8 +150,9 @@ def test_cancel_is_current_while_its_sequence_holds_or_the_session_is_gone(grant
     CouncilSession.objects.filter(pk=session.pk).update(ics_sequence=3)
     assert current(granted_roles, pk) is False
     # A cancel for a session that no longer exists (moved and deleted) still goes out.
-    Outbox.objects.filter(pk=pk).update(payload={"session": str(uuid.uuid4()), "sequence": 2})
-    assert current(granted_roles, pk) is True
+    gone = Outbox.objects.create(key=f"session_cancel:{uuid.uuid4()}", kind="session_cancel", recipient=people["member"],
+                                 payload={"session": str(uuid.uuid4()), "sequence": 2})
+    assert current(granted_roles, gone.pk) is True
 
 
 def test_delivery_check_is_worker_only(granted_roles, people, session):
