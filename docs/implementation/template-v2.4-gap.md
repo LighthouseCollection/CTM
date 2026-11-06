@@ -38,7 +38,7 @@ Status: **Have** = already in CTM; **Partial** = exists, differs from the templa
 | G-4 | §9 checks 13 (registry) and 15 (settings in prose) | Gap | None; `sdlc.md` and `CLAUDE.md` quote "4 sessions" in prose | `scripts/check_registry.cjs` in fast gates; prose names settings instead of quoting them | ctm3-delivery-lead |
 | G-5 | §6 dispatcher, mode P (poller on the agent host, heartbeat issue, watchdog) | Gap | Sessions are started by the owner or by another session | Build the poller for this Windows agent host (Task Scheduler, every `heartbeat_min`, headless `claude -p` per role from the registry), pinned "Dispatcher heartbeat" issue, daily watchdog workflow. The template's ready-made `dispatcher-kit/` was not found on this machine or in `plenix-ds/pds`, so it is built once and shared | ctm3-delivery-lead + ctm3-release-engineer |
 | G-6 | §6.1 / check 16 / A-17: no hand-off made with `GITHUB_TOKEN` | Partial | Hit twice on 2026-11-06: the Plenix upgrade PR's checks were held and its merge started no deploy. Fixed in `plenix-upgrade.yml` by an explicit `workflow_dispatch` (#148) | Check 16 in fast gates: every workflow that labels, tags, merges or opens PRs uses an App token or ends in a dispatch | ctm3-release-engineer |
-| G-7 | §11.1 GitHub App (one bot identity) | Gap | Agents comment as the owner's account, signed `— <role>` | Owner creates the CTM GitHub App; until then signatures + explicit dispatch (degraded mode in the template) | owner (checklist) |
+| G-7 | §11.1 GitHub App (one bot identity) | Deferred (owner, 2026-11-06: "is this needed now? i dont think so") | Agents comment as the owner's account, signed `— <role>`; hand-offs end in an explicit dispatch | Revisit only if the owner asks | owner |
 | G-8 | §7 gate records: each gate PASS / FAIL / N/A with a reason on the PR | Partial | Gates named in `sdlc.md`; N/A not recorded | PR template with the G5a–G8 table | ctm3-delivery-lead |
 | G-9 | §10 Application profile: merge → staging, tag → production | Partial (recorded deviation) | Merge → live directly, because the owner wants live = latest (#95) and there is no staging stack on VM 107 (16 GB) | Recorded as D-0038; revisit when staging exists | ctm3-release-engineer |
 | G-10 | §5.2 reserved gate slots, priority order, idle exit | Gap | Not enforced | Part of the registry settings and the poller (G-3, G-5) | ctm3-delivery-lead |
@@ -51,6 +51,6 @@ Status: **Have** = already in CTM; **Partial** = exists, differs from the templa
 2. G-3 + G-4 registry and its check (one PR), then G-2 board, G-8 PR template.
 3. G-6 check 16.
 4. G-5 + G-10 + G-11 poller and watchdog (largest; tooling cap ~10%).
-5. G-7 when the owner creates the App.
+5. G-7 deferred by the owner.
 
 — ctm3-product-lead
