@@ -184,7 +184,6 @@ def test_send_now_reaches_only_members_without_an_answer_and_once_an_hour(people
     assert people["member"].pk not in set(manual.values_list("recipient_id", flat=True))
     with pytest.raises(ValidationError, match="last hour"):
         send_reminders_now(people["secretary"], planned.pk, now=now + timedelta(minutes=30))
-    Outbox.objects.filter(pk__in=manual.values("pk")).update(created_at=now - timedelta(hours=2))
     assert send_reminders_now(people["secretary"], planned.pk, now=now + timedelta(hours=2)) == len(COUNCIL) - 1
 
 
