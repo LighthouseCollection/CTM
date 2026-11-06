@@ -278,7 +278,7 @@ test("the session header is Plenix EntityHeader style 2: facts carry their actio
   assert.doesNotMatch(agendaTable, /P\.SplitView/);
   const sessionWorkspace = council.slice(council.indexOf("function SessionWorkspace"), council.indexOf("function searchProblem"));
   assert.match(sessionWorkspace, /const \[agendaTab, setAgendaTab\] = R\.useState\("scheduled"\)/);
-  assert.match(sessionWorkspace, /h\(P\.Tabs, \{ variant: "contained", label: t\("agenda"\), value: agendaTab, onChange: setAgendaTab,/);
+  assert.match(sessionWorkspace, /h\(P\.Tabs, \{ variant: "folder", label: t\("agenda"\), value: agendaTab, onChange: setAgendaTab,/);
   assert.match(sessionWorkspace, /\{ value: "scheduled", label: t\("scheduledCasesForHearing"\), content: agendaTable\(2\) \}/);
   assert.match(sessionWorkspace, /\{ value: "assign", label: t\("casesToAssign"\), content: agendaTable\(1\) \}/);
   assert.doesNotMatch(agendaTable, /P\.Panel/);
@@ -814,4 +814,11 @@ test("ctm3-48 part 3: timeline is Plenix Timeline grouped by year; past hearings
   assert.match(timeline, /h\(P\.Timeline, \{ label:/);
   assert.match(timeline, /dateTime: event\.timestamp/);
   assert.match(councilCase, /h\(P\.Table, \{ label: t\("pastHearings"\)/);
+});
+
+// #113: the agenda tabs are Plenix Tabs; their panel holds a framed DataGrid, so they use the documented
+// "folder" variant (the tab strip alone, the content unframed) instead of a frame around the grid's frame.
+test("session agenda uses Plenix folder tabs around its table (#113)", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(council, /current \? h\(P\.Tabs, \{ variant: "folder", label: t\("agenda"\)/);
 });
