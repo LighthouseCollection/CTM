@@ -41,8 +41,8 @@ exec 9>/run/ctm-live-update.lock; flock -n 9 || { echo "another update is runnin
 
 restore_db() {
   log "restoring database from $(basename "$DUMP")"
-  docker exec "$PG" sh -c 'dropdb -U "$POSTGRES_USER" --force "$POSTGRES_DB"'
-  gunzip -c "$DUMP" | docker exec -i "$PG" sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres' >/dev/null
+  docker exec "$PG" sh -c 'export PGPASSWORD="$POSTGRES_PASSWORD"; dropdb -U "$POSTGRES_USER" --force "$POSTGRES_DB"'
+  gunzip -c "$DUMP" | docker exec -i "$PG" sh -c 'export PGPASSWORD="$POSTGRES_PASSWORD"; psql -q -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres' >/dev/null
 }
 
 rollback() {
@@ -83,7 +83,7 @@ FREE_GB="$(df -BG --output=avail / | tail -1 | tr -dc 0-9)"
 # --- 2. backup ----------------------------------------------------------------
 PHASE="backup"
 install -d -m 0700 "$BACKUP_DIR"
-docker exec "$PG" sh -c 'pg_dump --create -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip >"$DUMP"
+docker exec "$PG" sh -c 'export PGPASSWORD="$POSTGRES_PASSWORD"; pg_dump --create -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip >"$DUMP"
 [[ "$(gunzip -c "$DUMP" | head -c 100000 | grep -c 'CREATE DATABASE')" -ge 1 ]]
 log "database backup: $DUMP ($(du -h "$DUMP" | cut -f1))"
 
