@@ -192,3 +192,20 @@ def test_refusal_log_names_an_unreadable_token(tenant, caplog):
     with caplog.at_level("WARNING", logger="tribunal.auth"), pytest.raises(PermissionDenied):
         verified_microsoft_tenant({"access_token": "only"}, CLIENT, SUBJECT)
     assert "unreadable-id-token:KeyError" in caplog.records[-1].getMessage()
+
+
+def test_microsoft_scope_requests_profile_so_the_id_token_has_oid(monkeypatch):
+    # Microsoft only puts the oid claim in a v2.0 id_token when the profile
+    # scope is requested; without it the oid check refuses every sign-in.
+    import importlib
+
+    import ctm.settings as ctm_settings
+
+    monkeypatch.setenv("MICROSOFT_CLIENT_ID", "client-for-scope-test")
+    reloaded = importlib.reload(ctm_settings)
+    try:
+        scope = reloaded.SOCIALACCOUNT_PROVIDERS["microsoft"]["SCOPE"]
+        assert {"openid", "profile", "User.Read"} <= set(scope)
+    finally:
+        monkeypatch.delenv("MICROSOFT_CLIENT_ID")
+        importlib.reload(ctm_settings)
