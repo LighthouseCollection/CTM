@@ -29,6 +29,9 @@ EMAIL_KINDS = MANAGER_KINDS | ACCOUNT_STATUS_KINDS | {
     "decree_issued", "petitions_withdrawn", "appeal_accept", "appeal_decline",
     "closed_intake_accept", "closed_intake_decline",
 }
+# #116: council session calendar emails; each row carries its subject, body and .ics.
+SESSION_KINDS = {"session_invite", "session_update", "session_cancel", "session_reminder"}
+EMAIL_KINDS = EMAIL_KINDS | SESSION_KINDS
 
 
 class SupersededDelivery(Exception):
@@ -155,6 +158,16 @@ def deliver(events):
             closed = CouncilSession.objects.filter(pk=event.payload.get("session"), state="closed").exists()
         if not closed:
             raise RuntimeError("Selected council session has not closed")
+    if event.kind in SESSION_KINDS:
+        if connection.vendor == "postgresql":
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT public.ctm_session_delivery_current(%s)", [str(event.pk)])
+                current = cursor.fetchone()[0]
+        else:
+            from tribunal.services.session_reminders import delivery_current
+            current = delivery_current(event)
+        if not current:
+            raise SupersededDelivery("Superseded council session email")
     if event.kind == "finalize_payment":
         from tribunal.services.payments import finalize_paid_intent
 
@@ -202,13 +215,19 @@ def deliver(events):
     subject="CTM — portal update"
     if status_notice:
         subject,message=recipient.subject,recipient.body
-    accepted = EmailMessage(
+    if event.kind in SESSION_KINDS:
+        subject, message = event.payload["subject"], event.payload["body"]
+    email = EmailMessage(
         subject,
         message,
         settings.DEFAULT_FROM_EMAIL,
         [recipient.email],
         headers={"Message-ID": f"<ctm-{event.pk}@ctm.lighthouseway.org>"},
-    ).send(fail_silently=False)
+    )
+    if event.kind in SESSION_KINDS:
+        method = "CANCEL" if event.kind == "session_cancel" else "PUBLISH"
+        email.attach("ctm-council-session.ics", event.payload["ics"], f"text/calendar; charset=utf-8; method={method}")
+    accepted = email.send(fail_silently=False)
     if type(accepted) is not int or accepted != 1:
         raise RuntimeError("Email backend did not acknowledge delivery")
 
