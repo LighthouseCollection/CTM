@@ -76,6 +76,8 @@ def runtime():
             "ctm_draft_session_delete_allowed(uuid)",
             "ctm_session_response_readable(jsonb)",
             "ctm_session_response_writable(jsonb)",
+            "ctm_session_notice_allowed(jsonb)",
+            "ctm_session_reminder_readable(jsonb)",
             "ctm_admin_case_purge_allowed(uuid)",
             "ctm_reference_readable(text,jsonb)",
             "ctm_reference_writable(text,jsonb)",
