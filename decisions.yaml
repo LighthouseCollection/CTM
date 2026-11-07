@@ -406,3 +406,23 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: test, ref: tests/test_council_seats.py }
+
+  - id: D-0045
+    date: 2026-11-07
+    area: design
+    decision: Every CTM page fills the window (AppShell frame "full"); the Plenix centered 1366px frame with grey side bands is not used. Narrow pages get their width from their page kind (form, settings)
+    why: Owner 2026-11-07 (#170) "the dashboard looks like crap"; the narrow centered column with grey bands came from frame "centered" on every page
+    options: [Full window (chosen), Centered 1366px frame]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/shell-frame.test.cjs }
+
+  - id: D-0046
+    date: 2026-11-07
+    area: design
+    decision: Council Home is a full-width dashboard - next council session leads, then one row of equal stat tiles with short labels linking to their lists, My cases as a DataGrid, council members with active case counts, and a statistics summary; nothing shown twice
+    why: Owner 2026-11-07 (#170); layout chosen by ctm3-design-director on Plenix 0.93.1 (docs/implementation/slices/ctm3-170-home/design.md)
+    options: [Session-led dashboard (chosen)]
+    decided_by: owner
+    status: active
+    review_only: Not built yet (#170); the CouncilHome frontend test becomes the check
