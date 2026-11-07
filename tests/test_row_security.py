@@ -78,6 +78,10 @@ def runtime():
             "ctm_session_response_writable(jsonb)",
             "ctm_session_notice_allowed(jsonb)",
             "ctm_session_reminder_readable(jsonb)",
+            "ctm_council_seat(uuid)",
+            "ctm_voting_seat(uuid)",
+            "ctm_council_seat_readable()",
+            "ctm_council_seat_writable(jsonb)",
             "ctm_admin_case_purge_allowed(uuid)",
             "ctm_reference_readable(text,jsonb)",
             "ctm_reference_writable(text,jsonb)",
@@ -968,7 +972,7 @@ def test_readiness_gate_rejects_owner_and_reports_remaining_runtime_gaps(runtime
         assert not report["ready_for_deployment"]
         assert not any(report["checks"]["role_attributes"].values())
         assert not report["checks"]["owned_or_owner_role_accessible_tables"]
-        assert report["checks"]["forced_rls_table_count"] == 64
+        assert report["checks"]["forced_rls_table_count"] == 65
         assert "tribunal_reportrequest" not in report["checks"]["unreviewed_domain_tables"]
         assert not report["checks"]["public_security_definer_helpers"]
 
