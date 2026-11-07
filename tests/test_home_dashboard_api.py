@@ -93,3 +93,14 @@ def test_members_list_is_council_only(granted_roles, client, people):
     assert get(granted_roles, client, people["applicant"], "/api/dashboard/members/").status_code == 403
     client.logout()
     assert get(granted_roles, client, None, "/api/dashboard/members/").status_code == 401
+
+
+def test_members_list_never_hides_a_single_count(granted_roles, client, people):
+    """#170: with exactly one small count, a second cell is hidden so it can't be subtracted out."""
+    for prefix, member, n in (("P", people["president"], 5), ("M", people["member"], 6), ("S", people["secretary"], 2)):
+        for i in range(n):
+            m.Case.objects.create(number=f"{prefix}-{i}", origin="synthetic", status="open", assigned_member=member)
+    rows = get(granted_roles, client, people["secretary"], "/api/dashboard/members/").json()["items"]
+    hidden = [row for row in rows if row["suppressed"]]
+    assert len(hidden) == 2 and all(row["active_cases"] is None for row in hidden)
+    assert {row["id"] for row in hidden} == {str(people["secretary"].pk), str(people["president"].pk)}
