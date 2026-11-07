@@ -675,6 +675,17 @@
       spouses: "Spouses",
       homeNextStep: "Next step",
       allCases: "All cases",
+      councilMembers: "Council members",
+      activeCasesUnit: "active cases",
+      fewerThanFive: "Fewer than 5",
+      titlePresiding: "Presiding",
+      titleSecretary: "Secretary",
+      titleMember: "Member",
+      "case.next.completeness_review": "Completeness review",
+      "case.next.applicant_correction": "Waiting for the applicant's correction",
+      "case.next.hearing": "Hearing",
+      "case.next.assignment": "Assign a council member",
+      "case.next.investigation": "Investigation",
       noUpcoming: "No council session is scheduled.",
       needsAttention: "Needs attention",
       unreadNotifications: "{n} unread notifications",
@@ -1037,6 +1048,17 @@
       spouses: "الزوجان",
       homeNextStep: "الخطوة التالية",
       allCases: "كل القضايا",
+      councilMembers: "أعضاء المجلس",
+      activeCasesUnit: "قضايا نشطة",
+      fewerThanFive: "أقل من 5",
+      titlePresiding: "الرئيس",
+      titleSecretary: "السكرتير",
+      titleMember: "عضو",
+      "case.next.completeness_review": "مراجعة الاستيفاء",
+      "case.next.applicant_correction": "في انتظار تصحيح مقدم الطلب",
+      "case.next.hearing": "جلسة النظر",
+      "case.next.assignment": "تعيين عضو من المجلس",
+      "case.next.investigation": "التحقيق",
       noUpcoming: "لا توجد جلسة مجلس مجدولة.",
       needsAttention: "يحتاج إلى متابعة",
       unreadNotifications: "{n} إشعارات غير مقروءة",
@@ -3052,6 +3074,18 @@
     return people.map((person) => isolate(person.name)).join(" · ");
   }
 
+  // Council members on Home (issue 170 region 4): Presiding first, then Secretary, then Members by name.
+  // A count under the privacy threshold comes as null with suppressed: true and reads "Fewer than 5", never a number.
+  const MEMBER_TITLE_ORDER = { presiding: 0, secretary: 1, member: 2 };
+  function homeMembers(items, lang) {
+    const byName = new Intl.Collator(lang === "ar" ? "ar" : "en");
+    return (items || []).slice().sort((a, b) =>
+      (MEMBER_TITLE_ORDER[a.title] ?? 3) - (MEMBER_TITLE_ORDER[b.title] ?? 3) || byName.compare(a.name || "", b.name || ""));
+  }
+  function memberTitleKey(title) {
+    return title === "presiding" ? "titlePresiding" : title === "secretary" ? "titleSecretary" : "titleMember";
+  }
+
   // The tiles of Home's one row (issue 170, design §2): short labels, each opens its list; a count the server
   // did not send is "–" (value left out), never 0. "For council" has no list page yet, so it has no link.
   function homeTiles({ dashboard, unread, consideration }, user, t, n) {
@@ -3100,7 +3134,8 @@
         : Promise.resolve(null),
       [leadId],
     );
-    const [cases, retryCases] = useLoad(() => api("/api/cases/"), [user?.id]);
+    const [cases, retryCases] = useLoad(() => api("/api/cases/?mine=1"), [user?.id]);
+    const [members, retryMembers] = useLoad(() => api("/api/dashboard/members/"), [user?.id]);
 
     // A same-origin tile link opens its page inside the app (no reload); other clicks behave as links.
     const follow = (event) => {
@@ -3195,11 +3230,29 @@
       return h(P.Panel, { icon: "folder-open", title: t("myCases"), actions: allCases || undefined }, body);
     };
 
+    // 4. Council members: one person card each with their active cases (aggregate only, design §4).
+    const membersRegion = () => {
+      let body;
+      if (members.pending && !members.data) body = h(P.Skeleton, { height: "120px" });
+      else if (members.error) body = regionFailure(retryMembers, members.error);
+      else {
+        const rows = homeMembers(members.data.items, lang);
+        body = rows.length
+          ? h(P.WidgetGrid, { label: t("councilMembers"), columns: 4, items: rows.map((row) => ({ ...row, id: String(row.id) })),
+              renderItem: (row) => h(P.MetricCard, { key: row.id, type: "person", title: row.name || "—", headingLevel: 3,
+                person: { name: row.name || "—", role: t(memberTitleKey(row.title)), src: row.photo_url || undefined },
+                value: row.suppressed ? t("fewerThanFive") : n(row.active_cases), unit: row.suppressed ? undefined : t("activeCasesUnit") }) })
+          : h(P.EmptyState, { title: t("noMembers") });
+      }
+      return h(P.Panel, { icon: "settings-users", title: t("councilMembers") }, body);
+    };
+
     return h(P.Stack, { gap: "lg", onClickCapture: follow },
       h(P.Text, { as: "h1", variant: "title" }, t("homeTitle")),
       leadRegion(),
       tilesRegion(),
       casesRegion(),
+      membersRegion(),
     );
   }
 
@@ -3474,6 +3527,8 @@
     CouncilHome: guarded(CouncilHome),
     homeTiles,
     spousesText,
+    homeMembers,
+    memberTitleKey,
     caseRows,
     CasesTable: guarded(CasesTable),
     NewApplicationsTable: guarded(NewApplicationsTable),

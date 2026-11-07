@@ -241,7 +241,7 @@ test("council home: lead session, one row of tiles, My cases grid, in that order
     : url === "/api/sessions/" ? { items: [{ id: "s1", date: later, starts_at: "2099-01-11T02:00:00Z", location: "Synthetic Hall", state: "planned" }] }
     : url === "/api/sessions/s1/agenda/" ? { items: [{ id: "a1" }, { id: "a2" }, { id: "a3" }] }
     : url === "/api/sessions/s1/answers/" ? { members: [{ member_id: "sec", answer: "attend", answered_at: "2099-01-01T00:00:00Z" }], confirmed: 1, total: 4 }
-    : url === "/api/cases/" ? { items: [
+    : url.startsWith("/api/cases/") ? { items: [
         { id: "c1", number: "20261020-01", status: "open", assigned_member_id: "sec", applicant_name: "Emily Carter", applicant_gender: "F", respondent_name: "James Carter", respondent_gender: "M" },
         { id: "c2", number: "20261020-02", status: "open", assigned_member_id: "other", applicant_name: "Other Person" },
       ] }
@@ -309,7 +309,7 @@ test("council home for a member: two tiles in two columns; no session shows the 
 test("one failing region shows its own notice while the others still show (issue 170 design §3)", async () => {
   const [h, C] = boot();
   const api = async (url) => {
-    if (url === "/api/cases/") throw Object.assign(new Error("x"), { status: 500, data: {} });
+    if (url.startsWith("/api/cases/")) throw Object.assign(new Error("x"), { status: 500, data: {} });
     return url === "/api/dashboard/" ? { my_cases: 0, review_queue: 0, upcoming_sessions: [] } : url === "/api/notifications/" ? { unread_count: 0 } : { items: [] };
   };
   const props = { api, lang: "en", user: secretary, onCase() {}, onSession() {}, onNavigate() {} };
@@ -358,7 +358,7 @@ test("search is a SearchWorkspace in a form: nothing is sent before Search, resu
 
 test("statistics are MetricCards in a WidgetGrid; the per-manager counts are a ranked list card", async () => {
   const [h, C] = boot();
-  const api = async (url) => url === "/api/cases/" ? { items: cases.concat([{ id: "c3", status: "open", assigned_member: "Fr. David" }]) } : { items: [{ state: "planned" }] };
+  const api = async (url) => url.startsWith("/api/cases/") ? { items: cases.concat([{ id: "c3", status: "open", assigned_member: "Fr. David" }]) } : { items: [{ state: "planned" }] };
   const tree = await rendered(h, C, C.StatisticsWorkspace, { api, lang: "en" });
   const grid = byName(tree, "WidgetGrid")[0];
   const cards = grid.props.items.map((item) => grid.props.renderItem(item));
@@ -403,4 +403,40 @@ test("a refused search shows its reason even though the workspace has no results
   const notice = byName(form, "Notice")[0];
   assert.ok(notice, "a notice in the form");
   assert.equal(find(ws, (n) => n === notice).length, 0, "not inside the workspace results");
+});
+
+// Issue 170 region 4: council members after My cases, Presiding first, then Secretary, then Members by name;
+// a suppressed count reads "Fewer than 5", never a number; My cases asks the server for mine only.
+test("council home lists council members as person cards in their order; a suppressed count is never shown", async () => {
+  const [h, C] = boot();
+  const asked = [];
+  const api = async (url) => {
+    asked.push(url);
+    return url === "/api/dashboard/" ? { my_cases: 0, review_queue: 0, upcoming_sessions: [] }
+      : url === "/api/notifications/" ? { unread_count: 0 }
+      : url === "/api/dashboard/members/" ? { items: [
+          { id: 3, name: "Fr. Zed Member", title: "member", photo_url: null, active_cases: 7 },
+          { id: 2, name: "Sec Retary", title: "secretary", photo_url: null, active_cases: null, suppressed: true },
+          { id: 4, name: "Fr. Abe Member", title: "member", photo_url: null, active_cases: 12 },
+          { id: 1, name: "H.G. Presiding", title: "presiding", photo_url: null, active_cases: 9 },
+        ] }
+      : { items: [] };
+  };
+  const props = { api, lang: "en", user: secretary, onCase() {}, onSession() {}, onNavigate() {} };
+  h.render(C.CouncilHome, props);
+  await settle(); h.render(C.CouncilHome, props); await settle();
+  const tree = h.render(C.CouncilHome, props);
+  assert.ok(asked.includes("/api/cases/?mine=1"));
+  const panel = byName(tree, "Panel").find((node) => node.props.title === "Council members");
+  assert.ok(panel, "members panel");
+  const grid = byName(panel, "WidgetGrid")[0];
+  const cards = grid.props.items.map((item) => grid.props.renderItem(item));
+  same(cards.map((card) => [card.props.title, card.props.person.role, card.props.value ?? null]),
+    [["H.G. Presiding", "Presiding", "9"], ["Sec Retary", "Secretary", "Fewer than 5"], ["Fr. Abe Member", "Member", "12"], ["Fr. Zed Member", "Member", "7"]]);
+  assert.ok(cards.every((card) => card.props.type === "person" && card.props.menu === undefined));
+  assert.equal(cards[1].props.unit, undefined);
+  assert.equal(cards[0].props.unit, "active cases");
+  const ar = C.translator("ar");
+  for (const key of ["case.next.completeness_review", "case.next.applicant_correction", "case.next.hearing", "case.next.assignment", "case.next.investigation", "councilMembers", "fewerThanFive", "titlePresiding"])
+    assert.notEqual(ar(key), C.translator("en")(key), key);
 });
