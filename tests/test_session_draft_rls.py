@@ -39,7 +39,9 @@ def test_in_progress_session_goes_back_to_draft_and_forward_again(granted_roles,
 
 @pytest.mark.parametrize("role", ["member", "applicant"])
 def test_member_and_applicant_cannot_change_session_state(granted_roles, people, session, role):
-    with pytest.raises(DatabaseError):
+    # A member sees the session and is refused; an applicant cannot see it, so
+    # the update reaches no row. Either way nothing changes.
+    with pytest.raises((DatabaseError, AssertionError)):
         set_state(granted_roles, people[role], session, "draft")
     assert state(session) == "planned"
 
