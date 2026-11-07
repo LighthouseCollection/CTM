@@ -665,6 +665,16 @@
       homeTitle: "Home",
       considerationCount: "{n} appeals or later petitions await council consideration (place them on a session agenda from the case).",
       upcomingSession: "Upcoming council session",
+      openSession: "Open session",
+      sessionWhen: "Date and time",
+      agendaItems: "Agenda items",
+      scheduleSession: "Schedule session",
+      tileUnread: "Unread",
+      tileNewApplications: "New applications",
+      tileForCouncil: "For council",
+      spouses: "Spouses",
+      homeNextStep: "Next step",
+      allCases: "All cases",
       noUpcoming: "No council session is scheduled.",
       needsAttention: "Needs attention",
       unreadNotifications: "{n} unread notifications",
@@ -1017,6 +1027,16 @@
       homeTitle: "الرئيسية",
       considerationCount: "{n} من الاستئنافات أو الطلبات اللاحقة في انتظار نظر المجلس (أدرجها في جدول أعمال جلسة من القضية).",
       upcomingSession: "جلسة المجلس القادمة",
+      openSession: "فتح الجلسة",
+      sessionWhen: "التاريخ والوقت",
+      agendaItems: "بنود جدول الأعمال",
+      scheduleSession: "جدولة جلسة",
+      tileUnread: "غير مقروءة",
+      tileNewApplications: "طلبات جديدة",
+      tileForCouncil: "أمام المجلس",
+      spouses: "الزوجان",
+      homeNextStep: "الخطوة التالية",
+      allCases: "كل القضايا",
       noUpcoming: "لا توجد جلسة مجلس مجدولة.",
       needsAttention: "يحتاج إلى متابعة",
       unreadNotifications: "{n} إشعارات غير مقروءة",
@@ -3021,83 +3041,165 @@
     return (cases || []).filter((row) => row.status === "open" && user?.id && row.assigned_member_id === user.id);
   }
 
-  // A dashboard (dashboard-page.md): the counts people act on as MetricCards first, then the queues as panels,
-  // each row in a WidgetGrid (dashboard-grid.md; not reorderable). A count the server did not send is "–", never 0.
-  function CouncilHome({ api, lang, user, onCase, onSession, onReview, onNotifications, onCases }) {
+  // Spouses as one line, husband first when the genders are known (issue 170: "husband · wife").
+  function spousesText(row) {
+    const people = [
+      { name: row.applicant_name, gender: row.applicant_gender },
+      { name: row.respondent_name, gender: row.respondent_gender },
+    ].filter((person) => person.name);
+    const male = (g) => g === "M" || g === "male";
+    if (people.length === 2 && !male(people[0].gender) && male(people[1].gender)) people.reverse();
+    return people.map((person) => isolate(person.name)).join(" · ");
+  }
+
+  // The tiles of Home's one row (issue 170, design §2): short labels, each opens its list; a count the server
+  // did not send is "–" (value left out), never 0. "For council" has no list page yet, so it has no link.
+  function homeTiles({ dashboard, unread, consideration }, user, t, n) {
+    const route = (id, path) => window.CTMRoutes?.routeFor(id) || path;
+    return [
+      { id: "mine", icon: "folder-open", title: t("myCases"), value: n(dashboard?.my_cases), href: route("myCases", "/cases/mine") },
+      { id: "unread", icon: "hdr-bell", title: t("tileUnread"), value: n(unread), href: route("notifications", "/notifications") },
+      ...(canManage(user) ? [
+        { id: "review", icon: "doc-text", title: t("tileNewApplications"), value: n(dashboard?.review_queue), href: route("newApplications", "/applications/new") },
+        { id: "consideration", icon: "doc-text", title: t("tileForCouncil"), value: n(consideration) },
+      ] : []),
+    ];
+  }
+
+  // Council Home (issue 170, D-0046; design docs/implementation/slices/ctm3-170-home/design.md). Top to bottom:
+  // the next council session leads, then one row of equal tiles, then My cases as a DataGrid. Each region loads
+  // on its own, so one failure shows its own Notice and Retry while the others still show (design §3).
+  // Council members and the statistics summary follow when their aggregate endpoints exist.
+  function CouncilHome({ api, lang, user, onCase, onSession, onNavigate }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
       t = translator(lang);
-    const [state, retry] = useLoad(
-      () =>
-        Promise.all([
-          api("/api/dashboard/"),
-          api("/api/cases/"),
-          api("/api/notifications/"),
-          canManage(user) ? api("/api/applications/?state=council_consideration") : Promise.resolve({ items: [] }),
-        ]).then(([dashboard, cases, notes, consideration]) => ({
-          dashboard,
-          cases: cases.items,
-          unread: notes.unread_count || 0,
-          consideration: considerationQueue(consideration.items).length,
-        })),
+    const n = (value) => typeof value === "number" ? new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(value) : undefined;
+    const [dash, retryDash] = useLoad(() => api("/api/dashboard/"), [user?.id]);
+    const [counts, retryCounts] = useLoad(
+      () => Promise.all([
+        api("/api/notifications/"),
+        canManage(user) ? api("/api/applications/?state=council_consideration") : Promise.resolve({ items: [] }),
+      ]).then(([notes, consideration]) => ({ unread: notes.unread_count || 0, consideration: considerationQueue(consideration.items).length })),
       [user?.id],
     );
-    if (state.pending && !state.data) return loadingView(P, h, t);
-    if (state.error) return loadFailure(P, h, t, retry, state.error);
-    const { dashboard, cases, unread, consideration } = state.data;
-    const upcoming = dashboard.upcoming_sessions || [];
-    const mine = myCases(cases, user);
-    const n = (value) => typeof value === "number" ? new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(value) : undefined;
-    const open = (label, onSelect, icon) => onSelect ? h(P.MenuItem, { icon, onSelect }, label) : undefined;
-    const metricStrings = { more: t("metricMore") };
-    const metrics = [
-      { id: "mine", icon: "folder-open", title: t("myCases"), value: n(dashboard.my_cases), menu: open(t("casesTitle"), onCases, "folder-open") },
-      { id: "unread", icon: "hdr-bell", title: t("unreadTitle"), value: n(unread), menu: open(t("openNotifications"), onNotifications, "hdr-bell") },
-      ...(canManage(user) ? [
-        { id: "review", icon: "doc-text", title: t("reviewQueue"), value: n(dashboard.review_queue), menu: open(t("reviewOpen"), onReview, "doc-text") },
-        { id: "consideration", icon: "doc-text", title: t("considerationTitle"), value: n(consideration), info: t("considerationHelp") },
-      ] : []),
-    ];
-    const panels = [
-      { id: "upcoming", span: "1", body: () => h(
-        P.Panel,
-        { icon: "calendar", title: t("upcomingSession") },
-        upcoming.length
-          ? h(
-              P.Stack,
-              { gap: "sm" },
-              ...upcoming.slice(0, 3).map((s) =>
-                h(P.Card, { icon: "calendar", key: s.id, title: sessionLabel(s.date, t), meta: sessionReference(s.date), onOpen: () => onSession(s.id) }),
-              ),
-            )
-          : h(P.EmptyState, { title: t("noUpcoming") }),
-      ) },
-      { id: "mine", span: "1", body: () => h(
-        P.Panel,
-        { icon: "folder-open", title: t("myCases"), description: typeof dashboard.my_cases === "number" ? t("myCasesCount", { n: dashboard.my_cases }) : undefined },
-        mine.length
-          ? h(
-              P.Stack,
-              { gap: "sm" },
-              ...mine.map((row) => h(P.Card, { icon: "folder-open", key: row.id, title: row.number, meta: t("open"), onOpen: () => onCase(row.id) })),
-            )
-          : dashboard.my_cases === 0 ? h(P.EmptyState, { title: t("noMyCases") }) : h(P.Notice, { tone: "info" },
-              t("myCasesUnavailable"), onCases ? h(P.Button, { onClick: onCases }, t("casesTitle")) : null),
-      ) },
-    ];
-    const calm = !unread && !(dashboard.review_queue > 0) && !consideration;
-    return h(
-      P.Stack,
-      { gap: "lg" },
+    const leadId = dash.data?.upcoming_sessions?.[0]?.id || null;
+    // The lead session's time, place and agenda come from the session endpoints until /api/dashboard/ sends them.
+    const [lead, retryLead] = useLoad(
+      () => leadId
+        ? Promise.all([
+            api("/api/sessions/"),
+            api(`/api/sessions/${encodeURIComponent(leadId)}/agenda/`),
+            api(`/api/sessions/${encodeURIComponent(leadId)}/answers/`).catch(() => null),
+          ]).then(([sessions, agenda, answers]) => ({
+            session: (sessions.items || []).find((row) => row.id === leadId) || agenda.session || { id: leadId },
+            agendaCount: (agenda.items || []).length,
+            answers,
+          }))
+        : Promise.resolve(null),
+      [leadId],
+    );
+    const [cases, retryCases] = useLoad(() => api("/api/cases/"), [user?.id]);
+
+    // A same-origin tile link opens its page inside the app (no reload); other clicks behave as links.
+    const follow = (event) => {
+      const link = event.target.closest && event.target.closest("a[href]");
+      if (!link || !onNavigate || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin || !window.CTMRoutes?.parse(url.pathname)) return;
+      event.preventDefault();
+      onNavigate(url.pathname);
+    };
+    const regionFailure = (retry, error) => h(P.Notice, { tone: "danger" }, serverMessage(error, t), " ",
+      h(P.Button, { size: "sm", onClick: retry }, t("retry")));
+
+    // 1. The next council session leads the page.
+    const leadRegion = () => {
+      if (dash.pending && !dash.data) return h(P.Skeleton, { height: "160px" });
+      if (dash.error) return regionFailure(retryDash, dash.error);
+      if (!leadId)
+        return h(P.Panel, { icon: "calendar", title: t("upcomingSession") },
+          h(P.EmptyState, { title: t("noUpcoming"),
+            action: canManage(user) && onNavigate ? h(P.Button, { onClick: () => onNavigate(window.CTMRoutes?.routeFor("sessionsUpcoming") || "/sessions/upcoming") }, t("scheduleSession")) : undefined }));
+      if (lead.error) return regionFailure(retryLead, lead.error);
+      if (!lead.data) return h(P.Skeleton, { height: "160px" });
+      // Fields /api/dashboard/ sends (design §4) win over the ones read from the session endpoints.
+      const sent = dash.data.upcoming_sessions[0];
+      const session = { ...lead.data.session, ...Object.fromEntries(["starts_at", "location"].filter((key) => sent[key] != null).map((key) => [key, sent[key]])) };
+      const agendaCount = typeof sent.agenda_count === "number" ? sent.agenda_count : lead.data.agendaCount;
+      const answers = lead.data.answers;
+      const mine = answers ? ownAnswer(answers, user) : null;
+      const confirmed = confirmedText(answers, t, "confirmedCount");
+      const date = session.date || dash.data.upcoming_sessions[0].date;
+      // Today's session opens Tribunal Sessions, Current (owner, 2026-10-22); a later one opens its own page,
+      // because Current lists only sessions dated today or earlier.
+      const openLead = () => date <= todayInLosAngeles() || !onNavigate
+        ? onSession && onSession(leadId)
+        : onNavigate(window.CTMRoutes?.routeFor("session", leadId) || "/sessions/" + leadId);
+      return h(P.Panel, { icon: "calendar", title: sessionLabel(date, t), description: t("upcomingSession"),
+        actions: h(P.Button, { variant: "primary", icon: "open", onClick: openLead }, t("openSession")) },
+        h(P.Columns, { count: 3, collapseBelow: "wide" },
+          h(P.PropertyList, null,
+            h(P.PropertyList.Item, { label: t("sessionWhen") }, formatSessionStart(session.starts_at, lang) || t("timeNotRecorded"))),
+          h(P.PropertyList, null,
+            h(P.PropertyList.Item, { label: t("location") }, session.location || t("notRecorded"))),
+          h(P.PropertyList, null,
+            h(P.PropertyList.Item, { label: t("agendaItems"), data: true }, n(agendaCount))),
+          answers ? h(P.PropertyList, null,
+            h(P.PropertyList.Item, { label: t("yourAnswer") },
+              h(P.Badge, { tone: answerTone(mine?.answer), icon: mine?.answer === "attend" ? "check" : mine?.answer === "not_attend" ? "close" : undefined }, t(answerKey(mine?.answer))))) : null,
+          confirmed ? h(P.PropertyList, null,
+            h(P.PropertyList.Item, { label: t("confirmedColumn") }, confirmed)) : null,
+        ));
+    };
+
+    // 2. One row of equal tiles.
+    const tilesRegion = () => {
+      const loading = (dash.pending && !dash.data) || (counts.pending && !counts.data);
+      const tiles = homeTiles({ dashboard: dash.data, unread: counts.data?.unread, consideration: counts.data?.consideration }, user, t, n);
+      return h(P.Stack, { gap: "sm" },
+        counts.error ? regionFailure(retryCounts, counts.error) : null,
+        h(P.WidgetGrid, { label: t("needsAttention"), columns: tiles.length, items: tiles,
+          renderItem: (item) => h(P.MetricCard, { key: item.id, layout: "tile", size: "lg", icon: item.icon, title: item.title,
+            value: item.value, href: item.href, headingLevel: 2, state: loading ? "loading" : "ready" }) }));
+    };
+
+    // 3. My cases, once, as a grid: case, spouses, status, next step; a row opens the case.
+    const casesRegion = () => {
+      const allCases = onNavigate ? h(P.Button, { variant: "ghost", onClick: () => onNavigate(window.CTMRoutes?.routeFor("myCases") || "/cases/mine") }, t("allCases")) : null;
+      let body;
+      if (cases.pending && !cases.data) body = h(P.Skeleton, { height: "120px" });
+      else if (cases.error) body = regionFailure(retryCases, cases.error);
+      else {
+        const rows = myCases(cases.data.items, user).map((row) => ({
+          id: row.id, case_id: row.id, number: row.number, spouses: spousesText(row) || "—",
+          status: t(row.status === "closed" ? "closed" : "open"),
+          next_step: row.next_step ? t(row.next_step) : "—",
+        }));
+        body = rows.length
+          ? h(window.CTMShell.Table, {
+              label: t("myCases"), rows, isStatic: true, empty: t("noMyCases"),
+              onSelect: (id) => onCase(id),
+              columns: [
+                { title: t("caseNumber"), field: "number", kind: "data", width: "10rem" },
+                { title: t("spouses"), field: "spouses", kind: "name" },
+                { title: t("statusLabel"), field: "status", width: "8rem" },
+                { title: t("homeNextStep"), field: "next_step", kind: "wrap" },
+              ],
+              grid: { mode: "pages", pageSize: 10, pageSizes: [10, 25, 50], strings: { cardCount: plural(lang, "casesCount"), perPage: t("tablePerPage"),
+                range: t("tableRange"), count: t("tableCount"), pages: t("tablePages") } },
+            })
+          : h(P.EmptyState, { title: t("noMyCases"), action: allCases || undefined });
+      }
+      return h(P.Panel, { icon: "folder-open", title: t("myCases"), actions: allCases || undefined }, body);
+    };
+
+    return h(P.Stack, { gap: "lg", onClickCapture: follow },
       h(P.Text, { as: "h1", variant: "title" }, t("homeTitle")),
-      h(P.WidgetGrid, {
-        label: t("needsAttention"), items: metrics,
-        renderItem: (item) => h(P.MetricCard, { key: item.id, icon: item.icon, title: item.title, value: item.value,
-          info: item.info, menu: item.menu, size: "lg", headingLevel: 2, strings: metricStrings }),
-      }),
-      calm ? h(P.Notice, { tone: "success" }, t("nothingNeedsAttention")) : null,
-      h(P.WidgetGrid, { label: t("homeTitle"), items: panels, renderItem: (item) => item.body() }),
+      leadRegion(),
+      tilesRegion(),
+      casesRegion(),
     );
   }
 
@@ -3370,6 +3472,8 @@
     myCases,
     considerationQueue,
     CouncilHome: guarded(CouncilHome),
+    homeTiles,
+    spousesText,
     caseRows,
     CasesTable: guarded(CasesTable),
     NewApplicationsTable: guarded(NewApplicationsTable),

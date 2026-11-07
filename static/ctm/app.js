@@ -1682,9 +1682,11 @@
           user,
           onCase: (id) => openCase(id, { page: "home", labelKey: "backHome" }),
           onSession: () => go("sessions"),
-          onReview: () => go("review"),
-          onNotifications: () => go("notifications"),
-          onCases: () => go("cases"),
+          // Issue 170: Home's tiles and buttons are links; a same-origin path opens inside the app.
+          onNavigate: (pathname) => {
+            const route = routes?.parse(pathname);
+            if (route) go(route.page, route.selection);
+          },
         });
       if (page === "medical" && council && councilModule?.AssessmentsWorkspace)
         return h(councilModule.AssessmentsWorkspace, { key: selection, api, lang, user, caseId: selection });
