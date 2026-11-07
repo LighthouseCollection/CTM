@@ -6,6 +6,7 @@ secretary or president. The ballot refuses a vote from an account without a
 voting seat; earlier votes stay as cast. With no change recorded, member and
 president hold voting seats, and secretary and admin hold none.
 """
+import json
 from datetime import timedelta
 
 import pytest
@@ -23,7 +24,9 @@ pytestmark = pytest.mark.django_db
 def seat(account):
     with connection.cursor() as cursor:
         cursor.execute("SELECT public.ctm_council_seat(%s)", [str(account.pk)])
-        return cursor.fetchone()[0]
+        value = cursor.fetchone()[0]
+    # Raw cursors may hand jsonb back as text.
+    return json.loads(value) if isinstance(value, str) else value
 
 
 def change(granted_roles, actor, account, seated, voting, created_at=None):
