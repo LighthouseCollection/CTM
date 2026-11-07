@@ -1272,7 +1272,7 @@
       const loginHeader = brandHeader();
       // Sign-in: the Auth page with SsoButtons (sign-in.md, single-sign-on.md). SignInForm is left out on
       // purpose: through 0.88.0 it still always draws a password field, and CTM has no passwords (plenix-requests.md PLX-015).
-      return h(P.AppShell, { page: "form", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
+      return h(P.AppShell, { page: "form", frame: "centered", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
         h(P.PageContent, null, h(P.Stack, { gap: "none", grow: true },
           loginHeader,
           h(P.Stack, { grow: true, justify: "center", align: "center", inset: "lg" }, h(P.Auth, {
@@ -2005,7 +2005,7 @@
     }
     return h(
       P.AppShell,
-          { header, sideNav: nav, page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
+          { header, sideNav: nav, frame: "centered", page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       h("div", { className: "plx-page-panes" }, caseNav,
         h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
