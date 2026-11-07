@@ -466,3 +466,53 @@ decisions:
     decided_by: owner
     status: active
     review_only: "Visual decision; checked by ctm3-design-critic (G5b) against DESIGN.md section 4 and the study's starred preset until Plenix ships it, then by the Plenix visual-regression baselines"
+
+  - id: D-0051
+    date: 2026-11-07
+    area: design
+    decision: Long text in a DataGrid cell (e.g. Previous recommendation) shows the text itself on one line ending in an ellipsis; the full text is in the record's detail panel beside the grid (ListingPage SidePanel); no per-cell buttons or dialogs
+    why: Owner 2026-11-07 (#222) "this is not correct, it needs to be updated based on the pds"; Plenix DataGrid guide (one line per cell, detail in a SidePanel)
+    options: [Truncated text + detail panel (chosen), Button + dialog per cell (before)]
+    decided_by: agent:ctm3-product-lead
+    status: active
+    review_only: "Checked by ctm3-design-critic (G5b) on #222 and #217"
+
+  - id: D-0052
+    date: 2026-11-07
+    area: workflow
+    decision: Admin, president and secretary can move a tribunal session between Draft and In progress any number of times until it is Adjourned; nothing recorded is changed, reminders are not re-sent, each move is audited; a refused change names its reason
+    why: Owner 2026-11-07 (#224) "it needs to be allowed due to accidental click"
+    options: [Draft and In progress switch freely until Adjourned (chosen), One-way to In progress (before)]
+    decided_by: owner
+    status: active
+    review_only: "Enforced by the #224 backend test once it lands"
+
+  - id: D-0053
+    date: 2026-11-07
+    area: design
+    decision: Council attendance is a plain list (no DataGrid) of council seat holders with photo, name and role in D-0050 typography and a Present/Absent toggle (not a dropdown), a "n of m present" summary and Mark all present; the same component for session and hearing attendance
+    why: Owner 2026-11-07 (#229) "This is ugly ... does not need to be in a data grid, use pictures with proper typography, the absent present should not be drop down but toggle"
+    options: [Photo list with toggles (chosen), DataGrid with dropdowns (before)]
+    decided_by: owner
+    status: active
+    review_only: "Checked by ctm3-design-critic (G5b) on #229"
+
+  - id: D-0054
+    date: 2026-11-07
+    area: design
+    decision: Adding cases to a session (To assign, Hearings) uses a searchable DataGrid with multi-select in a large dialog, a counted Add button, and an empty state instead of an error; one picker for both actions
+    why: Owner 2026-11-07 (#230) "this is bad ui... it should be a datagrid to select"
+    options: [DataGrid picker with multi-select (chosen), Single dropdown (before)]
+    decided_by: owner
+    status: active
+    review_only: "Checked by ctm3-design-critic (G5b) on #230"
+
+  - id: D-0055
+    date: 2026-11-07
+    area: design
+    decision: A heading that introduces a table or content block on a page uses the D-0050 card heading style (14 px bold dark grey UPPERCASE with icon); where a page has several such sections each is its own card with the heading as the card header and the table inside; the session agenda (Hearings, To assign) is built this way, amending D-0042's bare full-width tables
+    why: Owner 2026-11-07 "the heading outside the table needs to be same as ... card heading. lock that in for other screens but in this screen I would put each section in a card"
+    options: [Section heading = card heading; sections as cards (chosen), Smaller page-section headings over bare tables (before)]
+    decided_by: owner
+    status: active
+    review_only: "Checked by ctm3-design-critic (G5b) against DESIGN.md section 4 on every screen in the #217 inventory"
