@@ -386,3 +386,13 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: test, ref: tests/frontend/council-shell.test.cjs }
+
+  - id: D-0044
+    date: 2026-11-06
+    area: data
+    decision: Admin, president and secretary can delete a case (replaces "Cases are never deleted"). The delete removes the case and everything that belongs only to it, in the database function ctm_delete_case, and leaves one audit entry with the case number, actor, time and an optional reason, and no case content. Members and applicants cannot. History inside a case stays immutable while the case exists; the history triggers open only inside that function
+    why: Owner 2026-11-06 (issue 176) "an admin or president or secretary should be able to delete cases.. whatever block is there is wrong and needs to change"
+    options: [Admin, president and secretary delete with one audit entry (chosen), Admin only, Never delete]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/test_case_delete.py }
