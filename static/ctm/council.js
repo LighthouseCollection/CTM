@@ -685,12 +685,12 @@
       statsYear: "Year",
       statsShare: "Share",
       statsOther: "Other",
-      statsHidden: "Some counts under 5 are hidden.",
-      statsAllHidden: "Every count in {year} is under 5, so none is shown.",
+      statsHidden: "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.",
+      statsAllHidden: "Every count in {year} is hidden.",
       statsNoCases: "No cases in {year}.",
       allStatistics: "All statistics",
       activeCasesUnit: "active cases",
-      fewerThanFive: "Fewer than 5",
+      hiddenValue: "Hidden",
       titlePresiding: "Presiding",
       titleSecretary: "Secretary",
       titleMember: "Member",
@@ -1071,12 +1071,12 @@
       statsYear: "السنة",
       statsShare: "النسبة",
       statsOther: "أخرى",
-      statsHidden: "بعض الأعداد الأقل من 5 مخفية.",
-      statsAllHidden: "كل الأعداد في {year} أقل من 5، لذلك لا يُعرض أي منها.",
+      statsHidden: "الأعداد الأقل من 5 مخفية، وأحيانًا عدد آخر معها حتى لا يمكن استنتاجها.",
+      statsAllHidden: "كل الأعداد في {year} مخفية.",
       statsNoCases: "لا توجد قضايا في {year}.",
       allStatistics: "كل الإحصاءات",
       activeCasesUnit: "قضايا نشطة",
-      fewerThanFive: "أقل من 5",
+      hiddenValue: "مخفي",
       titlePresiding: "الرئيس",
       titleSecretary: "السكرتير",
       titleMember: "عضو",
@@ -3102,7 +3102,7 @@
   }
 
   // Council members on Home (issue 170 region 4): Presiding first, then Secretary, then Members by name.
-  // A count under the privacy threshold comes as null with suppressed: true and reads "Fewer than 5", never a number.
+  // A hidden count (issue 208: under the threshold, or one more so it cannot be worked out) comes as null with suppressed: true and reads "Hidden".
   const MEMBER_TITLE_ORDER = { presiding: 0, secretary: 1, member: 2 };
   function homeMembers(items, lang) {
     const byName = new Intl.Collator(lang === "ar" ? "ar" : "en");
@@ -3113,8 +3113,8 @@
     return title === "presiding" ? "titlePresiding" : title === "secretary" ? "titleSecretary" : "titleMember";
   }
 
-  // Statistics on Home (issue 170 region 5, design §2 and the privacy rules): a suppressed count (under the
-  // threshold) is left out of the chart and the description says some counts are hidden; nothing shows a total or
+  // Statistics on Home (issue 170 region 5, design §2 and §4): a suppressed count (under the threshold, or one more
+  // hidden with it, issue 208) is left out of the chart and the description says some counts are hidden; nothing shows a total or
   // a share of the whole that would let a hidden count be worked out by subtraction.
   function visibleCounts(rows, label) {
     const list = rows || [];
@@ -3324,10 +3324,13 @@
           ? h(P.WidgetGrid, { label: t("councilMembers"), columns: 4, items: rows.map((row) => ({ ...row, id: String(row.id) })),
               renderItem: (row) => h(P.MetricCard, { key: row.id, type: "person", size: "sm", title: row.name || "—", headingLevel: 3,
                 person: { name: row.name || "—", role: t(memberTitleKey(row.title)), src: row.photo_url || undefined },
-                value: row.suppressed ? t("fewerThanFive") : n(row.active_cases), unit: row.suppressed ? undefined : t("activeCasesUnit") }) })
+                value: row.suppressed ? t("hiddenValue") : n(row.active_cases), unit: row.suppressed ? undefined : t("activeCasesUnit") }) })
           : h(P.EmptyState, { title: t("noMembers") });
       }
-      return h(P.Panel, { icon: "settings-users", title: t("councilMembers") }, body);
+      // Issue 208: a hidden count can be 5 or more (one more is hidden so it cannot be worked out), so it reads
+      // "Hidden", with one note on the Panel.
+      const anyHidden = Boolean(members.data?.items?.some((row) => row.suppressed));
+      return h(P.Panel, { icon: "settings-users", title: t("councilMembers"), description: anyHidden ? t("statsHidden") : undefined }, body);
     };
 
     // 5. Statistics summary: two charts side by side, each with its year; the full set lives on Statistics.

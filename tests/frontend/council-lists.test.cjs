@@ -406,7 +406,7 @@ test("a refused search shows its reason even though the workspace has no results
 });
 
 // Issue 170 region 4: council members after My cases, Presiding first, then Secretary, then Members by name;
-// a suppressed count reads "Fewer than 5", never a number; My cases asks the server for mine only.
+// a suppressed count reads "Hidden", never a number; My cases asks the server for mine only.
 test("council home lists council members as person cards in their order; a suppressed count is never shown", async () => {
   const [h, C] = boot();
   const asked = [];
@@ -432,12 +432,13 @@ test("council home lists council members as person cards in their order; a suppr
   const grid = byName(panel, "WidgetGrid")[0];
   const cards = grid.props.items.map((item) => grid.props.renderItem(item));
   same(cards.map((card) => [card.props.title, card.props.person.role, card.props.value ?? null]),
-    [["H.G. Presiding", "Presiding", "9"], ["Sec Retary", "Secretary", "Fewer than 5"], ["Fr. Abe Member", "Member", "12"], ["Fr. Zed Member", "Member", "7"]]);
+    [["H.G. Presiding", "Presiding", "9"], ["Sec Retary", "Secretary", "Hidden"], ["Fr. Abe Member", "Member", "12"], ["Fr. Zed Member", "Member", "7"]]);
   assert.ok(cards.every((card) => card.props.type === "person" && card.props.menu === undefined));
   assert.equal(cards[1].props.unit, undefined);
   assert.equal(cards[0].props.unit, "active cases");
+  assert.equal(panel.props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
   const ar = C.translator("ar");
-  for (const key of ["case.next.completeness_review", "case.next.applicant_correction", "case.next.hearing", "case.next.assignment", "case.next.investigation", "councilMembers", "fewerThanFive", "titlePresiding"])
+  for (const key of ["case.next.completeness_review", "case.next.applicant_correction", "case.next.hearing", "case.next.assignment", "case.next.investigation", "councilMembers", "hiddenValue", "titlePresiding"])
     assert.notEqual(ar(key), C.translator("en")(key), key);
 });
 
@@ -457,13 +458,13 @@ test("home statistics leave suppressed counts out, say so, and draw no donut tot
   const bars = byName(await chart("members"), "BarChart")[0];
   same(bars.props.categories, ["Fr. C", "Fr. A"]);
   same(bars.props.series[0].values, [12, 9]);
-  assert.equal(bars.props.description, "Some counts under 5 are hidden.");
+  assert.equal(bars.props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
   const pieTree = await chart("grounds");
   const pie = byName(pieTree, "PieChart")[0];
   same(pie.props.data.map((part) => [part.label, part.value]), [["Abuse", 7], ["Abandonment", 6]]);
   assert.equal(pie.props.variant, "donut");
   assert.equal(String(pie.props.centerValue).trim(), "", "no center total");
-  assert.equal(pie.props.description, "Some counts under 5 are hidden.");
+  assert.equal(pie.props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
   const panel = byName(pieTree, "Panel")[0];
   same(panel.props.actions.props.options.map((option) => option.value), ["2026", "2025"]);
   assert.ok(asked.includes("/api/statistics/summary/"));
@@ -480,5 +481,5 @@ test("home statistics: the chart caption is hidden and the hidden-count note sho
   h.render(C.HomeStatChart, props); await settle();
   const tree = h.render(C.HomeStatChart, props);
   assert.equal(byName(tree, "BarChart")[0].props.hideCaption, true);
-  assert.equal(byName(tree, "Panel")[0].props.description, "Some counts under 5 are hidden.");
+  assert.equal(byName(tree, "Panel")[0].props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
 });
