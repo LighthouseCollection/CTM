@@ -665,19 +665,25 @@ def _summary_child(value):
         return None
     return {
         "name": name,
+        "first_name": first_name or None,
+        "last_name": last_name or None,
         "date_of_birth": value.get("dob") or value.get("date_of_birth"),
         "gender": value.get("gender"),
         "lives_with": value.get("lives_with") or value.get("resides_with"),
     }
 
 
-def _case_summary(case, application):
-    """Case-summary values come only from a filing or a recorded council hearing."""
+def _case_summary(case, application, council=None):
+    """Case-summary values come only from a filing, a recorded council hearing or,
+    for children, the council's latest case_card.summary finding (#199; staff only)."""
     answers = _submitted_answers(application)
     grounds = _submitted_grounds(answers)
     children = answers.get("children") or []
     if isinstance(children, str):
         children = [children]
+    council_children = council and isinstance(council.get("value"), dict) and "children" in council["value"]
+    if council_children:
+        children = council["value"]["children"] or []
     last_hearing = (
         m.Hearing.objects.filter(agenda__case=case)
         .select_related("agenda__session")
@@ -698,7 +704,7 @@ def _case_summary(case, application):
         "sources": {
             "filing_date": filing_source,
             "reason": filing_source,
-            "children": filing_source,
+            "children": council["source"] if council_children else filing_source,
             "last_hearing_date": hearing_source,
         },
     }
@@ -848,7 +854,8 @@ def case_detail(request, case_id):
             marriage=_submitted_marriage(_submitted_answers(marriage_application)),
             marriage_source=_applicant_submission_source(marriage_application),
             separation=_submitted_separation(_submitted_answers(marriage_application), marriage_application, case),
-            summary=_case_summary(case, marriage_application),
+            summary=_case_summary(case, marriage_application,
+                                  _council_case_edits(case).get("summary") if request.user.role != "applicant" else None),
             proceedings=[
                 encoded(p, kind=p.kind, status=p.status, sequence=p.sequence)
                 for p in case.proceedings.all()

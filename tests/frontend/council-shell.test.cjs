@@ -376,8 +376,8 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /latestAudit\("case_heard"\)/);
   assert.match(councilCase, /latestAudit\("case_assigned"\)/);
   assert.match(councilCase, /latestAudit\("application_submitted"\)/);
-  assert.match(api, /def _case_summary\(case, application\):/);
-  assert.match(api, /summary=_case_summary\(case, marriage_application\)/);
+  assert.match(api, /def _case_summary\(case, application, council=None\):/);
+  assert.match(api, /summary=_case_summary\(case, marriage_application,/);
   assert.match(api, /def _applicant_submission_source\(application\):/);
   assert.match(api, /"kind": "applicant_submission"/);
   assert.match(api, /"kind": "council_record", "record_type": "hearing"/);

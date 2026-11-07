@@ -105,8 +105,21 @@ def field_value(field, ctx, rng):
 
 def answers_for(questionnaire, ctx, rng):
     answers = {}
+    has_children = bool(ctx.get("children"))
     for field in questionnaire.definition.get("fields", []):
-        answers[field["code"]] = field_value(field, ctx, rng)
+        code, kind = field["code"], field.get("type", "text")
+        if "children" in code and code != "children" and kind in {"boolean", "choice"}:
+            # "Do you have children?" agrees with the listed children (#199).
+            yes = next((c for c in field.get("choices", []) if str(c).lower() in {"yes", "true"}), None)
+            no = next((c for c in field.get("choices", []) if str(c).lower() in {"no", "false"}), None)
+            ctx.setdefault(code, has_children if kind == "boolean" else (yes if has_children else no))
+            if ctx[code] is None:
+                ctx.pop(code)
+        if kind == "list" and "item_fields" in field and isinstance(ctx.get(code), list):
+            for row in ctx[code]:  # extra per-row questions in this questionnaire version
+                for item in field["item_fields"]:
+                    row.setdefault(item["code"], field_value(item, {}, rng))
+        answers[code] = field_value(field, ctx, rng)
     answers.update(ctx)  # the case's own facts win over generated fillers
     validate_answers(questionnaire, answers)
     validate_petition(answers)
@@ -163,6 +176,21 @@ class Command(BaseCommand):
         for holder in seat_holders():
             name = f"{holder.first_name} {holder.last_name}".strip()
             self.stdout.write(f"open cases per seat holder: {name} <{holder.email}> {open_count(holder)}")
+
+    def children(self, seed, last, marriage, rng):
+        """#199: 0-3 fictional children, born after the marriage and not in the future."""
+        today = timezone.localdate()
+        span = (today - marriage).days
+        rows = []
+        for n in range(seed % 4):
+            boy = (seed >> n) & 1
+            names = FIRST_M if boy else FIRST_F
+            born = marriage + timedelta(days=300 + (span - 330) * (n + 1) // 4 + seed % 60)
+            rows.append({"id": str(uuid.UUID(int=rng.getrandbits(128), version=4)),
+                         "first_name": names[(seed // (n + 3)) % len(names)], "last_name": last,
+                         "date_of_birth": min(born, today).isoformat(), "gender": "M" if boy else "F",
+                         "lives_with": "Applicant"})
+        return rows
 
     def person_account(self, first, last, gender, birth, key):
         person = m.Person.objects.create(first_name=first, last_name=last, birth_date=birth, gender=gender)
@@ -245,7 +273,7 @@ class Command(BaseCommand):
             "date_of_marriage_outside_coptic_church": "None", "church_marriage_date": marriage.isoformat(),
             "officiating_priest": "Fr. Antony Attallah", "church_name": "St. Mark Coptic Orthodox Church",
             "church_location": "Los Angeles, CA", "marriage_diocese": "Diocese of Los Angeles",
-            "children": [], "restraining_orders": [],
+            "children": self.children(seed, last, marriage, rng), "restraining_orders": [],
         }
         q = c["questionnaire"]
         try:
