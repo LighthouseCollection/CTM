@@ -41,8 +41,8 @@ def test_counts_and_suppression(granted_roles, client, people):
     data = get(granted_roles, client, people["member"], f"/api/statistics/summary/?year={YEAR}").json()
     assert data["year"] == YEAR and YEAR in data["years"] and data["threshold"] == 5
     members = {row["id"]: row for row in data["cases_per_member"]}
-    assert members[str(people["member"].pk)] == {"id": str(people["member"].pk), "name": "Member User",
-                                                 "count": 5, "suppressed": False} or members[str(people["member"].pk)]["count"] == 5
+    mine = members[str(people["member"].pk)]
+    assert set(mine) == {"id", "name", "count", "suppressed"} and (mine["count"], mine["suppressed"]) == (5, False)
     assert members[str(people["president"].pk)]["count"] is None and members[str(people["president"].pk)]["suppressed"]
     grounds = {row["code"]: row for row in data["cases_by_ground"]}
     assert grounds["abandonment"]["count"] == 7 and grounds["infidelity"]["count"] == 5
