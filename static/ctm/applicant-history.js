@@ -57,7 +57,7 @@
   const changes=row?compare(index>0?data.items[index-1].answers:{},row.answers):[];
   const label=path=>{const code=path.split('/')[1]?.replace(/~1/g,'/').replace(/~0/g,'~');const field=currentFields.find(f=>f.code===code);return field?.[lang==='ar'?'label_ar':'label_en']||t('field');};
   const value=(present,v)=>present?JSON.stringify(v):t('absent');
-  return h(P.Panel,{title:t('title')},h(P.Stack,null,
+  return h(P.Panel,{icon:'progress',title:t('title')},h(P.Stack,null,
    h(P.Button,{disabled,onClick:()=>{setFieldPath(null);setOpen(true);}},t('open')),
    ...changes.map(change=>h(P.Button,{key:'open-field'+change.path,disabled,onClick:()=>{setFieldPath(change.path);setOpen(true);}},label(change.path)+': '+change.path)),
    h(P.Dialog,{open,onClose:()=>setOpen(false),title:t('title'),closeLabel:t('close'),size:'lg'},h(P.Stack,null,h(P.Text,null,t('wording')),h(P.Button,{disabled:disabled||loading,onClick:()=>reload(n=>n+1)},t('refresh')),

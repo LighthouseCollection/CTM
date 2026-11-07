@@ -68,6 +68,16 @@ test("separation cards and editable case cards are EN/AR", () => {
   assert.doesNotMatch(panel, /\}, "Edit"\)|\}, "Save"\)/);
   for (const key of ["separationDetails", "civilDivorce", "restrainingOrder", "reconciliation", "maritalStatus", "initiatedBy", "courtName", "courtLocation", "civilCaseNumber", "civilDivorceStatus", "orderFiled", "orderNameListed", "orderCaseNumber", "orderStatus", "reconciliationAttempted", "permitPreviouslyApplied", "permitWhen", "permitWhere", "decisionOutcome"])
     assert.notEqual(ar(key), t(key), key);
+
+// D-0050 (#217 G11): the applicant's application status and case reference are description-list items.
+test("applicant application status is a Badge in a PropertyList; applicant panels have icons", () => {
+  const app = fs.readFileSync("static/ctm/applicant.js", "utf8");
+  assert.doesNotMatch(app, /`\$\{t\("status"\)\}: /);
+  assert.doesNotMatch(app, /`\$\{t\("caseReference"\)\}: `/);
+  assert.match(app, /h\(P\.PropertyList\.Item, \{ label: t\("status"\) \}, h\(P\.Badge,/);
+  assert.match(app, /h\(P\.PropertyList\.Item, \{ label: t\("caseReference"\), data: true \}, record\.case_number\)/);
+  assert.match(fs.readFileSync("static/ctm/applicant-appeals.js", "utf8"), /h\(P\.Panel,\{icon:"doc-text",title:t\("title"\)\}/);
+  assert.match(fs.readFileSync("static/ctm/applicant-history.js", "utf8"), /h\(P\.Panel,\{icon:'progress',title:t\('title'\)\}/);
 });
 
 // D-0050 (#217 G6, G8, G9, G10, G13): status as a Badge, details as description-list items, every card with an icon.
