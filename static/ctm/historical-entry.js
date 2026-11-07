@@ -92,7 +92,7 @@
       saved ? h(P.PropertyList,null,h(P.PropertyList.Item,{label:t("reference"),data:true},saved.id),h(P.PropertyList.Item,{label:t("version")},saved.version)) : null,
       published ? h(P.Stack, { gap: "md" },
         h(P.FormSection, { title: t("caseDetails"), headingLevel: 3 }, h(P.PropertyList, { layout: "stacked" },
-          ...["number", "status", "closed_at"].filter((key) => form[key]).map((key) => h(P.PropertyList.Item, { key, label: t(key) }, key === "status" ? t(form[key]) : form[key])),
+          ...["number", "status", "closed_at"].filter((key) => form[key]).map((key) => h(P.PropertyList.Item, { key, label: t(key) }, key === "status" ? h(P.Badge, { tone: form[key] === "open" ? "success" : "neutral" }, t(form[key])) : form[key])),
         )),
         ...form.parties.filter((party) => party.name || party.legacy_reference).map((party) => h(P.FormSection, { key: party.slot, title: partyTitle(party.slot), headingLevel: 3 },
           h(P.PropertyList, { layout: "stacked" }, ...["name", "legacy_reference"].filter((key) => party[key]).map((key) => h(P.PropertyList.Item, { key, label: t(key) }, party[key]))),

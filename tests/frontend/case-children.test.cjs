@@ -68,6 +68,19 @@ test("separation cards and editable case cards are EN/AR", () => {
   assert.doesNotMatch(panel, /\}, "Edit"\)|\}, "Save"\)/);
   for (const key of ["separationDetails", "civilDivorce", "restrainingOrder", "reconciliation", "maritalStatus", "initiatedBy", "courtName", "courtLocation", "civilCaseNumber", "civilDivorceStatus", "orderFiled", "orderNameListed", "orderCaseNumber", "orderStatus", "reconciliationAttempted", "permitPreviouslyApplied", "permitWhen", "permitWhere", "decisionOutcome"])
     assert.notEqual(ar(key), t(key), key);
+
+// D-0050 (#217 G6, G8, G9, G10, G13): status as a Badge, details as description-list items, every card with an icon.
+test("council read views use Badge for status and PropertyList for label/value pairs", () => {
+  const read = (f) => fs.readFileSync(f, "utf8");
+  const council = read("static/ctm/council.js"), cc = read("static/ctm/council-case.js"), media = read("static/ctm/council-media.js"), decree = read("static/ctm/council-decree.js"), hist = read("static/ctm/historical-entry.js");
+  assert.match(council, /h\(P\.Panel, \{ icon: "folder", title: t\("assignedCases"\) \}/);
+  assert.match(council, /h\(P\.Panel, \{ icon: "event_available", title: t\("casesPresented"\) \}/);
+  assert.doesNotMatch(cc, /`\$\{t\("recordedBy"\)\}: /);
+  assert.doesNotMatch(cc, /`\$\{t\("president"\)\}: /);
+  assert.match(media, /label: t\("noticeState"\) \}, h\(P\.Badge,/);
+  assert.doesNotMatch(media, /h\(P\.Text, \{ variant: "secondary" \}, label\(code\)\)/);
+  assert.match(decree, /label: t\("fee"\) \}, h\(P\.Badge,/);
+  assert.match(hist, /key === "status" \? h\(P\.Badge,/);
 });
 
 // D-0050 groups (groups.md): read and edit use the same groups in the same order.

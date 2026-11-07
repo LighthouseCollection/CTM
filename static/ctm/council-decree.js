@@ -862,7 +862,7 @@
         row.applicant_name ? h(P.PropertyList.Item, { label: t("appellant") }, row.applicant_name) : null,
         h(P.PropertyList.Item, { label: t("statusLabel") }, h(P.Badge, { tone: pendingAppeal ? "active" : row.status === "accepted" ? "success" : "neutral" }, t("appeal_" + row.status))),
         row.submitted_at ? h(P.PropertyList.Item, { label: t("submittedAt"), data: true }, base.formatWhen(row.submitted_at, lang)) : null,
-        h(P.PropertyList.Item, { label: t("fee") }, row.fee ? t(row.fee.status) : t("unknown")),
+        h(P.PropertyList.Item, { label: t("fee") }, h(P.Badge, { tone: ["paid", "waived", "historical_exempt"].includes(row.fee?.status) ? "success" : row.fee?.status === "due" ? "action-required" : "neutral" }, row.fee ? t(row.fee.status) : t("unknown"))),
       ),
       h(
         P.Panel,
