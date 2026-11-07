@@ -1453,7 +1453,7 @@
           {
             key: selection,
             title: t("overview"), label: t("overview"), icon: navigationIcon("case"),
-            collapsible: true, resizable: true, defaultCollapsed: false, width: "sm",
+            collapsible: true, resizable: true, defaultCollapsed: false, width: "md",
             detailOpen: caseDetailOpen, onBack: () => setCaseDetailOpen(false),
             strings: { expand: t("paneExpand"), collapse: t("paneCollapse"), resize: t("paneResize"), back: t("paneBack") },
             rail: navigationRail(caseNavigationItems, selectCaseSection),
