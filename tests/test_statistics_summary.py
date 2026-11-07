@@ -31,8 +31,9 @@ def make_cases(people, n, *, member=None, grounds=("abandonment",), prefix="S"):
                                      marriage_date=date(2010, 1, 1), assigned_member=member)
         app = m.Application.objects.create(owner=owner, case=case, kind="petition", status="accepted",
                                            current_version=1, questionnaire=q, submitted_at=timezone.now())
-        m.AnswerRevision.objects.create(application=app, number=1, actor=owner, questionnaire=q,
-                                        answers={"grounds": list(grounds)})
+        revision = m.AnswerRevision.objects.create(application=app, number=1, actor=owner, questionnaire=q,
+                                                   answers={"grounds": list(grounds)})
+        m.Submission.objects.create(application=app, revision=revision, actor=owner, idempotency_key=f"stat-{prefix}-{i}")
 
 
 def test_counts_and_suppression(granted_roles, client, people):
