@@ -261,7 +261,8 @@ test("council home: lead session, one row of tiles, My cases grid, in that order
   assert.match(text, /Synthetic Hall/);
   assert.match(text, /Agenda items/);
   assert.match(text, /Attending/);
-  assert.match(text, /Confirmed 1 of 4/);
+  assert.match(text, /Confirmed/);
+  assert.match(text, /1 of 4/);
   const open = lead.props.actions;
   assert.equal(open.props.variant, "primary");
   open.props.onClick();

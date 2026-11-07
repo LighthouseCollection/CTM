@@ -3127,7 +3127,7 @@
       const session = lead.data.session;
       const answers = lead.data.answers;
       const mine = answers ? ownAnswer(answers, user) : null;
-      const confirmed = confirmedText(answers, t);
+      const confirmed = confirmedText(answers, t, "confirmedCount");
       const date = session.date || dash.data.upcoming_sessions[0].date;
       // Today's session opens Tribunal Sessions, Current (owner, 2026-10-22); a later one opens its own page,
       // because Current lists only sessions dated today or earlier.
@@ -3184,7 +3184,7 @@
                 { title: t("statusLabel"), field: "status", width: "8rem" },
                 { title: t("homeNextStep"), field: "next_step", kind: "wrap" },
               ],
-              grid: { mode: "pages", pageSize: 10, strings: { cardCount: plural(lang, "casesCount"), perPage: t("tablePerPage"),
+              grid: { mode: "pages", pageSize: 10, pageSizes: [10, 25, 50], strings: { cardCount: plural(lang, "casesCount"), perPage: t("tablePerPage"),
                 range: t("tableRange"), count: t("tableCount"), pages: t("tablePages") } },
             })
           : h(P.EmptyState, { title: t("noMyCases"), action: allCases || undefined });
