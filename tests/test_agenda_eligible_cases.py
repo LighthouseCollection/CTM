@@ -11,7 +11,7 @@ import pytest
 
 from tribunal import models as m
 from tribunal.services.applications import submit_application
-from tribunal.services.council import assign_case, create_session, hear_case, place_agenda
+from tribunal.services.council import assign_case, create_session, hear_case, place_agenda, record_attendance
 from tests.test_core_policy_completion import granted_roles  # noqa: F401  (fixture)
 
 pytestmark = pytest.mark.django_db
@@ -69,7 +69,9 @@ def test_placed_cases_drop_out_and_the_preview_shows_the_last_recommendation(gra
                                                                               session):
     assign_case(people["admin"], two_cases.case_id, people["member"].pk, people["president"].pk)
     earlier = create_session(people["admin"], date(2031, 4, 1), location="Hall 1")
-    hearing = hear_case(people["member"], place_agenda(people["member"], earlier.pk, two_cases.case_id).pk)
+    item = place_agenda(people["member"], earlier.pk, two_cases.case_id)
+    record_attendance(people["admin"], earlier.pk, people["member"].pk, True)
+    hearing = hear_case(people["member"], item.pk)
     m.HearingOutcome.objects.create(hearing=hearing, actor=people["member"], internal_text="Synthetic",
                                     recommendations="Recommend a further interview. " * 20)
     rows = call(granted_roles, client, people["secretary"], "get",

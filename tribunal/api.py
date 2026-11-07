@@ -2636,3 +2636,20 @@ def statistics_summary(request):
     """#170: counts per member and ground for one year (council only, small counts suppressed)."""
     from tribunal.services.home import statistics_summary as summary
     return JsonResponse(summary(request.user, request.GET.get("year")))
+
+
+@endpoint()
+def eligible_cases(request, session_id):
+    """#230: cases that can go on one part of this session's agenda (picker rows)."""
+    from tribunal.services.agenda_picker import eligible_cases as listing
+    return JsonResponse(listing(request.user, session_id, request.GET.get("part")))
+
+
+@endpoint(("POST",))
+def agenda_batch(request, session_id):
+    """#230: place several cases on one part of the agenda, all or none."""
+    from tribunal.services.agenda_picker import place_many
+    data = body(request)
+    items = place_many(request.user, session_id, data.get("part"), data.get("case_ids"))
+    return JsonResponse({"items": [{"id": str(item.pk), "case_id": str(item.case_id), "part": item.part,
+                                    "position": item.position} for item in items]}, status=201)
