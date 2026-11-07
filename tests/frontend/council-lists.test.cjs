@@ -316,9 +316,9 @@ test("one failing region shows its own notice while the others still show (issue
   h.render(C.CouncilHome, props);
   await settle(); h.render(C.CouncilHome, props); await settle();
   const tree = h.render(C.CouncilHome, props);
-  assert.equal(byName(tree, "WidgetGrid").length, 1, "tiles still show");
+  assert.ok(byName(tree, "WidgetGrid").some((grid) => grid.props.label === "Needs attention"), "tiles still show");
   assert.ok(byName(tree, "Notice").some((node) => node.props.tone === "danger"));
-  same(byName(tree, "WidgetGrid")[0].props.items.map((item) => item.id), ["mine", "unread", "review", "consideration"]);
+  same(byName(tree, "WidgetGrid").find((grid) => grid.props.label === "Needs attention").props.items.map((item) => item.id), ["mine", "unread", "review", "consideration"]);
 });
 
 test("home tile and session labels have EN and AR", () => {
@@ -406,7 +406,7 @@ test("a refused search shows its reason even though the workspace has no results
 });
 
 // Issue 170 region 4: council members after My cases, Presiding first, then Secretary, then Members by name;
-// a suppressed count reads "Fewer than 5", never a number; My cases asks the server for mine only.
+// a suppressed count reads "Hidden", never a number; My cases asks the server for mine only.
 test("council home lists council members as person cards in their order; a suppressed count is never shown", async () => {
   const [h, C] = boot();
   const asked = [];
@@ -432,11 +432,54 @@ test("council home lists council members as person cards in their order; a suppr
   const grid = byName(panel, "WidgetGrid")[0];
   const cards = grid.props.items.map((item) => grid.props.renderItem(item));
   same(cards.map((card) => [card.props.title, card.props.person.role, card.props.value ?? null]),
-    [["H.G. Presiding", "Presiding", "9"], ["Sec Retary", "Secretary", "Fewer than 5"], ["Fr. Abe Member", "Member", "12"], ["Fr. Zed Member", "Member", "7"]]);
+    [["H.G. Presiding", "Presiding", "9"], ["Sec Retary", "Secretary", "Hidden"], ["Fr. Abe Member", "Member", "12"], ["Fr. Zed Member", "Member", "7"]]);
   assert.ok(cards.every((card) => card.props.type === "person" && card.props.menu === undefined));
   assert.equal(cards[1].props.unit, undefined);
   assert.equal(cards[0].props.unit, "active cases");
+  assert.equal(panel.props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
   const ar = C.translator("ar");
-  for (const key of ["case.next.completeness_review", "case.next.applicant_correction", "case.next.hearing", "case.next.assignment", "case.next.investigation", "councilMembers", "fewerThanFive", "titlePresiding"])
+  for (const key of ["case.next.completeness_review", "case.next.applicant_correction", "case.next.hearing", "case.next.assignment", "case.next.investigation", "councilMembers", "hiddenValue", "titlePresiding"])
     assert.notEqual(ar(key), C.translator("en")(key), key);
+});
+
+// Issue 170 region 5: statistics never show a suppressed count, a total or anything that reveals one by subtraction.
+test("home statistics leave suppressed counts out, say so, and draw no donut total", async () => {
+  const [h, C] = boot();
+  const summary = { year: 2026, years: [2026, 2025], threshold: 5,
+    cases_per_member: [{ id: 1, name: "Fr. A", count: 9, suppressed: false }, { id: 2, name: "Fr. B", count: null, suppressed: true }, { id: 3, name: "Fr. C", count: 12, suppressed: false }],
+    cases_by_ground: [{ code: "abuse", count: 7, suppressed: false }, { code: "faith", count: null, suppressed: true }, { code: "desertion", count: 6, suppressed: false }] };
+  const asked = [];
+  const api = async (url) => { asked.push(url); return summary; };
+  async function chart(kind) {
+    const props = { api, lang: "en", kind, onNavigate() {} };
+    h.render(C.HomeStatChart, props); await settle();
+    return h.render(C.HomeStatChart, props);
+  }
+  const bars = byName(await chart("members"), "BarChart")[0];
+  same(bars.props.categories, ["Fr. C", "Fr. A"]);
+  same(bars.props.series[0].values, [12, 9]);
+  assert.equal(bars.props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
+  const pieTree = await chart("grounds");
+  const pie = byName(pieTree, "PieChart")[0];
+  same(pie.props.data.map((part) => [part.label, part.value]), [["Abuse", 7], ["Abandonment", 6]]);
+  assert.equal(pie.props.variant, "donut");
+  assert.equal(String(pie.props.centerValue).trim(), "", "no center total");
+  assert.equal(pie.props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
+  const panel = byName(pieTree, "Panel")[0];
+  same(panel.props.actions.props.options.map((option) => option.value), ["2026", "2025"]);
+  assert.ok(asked.includes("/api/statistics/summary/"));
+  // Every count hidden: say so, never "no cases".
+  same(C.visibleCounts([{ id: 1, count: null, suppressed: true }], (row) => row.id), { shown: [], hidden: true });
+  const ar = C.translator("ar");
+  for (const key of ["statsCasesPerMember", "statsCasesByReason", "statsHidden", "statsAllHidden", "allStatistics"]) assert.notEqual(ar(key), C.translator("en")(key), key);
+});
+
+test("home statistics: the chart caption is hidden and the hidden-count note shows once, on the Panel", async () => {
+  const [h, C] = boot();
+  const api = async () => ({ year: 2026, years: [2026], cases_per_member: [{ id: 1, name: "Fr. A", count: 9 }, { id: 2, name: "Fr. B", count: null, suppressed: true }], cases_by_ground: [] });
+  const props = { api, lang: "en", kind: "members", onNavigate() {} };
+  h.render(C.HomeStatChart, props); await settle();
+  const tree = h.render(C.HomeStatChart, props);
+  assert.equal(byName(tree, "BarChart")[0].props.hideCaption, true);
+  assert.equal(byName(tree, "Panel")[0].props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
 });
