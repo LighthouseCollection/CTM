@@ -260,3 +260,21 @@ def test_live_seed_never_changes_an_existing_staff_role():
     staff.refresh_from_db()
     assert staff.role == "secretary"
     assert not Case.objects.exists()
+
+
+@pytest.mark.django_db
+def test_seed_gives_the_admin_a_voting_seat_and_cases_once(monkeypatch, settings, tmp_path):
+    """#175: frraphaelmaher@lacopts.org stays admin, holds a voting seat and manages demo cases like members."""
+    from tribunal import models as m
+    from tribunal.services.council_seats import council_seat
+    settings.MEDIA_ROOT = tmp_path
+    _run_seed(monkeypatch)
+    admin = Account.objects.get(email="frraphaelmaher@lacopts.org")
+    assert admin.role == "admin"
+    assert council_seat(admin) == {"seated": True, "voting": True}
+    mine = Case.objects.filter(assigned_member=admin, status="open", origin="synthetic")
+    assert mine.count() == 4
+    assert m.CaseAssignment.objects.filter(member=admin, case__in=mine).count() == 4
+    _run_seed(monkeypatch)
+    assert m.CouncilSeatChange.objects.filter(account=admin).count() == 1
+    assert m.CaseAssignment.objects.filter(member=admin).count() == 4
