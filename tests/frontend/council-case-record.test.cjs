@@ -195,3 +195,12 @@ test("application review: Decline and Accept are page actions in an ActionBar, t
   assert.deepEqual(labels, ["Decline", "Accept"]);
   assert.equal(byName(bars[0], "Button").at(-1).props.variant, "primary");
 });
+
+// Issue 194: the case header and the first card touched (RecordPage has no header/body gap). The header and the
+// body share one Stack with the body's gap, so every card on the case page is the same distance apart.
+test("case page header and body share one Stack gap (issue 194)", () => {
+  const source = require("node:fs").readFileSync("static/ctm/council-case.js", "utf8");
+  const page = source.slice(source.indexOf("function CaseRecordPage("), source.indexOf("// ---------- Parties and case hearings"));
+  assert.match(page, /h\(P\.RecordPage, \{ className \},\s*h\(P\.Stack, \{ gap: "lg", className \},\s*shown \? h\(P\.EntityHeader, caseHeaderProps\(shown, lang, facts\)\) : null,/);
+  assert.doesNotMatch(page, /header: shown/);
+});

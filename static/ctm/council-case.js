@@ -3112,8 +3112,13 @@ ${ar}` : en;
     const body = h(P.Stack, { gap: "lg", className },
       title ? h(P.Text, { as: "h2", variant: "heading" }, title) : null,
       ...[].concat(children === undefined ? [] : children));
-    return h(P.RecordPage, { className, header: shown ? h(P.EntityHeader, caseHeaderProps(shown, lang, facts)) : null },
-      readOnly ? h(P.ReadOnly, { reason: t("caseClosedReadOnly"), className }, body) : body);
+    // Issue 194: RecordPage draws no gap between its header and its body (Plenix 0.93.1), so the case header and the
+    // first card touched. The header and the body share one Stack with the body's own gap (lg), so every card on the
+    // case page is the same distance apart. The read-only region still covers the body only.
+    return h(P.RecordPage, { className },
+      h(P.Stack, { gap: "lg", className },
+        shown ? h(P.EntityHeader, caseHeaderProps(shown, lang, facts)) : null,
+        readOnly ? h(P.ReadOnly, { reason: t("caseClosedReadOnly"), className }, body) : body));
   }
 
   // ---------- Parties and case hearings ----------
