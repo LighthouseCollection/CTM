@@ -30,7 +30,7 @@ def decided(ready_application, people, settings, tmp_path):
     app = ready_application
     submit_application(app.owner, app.pk, "delete-case", {"accepted": True, "name": "John Smith"})
     app.refresh_from_db()
-    save_note(people["member"], app.proceeding_id, "Synthetic note")
+    save_note(people["admin"], app.proceeding_id, "Synthetic note")
     decision = record_decision(people["admin"], app.proceeding_id, "diss-both", "Recorded grounds",
                                {str(app.party_id): "certificate"})
     cast_vote(people["member"], decision.pk, "approve")
@@ -97,7 +97,10 @@ def test_inactive_admin_cannot_delete_a_case(granted_roles, people, decided):
 
 
 def test_reason_is_optional_and_bounded(granted_roles, people, ready_application):
+    submit_application(ready_application.owner, ready_application.pk, "delete-reason", {"accepted": True, "name": "John Smith"})
+    ready_application.refresh_from_db()
     case_id = ready_application.case_id
+    assert case_id
     with pytest.raises(DatabaseError):
         delete(granted_roles, people["admin"], case_id, reason="x" * 501)
     delete(granted_roles, people["admin"], case_id, reason=None)
