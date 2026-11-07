@@ -426,3 +426,13 @@ decisions:
     decided_by: owner
     status: active
     review_only: Not built yet (#170); the CouncilHome frontend test becomes the check
+
+  - id: D-0047
+    date: 2026-11-07
+    area: design
+    decision: Navigation panes fit their labels - the main nav keeps the Plenix shell navigation width and folds to its rail while a case is open; the case nav is a SecondaryPane at width "sm" (collapsible, resizable); every nav icon is a Plenix icon so items line up (Appeals uses "reply"); the way back from a case reads "Back to sessions"
+    why: Owner 2026-11-07 (#193) "width of the nav bars is too wide"; Appeals was drawn with an 18px SVG, out of line with the 20px Plenix icons
+    options: [Plenix widths, small case pane (chosen)]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/nav-width.test.cjs }

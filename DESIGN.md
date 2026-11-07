@@ -74,6 +74,11 @@ A row of buttons never mixes `primary` with `danger`.
 - Cases are a workspace table, never navigation entries.
 - Pages fill the window: `AppShell frame="full"` (D-0045). A page that should
   be narrow gets it from its page kind (form, settings), never from the frame.
+- Navigation panes (D-0047): the main `NavPane` keeps the Plenix shell
+  navigation width and folds to its rail while a case is open; the case
+  `SecondaryPane` uses `width="sm"`, stays collapsible and resizable. Every
+  nav item uses a Plenix icon (no drawn SVG) so icons and labels line up.
+  "Back to sessions" is the way back from a case.
 
 ### Council Home (D-0046, #170)
 

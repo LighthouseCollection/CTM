@@ -221,8 +221,7 @@ test("council navigation groups sessions and cases into their requested destinat
   assert.match(app, /\{ id: "sessions", icon: navigationIcon\("sessions"\), label: t\("sessionCurrent"\) \}/);
   assert.match(app, /heading: t\("tribunalSessions"\),\s*icon: navigationIcon\("sessionsGroup"\)/);
   assert.match(app, /councilModule\?\.canManage\?\.\(user\)/);
-  assert.match(app, /const appealsReturnIcon = \(\) =>/);
-  assert.match(app, /id === "appeals"\s*\? appealsReturnIcon\(\)/);
+  assert.match(app, /id === "appeals"\s*\? h\(P\.Icon, \{ name: "reply"/);
   assert.doesNotMatch(app, /const casesNavigationItems = \[\s*\{ id: "search"/);
 });
 
