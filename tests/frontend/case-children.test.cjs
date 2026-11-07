@@ -68,6 +68,7 @@ test("separation cards and editable case cards are EN/AR", () => {
   assert.doesNotMatch(panel, /\}, "Edit"\)|\}, "Save"\)/);
   for (const key of ["separationDetails", "civilDivorce", "restrainingOrder", "reconciliation", "maritalStatus", "initiatedBy", "courtName", "courtLocation", "civilCaseNumber", "civilDivorceStatus", "orderFiled", "orderNameListed", "orderCaseNumber", "orderStatus", "reconciliationAttempted", "permitPreviouslyApplied", "permitWhen", "permitWhere", "decisionOutcome"])
     assert.notEqual(ar(key), t(key), key);
+});
 
 // D-0050 (#217 G6, G8, G9, G10, G13): status as a Badge, details as description-list items, every card with an icon.
 test("council read views use Badge for status and PropertyList for label/value pairs", () => {
