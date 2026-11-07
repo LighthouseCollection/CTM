@@ -88,3 +88,23 @@ def test_refuses_on_a_council_role_conflict(settings, tmp_path):
     with pytest.raises(CommandError, match="frjonahlabib@lacopts.org"):
         call_command("seed_seat_cases", **LIVE)
     assert not m.Case.objects.exists()
+
+
+def test_rerun_on_an_older_dataset_seats_the_admin_and_names_each_holder(settings, tmp_path, capsys, monkeypatch):
+    """Live 2026-11-07: the dataset predated the admin-seat step, so reruns took the
+    'dataset exists' path, the admin never got a seat and had no line."""
+    settings.MEDIA_ROOT = tmp_path
+    with monkeypatch.context() as patch:  # a dataset seeded before #183: no seat change recorded
+        patch.setattr(m.CouncilSeatChange.objects, "create", lambda **kwargs: None)
+        call_command("seed_workflow_demo", **LIVE)
+    admin = m.Account.objects.get(email="frraphaelmaher@lacopts.org")
+    assert not m.CouncilSeatChange.objects.filter(account=admin).exists()
+    call_command("seed_workflow_demo", **LIVE)  # the live rerun: dataset already exists
+    call_command("seed_new_applications_demo", **LIVE)
+    capsys.readouterr()
+    call_command("seed_seat_cases", **LIVE)
+    out = capsys.readouterr().out
+    assert m.CouncilSeatChange.objects.filter(account=admin, seated=True, voting=True).exists()
+    assert "open cases per seat holder: Fr. Raphael Maher <frraphaelmaher@lacopts.org> 5" in out
+    for holder in holders():
+        assert f"<{holder.email}>" in out
