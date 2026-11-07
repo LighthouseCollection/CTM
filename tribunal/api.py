@@ -1244,6 +1244,24 @@ def hear(request, item_id):
     return JsonResponse(encoded(hearing), status=201)
 
 
+def _roster_row(member, row):
+    """One attendance roster entry: who, title, voting seat, photo and what was recorded."""
+    from tribunal.services.council_seats import voting_seat
+    from tribunal.services.home import TITLES
+    return {
+        "member_id": str(member.pk),
+        "member_name": f"{member.first_name} {member.last_name}".strip(),
+        "member_role": member.role,
+        "member_active": member.is_active,
+        "title": TITLES.get(member.role, "member"),
+        "voting": voting_seat(member),
+        "photo_url": None,  # CTM stores no council profile photos yet
+        "present": row.present if row else None,
+        "actor_id": str(row.actor_id) if row else None,
+        "timestamp": row.created_at.isoformat() if row else None,
+    }
+
+
 @endpoint(("GET", "POST"))
 def attendance(request, session_id):
     from tribunal.services.council import attendance_for, attendance_roster_for, record_attendance
@@ -1253,22 +1271,7 @@ def attendance(request, session_id):
         hearing_id = request.GET.get("hearing_id") or None
         if hearing_id:
             roster = attendance_roster_for(request.user, session_id, hearing_id)
-            return JsonResponse(
-                {
-                    "items": [
-                        {
-                            "member_id": str(member.pk),
-                            "member_name": f"{member.first_name} {member.last_name}".strip(),
-                            "member_role": member.role,
-                            "member_active": member.is_active,
-                            "present": row.present if row else None,
-                            "actor_id": str(row.actor_id) if row else None,
-                            "timestamp": row.created_at.isoformat() if row else None,
-                        }
-                        for member, row in roster
-                    ]
-                }
-            )
+            return JsonResponse({"items": [_roster_row(member, row) for member, row in roster]})
         rows = attendance_for(request.user, session_id)
         return JsonResponse(
             {
@@ -1283,7 +1286,10 @@ def attendance(request, session_id):
                         timestamp=row.created_at.isoformat(),
                     )
                     for row in rows.values()
-                ]
+                ],
+                # #229 / D-0053: every seat holder for the attendance list, in roster order.
+                "roster": [_roster_row(member, row)
+                           for member, row in attendance_roster_for(request.user, session_id)],
             }
         )
     data = body(request)
