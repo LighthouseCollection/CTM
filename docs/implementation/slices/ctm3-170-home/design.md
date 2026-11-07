@@ -76,7 +76,7 @@ it; tiles keep one-line titles so heights match.
 | `GET /api/dashboard/` (extend) | `upcoming_sessions[0]`: `starts_at`, `location`, `agenda_count`; after #116 `my_answer`, `confirmed`, `invited` | Council roles only (as today) |
 | `GET /api/cases/?mine=1` (extend if missing) | per case: `number`, spouse display names, `status`, `next_step` (EN/AR key) | Existing case permissions |
 | `GET /api/dashboard/members/` (new) | active council members: `id`, `name`, `title` (presiding / secretary / member), `photo_url`, `active_cases` | Council roles only; no applicant data; deny by default; tests for applicant 403 and anonymous 401 |
-| `GET /api/statistics/summary/?year=` (new) | `cases_per_member[]`, `cases_by_ground[]`, `years[]` | Council roles only; counts only, never rows or links to applicants; Professional Assessments never a source; any count below the privacy threshold is returned as `null` + `suppressed: true`. Threshold: **5** as the interim value until the #170 spec sets it (ctm3-product-lead to confirm) |
+| `GET /api/statistics/summary/?year=` (new) | `cases_per_member[]`, `cases_by_ground[]`, `years[]` | Council roles only; counts only, never rows or links to applicants; Professional Assessments never a source; any count below the privacy threshold is returned as `null` + `suppressed: true`. Threshold **5**, confirmed by ctm3-product-lead on #170: a count below 5 shows "Fewer than 5" / "أقل من 5"; totals and other cells must not let a hidden count be worked out by subtraction (suppress a second cell or round the total when needed) |
 
 ## 5. Builder must not invent
 
