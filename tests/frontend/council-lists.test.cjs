@@ -316,9 +316,9 @@ test("one failing region shows its own notice while the others still show (issue
   h.render(C.CouncilHome, props);
   await settle(); h.render(C.CouncilHome, props); await settle();
   const tree = h.render(C.CouncilHome, props);
-  assert.equal(byName(tree, "WidgetGrid").length, 1, "tiles still show");
+  assert.ok(byName(tree, "WidgetGrid").some((grid) => grid.props.label === "Needs attention"), "tiles still show");
   assert.ok(byName(tree, "Notice").some((node) => node.props.tone === "danger"));
-  same(byName(tree, "WidgetGrid")[0].props.items.map((item) => item.id), ["mine", "unread", "review", "consideration"]);
+  same(byName(tree, "WidgetGrid").find((grid) => grid.props.label === "Needs attention").props.items.map((item) => item.id), ["mine", "unread", "review", "consideration"]);
 });
 
 test("home tile and session labels have EN and AR", () => {
@@ -439,4 +439,46 @@ test("council home lists council members as person cards in their order; a suppr
   const ar = C.translator("ar");
   for (const key of ["case.next.completeness_review", "case.next.applicant_correction", "case.next.hearing", "case.next.assignment", "case.next.investigation", "councilMembers", "fewerThanFive", "titlePresiding"])
     assert.notEqual(ar(key), C.translator("en")(key), key);
+});
+
+// Issue 170 region 5: statistics never show a suppressed count, a total or anything that reveals one by subtraction.
+test("home statistics leave suppressed counts out, say so, and draw no donut total", async () => {
+  const [h, C] = boot();
+  const summary = { year: 2026, years: [2026, 2025], threshold: 5,
+    cases_per_member: [{ id: 1, name: "Fr. A", count: 9, suppressed: false }, { id: 2, name: "Fr. B", count: null, suppressed: true }, { id: 3, name: "Fr. C", count: 12, suppressed: false }],
+    cases_by_ground: [{ code: "abuse", count: 7, suppressed: false }, { code: "faith", count: null, suppressed: true }, { code: "desertion", count: 6, suppressed: false }] };
+  const asked = [];
+  const api = async (url) => { asked.push(url); return summary; };
+  async function chart(kind) {
+    const props = { api, lang: "en", kind, onNavigate() {} };
+    h.render(C.HomeStatChart, props); await settle();
+    return h.render(C.HomeStatChart, props);
+  }
+  const bars = byName(await chart("members"), "BarChart")[0];
+  same(bars.props.categories, ["Fr. C", "Fr. A"]);
+  same(bars.props.series[0].values, [12, 9]);
+  assert.equal(bars.props.description, "Some counts under 5 are hidden.");
+  const pieTree = await chart("grounds");
+  const pie = byName(pieTree, "PieChart")[0];
+  same(pie.props.data.map((part) => [part.label, part.value]), [["Abuse", 7], ["Abandonment", 6]]);
+  assert.equal(pie.props.variant, "donut");
+  assert.equal(String(pie.props.centerValue).trim(), "", "no center total");
+  assert.equal(pie.props.description, "Some counts under 5 are hidden.");
+  const panel = byName(pieTree, "Panel")[0];
+  same(panel.props.actions.props.options.map((option) => option.value), ["2026", "2025"]);
+  assert.ok(asked.includes("/api/statistics/summary/"));
+  // Every count hidden: say so, never "no cases".
+  same(C.visibleCounts([{ id: 1, count: null, suppressed: true }], (row) => row.id), { shown: [], hidden: true });
+  const ar = C.translator("ar");
+  for (const key of ["statsCasesPerMember", "statsCasesByReason", "statsHidden", "statsAllHidden", "allStatistics"]) assert.notEqual(ar(key), C.translator("en")(key), key);
+});
+
+test("home statistics: the chart caption is hidden and the hidden-count note shows once, on the Panel", async () => {
+  const [h, C] = boot();
+  const api = async () => ({ year: 2026, years: [2026], cases_per_member: [{ id: 1, name: "Fr. A", count: 9 }, { id: 2, name: "Fr. B", count: null, suppressed: true }], cases_by_ground: [] });
+  const props = { api, lang: "en", kind: "members", onNavigate() {} };
+  h.render(C.HomeStatChart, props); await settle();
+  const tree = h.render(C.HomeStatChart, props);
+  assert.equal(byName(tree, "BarChart")[0].props.hideCaption, true);
+  assert.equal(byName(tree, "Panel")[0].props.description, "Some counts under 5 are hidden.");
 });

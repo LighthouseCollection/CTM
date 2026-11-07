@@ -679,6 +679,16 @@
       homeNextStep: "Next step",
       allCases: "All cases",
       councilMembers: "Council members",
+      statsSummary: "Statistics summary",
+      statsCasesPerMember: "Cases per member",
+      statsCasesByReason: "Cases by reason",
+      statsYear: "Year",
+      statsShare: "Share",
+      statsOther: "Other",
+      statsHidden: "Some counts under 5 are hidden.",
+      statsAllHidden: "Every count in {year} is under 5, so none is shown.",
+      statsNoCases: "No cases in {year}.",
+      allStatistics: "All statistics",
       activeCasesUnit: "active cases",
       fewerThanFive: "Fewer than 5",
       titlePresiding: "Presiding",
@@ -1055,6 +1065,16 @@
       homeNextStep: "الخطوة التالية",
       allCases: "كل القضايا",
       councilMembers: "أعضاء المجلس",
+      statsSummary: "ملخص الإحصاءات",
+      statsCasesPerMember: "القضايا لكل عضو",
+      statsCasesByReason: "القضايا حسب السبب",
+      statsYear: "السنة",
+      statsShare: "النسبة",
+      statsOther: "أخرى",
+      statsHidden: "بعض الأعداد الأقل من 5 مخفية.",
+      statsAllHidden: "كل الأعداد في {year} أقل من 5، لذلك لا يُعرض أي منها.",
+      statsNoCases: "لا توجد قضايا في {year}.",
+      allStatistics: "كل الإحصاءات",
       activeCasesUnit: "قضايا نشطة",
       fewerThanFive: "أقل من 5",
       titlePresiding: "الرئيس",
@@ -3093,6 +3113,17 @@
     return title === "presiding" ? "titlePresiding" : title === "secretary" ? "titleSecretary" : "titleMember";
   }
 
+  // Statistics on Home (issue 170 region 5, design §2 and the privacy rules): a suppressed count (under the
+  // threshold) is left out of the chart and the description says some counts are hidden; nothing shows a total or
+  // a share of the whole that would let a hidden count be worked out by subtraction.
+  function visibleCounts(rows, label) {
+    const list = rows || [];
+    const shown = list.filter((row) => !row.suppressed && typeof row.count === "number" && row.count > 0)
+      .map((row) => ({ id: String(row.id ?? row.code), label: label(row), value: row.count }))
+      .sort((a, b) => b.value - a.value);
+    return { shown, hidden: list.some((row) => row.suppressed) };
+  }
+
   // The tiles of Home's one row (issue 170, design §2): short labels, each opens its list; a count the server
   // did not send is "–" (value left out), never 0. "For council" opens New applications in its council view (D-0049).
   function homeTiles({ dashboard, unread, consideration }, user, t, n) {
@@ -3105,6 +3136,49 @@
         { id: "consideration", icon: "doc-text", title: t("tileForCouncil"), value: n(consideration), href: route("newApplications", "/applications/new") + "?view=council" },
       ] : []),
     ];
+  }
+
+  // One statistics chart with its own year picker (design §2: each Panel has a Select size sm in its actions).
+  function HomeStatChart({ api, lang, kind, onNavigate }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [year, setYear] = R.useState("");
+    const [state, retry] = useLoad(() => api("/api/statistics/summary/" + (year ? "?year=" + encodeURIComponent(year) : "")), [year]);
+    const data = state.data;
+    const shownYear = String(data?.year ?? year ?? "");
+    const number = new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US");
+    const members = kind === "members";
+    const title = t(members ? "statsCasesPerMember" : "statsCasesByReason");
+    const years = (data?.years || []).map(String);
+    const picker = years.length ? h(P.Select, { size: "sm", label: t("statsYear"), "aria-label": t("statsYear"), value: shownYear,
+      onChange: (event) => setYear(event.target.value), options: years.map((value) => ({ value, label: value })) }) : undefined;
+    const all = onNavigate ? h(P.Button, { variant: "ghost", onClick: () => onNavigate(window.CTMRoutes?.routeFor("statistics") || "/reports") }, t("allStatistics")) : undefined;
+    let body, note;
+    if (state.pending && !data) body = h(P.Skeleton, { height: "240px" });
+    else if (state.error) body = h(P.Notice, { tone: "danger" }, serverMessage(state.error, t), " ", h(P.Button, { size: "sm", onClick: retry }, t("retry")));
+    else {
+      const { shown, hidden } = members
+        ? visibleCounts(data.cases_per_member, (row) => row.name || "—")
+        : visibleCounts(data.cases_by_ground, (row) => groundsText([row.code], row.code, t));
+      const description = hidden ? t("statsHidden") : undefined;
+      // The chart caption repeats the Panel title, so it is hidden (the chart keeps its name); the note shows once.
+      note = shown.length ? description : undefined;
+      if (!shown.length)
+        body = h(P.EmptyState, { title: hidden ? t("statsAllHidden", { year: shownYear }) : t("statsNoCases", { year: shownYear }) });
+      else if (members)
+        body = h(P.BarChart, { title, description, hideCaption: true, categories: shown.map((part) => part.label),
+          series: [{ id: "cases", label: t("statsCases"), values: shown.map((part) => part.value) }],
+          valueLabel: t("statsCases"), showValues: true, legend: false, format: (value) => number.format(value),
+          strings: { category: t("councilMember"), total: t("statsCases") } });
+      else
+        // No center total (design: it would let a hidden count be worked out); the legend shows each part only.
+        body = h(P.PieChart, { title, description, hideCaption: true, variant: "donut", data: shown, centerValue: " ", centerLabel: " ",
+          format: (value) => number.format(value),
+          strings: { part: t("reason"), value: t("statsCases"), share: t("statsShare"), total: t("statsCases"), other: t("statsOther") } });
+    }
+    return h(P.Panel, { icon: members ? "settings-users" : "chart", title, description: note, actions: picker, footer: all }, body);
   }
 
   // Council Home (issue 170, D-0046; design docs/implementation/slices/ctm3-170-home/design.md). Top to bottom:
@@ -3256,12 +3330,18 @@
       return h(P.Panel, { icon: "settings-users", title: t("councilMembers") }, body);
     };
 
+    // 5. Statistics summary: two charts side by side, each with its year; the full set lives on Statistics.
+    const statsRegion = () => h(P.WidgetGrid, { label: t("statsSummary"), columns: 2,
+      items: [{ id: "members" }, { id: "grounds" }],
+      renderItem: (item) => h(HomeStatChart, { key: item.id, api, lang, kind: item.id, onNavigate }) });
+
     return h(P.Stack, { gap: "lg", onClickCapture: follow },
       h(P.Text, { as: "h1", variant: "title" }, t("homeTitle")),
       leadRegion(),
       tilesRegion(),
       casesRegion(),
       membersRegion(),
+      statsRegion(),
     );
   }
 
@@ -3571,6 +3651,8 @@
     homeTiles,
     spousesText,
     homeMembers,
+    visibleCounts,
+    HomeStatChart: guarded(HomeStatChart),
     applicationView,
     applicationViewSearch,
     memberTitleKey,
