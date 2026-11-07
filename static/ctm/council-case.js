@@ -426,6 +426,20 @@ ${ar}` : en;
       lastHearingDate: "Last Hearing Date",
       children: "Children",
       noChildren: "No children recorded",
+      noChildrenShort: "No children",
+      addChild: "Add child",
+      childDone: "Done",
+      edit: "Edit",
+      save: "Save",
+      remove: "Remove",
+      dateOfBirth: "Date of birth",
+      childAge: "age {n}",
+      childFirstRequired: "Enter the child's first name.",
+      childLastRequired: "Enter the child's last name.",
+      childBirthRequired: "Enter the child's date of birth.",
+      childBirthFuture: "The date of birth cannot be in the future.",
+      childBirthBeforeMarriage: "This date is more than a year before the marriage. Check it.",
+      childrenIncomplete: "Finish or cancel the open child first: each child needs a first name, last name and date of birth.",
       keyDates: "Key Dates",
       decreeIssued: "Decree Issued",
       councilReviewDecision: "Council Review & Decision",
@@ -893,6 +907,20 @@ ${ar}` : en;
       lastHearingDate: "تاريخ آخر جلسة",
       children: "الأبناء",
       noChildren: "لا يوجد أبناء مسجلون",
+      noChildrenShort: "لا يوجد أبناء",
+      addChild: "إضافة ابن",
+      childDone: "تم",
+      edit: "تحرير",
+      save: "حفظ",
+      remove: "إزالة",
+      dateOfBirth: "تاريخ الميلاد",
+      childAge: "العمر {n}",
+      childFirstRequired: "أدخل الاسم الأول للابن.",
+      childLastRequired: "أدخل اسم العائلة للابن.",
+      childBirthRequired: "أدخل تاريخ ميلاد الابن.",
+      childBirthFuture: "لا يمكن أن يكون تاريخ الميلاد في المستقبل.",
+      childBirthBeforeMarriage: "هذا التاريخ قبل الزواج بأكثر من سنة. تحقّق منه.",
+      childrenIncomplete: "أكمل الابن المفتوح أو ألغِه أولًا: يحتاج كل ابن إلى الاسم الأول واسم العائلة وتاريخ الميلاد.",
       keyDates: "التواريخ المهمة",
       decreeIssued: "صدور المرسوم",
       councilReviewDecision: "مراجعة المجلس والقرار",
@@ -3741,10 +3769,96 @@ ${ar}` : en;
   // intentionally preserve the form layout while preventing direct changes.
   // #48 row 14: read mode is a PropertyList, not a disabled-looking input. A date-only value is shown in the
   // page language and read as UTC so it never moves a day.
+  // Issue 199 (D-0048): each child is first name, last name and date of birth. A child saved before issue 199 may
+  // carry only "name": its last word becomes the last name so the council can complete it.
+  function childForm(child) {
+    if (typeof child === "string") child = { name: child };
+    const first = String(child?.first_name || "").trim(), last = String(child?.last_name || "").trim();
+    if (first || last) return { first_name: first, last_name: last, date_of_birth: child?.date_of_birth || "" };
+    const words = String(child?.name || "").trim().split(/\s+/).filter(Boolean);
+    return { first_name: words.length > 1 ? words.slice(0, -1).join(" ") : words.join(" "), last_name: words.length > 1 ? words[words.length - 1] : "", date_of_birth: child?.date_of_birth || "" };
+  }
+
+  // Age in whole years on a civil date (both YYYY-MM-DD; no time zone shift).
+  function ageOn(born, today) {
+    const [by, bm, bd] = String(born).split("-").map(Number), [ty, tm, td] = String(today).split("-").map(Number);
+    if (!by || !ty) return null;
+    return ty - by - (tm < bm || (tm === bm && td < bd) ? 1 : 0);
+  }
+
+  function todayCivil(now = new Date()) {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  }
+
+  // The problem with one child row, as a word key; null when it can be saved. A birth well before the marriage
+  // only warns (D-0048: warn, don't block).
+  function childProblem(child, today = todayCivil()) {
+    if (!String(child.first_name || "").trim()) return { field: "first_name", key: "childFirstRequired" };
+    if (!String(child.last_name || "").trim()) return { field: "last_name", key: "childLastRequired" };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(child.date_of_birth || ""))) return { field: "date_of_birth", key: "childBirthRequired" };
+    if (child.date_of_birth > today) return { field: "date_of_birth", key: "childBirthFuture" };
+    return null;
+  }
+  function childWarning(child, marriageDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(marriageDate || "")) || !child.date_of_birth) return null;
+    const [y, m, d] = marriageDate.split("-");
+    return child.date_of_birth < `${Number(y) - 1}-${m}-${d}` ? "childBirthBeforeMarriage" : null;
+  }
+
+  function childLine(child, lang, t) {
+    const form = childForm(child);
+    const name = [form.first_name, form.last_name].filter(Boolean).join(" ") || child?.name || "—";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(form.date_of_birth))) return base.isolate(name);
+    const born = new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(form.date_of_birth + "T00:00:00Z"));
+    const age = ageOn(form.date_of_birth, todayCivil());
+    return `${base.isolate(name)} · ${born}${age === null ? "" : ` (${t("childAge", { n: age })})`}`;
+  }
+
+  // The repeatable child list of the case summary edit form: each child a row with Edit and Remove; Add child
+  // opens a new row; a row is kept only when first name, last name and date of birth are valid.
+  function ChildrenEditor({ lang, children, onChange, disabled, marriageDate }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    const [open, setOpen] = R.useState(null); // { index, draft, problem }
+    const start = (index) => setOpen({ index, draft: index === -1 ? { first_name: "", last_name: "", date_of_birth: "" } : { ...children[index] }, problem: null });
+    const done = () => {
+      const problem = childProblem(open.draft);
+      if (problem) return setOpen((old) => ({ ...old, problem }));
+      const draft = { first_name: open.draft.first_name.trim(), last_name: open.draft.last_name.trim(), date_of_birth: open.draft.date_of_birth };
+      onChange(open.index === -1 ? [...children, draft] : children.map((child, i) => (i === open.index ? draft : child)));
+      setOpen(null);
+    };
+    const set = (field) => (event) => { const value = event.target.value; setOpen((old) => ({ ...old, draft: { ...old.draft, [field]: value }, problem: null })); };
+    const err = (field) => (open?.problem?.field === field ? t(open.problem.key) : undefined);
+    const editor = () => h(P.Stack, { gap: "sm", key: "editor" },
+      h(P.Columns, { count: 3, collapseBelow: "wide" },
+        h(P.Field, { label: t("firstName"), required: true, error: err("first_name") }, h(P.Input, { value: open.draft.first_name, disabled, onChange: set("first_name") })),
+        h(P.Field, { label: t("lastName"), required: true, error: err("last_name") }, h(P.Input, { value: open.draft.last_name, disabled, onChange: set("last_name") })),
+        h(P.Field, { label: t("dateOfBirth"), required: true, error: err("date_of_birth"),
+          warning: childWarning(open.draft, marriageDate) ? t("childBirthBeforeMarriage") : undefined },
+          h(P.Input, { type: "date", value: open.draft.date_of_birth, max: todayCivil(), disabled, onChange: set("date_of_birth") }))),
+      h(P.Inline, { gap: "sm" },
+        h(P.Button, { size: "sm", variant: "primary", disabled, onClick: done }, t(open.index === -1 ? "addChild" : "childDone")),
+        h(P.Button, { size: "sm", disabled, onClick: () => setOpen(null) }, t("cancel"))));
+    const rows = children.map((child, index) => open?.index === index ? editor() :
+      h(P.Inline, { key: index, gap: "sm", align: "center", justify: "between" },
+        h(P.Text, null, childLine(child, lang, t)),
+        h(P.Inline, { gap: "xs" },
+          h(P.Button, { size: "sm", icon: "pencil", disabled: disabled || Boolean(open), onClick: () => start(index) }, t("edit")),
+          h(P.Button, { size: "sm", icon: "trash", variant: "danger-secondary", disabled: disabled || Boolean(open), onClick: () => onChange(children.filter((_, i) => i !== index)) }, t("remove")))));
+    return h(P.Fieldset, { legend: t("children") },
+      h(P.Stack, { gap: "sm" },
+        !children.length && !open ? h(P.EmptyState, { title: t("noChildrenShort"),
+          action: h(P.Button, { size: "sm", icon: "add", disabled, onClick: () => start(-1) }, t("addChild")) }) : null,
+        ...rows,
+        open?.index === -1 ? editor() : null,
+        children.length && !open ? h(P.Inline, null, h(P.Button, { size: "sm", icon: "add", disabled, onClick: () => start(-1) }, t("addChild"))) : null));
+  }
+
   function CaseReadFields({ P, h, fields, values, lang, columns = 3 }) {
     const language = lang || window.document.documentElement.lang;
     const show = (value, type) => {
       if (value === undefined || value === null || value === "") return "—";
+      if (typeof value === "object" && value.$$typeof) return value;
       if (type === "date" && /^\d{4}-\d{2}-\d{2}$/.test(String(value)))
         return new Intl.DateTimeFormat(language === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(String(value) + "T00:00:00Z"));
       return String(value);
@@ -4136,21 +4250,21 @@ ${ar}` : en;
         badge: timelineBadge("active", t("completed")),
       });
     const canEditSummary = writerFor(user, null, record) && openProceeding(record)?.status === "open";
-    const childLabel = (child) => typeof child === "string" ? child : child?.name || "—";
-    const childrenText = (children) => (children || []).map(childLabel).filter((value) => value && value !== "—").join("\n");
     const startSummaryEdit = () => {
       setSummaryFailure(null);
-      setSummaryForm({ reason: summary.reason || "", children: childrenText(summary.children), memberId: eligibleMembers.find((member) => member.name === manager)?.id || "" });
+      setSummaryForm({ reason: summary.reason || "", children: (summary.children || []).map(childForm), memberId: eligibleMembers.find((member) => member.name === manager)?.id || "" });
       setSummaryEditing(true);
     };
     const saveSummary = async (event) => {
       event.preventDefault();
+      // Issue 199: every child needs first name, last name and a date of birth before the summary can be saved.
+      if (summaryForm.children.some((child) => childProblem(child))) { setSummaryFailure(t("childrenIncomplete")); return; }
       const nextMemberId = summaryForm.memberId;
       const currentMemberId = eligibleMembers.find((member) => member.name === manager)?.id || "";
       setSummaryPending(true); setSummaryFailure(null);
       try {
         if (nextMemberId && nextMemberId !== currentMemberId) await api(`/api/cases/${encodeURIComponent(caseId)}/assignment/`, { method: "POST", body: JSON.stringify({ member_id: nextMemberId }) });
-        await api(`/api/proceedings/${encodeURIComponent(openProceeding(record).id)}/findings/`, { method: "POST", body: JSON.stringify({ fact_code: "case_card.summary", value: { reason: summaryForm.reason.trim(), children: summaryForm.children.split(/\r?\n/).map((name) => name.trim()).filter(Boolean).map((name) => ({ name })) } }) });
+        await api(`/api/proceedings/${encodeURIComponent(openProceeding(record).id)}/findings/`, { method: "POST", body: JSON.stringify({ fact_code: "case_card.summary", value: { reason: summaryForm.reason.trim(), children: summaryForm.children.map((child) => ({ first_name: child.first_name, last_name: child.last_name, date_of_birth: child.date_of_birth })) } }) });
         setSummaryEditing(false); retry();
       } catch (error) { setSummaryFailure(base.serverMessage(error, bt)); }
       finally { setSummaryPending(false); }
@@ -4163,23 +4277,24 @@ ${ar}` : en;
     const summaryReadValues = {
       case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: record.status === "open" ? t("active") : bt("closed"), assigned_member: manager || bt("unassigned"),
       applicant: applicant?.name, respondent: respondent?.name, reason: summary.reason, marriage_duration: marriageDuration(record.marriage?.church_marriage_date, lang),
-      children: summary.children?.length ? summary.children.map(childLabel).join(" · ") : t("noChildren"), last_hearing_date: summaryDate(summary.last_hearing_date, lang),
+      children: summary.children?.length ? h(P.Stack, { gap: "xs" }, ...summary.children.map((child, index) => h(P.Text, { key: index }, childLine(child, lang, t)))) : t("noChildren"), last_hearing_date: summaryDate(summary.last_hearing_date, lang),
     };
     const summaryPanels = h(
       P.Stack,
       { gap: "lg" },
       h(
         P.Panel,
-        { icon: "document", title: t("caseSummary"), actions: canEditSummary && !summaryEditing ? h(P.Button, { size: "sm", onClick: startSummaryEdit }, "Edit") : null },
+        { icon: "document", title: t("caseSummary"), actions: canEditSummary && !summaryEditing ? h(P.Button, { size: "sm", onClick: startSummaryEdit }, t("edit")) : null },
         summaryEditing
           ? h(P.Form, { onSubmit: saveSummary, label: t("caseSummary"), noValidate: true },
               h(P.Columns, { count: 2, collapseBelow: "wide" },
                 h(P.Field, { label: t("reasonForDivorce") }, h(P.Input, { value: summaryForm.reason, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, reason: event.target.value })) })),
                 h(P.Field, { label: t("assignedCouncilMember") }, h(P.Select, { value: summaryForm.memberId, disabled: summaryPending || !record.can_assign, onChange: (event) => setSummaryForm((old) => ({ ...old, memberId: event.target.value })), options: [{ value: "", label: bt("unassigned") }, ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id }))] })),
               ),
-              h(P.Field, { label: t("children"), description: "One child per line. Submitted child details remain with the application." }, h(P.Textarea, { rows: 4, value: summaryForm.children, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, children: event.target.value })) })),
+              h(ChildrenEditor, { lang, children: summaryForm.children, disabled: summaryPending, marriageDate: record.marriage?.church_marriage_date,
+                onChange: (children) => setSummaryForm((old) => ({ ...old, children })) }),
               summaryFailure ? h(P.Notice, { tone: "danger" }, summaryFailure) : null,
-              h(P.FormActions, { sticky: false }, h(P.Button, { disabled: summaryPending, onClick: () => setSummaryEditing(false) }, bt("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: summaryPending, disabled: summaryPending }, "Save")),
+              h(P.FormActions, { sticky: false }, h(P.Button, { disabled: summaryPending, onClick: () => setSummaryEditing(false) }, bt("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: summaryPending, disabled: summaryPending }, t("save"))),
             )
           : h(CaseReadFields, { P, h, fields: summaryReadFields, values: summaryReadValues, lang, columns: 2 }),
       ),
@@ -4196,6 +4311,12 @@ ${ar}` : en;
   }
 
   Object.assign(window.CTMCouncil, {
+    childForm,
+    childProblem,
+    childWarning,
+    ageOn,
+    childLine,
+    ChildrenEditor,
     caseWords: words,
     caseTranslator: translator,
     InterviewForm, // exported for the unsaved-text regression test
