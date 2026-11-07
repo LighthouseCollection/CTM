@@ -1,7 +1,8 @@
 """#116 / D-0036 database part 2: council session emails in the Outbox.
 
 - who may queue session_invite / session_update / session_cancel / session_reminder
-- the president may read session reminder rows (once-an-hour limit)
+- the president may read and queue every session email (D-0052: the president
+  also moves sessions between Draft and In progress, which announces them)
 - the worker's ctm_session_delivery_current(outbox id) check
 """
 import uuid
@@ -47,11 +48,14 @@ def test_admin_and_secretary_queue_session_emails_without_a_notification(granted
     assert row.queued_by_id == people[sender].pk and row.case_id is None
 
 
-def test_president_queues_reminders_only(granted_roles, people, session):
-    president = people["president"]
-    queue(granted_roles, president, session, people["member"], "session_reminder")
-    for kind in ["session_invite", "session_update", "session_cancel"]:
-        refused(granted_roles, president, session, people["member"], kind)
+@pytest.mark.parametrize("kind", ["session_invite", "session_update", "session_cancel", "session_reminder"])
+def test_president_queues_every_session_email(granted_roles, people, session, kind):
+    pk = queue(granted_roles, people["president"], session, people["member"], kind)
+    assert Outbox.objects.get(pk=pk).queued_by_id == people["president"].pk
+
+
+def test_president_still_cannot_queue_other_outbox_kinds(granted_roles, people, session):
+    refused(granted_roles, people["president"], session, people["member"], "account_suspended")
 
 
 @pytest.mark.parametrize("sender", ["member", "applicant"])
@@ -107,14 +111,26 @@ def test_manual_reminder_uses_an_hour_bucket_key(granted_roles, people, session)
     refused(granted_roles, people["secretary"], session, people["secretary"], "session_invite", manual=True)
 
 
-def test_president_reads_session_reminders_but_not_other_outbox_rows(granted_roles, people, session):
+def test_president_reads_session_emails_but_not_other_outbox_rows(granted_roles, people, session):
     reminder = queue(granted_roles, people["secretary"], session, people["member"], "session_reminder")
     invite = queue(granted_roles, people["secretary"], session, people["member"], "session_invite")
+    other = Outbox.objects.create(key="unrelated:president-read", kind="account_suspended",
+                                  recipient=people["member"], payload={"session": str(session.pk)}).pk
     with granted_roles("ctm_app", people["president"]):
-        visible = set(Outbox.objects.filter(pk__in=[reminder, invite]).values_list("pk", flat=True))
-    assert visible == {reminder}
+        visible = set(Outbox.objects.filter(pk__in=[reminder, invite, other]).values_list("pk", flat=True))
+    assert visible == {reminder, invite}
     with granted_roles("ctm_app", people["member"]):
         assert not Outbox.objects.filter(pk__in=[reminder, invite]).exists()
+
+
+def test_president_reactivation_finds_existing_rows_and_queues_nothing_new(granted_roles, people, session):
+    # The service get_or_creates by key; after Draft and back, the rows are found.
+    secretary, president, member = people["secretary"], people["president"], people["member"]
+    queue(granted_roles, secretary, session, member, "session_invite")
+    key = f"session_invite:{session.pk}:{session.ics_sequence}:{member.pk}"
+    with granted_roles("ctm_app", president):
+        assert Outbox.objects.filter(key=key).count() == 1
+    assert Outbox.objects.filter(key=key).count() == 1
 
 
 def current(granted_roles, outbox_id):
