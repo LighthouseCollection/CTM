@@ -329,6 +329,32 @@ class Command(BaseCommand):
                     )
             return session
 
+        def move_held_hearings_to_past():
+            """#194: a hearing that took place belongs to a past session.
+
+            Earlier seeds recorded hearings on the next upcoming session (on live a
+            2030 draft session), so "Last hearing date" showed a future date. Agenda
+            placements are immutable, so the hearing moves to a new presented item on
+            the latest past closed session; the future placement stays as the next listing.
+            """
+            moved = 0
+            for hearing in m.Hearing.objects.filter(
+                agenda__case__origin="synthetic", agenda__session__date__gt=today
+            ).select_related("agenda"):
+                case = hearing.agenda.case
+                # A case is listed once per session: use the latest past session without it.
+                target = (m.CouncilSession.objects.filter(state="closed", date__lte=today)
+                          .exclude(agenda__case=case).order_by("-date").first())
+                if target is None:
+                    continue
+                position = (target.agenda.order_by("-position").values_list("position", flat=True).first() or 0) + 1
+                past = m.AgendaItem.objects.create(session=target, case=case, part=hearing.agenda.part,
+                                                   position=position, state="presented")
+                hearing.agenda = past
+                hearing.save(update_fields=["agenda"])
+                moved += 1
+            return moved
+
         def seat_admin_with_cases():
             """#175: the roster admin keeps the admin role, holds a voting seat and
             manages demo cases like the members. Runs once: a recorded seat change
@@ -800,6 +826,7 @@ class Command(BaseCommand):
         if dataset_exists:
             # Datasets seeded before #175 never ran this; reruns must catch up (live 2026-11-07).
             seat_admin_with_cases()
+            move_held_hearings_to_past()
             # A fixture upgrade may add fields to the immutable-source projection.
             # This database is explicitly synthetic and isolated; production filings
             # are never updated by this command.
@@ -1064,6 +1091,7 @@ class Command(BaseCommand):
         added = seed_agenda_cases(current_session)
         enrich_original_cases()
         seat_admin_with_cases()
+        move_held_hearings_to_past()
         m.AuditEvent.objects.create(
             actor=admin,
             action="demo_dataset_created",
