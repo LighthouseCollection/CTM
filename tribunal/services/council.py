@@ -133,6 +133,8 @@ def save_finding(actor, proceeding_id, fact_code, value, sources=None, *, expect
     if not isinstance(fact_code, str) or not fact_code.strip() or len(fact_code)>100:
         raise ValidationError("Provide a fact code of1–100 characters.")
     validate_json_value({"fact_code": fact_code, "value": value})
+    if fact_code == "case_card.summary":
+        value = validate_case_summary(value)
     sources = [] if sources is None else sources
     validate_finding_sources(actor, proceeding, sources)
     latest = FindingRevision.objects.filter(proceeding=proceeding, fact_code=fact_code).order_by("-number").first()
@@ -149,6 +151,36 @@ def save_finding(actor, proceeding_id, fact_code, value, sources=None, *, expect
     )
     audit(actor, "finding_saved", revision, proceeding.case)
     return revision
+
+
+def validate_case_summary(value):
+    """#199 / D-0048: the council's case summary keeps each child's first name,
+    last name and date of birth. Names required; the date must be real and not
+    in the future. Returns the cleaned value."""
+    from datetime import date
+    if not isinstance(value, dict):
+        raise ValidationError("The case summary must be an object.")
+    reason = value.get("reason", "")
+    if not isinstance(reason, str):
+        raise ValidationError("The reason must be text.")
+    children = value.get("children", [])
+    if not isinstance(children, list) or len(children) > 30:
+        raise ValidationError("Children must be a list of up to 30 entries.")
+    cleaned = []
+    for child in children:
+        if not isinstance(child, dict):
+            raise ValidationError("Each child needs a first name, last name and date of birth.")
+        first, last = child.get("first_name"), child.get("last_name")
+        if not all(isinstance(name, str) and name.strip() and len(name.strip()) <= 150 for name in (first, last)):
+            raise ValidationError("Each child needs a first name and a last name.")
+        try:
+            born = date.fromisoformat(child.get("date_of_birth"))
+        except (TypeError, ValueError):
+            raise ValidationError("Each child needs a real date of birth.")
+        if born > timezone.localdate():
+            raise ValidationError("A child's date of birth cannot be in the future.")
+        cleaned.append({"first_name": first.strip(), "last_name": last.strip(), "date_of_birth": born.isoformat()})
+    return {**value, "reason": reason, "children": cleaned}
 
 
 def validate_finding_sources(actor, proceeding, sources):

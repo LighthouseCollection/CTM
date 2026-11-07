@@ -108,3 +108,19 @@ def test_rerun_on_an_older_dataset_seats_the_admin_and_names_each_holder(setting
     assert "open cases per seat holder: Fr. Raphael Maher <frraphaelmaher@lacopts.org> 5" in out
     for holder in holders():
         assert f"<{holder.email}>" in out
+
+
+def test_new_cases_have_zero_to_three_children_born_after_the_marriage(seeded):
+    """#199: the owner sees real child examples (first name, last name, date of birth)."""
+    from datetime import date
+    from django.utils import timezone
+    counts = []
+    for case in m.Case.objects.filter(number__startswith="DEMO-").exclude(number__startswith="DEMO-NEW-"):
+        answers = m.Application.objects.get(case=case, kind="petition").submissions.get().revision.answers
+        children = answers.get("children", [])
+        counts.append(len(children))
+        for child in children:
+            born = date.fromisoformat(child["date_of_birth"])
+            assert case.marriage_date < born <= timezone.localdate()
+            assert child["first_name"] and child["last_name"] and child["gender"] and child["lives_with"]
+    assert max(counts) <= 3 and any(counts) and 0 in counts

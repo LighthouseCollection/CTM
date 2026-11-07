@@ -177,6 +177,8 @@ def test_council_case_detail_projects_submitted_spouse_profile_and_photo(
     assert detail["summary"]["sources"]["reason"] == detail["marriage_source"]
     assert detail["summary"]["children"] == [{
         "name": "Michael O'Brien",
+        "first_name": "Michael",  # #199: kept separately so the council edit can prefill
+        "last_name": "O'Brien",
         "date_of_birth": "2017-04-08",
         "gender": "M",
         "lives_with": "self",
