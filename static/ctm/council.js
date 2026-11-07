@@ -3124,7 +3124,10 @@
             action: canManage(user) && onNavigate ? h(P.Button, { onClick: () => onNavigate(window.CTMRoutes?.routeFor("sessionsUpcoming") || "/sessions/upcoming") }, t("scheduleSession")) : undefined }));
       if (lead.error) return regionFailure(retryLead, lead.error);
       if (!lead.data) return h(P.Skeleton, { height: "160px" });
-      const session = lead.data.session;
+      // Fields /api/dashboard/ sends (design §4) win over the ones read from the session endpoints.
+      const sent = dash.data.upcoming_sessions[0];
+      const session = { ...lead.data.session, ...Object.fromEntries(["starts_at", "location"].filter((key) => sent[key] != null).map((key) => [key, sent[key]])) };
+      const agendaCount = typeof sent.agenda_count === "number" ? sent.agenda_count : lead.data.agendaCount;
       const answers = lead.data.answers;
       const mine = answers ? ownAnswer(answers, user) : null;
       const confirmed = confirmedText(answers, t, "confirmedCount");
@@ -3142,7 +3145,7 @@
           h(P.PropertyList, null,
             h(P.PropertyList.Item, { label: t("location") }, session.location || t("notRecorded"))),
           h(P.PropertyList, null,
-            h(P.PropertyList.Item, { label: t("agendaItems"), data: true }, n(lead.data.agendaCount))),
+            h(P.PropertyList.Item, { label: t("agendaItems"), data: true }, n(agendaCount))),
           answers ? h(P.PropertyList, null,
             h(P.PropertyList.Item, { label: t("yourAnswer") },
               h(P.Badge, { tone: answerTone(mine?.answer), icon: mine?.answer === "attend" ? "check" : mine?.answer === "not_attend" ? "close" : undefined }, t(answerKey(mine?.answer))))) : null,
