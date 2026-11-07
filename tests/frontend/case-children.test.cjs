@@ -56,3 +56,16 @@ test("the child editor: No children with Add child; rows with Edit and Remove; R
   assert.deepEqual(plain(list), [{ first_name: "John", last_name: "Hayes", date_of_birth: "2017-05-06" }]);
   assert.match(textOf(tree), /Mary Hayes/);
 });
+
+// D-0050 (#217 G2, G5): the Separation cards and the editable case cards have EN and AR words, no English literals.
+test("separation cards and editable case cards are EN/AR", () => {
+  const source = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const start = source.indexOf("  function CaseSeparation(");
+  const sep = source.slice(start, source.indexOf("\n  }\n", start));
+  assert.ok(sep.includes("t(\"separationDetails\")"), "the real CaseSeparation body");
+  assert.doesNotMatch(sep.replace(/\/\/.*$/gm, ""), /"[A-Z][a-z]+[ ?]/, "no English labels or titles");
+  const panel = source.slice(source.indexOf("  function CouncilEditablePanel("), source.indexOf("  function CouncilEditablePanel(") + 3000);
+  assert.doesNotMatch(panel, /\}, "Edit"\)|\}, "Save"\)/);
+  for (const key of ["separationDetails", "civilDivorce", "restrainingOrder", "reconciliation", "maritalStatus", "initiatedBy", "courtName", "courtLocation", "civilCaseNumber", "civilDivorceStatus", "orderFiled", "orderNameListed", "orderCaseNumber", "orderStatus", "reconciliationAttempted", "permitPreviouslyApplied", "permitWhen", "permitWhere", "decisionOutcome"])
+    assert.notEqual(ar(key), t(key), key);
+});

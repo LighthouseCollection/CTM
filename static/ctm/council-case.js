@@ -508,6 +508,26 @@ ${ar}` : en;
       outsideMarriageDate: "Date of Marriage Outside Coptic Church",
       churchMarriageDate: "Date of Church Marriage",
       dateOfSeparation: "Date of Separation",
+      separationDetails: "Separation Details",
+      civilDivorce: "Civil Divorce",
+      restrainingOrder: "Restraining Order",
+      reconciliation: "Reconciliation",
+      maritalStatus: "Current Marital Status",
+      initiatedBy: "Initiated By",
+      civilDivorceFiled: "Civil Divorce Filed?",
+      courtName: "Name of Court",
+      courtLocation: "Court Street Address / Location",
+      civilCaseNumber: "Civil Case Number",
+      civilDivorceStatus: "Civil Divorce Status",
+      orderFiled: "Restraining Order Filed?",
+      orderNameListed: "Name Listed on Order",
+      orderCaseNumber: "Restraining Order Case Number",
+      orderStatus: "Restraining Order Status",
+      reconciliationAttempted: "Clergy Counseling / Reconciliation Attempted?",
+      permitPreviouslyApplied: "Previously Applied for Ecclesiastical Marriage Permit?",
+      permitWhen: "When Did You Previously Apply?",
+      permitWhere: "Where Did You Previously Apply?",
+      decisionOutcome: "Decision Outcome",
       dateOfCivilDivorce: "Date of Civil Divorce",
       dateOfRestrainingOrder: "Date of Restraining Order",
       restrainingOrderExpirationDate: "Restraining Order Expiration Date",
@@ -989,6 +1009,26 @@ ${ar}` : en;
       outsideMarriageDate: "تاريخ الزواج خارج الكنيسة القبطية",
       churchMarriageDate: "تاريخ الزواج الكنسي",
       dateOfSeparation: "تاريخ الانفصال",
+      separationDetails: "تفاصيل الانفصال",
+      civilDivorce: "الطلاق المدني",
+      restrainingOrder: "أمر التقييد",
+      reconciliation: "المصالحة",
+      maritalStatus: "الحالة الاجتماعية الحالية",
+      initiatedBy: "المبادر بالانفصال",
+      civilDivorceFiled: "هل رُفعت دعوى طلاق مدني؟",
+      courtName: "اسم المحكمة",
+      courtLocation: "عنوان المحكمة / موقعها",
+      civilCaseNumber: "رقم القضية المدنية",
+      civilDivorceStatus: "حالة الطلاق المدني",
+      orderFiled: "هل صدر أمر تقييد؟",
+      orderNameListed: "الاسم المذكور في الأمر",
+      orderCaseNumber: "رقم قضية أمر التقييد",
+      orderStatus: "حالة أمر التقييد",
+      reconciliationAttempted: "هل جرت محاولة إرشاد كنسي أو مصالحة؟",
+      permitPreviouslyApplied: "هل سبق التقدم بطلب تصريح زواج كنسي؟",
+      permitWhen: "متى تقدمت بالطلب سابقًا؟",
+      permitWhere: "أين تقدمت بالطلب سابقًا؟",
+      decisionOutcome: "نتيجة القرار",
       dateOfCivilDivorce: "تاريخ الطلاق المدني",
       dateOfRestrainingOrder: "تاريخ أمر التقييد",
       restrainingOrderExpirationDate: "تاريخ انتهاء أمر التقييد",
@@ -3902,12 +3942,12 @@ ${ar}` : en;
       finally { setPending(false); }
     };
     return h(CaseRecordPage, { api, lang, caseId, record, title: t("marriageTitle"), readOnly: !proceeding },
-      h(P.Panel, { icon: "settings-users", title: t("churchMarriage"), actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, "Edit") : null },
+      h(P.Panel, { icon: "settings-users", title: t("churchMarriage"), actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, t("edit")) : null },
         h(P.Stack, { gap: "md" },
           editing ? h(P.Form, { onSubmit: save, label: t("churchMarriage"), noValidate: true },
             caseColumns(P, h, fields.map(([key, label, type]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) }))), 3, "wide"),
             failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-            h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
+            h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("save"))),
           ) : h(CaseReadFields, { P, h, fields: [
             ["outside_coptic_church", t("marriedOutsideCoptic")], ["outside_denomination", t("outsideDenomination")], ["outside_marriage_date", t("outsideMarriageDate"), "date"],
             ["church_marriage_date", t("churchMarriageDate"), "date"], ["officiating_priest", t("officiatingPriest")], ["marriage_duration", t("marriageDuration")],
@@ -3938,11 +3978,11 @@ ${ar}` : en;
       } catch (error) { setFailure(base.serverMessage(error, t)); }
       finally { setPending(false); }
     };
-    return h(P.Panel, { title, icon, actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, "Edit") : null }, h(P.Stack, { gap: "md" },
+    return h(P.Panel, { title, icon, actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, t("edit")) : null }, h(P.Stack, { gap: "md" },
       editing ? h(P.Form, { onSubmit: save, label: title, noValidate: true },
         caseColumns(P, h, fields.map(([key, label, type = "text"]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) }))), 3, "wide"),
         failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-        h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, "Save")),
+        h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("save"))),
       ) : h(CaseReadFields, { P, h, fields, values }),
     ));
   }
@@ -3954,16 +3994,16 @@ ${ar}` : en;
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const record = state.data, separation = record.separation || {};
     const initiator = separation.initiated_by;
-    const initiatorValue = initiator?.party ? `${initiator.party.name} (${initiator.party.slot === "A" ? "Applicant" : "Spouse"})` : initiator?.value;
+    const initiatorValue = initiator?.party ? `${initiator.party.name} (${t(initiator.party.slot === "A" ? "applicant" : "respondent")})` : initiator?.value;
     const details = councilCardValues(record, "separation_details", { marital_status: separation.marital_status, separation_date: separation.separation_date, initiated_by: initiatorValue, reason: base.groundsText(separation.grounds, separation.reason, t) });
     const civil = councilCardValues(record, "civil_divorce", separation.civil_divorce || {});
     const reconciliation = councilCardValues(record, "reconciliation", separation.reconciliation || {});
     const order = councilCardValues(record, "restraining_order", separation.restraining_orders?.[0] || {});
     return h(CaseRecordPage, { api, lang, caseId, record, title: t("separation"), readOnly: !openProceeding(record) },
-      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "separation_details", title: "Separation Details", icon: "move", values: details, fields: [["marital_status", "Current Marital Status"], ["separation_date", "Date of Separation", "date"], ["initiated_by", "Initiated By"], ["reason", "Reason for Divorce"]] }),
-      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "civil_divorce", title: "Civil Divorce", icon: "document", values: civil, fields: [["filed", "Civil Divorce Filed?"], ["date", "Date of Civil Divorce", "date"], ["court", "Name of Court"], ["location", "Court Street Address / Location"], ["case_number", "Civil Case Number"], ["status", "Civil Divorce Status"]] }),
-      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "restraining_order", title: "Restraining Order", icon: "link", values: order, fields: [["filed", "Restraining Order Filed?"], ["date", "Date of Restraining Order", "date"], ["expiration_date", "Restraining Order Expiration Date", "date"], ["name_listed", "Name Listed on Order"], ["court", "Name of Court"], ["case_number", "Restraining Order Case Number"], ["status", "Restraining Order Status"]] }),
-      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "reconciliation", title: "Reconciliation", icon: "settings-users", values: reconciliation, fields: [["attempted", "Clergy Counseling / Reconciliation Attempted?"], ["previously_applied", "Previously Applied for Ecclesiastical Marriage Permit?"], ["when", "When Did You Previously Apply?"], ["where", "Where Did You Previously Apply?"], ["outcome", "Decision Outcome"]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "separation_details", title: t("separationDetails"), icon: "move", values: details, fields: [["marital_status", t("maritalStatus")], ["separation_date", t("dateOfSeparation"), "date"], ["initiated_by", t("initiatedBy")], ["reason", t("reasonForDivorce")]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "civil_divorce", title: t("civilDivorce"), icon: "document", values: civil, fields: [["filed", t("civilDivorceFiled")], ["date", t("dateOfCivilDivorce"), "date"], ["court", t("courtName")], ["location", t("courtLocation")], ["case_number", t("civilCaseNumber")], ["status", t("civilDivorceStatus")]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "restraining_order", title: t("restrainingOrder"), icon: "link", values: order, fields: [["filed", t("orderFiled")], ["date", t("dateOfRestrainingOrder"), "date"], ["expiration_date", t("restrainingOrderExpirationDate"), "date"], ["name_listed", t("orderNameListed")], ["court", t("courtName")], ["case_number", t("orderCaseNumber")], ["status", t("orderStatus")]] }),
+      h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "reconciliation", title: t("reconciliation"), icon: "settings-users", values: reconciliation, fields: [["attempted", t("reconciliationAttempted")], ["previously_applied", t("permitPreviouslyApplied")], ["when", t("permitWhen")], ["where", t("permitWhere")], ["outcome", t("decisionOutcome")]] }),
     );
   }
 
@@ -4275,7 +4315,7 @@ ${ar}` : en;
       ["children", t("children")], ["last_hearing_date", t("lastHearingDate")],
     ];
     const summaryReadValues = {
-      case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: record.status === "open" ? t("active") : bt("closed"), assigned_member: manager || bt("unassigned"),
+      case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed")), assigned_member: manager || bt("unassigned"),
       applicant: applicant?.name, respondent: respondent?.name, reason: summary.reason, marriage_duration: marriageDuration(record.marriage?.church_marriage_date, lang),
       children: summary.children?.length ? h(P.Stack, { gap: "xs" }, ...summary.children.map((child, index) => h(P.Text, { key: index }, childLine(child, lang, t)))) : t("noChildren"), last_hearing_date: summaryDate(summary.last_hearing_date, lang),
     };

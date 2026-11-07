@@ -366,7 +366,8 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /reasonForDivorce: "Reason Seeking Divorce"/);
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
   assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
-  assert.match(councilCase, /status: record\.status === "open" \? t\("active"\) : bt\("closed"\)/);
+  // D-0050 (#217): the case status is a Plenix Badge, never plain text.
+  assert.ok(councilCase.includes('status: h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed"))'));
   assert.match(councilCase, /actions: canEditSummary && !summaryEditing/);
   assert.match(councilCase, /fact_code: "case_card\.summary"/);
   assert.match(councilCase, /title: t\("churchMarriage"\), actions: canWrite && !editing/);
@@ -445,7 +446,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
   assert.match(councilCase, /"Separation Details"/);
   assert.match(councilCase, /"Civil Divorce"/);
   assert.match(councilCase, /"Restraining Order"/);
-  assert.match(councilCase, /scope: "restraining_order", title: "Restraining Order", icon: "link"/);
+  assert.match(councilCase, /scope: "restraining_order", title: t\("restrainingOrder"\), icon: "link"/);
   assert.match(councilCase, /"Reconciliation"/);
   assert.match(app, /const collaborationGroups = \[/);
   assert.match(app, /items: ["notes", "communications"]/);
