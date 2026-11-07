@@ -1083,6 +1083,9 @@
         setFailure(false);
         setPage(next.page);
         setSelection(next.selection);
+        // Back or Forward to the same page (only the ?view changed, D-0049) keeps page and selection, so the
+        // data effect would not run again and the page would stay on "Loading…"; a new revision reloads it.
+        reload((n) => n + 1);
       };
       if (!routes.parse(window.location.pathname)) window.history.replaceState(null, "", "/");
       window.addEventListener("popstate", restore);

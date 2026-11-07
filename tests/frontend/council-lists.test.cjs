@@ -274,7 +274,7 @@ test("council home: lead session, one row of tiles, My cases grid, in that order
   same(cards.map((card) => card.props.title), ["My cases", "Unread", "New applications", "For council"]);
   assert.ok(cards.every((card) => card.props.layout === "tile" && card.props.size === "lg"));
   assert.ok(cards.every((card) => card.props.menu === undefined && card.props.info === undefined));
-  same(cards.map((card) => card.props.href || null), ["/cases/mine", "/notifications", "/applications/new", null]);
+  same(cards.map((card) => card.props.href || null), ["/cases/mine", "/notifications", "/applications/new", "/applications/new?view=council"]);
   same(cards.map((card) => card.props.value), ["2", "0", "10", "0"]);
   // My cases appears once, as a grid of the four columns; a row opens its case.
   assert.equal(byName(tree, "MetricCard").length + cards.length >= 4, true);
