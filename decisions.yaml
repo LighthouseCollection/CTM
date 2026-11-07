@@ -396,3 +396,13 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: test, ref: tests/test_case_delete.py }
+
+  - id: D-0043
+    date: 2026-11-06
+    area: workflow
+    decision: A council seat is separate from the system role. Any staff account (member, president, secretary, admin) can hold a seat, and each seat is voting or non-voting. Admin, secretary and president change seats; every change is kept with its actor and time, and earlier votes stay as cast. The ballot refuses a vote from an account without a voting seat, and quorum and tally count voting seats only. With no change recorded, member and president hold voting seats and the secretary and admins hold none
+    why: Owner 2026-11-06 (issue 175) "add frraphaelmaher@lacopts.org as council member" and "there can be voting council and non voting member to be defined in settings by the admin and secretary and president"
+    options: [Seat separate from role, voting or non-voting (chosen), Make admins council members by role]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/test_council_seats.py }

@@ -779,6 +779,25 @@ class Vote(Immutable):
         constraints = [models.UniqueConstraint(fields=["decision", "member", "idempotency_key"], name="vote_replay_identity")]
 
 
+class CouncilSeatChange(Immutable):
+    """A change to an account's council seat (#175, D-0043). Append-only; the latest counts.
+
+    A seat is separate from the system role: any staff account can hold one, and a
+    seat is voting or non-voting. With no change recorded, member and president hold
+    voting seats and secretary and admin hold none (public.ctm_council_seat). Only
+    admin, secretary or president add changes; the database sets created_at.
+    """
+    account = models.ForeignKey(Account, on_delete=models.PROTECT, related_name="seat_changes")
+    seated = models.BooleanField()
+    voting = models.BooleanField()
+    actor = models.ForeignKey(Account, on_delete=models.PROTECT, related_name="seat_changes_made")
+
+    class Meta:
+        indexes = [models.Index(fields=["account", "-created_at"], name="council_seat_latest")]
+        constraints = [models.CheckConstraint(condition=models.Q(voting=False) | models.Q(seated=True),
+                                              name="council_seat_voting_needs_seat")]
+
+
 class PresidentialApproval(Immutable):
     decision = models.ForeignKey(DecisionRevision, on_delete=models.PROTECT)
     president = models.ForeignKey(
