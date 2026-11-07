@@ -872,6 +872,7 @@ def assign(request, case_id):
 @endpoint()
 def members(request):
     from tribunal.services.staff_roles import assignment_president, assignment_recorder
+    from tribunal.services.council_seats import seated_ids
 
     staff(request.user)
     # The roster (items) stays council-only: it feeds voting, attendance and
@@ -893,7 +894,7 @@ def members(request):
                         can_authorize_assignment=assignment_president(x),
                         can_record_assignment=assignment_recorder(x))
                 for x in m.Account.objects.filter(
-                    is_active=True, role__in=["president", "secretary", "member"]
+                    Q(role__in=["president", "secretary", "member"]) | Q(pk__in=seated_ids()), is_active=True
                 ).order_by("created_at")
             ],
             "assignment_authorities": authorities,
@@ -2590,3 +2591,19 @@ def complete_paper_report_request(request, request_id):
     data = body(request)
     return JsonResponse(encoded(complete_external_paper(request.user, request_id,
         data.get('file_id'), data.get('completion_date'), expected_version=data.get('expected_version'))), status=201)
+
+
+@endpoint()
+def council_seats(request):
+    """#175: every active staff account with its council seat (staff only)."""
+    from tribunal.services.council_seats import seat_list
+    return JsonResponse(seat_list(request.user))
+
+
+@endpoint(("POST",))
+def council_seat(request, account_id):
+    """#175: admin, secretary or president sets an account's seat and voting."""
+    from tribunal.services.council_seats import set_seat
+    data = body(request)
+    seat = set_seat(request.user, account_id, seated=data.get("seated"), voting=data.get("voting"))
+    return JsonResponse({"id": str(account_id), **seat})

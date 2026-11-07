@@ -329,6 +329,21 @@ class Command(BaseCommand):
                     )
             return session
 
+        def seat_admin_with_cases():
+            """#175: the roster admin keeps the admin role, holds a voting seat and
+            manages demo cases like the members. Runs once: a recorded seat change
+            or an assigned demo case means it already ran, or a person decided."""
+            if not m.CouncilSeatChange.objects.filter(account=admin).exists():
+                m.CouncilSeatChange.objects.create(account=admin, seated=True, voting=True, actor=president)
+            if m.Case.objects.filter(assigned_member=admin, origin="synthetic").exists():
+                return
+            cases = (m.Case.objects.filter(origin="synthetic", status="open", assigned_member__in=members)
+                     .order_by("-number")[:4])
+            for case in cases:
+                case.assigned_member = admin
+                case.save(update_fields=["assigned_member"])
+                m.CaseAssignment.objects.create(case=case, member=admin, president=president, actor=secretary)
+
         def ensure_session_agenda(current_session, archived_session):
             entries = (
                 (current_session, "20261020-03", 1, 1, "scheduled"),
@@ -1046,6 +1061,7 @@ class Command(BaseCommand):
         ensure_session_agenda(current_session, archived_session)
         added = seed_agenda_cases(current_session)
         enrich_original_cases()
+        seat_admin_with_cases()
         m.AuditEvent.objects.create(
             actor=admin,
             action="demo_dataset_created",
