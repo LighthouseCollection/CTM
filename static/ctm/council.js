@@ -3210,7 +3210,7 @@
         const rows = myCases(cases.data.items, user).map((row) => ({
           id: row.id, case_id: row.id, number: row.number, spouses: spousesText(row) || "—",
           status: t(row.status === "closed" ? "closed" : "open"),
-          next_step: row.next_step ? t(row.next_step) : "—",
+          next_step: row.next_step ? t(row.next_step) : "",
         }));
         body = rows.length
           ? h(window.CTMShell.Table, {
@@ -3239,7 +3239,7 @@
         const rows = homeMembers(members.data.items, lang);
         body = rows.length
           ? h(P.WidgetGrid, { label: t("councilMembers"), columns: 4, items: rows.map((row) => ({ ...row, id: String(row.id) })),
-              renderItem: (row) => h(P.MetricCard, { key: row.id, type: "person", title: row.name || "—", headingLevel: 3,
+              renderItem: (row) => h(P.MetricCard, { key: row.id, type: "person", size: "sm", title: row.name || "—", headingLevel: 3,
                 person: { name: row.name || "—", role: t(memberTitleKey(row.title)), src: row.photo_url || undefined },
                 value: row.suppressed ? t("fewerThanFive") : n(row.active_cases), unit: row.suppressed ? undefined : t("activeCasesUnit") }) })
           : h(P.EmptyState, { title: t("noMembers") });
