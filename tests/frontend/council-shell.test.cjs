@@ -280,13 +280,16 @@ test("the session header is Plenix EntityHeader style 2: facts carry their actio
   assert.doesNotMatch(sessionWorkspace, /\bagendaTab\b|h\(P\.Tabs, \{[^}]*label: t\("agenda"\)/);
   const sections = sessionWorkspace.match(/h\(P\.Stack, \{ gap: "sm" \}, h\(P\.Text, \{ as: "h2", variant: "heading" \}, t\("(\w+)"\)\), agendaTable\((\d)\)\)/g) || [];
   assert.deepEqual(sections.map((s) => s.match(/t\("(\w+)"\)\), agendaTable\((\d)\)/).slice(1).join(":")), ["scheduledCasesForHearing:2", "casesToAssign:1"]);
-  assert.match(sessionWorkspace, /current \? h\(P\.Stack, \{ gap: "section" \},/);
+  assert.match(sessionWorkspace, /current \? h\(P\.Inline, \{ align: "start", gap: "lg" \},\s*h\(P\.Stack, \{ gap: "section", grow: true \},/);
   assert.doesNotMatch(agendaTable, /P\.Panel/);
   assert.match(agendaTable, /previousRecommendation/);
-  assert.match(agendaTable, /h\(PreviousRecommendationCell, \{ value: row\.previous_recommendation, lang \}\)/);
-  assert.match(council, /function PreviousRecommendationCell\(\{ value, lang \}\)/);
-  assert.match(council, /t\("readRecommendation"\)/);
-  assert.match(council, /open: open, size: "lg", title: t\("previousRecommendation"\)/);
+  // Issue 222: the recommendation cell is text (one line, "…", full text on hover); no button or dialog in a cell.
+  assert.match(agendaTable, /render: \(row\) => recommendationText\(row\.previous_recommendation, t\)/);
+  assert.doesNotMatch(council, /PreviousRecommendationCell|readRecommendation/);
+  // The full text is in the agenda row's Plenix SidePanel, as a read-only field.
+  assert.match(sessionWorkspace, /agendaDetail \? h\(P\.SidePanel, \{/);
+  assert.match(sessionWorkspace, /h\(P\.PropertyList\.Item, \{ label: t\("previousRecommendation"\) \}/);
+  assert.match(sessionWorkspace, /onSelect: \(id\) => setAgendaDetail\(/);
   assert.doesNotMatch(agendaTable, /field: "record"/);
   assert.match(agendaTable, /title: t\("actions"\), field: "open_action"/);
   assert.match(council, /empty: t\(`part\$\{n\}Empty`\), isStatic: true/);
