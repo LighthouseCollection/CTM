@@ -65,3 +65,22 @@ def test_council_only(granted_roles, client, people):
     assert get(granted_roles, client, people["applicant"]).status_code == 403
     client.logout()
     assert get(granted_roles, client, None).status_code == 401
+
+
+def test_a_single_hidden_cell_cannot_be_worked_out_by_subtraction(granted_roles, client, people):
+    """Threshold confirmed at 5 (#170). The year's case total is knowable, so one
+    hidden member cell would equal total minus the visible cells; a second cell
+    is hidden with it, and no total is published."""
+    make_cases(people, 6, member=people["member"], prefix="A")
+    make_cases(people, 5, member=people["president"], prefix="B")
+    make_cases(people, 2, member=people["secretary"], prefix="C")
+    data = get(granted_roles, client, people["secretary"], f"/api/statistics/summary/?year={YEAR}").json()
+    assert "total" not in data
+    cells = {row["id"]: row for row in data["cases_per_member"]}
+    hidden = [row for row in cells.values() if row["suppressed"]]
+    assert len(hidden) >= 2 and all(row["count"] is None for row in hidden)
+    assert cells[str(people["secretary"].pk)]["suppressed"]
+    assert cells[str(people["president"].pk)]["suppressed"]  # smallest visible cell hidden with it
+    assert cells[str(people["member"].pk)]["count"] == 6
+    grounds = [row for row in data["cases_by_ground"] if row["suppressed"]]
+    assert len(grounds) != 1

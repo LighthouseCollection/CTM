@@ -1,4 +1,4 @@
-// D-0047 (#193): navigation panes fit their labels; every nav icon is a Plenix icon so items line up.
+// D-0047, D-0048 (#193): navigation panes fit their labels; every nav icon is a Plenix icon so items line up.
 const test = require("node:test");
 const assert = require("node:assert");
 const fs = require("fs");
@@ -6,10 +6,10 @@ const path = require("path");
 
 const app = fs.readFileSync(path.join(__dirname, "..", "..", "static", "ctm", "app.js"), "utf8");
 
-test("case navigation pane uses the small Plenix pane width and stays collapsible", () => {
+test("case navigation pane uses the Plenix md pane width (D-0048) and stays collapsible", () => {
   const at = app.indexOf("P.SecondaryPane");
   const pane = app.slice(at, at + 400);
-  assert.match(pane, /width: "sm"/);
+  assert.match(pane, /width: "md"/);
   assert.match(pane, /collapsible: true/);
 });
 

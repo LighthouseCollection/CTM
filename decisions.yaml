@@ -436,3 +436,23 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: test, ref: tests/frontend/nav-width.test.cjs }
+
+  - id: D-0048
+    date: 2026-11-07
+    area: design
+    decision: The case navigation pane uses the Plenix SecondaryPane width "md" (replaces "sm" from D-0047) so the longest label, the contract term "Professional Assessments", fits in English and Arabic; terms are never shortened to fit. The main nav stays folded to its rail inside a case
+    why: At "sm" (measured 203px) the EN label was cut off (#193, frontend check 2026-11-07); glossary marks the term as Contract
+    options: [Plenix "md" width (chosen), Shorten the label (not allowed - contract term)]
+    decided_by: agent:ctm3-design-director
+    status: active
+    check: { kind: test, ref: tests/frontend/nav-width.test.cjs }
+
+  - id: D-0049
+    date: 2026-11-07
+    area: design
+    decision: The Home "For council" tile opens the New applications page on a second view - Tabs "Awaiting review" / "For council" (applications in council consideration), with the view in the URL (/applications/new?view=council); no separate page
+    why: The tile had no list to open (#170); both are the managers' application queue, so one ListingPage with two views keeps navigation unchanged
+    options: [Second view on New applications (chosen), New page]
+    decided_by: agent:ctm3-design-director
+    status: active
+    review_only: Not built yet (#170); the frontend test for the view becomes the check

@@ -14,11 +14,22 @@ PRIVACY_THRESHOLD = 5
 TITLES = {"president": "presiding", "secretary": "secretary"}
 
 
-def suppressed_count(value):
-    """(count or None, suppressed) under the privacy threshold."""
-    if value < PRIVACY_THRESHOLD:
-        return None, True
-    return value, False
+def protected_cells(rows):
+    """Suppress small counts so no hidden count can be worked out by subtraction.
+
+    rows: dicts with a raw "count". Counts below the threshold become null with
+    suppressed: true. When exactly one cell is hidden, the smallest visible cell
+    is hidden too, because the list's total is knowable (#170, threshold 5).
+    """
+    out = [dict(row, suppressed=row["count"] < PRIVACY_THRESHOLD) for row in rows]
+    hidden = [row for row in out if row["suppressed"]]
+    visible = [row for row in out if not row["suppressed"]]
+    if len(hidden) == 1 and visible:
+        min(visible, key=lambda row: row["count"])["suppressed"] = True
+    for row in out:
+        if row["suppressed"]:
+            row["count"] = None
+    return out
 
 
 def council_members():
@@ -33,12 +44,11 @@ def members_summary(actor):
     rank = {"president": 0, "secretary": 1}
     accounts = council_members().annotate(
         open_cases=Count("assigned_cases", filter=Q(assigned_cases__status="open"), distinct=True))
-    rows = []
-    for account in sorted(accounts, key=lambda a: (rank.get(a.role, 2), a.last_name, a.first_name, a.pk)):
-        count, hidden = suppressed_count(account.open_cases)
-        rows.append({"id": str(account.pk), "name": f"{account.first_name} {account.last_name}".strip(),
-                     "title": TITLES.get(account.role, "member"), "photo_url": None,
-                     "active_cases": count, "suppressed": hidden})
+    cells = protected_cells([
+        {"id": str(account.pk), "name": f"{account.first_name} {account.last_name}".strip(),
+         "title": TITLES.get(account.role, "member"), "photo_url": None, "count": account.open_cases}
+        for account in sorted(accounts, key=lambda a: (rank.get(a.role, 2), a.last_name, a.first_name, a.pk))])
+    rows = [{**{k: v for k, v in row.items() if k != "count"}, "active_cases": row["count"]} for row in cells]
     return {"items": rows, "threshold": PRIVACY_THRESHOLD}
 
 
@@ -102,15 +112,10 @@ def statistics_summary(actor, year=None):
         raise ValidationError("Choose a year as a number.")
     cases = [case for case in m.Case.objects.all() if case.created_at.astimezone(la).year == year]
 
-    def cell(value):
-        count, hidden = suppressed_count(value)
-        return {"count": count, "suppressed": hidden}
-
-    per_member = []
-    for account in council_members().order_by("last_name", "first_name", "pk"):
-        mine = sum(1 for case in cases if case.assigned_member_id == account.pk)
-        per_member.append({"id": str(account.pk), "name": f"{account.first_name} {account.last_name}".strip(),
-                           **cell(mine)})
+    per_member = protected_cells([
+        {"id": str(account.pk), "name": f"{account.first_name} {account.last_name}".strip(),
+         "count": sum(1 for case in cases if case.assigned_member_id == account.pk)}
+        for account in council_members().order_by("last_name", "first_name", "pk")])
     ground_counts = dict.fromkeys(sorted(GROUNDS), 0)
     for case in cases:
         # The first formal submission only: saved-but-unsubmitted corrections never count (F08).
@@ -120,6 +125,6 @@ def statistics_summary(actor, year=None):
         for code in set(submitted_grounds(revision.answers) if revision else []):
             if code in ground_counts:
                 ground_counts[code] += 1
-    by_ground = [{"code": code, **cell(count)} for code, count in ground_counts.items()]
+    by_ground = protected_cells([{"code": code, "count": count} for code, count in ground_counts.items()])
     return {"year": year, "years": years, "threshold": PRIVACY_THRESHOLD,
             "cases_per_member": per_member, "cases_by_ground": by_ground}

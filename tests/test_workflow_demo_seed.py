@@ -278,3 +278,43 @@ def test_seed_gives_the_admin_a_voting_seat_and_cases_once(monkeypatch, settings
     _run_seed(monkeypatch)
     assert m.CouncilSeatChange.objects.filter(account=admin).count() == 1
     assert m.CaseAssignment.objects.filter(member=admin).count() == 4
+
+
+def _assert_demo_dates_are_realistic():
+    from tribunal import models as m
+    today, now = timezone.localdate(), timezone.now()
+    future = m.Hearing.objects.filter(agenda__case__origin="synthetic", agenda__session__date__gt=today)
+    assert not future.exists(), [h.agenda.session.date for h in future]  # #194: a held hearing is never in the future
+    assert not m.Case.objects.filter(origin="synthetic", marriage_date__gte=today).exists()
+    assert not m.Application.objects.filter(case__origin="synthetic", submitted_at__gt=now).exists()
+    for party in m.Party.objects.filter(case__origin="synthetic").select_related("person", "case"):
+        if party.person and party.person.birth_date and party.case.marriage_date:
+            assert party.person.birth_date < party.case.marriage_date
+
+
+@pytest.mark.django_db
+@pytest.mark.skipif(connection.vendor != "postgresql", reason="Live fictitious path requires PostgreSQL")
+def test_demo_hearings_filings_and_marriages_are_in_the_past(settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    call_command("seed_workflow_demo", live_fictitious=True, confirmation="FICTITIOUS-DEMO-DATA-ONLY")
+    _assert_demo_dates_are_realistic()
+
+
+@pytest.mark.django_db
+@pytest.mark.skipif(connection.vendor != "postgresql", reason="Live fictitious path requires PostgreSQL")
+def test_rerun_moves_an_existing_future_hearing_into_the_past(settings, tmp_path):
+    """Live 2026-11-07: 20261020-04 showed 'Last Hearing Date: Jan 22, 2030'."""
+    from datetime import date
+    from tribunal import models as m
+    settings.MEDIA_ROOT = tmp_path
+    call_command("seed_workflow_demo", live_fictitious=True, confirmation="FICTITIOUS-DEMO-DATA-ONLY")
+    case = Case.objects.get(number="20261020-04")
+    later = m.CouncilSession.objects.create(date=date(2030, 1, 22), state="draft")
+    item = m.AgendaItem.objects.create(session=later, case=case, part=2, position=99)
+    staff = Account.objects.get(email="frmauritiusmikhail@lacopts.org")
+    hearing = m.Hearing.objects.create(agenda=item, proceeding=case.proceedings.first(), presenter=staff)
+    call_command("seed_workflow_demo", live_fictitious=True, confirmation="FICTITIOUS-DEMO-DATA-ONLY")
+    hearing.refresh_from_db()
+    assert hearing.agenda.session.date <= timezone.localdate() and hearing.agenda.state == "presented"
+    assert m.AgendaItem.objects.filter(pk=item.pk, session=later).exists()  # the future placement stays as upcoming
+    _assert_demo_dates_are_realistic()

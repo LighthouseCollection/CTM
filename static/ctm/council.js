@@ -387,6 +387,9 @@
       councilMember: "Council member",
       reviewQueue: "Applications awaiting completeness review",
       reviewQueueEmpty: "No applications are awaiting completeness review.",
+      viewAwaitingReview: "Awaiting review",
+      viewForCouncil: "For council",
+      councilQueueEmpty: "No applications are waiting for the council.",
       reviewOpen: "Review applications",
       reviewCount: "{n} awaiting review",
       review: "Completeness review",
@@ -764,6 +767,9 @@
       councilMember: "عضو المجلس",
       reviewQueue: "طلبات في انتظار مراجعة الاستيفاء",
       reviewQueueEmpty: "لا توجد طلبات في انتظار مراجعة الاستيفاء.",
+      viewAwaitingReview: "في انتظار المراجعة",
+      viewForCouncil: "أمام المجلس",
+      councilQueueEmpty: "لا توجد طلبات في انتظار المجلس.",
       reviewOpen: "مراجعة الطلبات",
       reviewCount: "{n} في انتظار المراجعة",
       review: "مراجعة استيفاء الطلب",
@@ -1256,6 +1262,7 @@
 
   const feeLabel = (row, t) => (row.fee ? t(row.fee.status) : t("unknown"));
   const REVIEW_URL = "/api/applications/?state=awaiting_review";
+  const CONSIDERATION_URL = "/api/applications/?state=council_consideration";
   function formatWhen(value, lang) {
     if (!value) return "";
     const d = new Date(value);
@@ -3087,7 +3094,7 @@
   }
 
   // The tiles of Home's one row (issue 170, design §2): short labels, each opens its list; a count the server
-  // did not send is "–" (value left out), never 0. "For council" has no list page yet, so it has no link.
+  // did not send is "–" (value left out), never 0. "For council" opens New applications in its council view (D-0049).
   function homeTiles({ dashboard, unread, consideration }, user, t, n) {
     const route = (id, path) => window.CTMRoutes?.routeFor(id) || path;
     return [
@@ -3095,7 +3102,7 @@
       { id: "unread", icon: "hdr-bell", title: t("tileUnread"), value: n(unread), href: route("notifications", "/notifications") },
       ...(canManage(user) ? [
         { id: "review", icon: "doc-text", title: t("tileNewApplications"), value: n(dashboard?.review_queue), href: route("newApplications", "/applications/new") },
-        { id: "consideration", icon: "doc-text", title: t("tileForCouncil"), value: n(consideration) },
+        { id: "consideration", icon: "doc-text", title: t("tileForCouncil"), value: n(consideration), href: route("newApplications", "/applications/new") + "?view=council" },
       ] : []),
     ];
   }
@@ -3114,7 +3121,7 @@
     const [counts, retryCounts] = useLoad(
       () => Promise.all([
         api("/api/notifications/"),
-        canManage(user) ? api("/api/applications/?state=council_consideration") : Promise.resolve({ items: [] }),
+        canManage(user) ? api(CONSIDERATION_URL) : Promise.resolve({ items: [] }),
       ]).then(([notes, consideration]) => ({ unread: notes.unread_count || 0, consideration: considerationQueue(consideration.items).length })),
       [user?.id],
     );
@@ -3144,6 +3151,8 @@
       const url = new URL(link.href, window.location.href);
       if (url.origin !== window.location.origin || !window.CTMRoutes?.parse(url.pathname)) return;
       event.preventDefault();
+      // A view in the address (?view=council) goes into history first; the page reads it when it opens.
+      if (url.search) window.history.pushState(null, "", url.pathname + url.search);
       onNavigate(url.pathname);
     };
     const regionFailure = (retry, error) => h(P.Notice, { tone: "danger" }, serverMessage(error, t), " ",
@@ -3210,7 +3219,7 @@
         const rows = myCases(cases.data.items, user).map((row) => ({
           id: row.id, case_id: row.id, number: row.number, spouses: spousesText(row) || "—",
           status: t(row.status === "closed" ? "closed" : "open"),
-          next_step: row.next_step ? t(row.next_step) : "—",
+          next_step: row.next_step ? t(row.next_step) : "",
         }));
         body = rows.length
           ? h(window.CTMShell.Table, {
@@ -3239,7 +3248,7 @@
         const rows = homeMembers(members.data.items, lang);
         body = rows.length
           ? h(P.WidgetGrid, { label: t("councilMembers"), columns: 4, items: rows.map((row) => ({ ...row, id: String(row.id) })),
-              renderItem: (row) => h(P.MetricCard, { key: row.id, type: "person", title: row.name || "—", headingLevel: 3,
+              renderItem: (row) => h(P.MetricCard, { key: row.id, type: "person", size: "sm", title: row.name || "—", headingLevel: 3,
                 person: { name: row.name || "—", role: t(memberTitleKey(row.title)), src: row.photo_url || undefined },
                 value: row.suppressed ? t("fewerThanFive") : n(row.active_cases), unit: row.suppressed ? undefined : t("activeCasesUnit") }) })
           : h(P.EmptyState, { title: t("noMembers") });
@@ -3368,25 +3377,50 @@
   }
 
   // New applications awaiting completeness review, on the ListingPage template; a row opens the standard case view.
+  // D-0049 (issue 170): New applications has two views, the completeness review ("Awaiting review", the default)
+  // and the appeals and later petitions awaiting the council ("For council"). The view lives in the address
+  // (?view=council), so Home's For council tile and Back/Forward open it.
+  const APPLICATION_VIEWS = ["review", "council"];
+  function applicationView(search) {
+    return /(?:^\?|&)view=council(?:&|$)/.test(String(search || "")) ? "council" : "review";
+  }
+  function applicationViewSearch(view) {
+    return view === "council" ? "?view=council" : "";
+  }
+
   function NewApplicationsTable({ api, lang, user, onOpen }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
-    const [state, retry] = useLoad(() => api(REVIEW_URL), [user?.id]);
+    const [view, setView] = R.useState(() => applicationView(window.location?.search));
+    R.useEffect(() => {
+      const sync = () => setView(applicationView(window.location?.search));
+      if (!window.addEventListener) return undefined;
+      window.addEventListener("popstate", sync);
+      return () => window.removeEventListener("popstate", sync);
+    }, []);
+    const [state, retry] = useLoad(() => api(view === "council" ? CONSIDERATION_URL : REVIEW_URL), [user?.id, view]);
     if (!canManage(user)) return h(P.EmptyState, { title: t("reviewOnlyAdmin") });
-    if (state.pending && !state.data) return loadingView(P, h, t);
-    if (state.error) return loadFailure(P, h, t, retry, state.error);
-    const rows = awaitingReview(state.data?.items).map((row) => ({
-      ...row,
-      applicant: { name: row.applicant_name || "—", gender: row.applicant_gender === "M" ? "male" : row.applicant_gender === "F" ? "female" : undefined },
-      respondent: { name: row.respondent_name || "—", gender: row.respondent_gender === "M" ? "male" : row.respondent_gender === "F" ? "female" : undefined },
-      status: t("applicationSubmitted"),
-      assigned_to: row.assigned_to || t("unassigned"),
-      submitted: row.submitted_at ? formatWhen(row.submitted_at, lang) : t("notRecorded"),
-    }));
-    const open = (row) => onOpen(row.case_id, row.id);
-    return h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
-      h(P.Text, { as: "h1", variant: "title" }, t("newApplications")),
-      h(window.CTMShell.Listing, {
-        label: t("newApplications"), rows, empty: t("reviewQueueEmpty"), isStatic: true,
+    const choose = (next) => {
+      if (!APPLICATION_VIEWS.includes(next) || next === view) return;
+      if (window.history && window.location) window.history.pushState(null, "", window.location.pathname + applicationViewSearch(next));
+      setView(next);
+    };
+    const listing = () => {
+      if (state.pending && !state.data) return loadingView(P, h, t);
+      if (state.error) return loadFailure(P, h, t, retry, state.error);
+      const items = view === "council" ? considerationQueue(state.data?.items) : awaitingReview(state.data?.items);
+      const rows = items.map((row) => ({
+        ...row,
+        applicant: { name: row.applicant_name || "—", gender: row.applicant_gender === "M" ? "male" : row.applicant_gender === "F" ? "female" : undefined },
+        respondent: { name: row.respondent_name || "—", gender: row.respondent_gender === "M" ? "male" : row.respondent_gender === "F" ? "female" : undefined },
+        status: t(view === "council" ? "considerationTitle" : "applicationSubmitted"),
+        assigned_to: row.assigned_to || t("unassigned"),
+        submitted: row.submitted_at ? formatWhen(row.submitted_at, lang) : t("notRecorded"),
+      }));
+      const open = (row) => onOpen(row.case_id, row.id);
+      return h(window.CTMShell.Listing, {
+        key: view,
+        label: t(view === "council" ? "viewForCouncil" : "viewAwaitingReview"), rows,
+        empty: t(view === "council" ? "councilQueueEmpty" : "reviewQueueEmpty"), isStatic: true,
         onOpen: open,
         rowMenu: [{ label: t("open"), icon: "open", onSelect: open }],
         cardCount: plural(lang, "applicationsCount"),
@@ -3399,9 +3433,18 @@
           { title: t("assignedTo"), field: "assigned_to", type: "person", minWidth: "12rem" },
           { title: t("submitted"), field: "submitted", minWidth: "12rem" },
         ],
-      }),
+      });
+    };
+    return h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
+      h(P.Text, { as: "h1", variant: "title" }, t("newApplications")),
+      h(P.Tabs, { variant: "folder", label: t("newApplications"), value: view, onChange: choose,
+        items: [
+          { value: "review", label: t("viewAwaitingReview"), content: view === "review" ? listing() : null },
+          { value: "council", label: t("viewForCouncil"), content: view === "council" ? listing() : null },
+        ] }),
     );
   }
+
 
   // Operational counts only. No rates: tribunal cases have no valid population
   // denominator, so nothing here implies a divorce or approval rate.
@@ -3528,6 +3571,8 @@
     homeTiles,
     spousesText,
     homeMembers,
+    applicationView,
+    applicationViewSearch,
     memberTitleKey,
     caseRows,
     CasesTable: guarded(CasesTable),
