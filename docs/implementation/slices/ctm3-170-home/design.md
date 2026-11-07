@@ -67,7 +67,7 @@ it; tiles keep one-line titles so heights match.
 | Stat tiles | skeleton tiles | value 0 shown as 0 (not hidden) | tile value "—" + region `Notice` | — | n/a | n/a | n/a | n/a |
 | My cases | `DataGrid` loading row | `EmptyState` "No open cases are assigned to you" + "All cases" | `Notice` + retry | — | n/a | n/a | n/a | n/a |
 | Members | skeleton | `EmptyState` "No active council members" | `Notice` + retry | — | n/a | n/a | n/a | photo missing → initials |
-| Statistics | skeleton | `EmptyState` "No cases in {year}" | `Notice` + retry | — | n/a | n/a | n/a | suppressed count shown as "Fewer than 5" (never the number) |
+| Statistics | skeleton | `EmptyState` "No cases in {year}" | `Notice` + retry | — | n/a | n/a | n/a | suppressed count shown as "Hidden" (never the number), with the privacy note |
 
 ## 4. Data (backend, aggregate only)
 
@@ -76,7 +76,7 @@ it; tiles keep one-line titles so heights match.
 | `GET /api/dashboard/` (extend) | `upcoming_sessions[0]`: `starts_at`, `location`, `agenda_count`; after #116 `my_answer`, `confirmed`, `invited` | Council roles only (as today) |
 | `GET /api/cases/?mine=1` (extend if missing) | per case: `number`, spouse display names, `status`, `next_step` (EN/AR key) | Existing case permissions |
 | `GET /api/dashboard/members/` (new) | active council members: `id`, `name`, `title` (presiding / secretary / member), `photo_url`, `active_cases` | Council roles only; no applicant data; deny by default; tests for applicant 403 and anonymous 401 |
-| `GET /api/statistics/summary/?year=` (new) | `cases_per_member[]`, `cases_by_ground[]`, `years[]` | Council roles only; counts only, never rows or links to applicants; Professional Assessments never a source; any count below the privacy threshold is returned as `null` + `suppressed: true`. Threshold **5**, confirmed by ctm3-product-lead on #170: a count below 5 shows "Fewer than 5" / "أقل من 5"; totals and other cells must not let a hidden count be worked out by subtraction (suppress a second cell or round the total when needed) |
+| `GET /api/statistics/summary/?year=` (new) | `cases_per_member[]`, `cases_by_ground[]`, `years[]` | Council roles only; counts only, never rows or links to applicants; Professional Assessments never a source; any count below the privacy threshold is returned as `null` + `suppressed: true`. Threshold **5**, confirmed by ctm3-product-lead on #170: a count below 5 is hidden; if only one cell in a list is hidden, the smallest visible cell is hidden too, and no total is published (#208). Every hidden cell reads **"Hidden"** / **"مخفي"**, never "Fewer than 5", because a second hidden cell can be 5 or more; the panel says once "Counts under 5 are hidden, sometimes with one more so they cannot be worked out." / "الأعداد الأقل من 5 مخفية، وأحيانًا عدد آخر معها حتى لا يمكن استنتاجها." |
 
 ## 5. Builder must not invent
 
