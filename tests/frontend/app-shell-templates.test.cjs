@@ -89,7 +89,7 @@ test("shell.html gives every static/ctm script a cache stamp, bumped after slice
   const scripts = [...shell.matchAll(/static '(ctm\/[a-z-]+\.js)' %\}(\?v=[^"]*)?"/g)];
   assert.ok(scripts.length >= 25, "every module is listed");
   // Bumped for #116 and #144 (2026-11-06): the live site kept serving the old stamp after the reminders UI.
-  for (const [, file, stamp] of scripts) assert.equal(stamp, "?v=ctm-20261107a", file);
+  for (const [, file, stamp] of scripts) assert.equal(stamp, "?v=ctm-20261107b", file);
 });
 
 // CTM#113 (owner: "it feels smaller than the cdn tab"): CTM renders at the CDN default density (density.md:
