@@ -3,7 +3,7 @@
 # local review copy: seed_workflow_demo (33 cases, sessions, decrees, reports,
 # messages) and seed_new_applications_demo (the New Applications queue), then
 # seed_seat_cases: every council seat holder topped up to five open, fully
-# filled cases. Prints "open cases per seat holder: <name> <n>".
+# filled cases. Prints "open cases per seat holder: <name> <email> <n>".
 #
 #   preflight -> database backup -> run the seeders once, as the database
 #   owner role, in a throwaway container from the live image with live's

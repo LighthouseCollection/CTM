@@ -798,6 +798,8 @@ class Command(BaseCommand):
             return added
 
         if dataset_exists:
+            # Datasets seeded before #175 never ran this; reruns must catch up (live 2026-11-07).
+            seat_admin_with_cases()
             # A fixture upgrade may add fields to the immutable-source projection.
             # This database is explicitly synthetic and isolated; production filings
             # are never updated by this command.
