@@ -51,7 +51,7 @@ def test_dashboard_session_card_has_time_place_agenda_and_answers(granted_roles,
     answer_session(people["member"], upcoming.pk, "attend")
     card = get(granted_roles, client, people["secretary"], "/api/dashboard/").json()["upcoming_sessions"][0]
     assert card["id"] == str(upcoming.pk)
-    assert card["starts_at"] == upcoming.starts_at.isoformat() and card["location"] == "Hall 2"
+    assert datetime.fromisoformat(card["starts_at"]) == upcoming.starts_at and card["location"] == "Hall 2"
     assert card["agenda_count"] == 1
     assert card["my_answer"] is None and card["confirmed"] == 1 and card["invited"] >= 4
     mine = get(granted_roles, client, people["member"], "/api/dashboard/").json()["upcoming_sessions"][0]

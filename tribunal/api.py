@@ -492,9 +492,13 @@ def _case_list_data(case):
 @endpoint()
 def cases(request):
     from tribunal.pagination import page_records
+    from tribunal.services.home import next_step
     qs = m.Case.objects.all()
-    if request.user.role == "applicant":
+    staff_view = request.user.role != "applicant"
+    if not staff_view:
         qs = qs.filter(parties__account=request.user).distinct()
+    elif request.GET.get("mine") == "1":  # #170: Home "my cases"
+        qs = qs.filter(assigned_member=request.user)
     return JsonResponse(page_records(
         qs.select_related("assigned_member").prefetch_related(
             "parties", "applications__party", "applications__revisions"
@@ -506,6 +510,7 @@ def cases(request):
             assigned_member=f"{c.assigned_member.first_name} {c.assigned_member.last_name}".strip()
             if c.assigned_member else None,
             **_case_list_data(c),
+            **({"next_step": next_step(c)} if staff_view else {}),
         ),
     ))
 
@@ -2109,6 +2114,14 @@ def publish_questionnaire(request):
     )
 
 
+def _upcoming_sessions(actor):
+    from tribunal.services.home import session_card
+    sessions = list(m.CouncilSession.objects.filter(state="planned", date__gte=timezone.localdate()).order_by("date")[:5])
+    # #170: the first upcoming session is the Home card; the rest stay date-only.
+    return [session_card(s, actor) if index == 0 else {"id": str(s.pk), "date": s.date.isoformat()}
+            for index, s in enumerate(sessions)]
+
+
 @endpoint()
 def dashboard(request):
     if request.user.role == "applicant":
@@ -2137,12 +2150,7 @@ def dashboard(request):
             ).exclude(origin="closed_case_intake").count()
             if request.user.role in {"admin", "secretary"}
             else None,
-            "upcoming_sessions": [
-                {"id": str(s.pk), "date": s.date.isoformat()}
-                for s in m.CouncilSession.objects.filter(
-                    state="planned", date__gte=timezone.localdate()
-                ).order_by("date")[:5]
-            ],
+            "upcoming_sessions": _upcoming_sessions(request.user),
         }
     )
 
@@ -2607,3 +2615,10 @@ def council_seat(request, account_id):
     data = body(request)
     seat = set_seat(request.user, account_id, seated=data.get("seated"), voting=data.get("voting"))
     return JsonResponse({"id": str(account_id), **seat})
+
+
+@endpoint()
+def dashboard_members(request):
+    """#170: council members for Home, counts only (deny by default)."""
+    from tribunal.services.home import members_summary
+    return JsonResponse(members_summary(request.user))
