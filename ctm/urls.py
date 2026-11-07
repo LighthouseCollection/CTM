@@ -108,6 +108,7 @@ urlpatterns = [
     path("api/system/questionnaires/publish/", api.publish_questionnaire),
     path("api/dashboard/", api.dashboard),
     path("api/dashboard/members/", api.dashboard_members),
+    path("api/statistics/summary/", api.statistics_summary),
     path("api/cases/<uuid:case_id>/calls/", api.calls),
     path("api/cases/<uuid:case_id>/parties/", api.add_party),
     path("api/files/<uuid:file_id>/signature/", api.signature),

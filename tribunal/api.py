@@ -2622,3 +2622,10 @@ def dashboard_members(request):
     """#170: council members for Home, counts only (deny by default)."""
     from tribunal.services.home import members_summary
     return JsonResponse(members_summary(request.user))
+
+
+@endpoint()
+def statistics_summary(request):
+    """#170: counts per member and ground for one year (council only, small counts suppressed)."""
+    from tribunal.services.home import statistics_summary as summary
+    return JsonResponse(summary(request.user, request.GET.get("year")))

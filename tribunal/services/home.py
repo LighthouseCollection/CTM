@@ -76,3 +76,50 @@ def next_step(case):
     if case.assigned_member_id is None:
         return "case.next.assignment"
     return "case.next.investigation"
+
+
+def statistics_summary(actor, year=None):
+    """Cases per member and per ground for one year (case opened), counts only.
+
+    Grounds come from each case's first submitted petition answers, read as
+    D-0035 codes; Professional Assessments are never a source.
+    """
+    from zoneinfo import ZoneInfo
+    from django.core.exceptions import ValidationError
+    from tribunal.services.applications import GROUNDS, submitted_grounds
+
+    staff(actor)
+    la = ZoneInfo("America/Los_Angeles")
+    years = sorted({row.astimezone(la).year for row in m.Case.objects.values_list("created_at", flat=True)},
+                   reverse=True)
+    if year in (None, ""):
+        year = timezone.localdate().year
+    try:
+        year = int(year)
+    except (TypeError, ValueError):
+        raise ValidationError("Choose a year as a number.")
+    if not 1900 <= year <= 2999:
+        raise ValidationError("Choose a year as a number.")
+    cases = [case for case in m.Case.objects.all() if case.created_at.astimezone(la).year == year]
+
+    def cell(value):
+        count, hidden = suppressed_count(value)
+        return {"count": count, "suppressed": hidden}
+
+    per_member = []
+    for account in council_members().order_by("last_name", "first_name", "pk"):
+        mine = sum(1 for case in cases if case.assigned_member_id == account.pk)
+        per_member.append({"id": str(account.pk), "name": f"{account.first_name} {account.last_name}".strip(),
+                           **cell(mine)})
+    ground_counts = dict.fromkeys(sorted(GROUNDS), 0)
+    for case in cases:
+        # The first formal submission only: saved-but-unsubmitted corrections never count (F08).
+        submission = (m.Submission.objects.filter(application__case=case, application__kind="petition")
+                      .select_related("revision").order_by("created_at", "id").first())
+        revision = submission.revision if submission else None
+        for code in set(submitted_grounds(revision.answers) if revision else []):
+            if code in ground_counts:
+                ground_counts[code] += 1
+    by_ground = [{"code": code, **cell(count)} for code, count in ground_counts.items()]
+    return {"year": year, "years": years, "threshold": PRIVACY_THRESHOLD,
+            "cases_per_member": per_member, "cases_by_ground": by_ground}
