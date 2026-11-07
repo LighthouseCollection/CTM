@@ -425,7 +425,7 @@ decisions:
     options: [Session-led dashboard (chosen)]
     decided_by: owner
     status: active
-    review_only: Not built yet (#170); the CouncilHome frontend test becomes the check
+    check: { kind: test, ref: tests/frontend/council-lists.test.cjs }
 
   - id: D-0047
     date: 2026-11-07
@@ -455,4 +455,4 @@ decisions:
     options: [Second view on New applications (chosen), New page]
     decided_by: agent:ctm3-design-director
     status: active
-    review_only: Not built yet (#170); the frontend test for the view becomes the check
+    check: { kind: test, ref: tests/frontend/application-views.test.cjs }
