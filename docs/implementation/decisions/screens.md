@@ -1,4 +1,4 @@
-# Screen decisions register
+Applied | `static/ctm/council.js` (`?view=council`) |Applied | `static/ctm/app.js` (#207) |Applied | `static/ctm/council.js` CouncilHome (#200, #203, #205, #211) |# Screen decisions register
 
 One accepted decision per screen element. Builders and the UI finish gate treat
 these as **locked**: a layout that stays stable is part of the product's
