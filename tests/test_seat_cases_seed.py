@@ -42,7 +42,7 @@ def test_every_seat_holder_has_five_open_cases_and_the_script_says_so(seeded):
     for holder in found:
         assert m.Case.objects.filter(assigned_member=holder, status="open").count() == 5, holder.email
         name = f"{holder.first_name} {holder.last_name}".strip()
-        assert f"open cases per seat holder: {name} 5" in seeded
+        assert f"open cases per seat holder: {name} <{holder.email}> 5" in seeded
 
 
 def test_new_cases_are_complete(seeded):

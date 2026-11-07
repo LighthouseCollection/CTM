@@ -162,7 +162,7 @@ class Command(BaseCommand):
         self.stdout.write(json.dumps({"dataset": DATASET, "created": len(created), "cases": created}))
         for holder in seat_holders():
             name = f"{holder.first_name} {holder.last_name}".strip()
-            self.stdout.write(f"open cases per seat holder: {name} {open_count(holder)}")
+            self.stdout.write(f"open cases per seat holder: {name} <{holder.email}> {open_count(holder)}")
 
     def person_account(self, first, last, gender, birth, key):
         person = m.Person.objects.create(first_name=first, last_name=last, birth_date=birth, gender=gender)
