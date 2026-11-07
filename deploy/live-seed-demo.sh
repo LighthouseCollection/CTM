@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Load the fictitious demo cases into live CTM (VM 107), the same data as the
 # local review copy: seed_workflow_demo (33 cases, sessions, decrees, reports,
-# messages) and seed_new_applications_demo (the New Applications queue).
+# messages) and seed_new_applications_demo (the New Applications queue), then
+# seed_seat_cases: every council seat holder topped up to five open, fully
+# filled cases. Prints "open cases per seat holder: <name> <n>".
 #
-#   preflight -> database backup -> run both seeders once, as the database
+#   preflight -> database backup -> run the seeders once, as the database
 #   owner role, in a throwaway container from the live image with live's
 #   upload folder -> on any failure, restore the backup.
 #
@@ -89,12 +91,12 @@ pw = u.quote(os.environ["POSTGRES_PASSWORD"], safe="")
 host = p.hostname + (":%d" % p.port if p.port else "")
 os.environ["DATABASE_URL"] = u.urlunsplit((p.scheme, "%s:%s@%s" % (user, pw, host), p.path, p.query, ""))
 confirm = sys.argv[1]
-for command in ["seed_workflow_demo", "seed_new_applications_demo"]:
+for command in ["seed_workflow_demo", "seed_new_applications_demo", "seed_seat_cases"]:
     subprocess.run(["python", "manage.py", command, "--live-fictitious", "--confirmation", confirm], check=True)
 '
 SEEDED="yes"
 docker run --rm --env-file "$ENV_FILE" --network "$NET_INT" -v "$MEDIA_DIR:$MEDIA_IN" "$IMAGE" \
-  python -c "$OWNER_SEED" "$CONFIRM" >/dev/null
+  python -c "$OWNER_SEED" "$CONFIRM" | { grep '^open cases per seat holder: ' || true; }
 chown -R 1000:1000 "$MEDIA_DIR"
 
 # --- 4. report (counts only) --------------------------------------------------
