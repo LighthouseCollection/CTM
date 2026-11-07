@@ -6,4 +6,4 @@ count cards of unequal height, My cases shown twice, empty kebab menus, a thin
 upcoming-session card, an empty page, long labels.
 
 Acceptance AC-1 to AC-7 are defined in `design.md`. AC-1 (full-width shell, every page) is applied in
-the design PR. AC-2 to AC-4, AC-6 and AC-7 go to ctm3-frontend-engineer. AC-5 goes to ctm3-backend-engineer.
+the design PR. AC-2, AC-3, AC-4, AC-6 and AC-7 go to ctm3-frontend-engineer. AC-5 goes to ctm3-backend-engineer.
