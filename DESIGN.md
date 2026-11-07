@@ -140,6 +140,14 @@ and value colours keep at least 4.5 : 1 contrast on the tile (navy about
 label). The owner chose label 11 px and value 13 px knowing the study flags
 them under the 12 px / 14 px readability guidance; the decision stands.
 
+**Section headings (D-0055, owner 2026-11-07).** A heading that introduces a
+table or a block of content on a page (for example "Hearings" and "To assign"
+on a session page) uses the **card heading** style above: 14 px, bold, dark
+grey, UPPERCASE, with its icon. Never a separate, smaller "page section" style.
+Where a page has several such sections, each section is its own card: the
+heading is the card header (glow, inset line) and the table sits inside the
+card body. The session agenda (Hearings, To assign) is built this way.
+
 ## 5. Words
 
 All messages follow `docs/content/messaging.md`; terms come from
