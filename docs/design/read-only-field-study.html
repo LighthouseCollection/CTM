@@ -1,0 +1,383 @@
+<title>Read-only Field Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: a full CTM case page (top bar, side nav, entity header, cards) driven by one style set; the controls sit in a dock at the bottom. */
+:root{
+  --bg:#f3f4f7; --surface:#ffffff; --ink:#1f2430; --ink2:#3b4252; --muted:#5d6577; --faint:#8a92a3;
+  --line:#e2e5ec; --tint:#f5f7fb; --accent:#2c64d8; --accent-soft:#e8effc; --brand:#1d4f91; --brand-soft:#e6eef8;
+  --bar:#2c64d8; --bar-ink:#ffffff; --gold:#8a5a00; --good:#1f7a45; --good-soft:#e6f4ec;
+  --warm:#8a7a6c;
+  --t-porcelain:#fbfaf9; --t-oyster:#f8f6f3; --t-mist:#f7f4f1; --t-blush:#f8f2ef; --t-pebble:#f4f2f0; --t-taupe:#f3efeb; --t-mushroom:#f1ece7;
+  --t-ivory:#fcfaf6; --t-cream:#fbf7ef; --t-linen:#f8f4ec; --t-oat:#f6f1e7; --t-sand:#f8f3ea; --t-parchment:#f5eee1; --t-beige:#f3ece0; --t-greige:#f4f2ee; --t-stone:#f2f0ec; --t-white:#ffffff;
+  --f-body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --f-display:"Fraunces",Georgia,serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14171d; --surface:#1d2129; --ink:#e9ecf2; --ink2:#cfd5e0; --muted:#a3abbb; --faint:#7b8396; --line:#2e3440; --tint:#232834;
+  --accent:#7ea4f2; --accent-soft:#223154; --brand:#8fb4ea; --brand-soft:#1f2c44; --bar:#1c3f86; --bar-ink:#ffffff; --gold:#f0c46b; --good:#6fd39b; --good-soft:#1b3326;
+  --warm:#b3a394; --t-porcelain:#1f2023; --t-oyster:#222224; --t-mist:#242323; --t-blush:#262222; --t-pebble:#242425; --t-taupe:#272524; --t-mushroom:#292624; --t-ivory:#252219; --t-cream:#27231a; --t-linen:#28241c; --t-oat:#29241b; --t-sand:#2c271e; --t-parchment:#2b251a; --t-beige:#2c261c; --t-greige:#262420; --t-stone:#252421; --t-white:#1d2129; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171d; --surface:#1d2129; --ink:#e9ecf2; --ink2:#cfd5e0; --muted:#a3abbb; --faint:#7b8396; --line:#2e3440; --tint:#232834;
+  --accent:#7ea4f2; --accent-soft:#223154; --brand:#8fb4ea; --brand-soft:#1f2c44; --bar:#1c3f86; --bar-ink:#ffffff; --gold:#f0c46b; --good:#6fd39b; --good-soft:#1b3326;
+  --warm:#b3a394; --t-porcelain:#1f2023; --t-oyster:#222224; --t-mist:#242323; --t-blush:#262222; --t-pebble:#242425; --t-taupe:#272524; --t-mushroom:#292624; --t-ivory:#252219; --t-cream:#27231a; --t-linen:#28241c; --t-oat:#29241b; --t-sand:#2c271e; --t-parchment:#2b251a; --t-beige:#2c261c; --t-greige:#262420; --t-stone:#252421; --t-white:#1d2129; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- the app, every level driven by variables on .app ---------- */
+.app{--lc:var(--brand);--ls:10px;--lw:600;--vs:14px;--vw:600;--vc:var(--ink);--tt:var(--t-ivory);--gap:16px;
+  --ch-size:16px;--ch-w:600;--ch-c:var(--ink);--ch-f:var(--f-body);--gh-size:13px;
+  padding-bottom:var(--dock-h,46vh)}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;background:var(--bar);color:var(--bar-ink);padding:10px 20px;padding-top:calc(10px + env(safe-area-inset-top,0px))}
+.seal{width:26px;height:26px;border-radius:50%;background:color-mix(in oklab,var(--bar-ink) 22%,var(--bar));display:grid;place-items:center;font-size:12px;font-weight:700}
+.top b{font-size:13px;letter-spacing:.04em;line-height:1.15}
+.top small{display:block;font-size:10px;letter-spacing:.06em;opacity:.85}
+.top .sp{flex:1}
+.av{width:28px;height:28px;border-radius:6px;background:var(--bar-ink);color:var(--bar);display:grid;place-items:center;font-size:11px;font-weight:700}
+.frame{display:grid;grid-template-columns:200px minmax(0,1fr)}
+@media (max-width:820px){.frame{grid-template-columns:1fr}.nav{display:none}}
+.nav{background:var(--surface);border-inline-end:1px solid var(--line);padding:14px 10px;display:grid;align-content:start;gap:2px;min-height:100%}
+.nav .sec{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);padding:12px 10px 6px}
+.nav a{display:block;padding:6px 10px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:14px}
+.nav a[aria-current]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.main{padding:20px 24px;display:grid;gap:16px;min-width:0}
+.crumb{font-size:13px;color:var(--muted)}
+.crumb a{color:var(--accent);text-decoration:none}
+.entity{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.entity .ic{width:44px;height:44px;border-radius:8px;background:var(--brand-soft);display:grid;place-items:center}
+.entity .ic svg{width:22px;height:22px;fill:none;stroke:var(--brand);stroke-width:1.6}
+.entity h1{margin:0;font-size:22px;line-height:1.2;font-weight:700}
+.entity .sub{color:var(--muted);font-size:13px}
+.entity .meta{margin-inline-start:auto;display:flex;gap:10px;flex-wrap:wrap}
+.chipm{background:var(--tint);border-radius:6px;padding:6px 10px;font-size:13px}
+.chipm span{display:block;font-size:11px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.stack{display:grid;gap:16px;min-width:0}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-width:0}
+.card-h{display:flex;align-items:center;gap:10px;padding:16px 20px 12px;position:relative;border-radius:8px 8px 0 0}
+.app[data-glow="warm"] .card-h{background:linear-gradient(to bottom,color-mix(in oklab,var(--tt) 100%,var(--warm) 6%),var(--surface))}
+.app[data-glow="tint"] .card-h{background:linear-gradient(to bottom,var(--tt),var(--surface))}
+.app[data-glow="navy"] .card-h{background:linear-gradient(to bottom,color-mix(in oklab,var(--brand) 7%,var(--surface)),var(--surface))}
+.app[data-glow="grey"] .card-h{background:linear-gradient(to bottom,color-mix(in oklab,var(--ink) 4%,var(--surface)),var(--surface))}
+.card-h h2{margin:0;font-family:var(--ch-f);font-size:var(--ch-size);font-weight:var(--ch-w);color:var(--ch-c);line-height:1.3}
+.card-h .act{margin-inline-start:auto;font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:4px 12px;border-radius:6px}
+.card-h svg{width:18px;height:18px;fill:none;stroke:var(--ch-c);stroke-width:1.6;flex:none}
+.app[data-chicon="off"] .card-h svg{display:none}
+.app[data-chcase="upper"] .card-h h2{text-transform:uppercase;letter-spacing:.07em}
+/* divider under card header */
+.app[data-hl="full"] .card-h{border-bottom:1px solid var(--line)}
+.app[data-hl="inset"] .card-h::after{content:"";position:absolute;inset-inline:20px;bottom:0;height:1px;background:var(--line)}
+.app[data-hl="accent"] .card-h::after{content:"";position:absolute;inset-inline-start:20px;bottom:0;width:32px;height:2px;background:var(--brand);border-radius:2px}
+.card-b{padding:14px 20px 20px}
+.app[data-hl="none"] .card-b{padding-top:4px}
+
+/* fields */
+.card dl{margin:0;display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));column-gap:14px;row-gap:var(--gap)}
+.card dl.one{--cols:1}
+.f{min-width:0}
+.card dt{font-size:var(--ls);font-weight:var(--lw);color:var(--lc);line-height:1.35}
+.app[data-case="upper"] .card dt{text-transform:uppercase;letter-spacing:.07em}
+.card dd{margin:4px 0 0;font-size:var(--vs);font-weight:var(--vw);color:var(--vc);line-height:1.4;overflow-wrap:anywhere}
+.app[data-sep="tiles"] .f{background:var(--tt);border-radius:6px;padding:10px 12px}
+.app[data-sep="tiles"][data-tb="soft"] .f{border:1px solid color-mix(in oklab,var(--tt) 93%,var(--warm))}
+.app[data-sep="tiles"][data-tb="on"] .f{border:1px solid color-mix(in oklab,var(--tt) 88%,var(--warm))}
+.app[data-sep="none"] .card dl{column-gap:32px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--good-soft);color:var(--good)}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* group headings */
+.groups{display:grid;gap:var(--gsp,28px)}
+.group h3{margin:0 0 10px;font-size:var(--gh-size);line-height:1.3}
+.app[data-groups="off"] .group h3{display:none}
+.app[data-groups="off"] .groups{gap:var(--gap)}
+.group h3{font-weight:var(--gh-w,700);color:var(--gh-c,var(--ink))}
+.app[data-ghcase="upper"] .group h3{text-transform:uppercase;letter-spacing:.1em}
+.app[data-ghline="faint"] .group h3{padding-bottom:6px;border-bottom:1px solid color-mix(in oklab,var(--gh-c,var(--ink)) 14%,var(--surface))}
+.app[data-ghline="mark"] .group h3::after{content:"";display:block;width:24px;height:2px;margin-top:6px;border-radius:2px;background:var(--gh-c,var(--ink))}
+
+/* table card */
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{text-align:start;font-size:var(--ls);font-weight:var(--lw);color:var(--lc);padding:8px 10px;border-bottom:1px solid var(--line)}
+.app[data-case="upper"] th{text-transform:uppercase;letter-spacing:.07em}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+
+/* ---------- hierarchy readout ---------- */
+.ladder{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-size:12px;color:var(--muted)}
+.ladder b{color:var(--ink);font-weight:600}
+.ladder .warn{color:var(--gold);font-weight:600}
+.contrast{display:flex;flex-wrap:wrap;gap:8px;font-size:12px}
+.contrast span{border:1px solid var(--line);border-radius:999px;padding:2px 10px;background:var(--surface);color:var(--ink2)}
+.contrast .ok{border-color:color-mix(in oklab,var(--good) 45%,var(--surface));color:var(--good)}
+.contrast .bad{border-color:color-mix(in oklab,var(--gold) 55%,var(--surface));color:var(--gold);font-weight:600}
+
+/* ---------- dock ---------- */
+.dock{position:fixed;inset-inline:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 24px color-mix(in oklab,var(--ink) 10%,transparent);
+  padding-bottom:env(safe-area-inset-bottom,0px);max-height:46vh;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.dock[data-open="false"]{max-height:none}
+.dock[data-open="false"] .dock-b{display:none}
+.dock-h{display:flex;align-items:center;gap:10px;padding:8px 16px;flex-wrap:wrap}
+.dock-h strong{font-size:13px}
+.toggle,.btn,.presets button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 10px;border-radius:6px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+.presets{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.presets button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dock-b{overflow:auto;padding:4px 16px 14px;border-top:1px solid var(--line)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px 18px;padding-top:10px}
+.grp{display:grid;gap:8px;align-content:start}
+.grp h4{margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.ctl{display:grid;gap:3px}
+.ctl label{font-size:12px;font-weight:600;color:var(--muted)}
+.ctl select{font:inherit;font-size:13px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);width:100%}
+.spec{font-size:12px;color:var(--muted);padding-top:10px}
+.dock-grid{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:18px}
+@media (max-width:820px){.dock-grid{grid-template-columns:1fr}}
+.ctl .lab{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.lock{font:inherit;font-size:12px;line-height:1;border:1px solid var(--line);background:var(--surface);color:var(--faint);width:22px;height:22px;border-radius:5px;cursor:pointer;display:grid;place-items:center;padding:0}
+.lock:hover{color:var(--good);border-color:var(--good)}
+.ctl.locked{display:none}
+.grp.allLocked{display:none}
+.side{border-inline-start:1px solid var(--line);padding:10px 0 0 16px;display:grid;gap:6px;align-content:start}
+@media (max-width:820px){.side{border-inline-start:0;border-top:1px solid var(--line);padding:10px 0 0}}
+.side h4{margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--good)}
+.side ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.side li{display:flex;align-items:center;gap:8px;font-size:12px;background:var(--good-soft);border-radius:6px;padding:4px 8px}
+.side li .k{color:var(--muted)} .side li .v{font-weight:600;color:var(--ink)} .side li .tick{color:var(--good);font-weight:700}
+.side li button{margin-inline-start:auto;font:inherit;font-size:11px;border:0;background:none;color:var(--accent);cursor:pointer;padding:2px 4px}
+.side .none{font-size:12px;color:var(--faint)}
+@media (prefers-reduced-motion:no-preference){.app *{transition:color .15s,background-color .15s}}
+</style>
+
+<div class="app" id="app">
+  <div class="top"><div class="seal" aria-hidden="true">✝</div><div><b>DIOCESE OF LOS ANGELES</b><small>CLERICAL TRIBUNAL MANAGEMENT</small></div><div class="sp"></div><div class="av">RM</div></div>
+  <div class="frame">
+    <nav class="nav" aria-label="Case sections">
+      <a href="#" onclick="return false">← Back to sessions</a>
+      <div class="sec">Case overview</div>
+      <a href="#" aria-current="page" onclick="return false">Summary</a><a href="#" onclick="return false">Timeline</a><a href="#" onclick="return false">Spouses</a><a href="#" onclick="return false">Marriage</a>
+      <div class="sec">Email &amp; notes</div>
+      <a href="#" onclick="return false">Email</a><a href="#" onclick="return false">Calls</a><a href="#" onclick="return false">Notes</a>
+      <div class="sec">Case review</div>
+      <a href="#" onclick="return false">Petition</a><a href="#" onclick="return false">Hearings</a><a href="#" onclick="return false">Documents</a>
+    </nav>
+    <main class="main">
+      <div class="crumb"><a href="#" onclick="return false">Cases</a> / 20261020-04</div>
+      <section class="entity" aria-label="Case header">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg></div>
+        <div><h1>William Hayes vs. Amelia Hayes</h1><div class="sub num">20261020-04 · Filed Oct 22, 2026</div></div>
+        <div class="meta"><div class="chipm"><span>Status</span><span class="badge">Active</span></div><div class="chipm"><span>Council member</span>Fr. Youhanna Youssef</div></div>
+      </section>
+      <div class="ladder" id="ladder" aria-live="polite"></div>
+      <div class="contrast" id="contrast" aria-live="polite"></div>
+      <div class="grid">
+        <div class="stack">
+          <section class="card"><div class="card-h"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/></svg><h2>Case summary</h2><button class="act" type="button">Edit</button></div>
+            <div class="card-b"><div class="groups">
+              <div class="group"><h3>Case</h3><dl>
+                <div class="f"><dt>Case number</dt><dd class="num">20261020-04</dd></div>
+                <div class="f"><dt>Status</dt><dd><span class="badge">Active</span></dd></div>
+                <div class="f"><dt>Filing date</dt><dd class="num">Oct 22, 2026</dd></div>
+                <div class="f"><dt>Council member</dt><dd>Fr. Youhanna Youssef</dd></div></dl></div>
+              <div class="group"><h3>Parties</h3><dl>
+                <div class="f"><dt>Applicant</dt><dd>William Hayes</dd></div>
+                <div class="f"><dt>Respondent</dt><dd>Amelia Hayes</dd></div>
+                <div class="f"><dt>Children</dt><dd>Mary Hayes · Mar 4, 2015 (11)</dd></div>
+                <div class="f"><dt>Parish</dt><dd>St. Mark, Los Angeles</dd></div></dl></div>
+              <div class="group"><h3>Marriage</h3><dl>
+                <div class="f"><dt>Grounds</dt><dd>Abandonment</dd></div>
+                <div class="f"><dt>Married for</dt><dd>16 years, 4 months</dd></div>
+                <div class="f"><dt>Separated since</dt><dd class="num">Feb 2025</dd></div>
+                <div class="f"><dt>Last hearing</dt><dd class="num">Oct 30, 2026</dd></div></dl></div>
+            </div></div></section>
+          <section class="card"><div class="card-h"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16"/></svg><h2>Recent notes</h2><button class="act" type="button">Add note</button></div>
+            <div class="card-b"><div class="tbl"><table><thead><tr><th>Date</th><th>Author</th><th>Note</th></tr></thead><tbody>
+              <tr><td class="num">Oct 30, 2026</td><td>Fr. Youhanna Youssef</td><td>Spoke with the applicant; documents complete.</td></tr>
+              <tr><td class="num">Oct 24, 2026</td><td>Fr. Mauritius Mikhail</td><td>Assigned and added to the November agenda.</td></tr>
+            </tbody></table></div></div></section>
+        </div>
+        <div class="stack">
+          <section class="card"><div class="card-h"><svg viewBox="0 0 24 24"><path d="M4 6h16v14H4zM8 3v5M16 3v5M4 10h16"/></svg><h2>Key dates</h2></div>
+            <div class="card-b"><dl class="one">
+              <div class="f"><dt>Marriage</dt><dd class="num">Jun 12, 2010</dd></div>
+              <div class="f"><dt>Separation</dt><dd class="num">Feb 3, 2025</dd></div>
+              <div class="f"><dt>Next session</dt><dd class="num">Nov 14, 2026 · 6:30 PM</dd></div></dl></div></section>
+          <section class="card"><div class="card-h"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><h2>Priest report</h2></div>
+            <div class="card-b"><dl class="one">
+              <div class="f"><dt>Priest</dt><dd>Fr. Bishoy Bastawros</dd></div>
+              <div class="f"><dt>Requested</dt><dd class="num">Oct 25, 2026</dd></div>
+              <div class="f"><dt>State</dt><dd>Draft, not sent</dd></div></dl></div></section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<section class="dock" id="dock" data-open="true" aria-label="Style controls">
+  <div class="dock-h"><strong>Style</strong><div class="presets" id="presets" role="group" aria-label="Presets"></div>
+    <button type="button" class="toggle" id="tog" aria-expanded="true">Hide controls</button></div>
+  <div class="dock-b"><div class="dock-grid"><form id="panel">
+    <div class="cols">
+      <div class="grp"><h4>Card heading</h4>
+        <div class="ctl"><label for="chsize">Size</label><select id="chsize"><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>20</option></select></div>
+        <div class="ctl"><label for="chw">Weight</label><select id="chw"><option value="500">Medium</option><option value="600">Semibold</option><option value="700">Bold</option></select></div>
+        <div class="ctl"><label for="chc">Colour</label><select id="chc"><option value="ink">Black</option><option value="brand">Diocese navy</option><option value="ink2">Dark grey</option></select></div>
+        <div class="ctl"><label for="chf">Typeface</label><select id="chf"><option value="sans">Same as body</option><option value="serif">Serif</option></select></div>
+        <div class="ctl"><label for="chcase">Case</label><select id="chcase"><option value="normal">Sentence case</option><option value="upper">UPPERCASE</option></select></div>
+        <div class="ctl"><label for="chicon">Icon</label><select id="chicon"><option value="on">Show</option><option value="off">Hide</option></select></div>
+        <div class="ctl"><label for="glow">Soft glow behind heading</label><select id="glow"><option value="none">None</option><option value="tint">Same as field tint</option><option value="warm">Warm, a touch deeper</option><option value="navy">Faint navy</option><option value="grey">Faint grey</option></select></div>
+        <div class="ctl"><label for="hl">Line under heading</label><select id="hl"><option value="inset">Inset (not edge to edge)</option><option value="accent">Short navy mark</option><option value="none">None</option><option value="full">Edge to edge (today)</option></select></div>
+      </div>
+      <div class="grp"><h4>Group heading</h4>
+        <div class="ctl"><label for="groups">Groups</label><select id="groups"><option value="on">Show group headings</option><option value="off">No groups</option></select></div>
+        <div class="ctl"><label for="ghc">Colour</label><select id="ghc"><option value="ink">Black</option><option value="navydark">Deep navy</option><option value="brand">Diocese navy</option><option value="ink2">Dark grey</option><option value="muted">Grey</option><option value="gold">Gold</option></select></div>
+        <div class="ctl"><label for="ghw">Weight</label><select id="ghw"><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semibold</option><option value="700">Bold</option></select></div>
+        <div class="ctl"><label for="ghcase">Case</label><select id="ghcase"><option value="normal">Sentence case</option><option value="upper">UPPERCASE</option></select></div>
+        <div class="ctl"><label for="ghline">Line under it</label><select id="ghline"><option value="none">None</option><option value="faint">Faint line</option><option value="mark">Short mark</option></select></div>
+        <div class="ctl"><label for="gsp">Space above each group</label><select id="gsp"><option value="16">16 px</option><option value="24">24 px</option><option value="28">28 px</option><option value="32">32 px</option><option value="40">40 px</option></select></div>
+        <div class="ctl"><label for="ghs">Size</label><select id="ghs"><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option></select></div>
+      </div>
+      <div class="grp"><h4>Field label</h4>
+        <div class="ctl"><label for="lc">Colour</label><select id="lc"><option value="brand">Diocese navy</option><option value="muted">Grey</option><option value="faint">Light grey</option><option value="ink2">Dark grey</option><option value="gold">Gold</option></select></div>
+        <div class="ctl"><label for="ls">Size</label><select id="ls"><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option></select></div>
+        <div class="ctl"><label for="lw">Weight</label><select id="lw"><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semibold</option><option value="700">Bold</option></select></div>
+        <div class="ctl"><label for="case">Case</label><select id="case"><option value="upper">UPPERCASE</option><option value="normal">Sentence case</option></select></div>
+      </div>
+      <div class="grp"><h4>Value</h4>
+        <div class="ctl"><label for="vs">Size</label><select id="vs"><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option></select></div>
+        <div class="ctl"><label for="vw">Weight</label><select id="vw"><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semibold</option></select></div>
+        <div class="ctl"><label for="vc">Colour</label><select id="vc"><option value="ink">Black</option><option value="ink2">Dark grey</option></select></div>
+      </div>
+      <div class="grp"><h4>Field surface</h4>
+        <div class="ctl"><label for="sep">Fields on</label><select id="sep"><option value="tiles">Tinted tiles</option><option value="none">Plain card</option></select></div>
+        <div class="ctl"><label for="tint">Tint</label><select id="tint"><optgroup label="Softest, not yellow"><option value="porcelain">Porcelain</option><option value="oyster">Oyster</option><option value="mist">Mist beige</option><option value="blush">Blush beige</option><option value="pebble">Pebble</option><option value="taupe">Light taupe</option><option value="mushroom">Mushroom</option></optgroup><optgroup label="Warmer"><option value="ivory">Ivory</option><option value="cream">Cream</option><option value="linen">Linen</option><option value="oat">Oat</option><option value="sand">Warm sand</option><option value="parchment">Parchment</option><option value="beige">Beige</option><option value="greige">Greige</option><option value="stone">Stone</option></optgroup></select></div>
+        <div class="ctl"><label for="tb">Tile border</label><select id="tb"><option value="off">None</option><option value="soft">Soft</option><option value="on">Medium</option></select></div>
+        <div class="ctl"><label for="gap">Space between fields</label><select id="gap"><option value="10">Tight</option><option value="16">Normal</option><option value="22">Airy</option></select></div>
+      </div>
+    </div>
+    <div class="spec" id="spec"></div>
+  </form>
+  <aside class="side" aria-label="Locked settings"><h4>Locked ✓</h4><ul id="locked"></ul><div class="none" id="lockedNone">Press ✓ next to a setting to lock it. Locked settings move here and presets leave them alone.</div></aside>
+  </div></div>
+</section>
+
+<script>
+(function(){
+  var C={navydark:"color-mix(in oklab,var(--brand) 75%,var(--ink))",ink:"var(--ink)",ink2:"var(--ink2)",brand:"var(--brand)",muted:"var(--muted)",faint:"var(--faint)",gold:"var(--gold)"};
+  var N={navydark:"deep navy",ink:"black",ink2:"dark grey",brand:"navy",muted:"grey",faint:"light grey",gold:"gold"};
+  var ids=["chsize","chw","chc","chf","chcase","chicon","glow","hl","gsp","groups","ghc","ghw","ghcase","ghline","ghs","lc","ls","lw","case","vs","vw","vc","sep","tint","tb","gap"];
+  var base={chsize:"16",chw:"600",chc:"ink",chf:"sans",chcase:"normal",chicon:"on",glow:"tint",hl:"inset",gsp:"32",groups:"on",ghc:"ink",ghw:"700",ghcase:"normal",ghline:"none",ghs:"13",lc:"brand",ls:"10",lw:"600",case:"upper",vs:"14",vw:"600",vc:"ink",sep:"tiles",tint:"oyster",tb:"soft",gap:"16"};
+  function P(n,o){var s={};for(var k in base)s[k]=base[k];for(var k2 in o)s[k2]=o[k2];return {n:n,s:s}}
+  var presets=[
+    P("★ Owner decision (D-0050)",{chsize:"14",chw:"700",chc:"ink2",chf:"sans",chcase:"upper",chicon:"on",glow:"tint",hl:"inset",gsp:"40",groups:"on",ghc:"gold",ghw:"500",ghcase:"normal",ghline:"none",ghs:"13",lc:"brand",ls:"11",lw:"400",case:"normal",vs:"13",vw:"600",vc:"ink2",sep:"tiles",tint:"porcelain",tb:"on",gap:"16"}),
+    P("S · Balanced",{}),
+    P("Y · Readability",{chsize:"15",chw:"700",chc:"ink2",chcase:"upper",glow:"tint",hl:"inset",gsp:"40",ghc:"ink",ghw:"700",ghcase:"normal",ghs:"13",lc:"ink2",ls:"12",lw:"500",case:"normal",vs:"14",vw:"600",vc:"ink",tint:"porcelain",tb:"on",gap:"16"}),
+    P("Z · Owner current",{chsize:"14",chw:"700",chc:"ink2",chcase:"upper",glow:"tint",hl:"inset",gsp:"40",ghc:"muted",ghw:"700",ghcase:"upper",ghs:"11",lc:"gold",ls:"10",lw:"400",case:"normal",vs:"13",vw:"600",vc:"ink2",tint:"porcelain",tb:"on",gap:"16"}),
+    P("W · Mist, navy glow",{tint:"mist",glow:"navy",ghc:"navydark",ghw:"700",ghcase:"normal",gsp:"32"}),
+    P("X · Blush, warm glow",{tint:"blush",glow:"warm",tb:"off",gsp:"40"}),
+    P("M · Owner pick",{glow:"none",ghc:"ink2",ghw:"700",ghcase:"normal",gsp:"16",chsize:"16",hl:"full",groups:"off",tint:"sand",tb:"on",vs:"13"}),
+    P("T · Navy headings, no lines",{glow:"none",ghc:"ink2",ghw:"700",ghcase:"normal",gsp:"24",chc:"brand",chw:"700",hl:"none",ghc:"ink2",ghw:"700",ghcase:"normal",tb:"off",tint:"linen"}),
+    P("U · Serif cards",{glow:"none",ghc:"muted",ghw:"700",ghcase:"upper",gsp:"24",chf:"serif",chsize:"18",chicon:"off",hl:"accent",ghc:"muted",ghw:"700",ghcase:"upper",ghs:"11",tint:"cream"}),
+    P("V · Plain, no tiles",{glow:"none",ghc:"ink2",ghw:"700",ghcase:"normal",gsp:"24",sep:"none",hl:"inset",lc:"muted",case:"normal",ls:"12",vw:"400",vs:"15",gap:"18"}),
+    P("A · Today",{glow:"none",ghc:"ink2",ghw:"700",ghcase:"normal",gsp:"16",chsize:"16",hl:"full",groups:"off",lc:"muted",case:"normal",ls:"15",lw:"400",vs:"16",vw:"400",sep:"none",gap:"10"})
+  ];
+  var el=function(i){return document.getElementById(i)}, app=el("app");
+  function read(){var s={};ids.forEach(function(k){s[k]=el(k).value});return s}
+  function write(s){ids.forEach(function(k){if(s[k]!=null)el(k).value=s[k]})}
+  function apply(s){
+    var st=app.style;
+    st.setProperty("--ch-size",s.chsize+"px");st.setProperty("--ch-w",s.chw);st.setProperty("--ch-c",C[s.chc]);
+    st.setProperty("--ch-f",s.chf==="serif"?"var(--f-display)":"var(--f-body)");
+    st.setProperty("--gh-size",s.ghs+"px");st.setProperty("--gh-c",C[s.ghc]);st.setProperty("--gh-w",s.ghw);st.setProperty("--gsp",(s.gsp||"28")+"px");
+    st.setProperty("--lc",C[s.lc]);st.setProperty("--ls",s.ls+"px");st.setProperty("--lw",s.lw);
+    st.setProperty("--vs",s.vs+"px");st.setProperty("--vw",s.vw);st.setProperty("--vc",C[s.vc]);
+    st.setProperty("--tt","var(--t-"+s.tint+")");st.setProperty("--gap",s.gap+"px");
+    ["chcase","chicon","glow","hl","groups","ghcase","ghline","case","sep","tb"].forEach(function(k){app.dataset[k]=s[k]});
+  }
+  function ladder(s){
+    var rows=[["Page title","22"],["Card heading",s.chsize],["Group heading",s.groups==="on"?s.ghs:null],["Field label",s.ls],["Value",s.vs]];
+    var out=rows.filter(function(r){return r[1]}).map(function(r,i){return "<span>L"+(i+1)+" "+r[0]+" <b>"+r[1]+" px</b></span>"}).join("<span>›</span>");
+    var warn=[];
+    if(+s.chsize<=+s.vs)warn.push("card heading is not larger than the values");
+    if(s.groups==="on"&&+s.ghs>=+s.chsize)warn.push("group heading competes with the card heading");
+    if(s.groups==="on"&&+s.ghs<+s.vs&&s.ghcase!=="upper")warn.push("group heading is no larger than the values");
+    el("ladder").innerHTML="<span>Hierarchy:</span>"+out+(warn.length?' <span class="warn">⚠ '+warn.join("; ")+'</span>':' <span>✓ each level is distinct</span>');
+  }
+  function describe(s){
+    var w={"400":"regular","500":"medium","600":"semibold","700":"bold"};
+    return "Card heading "+s.chsize+" px "+w[s.chw]+" "+N[s.chc]+(s.chf==="serif"?" serif":"")+(s.chcase==="upper"?" uppercase":"")+(s.glow&&s.glow!=="none"?", "+s.glow+" glow":"")+", line: "+({inset:"inset",accent:"short navy mark",none:"none",full:"edge to edge"})[s.hl]+
+      " · Groups: "+(s.groups==="on"?s.ghs+" px, "+(s.gsp||"28")+" px apart, "+({"400":"regular","500":"medium","600":"semibold","700":"bold"})[s.ghw]+" "+N[s.ghc]+(s.ghcase==="upper"?" uppercase":"")+(s.ghline!=="none"?" with "+(s.ghline==="mark"?"short mark":"faint line"):""):"off")+
+      " · Label "+s.ls+" px "+w[s.lw]+" "+N[s.lc]+(s.case==="upper"?" uppercase":"")+
+      " · Value "+s.vs+" px "+w[s.vw]+" "+N[s.vc]+
+      " · Fields on "+(s.sep==="tiles"?s.tint+" tiles"+(s.tb!=="off"?", "+(s.tb==="on"?"medium":"soft")+" border":""):"plain card");
+  }
+  function rgb(str){var m=str.match(/[\d.]+/g);return m?m.slice(0,3).map(Number).concat([m[3]!=null?+m[3]:1]):[255,255,255,1]}
+  function lum(c){return c.slice(0,3).map(function(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4)}).reduce(function(a,v,i){return a+v*[0.2126,0.7152,0.0722][i]},0)}
+  function ratio(a,b){var l1=lum(a),l2=lum(b);return (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05)}
+  function bgOf(node){while(node&&node.nodeType===1){var c=rgb(getComputedStyle(node).backgroundColor);if(c[3]>0.5)return c;node=node.parentElement}return rgb(getComputedStyle(document.body).backgroundColor)}
+  function probe(cssColor,where){var sp=document.createElement("span");sp.style.color=cssColor;where.appendChild(sp);var c=rgb(getComputedStyle(sp).color);sp.remove();return c}
+  function contrast(s){
+    var dt=app.querySelector(".card .f dt"),dd=app.querySelector(".card .f dd"),f=dt.parentElement,bg=bgOf(f);
+    var lr=ratio(rgb(getComputedStyle(dt).color),bg),vr=ratio(rgb(getComputedStyle(dd).color),bg);
+    var size=+s.ls, items=[];
+    function pill(text,ok){return '<span class="'+(ok?"ok":"bad")+'">'+text+'</span>'}
+    items.push(pill("Label contrast "+lr.toFixed(1)+" : 1 "+(lr>=4.5?"✓ AA":"✗ below 4.5"),lr>=4.5));
+    items.push(pill("Value contrast "+vr.toFixed(1)+" : 1 "+(vr>=4.5?"✓ AA":"✗ below 4.5"),vr>=4.5));
+    items.push(pill("Label size "+size+" px "+(size>=12?"✓ readable":"✗ under 12 px"),size>=12));
+    items.push(pill("Label "+(+s.lw<+s.vw?"lighter than value ✓":"as heavy as the value ✗"),+s.lw<+s.vw));
+    items.push(pill(s.case==="normal"?"Sentence case ✓":"UPPERCASE labels read slower",s.case==="normal"));
+    el("contrast").innerHTML=items.join("");
+    // contrast next to each label colour option, against the current field surface
+    Array.prototype.forEach.call(el("lc").options,function(o){
+      if(!o.dataset.base)o.dataset.base=o.textContent;
+      var r=ratio(probe(C[o.value],f),bg);o.textContent=o.dataset.base+" · "+r.toFixed(1)+":1"+(r>=4.5?"":" ✗");
+    });
+  }
+  var locks={};try{locks=JSON.parse(localStorage.getItem("rof2-locks")||"{}")||{}}catch(e){}
+  function grpName(id){var g=el(id).closest(".grp");return g?g.querySelector("h4").textContent:""}
+  function labName(id){return document.querySelector('label[for="'+id+'"]').textContent}
+  function decorate(){
+    ids.forEach(function(k){
+      var sel=el(k),ctl=sel.closest(".ctl"),lab=ctl.querySelector("label");
+      if(!ctl.querySelector(".lab")){var row=document.createElement("div");row.className="lab";lab.parentNode.insertBefore(row,lab);row.appendChild(lab);
+        var b=document.createElement("button");b.type="button";b.className="lock";b.textContent="✓";b.title="Lock this setting";b.setAttribute("aria-label","Lock "+grpName(k)+" "+labName(k));
+        b.addEventListener("click",function(){locks[k]=true;saveLocks();renderLocks()});row.appendChild(b)}
+    });
+  }
+  function saveLocks(){try{localStorage.setItem("rof2-locks",JSON.stringify(locks))}catch(e){}}
+  function renderLocks(){
+    var ul=el("locked");ul.innerHTML="";var any=false;
+    ids.forEach(function(k){var ctl=el(k).closest(".ctl");var on=!!locks[k];ctl.classList.toggle("locked",on);
+      if(on){any=true;var li=document.createElement("li");var sel=el(k);
+        li.innerHTML='<span class="tick">✓</span><span><span class="k"></span> <span class="v"></span></span>';
+        li.querySelector(".k").textContent=grpName(k)+" · "+labName(k)+":";
+        li.querySelector(".v").textContent=(sel.options[sel.selectedIndex]||{}).dataset&&sel.options[sel.selectedIndex].dataset.base||sel.options[sel.selectedIndex].textContent;
+        var u=document.createElement("button");u.type="button";u.textContent="Unlock";u.addEventListener("click",function(){delete locks[k];saveLocks();renderLocks()});li.appendChild(u);ul.appendChild(li)}});
+    el("lockedNone").hidden=any;
+    Array.prototype.forEach.call(document.querySelectorAll(".grp"),function(g){var all=Array.prototype.every.call(g.querySelectorAll(".ctl"),function(c){return c.classList.contains("locked")});g.classList.toggle("allLocked",all)});
+    fit&&fit();
+  }
+  var pbox=el("presets");
+  function render(){
+    var s=read();apply(s);ladder(s);contrast(s);clearTimeout(window.__ct);window.__ct=setTimeout(function(){contrast(s)},220);el("spec").textContent=describe(s);
+    var m=presets.findIndex(function(p){return ids.every(function(k){return locks[k]||p.s[k]===s[k]})});
+    Array.prototype.forEach.call(pbox.children,function(b,i){b.setAttribute("aria-pressed",i===m?"true":"false")});
+    try{localStorage.setItem("rof2",JSON.stringify(s))}catch(e){}
+    if(el("locked"))renderLocks();
+  }
+  presets.forEach(function(p){var b=document.createElement("button");b.type="button";b.textContent=p.n;b.setAttribute("aria-pressed","false");
+    b.addEventListener("click",function(){var cur=read(),s2={};for(var k in p.s)s2[k]=locks[k]?cur[k]:p.s[k];write(s2);render();renderLocks()});pbox.appendChild(b)});
+  ids.forEach(function(k){el(k).addEventListener("change",render)});
+  var dock=el("dock"),tog=el("tog");
+  function fit(){app.style.setProperty("--dock-h",(dock.getBoundingClientRect().height+24)+"px")}
+  tog.addEventListener("click",function(){var open=dock.dataset.open!=="true";dock.dataset.open=String(open);tog.setAttribute("aria-expanded",String(open));tog.textContent=open?"Hide controls":"Show controls";fit()});
+  window.addEventListener("resize",fit);
+  var start=presets[0].s;var fresh=!localStorage.getItem("rof2");try{var sv=JSON.parse(localStorage.getItem("rof2")||"null");if(sv&&sv.chsize){if(sv.gh){var mm={black:["ink","700","normal"],navydark:["navydark","700","normal"],plain:["ink2","700","normal"],navy:["brand","700","normal"],medium:["muted","500","normal"],caps:["muted","700","upper"]}[sv.gh]||["ink","700","normal"];sv.ghc=mm[0];sv.ghw=mm[1];sv.ghcase=mm[2];if(sv.gh==="caps")sv.ghs="11";delete sv.gh}sv.ghline=sv.ghline||"none";sv.glow=sv.glow||"none";sv.gsp=sv.gsp||"16";start=sv}}catch(e){}
+  decorate();write(start);render();renderLocks();fit();
+})();
+</script>
