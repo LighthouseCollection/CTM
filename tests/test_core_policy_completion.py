@@ -34,6 +34,7 @@ def granted_roles():
     import_module('tribunal.migrations.0070_session_notice_outbox').grant_runtime(apps,editor)
     import_module('tribunal.migrations.0071_case_delete').grant_runtime(apps,editor)
     import_module('tribunal.migrations.0073_council_seat_guards').grant_runtime(apps,editor)
+    import_module('tribunal.migrations.0074_session_draft_state').grant_runtime(apps,editor)
     @contextmanager
     def enter(role,actor=None,*,session=False):
         with transaction.atomic():
