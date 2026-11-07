@@ -501,6 +501,11 @@ ${ar}` : en;
       petition: "Petition",
       noPetitions: "No submitted petition is available for this case.",
       marriageTitle: "Marriage",
+      groupCase: "Case",
+      groupSpouses: "Spouses",
+      groupOutsideCoptic: "Outside the Coptic Church",
+      groupRequest: "Request",
+      groupRecord: "Record",
       separation: "Separation",
       churchMarriage: "Church Marriage",
       marriedOutsideCoptic: "Were You Married Outside the Coptic Orthodox Church?",
@@ -1002,6 +1007,11 @@ ${ar}` : en;
       petition: "الطلب",
       noPetitions: "لا يوجد طلب مقدَّم متاح لهذه القضية.",
       marriageTitle: "الزواج",
+      groupCase: "القضية",
+      groupSpouses: "الزوجان",
+      groupOutsideCoptic: "خارج الكنيسة القبطية",
+      groupRequest: "الطلب",
+      groupRecord: "السجل",
       separation: "الانفصال",
       churchMarriage: "الزواج الكنسي",
       marriedOutsideCoptic: "هل تم الزواج خارج الكنيسة القبطية الأرثوذكسية؟",
@@ -2076,6 +2086,8 @@ ${ar}` : en;
     return h(
       P.Stack,
       { gap: "md" },
+      // D-0050 groups (groups.md): Request · Record.
+      groupHeading(P, h, t("groupRequest")),
       h(
         P.PropertyList,
         null,
@@ -2084,6 +2096,11 @@ ${ar}` : en;
         h(P.PropertyList.Item, { label: t("method") }, t(request.kind)),
         request.subject_name ? h(P.PropertyList.Item, { label: t("subject") }, request.subject_name) : null,
         request.language ? h(P.PropertyList.Item, { label: t("language") }, t(request.language)) : null,
+      ),
+      groupHeading(P, h, t("groupRecord")),
+      h(
+        P.PropertyList,
+        null,
         request.author ? h(P.PropertyList.Item, { label: t("preparedBy") }, request.author) : null,
         request.created_at ? h(P.PropertyList.Item, { label: t("createdAt"), data: true }, base.formatWhen(request.created_at, lang)) : null,
         request.sent_at ? h(P.PropertyList.Item, { label: t(interview ? "startedAt" : "sentAt"), data: true }, base.formatWhen(request.sent_at, lang)) : null,
@@ -3207,6 +3224,25 @@ ${ar}` : en;
     return h(P.Columns, { count, collapseBelow }, ...columns.map((column, index) => h(P.Stack, { gap: "md", key: index }, ...column)));
   }
 
+  // D-0050 group headings (DESIGN.md §4, groups.md): a Plenix SectionHeading inside the card, directly above the
+  // group's fields; Plenix draws it as the gold group heading (Plenix issue 946). Read and edit mode use the same groups.
+  function groupHeading(P, h, title) {
+    return h(P.SectionHeading, { level: 3 }, title);
+  }
+
+  // groups: [{ title, fields: [[key, label, type]] }] drawn with CaseReadFields; an empty group is left out.
+  function GroupedReadFields({ P, h, groups, values, lang, columns = 2 }) {
+    return h(P.Stack, { gap: "xl" }, ...groups.filter((group) => group.fields.length).map((group) =>
+      h(P.Stack, { gap: "sm", key: group.title }, groupHeading(P, h, group.title), h(CaseReadFields, { P, h, fields: group.fields, values, lang, columns }))));
+  }
+
+  // The edit form's groups: the same titles and order as read mode; each field drawn by field(key, label, type).
+  function groupedEdit(P, h, groups, field, columns = 2) {
+    return h(P.Stack, { gap: "xl" }, ...groups.filter((group) => group.fields.length).map((group) =>
+      h(P.Stack, { gap: "sm", key: group.title }, groupHeading(P, h, group.title),
+        caseColumns(P, h, group.fields.map(([key, label, type]) => field(key, label, type)), columns, "wide"))));
+  }
+
   function profileList(P, h, items) {
     return h(P.PropertyList, { layout: "stacked" }, ...items);
   }
@@ -3217,13 +3253,7 @@ ${ar}` : en;
     return h(
       P.Stack,
       { gap: "sm", key: title },
-      h(
-        P.Inline,
-        { gap: "sm", align: "center" },
-        h(P.Icon, { name: icon, label: title }),
-        h(P.SectionHeading, { level: 2 }, title),
-        h(P.Divider),
-      ),
+      groupHeading(P, h, title),
       twoColumns
         ? caseColumns(P, h, fields.map(([label, value]) => profileList(P, h, [h(P.PropertyList.Item, { key: label, label: t(label) }, value)])), 2, "medium")
         : profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value))),
@@ -3276,7 +3306,7 @@ ${ar}` : en;
       ...groups.map(([scope, title, fields]) => h(
         P.Stack,
         { gap: "sm", key: scope },
-        h(P.SectionHeading, { level: 2 }, title),
+        groupHeading(P, h, title),
         caseColumns(
           P,
           h,
@@ -3341,13 +3371,7 @@ ${ar}` : en;
     return h(
       P.Stack,
       { gap: "sm" },
-      h(
-        P.Inline,
-        { gap: "sm", align: "center" },
-        h(P.Icon, { name: "message", label: t("contact") }),
-        h(P.SectionHeading, { level: 2 }, t("contact")),
-        h(P.Divider),
-      ),
+      groupHeading(P, h, t("contact")),
       editing
         ? h(
             P.Form,
@@ -3919,16 +3943,17 @@ ${ar}` : en;
     const marriage = councilCardValues(record, "marriage", record.marriage || {}), value = (item) => item || "—";
     const proceeding = openProceeding(record);
     const canWrite = writerFor(user, null, record) && proceeding?.status === "open";
-    const fields = [
-      ["outside_coptic_church", t("marriedOutsideCoptic"), "text"],
-      ["outside_denomination", t("outsideDenomination"), "text"],
-      ["outside_marriage_date", t("outsideMarriageDate"), "date"],
-      ["church_marriage_date", t("churchMarriageDate"), "date"],
-      ["officiating_priest", t("officiatingPriest"), "text"],
-      ["church_name", t("churchName"), "text"],
-      ["church_location", t("churchLocation"), "text"],
-      ["diocese", t("diocese"), "text"],
+    // D-0050 groups (groups.md): Church marriage · Outside the Coptic Church, the same in read and edit mode
+    // (marriage duration is computed, so it is read-only).
+    const marriageGroups = (withDuration) => [
+      { title: t("churchMarriage"), fields: [["church_marriage_date", t("churchMarriageDate"), "date"],
+        ...(withDuration ? [["marriage_duration", t("marriageDuration")]] : []),
+        ["officiating_priest", t("officiatingPriest"), "text"], ["church_name", t("churchName"), "text"],
+        ["church_location", t("churchLocation"), "text"], ["diocese", t("diocese"), "text"]] },
+      { title: t("groupOutsideCoptic"), fields: [["outside_coptic_church", t("marriedOutsideCoptic"), "text"],
+        ["outside_denomination", t("outsideDenomination"), "text"], ["outside_marriage_date", t("outsideMarriageDate"), "date"]] },
     ];
+    const fields = marriageGroups(false).flatMap((group) => group.fields);
     const startEditing = () => { setForm(Object.fromEntries(fields.map(([key]) => [key, marriage[key] || ""]))); setFailure(null); setEditing(true); };
     const save = async (event) => {
       event.preventDefault();
@@ -3942,17 +3967,14 @@ ${ar}` : en;
       finally { setPending(false); }
     };
     return h(CaseRecordPage, { api, lang, caseId, record, title: t("marriageTitle"), readOnly: !proceeding },
-      h(P.Panel, { icon: "settings-users", title: t("churchMarriage"), actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, t("edit")) : null },
+      h(P.Panel, { icon: "settings-users", title: t("marriageTitle"), actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, t("edit")) : null },
         h(P.Stack, { gap: "md" },
-          editing ? h(P.Form, { onSubmit: save, label: t("churchMarriage"), noValidate: true },
-            caseColumns(P, h, fields.map(([key, label, type]) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) }))), 3, "wide"),
+          editing ? h(P.Form, { onSubmit: save, label: t("marriageTitle"), noValidate: true },
+            groupedEdit(P, h, marriageGroups(false), (key, label, type) => h(P.Field, { key, label }, h(P.Input, { type, value: form[key], disabled: pending, onChange: (event) => setForm((old) => ({ ...old, [key]: event.target.value })) })), 3),
             failure ? h(P.Notice, { tone: "danger" }, failure) : null,
             h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("save"))),
-          ) : h(CaseReadFields, { P, h, fields: [
-            ["outside_coptic_church", t("marriedOutsideCoptic")], ["outside_denomination", t("outsideDenomination")], ["outside_marriage_date", t("outsideMarriageDate"), "date"],
-            ["church_marriage_date", t("churchMarriageDate"), "date"], ["officiating_priest", t("officiatingPriest")], ["marriage_duration", t("marriageDuration")],
-            ["church_name", t("churchName")], ["church_location", t("churchLocation")], ["diocese", t("diocese")],
-          ], values: { ...marriage, marriage_duration: marriageDuration(marriage.church_marriage_date, lang) } }),
+          ) : h(GroupedReadFields, { P, h, groups: marriageGroups(true), columns: 3, lang,
+            values: { ...marriage, marriage_duration: marriageDuration(marriage.church_marriage_date, lang) } }),
         ),
       ),
     );
@@ -4309,10 +4331,11 @@ ${ar}` : en;
       } catch (error) { setSummaryFailure(base.serverMessage(error, bt)); }
       finally { setSummaryPending(false); }
     };
-    const summaryReadFields = [
-      ["case_number", t("caseNumber")], ["filing_date", t("filingDate")], ["status", bt("statusLabel")], ["assigned_member", t("assignedCouncilMember")],
-      ["applicant", t("applicant")], ["respondent", t("respondent")], ["reason", t("reasonForDivorce")], ["marriage_duration", t("marriageDuration")],
-      ["children", t("children")], ["last_hearing_date", t("lastHearingDate")],
+    // D-0050 groups (groups.md): Case · Spouses · Marriage, the same in read and edit mode.
+    const summaryGroups = [
+      { title: t("groupCase"), fields: [["case_number", t("caseNumber")], ["filing_date", t("filingDate")], ["status", bt("statusLabel")], ["assigned_member", t("assignedCouncilMember")], ["last_hearing_date", t("lastHearingDate")]] },
+      { title: t("groupSpouses"), fields: [["applicant", t("applicant")], ["respondent", t("respondent")]] },
+      { title: t("marriageTitle"), fields: [["marriage_duration", t("marriageDuration")], ["children", t("children")], ["reason", t("reasonForDivorce")]] },
     ];
     const summaryReadValues = {
       case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed")), assigned_member: manager || bt("unassigned"),
@@ -4327,16 +4350,20 @@ ${ar}` : en;
         { icon: "document", title: t("caseSummary"), actions: canEditSummary && !summaryEditing ? h(P.Button, { size: "sm", onClick: startSummaryEdit }, t("edit")) : null },
         summaryEditing
           ? h(P.Form, { onSubmit: saveSummary, label: t("caseSummary"), noValidate: true },
-              h(P.Columns, { count: 2, collapseBelow: "wide" },
-                h(P.Field, { label: t("reasonForDivorce") }, h(P.Input, { value: summaryForm.reason, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, reason: event.target.value })) })),
-                h(P.Field, { label: t("assignedCouncilMember") }, h(P.Select, { value: summaryForm.memberId, disabled: summaryPending || !record.can_assign, onChange: (event) => setSummaryForm((old) => ({ ...old, memberId: event.target.value })), options: [{ value: "", label: bt("unassigned") }, ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id }))] })),
-              ),
-              h(ChildrenEditor, { lang, children: summaryForm.children, disabled: summaryPending, marriageDate: record.marriage?.church_marriage_date,
-                onChange: (children) => setSummaryForm((old) => ({ ...old, children })) }),
+              // D-0050 groups, the same order as read mode: Case (assigned member) · Marriage (children, reason).
+              h(P.Stack, { gap: "xl" },
+                h(P.Stack, { gap: "sm" }, groupHeading(P, h, t("groupCase")),
+                  h(P.Columns, { count: 2, collapseBelow: "wide" },
+                    h(P.Field, { label: t("assignedCouncilMember") }, h(P.Select, { value: summaryForm.memberId, disabled: summaryPending || !record.can_assign, onChange: (event) => setSummaryForm((old) => ({ ...old, memberId: event.target.value })), options: [{ value: "", label: bt("unassigned") }, ...eligibleMembers.map((member) => ({ value: member.id, label: member.name || member.id }))] })))),
+                h(P.Stack, { gap: "sm" }, groupHeading(P, h, t("marriageTitle")),
+                  h(ChildrenEditor, { lang, children: summaryForm.children, disabled: summaryPending, marriageDate: record.marriage?.church_marriage_date,
+                    onChange: (children) => setSummaryForm((old) => ({ ...old, children })) }),
+                  h(P.Columns, { count: 2, collapseBelow: "wide" },
+                    h(P.Field, { label: t("reasonForDivorce") }, h(P.Input, { value: summaryForm.reason, disabled: summaryPending, onChange: (event) => setSummaryForm((old) => ({ ...old, reason: event.target.value })) }))))),
               summaryFailure ? h(P.Notice, { tone: "danger" }, summaryFailure) : null,
               h(P.FormActions, { sticky: false }, h(P.Button, { disabled: summaryPending, onClick: () => setSummaryEditing(false) }, bt("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: summaryPending, disabled: summaryPending }, t("save"))),
             )
-          : h(CaseReadFields, { P, h, fields: summaryReadFields, values: summaryReadValues, lang, columns: 2 }),
+          : h(GroupedReadFields, { P, h, groups: summaryGroups, values: summaryReadValues, lang, columns: 2 }),
       ),
       h(
         P.Panel,
@@ -4351,6 +4378,8 @@ ${ar}` : en;
   }
 
   Object.assign(window.CTMCouncil, {
+    GroupedReadFields,
+    groupedEdit,
     childForm,
     childProblem,
     childWarning,

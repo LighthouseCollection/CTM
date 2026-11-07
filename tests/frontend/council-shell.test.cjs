@@ -328,8 +328,10 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /size: "2xl",\s*label: party\.name/);
   assert.match(councilCase, /t\("personalDetails"\), "person", \[/);
   assert.doesNotMatch(councilCase, /t\("personalDetails"\), "user", \[/);
-  assert.match(councilCase, /P\.SectionHeading, \{ level: 2 \}/);
-  assert.match(councilCase, /h\(P\.Divider\)/);
+  // D-0050 (#217): the spouse sections are group headings (Plenix SectionHeading), with no icon and no line.
+  assert.match(councilCase, /function groupHeading\(P, h, title\) \{\s*return h\(P\.SectionHeading, \{ level: 3 \}, title\);/);
+  const sectionStart = councilCase.indexOf("function spouseProfileSection");
+  assert.doesNotMatch(councilCase.slice(sectionStart, councilCase.indexOf("\n  }\n", sectionStart)), /P\.Divider/);
   assert.doesNotMatch(councilCase, /ctm-spouse-profile-columns/);
   const spouseCards = councilCase.slice(councilCase.indexOf("function CaseParties"));
   const personal = spouseCards.indexOf('t("personalDetails")');
@@ -362,7 +364,8 @@ test("case summary shows case details and recorded key-date milestones", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   const api = fs.readFileSync("tribunal/api.py", "utf8");
   assert.match(councilCase, /caseSummary: "Case Summary"/);
-  assert.match(councilCase, /CaseReadFields, \{ P, h, fields: summaryReadFields, values: summaryReadValues, lang, columns: 2 \}/);
+  // D-0050 groups (groups.md): Case · Spouses · Marriage.
+  assert.match(councilCase, /GroupedReadFields, \{ P, h, groups: summaryGroups, values: summaryReadValues, lang, columns: 2 \}/);
   assert.match(councilCase, /reasonForDivorce: "Reason Seeking Divorce"/);
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
   assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
@@ -370,7 +373,8 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.ok(councilCase.includes('status: h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed"))'));
   assert.match(councilCase, /actions: canEditSummary && !summaryEditing/);
   assert.match(councilCase, /fact_code: "case_card\.summary"/);
-  assert.match(councilCase, /title: t\("churchMarriage"\), actions: canWrite && !editing/);
+  // D-0050 groups: the card is "Marriage"; "Church marriage" and "Outside the Coptic Church" are its groups.
+  assert.match(councilCase, /title: t\("marriageTitle"\), actions: canWrite && !editing/);
   assert.match(councilCase, /title, icon, actions: canWrite && !editing/);
   assert.match(councilCase, /\["applicant", t\("applicant"\)\], \["respondent", t\("respondent"\)\]/);
   assert.match(api, /def _summary_child\(value\):/);

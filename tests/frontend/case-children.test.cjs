@@ -69,3 +69,18 @@ test("separation cards and editable case cards are EN/AR", () => {
   for (const key of ["separationDetails", "civilDivorce", "restrainingOrder", "reconciliation", "maritalStatus", "initiatedBy", "courtName", "courtLocation", "civilCaseNumber", "civilDivorceStatus", "orderFiled", "orderNameListed", "orderCaseNumber", "orderStatus", "reconciliationAttempted", "permitPreviouslyApplied", "permitWhen", "permitWhere", "decisionOutcome"])
     assert.notEqual(ar(key), t(key), key);
 });
+
+// D-0050 groups (groups.md): read and edit use the same groups in the same order.
+test("case summary, marriage and request detail are grouped as decided", () => {
+  const source = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const order = (text, keys) => { let at = -1; for (const key of keys) { const i = text.indexOf(key, at + 1); assert.ok(i > at, key); at = i; } };
+  const s0 = source.indexOf("const summaryGroups = [");
+  order(source.slice(s0, source.indexOf("];", s0)), ['t("groupCase")', '"case_number"', '"filing_date"', '"status"', '"assigned_member"', '"last_hearing_date"', 't("groupSpouses")', '"applicant"', '"respondent"', 't("marriageTitle")', '"marriage_duration"', '"children"', '"reason"']);
+  order(source.slice(source.indexOf("h(P.Form, { onSubmit: saveSummary"), source.indexOf("summaryFailure ? h(P.Notice")), ['t("groupCase")', 't("assignedCouncilMember")', 't("marriageTitle")', "ChildrenEditor", 't("reasonForDivorce")']);
+  const m0 = source.indexOf("const marriageGroups = (withDuration) => [");
+  order(source.slice(m0, source.indexOf("const fields = marriageGroups(false)")), ['t("churchMarriage")', '"church_marriage_date"', '"marriage_duration"', '"officiating_priest"', '"church_name"', '"church_location"', '"diocese"', 't("groupOutsideCoptic")', '"outside_coptic_church"', '"outside_denomination"', '"outside_marriage_date"']);
+  assert.match(source, /groupedEdit\(P, h, marriageGroups\(false\)/);
+  const r0 = source.indexOf("// D-0050 groups (groups.md): Request · Record.");
+  order(source.slice(r0, source.indexOf("externalNoQuestions", r0)), ['t("groupRequest")', 't("title")', 't("method")', 't("language")', 't("groupRecord")', 't("preparedBy")', 't("createdAt")', 't("parent")']);
+  for (const key of ["groupCase", "groupSpouses", "groupOutsideCoptic", "groupRequest", "groupRecord"]) assert.notEqual(ar(key), t(key), key);
+});
