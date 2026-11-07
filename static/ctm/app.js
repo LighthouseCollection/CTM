@@ -26,10 +26,6 @@
     medical: "lock", appeals: "progress",
     communications: "mail", calls: "phone", notes: "message", audit: "list-lines",
   };
-  const appealsReturnIcon = () =>
-    h("svg", { className: "ctm-appeals-nav-icon", width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": true },
-      h("path", { d: "m9 7-5 5 5 5M5 12h8a6 6 0 0 1 6 6v1" }),
-    );
   const navigationIcon = (id) =>
     id === "search"
       ? h(P.Icon, { name: "document_search", "aria-hidden": true })
@@ -44,7 +40,7 @@
         : id === "decree"
           ? h(P.Icon, { name: "approval", "aria-hidden": true })
           : id === "appeals"
-            ? appealsReturnIcon()
+            ? h(P.Icon, { name: "reply", "aria-hidden": true })
             : h(P.Icon, { name: navigationIcons[id] });
   const words = {
     en: {
@@ -216,9 +212,9 @@
       backAllCases: "Back to All Active Cases",
       backNewApplications: "Back to New Applications",
       backArchivedCases: "Back to Archived Cases",
-      backCurrentSessions: "Back to Current Tribunal Sessions",
-      backUpcomingSessions: "Back to Upcoming Tribunal Sessions",
-      backArchivedSessions: "Back to Archived Tribunal Sessions",
+      backCurrentSessions: "Back to sessions",
+      backUpcomingSessions: "Back to sessions",
+      backArchivedSessions: "Back to sessions",
       backTribunalSession: "Back to Tribunal Session",
       account: "My Profile",
       settings: "Account Settings",
@@ -430,9 +426,9 @@
       backAllCases: "العودة إلى جميع القضايا",
       backNewApplications: "العودة إلى الطلبات الجديدة",
       backArchivedCases: "العودة إلى القضايا المؤرشفة",
-      backCurrentSessions: "العودة إلى جلسات المجلس الحالية",
-      backUpcomingSessions: "العودة إلى جلسات المجلس القادمة",
-      backArchivedSessions: "العودة إلى جلسات المجلس المؤرشفة",
+      backCurrentSessions: "العودة إلى الجلسات",
+      backUpcomingSessions: "العودة إلى الجلسات",
+      backArchivedSessions: "العودة إلى الجلسات",
       backTribunalSession: "العودة إلى جلسة المجلس",
       account: "ملفي الشخصي",
       settings: "إعدادات الحساب",
@@ -1272,7 +1268,7 @@
       const loginHeader = brandHeader();
       // Sign-in: the Auth page with SsoButtons (sign-in.md, single-sign-on.md). SignInForm is left out on
       // purpose: through 0.88.0 it still always draws a password field, and CTM has no passwords (plenix-requests.md PLX-015).
-      return h(P.AppShell, { page: "form", frame: "centered", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
+      return h(P.AppShell, { page: "form", frame: "full", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
         h(P.PageContent, null, h(P.Stack, { gap: "none", grow: true },
           loginHeader,
           h(P.Stack, { grow: true, justify: "center", align: "center", inset: "lg" }, h(P.Auth, {
@@ -1457,7 +1453,7 @@
           {
             key: selection,
             title: t("overview"), label: t("overview"), icon: navigationIcon("case"),
-            collapsible: true, resizable: true, defaultCollapsed: false, width: "md",
+            collapsible: true, resizable: true, defaultCollapsed: false, width: "sm",
             detailOpen: caseDetailOpen, onBack: () => setCaseDetailOpen(false),
             strings: { expand: t("paneExpand"), collapse: t("paneCollapse"), resize: t("paneResize"), back: t("paneBack") },
             rail: navigationRail(caseNavigationItems, selectCaseSection),
@@ -2005,7 +2001,7 @@
     }
     return h(
       P.AppShell,
-          { header, sideNav: nav, frame: "centered", page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
+          { header, sideNav: nav, frame: "full", page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       h("div", { className: "plx-page-panes" }, caseNav,
         h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },

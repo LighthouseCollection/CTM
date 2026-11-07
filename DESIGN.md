@@ -72,6 +72,23 @@ A row of buttons never mixes `primary` with `danger`.
 - One thing leads each page; one primary action; extra actions in a menu.
   Related items grouped (space before lines). Pages end on purpose.
 - Cases are a workspace table, never navigation entries.
+- Pages fill the window: `AppShell frame="full"` (D-0045). A page that should
+  be narrow gets it from its page kind (form, settings), never from the frame.
+- Navigation panes (D-0047): the main `NavPane` keeps the Plenix shell
+  navigation width and folds to its rail while a case is open; the case
+  `SecondaryPane` uses `width="sm"`, stays collapsible and resizable. Every
+  nav item uses a Plenix icon (no drawn SVG) so icons and labels line up.
+  "Back to sessions" is the way back from a case.
+
+### Council Home (D-0046, #170)
+
+Dashboard page, top to bottom: the next council session leads (one `Panel`,
+date and time, location, agenda count, my answer, one primary "Open
+session"); one row of equal `MetricCard layout="tile"` stat tiles with short
+labels, each linking to its list, no menus; My cases as a `DataGrid`; council
+members as `MetricCard type="person"` cards with active case counts; a
+statistics summary (cases per member, cases by reason) with a year picker.
+Nothing appears twice. Full spec: `docs/implementation/slices/ctm3-170-home/design.md`.
 
 ## 3. States (every screen spec has this matrix)
 
