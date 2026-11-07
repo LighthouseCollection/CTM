@@ -330,6 +330,10 @@ def decision_data(decision, actor):
                 "actor_id": str(row.actor_id), "actor": name(row.actor), "timestamp": row.created_at.isoformat()}
         votes.append(vote)
         effective[row.member_id] = vote
+    from tribunal.services.council_seats import voting_seat_count
+    tally = {choice: sum(1 for vote in effective.values() if vote["choice"] == choice)
+             for choice in ("approve", "deny", "abstain")}
+    tally["voting_seats"] = voting_seat_count()  # earlier votes stay as cast (#175)
     approvals = [{"president_id": str(row.president_id), "president": name(row.president),
                   "actor": name(row.actor), "actor_id": str(row.actor_id), "timestamp": row.created_at.isoformat()}
                  for row in m.PresidentialApproval.objects.filter(decision=decision).select_related("president", "actor").order_by("created_at", "id")]
@@ -339,6 +343,6 @@ def decision_data(decision, actor):
             "grounds": decision.grounds, "entitlements": decision.entitlements,
             "conditions": decision.conditions, "actor": name(decision.actor),
             "timestamp": decision.created_at.isoformat(), "votes": list(effective.values()),
-            "vote_history": votes, "approval": approvals[-1] if approvals else None,
+            "vote_history": votes, "tally": tally, "approval": approvals[-1] if approvals else None,
             "approval_history": approvals, "current": current, "decree": decree_data,
             "can_vote": writable, "can_approve": writable and actor.role in {"president", "admin", "secretary"}}

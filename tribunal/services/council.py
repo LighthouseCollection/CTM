@@ -328,10 +328,12 @@ def attendance_for(actor, session_id, hearing_id=None):
 def attendance_roster_for(actor, session_id, hearing_id=None):
     """Return the active council roster with any recorded attendance for a hearing."""
     rows = attendance_for(actor, session_id, hearing_id)
+    from django.db.models import Q
+    from .council_seats import seated_ids
     members = Account.objects.filter(
-        is_active=True, role__in=("president", "secretary", "member")
+        Q(role__in=("president", "secretary", "member")) | Q(pk__in=seated_ids()), is_active=True
     ).order_by("last_name", "first_name", "pk")
-    rank = {"president": 0, "secretary": 1, "member": 2}
+    rank = {"president": 0, "secretary": 1, "member": 2, "admin": 3}
     members = sorted(members, key=lambda member: (rank[member.role], member.last_name, member.first_name, member.pk))
     return [(member, rows.get(member.pk)) for member in members]
 

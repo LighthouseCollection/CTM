@@ -35,6 +35,8 @@ urlpatterns = [
     path("api/cases/<uuid:case_id>/", api.case_detail),
     path("api/cases/<uuid:case_id>/assignment/", api.assign),
     path("api/council/members/", api.members),
+    path("api/council/seats/", api.council_seats),
+    path("api/council/seats/<uuid:account_id>/", api.council_seat),
     path("api/system/accounts/", api.system_accounts),
     path("api/system/members/", api.system_members),
     path("api/system/members/<uuid:account_id>/", api.system_member),
