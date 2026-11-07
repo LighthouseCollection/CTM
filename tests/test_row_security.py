@@ -82,6 +82,8 @@ def runtime():
             "ctm_voting_seat(uuid)",
             "ctm_council_seat_readable()",
             "ctm_council_seat_writable(jsonb)",
+            "ctm_session_draft_state_writable(jsonb)",
+            "ctm_session_draft_insertable(jsonb)",
             "ctm_admin_case_purge_allowed(uuid)",
             "ctm_reference_readable(text,jsonb)",
             "ctm_reference_writable(text,jsonb)",
