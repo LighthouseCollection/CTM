@@ -799,8 +799,9 @@ def _council_case_edits(case):
 @endpoint(("GET", "DELETE"))
 def case_detail(request, case_id):
     if request.method == "DELETE":
-        from tribunal.services.admin_purge import purge_case
-        purge_case(request.user, case_id)
+        from tribunal.services.admin_purge import delete_case
+        data = body(request)
+        delete_case(request.user, case_id, data.get("confirm_number"), data.get("reason"))
         return JsonResponse({}, status=204)
     from tribunal.projections import case_capabilities
     case = case_for(request.user, case_id)
