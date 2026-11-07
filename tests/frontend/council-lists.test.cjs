@@ -231,30 +231,103 @@ test("archived sessions are a split workspace whose reading pane is read-only", 
   assert.ok(tables.every((table) => !table.props.columns.some((column) => column.field === "case_id")), "no button column");
 });
 
-test("council home is a dashboard: MetricCards in a WidgetGrid, a missing count is never zero", async () => {
+// Issue 170 (D-0046, design docs/implementation/slices/ctm3-170-home/design.md): the next session leads, then one
+// row of equal tiles with short labels and links (no menus, no info), then My cases once as a grid.
+test("council home: lead session, one row of tiles, My cases grid, in that order (issue 170 AC-2, AC-3, AC-4)", async () => {
   const [h, C] = boot();
-  const api = async (url) => url === "/api/dashboard/" ? { my_cases: 2, review_queue: 10, upcoming_sessions: [{ id: "s1", date: "2099-01-10" }] }
+  const later = "2099-01-10";
+  const api = async (url) => url === "/api/dashboard/" ? { my_cases: 2, review_queue: 10, upcoming_sessions: [{ id: "s1", date: later }] }
     : url === "/api/notifications/" ? { unread_count: 0 }
-    : url.startsWith("/api/applications/") ? { items: [] } : { items: [] };
-  let reviewed = 0;
-  const tree = await rendered(h, C, C.CouncilHome, { api, lang: "en", user: secretary, onCase() {}, onSession() {}, onReview: () => reviewed++, onNotifications() {}, onCases() {} });
-  const grids = byName(tree, "WidgetGrid");
-  assert.equal(grids.length, 2);
-  const metrics = grids[0].props.items;
-  same(metrics.map((item) => item.id), ["mine", "unread", "review", "consideration"]);
-  const card = grids[0].props.renderItem(metrics[0]);
-  assert.equal(card.type.displayName, "MetricCard");
-  assert.equal(card.props.value, "2");
-  assert.equal(grids[0].props.renderItem(metrics[2]).props.value, "10");
-  metrics[2].menu.props.onSelect();
-  assert.equal(reviewed, 1);
-  // a member: no review metrics; a count the server did not send stays empty ("–"), never 0
-  const [h2, C2] = boot();
-  const memberApi = async (url) => url === "/api/dashboard/" ? { my_cases: null, review_queue: null, upcoming_sessions: [] } : url === "/api/notifications/" ? { unread_count: 1 } : { items: [] };
-  const member = await rendered(h2, C2, C2.CouncilHome, { api: memberApi, lang: "en", user: { id: "m", role: "member" }, onCase() {}, onSession() {}, onReview() {}, onNotifications() {}, onCases() {} });
-  const memberGrid = byName(member, "WidgetGrid")[0];
-  same(memberGrid.props.items.map((item) => item.id), ["mine", "unread"]);
-  assert.equal(memberGrid.props.renderItem(memberGrid.props.items[0]).props.value, undefined);
+    : url === "/api/sessions/" ? { items: [{ id: "s1", date: later, starts_at: "2099-01-11T02:00:00Z", location: "Synthetic Hall", state: "planned" }] }
+    : url === "/api/sessions/s1/agenda/" ? { items: [{ id: "a1" }, { id: "a2" }, { id: "a3" }] }
+    : url === "/api/sessions/s1/answers/" ? { members: [{ member_id: "sec", answer: "attend", answered_at: "2099-01-01T00:00:00Z" }], confirmed: 1, total: 4 }
+    : url === "/api/cases/" ? { items: [
+        { id: "c1", number: "20261020-01", status: "open", assigned_member_id: "sec", applicant_name: "Emily Carter", applicant_gender: "F", respondent_name: "James Carter", respondent_gender: "M" },
+        { id: "c2", number: "20261020-02", status: "open", assigned_member_id: "other", applicant_name: "Other Person" },
+      ] }
+    : { items: [] };
+  const opened = [], moved = [];
+  const props = { api, lang: "en", user: secretary, onCase: (id) => opened.push(id), onSession() {}, onNavigate: (path) => moved.push(path) };
+  h.render(C.CouncilHome, props);
+  await settle(); h.render(C.CouncilHome, props); await settle();
+  const tree = h.render(C.CouncilHome, props);
+  const root = find(tree, (n) => n.props && typeof n.props.onClickCapture === "function")[0];
+  // Order: title, lead session Panel, tiles, My cases Panel.
+  const regions = root.children.filter(Boolean).map((child) => child.type && (child.type.displayName || child.type.name));
+  same(regions.slice(0, 4), ["Text", "Panel", "Stack", "Panel"]);
+  const lead = root.children.filter(Boolean)[1];
+  assert.equal(lead.props.icon, "calendar");
+  const text = textOf(lead);
+  assert.match(text, /Synthetic Hall/);
+  assert.match(text, /Agenda items/);
+  assert.match(text, /Attending/);
+  assert.match(text, /Confirmed 1 of 4/);
+  const open = lead.props.actions;
+  assert.equal(open.props.variant, "primary");
+  open.props.onClick();
+  same(moved, ["/sessions/s1"]);
+  // One row of equal tiles: four for a manager, short labels, links, no menu or info.
+  const grid = byName(tree, "WidgetGrid")[0];
+  assert.equal(grid.props.columns, 4);
+  const cards = grid.props.items.map((item) => grid.props.renderItem(item));
+  same(cards.map((card) => card.props.title), ["My cases", "Unread", "New applications", "For council"]);
+  assert.ok(cards.every((card) => card.props.layout === "tile" && card.props.size === "lg"));
+  assert.ok(cards.every((card) => card.props.menu === undefined && card.props.info === undefined));
+  same(cards.map((card) => card.props.href || null), ["/cases/mine", "/notifications", "/applications/new", null]);
+  same(cards.map((card) => card.props.value), ["2", "0", "10", "0"]);
+  // My cases appears once, as a grid of the four columns; a row opens its case.
+  assert.equal(byName(tree, "MetricCard").length + cards.length >= 4, true);
+  const tables = find(tree, (n) => n.type === Table);
+  assert.equal(tables.length, 1);
+  same(tables[0].props.columns.map((column) => column.field), ["number", "spouses", "status", "next_step"]);
+  same(tables[0].props.rows.map((row) => [row.number, row.spouses]), [["20261020-01", "⁨James Carter⁩ · ⁨Emily Carter⁩"]]);
+  tables[0].props.onSelect("c1");
+  same(opened, ["c1"]);
+  assert.equal(byName(tree, "Card").length, 0, "no second My cases list");
+});
+
+test("council home for a member: two tiles in two columns; no session shows the empty state; a missing count is never 0", async () => {
+  const [h, C] = boot();
+  const api = async (url) => url === "/api/dashboard/" ? { my_cases: null, review_queue: null, upcoming_sessions: [] }
+    : url === "/api/notifications/" ? { unread_count: 1 } : { items: [] };
+  const props = { api, lang: "en", user: { id: "m", portal: "council", role: "member" }, onCase() {}, onSession() {}, onNavigate() {} };
+  h.render(C.CouncilHome, props);
+  await settle(); h.render(C.CouncilHome, props); await settle();
+  const tree = h.render(C.CouncilHome, props);
+  const grid = byName(tree, "WidgetGrid")[0];
+  assert.equal(grid.props.columns, 2);
+  const cards = grid.props.items.map((item) => grid.props.renderItem(item));
+  same(cards.map((card) => card.props.title), ["My cases", "Unread"]);
+  assert.equal(cards[0].props.value, undefined, "a count the server did not send stays '–'");
+  const empty = byName(tree, "EmptyState").map((node) => node.props.title);
+  assert.ok(empty.includes("No council session is scheduled."));
+  assert.ok(empty.includes("No open cases are assigned to you."));
+  assert.equal(byName(tree, "EmptyState").find((node) => node.props.title === "No council session is scheduled.").props.action, undefined, "only managers schedule");
+});
+
+test("one failing region shows its own notice while the others still show (issue 170 design §3)", async () => {
+  const [h, C] = boot();
+  const api = async (url) => {
+    if (url === "/api/cases/") throw Object.assign(new Error("x"), { status: 500, data: {} });
+    return url === "/api/dashboard/" ? { my_cases: 0, review_queue: 0, upcoming_sessions: [] } : url === "/api/notifications/" ? { unread_count: 0 } : { items: [] };
+  };
+  const props = { api, lang: "en", user: secretary, onCase() {}, onSession() {}, onNavigate() {} };
+  h.render(C.CouncilHome, props);
+  await settle(); h.render(C.CouncilHome, props); await settle();
+  const tree = h.render(C.CouncilHome, props);
+  assert.equal(byName(tree, "WidgetGrid").length, 1, "tiles still show");
+  assert.ok(byName(tree, "Notice").some((node) => node.props.tone === "danger"));
+  same(byName(tree, "WidgetGrid")[0].props.items.map((item) => item.id), ["mine", "unread", "review", "consideration"]);
+});
+
+test("home tile and session labels have EN and AR", () => {
+  const [, C] = boot();
+  const en = C.translator("en"), ar = C.translator("ar");
+  for (const key of ["tileUnread", "tileNewApplications", "tileForCouncil", "openSession", "sessionWhen", "agendaItems", "scheduleSession", "spouses", "homeNextStep", "allCases"])
+    assert.notEqual(ar(key), en(key), key);
+  assert.equal(ar("tileNewApplications"), "طلبات جديدة");
+  assert.equal(ar("tileForCouncil"), "أمام المجلس");
+  assert.equal(ar("tileUnread"), "غير مقروءة");
 });
 
 test("search is a SearchWorkspace in a form: nothing is sent before Search, results open their case from the row", async () => {
