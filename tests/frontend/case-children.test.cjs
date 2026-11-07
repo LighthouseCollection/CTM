@@ -68,6 +68,7 @@ test("separation cards and editable case cards are EN/AR", () => {
   assert.doesNotMatch(panel, /\}, "Edit"\)|\}, "Save"\)/);
   for (const key of ["separationDetails", "civilDivorce", "restrainingOrder", "reconciliation", "maritalStatus", "initiatedBy", "courtName", "courtLocation", "civilCaseNumber", "civilDivorceStatus", "orderFiled", "orderNameListed", "orderCaseNumber", "orderStatus", "reconciliationAttempted", "permitPreviouslyApplied", "permitWhen", "permitWhere", "decisionOutcome"])
     assert.notEqual(ar(key), t(key), key);
+});
 
 // D-0050 (#217 G11): the applicant's application status and case reference are description-list items.
 test("applicant application status is a Badge in a PropertyList; applicant panels have icons", () => {
