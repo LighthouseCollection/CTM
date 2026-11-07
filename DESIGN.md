@@ -118,6 +118,28 @@ A success message appears only after the server confirmed the change.
 - Dates and numbers through `Intl` (`en-US`, `ar-EG`); civil dates never shift
   by time zone.
 
+### Read-only fields and card headings (D-0050, owner 2026-11-07, #195, plenix-ds/pds#946)
+
+The owner chose this from the study `docs/design/read-only-field-study.html`
+(open it in a browser; the ★ preset is the decision, every other preset is a
+rejected alternative kept for reference). Plenix implements it as the default
+read-only field and card styles; CTM uses those components and adds no CSS.
+
+| Level | Decision |
+|---|---|
+| Card heading | 14 px, bold, dark grey (secondary ink), UPPERCASE, icon shown; soft vertical glow from the card top to the heading line in the field tint; line under the heading **inset** (not edge to edge) |
+| Group heading (Case, Parties, Marriage …) | 13 px, medium, gold, sentence case, no line; 40 px above each group |
+| Field label | 11 px, regular, diocese navy (brand), sentence case |
+| Value | 13 px, semibold, dark grey (secondary ink) |
+| Field surface | each field on a porcelain tile (very soft warm neutral, not yellow) with a 1 px border in a deeper shade of the same tint; never the grey used for card borders |
+| Status | a Plenix status badge, never plain text |
+
+Rules that come with it: the label is always lighter than its value; label
+and value colours keep at least 4.5 : 1 contrast on the tile (navy about
+8 : 1); every level stays distinct (card heading › group heading › value ›
+label). The owner chose label 11 px and value 13 px knowing the study flags
+them under the 12 px / 14 px readability guidance; the decision stands.
+
 ## 5. Words
 
 All messages follow `docs/content/messaging.md`; terms come from

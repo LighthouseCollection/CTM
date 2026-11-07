@@ -456,3 +456,13 @@ decisions:
     decided_by: agent:ctm3-design-director
     status: active
     check: { kind: test, ref: tests/frontend/application-views.test.cjs }
+
+  - id: D-0050
+    date: 2026-11-07
+    area: design
+    decision: Read-only fields and card headings follow the owner's choice from docs/design/read-only-field-study.html (the starred preset) - card heading 14 px bold dark grey UPPERCASE with icon, a soft tint glow down to an inset (not edge-to-edge) line; group headings 13 px medium gold, 40 px above each group; field label 11 px regular diocese navy, sentence case; value 13 px semibold dark grey; each field on a porcelain tile with a 1 px border in a deeper shade of the same tint; status as a badge. Plenix implements it as the default read-only and card styles (plenix-ds/pds#946); CTM uses the components with no CSS of its own. Recorded in DESIGN.md section 4
+    why: Owner 2026-11-07 after iterating the study ("my choices are Card heading 14 px bold dark grey uppercase, tint glow, line inset; Groups 13 px, 40 px apart, medium gold; Label 11 px regular navy; Value 13 px semibold dark grey; Fields on porcelain tiles, medium border"). The owner kept label 11 px and value 13 px over the 12/14 px readability recommendation shown in the study
+    options: [Owner choice (chosen), Y Readability (12/14 px), B Fluent field, C Property list, Today]
+    decided_by: owner
+    status: active
+    review_only: "Visual decision; checked by ctm3-design-critic (G5b) against DESIGN.md section 4 and the study's starred preset until Plenix ships it, then by the Plenix visual-regression baselines"
