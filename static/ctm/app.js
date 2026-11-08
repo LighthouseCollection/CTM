@@ -1439,6 +1439,11 @@
       setCaseDetailOpen(true);
       go(id, selection);
     };
+    // The parent's name for the pane's "Back to {name}" row: the origin's own back label without the paneBack frame.
+    const backParent = (t, key) => {
+      const [before, after = ""] = t("paneBack").split("{name}"), label = t(key);
+      return label.startsWith(before) && label.endsWith(after) ? label.slice(before.length, label.length - after.length) : label;
+    };
     const caseNav = caseContext
       ? h(
           P.SecondaryPane,
@@ -1447,17 +1452,11 @@
             title: t("overview"), label: t("overview"), icon: navigationIcon("case"),
             collapsible: true, resizable: true, defaultCollapsed: false, width: "md",
             detailOpen: caseDetailOpen, onBack: () => setCaseDetailOpen(false),
+            // D-0061 (issue 263): the Plenix back-to-parent row above the pane title (pds issue 995, shipped in 1.2.0).
+            back: { parent: backParent(t, caseOrigin?.labelKey || "backCases"), onClick: returnToCaseOrigin },
             strings: { expand: t("paneExpand"), collapse: t("paneCollapse"), resize: t("paneResize"), back: t("paneBack") },
             rail: navigationRail(caseNavigationItems, selectCaseSection),
           },
-          // D-0061 (issue 263): the way back is a quiet nav item at the top of the pane: a back arrow on the nav icon
-          // column (Plenix mirrors it in Arabic) and muted text, so Case Overview stays the pane's strongest text. The
-          // Plenix back-item pattern is requested in plenix-ds/pds issue 995; this is the closest documented NavList item.
-          h(P.NavList, {
-            label: t(caseOrigin?.labelKey || "backCases"),
-            onSelect: returnToCaseOrigin,
-            items: [{ id: "back", icon: h(P.Icon, { name: "arrow-left", "aria-hidden": true }), label: t(caseOrigin?.labelKey || "backCases"), muted: true }],
-          }),
           h(P.NavList, {
             label: t("overview"),
             value: page,

@@ -359,9 +359,9 @@ test("case back navigation retains the workspace that opened the case", () => {
   assert.match(app, /const openCase = \(id, origin\) =>/);
   assert.match(app, /const returnToCaseOrigin = \(\) =>/);
   // D-0061 (issue 263): a quiet NavList back item (arrow icon, muted text), never a full-width button.
-  assert.ok(app.includes('onSelect: returnToCaseOrigin,'));
-  assert.ok(app.includes('items: [{ id: "back", icon: h(P.Icon, { name: "arrow-left", "aria-hidden": true }), label: t(caseOrigin?.labelKey || "backCases"), muted: true }]'));
-  assert.doesNotMatch(app, /onClick: returnToCaseOrigin/);
+  // Plenix 1.2.0 SecondaryPane back row (pds issue 995): "Back to {name}" with the origin as the parent.
+  assert.ok(app.includes('back: { parent: backParent(t, caseOrigin?.labelKey || "backCases"), onClick: returnToCaseOrigin },'));
+  assert.ok(!app.includes('id: "back", icon: h(P.Icon'));
   assert.match(app, /page: "search", labelKey: "backSearchResults"/);
   assert.match(app, /onOpen: \(id\) => openCase\(id, \{ page, labelKey:/);
   assert.match(app, /page: "session", selection, labelKey: "backTribunalSession"/);
