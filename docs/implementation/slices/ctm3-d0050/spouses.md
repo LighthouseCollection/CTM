@@ -21,7 +21,7 @@ Owner, 2026-11-07: "this is crap. 1) card is not consistent 2) the title in the 
 
 Discreet, never a full button, never inside Edit, and only for users who may change the photo.
 
-- **Target (Plenix, PLX-012, https://github.com/plenix-ds/pds/issues/977):** a small round icon button in the photo's bottom-end corner, quiet at rest and shown on hover or focus, with the tooltip and name "Change photo". CTM switches to it when it ships.
+- **Target (Plenix, PLX-027, https://github.com/plenix-ds/pds/issues/977):** a small round icon button in the photo's bottom-end corner, quiet at rest and shown on hover or focus, with the tooltip and name "Change photo". CTM switches to it when it ships.
 - **Until then** (no CTM CSS, so no overlay):
   - **Spouse card header:** the first item in `Panel.actions` is `Button variant="ghost" size="sm" icon="photo_camera"`, icon-only, with `aria-label` and `Tooltip` "Change photo" / "تغيير الصورة".
   - **Council member cards and My Account** (a larger photo with room below): `Button variant="ghost" size="sm"` with the text "Change photo", centred under the photo. This is the smallest Plenix action, since Plenix has no link look for actions.
