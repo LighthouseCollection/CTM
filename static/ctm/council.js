@@ -1737,14 +1737,14 @@
       h(P.Stack, { gap: "md" },
         archiveAgendaState.pending ? loadingView(P, h, t) : null,
         archiveAgendaState.error ? h(P.Notice, { tone: "danger" }, serverMessage(archiveAgendaState.error, t)) : null,
-        !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { title: t("assignedCases") },
+        !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { icon: "folder", title: t("assignedCases") },
           archiveTable(t("assignedCases"), archivedItems.assigned, t("part1Empty"), caseColumns([
             { title: t("reason"), field: "reason", minWidth: "9rem", pill: false, render: (row) => groundsText(row.grounds, row.reason, t) || t("notRecorded") },
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
             { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
           ])),
         ) : null,
-        !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { title: t("casesPresented") },
+        !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { icon: "event_available", title: t("casesPresented") },
           archiveTable(t("casesPresented"), archivedItems.presented, t("part2Empty"), caseColumns([
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
             { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },

@@ -1361,18 +1361,14 @@
               title: t("latestVersionTitle", { ...conflictVars, when: conflict.timestamp ? base.formatWhen(conflict.timestamp, lang) : "—" }),
             },
             h(
-              P.Stack,
-              { gap: "sm" },
+              P.PropertyList,
+              { layout: "stacked" },
               ...answerEntries(report, conflict.answers).map(([code, answer]) =>
-                h(
-                  P.Stack,
-                  { key: code, gap: "xs" },
-                  h(P.Text, { variant: "secondary" }, label(code)),
-                  h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)),
-                ),
+                h(P.PropertyList.Item, { key: code, label: label(code) },
+                  h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer))),
               ),
               conflict.observations
-                ? h(P.Stack, { gap: "xs" }, h(P.Text, { variant: "secondary" }, t("observations")), h(P.Text, { as: "p", dir: "auto" }, conflict.observations))
+                ? h(P.PropertyList.Item, { label: t("observations") }, h(P.Text, { as: "p", dir: "auto" }, conflict.observations))
                 : null,
             ),
           )
@@ -1506,7 +1502,7 @@
                     h(P.PropertyList.Item, { label: t("submittedOn"), data: true }, base.formatWhen(recording.created_at, lang)),
                     h(P.PropertyList.Item, { label: t("recDuration"), data: true }, recording.duration_ms != null ? formatDuration(recording.duration_ms) : t("durationUnknown")),
                     recording.byte_count ? h(P.PropertyList.Item, { label: t("size"), data: true }, formatBytes(recording.byte_count, lang)) : null,
-                    h(P.PropertyList.Item, { label: t("noticeState") }, t(recording.notice_recorded ? "noticeGiven" : "noticeMissing")),
+                    h(P.PropertyList.Item, { label: t("noticeState") }, h(P.Badge, { tone: recording.notice_recorded ? "success" : "warning" }, t(recording.notice_recorded ? "noticeGiven" : "noticeMissing"))),
                   ),
                   recording.download_url
                     ? h(P.MediaPlayer, { src: recording.download_url, kind: "audio", label: t("recordingItem", { n: String(i + 1) }), strings: mediaStrings(t) })

@@ -2561,10 +2561,11 @@ ${ar}` : en;
               P.Stack,
               { gap: "sm" },
               h(P.Badge, { tone: "success" }, t("approved")),
-              h(P.Text, { as: "p" }, `${t("president")}: ${decision.approval.president || ""}`),
-              decision.approval.actor && decision.approval.actor !== decision.approval.president
-                ? h(P.Text, { as: "p", variant: "secondary" }, `${t("recordedBy")}: ${decision.approval.actor}${decision.approval.timestamp ? " · " + base.formatWhen(decision.approval.timestamp, lang) : ""}`)
-                : null,
+              h(P.PropertyList, { layout: "stacked" },
+                h(P.PropertyList.Item, { label: t("president") }, decision.approval.president || "—"),
+                decision.approval.actor && decision.approval.actor !== decision.approval.president
+                  ? h(P.PropertyList.Item, { label: t("recordedBy") }, `${decision.approval.actor}${decision.approval.timestamp ? " · " + base.formatWhen(decision.approval.timestamp, lang) : ""}`)
+                  : null),
             )
           : canApprove
             ? h(
