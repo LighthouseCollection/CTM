@@ -56,6 +56,10 @@ def unassign_case(actor, case_id, president_id=None):
     one case_unassigned audit entry records who cleared it and the previous
     manager. The database is told the new manager is none (empty context).
     """
+    from .staff_roles import assignment_recorder
+    active(actor)
+    if not assignment_recorder(actor):  # before any lookup, so refusals read as refusals
+        raise PermissionDenied("Administrative assignment authority is required.")
     with database_actor(actor):
         if president_id is None:
             president_id = (Account.objects.filter(is_active=True, role="president")
@@ -86,8 +90,13 @@ def _unassign_case(actor, case_id, president_id):
     previous = case.assigned_member
     case.assigned_member = None
     case.save(update_fields=["assigned_member"])
-    audit(actor, "case_unassigned", case, case, metadata={"previous_member_id": str(previous.pk)})
-    notify(previous, "assignment_changed", case, case=case, payload={"assigned_member": None})
+    event = audit(actor, "case_unassigned", case, case, metadata={"previous_member_id": str(previous.pk)})
+    notify(previous, "assignment_changed", event, case=case, payload={"assigned_member": None})
+    # #237: inside the undo window the parties' pending notice is discarded and they
+    # hear nothing; after it, they are told the case has no manager for now.
+    from .assignment_notices import discard_pending, notify_parties
+    if not discard_pending(case):
+        notify_parties(case, event, None)
     return case
 
 
@@ -117,17 +126,10 @@ def _assign_case(actor, case_id, member_id, president_id):
     audit(actor, "case_assigned", record, case)
     for recipient in {x for x in [previous, member] if x}:
         notify(recipient, "assignment_changed", record, case=case)
-    for party in case.parties.select_related("account").all():
-        if party.account:
-            notify(
-                party.account,
-                "assignment_changed",
-                record,
-                case=case,
-                payload={
-                    "assigned_member": f"{member.first_name} {member.last_name}".strip()
-                },
-            )
+    # #237: a change inside the undo window replaces the parties' pending notice.
+    from .assignment_notices import discard_pending, notify_parties
+    discard_pending(case)
+    notify_parties(case, record, member)
     return record
 
 

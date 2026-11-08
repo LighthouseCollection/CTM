@@ -1363,8 +1363,14 @@ def message_acknowledge(request, message_id):
 @endpoint(("GET", "POST"))
 def notifications(request):
     from tribunal.services.filing_privacy import notice_visible
+    from tribunal.services.assignment_notices import party_notice_visible
     qs = m.Notification.objects.filter(recipient=request.user)
-    hidden = [pk for pk, key in qs.values_list("pk", "key") if not notice_visible(key)]
+
+    def later_after(notice, moment):
+        return qs.filter(case_id=notice.case_id, kind=notice.kind, created_at__gt=moment).exists()
+
+    hidden = [row.pk for row in qs.select_related("case")
+              if not notice_visible(row.key) or not party_notice_visible(row, later_after)]
     qs = qs.exclude(pk__in=hidden)
     if request.method == "POST":
         updated = qs.filter(pk=body(request)["id"], read_at__isnull=True).update(

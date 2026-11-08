@@ -176,5 +176,7 @@ STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 CLAMAV_HOST = os.environ.get("CLAMAV_HOST", "")
 CLAMAV_PORT = int(os.environ.get("CLAMAV_PORT", "3310"))
 CTM_SCAN_REQUIRED = True
+# #237: parties hear about a case manager change only after this undo window.
+CTM_ASSIGNMENT_UNDO_WINDOW_SECONDS = int(os.environ.get("CTM_ASSIGNMENT_UNDO_WINDOW_SECONDS", "300"))
 CTM_TRIBUNAL_ID = os.environ.get("CTM_TRIBUNAL_ID", "")
 PLENIX_BASE = "https://design-system.lighthouseway.org/cdn/0.93.1/"

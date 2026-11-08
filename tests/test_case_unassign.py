@@ -68,3 +68,66 @@ def test_case_scheduled_for_a_hearing_keeps_its_manager(granted_roles, client, p
     assert "hearing" in response.json()["messages"][0]
     assigned.refresh_from_db()
     assert assigned.assigned_member_id == people["member"].pk
+
+
+# Ruling on #237 (ctm3-product-lead): the parties hear about a manager change only
+# after the undo window; an Undo or Change inside the window tells them nothing.
+from datetime import timedelta  # noqa: E402
+from unittest.mock import patch  # noqa: E402
+from django.utils import timezone  # noqa: E402
+
+
+def party_accounts(case):
+    return [party.account for party in case.parties.select_related("account") if party.account]
+
+
+def inbox(granted_roles, client, account):
+    client.force_login(account)
+    with granted_roles("ctm_app", session=True):
+        return [row for row in client.get("/api/notifications/").json()["items"] if row["kind"] == "assignment_changed"]
+
+
+def test_party_notice_waits_for_the_undo_window(granted_roles, client, people, assigned, settings):
+    window = settings.CTM_ASSIGNMENT_UNDO_WINDOW_SECONDS
+    party = party_accounts(assigned)[0]
+    job = m.Outbox.objects.get(kind="assignment_changed", recipient=party, case=assigned)
+    assert job.due_at >= timezone.now() + timedelta(seconds=window - 30)
+    assert inbox(granted_roles, client, party) == []  # nothing before the window passes
+    with patch("django.utils.timezone.now", return_value=timezone.now() + timedelta(seconds=window + 5)):
+        assert len(inbox(granted_roles, client, party)) == 1
+
+
+def test_undo_inside_the_window_tells_the_parties_nothing(granted_roles, client, people, assigned):
+    party = party_accounts(assigned)[0]
+    assert unassign(granted_roles, client, people["admin"], assigned).status_code == 200
+    jobs = m.Outbox.objects.filter(kind="assignment_changed", recipient=party, case=assigned)
+    assert jobs.count() == 1 and jobs.get().discarded_at is not None
+    later = timezone.now() + timedelta(hours=1)
+    with patch("django.utils.timezone.now", return_value=later):
+        assert inbox(granted_roles, client, party) == []
+    assert m.Notification.objects.filter(recipient=people["member"], kind="assignment_changed").count() >= 2
+
+
+def test_change_inside_the_window_replaces_the_first_notice(granted_roles, client, people, assigned):
+    other = m.Account.objects.create_user(email="second.member@example.test", role="member",
+                                          first_name="Second", last_name="Member")
+    party = party_accounts(assigned)[0]
+    assign_case(people["admin"], assigned.pk, other.pk, people["president"].pk)
+    jobs = m.Outbox.objects.filter(kind="assignment_changed", recipient=party, case=assigned).order_by("created_at")
+    assert [job.discarded_at is not None for job in jobs] == [True, False]
+    with patch("django.utils.timezone.now", return_value=timezone.now() + timedelta(hours=1)):
+        names = [row["payload"]["assigned_member"] for row in inbox(granted_roles, client, party)]
+    assert names == ["Second Member"]
+
+
+def test_unassign_after_the_window_tells_the_parties(granted_roles, client, people, assigned, settings):
+    party = party_accounts(assigned)[0]
+    later = timezone.now() + timedelta(seconds=settings.CTM_ASSIGNMENT_UNDO_WINDOW_SECONDS + 60)
+    with patch("django.utils.timezone.now", return_value=later):
+        assert unassign(granted_roles, client, people["admin"], assigned).status_code == 200
+    first = m.Outbox.objects.filter(kind="assignment_changed", recipient=party, case=assigned).order_by("created_at")
+    assert first.count() == 2 and first[0].discarded_at is None  # the first notice was due and stands
+    assert first[1].payload["assigned_member"] is None
+    with patch("django.utils.timezone.now", return_value=later + timedelta(hours=1)):
+        names = [row["payload"]["assigned_member"] for row in inbox(granted_roles, client, party)]
+    assert sorted(names, key=str) == sorted([None, "member Test"], key=str)  # history kept, new notice added
