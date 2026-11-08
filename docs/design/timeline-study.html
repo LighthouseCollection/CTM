@@ -1,0 +1,189 @@
+<title>Case Timeline Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<style>
+/* Layout: one case timeline in the decided card frame, colour-coded by case area, grouped by year; options bar on top, legend beside. */
+:root{
+  --bg:#f3f4f7; --surface:#ffffff; --ink:#1f2430; --ink2:#3b4252; --muted:#5d6577; --faint:#8a92a3; --line:#e2e5ec;
+  --porcelain:#fbfaf9; --warm:#8a7a6c; --accent:#2c64d8; --brand:#1d4f91;
+  /* case areas */
+  --c-marriage:#7a3b5c; --c-application:#5b6474; --c-filing:#0f6f86; --c-assign:#6b5ca5; --c-hearing:#a8541a; --c-decision:#1d4f91; --c-decree:#1f7a45; --c-comms:#8a6a1e;
+  --f:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14171d; --surface:#1d2129; --ink:#e9ecf2; --ink2:#cfd5e0; --muted:#a3abbb; --faint:#7b8396; --line:#2e3440; --porcelain:#1f2023; --warm:#b3a394; --accent:#7ea4f2; --brand:#8fb4ea;
+  --c-marriage:#d48db0; --c-application:#a9b2c2; --c-filing:#5cc3d9; --c-assign:#aea2e0; --c-hearing:#eba06c; --c-decision:#8fb4ea; --c-decree:#6fd39b; --c-comms:#e2c26e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171d; --surface:#1d2129; --ink:#e9ecf2; --ink2:#cfd5e0; --muted:#a3abbb; --faint:#7b8396; --line:#2e3440; --porcelain:#1f2023; --warm:#b3a394; --accent:#7ea4f2; --brand:#8fb4ea;
+  --c-marriage:#d48db0; --c-application:#a9b2c2; --c-filing:#5cc3d9; --c-assign:#aea2e0; --c-hearing:#eba06c; --c-decision:#8fb4ea; --c-decree:#6fd39b; --c-comms:#e2c26e; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 48px;display:grid;gap:18px}
+h1{font-size:1.5rem;margin:0} .lede{margin:4px 0 0;color:var(--muted);max-width:82ch}
+.opts{display:flex;flex-wrap:wrap;gap:14px;align-items:end;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.opts label{display:grid;gap:3px;font-size:12px;font-weight:600;color:var(--muted)}
+.opts select{font:inherit;font-size:13px;padding:5px 7px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink)}
+select:focus-visible,.legend button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:18px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.legend{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;display:grid;gap:6px}
+.legend h2{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.legend button{font:inherit;font-size:13px;display:flex;align-items:center;gap:8px;border:0;background:none;color:var(--ink);padding:3px 4px;border-radius:4px;cursor:pointer;text-align:start}
+.legend button[aria-pressed="false"]{opacity:.4}
+.legend i{width:12px;height:12px;border-radius:6px;background:var(--c);flex:none}
+.legend small{color:var(--faint);font-size:11px;margin-top:4px}
+/* decided card frame */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;min-width:0;overflow:hidden}
+.card-h{display:flex;align-items:center;gap:10px;padding:16px 20px 12px;position:relative;background:linear-gradient(to bottom,var(--porcelain),var(--surface))}
+.card-h::after{content:"";position:absolute;inset-inline:20px;bottom:0;height:1px;background:var(--line)}
+.card-h h3{margin:0;font-size:14px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.07em}
+.card-h svg{width:18px;height:18px;fill:none;stroke:var(--ink2);stroke-width:1.6}
+/* year groups */
+.year{display:grid;grid-template-columns:var(--yw,22px) minmax(0,1fr);grid-template-areas:"yh yh" "yl ev";column-gap:8px;row-gap:12px;padding-top:40px}
+.year:first-child{border-top:0;padding-top:0}
+#tl>div{display:grid;gap:40px;padding:16px 20px 20px}
+.yl{grid-area:yl;display:block;padding:0;background-repeat:repeat-y;background-image:none}
+.yl b{writing-mode:vertical-rl;transform:rotate(180deg);font-size:24px;font-weight:700;letter-spacing:.04em;color:var(--ink2);font-variant-numeric:tabular-nums;line-height:1}
+[data-year="header"] .year{grid-template-columns:1fr}
+[data-year="header"] .yl{padding:0 2px 2px;background-image:none!important}
+[data-year="header"] .year{grid-template-columns:minmax(0,1fr);grid-template-areas:"yh" "ev"}
+[data-year="header"] .yl{display:none}
+[data-year="header"] .yl b{writing-mode:horizontal-tb;transform:none;font-size:16px;position:static}
+.events{grid-area:ev;display:grid;gap:10px;align-content:start}
+.yh{grid-area:yh}
+.yh b{display:inline-block;font-size:20px;font-weight:700;line-height:1.1;color:var(--ink2);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.yh b::after{content:"";display:block;width:72px;height:2px;margin-top:6px;border-radius:2px;background:color-mix(in oklab,var(--ink2) 45%,var(--surface))}
+.ev{display:grid;grid-template-columns:var(--dw,auto) minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:12px 14px;border-radius:6px;background:var(--surface);border:1px solid color-mix(in oklab,var(--c) 22%,var(--surface))}
+.ev.future{border-style:dashed}
+.dt{font-size:14px;font-weight:700;color:var(--ink);text-align:start;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ev.future .dt{color:var(--muted)}
+.dt{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.dt .ic{width:18px;height:18px;fill:none;stroke:var(--c);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ev.future .dt .ic{stroke:var(--faint)}
+[data-ds="inline"] .dt{flex-direction:row;align-items:center;gap:6px}
+[data-ds="inline"] .dt .ic{order:-1;width:16px;height:16px}
+[data-ds="plain"] .dt .ic{display:none}
+[data-ds="tile"] .dt .ic{display:none}
+[data-ds="tile"] .cal{display:block}
+[data-ds="tile"] .dt>span:not(.cal){display:none}
+.cal{width:56px;height:56px;display:none}
+.cal .pg{fill:var(--surface);stroke:color-mix(in oklab,var(--ink) 35%,var(--surface));stroke-width:2.5}
+.cal .bd{fill:var(--c)}
+.cal .hole{fill:var(--surface);stroke:color-mix(in oklab,var(--c) 70%,var(--ink));stroke-width:1.5}
+.cal .ring{fill:var(--ink)}
+.cal .mo{font:800 11px var(--f);letter-spacing:.06em;text-transform:uppercase;fill:var(--ink)}
+.cal .dy{font:700 19px var(--f);fill:var(--ink)}
+.cal .pd{font:700 10px var(--f);fill:var(--muted)}
+.ev.future .cal .bd{fill:color-mix(in oklab,var(--faint) 45%,var(--surface))}
+.ev.future .cal .pg{stroke-dasharray:4 3}
+.dot{width:22px;height:22px;border-radius:50%;background:var(--c);margin-top:0}
+.ev.future .dot{background:var(--surface);box-shadow:inset 0 0 0 2px var(--c)}
+.tt{font-weight:600;color:var(--ink)} .ds{color:var(--muted);font-size:13px}
+.tag{font-size:11px;font-weight:600;padding:2px 9px;border-radius:4px;white-space:nowrap;color:var(--c);background:color-mix(in oklab,var(--c) 12%,var(--surface))}
+/* colour strength */
+[data-color="title"] .tt{color:var(--c)}
+[data-color="row"] .ev{background:color-mix(in oklab,var(--c) 7%,var(--surface));border-color:color-mix(in oklab,var(--c) 28%,var(--surface))}
+[data-color="dot"] .ev{border-color:var(--line)}
+[data-color="row"] .tt{color:var(--c)}
+[data-color="bar"] .ev{box-shadow:inset 4px 0 0 var(--c);border-color:var(--line)}
+[dir="rtl"] [data-color="bar"] .ev{box-shadow:inset -4px 0 0 var(--c)}
+[data-color="all"] .ev{background:color-mix(in oklab,var(--c) 7%,var(--surface));border-color:color-mix(in oklab,var(--c) 35%,var(--surface))}
+[data-color="all"] .tt{color:var(--c)} [data-color="all"] .ds{color:color-mix(in oklab,var(--c) 70%,var(--muted))}
+.ev.future{opacity:.85}
+[data-tag="off"] .tag{display:none}
+.ev[hidden]{display:none}
+.year.empty{display:none}
+@media (max-width:560px){.ev{grid-template-columns:auto minmax(0,1fr)}.tag{grid-column:2;justify-self:start}.year{--yw:22px}.yl b{font-size:16px}}
+.foot{font-size:12px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <header><h1>Case timeline: events grouped by year</h1>
+  <p class="lede">The concept from the reference: each area of a case has its own colour (marriage, application, filing, assignment, interviews and hearings, council decision, decree, communications), and events are grouped by year. The colours are new, chosen to sit with the navy, gold and porcelain already decided (D-0050), and each works in light and dark. Use the options for how strongly the colour shows, and click the legend to hide areas. Fictional demo case.</p></header>
+  <div class="opts">
+    <label for="color">Colour strength<select id="color">
+      <option value="dot">Neutral container (colour in the label only)</option><option value="title">Faint coloured outline + coloured title</option><option value="bar">Neutral container + coloured side bar</option><option value="row" selected>Tinted container + coloured title</option><option value="all">Tinted container, everything coloured</option></select></label>
+    <label for="year">Year<select id="year"><option value="rail">Year on top, faint year beside each card</option><option value="header">Year on top only</option></select></label>
+    <label for="ds">Date style<select id="ds"><option value="tile">Date inside a calendar icon</option><option value="under">Strong date, small calendar icon under it</option><option value="inline">Small calendar icon before the date</option><option value="plain">Strong date only</option></select></label>
+    <label for="tag">Area label on the right<select id="tag"><option value="on">Show</option><option value="off">Hide</option></select></label>
+    <label for="order">Order<select id="order"><option value="new">Latest first</option><option value="old">Oldest first</option></select></label>
+  </div>
+  <div class="layout">
+    <section class="card"><div class="card-h"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><h3>Timeline</h3></div><div id="tl"></div></section>
+    <aside class="legend" aria-label="Case areas"><h2>Case areas</h2><div id="legend"></div><small>Click an area to hide or show it.</small></aside>
+  </div>
+  <p class="foot">Each area colour becomes a Plenix category token (light and dark) so every app uses the same set.</p>
+</div>
+
+<script>
+(function(){
+  var A={marriage:"Marriage",application:"Application",filing:"Filing",assign:"Assignment",hearing:"Interviews & hearings",decision:"Council decision",decree:"Decree",comms:"Communications"};
+  var E=[
+    {y:2010,d:"Jun 12",a:"marriage",t:"Church marriage",s:"St. Mark Church, Los Angeles · Fr. Antony Attallah"},
+    {y:2015,d:"Mar 4",a:"marriage",t:"Child born · Mary Bennett",s:"Lives with the applicant"},
+    {y:2025,d:"Feb 3",a:"marriage",t:"Physical separation",s:"Parties stopped living together"},
+    {y:2026,d:"Sep 30",a:"application",t:"First inquiry",s:"Phone call from the applicant"},
+    {y:2026,d:"Oct 22",a:"filing",t:"Case filed",s:"20261020-03 opened · applicant notified"},
+    {y:2026,d:"Oct 24",a:"comms",t:"Documents requested",s:"Email sent: marriage certificate"},
+    {y:2026,d:"Oct 30",a:"assign",t:"Assigned to Fr. Youhanna Youssef",s:"Session CS20261030"},
+    {y:2026,d:"Nov 6",a:"hearing",t:"Intake interview",s:"Fr. Youhanna Youssef met the applicant"},
+    {y:2026,d:"Nov 14",a:"hearing",t:"First hearing",s:"Applicant testimony",f:1},
+    {y:2026,d:"Pending",a:"decision",t:"Council decision",s:"Waiting for the hearings",f:1},
+    {y:2026,d:"Pending",a:"decree",t:"Decree issued",s:"After the council decision",f:1}
+  ];
+  var CAL='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+  function cal(e){
+    var p=String(e.d).split(" "),dated=p.length===2&&/^\d+$/.test(p[1]);
+    var top=dated?p[0]:"",big=dated?p[1]:"",label=dated?e.d+" "+e.y:e.d;
+    return '<svg class="cal" viewBox="0 0 64 64" role="img" aria-label="'+esc(label)+'">'+
+      '<rect x="3" y="7" width="58" height="54" rx="7" class="pg"/>'+
+      '<path d="M3 14a7 7 0 0 1 7-7h44a7 7 0 0 1 7 7v8H3z" class="bd"/>'+
+      '<circle cx="20" cy="14" r="4.2" class="hole"/><circle cx="44" cy="14" r="4.2" class="hole"/>'+
+      '<rect x="17.5" y="2" width="5" height="14" rx="2.5" class="ring"/><rect x="41.5" y="2" width="5" height="14" rx="2.5" class="ring"/>'+
+      (dated?'<text x="32" y="36" text-anchor="middle" class="mo">'+esc(top)+'</text><text x="32" y="54" text-anchor="middle" class="dy">'+esc(big)+'</text>'
+            :'<text x="32" y="47" text-anchor="middle" class="pd">'+esc(e.d)+'</text>')+'</svg>';
+  }
+  var CAL='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+  var hidden={};
+  var WM_TEXT=60, WM_GAP=120, WM_TILE=WM_TEXT+WM_GAP, WM_MIN=WM_TEXT+WM_GAP*2+80; /* watermark only when the year is long enough for one full repeat clear of the label */
+  function wm(y){
+    var dark=document.documentElement.dataset.theme==="dark"||(document.documentElement.dataset.theme!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);
+    var fill=dark?"rgba(255,255,255,0.07)":"rgba(31,36,48,0.07)";
+    var svg="<svg xmlns='http://www.w3.org/2000/svg' width='22' height='"+WM_TEXT+"'><text transform='translate(19 "+(WM_TEXT/2)+") rotate(-90)' text-anchor='middle' font-family='DM Sans,Segoe UI,sans-serif' font-size='24' font-weight='700' letter-spacing='1' fill='"+fill+"'>"+y+"</text></svg>";
+    return 'url(&quot;data:image/svg+xml,'+encodeURIComponent(svg)+'&quot;)';
+  }
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function render(){
+    var ds=document.getElementById("ds").value,color=document.getElementById("color").value,yr=document.getElementById("year").value,tag=document.getElementById("tag").value,order=document.getElementById("order").value;
+    var years={};E.forEach(function(e){(years[e.y]=years[e.y]||[]).push(e)});
+    var ys=Object.keys(years).map(Number).sort(function(a,b){return order==="new"?b-a:a-b});
+    var html='<div data-ds="'+ds+'" data-color="'+color+'" data-year="'+yr+'" data-tag="'+tag+'">'+ys.map(function(y){
+      var evs=years[y].slice();if(order==="new")evs.reverse();
+      var vis=evs.filter(function(e){return !hidden[e.a]});
+      return '<div class="year'+(vis.length?'':' empty')+'" data-y="'+y+'"><div class="yh"><b>'+y+'</b></div><div class="yl" aria-hidden="true"></div><div class="events">'+evs.map(function(e){
+        return '<div class="ev'+(e.f?' future':'')+'" style="--c:var(--c-'+e.a+')"'+(hidden[e.a]?' hidden':'')+'><div class="dt"><span>'+esc(e.d)+'</span>'+CAL+cal(e)+'</div><div><div class="tt">'+esc(e.t)+'</div><div class="ds">'+esc(e.s)+'</div></div><span class="tag">'+A[e.a]+(e.f?' · upcoming':'')+'</span></div>'}).join("")+'</div></div>'}).join("")+'</div>';
+    document.getElementById("tl").innerHTML=html;
+    /* date column as wide as the widest date, so the gap to the event is the same everywhere */
+    var tl=document.querySelector("#tl>div"),w=0;Array.prototype.forEach.call(tl.querySelectorAll(".dt"),function(d){w=Math.max(w,d.getBoundingClientRect().width)});tl.style.setProperty("--dw",Math.ceil(w)+"px");
+    if(yr==="rail"){Array.prototype.forEach.call(document.querySelectorAll("#tl .year"),function(row){
+      /* one faint year beside each card, centred on the card; skipped where it would touch the bold year */
+      var yl=row.querySelector(".yl"),top=yl.getBoundingClientRect().top,lb=-16;
+      var img=wm(row.dataset.y).replace(/&quot;/g,'"'),imgs=[],pos=[];
+      Array.prototype.forEach.call(row.querySelectorAll(".ev:not([hidden])"),function(ev){
+        var r=ev.getBoundingClientRect(),y=Math.round(r.top-top+r.height/2-WM_TEXT/2);
+        if(y<lb+16)return; imgs.push(img);pos.push("0px "+y+"px");
+      });
+      yl.style.backgroundRepeat="no-repeat";
+      if(!imgs.length){yl.style.backgroundImage="none";return}
+      yl.style.backgroundImage=imgs.join(",");yl.style.backgroundPosition=pos.join(",");yl.style.backgroundSize=imgs.map(function(){return "22px "+WM_TEXT+"px"}).join(",");
+    })}
+    try{localStorage.setItem("tl3",JSON.stringify({ds:ds,color:color,year:yr,tag:tag,order:order}))}catch(e){}
+  }
+  var lg=document.getElementById("legend");
+  Object.keys(A).forEach(function(k){var b=document.createElement("button");b.type="button";b.setAttribute("aria-pressed","true");b.style.setProperty("--c","var(--c-"+k+")");
+    b.innerHTML='<i aria-hidden="true"></i>'+A[k];b.addEventListener("click",function(){hidden[k]=!hidden[k];b.setAttribute("aria-pressed",hidden[k]?"false":"true");render()});lg.appendChild(b)});
+  try{var s=JSON.parse(localStorage.getItem("tl3")||"null");if(s){["ds","color","year","tag","order"].forEach(function(k){if(s[k])document.getElementById(k).value=s[k]})}}catch(e){}
+  ["ds","color","year","tag","order"].forEach(function(id){document.getElementById(id).addEventListener("change",render)});
+  render();
+})();
+</script>

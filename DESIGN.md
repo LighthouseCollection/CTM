@@ -148,6 +148,32 @@ Where a page has several such sections, each section is its own card: the
 heading is the card header (glow, inset line) and the table sits inside the
 card body. The session agenda (Hearings, To assign) is built this way.
 
+### Case timeline (D-0058, owner 2026-11-07, #242)
+
+Decided from `docs/design/timeline-study.html` (open it in a browser; its
+defaults are the decision). Plenix ships it as a Timeline variation
+("grouped by year, by category"); CTM uses that component.
+
+- **Grouped by year**, latest year first. Each year starts with the year as a
+  heading (20 px bold, secondary ink) and a 72 px x 2 px soft line under it;
+  80 px between years; no dividing rule.
+- **Watermark year:** beside every event card, a very faint copy of the year
+  (about 7% ink), rotated, centred on the card and left-aligned with the year
+  heading; 8 px from the card. It never overlaps the heading or another mark.
+- **Each event is its own container** (6 px radius, Plenix card radius): a soft
+  tint of its case-area colour with a matching faint border, the title in the
+  area colour, the description in secondary ink, and the area label on the
+  end side. Upcoming events have a dashed outline. No timeline dots.
+- **Date** sits at the start of the container inside a calendar icon (6 px
+  corners): a top band in the case-area colour with two binder rings, the
+  month in extra-bold uppercase and the day large and bold. Upcoming events
+  show a grey band and "Pending". The date column is as wide as the widest
+  date; 10 px to the event.
+- **Case areas and colours** (light / dark tokens, Plenix category set):
+  Marriage (plum), Application (slate), Filing (teal), Assignment (violet),
+  Interviews & hearings (copper), Council decision (navy), Decree (green),
+  Communications (gold). A legend can filter areas.
+
 **Three heading levels, never mixed (applies D-0050/D-0055, #217):**
 
 | Heading | What it is | Plenix |
