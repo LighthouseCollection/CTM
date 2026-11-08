@@ -3225,6 +3225,14 @@ ${ar}` : en;
     return history && history.length ? history[history.length - 1].member : record.assigned_member || null;
   }
 
+  // D-0060 (issue 260): the parties for the EntityHeader versus variant (plenix-ds/pds issue 991): applicant first, then
+  // respondent, each an Avatar media ({ person, src }; Plenix draws initials without a photo). photo_url is the council
+  // portrait (CASE_PHOTO) through the permission-checked file URL; the server sends it to council users only, so an
+  // applicant never gets the other party's photo. Until the variant ships the header keeps the folder icon below.
+  function caseHeaderPeople(applicant, respondent) {
+    return [applicant, respondent].filter(Boolean).map((party) => ({ person: party.name || "—", src: party.photo_url || undefined }));
+  }
+
   function caseHeaderProps(record, lang, facts, assigneeValue) {
     const t = translator(lang), bt = base.translator(lang);
     const parties = record.parties || [];
@@ -3235,6 +3243,8 @@ ${ar}` : en;
     return {
       // Issue 109 (owner, 2026-11-05): the decided icon box (record-page.md media box), the spouses' names as the
       // title and the case number as the small line under it. Without names the case number is the title.
+      // D-0060: when the Plenix versus variant (pds issue 991) ships, this becomes its media with
+      // caseHeaderPeople(applicant, respondent) (one party: one avatar); until then the icon box stays.
       media: { icon: "folder", hue: "purple", box: true },
       title: names.length ? names.join(` ${bt("versus")} `) : base.isolate(record.number),
       subtitle: names.length ? base.isolate(record.number) : undefined,
@@ -4537,6 +4547,7 @@ ${ar}` : en;
   }
 
   Object.assign(window.CTMCouncil, {
+    caseHeaderPeople,
     timelineModel,
     timelineApiEvents,
     HeaderAssignment,

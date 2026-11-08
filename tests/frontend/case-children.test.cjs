@@ -160,3 +160,13 @@ test("timeline API items: own EN/AR title per kind, pending first", () => {
   const model = C.timelineModel(events, "en", t, "2026-11-08");
   assert.deepEqual(plain(model.groups.map((g) => [g.year, g.items.map((i) => i.id)])), [["Pending", ["y"]], ["2026", ["z", "x"]], ["2015", ["w"]]]);
 });
+
+// D-0060 (issue 260): the parties for the EntityHeader versus variant, applicant first; photo_url (council only) or
+// initials; one party gives one avatar. Until Plenix ships the variant the header keeps the folder icon box.
+test("case header people: applicant then respondent, photo or initials, icon box kept", () => {
+  assert.deepEqual(plain(C.caseHeaderPeople({ name: "Anna Example", photo_url: "/api/files/1/?view=1" }, { name: "Ben Example" })),
+    [{ person: "Anna Example", src: "/api/files/1/?view=1" }, { person: "Ben Example" }]);
+  assert.deepEqual(plain(C.caseHeaderPeople({ name: "Anna Example" }, null)), [{ person: "Anna Example" }]);
+  const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(src, /media: \{ icon: "folder", hue: "purple", box: true \},/);
+});
