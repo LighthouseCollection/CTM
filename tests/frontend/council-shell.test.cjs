@@ -278,9 +278,10 @@ test("the session header is Plenix EntityHeader style 2: facts carry their actio
   const sessionWorkspace = council.slice(council.indexOf("function SessionWorkspace"), council.indexOf("function searchProblem"));
   // D-0042 (owner, issue 171): no agenda tabs; Hearings, then To assign, stacked, each with its heading and table.
   assert.doesNotMatch(sessionWorkspace, /\bagendaTab\b|h\(P\.Tabs, \{[^}]*label: t\("agenda"\)/);
-  const sections = sessionWorkspace.match(/h\(P\.Stack, \{ gap: "sm" \}, h\(P\.Text, \{ as: "h2", variant: "heading" \}, t\("(\w+)"\)\), agendaTable\((\d)\)\)/g) || [];
-  assert.deepEqual(sections.map((s) => s.match(/t\("(\w+)"\)\), agendaTable\((\d)\)/).slice(1).join(":")), ["scheduledCasesForHearing:2", "casesToAssign:1"]);
-  assert.match(sessionWorkspace, /current \? h\(P\.Inline, \{ align: "start", gap: "lg" \},\s*h\(P\.Stack, \{ gap: "section", grow: true \},/);
+  // D-0055 (amends D-0042): each agenda section is a card (Panel with icon) with its table inside.
+  const sections = sessionWorkspace.match(/h\(P\.Panel, \{ icon: "[\w-]+", title: t\("(\w+)"\) \}, agendaTable\((\d)\)\)/g) || [];
+  assert.deepEqual(sections.map((s) => s.match(/t\("(\w+)"\) \}, agendaTable\((\d)\)/).slice(1).join(":")), ["scheduledCasesForHearing:2", "casesToAssign:1"]);
+  assert.match(sessionWorkspace, /current \? h\(P\.Inline, \{ align: "start", gap: "lg" \},[\s\S]*?h\(P\.Stack, \{ gap: "lg", grow: true \},/);
   assert.doesNotMatch(agendaTable, /P\.Panel/);
   assert.match(agendaTable, /previousRecommendation/);
   // Issue 222: the recommendation cell is text (one line, "…", full text on hover); no button or dialog in a cell.
@@ -841,13 +842,16 @@ test("ctm3-48 part 3: timeline is Plenix Timeline grouped by year; past hearings
 
 // D-0042 (owner, issue 171) reverses the #113 agenda tabs: "should be full container table". The current
 // session shows Hearings, then To assign, as two stacked full-width tables; tabs must not come back.
-test("current session agenda is two stacked full-width tables, never tabs (D-0042, issue 171)", () => {
+// D-0055 (owner, 2026-11-07) amends D-0042: the two sections are two cards (the heading is the card header,
+// the table inside), still stacked, still never tabs.
+test("current session agenda is two stacked cards, each with its table, never tabs (D-0042, D-0055)", () => {
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   const workspace = council.slice(council.indexOf("function SessionWorkspace"), council.indexOf("function searchProblem"));
   assert.doesNotMatch(workspace, /\bagendaTab\b/);
   assert.doesNotMatch(workspace, /h\(P\.Tabs, \{[^}]*label: t\("agenda"\)/);
   assert.doesNotMatch(workspace, /content: agendaTable\(/);
-  const order = [...workspace.matchAll(/t\("(\w+)"\)\), agendaTable\((\d)\)\)/g)].map((m) => m[1] + ":" + m[2]);
+  assert.doesNotMatch(workspace, /h\(P\.Text, \{ as: "h2", variant: "heading" \}, t\("(scheduledCasesForHearing|casesToAssign)"\)\)/, "no bare section headings");
+  const order = [...workspace.matchAll(/h\(P\.Panel, \{ icon: "[\w-]+", title: t\("(\w+)"\) \}, agendaTable\((\d)\)\)/g)].map((m) => m[1] + ":" + m[2]);
   assert.deepEqual(order, ["scheduledCasesForHearing:2", "casesToAssign:1"]);
 });
 
