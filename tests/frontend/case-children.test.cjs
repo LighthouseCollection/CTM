@@ -213,3 +213,15 @@ test("api(): a 204 reply resolves to null instead of failing on an empty body", 
   const app = fs.readFileSync("static/ctm/app.js", "utf8");
   assert.match(app, /return response\.status === 204 \? null : response\.json\(\);/);
 });
+
+// Issue 175 (D-0043): Users & Roles shows each active account's council seat and voting seat as Plenix Switches for
+// those the server lets edit (can_edit: admin, secretary, president), text for others; voting needs a seat.
+test("users and roles: council seat and voting switches from the seats API", () => {
+  const src = fs.readFileSync("static/ctm/ui-workspaces.js", "utf8");
+  assert.match(src, /api\("\/api\/council\/seats\/"\)\.then\(\(data\) => live && setSeats\(\{ items: data\?\.items \|\| \[\], canEdit: data\?\.can_edit === true \}\)\)/);
+  assert.match(src, /method: "POST", body: JSON\.stringify\(\{ seated, voting: seated && voting \}\)/);
+  assert.match(src, /if \(!seats\.canEdit\) return t\(on \? "seatYes" : "seatNo"\);/);
+  assert.match(src, /disabled: Boolean\(seatSaving\) \|\| \(field === "voting" && !seat\.seated\)/);
+  assert.match(src, /councilSeat: "Council seat", votingSeat: "Voting"/);
+  assert.match(src, /councilSeat: "مقعد في المجلس", votingSeat: "التصويت"/);
+});
