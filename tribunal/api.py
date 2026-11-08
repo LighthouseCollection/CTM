@@ -868,10 +868,13 @@ def case_detail(request, case_id):
     return response
 
 
-@endpoint(("POST",))
+@endpoint(("POST", "DELETE"))
 def assign(request, case_id):
-    from tribunal.services.council import assign_case
+    from tribunal.services.council import assign_case, unassign_case
 
+    if request.method == "DELETE":  # #237: Undo of a first assignment
+        case = unassign_case(request.user, case_id)
+        return JsonResponse({"case_id": str(case.pk), "assigned_member_id": None})
     data = body(request)
     return JsonResponse(
         encoded(

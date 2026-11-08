@@ -49,6 +49,48 @@ def assign_case(actor, case_id, member_id, president_id=None):
             return _assign_case(actor, case_id, member_id, president_id)
 
 
+def unassign_case(actor, case_id, president_id=None):
+    """#237 / D-0056: clear the case manager (the Undo of a first assignment).
+
+    Same authority as recording an assignment. The assignment history stays;
+    one case_unassigned audit entry records who cleared it and the previous
+    manager. The database is told the new manager is none (empty context).
+    """
+    with database_actor(actor):
+        if president_id is None:
+            president_id = (Account.objects.filter(is_active=True, role="president")
+                            .order_by("created_at", "pk").values_list("pk", flat=True).first())
+            if president_id is None:
+                raise ValidationError("An active president must authorize the change.")
+        with database_settings({"ctm.assignment_member": "", "ctm.assignment_president": str(president_id)}):
+            return _unassign_case(actor, case_id, president_id)
+
+
+@core_operation("assignment")
+def _unassign_case(actor, case_id, president_id):
+    from .staff_roles import assignment_president, assignment_recorder
+
+    active(actor)
+    if not assignment_recorder(actor):
+        raise PermissionDenied("Administrative assignment authority is required.")
+    case = Case.objects.select_for_update(of=("self",)).get(pk=case_id)
+    if case.status != "open":
+        raise ValidationError("A closed case's manager can't be changed.")
+    if case.assigned_member_id is None:
+        raise ValidationError("This case has no case manager to remove.")
+    if not assignment_president(Account.objects.get(pk=president_id, is_active=True)):
+        raise PermissionDenied("An active president must authorize the change.")
+    if AgendaItem.objects.filter(case=case, part=2, state__in={"scheduled", "time_exhausted"},
+                                 session__state__in={"draft", "planned"}).exists():
+        raise ValidationError("This case is scheduled for a hearing. Remove it from the hearing agenda first.")
+    previous = case.assigned_member
+    case.assigned_member = None
+    case.save(update_fields=["assigned_member"])
+    audit(actor, "case_unassigned", case, case, metadata={"previous_member_id": str(previous.pk)})
+    notify(previous, "assignment_changed", case, case=case, payload={"assigned_member": None})
+    return case
+
+
 @core_operation("assignment")
 def _assign_case(actor, case_id, member_id, president_id):
     from .staff_roles import assignment_president, assignment_recorder
