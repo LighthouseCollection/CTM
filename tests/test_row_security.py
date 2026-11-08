@@ -84,6 +84,7 @@ def runtime():
             "ctm_council_seat_writable(jsonb)",
             "ctm_session_draft_state_writable(jsonb)",
             "ctm_session_draft_insertable(jsonb)",
+            "ctm_case_unassign_allowed(jsonb,text)",
             "ctm_admin_case_purge_allowed(uuid)",
             "ctm_reference_readable(text,jsonb)",
             "ctm_reference_writable(text,jsonb)",
