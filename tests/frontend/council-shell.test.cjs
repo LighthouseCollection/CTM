@@ -649,7 +649,7 @@ test("case hearing header is rendered above its tabs and Hearings uses the balan
   const hearing = councilCase.slice(councilCase.indexOf("function CaseHearings"), councilCase.indexOf("function HearingAttendance"));
   // #97 slice 3: a Plenix EntityHeader section, inside the case RecordPage, above the tabs.
   assert.match(hearing, /const currentHeader = current \? h\(P\.EntityHeader, \{\s*kind: "section"/);
-  assert.match(hearing, /return h\(CaseRecordPage, \{ api, lang, caseId, title: t\("hearingsTitle"\) \}, currentHeader, h\(P\.Tabs/);
+  assert.match(hearing, /return h\(CaseRecordPage, \{ api, lang, user, caseId, title: t\("hearingsTitle"\) \}, currentHeader, h\(P\.Tabs/);
   assert.match(app, /id === "hearings"\s*\? h\(P\.Icon, \{ name: "balance"/);
 });
 
