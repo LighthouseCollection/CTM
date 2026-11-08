@@ -375,7 +375,7 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /GroupedReadFields, \{ P, h, groups: summaryGroups, values: summaryReadValues, lang, columns: 2 \}/);
   assert.match(councilCase, /reasonForDivorce: "Reason Seeking Divorce"/);
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
-  assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
+  assert.match(councilCase, /h\(P\.Timeline, \{ variant: "grouped", label: t\("keyDates"\),\s*items: summaryTimeline\.map\(/);
   // D-0050 (#217): the case status is a Plenix Badge, never plain text.
   // D-0059 (issue 259): the same badge as the header, with Unassigned for an open case without a member.
   assert.ok(councilCase.includes('status: ((badge) => h(P.Badge, { tone: badge.tone, icon: badge.icon }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)),'));
@@ -659,7 +659,6 @@ test("council can edit a spouse contact through a versioned case finding", () =>
   assert.match(councilCase, /function SpouseContactSection\(/);
   assert.match(councilCase, /fact_code: `case_card\.contact_\$\{party\.id\}`/);
   assert.match(councilCase, /h\(SpouseContactSection, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
-  assert.match(councilCase, /P\.SectionHeading, \{ level: 2 \}/);
 });
 
 test("case navigation uses the requested Material folder icons", () => {
@@ -839,11 +838,14 @@ test("ctm3-48 part 3: timeline is Plenix Timeline grouped by year; past hearings
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   // D-0058: one model (timelineModel) and one drawing (drawTimeline) that becomes the Plenix variation.
   const draw = councilCase.slice(councilCase.indexOf("function drawTimeline("), councilCase.indexOf("function CaseTimeline("));
-  assert.match(draw, /h\(P\.SectionHeading, \{ level: 2 \}, group\.year\)/);
-  assert.match(draw, /h\(P\.Timeline, \{ label:/);
+  // Plenix 1.2.0 grouped variant (pds issue 987): grouped by year, area as category, legend filters; no CTM tabs.
+  assert.match(draw, /h\(P\.Timeline, \{ variant: "grouped", legend: true, label:/);
   assert.match(draw, /dateTime: item\.dateTime/);
-  const timeline = councilCase.slice(councilCase.indexOf("function CaseTimeline("));
-  assert.match(timeline, /drawTimeline\(\{ P, h, t, model: shown \}\)/);
+  assert.match(draw, /category: timelineCategory\(item\.area, t\),/);
+  assert.match(draw, /upcoming: Boolean\(item\.pending \|\| item\.upcoming\)/);
+  const timeline = councilCase.slice(councilCase.indexOf("function CaseTimeline("), councilCase.indexOf("// ---------- Case summary"));
+  assert.match(timeline, /drawTimeline\(\{ P, h, t, model \}\)/);
+  assert.doesNotMatch(timeline, /P\.Tabs/);
   assert.match(councilCase, /h\(P\.Table, \{ label: t\("pastHearings"\)/);
 });
 

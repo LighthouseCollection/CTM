@@ -4275,19 +4275,28 @@ ${ar}` : en;
     return { areas: TIMELINE_AREAS.filter((area) => items.some((item) => item.area === area)), groups };
   }
 
-  function drawTimeline({ P, h, t, model }) {
-    return h(P.Stack, { gap: "xl" }, ...model.groups.map((group) => h(P.Stack, { key: group.year, gap: "sm" },
-      h(P.SectionHeading, { level: 2 }, group.year),
-      h(P.Timeline, { label: `${t("timelineTitle")} ${group.year}`, items: group.items.map((item) => ({
-        id: item.id, time: item.upcoming ? `${item.date} · ${t("timelineUpcoming")}` : item.date, dateTime: item.dateTime || undefined,
-        title: item.title, description: item.description || undefined, icon: AREA_ICON[item.area],
-        badge: h(P.Badge, { tone: item.pending || item.upcoming ? "waiting" : "neutral", size: "sm" }, item.areaLabel),
-      })) }))));
+  // A case area as a Plenix Timeline category: its label is the tag, its slot (1 to 8, in TIMELINE_AREAS order) the tint.
+  function timelineCategory(area, t) {
+    return { id: area, label: t(`timelineArea_${area}`), color: String(TIMELINE_AREAS.indexOf(area) + 1) };
+  }
+
+  // Plenix 1.2.0 Timeline variant "grouped" (pds issue 987): grouped by year, each event tinted by its case area,
+  // upcoming events outlined as Pending, and a legend that filters by area.
+  // Plenix 1.2.0 collapses a grouped row without a date (plenix-ds/pds issue 1055), so an undated pending event is placed at
+  // today (it shows "Pending", never a date).
+  const timelineToday = () => new Date().toISOString().slice(0, 10);
+
+  function drawTimeline({ P, h, t, model, label }) {
+    return h(P.Timeline, { variant: "grouped", legend: true, label: label || t("timelineTitle"),
+      items: model.groups.flatMap((group) => group.items).map((item) => ({
+        id: item.id, time: item.date, dateTime: item.dateTime || timelineToday(), title: item.title,
+        description: item.description || undefined, icon: AREA_ICON[item.area], category: timelineCategory(item.area, t),
+        upcoming: Boolean(item.pending || item.upcoming),
+      })) });
   }
 
   function CaseTimeline({ api, lang, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
-    const [tab, setTab] = R.useState("all");
     const [state, retry] = base.useLoad(
       () => api(`/api/cases/${encodeURIComponent(caseId)}/`).then((record) => api(`/api/cases/${encodeURIComponent(caseId)}/timeline/`)
         .then((timeline) => ({ record, events: timelineApiEvents(timeline.items, lang, t) }))
@@ -4298,14 +4307,9 @@ ${ar}` : en;
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const model = timelineModel(state.data.events, lang, t);
-    const shown = tab === "all" ? model : { ...model, groups: model.groups.map((group) => ({ ...group, items: group.items.filter((item) => item.area === tab) })).filter((group) => group.items.length) };
-    const content = shown.groups.length ? drawTimeline({ P, h, t, model: shown }) : h(P.EmptyState, { title: t("noTimeline") });
     return h(CaseRecordPage, { api, lang, caseId, record: state.data.record, title: t("timelineTitle") },
       h(P.Text, { variant: "secondary" }, t("timelineHelp")),
-      h(P.Tabs, { variant: "contained", label: t("timelineTitle"), value: tab, onChange: setTab,
-        // The legend that filters by case area (D-0058); only the areas this case has.
-        items: [{ value: "all", label: t("timelineAll"), content }, ...model.areas.map((area) => ({ value: area, label: t(`timelineArea_${area}`), content }))],
-      }),
+      model.groups.length ? drawTimeline({ P, h, t, model }) : h(P.EmptyState, { title: t("noTimeline") }),
     );
   }
 
@@ -4452,34 +4456,30 @@ ${ar}` : en;
     };
     const latestAudit = (action) => [...facts.audit].filter((row) => row.action === action).sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)))[0];
     const summaryTimeline = [];
-    const timelineBadge = (tone, label) => h(P.Badge, { tone, size: "sm" }, label);
     summaryTimeline.push({
-      id: "decree", title: t("decreeIssued"), time: facts.decision?.issued ? summaryDate(facts.decision.issuedAt, lang) : t("pending"),
-      badge: timelineBadge(facts.decision?.issued ? "success" : "neutral", facts.decision?.issued ? t("completed") : t("upcoming")),
+      id: "decree", area: "decree", title: t("decreeIssued"), time: facts.decision?.issued ? summaryDate(facts.decision.issuedAt, lang) : t("pending"),
+      dateTime: facts.decision?.issued ? facts.decision.issuedAt : undefined, upcoming: !facts.decision?.issued,
     });
     summaryTimeline.push({
-      id: "decision", title: t("councilReviewDecision"), time: facts.decision?.approved ? t("approved") : t("pending"),
-      description: facts.decision?.approved ? null : t("awaitingCouncilReview"),
-      badge: timelineBadge(facts.decision?.approved ? "success" : "neutral", facts.decision?.approved ? t("completed") : t("upcoming")),
+      id: "decision", area: "decision", title: t("councilReviewDecision"), time: facts.decision?.approved ? t("approved") : t("pending"),
+      description: facts.decision?.approved ? null : t("awaitingCouncilReview"), upcoming: !facts.decision?.approved,
     });
     if (record.status === "open") summaryTimeline.push({
-      id: "recommendation", title: t("recommendationPending"), time: t("inProgress"),
-      description: manager ? t("awaitingRecommendation", { member: manager }) : bt("unassigned"),
-      badge: timelineBadge("success", t("current")),
+      id: "recommendation", area: "decision", title: t("recommendationPending"), time: t("inProgress"),
+      description: manager ? t("awaitingRecommendation", { member: manager }) : bt("unassigned"), upcoming: true,
     });
     const hearing = latestAudit("case_heard");
     if (hearing) summaryTimeline.push({
-      id: `hearing-${hearing.id}`, title: t("hearing"), time: summaryDate(hearing.timestamp, lang), description: auditLabel(hearing.action, lang), badge: timelineBadge("active", t("completed")),
+      id: `hearing-${hearing.id}`, area: "hearing", title: t("hearing"), time: summaryDate(hearing.timestamp, lang), dateTime: hearing.timestamp, description: auditLabel(hearing.action, lang),
     });
     const assigned = latestAudit("case_assigned");
     if (assigned) summaryTimeline.push({
-      id: `assigned-${assigned.id}`, title: t("caseAssigned"), time: summaryDate(assigned.timestamp, lang),
+      id: `assigned-${assigned.id}`, area: "assign", title: t("caseAssigned"), time: summaryDate(assigned.timestamp, lang), dateTime: assigned.timestamp,
       description: manager || null,
-      badge: timelineBadge("active", t("completed")),
     });
     const filed = latestAudit("application_submitted");
     if (summary.filing_date) summaryTimeline.push({
-      id: "filed", title: t("caseFiled"), time: summaryDate(filed?.timestamp || summary.filing_date, lang), description: t("caseFiledDescription"), badge: timelineBadge("active", t("completed")),
+      id: "filed", area: "application", title: t("caseFiled"), time: summaryDate(filed?.timestamp || summary.filing_date, lang), dateTime: filed?.timestamp || summary.filing_date, description: t("caseFiledDescription"),
     });
     const applicationDates = [
       { id: "church-marriage", title: t("churchMarriageDate"), date: record.marriage?.church_marriage_date },
@@ -4494,8 +4494,9 @@ ${ar}` : en;
     for (const applicationDate of applicationDates.filter((item) => isSubmittedDate(item.date)))
       summaryTimeline.push({
         ...applicationDate,
+        area: "marriage",
         time: summaryDate(applicationDate.date, lang),
-        badge: timelineBadge("active", t("completed")),
+        dateTime: applicationDate.date,
       });
     const canEditSummary = writerFor(user, null, record) && openProceeding(record)?.status === "open";
     const startSummaryEdit = () => {
@@ -4554,7 +4555,9 @@ ${ar}` : en;
       h(
         P.Panel,
         { icon: "calendar", title: t("keyDates") },
-        h(P.Timeline, { label: t("keyDates"), items: summaryTimeline }),
+        // Until the owner picks a Key Dates variant (issue 239): the case timeline's grouped variant, key milestones only.
+        h(P.Timeline, { variant: "grouped", label: t("keyDates"),
+          items: summaryTimeline.map(({ area, date, ...item }) => ({ ...item, dateTime: item.dateTime || timelineToday(), icon: AREA_ICON[area], category: timelineCategory(area, t) })) }),
       ),
     );
     return h(CaseRecordPage, { api, lang, caseId, record, readOnly: !openProceeding(record), onChanged: retry },
