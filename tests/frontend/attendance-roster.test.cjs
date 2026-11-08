@@ -75,3 +75,22 @@ test("rows are compact UserCards with a SegmentedControl that never folds; read-
   const ar = C.translator("ar"), en = C.translator("en");
   for (const key of ["rosterPresentOf", "rosterNotRecorded", "markAllPresent", "markRestPresent", "rosterSaveFailed", "seatVoting", "seatNonVoting"]) assert.notEqual(ar(key), en(key), key);
 });
+
+test("the server roster (title, voting, photo, present) becomes roster rows; former members' records stay at the end", () => {
+  const [h, C] = boot();
+  const rows = C.rosterRowsFrom({
+    roster: [
+      { member_id: "p", member_name: "H.G. Presiding", member_role: "president", member_active: true, title: "presiding", voting: true, photo_url: null, present: null },
+      { member_id: "s", member_name: "Sec Retary", member_role: "secretary", member_active: true, title: "secretary", voting: false, photo_url: "/p.jpg", present: true },
+    ],
+    items: [{ member_id: "s", member_name: "Sec Retary", member_role: "secretary", present: true }, { member_id: "x", member_name: "Fr. Former", member_role: "member", present: false }],
+  });
+  assert.deepEqual(plain(rows), [
+    { id: "p", name: "H.G. Presiding", role: "presiding", seat: "voting", present: null, former: false },
+    { id: "s", name: "Sec Retary", role: "secretary", seat: "non_voting", photo_url: "/p.jpg", present: true, former: false },
+    { id: "x", name: "Fr. Former", role: "member", present: false, former: true },
+  ]);
+  assert.equal(C.rosterRowsFrom({ items: [] }), null, "an older server without roster keeps the old path");
+  const tree = h.render(C.AttendanceRoster, { lang: "en", rows, readOnly: false, onRecord: async () => {} });
+  assert.equal(byName(tree, "UserCard")[0].props.secondary, "Presiding · Voting");
+});
