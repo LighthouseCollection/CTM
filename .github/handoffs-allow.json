@@ -24,6 +24,18 @@
       "job": "upgrade",
       "step": "Publish screenshots to the dashboard branch",
       "reason": "Pushes images to the ci-screenshots data branch, which needs no checks."
+    },
+    {
+      "workflow": "plenix-upgrade.yml",
+      "job": "upgrade",
+      "step": "Detect new Plenix version",
+      "reason": "Only deletes a stale bot/plenix-* branch before it is rebuilt; nothing has to start from a branch deletion. The merge step later dispatches the checks on the new branch."
+    },
+    {
+      "workflow": "plenix-upgrade.yml",
+      "job": "upgrade",
+      "step": "Report a stuck upgrade",
+      "reason": "Report issue for the release engineer and PDS. No workflow has to react to its labels; the dashboard web page (dashboard.yml) picks it up on its 15-minute run."
     }
   ]
 }
