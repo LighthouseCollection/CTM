@@ -358,7 +358,10 @@ test("case back navigation retains the workspace that opened the case", () => {
   assert.match(app, /const \[caseOrigin, setCaseOrigin\] = R\.useState\(null\)/);
   assert.match(app, /const openCase = \(id, origin\) =>/);
   assert.match(app, /const returnToCaseOrigin = \(\) =>/);
-  assert.match(app, /onClick: returnToCaseOrigin/);
+  // D-0061 (issue 263): a quiet NavList back item (arrow icon, muted text), never a full-width button.
+  assert.ok(app.includes('onSelect: returnToCaseOrigin,'));
+  assert.ok(app.includes('items: [{ id: "back", icon: h(P.Icon, { name: "arrow-left", "aria-hidden": true }), label: t(caseOrigin?.labelKey || "backCases"), muted: true }]'));
+  assert.doesNotMatch(app, /onClick: returnToCaseOrigin/);
   assert.match(app, /page: "search", labelKey: "backSearchResults"/);
   assert.match(app, /onOpen: \(id\) => openCase\(id, \{ page, labelKey:/);
   assert.match(app, /page: "session", selection, labelKey: "backTribunalSession"/);
