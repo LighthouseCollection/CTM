@@ -2659,3 +2659,10 @@ def agenda_batch(request, session_id):
     items = place_many(request.user, session_id, data.get("part"), data.get("case_ids"))
     return JsonResponse({"items": [{"id": str(item.pk), "case_id": str(item.case_id), "part": item.part,
                                     "position": item.position} for item in items]}, status=201)
+
+
+@endpoint()
+def case_timeline(request, case_id):
+    """#242 / D-0058: the case timeline by case area (council only)."""
+    from tribunal.services.case_timeline import case_timeline as timeline
+    return JsonResponse(timeline(request.user, case_id))

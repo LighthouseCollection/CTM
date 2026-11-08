@@ -34,6 +34,7 @@ urlpatterns = [
     path("api/cases/", api.cases),
     path("api/cases/<uuid:case_id>/", api.case_detail),
     path("api/cases/<uuid:case_id>/assignment/", api.assign),
+    path("api/cases/<uuid:case_id>/timeline/", api.case_timeline),
     path("api/council/members/", api.members),
     path("api/council/seats/", api.council_seats),
     path("api/council/seats/<uuid:account_id>/", api.council_seat),
