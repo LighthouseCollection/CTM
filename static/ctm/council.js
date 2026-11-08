@@ -2471,7 +2471,7 @@
             options: [{ value: "attend", label: t("willAttend"), icon: "check" }, { value: "not_attend", label: t("willNotAttend"), icon: "close" }] })),
         sender ? h(P.Stack, { gap: "sm" },
           h(P.Inline, { gap: "sm", align: "center" },
-            h(P.Text, { as: "h3", variant: "heading" }, confirmedText(data, t)),
+            h(P.SectionHeading, { level: 3 }, confirmedText(data, t)),
             h(P.Text, { variant: "secondary" }, t("reminderHelp"))),
           h(window.CTMShell.Table, { label: t("sessionAnswers"), rows, isStatic: true, empty: t("noMembers"),
             columns: [
@@ -2652,9 +2652,8 @@
 
     const part = (n) =>
       h(
-        P.Stack,
-        { key: n, gap: "sm" },
-        h(P.Text, { as: "h2", variant: "heading" }, t(`part${n}`)),
+        P.Panel,
+        { key: n, icon: n === 1 ? "folder" : "event_available", title: t(`part${n}`) },
         h(
           P.Stack,
           { gap: "sm" },
@@ -2818,9 +2817,7 @@
             h(P.PropertyList.Item, { label: t("previousRecommendation") },
               h(P.Text, { as: "p", dir: "auto" }, String(agendaDetail.previous_recommendation || "").trim() || t("notRecorded")))),
           h(P.Inline, { gap: "sm" }, h(P.Button, { size: "sm", icon: "open", onClick: () => onCase(agendaDetail.case_id) }, t("open")))) : null,
-      ) : h(P.Text, { as: "h2", variant: "heading" }, t("agenda")),
-      current ? null : part(1),
-      current ? null : part(2),
+      ) : h(P.Stack, { gap: "lg" }, part(1), part(2)),
       data.items.length && !data.items.some((row) => "hearing_id" in row) ? h(P.Notice, { tone: "info" }, t("outcomeDependency")) : null,
       dialog?.kind === "outcome"
         ? h(HearingOutcomeDialog, {

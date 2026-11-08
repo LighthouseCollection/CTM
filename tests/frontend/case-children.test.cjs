@@ -109,3 +109,15 @@ test("case summary, marriage and request detail are grouped as decided", () => {
   order(source.slice(r0, source.indexOf("externalNoQuestions", r0)), ['t("groupRequest")', 't("title")', 't("method")', 't("language")', 't("groupRecord")', 't("preparedBy")', 't("createdAt")', 't("parent")']);
   for (const key of ["groupCase", "groupSpouses", "groupOutsideCoptic", "groupRequest", "groupRecord"]) assert.notEqual(ar(key), t(key), key);
 });
+
+// D-0055 (owner): a heading that introduces a table or block is a card header, never a bare section heading.
+test("D-0055: other sessions' agenda parts are cards; card-internal headings are group headings or the card title", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const part = council.slice(council.indexOf("    const part = (n) =>"), council.indexOf("    const part = (n) =>") + 300);
+  assert.match(part, /P\.Panel,\s*\{ key: n, icon: n === 1 \? "folder" : "event_available", title: t\(`part\$\{n\}`\) \}/);
+  assert.doesNotMatch(council, /h\(P\.Text, \{ as: "h2", variant: "heading" \}, t\("agenda"\)\)/);
+  assert.match(council, /h\(P\.SectionHeading, \{ level: 3 \}, confirmedText\(data, t\)\)/);
+  const decree = fs.readFileSync("static/ctm/council-decree.js", "utf8");
+  assert.match(decree, /\{ icon: "doc-text", title: t\("decreeProtocolTitle"\) \}/);
+  assert.doesNotMatch(decree, /h\(P\.Text, \{ as: "h2", variant: "heading" \}, t\("decreeProtocolTitle"\)\)/);
+});

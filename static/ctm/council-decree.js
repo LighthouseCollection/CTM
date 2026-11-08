@@ -681,8 +681,7 @@
     const P = window.Plenix, h = window.React.createElement, t = translator(lang);
     return h(
       P.Panel,
-      { icon: "doc-text", title: t("decree") },
-      h(P.Text, { as: "h2", variant: "heading" }, t("decreeProtocolTitle")),
+      { icon: "doc-text", title: t("decreeProtocolTitle") },
       h(P.Text, { as: "p", variant: "secondary" }, t("decreeProtocolMessage")),
       h(P.ActionBar, { label: t("decree"), sticky: false }, h(P.Button, { variant: "primary", onClick: onGoDecision }, t("goDecisionVoting"))),
     );
