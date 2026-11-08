@@ -58,11 +58,13 @@ function assertCaseHeader(tree, record) {
   const headers = caseHeaders(tree);
   assert.equal(headers.length, 1, "one case header");
   const header = headers[0].props;
-  // #109 (owner): the names are the title, the case number the small line under it, the icon in its box.
+  // #109 (owner): the names are the title, the case number the small line under it. D-0060 (issue 260): the two
+  // parties' photos with "vs." (media.versus), initials without a photo.
   assert.match(String(header.title), /Applicant Synthetic/);
   assert.match(String(header.title), /Respondent Synthetic/);
   assert.match(String(header.subtitle), new RegExp(record.number));
-  assert.deepEqual(JSON.parse(JSON.stringify(header.media)), { icon: "folder", hue: "purple", box: true });
+  assert.deepEqual(JSON.parse(JSON.stringify(header.media)).versus.map((party) => party.name), ["Applicant Synthetic", "Respondent Synthetic"]);
+  assert.equal(header.media.decorative, true);
   assert.equal(header.status.label, record.status === "open" ? "Active" : "Closed");
   assert.ok(header.facts.some((fact) => fact.value === "Synthetic Manager"), "the case manager is a fact");
   return header;

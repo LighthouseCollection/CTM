@@ -3230,7 +3230,7 @@ ${ar}` : en;
   // portrait (CASE_PHOTO) through the permission-checked file URL; the server sends it to council users only, so an
   // applicant never gets the other party's photo. Until the variant ships the header keeps the folder icon below.
   function caseHeaderPeople(applicant, respondent) {
-    return [applicant, respondent].filter(Boolean).map((party) => ({ person: party.name || "—", src: party.photo_url || undefined }));
+    return [applicant, respondent].filter(Boolean).map((party) => ({ name: party.name || "—", src: party.photo_url || undefined }));
   }
 
   // Issue 259 (D-0059): the server's display_status is "unassigned" for an open case with no member (council only);
@@ -3246,6 +3246,12 @@ ${ar}` : en;
       : status === "open" ? { tone: "success", icon: "circle-check", label: t("active") } : { tone: "neutral", icon: "lock", label: bt("closed") };
   }
 
+  function caseHeaderMedia(people) {
+    if (people.length === 2) return { versus: people, decorative: true };
+    if (people.length === 1) return { person: people[0].name, src: people[0].src };
+    return { icon: "folder", hue: "purple", box: true };
+  }
+
   function caseHeaderProps(record, lang, facts, assigneeValue, assignedNow) {
     const t = translator(lang), bt = base.translator(lang);
     const parties = record.parties || [];
@@ -3256,16 +3262,16 @@ ${ar}` : en;
     return {
       // Issue 109 (owner, 2026-11-05): the decided icon box (record-page.md media box), the spouses' names as the
       // title and the case number as the small line under it. Without names the case number is the title.
-      // D-0060: when the Plenix versus variant (pds issue 991) ships, this becomes its media with
-      // caseHeaderPeople(applicant, respondent) (one party: one avatar); until then the icon box stays.
-      media: { icon: "folder", hue: "purple", box: true },
+      // D-0060 (issue 260): the parties' photos with "vs." (Plenix media.versus, pds issue 991, shipped in 1.2.0); one
+      // party: one avatar; none: the folder icon box. The title already names them, so the media is decorative.
+      media: caseHeaderMedia(caseHeaderPeople(applicant, respondent)),
       title: names.length ? names.join(` ${bt("versus")} `) : base.isolate(record.number),
       subtitle: names.length ? base.isolate(record.number) : undefined,
       status: caseStatusBadge(status, t, bt),
       // Red tones draw the eye to the member slot while nothing is chosen (D-0059; Plenix fact tone).
       facts: [{ icon: "person", label: t("assignedCouncilMember"), value: assigneeValue ?? (caseManager(record) || bt("unassigned")),
         ...(status === "unassigned" ? { tone: "danger" } : {}) }, ...(facts || [])],
-      strings: { status: bt("statusLabel"), more: t("moreActions") },
+      strings: { status: bt("statusLabel"), more: t("moreActions"), vs: bt("versus") },
       // A tab that fills the room (split list and detail) must never squeeze the header.
       className: "plx-u-shrink-0",
     };
