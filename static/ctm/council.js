@@ -2731,9 +2731,11 @@
       // D-0042 (owner, issue 171): no agenda tabs. Two full-width sections, one below the other, each with
       // its heading and its own table: Hearings, then To assign (peer sections, stack.md gap "section").
       current ? h(P.Inline, { align: "start", gap: "lg" },
-        h(P.Stack, { gap: "section", grow: true },
-          h(P.Stack, { gap: "sm" }, h(P.Text, { as: "h2", variant: "heading" }, t("scheduledCasesForHearing")), agendaTable(2)),
-          h(P.Stack, { gap: "sm" }, h(P.Text, { as: "h2", variant: "heading" }, t("casesToAssign")), agendaTable(1))),
+        // D-0055 (owner, amends D-0042): each agenda section is its own card; the heading is the card header
+        // (Plenix Panel title with icon) and the table sits in the card body.
+        h(P.Stack, { gap: "lg", grow: true },
+          h(P.Panel, { icon: "event_available", title: t("scheduledCasesForHearing") }, agendaTable(2)),
+          h(P.Panel, { icon: "folder", title: t("casesToAssign") }, agendaTable(1))),
         agendaDetail ? h(P.SidePanel, { title: agendaDetail.case_number || t("caseNumber"), icon: "folder",
           actions: h(P.Button, { iconOnly: true, icon: "close", label: t("close"), variant: "ghost", onClick: () => setAgendaDetail(null) }) },
           h(P.PropertyList, { layout: "stacked" },
