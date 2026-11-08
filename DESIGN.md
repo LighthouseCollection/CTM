@@ -148,6 +148,20 @@ Where a page has several such sections, each section is its own card: the
 heading is the card header (glow, inset line) and the table sits inside the
 card body. The session agenda (Hearings, To assign) is built this way.
 
+**Three heading levels, never mixed (applies D-0050/D-0055, #217):**
+
+| Heading | What it is | Plenix |
+|---|---|---|
+| **Page title** | Names the page; one per page; it receives focus on route change (§6). Kept even when the nav names the page | The page template's own title: `RecordPage.Header`, `ListingPage` title, `SettingsLayout` title, or for My Account the profile header. Never restyled as a card heading |
+| **Card heading** | Introduces one block (table, fields, form) | `Panel` title (D-0055) |
+| **Group heading** | Groups fields inside a card, **or** groups several cards that belong together (for example one card per recording) | `SectionHeading` (D-0050 group style); a card never holds cards |
+
+A page with a single full-height list keeps the list as the page's listing
+under the page title, with no card around it, so the fill layout stays. A page
+with several sections (for example Security sessions plus Audit) puts each
+section in its own `Panel`. The list inside then uses `DataGrid mode="pages"`
+in place of fill.
+
 ## 5. Words
 
 All messages follow `docs/content/messaging.md`; terms come from
