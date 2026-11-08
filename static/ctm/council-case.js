@@ -499,12 +499,31 @@ ${ar}` : en;
       timelineArea_marriage: "Marriage",
       timelineArea_application: "Application",
       timelineArea_filing: "Filing",
-      timelineArea_assignment: "Assignment",
-      timelineArea_hearings: "Interviews & hearings",
+      timelineArea_assign: "Assignment",
+      timelineArea_hearing: "Interviews & hearings",
       timelineArea_decision: "Council decision",
       timelineArea_decree: "Decree",
-      timelineArea_communications: "Communications",
+      timelineArea_comms: "Communications",
       timelinePending: "Pending",
+      timelineUpcoming: "Upcoming",
+      timelineKind_marriage: "Marriage",
+      timelineKind_separation: "Separation",
+      timelineKind_child_born: "{first_name} born",
+      timelineKind_petition_submitted: "Petition submitted",
+      timelineKind_petition_resubmitted: "Petition resubmitted",
+      timelineKind_filing_accepted: "Filing accepted",
+      timelineKind_filing_returned: "Filing returned for corrections",
+      timelineKind_manager_assigned: "Assigned to {member}",
+      timelineKind_hearing_held: "Hearing held",
+      timelineKind_hearing_scheduled: "Hearing scheduled",
+      timelineKind_interview_scheduled: "Interview scheduled",
+      timelineKind_decision_recorded: "Council decision recorded",
+      timelineKind_decision_approved: "Approved by the president",
+      timelineKind_decision_pending_approval: "Awaiting the president's approval",
+      timelineKind_decree_issued: "Decree issued",
+      timelineKind_decree_released: "Decree released",
+      timelineKind_message_sent: "Message sent",
+      timelineKind_call_logged: "Call recorded",
       timelineCase: "Case",
       timelineMarriage: "Marriage",
       churchMarriageEvent: "Church marriage",
@@ -1019,12 +1038,31 @@ ${ar}` : en;
       timelineArea_marriage: "الزواج",
       timelineArea_application: "الطلب",
       timelineArea_filing: "التقديم",
-      timelineArea_assignment: "التعيين",
-      timelineArea_hearings: "المقابلات والجلسات",
+      timelineArea_assign: "التعيين",
+      timelineArea_hearing: "المقابلات والجلسات",
       timelineArea_decision: "قرار المجلس",
       timelineArea_decree: "المرسوم",
-      timelineArea_communications: "المراسلات",
+      timelineArea_comms: "المراسلات",
       timelinePending: "قيد الانتظار",
+      timelineUpcoming: "قادم",
+      timelineKind_marriage: "الزواج",
+      timelineKind_separation: "الانفصال",
+      timelineKind_child_born: "ولادة {first_name}",
+      timelineKind_petition_submitted: "قُدِّم الالتماس",
+      timelineKind_petition_resubmitted: "أُعيد تقديم الالتماس",
+      timelineKind_filing_accepted: "قُبل الملف",
+      timelineKind_filing_returned: "أُعيد الملف للتصحيح",
+      timelineKind_manager_assigned: "عُيِّنت القضية إلى {member}",
+      timelineKind_hearing_held: "عُقدت جلسة النظر",
+      timelineKind_hearing_scheduled: "حُدِّدت جلسة نظر",
+      timelineKind_interview_scheduled: "حُدِّدت مقابلة",
+      timelineKind_decision_recorded: "سُجِّل قرار المجلس",
+      timelineKind_decision_approved: "اعتمده الرئيس",
+      timelineKind_decision_pending_approval: "في انتظار اعتماد الرئيس",
+      timelineKind_decree_issued: "صدر المرسوم",
+      timelineKind_decree_released: "أُتيح المرسوم",
+      timelineKind_message_sent: "أُرسلت رسالة",
+      timelineKind_call_logged: "سُجِّلت مكالمة",
       timelineCase: "القضية",
       timelineMarriage: "الزواج",
       churchMarriageEvent: "الزواج الكنسي",
@@ -4163,29 +4201,45 @@ ${ar}` : en;
   // case areas, each with its colour. Plenix builds the look as a Timeline variation (grouped by year, by category);
   // until it ships CTM draws the same model with today's Plenix Timeline, the area as a badge, and no CSS of its own.
   // timelineModel() is the only shape; drawTimeline() is the only place to switch to the Plenix variation.
-  const TIMELINE_AREAS = ["marriage", "application", "filing", "assignment", "hearings", "decision", "decree", "communications"];
+  const TIMELINE_AREAS = ["marriage", "application", "filing", "assign", "hearing", "decision", "decree", "comms"];
   const AREA_OF_ACTION = {
-    application_submitted: "filing", filing_withdrawn: "filing", petitions_withdrawn: "filing",
-    completeness_accept: "application", completeness_reject: "application",
-    case_assigned: "assignment", agenda_placed: "assignment",
-    case_heard: "hearings", hearing_deferred_presenter_absent: "hearings", testimony_scheduled: "hearings",
-    report_request_sent: "hearings", report_submitted: "hearings",
+    application_submitted: "application", filing_withdrawn: "application", petitions_withdrawn: "application",
+    completeness_accept: "filing", completeness_reject: "filing",
+    case_assigned: "assign", agenda_placed: "assign",
+    case_heard: "hearing", hearing_deferred_presenter_absent: "hearing", testimony_scheduled: "hearing",
+    report_request_sent: "hearing", report_submitted: "hearing",
     decision_recorded: "decision", president_approved: "decision", petition_denied: "decision", appeal_accept: "decision", appeal_decline: "decision",
     decree_issued: "decree", decree_access_release: "decree", decree_access_withdraw: "decree",
   };
-  const AREA_ICON = { marriage: "church", application: "description", filing: "doc-text", assignment: "person",
-    hearings: "calendar", decision: "check-square", decree: "document", communications: "message" };
+  const AREA_ICON = { marriage: "church", application: "description", filing: "doc-text", assign: "person",
+    hearing: "calendar", decision: "check-square", decree: "document", comms: "message" };
+  const TIMELINE_KINDS = new Set(["marriage", "separation", "child_born", "petition_submitted", "petition_resubmitted", "filing_accepted",
+    "filing_returned", "manager_assigned", "hearing_held", "hearing_scheduled", "interview_scheduled", "decision_recorded",
+    "decision_approved", "decision_pending_approval", "decree_issued", "decree_released", "message_sent", "call_logged"]);
 
-  // events: [{ id, area?, action?, category?, date?, timestamp, label, description? }]. The server's area and date win
-  // (the timeline API, backend part of issue 242); before they arrive the area comes from the audit action.
+  // GET /api/cases/<id>/timeline/ items -> events. The title is CTM's own EN/AR word for the kind; the server's English
+  // title (and description) is the fallback for a kind CTM does not know yet.
+  function timelineApiEvents(items, lang, t) {
+    return (items || []).map((item) => {
+      const params = Object.fromEntries(Object.entries(item.params || {}).map(([k, v]) => [k, v && typeof v === "object" ? v.name || "" : String(v ?? "")]));
+      const known = TIMELINE_KINDS.has(item.kind) ? t(`timelineKind_${item.kind}`, params) : null;
+      return { id: item.id, area: item.area, date: item.date, pending: Boolean(item.pending) || !item.date, upcoming: Boolean(item.upcoming),
+        label: known && !/\{\w+\}/.test(known) ? known : item.title, description: lang === "ar" ? null : item.description };
+    });
+  }
+
+  // events: [{ id, area?, action?, category?, date?, timestamp?, pending?, upcoming?, label, description? }]. The server's
+  // area and date win (the timeline API); for the audit fallback the area comes from the action. Events without a date
+  // (pending) come first, in their own group.
   function timelineModel(events, lang, t, today = new Date().toISOString().slice(0, 10)) {
     const items = (events || []).map((event) => {
       const area = TIMELINE_AREAS.includes(event.area) ? event.area : event.category === "marriage" ? "marriage" : AREA_OF_ACTION[event.action] || "application";
-      const when = event.date || event.timestamp;
-      const parts = timelineDateParts(when, lang);
+      const when = String(event.date || event.timestamp || "");
+      const pending = Boolean(event.pending) || !when;
+      const parts = pending ? { year: t("timelinePending"), date: t("timelinePending") } : timelineDateParts(when, lang);
       return { id: event.id, area, areaLabel: t(`timelineArea_${area}`), title: event.label, description: event.description || null,
-        dateTime: String(when || ""), date: parts.date, year: parts.year, upcoming: String(when || "").slice(0, 10) > today };
-    }).sort((a, b) => b.dateTime.localeCompare(a.dateTime));
+        dateTime: when, date: parts.date, year: parts.year, pending, upcoming: !pending && (Boolean(event.upcoming) || when.slice(0, 10) > today) };
+    }).sort((a, b) => (b.pending - a.pending) || b.dateTime.localeCompare(a.dateTime));
     const groups = [];
     for (const item of items) {
       const group = groups.find((entry) => entry.year === item.year);
@@ -4198,9 +4252,9 @@ ${ar}` : en;
     return h(P.Stack, { gap: "xl" }, ...model.groups.map((group) => h(P.Stack, { key: group.year, gap: "sm" },
       h(P.SectionHeading, { level: 2 }, group.year),
       h(P.Timeline, { label: `${t("timelineTitle")} ${group.year}`, items: group.items.map((item) => ({
-        id: item.id, time: item.upcoming ? `${item.date} · ${t("timelinePending")}` : item.date, dateTime: item.dateTime,
+        id: item.id, time: item.upcoming ? `${item.date} · ${t("timelineUpcoming")}` : item.date, dateTime: item.dateTime || undefined,
         title: item.title, description: item.description || undefined, icon: AREA_ICON[item.area],
-        badge: h(P.Badge, { tone: item.upcoming ? "waiting" : "neutral", size: "sm" }, item.areaLabel),
+        badge: h(P.Badge, { tone: item.pending || item.upcoming ? "waiting" : "neutral", size: "sm" }, item.areaLabel),
       })) }))));
   }
 
@@ -4208,12 +4262,15 @@ ${ar}` : en;
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const [tab, setTab] = R.useState("all");
     const [state, retry] = base.useLoad(
-      () => Promise.all([api(`/api/cases/${encodeURIComponent(caseId)}/audit/`), api(`/api/cases/${encodeURIComponent(caseId)}/`)]).then(([audit, record]) => ({ items: audit.items, record })),
-      [caseId],
+      () => api(`/api/cases/${encodeURIComponent(caseId)}/`).then((record) => api(`/api/cases/${encodeURIComponent(caseId)}/timeline/`)
+        .then((timeline) => ({ record, events: timelineApiEvents(timeline.items, lang, t) }))
+        // Until the timeline API is on the server: the milestones from the audit.
+        .catch(() => api(`/api/cases/${encodeURIComponent(caseId)}/audit/`).then((audit) => ({ record, events: timelineEvents(audit.items, record, lang) })))),
+      [caseId, lang],
     );
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const model = timelineModel(timelineEvents(state.data.items, state.data.record, lang), lang, t);
+    const model = timelineModel(state.data.events, lang, t);
     const shown = tab === "all" ? model : { ...model, groups: model.groups.map((group) => ({ ...group, items: group.items.filter((item) => item.area === tab) })).filter((group) => group.items.length) };
     const content = shown.groups.length ? drawTimeline({ P, h, t, model: shown }) : h(P.EmptyState, { title: t("noTimeline") });
     return h(CaseRecordPage, { api, lang, caseId, record: state.data.record, title: t("timelineTitle") },
@@ -4481,6 +4538,7 @@ ${ar}` : en;
 
   Object.assign(window.CTMCouncil, {
     timelineModel,
+    timelineApiEvents,
     HeaderAssignment,
     caseHeaderProps,
     GroupedReadFields,

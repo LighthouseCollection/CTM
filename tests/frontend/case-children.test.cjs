@@ -129,16 +129,34 @@ test("timeline model: area from the server or the audit action, years latest fir
     { id: "a", action: "application_submitted", timestamp: "2025-03-01T10:00:00Z", label: "Filed" },
     { id: "b", action: "case_assigned", timestamp: "2026-02-01T10:00:00Z", label: "Assigned" },
     { id: "c", category: "marriage", timestamp: "2010-06-05", label: "Church marriage" },
-    { id: "d", action: "report_submitted", area: "communications", date: "2026-12-01", timestamp: "2026-01-01T00:00:00Z", label: "Server area" },
+    { id: "d", action: "report_submitted", area: "comms", date: "2026-12-01", timestamp: "2026-01-01T00:00:00Z", label: "Server area" },
   ];
   const model = C.timelineModel(events, "en", t, "2026-11-08");
   assert.deepEqual(plain(model.groups.map((g) => [g.year, g.items.map((i) => [i.id, i.area, i.upcoming])])), [
-    ["2026", [["d", "communications", true], ["b", "assignment", false]]],
-    ["2025", [["a", "filing", false]]],
+    ["2026", [["d", "comms", true], ["b", "assign", false]]],
+    ["2025", [["a", "application", false]]],
     ["2010", [["c", "marriage", false]]],
   ]);
-  assert.deepEqual(plain(model.areas), ["marriage", "filing", "assignment", "communications"]);
+  assert.deepEqual(plain(model.areas), ["marriage", "application", "assign", "comms"]);
   assert.equal(model.groups[0].items[1].areaLabel, "Assignment");
-  for (const area of ["marriage", "application", "filing", "assignment", "hearings", "decision", "decree", "communications"])
+  for (const area of ["marriage", "application", "filing", "assign", "hearing", "decision", "decree", "comms"])
     assert.notEqual(ar(`timelineArea_${area}`), t(`timelineArea_${area}`), area);
+});
+
+// The timeline API (backend PR 258): CTM words for known kinds with their params, the server title otherwise, English
+// descriptions only in English, and events without a date first as Pending.
+test("timeline API items: own EN/AR title per kind, pending first", () => {
+  const items = [
+    { id: "x", kind: "manager_assigned", area: "assign", date: "2026-03-01", params: { member: { name: "Fr. Example" } }, title: "Assigned", description: "By the clerk" },
+    { id: "y", kind: "decision_pending_approval", area: "decision", date: null, pending: true, params: {}, title: "Awaiting approval" },
+    { id: "z", kind: "something_new", area: "comms", date: "2026-04-01", params: {}, title: "Server words" },
+    { id: "w", kind: "child_born", area: "marriage", date: "2015-01-02", params: {}, title: "Child born" },
+  ];
+  const events = C.timelineApiEvents(items, "en", t);
+  assert.deepEqual(plain(events.map((e) => [e.id, e.label, e.description ?? null])), [
+    ["x", "Assigned to Fr. Example", "By the clerk"], ["y", "Awaiting the president's approval", null], ["z", "Server words", null], ["w", "Child born", null],
+  ]);
+  assert.equal(C.timelineApiEvents(items, "ar", ar)[0].description, null);
+  const model = C.timelineModel(events, "en", t, "2026-11-08");
+  assert.deepEqual(plain(model.groups.map((g) => [g.year, g.items.map((i) => i.id)])), [["Pending", ["y"]], ["2026", ["z", "x"]], ["2015", ["w"]]]);
 });
