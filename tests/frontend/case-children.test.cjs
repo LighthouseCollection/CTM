@@ -170,3 +170,19 @@ test("case header people: applicant then respondent, photo or initials, icon box
   const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.match(src, /media: \{ icon: "folder", hue: "purple", box: true \},/);
 });
+
+// D-0059 (issue 259): an open case with no member shows Unassigned wherever its status shows; the header's member
+// fact turns danger and the picker invalid while nothing is chosen (Plenix props, no CSS).
+test("unassigned status: server display_status, header fact tone and picker invalid", () => {
+  assert.equal(C.caseStatusOf({ status: "open", display_status: "unassigned" }), "unassigned");
+  assert.equal(C.caseStatusOf({ status: "open", display_status: "unassigned" }, true), "open");
+  assert.equal(C.caseStatusOf({ status: "open", display_status: "open" }), "open");
+  assert.equal(C.caseStatusOf({ status: "closed", display_status: "closed" }), "closed");
+  const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(src, /status === "unassigned" \? \{ tone: "action-required", label: bt\("statusUnassigned"\) \}/);
+  assert.match(src, /\.\.\.\(status === "unassigned" \? \{ tone: "danger" \} : \{\}\)/);
+  assert.match(src, /h\(P\.EntityPicker, \{ kind: "people", [^}]*invalid: !current,/);
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.equal(council.split("status: t(caseListStatus(row)),").length - 1, 3);
+  assert.match(council, /row\.display_status === "unassigned" \? "statusUnassigned"/);
+});
