@@ -3241,8 +3241,9 @@ ${ar}` : en;
   }
 
   function caseStatusBadge(status, t, bt) {
-    return status === "unassigned" ? { tone: "action-required", label: bt("statusUnassigned") }
-      : status === "open" ? { tone: "success", label: t("active") } : { tone: "neutral", label: bt("closed") };
+    // Issue 273: the status Badge carries its icon (the header status tile takes the same one).
+    return status === "unassigned" ? { tone: "action-required", icon: "warning", label: bt("statusUnassigned") }
+      : status === "open" ? { tone: "success", icon: "circle-check", label: t("active") } : { tone: "neutral", icon: "lock", label: bt("closed") };
   }
 
   function caseHeaderProps(record, lang, facts, assigneeValue, assignedNow) {
@@ -4523,7 +4524,7 @@ ${ar}` : en;
       { title: t("marriageTitle"), fields: [["marriage_duration", t("marriageDuration")], ["children", t("children")], ["reason", t("reasonForDivorce")]] },
     ];
     const summaryReadValues = {
-      case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: ((badge) => h(P.Badge, { tone: badge.tone }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)), assigned_member: manager || bt("unassigned"),
+      case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: ((badge) => h(P.Badge, { tone: badge.tone, icon: badge.icon }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)), assigned_member: manager || bt("unassigned"),
       applicant: applicant?.name, respondent: respondent?.name, reason: summary.reason, marriage_duration: marriageDuration(record.marriage?.church_marriage_date, lang),
       children: summary.children?.length ? h(P.Stack, { gap: "xs" }, ...summary.children.map((child, index) => h(P.Text, { key: index }, childLine(child, lang, t)))) : t("noChildren"), last_hearing_date: summaryDate(summary.last_hearing_date, lang),
     };

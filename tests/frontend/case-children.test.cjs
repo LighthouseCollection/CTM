@@ -179,7 +179,7 @@ test("unassigned status: server display_status, header fact tone and picker inva
   assert.equal(C.caseStatusOf({ status: "open", display_status: "open" }), "open");
   assert.equal(C.caseStatusOf({ status: "closed", display_status: "closed" }), "closed");
   const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  assert.match(src, /status === "unassigned" \? \{ tone: "action-required", label: bt\("statusUnassigned"\) \}/);
+  assert.match(src, /status === "unassigned" \? \{ tone: "action-required", icon: "warning", label: bt\("statusUnassigned"\) \}/);
   assert.match(src, /\.\.\.\(status === "unassigned" \? \{ tone: "danger" \} : \{\}\)/);
   assert.match(src, /h\(P\.EntityPicker, \{ kind: "people", [^}]*invalid: !current,/);
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
