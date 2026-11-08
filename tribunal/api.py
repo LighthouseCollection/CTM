@@ -489,6 +489,14 @@ def _case_list_data(case):
     }
 
 
+def display_status(case, actor):
+    """#259: derived, never stored. The council sees an open case without a case
+    manager as "unassigned"; applicants always see the stored status."""
+    if actor.role != "applicant" and case.status == "open" and case.assigned_member_id is None:
+        return "unassigned"
+    return case.status
+
+
 @endpoint()
 def cases(request):
     from tribunal.pagination import page_records
@@ -505,7 +513,7 @@ def cases(request):
         ).order_by("-created_at", "-id"), request,
         default_limit=100,
         serialize=lambda c: encoded(
-            c, number=c.number, status=c.status,
+            c, number=c.number, status=c.status, display_status=display_status(c, request.user),
             assigned_member_id=str(c.assigned_member_id) if c.assigned_member_id else None,
             assigned_member=f"{c.assigned_member.first_name} {c.assigned_member.last_name}".strip()
             if c.assigned_member else None,
@@ -847,6 +855,7 @@ def case_detail(request, case_id):
             case,
             number=case.number,
             status=case.status,
+            display_status=display_status(case, request.user),
             **case_capabilities(case, request.user),
             can_message=request.user.role in {"applicant", "admin", "secretary"}
             or case.assigned_member_id == request.user.pk,
