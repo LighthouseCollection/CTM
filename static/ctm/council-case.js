@@ -411,8 +411,8 @@ ${ar}` : en;
       declineApplicationHelp: "Explain why the application is being declined. This reason will be emailed to the applicant.",
       declineReason: "Reason for decline",
       declineReasonRequired: "Enter a reason for declining this application.",
-      caseNumber: "Case Number",
-      filingDate: "Filing Date",
+      caseNumber: "Case number",
+      filingDate: "Filing date",
       pending: "Pending",
       inProgress: "In progress",
       active: "Active",
@@ -421,14 +421,14 @@ ${ar}` : en;
       moreActions: "More actions",
       applicant: "Applicant",
       respondent: "Respondent",
-      reasonForDivorce: "Reason Seeking Divorce",
-      assignedCouncilMember: "Assigned Council Member",
+      reasonForDivorce: "Reason seeking divorce",
+      assignedCouncilMember: "Assigned council member",
       assignChange: "Change",
       assignPlaceholder: "Choose a council member",
       assignEntityName: "council members",
       assignedToast: "Assigned to {name}",
       undo: "Undo",
-      lastHearingDate: "Last Hearing Date",
+      lastHearingDate: "Last hearing date",
       children: "Children",
       noChildren: "No children recorded",
       noChildrenShort: "No children",
@@ -541,38 +541,38 @@ ${ar}` : en;
       groupRecord: "Record",
       separation: "Separation",
       churchMarriage: "Church Marriage",
-      marriedOutsideCoptic: "Were You Married Outside the Coptic Orthodox Church?",
-      outsideDenomination: "Religious Denomination Officiating",
-      outsideMarriageDate: "Date of Marriage Outside Coptic Church",
-      churchMarriageDate: "Date of Church Marriage",
-      dateOfSeparation: "Date of Separation",
+      marriedOutsideCoptic: "Were you married outside the Coptic Orthodox Church?",
+      outsideDenomination: "Religious denomination officiating",
+      outsideMarriageDate: "Date of marriage outside Coptic Church",
+      churchMarriageDate: "Date of church marriage",
+      dateOfSeparation: "Date of separation",
       separationDetails: "Separation Details",
       civilDivorce: "Civil Divorce",
       restrainingOrder: "Restraining Order",
       reconciliation: "Reconciliation",
-      maritalStatus: "Current Marital Status",
-      initiatedBy: "Initiated By",
-      civilDivorceFiled: "Civil Divorce Filed?",
-      courtName: "Name of Court",
-      courtLocation: "Court Street Address / Location",
-      civilCaseNumber: "Civil Case Number",
-      civilDivorceStatus: "Civil Divorce Status",
-      orderFiled: "Restraining Order Filed?",
-      orderNameListed: "Name Listed on Order",
-      orderCaseNumber: "Restraining Order Case Number",
-      orderStatus: "Restraining Order Status",
-      reconciliationAttempted: "Clergy Counseling / Reconciliation Attempted?",
-      permitPreviouslyApplied: "Previously Applied for Ecclesiastical Marriage Permit?",
-      permitWhen: "When Did You Previously Apply?",
-      permitWhere: "Where Did You Previously Apply?",
-      decisionOutcome: "Decision Outcome",
-      dateOfCivilDivorce: "Date of Civil Divorce",
-      dateOfRestrainingOrder: "Date of Restraining Order",
-      restrainingOrderExpirationDate: "Restraining Order Expiration Date",
-      officiatingPriest: "Officiating Priest",
-      marriageDuration: "Marriage Duration",
-      churchName: "Church Name",
-      churchLocation: "Church Address / Location",
+      maritalStatus: "Current marital status",
+      initiatedBy: "Initiated by",
+      civilDivorceFiled: "Civil divorce filed?",
+      courtName: "Name of court",
+      courtLocation: "Court street address / location",
+      civilCaseNumber: "Civil case number",
+      civilDivorceStatus: "Civil divorce status",
+      orderFiled: "Restraining order filed?",
+      orderNameListed: "Name listed on order",
+      orderCaseNumber: "Restraining order case number",
+      orderStatus: "Restraining order status",
+      reconciliationAttempted: "Clergy counseling / reconciliation attempted?",
+      permitPreviouslyApplied: "Previously applied for ecclesiastical marriage permit?",
+      permitWhen: "When did you previously apply?",
+      permitWhere: "Where did you previously apply?",
+      decisionOutcome: "Decision outcome",
+      dateOfCivilDivorce: "Date of civil divorce",
+      dateOfRestrainingOrder: "Date of restraining order",
+      restrainingOrderExpirationDate: "Restraining order expiration date",
+      officiatingPriest: "Officiating priest",
+      marriageDuration: "Marriage duration",
+      churchName: "Church name",
+      churchLocation: "Church address / location",
       internalNotes: "Internal notes",
       internalNotesHelp: "Council only. Never shown to applicants.",
       note: "Note",
@@ -586,7 +586,7 @@ ${ar}` : en;
       portalAccount: "Portal account",
       registered: "Registered",
       notRegistered: "Not registered",
-      personalDetails: "Personal Details",
+      personalDetails: "Personal details",
       contact: "Contact",
       editContact: "Edit contact",
       saveContact: "Save contact",
@@ -599,24 +599,24 @@ ${ar}` : en;
       photoOf: "{name}’s photo",
       photoUploadFailed: "The photo could not be uploaded.",
       career: "Career",
-      churchAffiliation: "Church Affiliation",
-      otherNamesKnownBy: "Other Names Known By",
-      placeOfBirth: "Place of Birth",
+      churchAffiliation: "Church affiliation",
+      otherNamesKnownBy: "Other names known by",
+      placeOfBirth: "Place of birth",
       nationality: "Nationality",
-      awarenessOfApplication: "Awareness of Application",
+      awarenessOfApplication: "Awareness of application",
       address: "Address",
-      mobileNumber: "Mobile Number",
-      emailAddress: "Email Address",
-      immigrationStatus: "Immigration Status",
-      residingWith: "Residing With",
+      mobileNumber: "Mobile number",
+      emailAddress: "Email address",
+      immigrationStatus: "Immigration status",
+      residingWith: "Residing with",
       education: "Education",
-      yearOfGraduation: "Year of Graduation",
+      yearOfGraduation: "Year of graduation",
       occupation: "Occupation",
       denomination: "Denomination",
-      nameOfBishop: "Name of Bishop",
+      nameOfBishop: "Name of bishop",
       diocese: "Diocese",
-      parishName: "Parish Name",
-      fatherOfConfession: "Father of Confession",
+      parishName: "Parish name",
+      fatherOfConfession: "Father of confession",
       noParties: "No spouses are recorded.",
       addParty: "Add the other spouse",
       addPartyHelp: "Record the other spouse by name and email. They are linked automatically after registering with a matching verified email. No account is created for them and no invitation acceptance is needed.",
@@ -1785,7 +1785,7 @@ ${ar}` : en;
         controls.projected
           ? h(
               P.PropertyList,
-              null,
+              { layout: "stacked" },
               controls.priestName ? h(P.PropertyList.Item, { label: t("priestName") }, base.isolate(controls.priestName)) : null,
               h(
                 P.PropertyList.Item,
@@ -2067,7 +2067,7 @@ ${ar}` : en;
         form.fileId
           ? h(
               P.PropertyList,
-              null,
+              { layout: "stacked" },
               h(P.PropertyList.Item, { label: w("File") }, base.isolate(form.fileName)),
               h(P.PropertyList.Item, { label: t("returnedCheckState") }, h(P.Badge, { tone: form.scan === "clean" ? "success" : form.scan === "rejected" ? "danger" : "neutral" }, t("scan_" + form.scan))),
               variant === "recording" ? h(P.PropertyList.Item, { label: t("recDuration") }, form.durationMs === null ? t("recDurationUnknown") : base.isolate(formatDuration(form.durationMs))) : null,
@@ -2154,25 +2154,23 @@ ${ar}` : en;
       P.Stack,
       { gap: "md" },
       // D-0050 groups (groups.md): Request · Record.
-      groupHeading(P, h, t("groupRequest")),
-      h(
+      readGroup(P, h, t("groupRequest"), h(
         P.PropertyList,
-        null,
+        { layout: "stacked" },
         h(P.PropertyList.Item, { label: t("title") }, request.title),
         h(P.PropertyList.Item, { label: base.translator(lang)("statusLabel") }, h(P.Badge, { tone: request.state === "draft" ? "neutral" : request.state === "sent" ? "active" : "success" }, t(request.state))),
         h(P.PropertyList.Item, { label: t("method") }, t(request.kind)),
         request.subject_name ? h(P.PropertyList.Item, { label: t("subject") }, request.subject_name) : null,
         request.language ? h(P.PropertyList.Item, { label: t("language") }, t(request.language)) : null,
-      ),
-      groupHeading(P, h, t("groupRecord")),
-      h(
+      )),
+      readGroup(P, h, t("groupRecord"), h(
         P.PropertyList,
-        null,
+        { layout: "stacked" },
         request.author ? h(P.PropertyList.Item, { label: t("preparedBy") }, request.author) : null,
         request.created_at ? h(P.PropertyList.Item, { label: t("createdAt"), data: true }, base.formatWhen(request.created_at, lang)) : null,
         request.sent_at ? h(P.PropertyList.Item, { label: t(interview ? "startedAt" : "sentAt"), data: true }, base.formatWhen(request.sent_at, lang)) : null,
         request.parent_report_id ? h(P.PropertyList.Item, { label: t("parent") }, t("followUpYes")) : null,
-      ),
+      )),
       external
         ? h(P.Notice, { tone: "info" }, t("externalNoQuestions"))
         : h(
@@ -2576,7 +2574,7 @@ ${ar}` : en;
           !readAvailable ? h(P.Notice, { tone: "warning" }, t("sessionVotesNotice")) : null,
           h(
             P.PropertyList,
-            null,
+            { layout: "stacked" },
             ...rows.map((row) =>
               h(
                 P.PropertyList.Item,
@@ -3360,10 +3358,17 @@ ${ar}` : en;
     return h(P.SectionHeading, { level: 3 }, title);
   }
 
+  // Issue 273 (D-0050, pds D-0106): a read-only group is a Plenix PropertyGroup (its own heading) around stacked
+  // PropertyLists. This is the one place that draws a read-only group, so the named Plenix read-only variation
+  // switches here with one prop when it ships. Edit forms keep groupHeading above their fields.
+  function readGroup(P, h, title, ...children) {
+    return h(P.PropertyGroup, { heading: title, level: 3, key: typeof title === "string" ? title : undefined }, ...children);
+  }
+
   // groups: [{ title, fields: [[key, label, type]] }] drawn with CaseReadFields; an empty group is left out.
   function GroupedReadFields({ P, h, groups, values, lang, columns = 2 }) {
     return h(P.Stack, { gap: "xl" }, ...groups.filter((group) => group.fields.length).map((group) =>
-      h(P.Stack, { gap: "sm", key: group.title }, groupHeading(P, h, group.title), h(CaseReadFields, { P, h, fields: group.fields, values, lang, columns }))));
+      readGroup(P, h, group.title, h(CaseReadFields, { P, h, fields: group.fields, values, lang, columns }))));
   }
 
   // The edit form's groups: the same titles and order as read mode; each field drawn by field(key, label, type).
@@ -3380,14 +3385,10 @@ ${ar}` : en;
   function spouseProfileSection(P, h, t, title, icon, values, twoColumns = false) {
     const fields = values.filter(([, value]) => value);
     if (!fields.length) return null;
-    return h(
-      P.Stack,
-      { gap: "sm", key: title },
-      groupHeading(P, h, title),
+    return readGroup(P, h, title,
       twoColumns
         ? caseColumns(P, h, fields.map(([label, value]) => profileList(P, h, [h(P.PropertyList.Item, { key: label, label: t(label) }, value)])), 2, "medium")
-        : profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value))),
-    );
+        : profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value))));
   }
 
   function spouseProfileValues(record, party) {
@@ -3501,7 +3502,7 @@ ${ar}` : en;
     return h(
       P.Stack,
       { gap: "sm" },
-      groupHeading(P, h, t("contact")),
+      editing ? groupHeading(P, h, t("contact")) : null,
       editing
         ? h(
             P.Form,
@@ -3510,7 +3511,7 @@ ${ar}` : en;
             failure ? h(P.Notice, { tone: "danger" }, failure) : null,
             h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveContact"))),
           )
-        : caseColumns(P, h, fields.map(([key, label]) => profileList(P, h, [h(P.PropertyList.Item, { key, label }, values[key] || "—")])), 2, "medium"),
+        : readGroup(P, h, t("contact"), caseColumns(P, h, fields.map(([key, label]) => profileList(P, h, [h(P.PropertyList.Item, { key, label }, values[key] || "—")])), 2, "medium")),
     );
   }
 

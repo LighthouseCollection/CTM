@@ -373,7 +373,7 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /caseSummary: "Case Summary"/);
   // D-0050 groups (groups.md): Case · Spouses · Marriage.
   assert.match(councilCase, /GroupedReadFields, \{ P, h, groups: summaryGroups, values: summaryReadValues, lang, columns: 2 \}/);
-  assert.match(councilCase, /reasonForDivorce: "Reason Seeking Divorce"/);
+  assert.match(councilCase, /reasonForDivorce: "Reason seeking divorce"/);
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
   assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
   // D-0050 (#217): the case status is a Plenix Badge, never plain text.
