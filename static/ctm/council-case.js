@@ -496,6 +496,15 @@ ${ar}` : en;
       timelineHelp: "Key case and marriage events in one dated history. Every recorded action is listed in Case Audit.",
       noTimeline: "No timeline events are recorded yet.",
       timelineAll: "All",
+      timelineArea_marriage: "Marriage",
+      timelineArea_application: "Application",
+      timelineArea_filing: "Filing",
+      timelineArea_assignment: "Assignment",
+      timelineArea_hearings: "Interviews & hearings",
+      timelineArea_decision: "Council decision",
+      timelineArea_decree: "Decree",
+      timelineArea_communications: "Communications",
+      timelinePending: "Pending",
       timelineCase: "Case",
       timelineMarriage: "Marriage",
       churchMarriageEvent: "Church marriage",
@@ -1007,6 +1016,15 @@ ${ar}` : en;
       timelineHelp: "الأحداث الرئيسية للقضية من الأقدم إلى الأحدث. وتُعرض جميع الإجراءات المسجلة في سجل تدقيق القضية.",
       noTimeline: "لم تُسجَّل أحداث رئيسية بعد.",
       timelineAll: "الكل",
+      timelineArea_marriage: "الزواج",
+      timelineArea_application: "الطلب",
+      timelineArea_filing: "التقديم",
+      timelineArea_assignment: "التعيين",
+      timelineArea_hearings: "المقابلات والجلسات",
+      timelineArea_decision: "قرار المجلس",
+      timelineArea_decree: "المرسوم",
+      timelineArea_communications: "المراسلات",
+      timelinePending: "قيد الانتظار",
       timelineCase: "القضية",
       timelineMarriage: "الزواج",
       churchMarriageEvent: "الزواج الكنسي",
@@ -3243,12 +3261,14 @@ ${ar}` : en;
 
   function CaseRecordPage({ api, lang, caseId, record, title, facts, readOnly, fill, onChanged, children }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
+    // Issue 237: a tab that passes its own case record may lack the assigned member (the case detail sends only the
+    // history), so the header fills it in the same way; until then it shows the record as given.
     const [state] = base.useLoad(
-      () => (record ? Promise.resolve(null) : api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r))),
-      [caseId, Boolean(record)],
+      () => (record ? withAssignee(api, record) : api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r))),
+      [caseId, record],
     );
     const [assigned, setAssigned] = R.useState(null);
-    const shown = record || state.data;
+    const shown = state.data && (!record || state.data.id === record.id) ? { ...(record || {}), ...state.data } : record;
     const manager = shown ? caseManager(shown) : null;
     const current = assigned || (manager ? { id: shown.assigned_member_id || null, name: manager } : null);
     const assigneeValue = shown && shown.can_assign === true && shown.status === "open"
@@ -4114,7 +4134,7 @@ ${ar}` : en;
     return (items || [])
       .filter((row) => MILESTONES.has(row.action))
       .sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)))
-      .map((row) => ({ id: row.id, timestamp: row.timestamp, label: auditLabel(row.action, lang) }));
+      .map((row) => ({ id: row.id, timestamp: row.timestamp, label: auditLabel(row.action, lang), action: row.action, area: row.area, date: row.date }));
   }
 
   function timelineEvents(items, record, lang) {
@@ -4139,6 +4159,51 @@ ${ar}` : en;
     };
   }
 
+  // D-0058 (issue 242): the case timeline is grouped by year (latest first), and each event belongs to one of eight
+  // case areas, each with its colour. Plenix builds the look as a Timeline variation (grouped by year, by category);
+  // until it ships CTM draws the same model with today's Plenix Timeline, the area as a badge, and no CSS of its own.
+  // timelineModel() is the only shape; drawTimeline() is the only place to switch to the Plenix variation.
+  const TIMELINE_AREAS = ["marriage", "application", "filing", "assignment", "hearings", "decision", "decree", "communications"];
+  const AREA_OF_ACTION = {
+    application_submitted: "filing", filing_withdrawn: "filing", petitions_withdrawn: "filing",
+    completeness_accept: "application", completeness_reject: "application",
+    case_assigned: "assignment", agenda_placed: "assignment",
+    case_heard: "hearings", hearing_deferred_presenter_absent: "hearings", testimony_scheduled: "hearings",
+    report_request_sent: "hearings", report_submitted: "hearings",
+    decision_recorded: "decision", president_approved: "decision", petition_denied: "decision", appeal_accept: "decision", appeal_decline: "decision",
+    decree_issued: "decree", decree_access_release: "decree", decree_access_withdraw: "decree",
+  };
+  const AREA_ICON = { marriage: "church", application: "description", filing: "doc-text", assignment: "person",
+    hearings: "calendar", decision: "check-square", decree: "document", communications: "message" };
+
+  // events: [{ id, area?, action?, category?, date?, timestamp, label, description? }]. The server's area and date win
+  // (the timeline API, backend part of issue 242); before they arrive the area comes from the audit action.
+  function timelineModel(events, lang, t, today = new Date().toISOString().slice(0, 10)) {
+    const items = (events || []).map((event) => {
+      const area = TIMELINE_AREAS.includes(event.area) ? event.area : event.category === "marriage" ? "marriage" : AREA_OF_ACTION[event.action] || "application";
+      const when = event.date || event.timestamp;
+      const parts = timelineDateParts(when, lang);
+      return { id: event.id, area, areaLabel: t(`timelineArea_${area}`), title: event.label, description: event.description || null,
+        dateTime: String(when || ""), date: parts.date, year: parts.year, upcoming: String(when || "").slice(0, 10) > today };
+    }).sort((a, b) => b.dateTime.localeCompare(a.dateTime));
+    const groups = [];
+    for (const item of items) {
+      const group = groups.find((entry) => entry.year === item.year);
+      if (group) group.items.push(item); else groups.push({ year: item.year, items: [item] });
+    }
+    return { areas: TIMELINE_AREAS.filter((area) => items.some((item) => item.area === area)), groups };
+  }
+
+  function drawTimeline({ P, h, t, model }) {
+    return h(P.Stack, { gap: "xl" }, ...model.groups.map((group) => h(P.Stack, { key: group.year, gap: "sm" },
+      h(P.SectionHeading, { level: 2 }, group.year),
+      h(P.Timeline, { label: `${t("timelineTitle")} ${group.year}`, items: group.items.map((item) => ({
+        id: item.id, time: item.upcoming ? `${item.date} · ${t("timelinePending")}` : item.date, dateTime: item.dateTime,
+        title: item.title, description: item.description || undefined, icon: AREA_ICON[item.area],
+        badge: h(P.Badge, { tone: item.upcoming ? "waiting" : "neutral", size: "sm" }, item.areaLabel),
+      })) }))));
+  }
+
   function CaseTimeline({ api, lang, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const [tab, setTab] = R.useState("all");
@@ -4148,33 +4213,14 @@ ${ar}` : en;
     );
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
-    const events = timelineEvents(state.data.items, state.data.record, lang);
-    const visible = tab === "all" ? events : events.filter((event) => event.category === tab);
-    const groups = visible.slice().reverse().reduce((all, event) => {
-      const parts = timelineDateParts(event.timestamp, lang), item = { ...event, ...parts };
-      const group = all.find((entry) => entry.year === parts.year);
-      if (group) group.items.push(item); else all.push({ year: parts.year, items: [item] });
-      return all;
-    }, []);
-    const content = visible.length ? h(P.Stack, { gap: "lg" }, ...groups.map((group) => h(P.Stack, { key: group.year, gap: "sm" },
-      h(P.SectionHeading, { level: 2 }, group.year),
-      h(P.Timeline, { label: `${t("timelineTitle")} ${group.year}`, items: group.items.map((event) => ({
-        id: event.id,
-        time: event.date,
-        dateTime: event.timestamp,
-        title: event.label,
-        icon: event.category === "marriage" ? "church" : "description",
-        badge: h(P.Badge, { tone: event.category === "case" ? "active" : "neutral", size: "sm" }, t(event.category === "case" ? "timelineCase" : "timelineMarriage")),
-      })) }),
-    ))) : h(P.EmptyState, { title: t("noTimeline") });
+    const model = timelineModel(timelineEvents(state.data.items, state.data.record, lang), lang, t);
+    const shown = tab === "all" ? model : { ...model, groups: model.groups.map((group) => ({ ...group, items: group.items.filter((item) => item.area === tab) })).filter((group) => group.items.length) };
+    const content = shown.groups.length ? drawTimeline({ P, h, t, model: shown }) : h(P.EmptyState, { title: t("noTimeline") });
     return h(CaseRecordPage, { api, lang, caseId, record: state.data.record, title: t("timelineTitle") },
       h(P.Text, { variant: "secondary" }, t("timelineHelp")),
       h(P.Tabs, { variant: "contained", label: t("timelineTitle"), value: tab, onChange: setTab,
-        items: [
-          { value: "all", label: t("timelineAll"), content },
-          { value: "case", label: t("timelineCase"), content },
-          { value: "marriage", label: t("timelineMarriage"), content },
-        ],
+        // The legend that filters by case area (D-0058); only the areas this case has.
+        items: [{ value: "all", label: t("timelineAll"), content }, ...model.areas.map((area) => ({ value: area, label: t(`timelineArea_${area}`), content }))],
       }),
     );
   }
@@ -4434,6 +4480,7 @@ ${ar}` : en;
   }
 
   Object.assign(window.CTMCouncil, {
+    timelineModel,
     HeaderAssignment,
     caseHeaderProps,
     GroupedReadFields,

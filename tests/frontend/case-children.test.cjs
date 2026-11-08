@@ -121,3 +121,24 @@ test("D-0055: other sessions' agenda parts are cards; card-internal headings are
   assert.match(decree, /\{ icon: "doc-text", title: t\("decreeProtocolTitle"\) \}/);
   assert.doesNotMatch(decree, /h\(P\.Text, \{ as: "h2", variant: "heading" \}, t\("decreeProtocolTitle"\)\)/);
 });
+
+// D-0058 (issue 242): the case timeline model: eight case areas, grouped by year, latest first; the server's area and
+// date win; upcoming events are marked.
+test("timeline model: area from the server or the audit action, years latest first, upcoming marked", () => {
+  const events = [
+    { id: "a", action: "application_submitted", timestamp: "2025-03-01T10:00:00Z", label: "Filed" },
+    { id: "b", action: "case_assigned", timestamp: "2026-02-01T10:00:00Z", label: "Assigned" },
+    { id: "c", category: "marriage", timestamp: "2010-06-05", label: "Church marriage" },
+    { id: "d", action: "report_submitted", area: "communications", date: "2026-12-01", timestamp: "2026-01-01T00:00:00Z", label: "Server area" },
+  ];
+  const model = C.timelineModel(events, "en", t, "2026-11-08");
+  assert.deepEqual(plain(model.groups.map((g) => [g.year, g.items.map((i) => [i.id, i.area, i.upcoming])])), [
+    ["2026", [["d", "communications", true], ["b", "assignment", false]]],
+    ["2025", [["a", "filing", false]]],
+    ["2010", [["c", "marriage", false]]],
+  ]);
+  assert.deepEqual(plain(model.areas), ["marriage", "filing", "assignment", "communications"]);
+  assert.equal(model.groups[0].items[1].areaLabel, "Assignment");
+  for (const area of ["marriage", "application", "filing", "assignment", "hearings", "decision", "decree", "communications"])
+    assert.notEqual(ar(`timelineArea_${area}`), t(`timelineArea_${area}`), area);
+});
