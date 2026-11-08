@@ -387,6 +387,17 @@
       councilMember: "Council member",
       reviewQueue: "Applications awaiting completeness review",
       reviewQueueEmpty: "No applications are awaiting completeness review.",
+      pickerTitleAssign: "Add to assign",
+      pickerTitleHearing: "Add hearing",
+      pickerSearch: "Search by case number or name",
+      pickerParties: "Parties",
+      pickerFiled: "Filed",
+      pickerRecommendation: "Recommendation",
+      pickerAddNone: "Add cases",
+      pickerNoMatch: "No cases match the search.",
+      pickerEmptyAssign: "No accepted cases are waiting to be assigned.",
+      pickerEmptyHearing: "No assigned cases are waiting for a hearing.",
+      placedMany: "The cases were added to the agenda.",
       viewAwaitingReview: "Awaiting review",
       viewForCouncil: "For council",
       councilQueueEmpty: "No applications are waiting for the council.",
@@ -787,6 +798,17 @@
       councilMember: "عضو المجلس",
       reviewQueue: "طلبات في انتظار مراجعة الاستيفاء",
       reviewQueueEmpty: "لا توجد طلبات في انتظار مراجعة الاستيفاء.",
+      pickerTitleAssign: "إضافة للتعيين",
+      pickerTitleHearing: "إضافة جلسة نظر",
+      pickerSearch: "ابحث برقم القضية أو الاسم",
+      pickerParties: "الطرفان",
+      pickerFiled: "تاريخ التقديم",
+      pickerRecommendation: "التوصية",
+      pickerAddNone: "إضافة قضايا",
+      pickerNoMatch: "لا توجد قضايا مطابقة للبحث.",
+      pickerEmptyAssign: "لا توجد قضايا مقبولة في انتظار التعيين.",
+      pickerEmptyHearing: "لا توجد قضايا معيّنة في انتظار جلسة نظر.",
+      placedMany: "أُضيفت القضايا إلى جدول الأعمال.",
       viewAwaitingReview: "في انتظار المراجعة",
       viewForCouncil: "أمام المجلس",
       councilQueueEmpty: "لا توجد طلبات في انتظار المجلس.",
@@ -1184,12 +1206,14 @@
   const counts = {
     en: {
       casesCount: { one: "{n} case", other: "{n} cases" },
+      addCasesCount: { one: "Add {n} case", other: "Add {n} cases" },
       sessionsCount: { one: "{n} session", other: "{n} sessions" },
       applicationsCount: { one: "{n} application", other: "{n} applications" },
       resultsCount: { one: "{n} document", other: "{n} documents" },
     },
     ar: {
       casesCount: { zero: "لا توجد قضايا", one: "قضية واحدة", two: "قضيتان", few: "{n} قضايا", many: "{n} قضية", other: "{n} قضية" },
+      addCasesCount: { zero: "إضافة قضايا", one: "إضافة قضية واحدة", two: "إضافة قضيتين", few: "إضافة {n} قضايا", many: "إضافة {n} قضية", other: "إضافة {n} قضية" },
       sessionsCount: { zero: "لا توجد جلسات", one: "جلسة واحدة", two: "جلستان", few: "{n} جلسات", many: "{n} جلسة", other: "{n} جلسة" },
       applicationsCount: { zero: "لا توجد طلبات", one: "طلب واحد", two: "طلبان", few: "{n} طلبات", many: "{n} طلبًا", other: "{n} طلب" },
       resultsCount: { zero: "لا توجد مستندات", one: "مستند واحد", two: "مستندان", few: "{n} مستندات", many: "{n} مستندًا", other: "{n} مستند" },
@@ -2482,6 +2506,86 @@
       ));
   }
 
+  // Issue 230 (D-0054): one case picker for both agenda parts. A large dialog with a search box and a DataGrid of
+  // the cases this session can take (GET …/eligible-cases/?part=1|2), with row checkboxes; the button counts the
+  // choice and adds them in one all-or-none request (POST …/agenda/batch/). No cases is an empty state, not an error.
+  function pluralWord(lang, key, n) {
+    const forms = plural(lang, key) || {};
+    const rule = new Intl.PluralRules(lang === "ar" ? "ar" : "en").select(n);
+    return String(forms[rule] || forms.other || "").replace("{n}", new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(n));
+  }
+
+  function pickerRows(items, query, t, lang) {
+    const q = String(query || "").trim().toLowerCase();
+    return (items || []).map((row) => ({
+      id: row.id,
+      number: row.number,
+      parties: (row.party_names || []).map((name) => isolate(name)).join(` ${t("versus")} `) || "—",
+      filed: row.filed_at ? formatDate(row.filed_at, lang) : t("notRecorded"),
+      grounds: groundsText(row.grounds, "", t) || "—",
+      status: t(row.status === "closed" ? "closed" : "open"),
+      member: row.assigned_member || t("unassigned"),
+      recommendation: recommendationText(row.recommendation_preview, t),
+      search: [row.number, ...(row.party_names || [])].join(" ").toLowerCase(),
+    })).filter((row) => !q || row.search.includes(q));
+  }
+
+  function CasePicker({ api, lang, sessionId, part, onClose, onAdded }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [state, retry] = useLoad(() => api(`/api/sessions/${encodeURIComponent(sessionId)}/eligible-cases/?part=${part}`), [sessionId, part]);
+    const [query, setQuery] = R.useState("");
+    const [chosen, setChosen] = R.useState([]);
+    const [pending, setPending] = R.useState(false);
+    const [failure, setFailure] = R.useState(null);
+    const rows = pickerRows(state.data?.items, query, t, lang);
+    async function add() {
+      setPending(true);
+      setFailure(null);
+      try {
+        await api(`/api/sessions/${encodeURIComponent(sessionId)}/agenda/batch/`, { method: "POST", body: JSON.stringify({ part, case_ids: chosen }) });
+        onAdded(chosen.length);
+      } catch (error) {
+        setFailure(serverMessage(error, t));
+      } finally {
+        setPending(false);
+      }
+    }
+    // Every column has a width that adds up to the xl dialog (about 850 px), so the grid never scrolls sideways
+    // (a fixed table widens a column without a width past the room, PLX-025). Status is left out: every eligible
+    // case is open, so the column would read "Open" on every row.
+    const columns = [
+      { title: t("caseNumber"), field: "number", kind: "data", width: "8rem" },
+      { title: t("pickerParties"), field: "parties", kind: "name", width: "12rem" },
+      { title: t("pickerFiled"), field: "filed", width: "6.5rem" },
+      { title: t("reason"), field: "grounds", width: "6rem" },
+      ...(part === 2 ? [{ title: t("assignedTo"), field: "member", width: "8rem" }] : []),
+      { title: t("pickerRecommendation"), field: "recommendation", width: part === 2 ? "9rem" : "17rem" },
+    ];
+    let body;
+    if (state.pending && !state.data) body = loadingView(P, h, t);
+    else if (state.error) body = loadFailure(P, h, t, retry, state.error);
+    else if (!(state.data.items || []).length) body = h(P.EmptyState, { title: t(part === 1 ? "pickerEmptyAssign" : "pickerEmptyHearing") });
+    else body = h(P.Stack, { gap: "md" },
+      h(P.Field, { label: t("pickerSearch") },
+        h(P.Input, { type: "search", value: query, disabled: pending, onChange: (event) => setQuery(event.target.value) })),
+      h(window.CTMShell.Table, { label: t(part === 1 ? "addAssignmentCase" : "addHearingCase"), rows, columns, isStatic: true, narrow: "table",
+        empty: t("pickerNoMatch"),
+        grid: { selectable: true, selected: chosen, onSelectionChange: (keys) => setChosen([...keys]), mode: "pages", pageSize: 10, pageSizes: [10, 25, 50],
+          strings: { cardCount: plural(lang, "casesCount"), perPage: t("tablePerPage"), range: t("tableRange"), count: t("tableCount"), pages: t("tablePages") } } }));
+    return h(P.Dialog, {
+      // "xl": room for every column as a table (a narrower dialog turns the grid into row cards).
+      open: true, size: "xl", title: t(part === 1 ? "pickerTitleAssign" : "pickerTitleHearing"), closeLabel: t("cancel"),
+      onClose: () => !pending && onClose(),
+      footer: h(P.Inline, null,
+        h(P.Button, { disabled: pending, onClick: onClose }, t("cancel")),
+        h(P.Button, { variant: "primary", loading: pending, disabled: pending || !chosen.length, onClick: add },
+          chosen.length ? pluralWord(lang, "addCasesCount", chosen.length) : t("pickerAddNone"))),
+    }, h(P.Stack, { gap: "md" }, body, failure ? h(P.Notice, { tone: "danger" }, failure) : null));
+  }
+
   function SessionWorkspace({ api, lang, user, sessionId, renderAttendance, onCase, onBack, onSession, onChanged, compact = false, current = false }) {
     const R = window.React,
       P = window.Plenix,
@@ -2545,11 +2649,11 @@
       },
       {
         icon: "folder", label: t("casesToAssign"), value: String(pendingAssignments), data: true,
-        action: current && editable && manage ? { label: t("addAssignmentCase"), icon: "folder-add", name: t("addAssignmentCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 1 }) } : undefined,
+        action: current && editable && manage ? { label: t("addAssignmentCase"), icon: "folder-add", name: t("addAssignmentCase"), disabled: pending, onClick: () => { setFailure(null); setDialog({ kind: "place", part: 1 }); } } : undefined,
       },
       {
         icon: "event_available", label: t("scheduledCasesForHearing"), value: String(scheduledHearings), data: true,
-        action: current && editable ? { label: t("addHearingCase"), icon: "event_available", name: t("addHearingCase"), disabled: pending, onClick: () => setDialog({ kind: "place", part: 2 }) } : undefined,
+        action: current && editable ? { label: t("addHearingCase"), icon: "event_available", name: t("addHearingCase"), disabled: pending, onClick: () => { setFailure(null); setDialog({ kind: "place", part: 2 }); } } : undefined,
       },
     ];
     const sessionStatus = session.state === "closed" ? "adjourned" : session.state === "draft" ? "draft" : "in-session";
@@ -2907,38 +3011,8 @@
           )
         : null,
       dialog?.kind === "place"
-        ? h(
-            P.Dialog,
-            {
-              open: true,
-              title: t(dialog.part === 1 ? "addAssignmentCase" : "addHearingCase"),
-              closeLabel: t("cancel"),
-              onClose: () => !pending && setDialog(null),
-              footer: h(P.Inline, null,
-                h(P.Button, { disabled: pending, onClick: () => setDialog(null) }, t("cancel")),
-                h(P.Button, {
-                  variant: "primary",
-                  loading: pending,
-                  disabled: pending || !choice[`part${dialog.part}`],
-                  onClick: () => place(dialog.part),
-                }, t("addCase")),
-              ),
-            },
-            h(P.Stack, { gap: "md" },
-              h(P.Field, { label: t(dialog.part === 1 ? "addToPart1" : "addToPart2") },
-                h(P.Select, {
-                  value: choice[`part${dialog.part}`],
-                  disabled: pending,
-                  onChange: (event) => setChoice((old) => ({ ...old, [`part${dialog.part}`]: event.target.value })),
-                  options: [
-                    { value: "", label: (dialog.part === 1 ? c1 : c2).length ? t("chooseCase") : t("noCandidates") },
-                    ...(dialog.part === 1 ? c1 : c2).map((row) => ({ value: row.id, label: casePlacementLabel(row) })),
-                  ],
-                }),
-              ),
-              failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-            ),
-          )
+        ? h(CasePicker, { key: `picker-${dialog.part}`, api, lang, sessionId, part: dialog.part, onClose: () => setDialog(null),
+            onAdded: (n) => { setDialog(null); setNotice(n === 1 ? "placed" : "placedMany"); retry(); if (onChanged) onChanged(); } })
         : null,
       h(
         P.ConfirmDialog,
@@ -3712,6 +3786,9 @@
     ReviewWorkspace: guarded(ReviewWorkspace),
     SessionList: guarded(SessionList),
     SessionWorkspace: guarded(SessionWorkspace),
+    CasePicker: guarded(CasePicker),
+    pickerRows,
+    pluralWord,
     AttendanceRoster,
     rosterOrder,
     rosterUnrecorded,
