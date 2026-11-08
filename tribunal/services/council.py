@@ -312,17 +312,39 @@ def update_session(actor, session_id, session_date, *, starts_at=None, presiding
     return session
 
 
+SESSION_STATUS_ROLES = {"admin", "president", "secretary"}
+
+
+def session_status_actor(actor):
+    """#224 / D-0052: admin, president and secretary switch Draft and In progress."""
+    active(actor)
+    if actor.role not in SESSION_STATUS_ROLES:
+        raise PermissionDenied("Only an administrator, the president or the secretary can change a session's status.")
+
+
+def save_session_state(session, state):
+    """Save a status switch; a database refusal becomes a clear 403, never a server error."""
+    from django.db import DatabaseError
+    session.state = state
+    try:
+        with transaction.atomic():
+            session.save(update_fields=["state"])
+    except DatabaseError:
+        raise PermissionDenied("The session status could not be changed. Nothing was changed.") from None
+
+
 @transaction.atomic
 def activate_session(actor, session_id):
-    """Make a prepared draft session the official in-session record."""
-    administrator(actor)
+    """Make a prepared draft session the official in-session record (again, after an undo)."""
+    session_status_actor(actor)
     session = CouncilSession.objects.select_for_update().get(pk=session_id)
     if session.state == "planned":
         return session
+    if session.state == "closed":
+        raise ValidationError("This session is adjourned, so its status can't change.")
     if session.state != "draft":
         raise ValidationError("Only a draft tribunal session can be activated.")
-    session.state = "planned"
-    session.save(update_fields=["state"])
+    save_session_state(session, "planned")
     audit(actor, "session_activated", session)
     from tribunal.services.session_reminders import announce_session
     announce_session(session)
@@ -331,15 +353,19 @@ def activate_session(actor, session_id):
 
 @transaction.atomic
 def return_session_to_planned(actor, session_id):
-    """Return an in-progress session to Planned before it is adjourned."""
-    administrator(actor)
+    """Return an In progress session to Draft before it is adjourned (#224, D-0052).
+
+    Only the status changes: attendance, hearings, notes and votes stay as recorded.
+    """
+    session_status_actor(actor)
     session = CouncilSession.objects.select_for_update().get(pk=session_id)
     if session.state == "draft":
         return session
+    if session.state == "closed":
+        raise ValidationError("This session is adjourned, so it can't go back to Draft.")
     if session.state != "planned":
-        raise ValidationError("Only an in-progress tribunal session can return to Planned.")
-    session.state = "draft"
-    session.save(update_fields=["state"])
+        raise ValidationError("Only an In progress session can go back to Draft.")
+    save_session_state(session, "draft")
     audit(actor, "session_returned_to_planned", session)
     return session
 
