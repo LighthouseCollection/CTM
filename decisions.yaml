@@ -516,3 +516,33 @@ decisions:
     decided_by: owner
     status: active
     review_only: "Checked by ctm3-design-critic (G5b) against DESIGN.md section 4 on every screen in the #217 inventory"
+
+  - id: D-0056
+    date: 2026-11-07
+    area: workflow
+    decision: On an unassigned case, admin, secretary and president assign a council member from the case header (people picker, toast with Undo, then Change); the parties' notice is held for an undo window and discarded if undone, and a later change sends a short "case manager changed" notice
+    why: Owner 2026-11-07 (#237) "when something is not assigned, the top assign council member needs to be drop down"; undo-notice ruling by the product lead
+    options: [Assign in the header with held party notice (chosen), Assign only through Edit summary (before)]
+    decided_by: owner
+    status: active
+    review_only: "Enforced by the #237 backend and frontend tests"
+
+  - id: D-0057
+    date: 2026-11-07
+    area: design
+    decision: Each spouse is a standard collapsible case card whose title is only the person's name with an Applicant or Respondent badge and photo or initials; all other details are read-only fields in the body; Edit in the header actions; Change photo is a small icon in the photo corner (smallest text link under the photo as fallback), everywhere a photo can be changed
+    why: Owner 2026-11-07 (#240) "card is not consistent ... the title should only be name of person with indicator ... the expand/collapse arrow not consistent" and "change photo ... should be discreet"
+    options: [Standard card, name + role title, corner photo icon (chosen), Custom row card with inline buttons (before)]
+    decided_by: owner
+    status: active
+    review_only: "Checked by ctm3-design-critic (G5b) on #240"
+
+  - id: D-0058
+    date: 2026-11-07
+    area: design
+    decision: The case timeline groups events by year (year heading with a short line, 80 px between years, a faint rotated year beside each card), puts each event in its own container tinted by its case area (8 areas, Plenix category tokens), with the date in a calendar icon and no dots; Plenix ships it as a Timeline variation and CTM uses it. Spec in DESIGN.md section 4, study in docs/design/timeline-study.html
+    why: Owner 2026-11-07 (#242), iterated on the study: "lock this in as variation in pds, and implement in ctm"
+    options: [Year-grouped, area-coloured containers with calendar date (chosen), Thin dot timeline (before)]
+    decided_by: owner
+    status: active
+    review_only: "Checked by ctm3-design-critic (G5b) against DESIGN.md section 4 and the study; Plenix visual-regression baselines once shipped"
