@@ -79,9 +79,24 @@ jobs:
           echo "new=$new" >> "$GITHUB_OUTPUT"
           if [ "$old" = "$new" ]; then echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0; fi
           branch="bot/plenix-$new"
-          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1 \
-             || gh issue list --state open --search "Plenix $new breaks CTM in:title" --json number --jq '.[0].number' | grep -q .; then
-            echo "Already handled $new (branch or open issue exists)"; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          if gh issue list --state open --search "Plenix $new breaks CTM in:title" --json number --jq '.[0].number' | grep -q .; then
+            echo "Plenix $new failed validation before (open issue); not retrying"; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # An open upgrade PR younger than an hour belongs to a run that is still
+          # waiting for it. Older, it is stuck (#254: no checks, or a conflict):
+          # close it and build a fresh one on today's main. A leftover branch with
+          # no open PR is stale too.
+          pr=$(gh pr list --head "$branch" --state open --json number,createdAt --jq '.[0] // empty')
+          if [ -n "$pr" ]; then
+            num=$(jq -r .number <<<"$pr"); age=$(( ($(date +%s) - $(date -d "$(jq -r .createdAt <<<"$pr")" +%s)) / 60 ))
+            if [ "$age" -lt 60 ]; then
+              echo "#$num for $new is $age minutes old; its run is still on it"; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            gh pr close "$num" --comment "Stuck for $age minutes without merging; replaced by a fresh upgrade PR on the current main (run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}). — ctm3-release-engineer (plenix-upgrade.yml)"
+            echo "stuck=#$num for Plenix $new was open $age minutes without merging; closed and rebuilt on the current main." >> "$GITHUB_OUTPUT"
+          fi
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$branch" >/dev/null
           fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
@@ -152,45 +167,99 @@ jobs:
           { echo 'md<<EOF'; echo "$md"; echo 'EOF'; } >> "$GITHUB_OUTPUT"
 
       - name: Merge the upgrade (all checks passed)
+        id: merge
         if: steps.bump.outputs.changed == 'true' && steps.files.outcome == 'success' && steps.contract.outcome == 'success' && steps.node.outcome == 'success' && steps.shell.outcome == 'success' && steps.smoke.outcome == 'success'
         env:
           SHOTS: ${{ steps.shots.outputs.md }}
+          BRANCH: ${{ steps.bump.outputs.branch }}
+          NEW: ${{ steps.bump.outputs.new }}
+          HAS_BOT_TOKEN: ${{ secrets.CTM_BOT_TOKEN != '' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          # Four tries with back-off: one GitHub HTTP 500 on a dispatch stranded 1.2.0 (#254).
+          retry() { local n; for n in 1 2 3 4; do "$@" && return 0; echo "::warning::try $n failed: $*" >&2; sleep $((n * 15)); done; return 1; }
+          if [ "$HAS_BOT_TOKEN" != true ]; then
+            echo "::warning::CTM_BOT_TOKEN is not set: the PR is made with GITHUB_TOKEN, so this run starts its checks and the deploy itself (#254)"
+          fi
           node scripts/bump_plenix.cjs --verify   # second guard: never merge a pin whose CDN files are missing
           git config user.name "ctm-bot"; git config user.email "ctm-bot@users.noreply.github.com"
-          git switch -c "${{ steps.bump.outputs.branch }}"
-          git add -u   # the bump only edits tracked files; logs and .tmp stay out
-          git commit -m "chore(plenix): upgrade CDN ${{ steps.bump.outputs.old }} -> ${{ steps.bump.outputs.new }}"
-          git push -u origin "${{ steps.bump.outputs.branch }}"
-          printf 'Automatic Plenix CDN upgrade **%s -> %s**.\n\nValidated in run %s: CDN files exist, pins/styling, frontend contract tests, shell tests, browser smoke against the real CDN.\n\n### Screenshots\n%s\n' \
-            "${{ steps.bump.outputs.old }}" "${{ steps.bump.outputs.new }}" "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" "$SHOTS" > .pr.md
-          url=$(gh pr create --base main --head "${{ steps.bump.outputs.branch }}" --title "chore(plenix): upgrade CDN to ${{ steps.bump.outputs.new }}" --body-file .pr.md)
-          # PRs opened with GITHUB_TOKEN do not start other workflows, so start the
-          # required checks on the upgrade branch ourselves (workflow_dispatch is
-          # allowed), then let GitHub merge once they pass.
-          gh workflow run quality.yml --ref "${{ steps.bump.outputs.branch }}"
-          gh workflow run backend.yml --ref "${{ steps.bump.outputs.branch }}"   # postgres is required too (issue 46)
-          gh workflow run db-owner-guard.yml --ref "${{ steps.bump.outputs.branch }}" -f pr="${url##*/}"   # required too (issue 67)
-          gh pr merge "$url" --squash --auto --delete-branch
+          # Build the bump on the newest main. Main moved under 1.0.0 between the
+          # validation and the PR, so that PR was born conflicting (#254).
+          # Called as `build_branch || ...`, where bash -e is off: every line returns on failure.
+          build_branch() {
+            local old
+            retry git fetch -q origin main || return 1
+            git switch -q -C "$BRANCH" origin/main || return 1
+            old=$(node scripts/bump_plenix.cjs --current) || return 1
+            node scripts/bump_plenix.cjs "$NEW" >/dev/null || return 1
+            if git diff --quiet; then echo "main is already on Plenix $NEW"; return 3; fi
+            git add -u || return 1   # the bump only edits tracked files; logs and .tmp stay out
+            git commit -qm "chore(plenix): upgrade CDN $old -> $NEW" || return 1
+            retry git push -q -f origin "$BRANCH" || return 1
+          }
+          build_branch || { [ $? -eq 3 ] && exit 0; exit 1; }
+          printf 'Automatic Plenix CDN upgrade to **%s**.\n\nValidated in run %s: CDN files exist, pins/styling, frontend contract tests, shell tests, browser smoke against the real CDN.\n\n### Screenshots\n%s\n' \
+            "$NEW" "$RUN_URL" "$SHOTS" > .pr.md
+          url=$(gh pr list --head "$BRANCH" --state open --json url --jq '.[0].url // empty')
+          [ -n "$url" ] || url=$(retry gh pr create --base main --head "$BRANCH" --title "chore(plenix): upgrade CDN to $NEW" --body-file .pr.md)
+          retry gh pr merge "$url" --squash --auto
           echo "Auto-merge set on $url (merges when the required checks pass)" >> "$GITHUB_STEP_SUMMARY"
           # GitHub holds pull_request runs on a bot-opened PR as "action_required", which blocks the
-          # merge; approve our own branch's runs. A merge made with GITHUB_TOKEN also starts no push
-          # workflows, so start the live deploy ourselves once it has merged (#90).
-          branch="${{ steps.bump.outputs.branch }}"
-          for i in $(seq 1 90); do
-            for id in $(gh run list --branch "$branch" --event pull_request --json databaseId,conclusion,status                 --jq '.[] | select(.conclusion == "action_required" or .status == "waiting") | .databaseId'); do
-              gh api -X POST "repos/${{ github.repository }}/actions/runs/$id/approve" >/dev/null 2>&1                 || gh run rerun "$id" >/dev/null 2>&1 || true
+          # merge; approve our own branch's runs. If main moves into a conflict, rebuild the
+          # branch on the new main (at most 3 times). Every push ends by starting the
+          # required checks, because a GITHUB_TOKEN push starts no workflows.
+          rebuilt=0
+          retry gh workflow run quality.yml --ref "$BRANCH"
+          retry gh workflow run backend.yml --ref "$BRANCH"   # postgres is required too (issue 46)
+          retry gh workflow run db-owner-guard.yml --ref "$BRANCH" -f pr="${url##*/}"   # required too (issue 67)
+          state=OPEN
+          for _ in $(seq 1 90); do
+            for id in $(gh run list --branch "$BRANCH" --event pull_request --json databaseId,conclusion,status --jq '.[] | select(.conclusion == "action_required" or .status == "waiting") | .databaseId'); do
+              gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$id/approve" >/dev/null 2>&1 || gh run rerun "$id" >/dev/null 2>&1 || true
             done
-            state=$(gh pr view "$url" --json state --jq .state)
+            read -r state mergeable < <(gh pr view "$url" --json state,mergeable --jq '"\(.state) \(.mergeable)"' || echo "OPEN UNKNOWN")
             [ "$state" = MERGED ] && break
             [ "$state" = CLOSED ] && { echo "::warning::$url was closed without merging"; exit 0; }
+            if [ "$mergeable" = CONFLICTING ] && [ "$rebuilt" -lt 3 ]; then
+              rebuilt=$((rebuilt + 1)); echo "main moved into a conflict; rebuilding $BRANCH (#$rebuilt)"
+              build_branch || { [ $? -eq 3 ] && { gh pr close "$url" --comment "main already has Plenix $NEW. — ctm3-release-engineer (plenix-upgrade.yml)"; exit 0; }; exit 1; }
+              retry gh pr merge "$url" --squash --auto
+              retry gh workflow run quality.yml --ref "$BRANCH"
+              retry gh workflow run backend.yml --ref "$BRANCH"
+              retry gh workflow run db-owner-guard.yml --ref "$BRANCH" -f pr="${url##*/}"
+            fi
             sleep 30
           done
-          if [ "$state" = MERGED ]; then
-            gh workflow run deploy.yml --ref main
-            echo "Merged; live deploy started" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$state" != MERGED ]; then
+            echo "::error::$url has not merged after 45 minutes ($mergeable)"; exit 1
+          fi
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$BRANCH" >/dev/null 2>&1 || true
+          # A merge made with GITHUB_TOKEN starts no push workflows, so start the live deploy (#90).
+          retry gh workflow run deploy.yml --ref main
+          echo "Merged; live deploy started" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report a stuck upgrade
+        # Not a Plenix defect (validation passed): CTM's own pipeline did not land it.
+        # One open `plenix-upgrade-stuck` issue collects these; PDS watches it (#254).
+        if: always() && (steps.bump.outputs.stuck != '' || steps.merge.outcome == 'failure' || steps.bump.outcome == 'failure')
+        env:
+          STUCK: ${{ steps.bump.outputs.stuck }}
+          MERGE: ${{ steps.merge.outcome }}
+          NEW: ${{ steps.bump.outputs.new }}
+          HAS_BOT_TOKEN: ${{ secrets.CTM_BOT_TOKEN != '' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          msg="Plenix ${NEW:-?} auto-upgrade did not land by itself (run $RUN_URL)."
+          [ -n "$STUCK" ] && msg="$msg"$'\n\n'"- $STUCK"
+          [ "$MERGE" = failure ] && msg="$msg"$'\n\n'"- The merge step failed (see the run log)."
+          [ "$HAS_BOT_TOKEN" = true ] || msg="$msg"$'\n\n'"- \`CTM_BOT_TOKEN\` is not set; the run uses GITHUB_TOKEN plus explicit dispatches."
+          msg="$msg"$'\n\n'"— ctm3-release-engineer (plenix-upgrade.yml)"
+          gh label create plenix-upgrade-stuck --color B60205 --force >/dev/null 2>&1 || true
+          issue=$(gh issue list --state open --label plenix-upgrade-stuck --json number --jq '.[0].number // empty')
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body "$msg"
           else
-            echo "::warning::$url has not merged after 45 minutes; the next push to main deploys it"
+            gh issue create --title "Plenix auto-upgrade stuck" --label plenix-upgrade-stuck --label type:bug --label area:release --label agent:ctm3-release-engineer --body "$msg"
           fi
 
       - name: Report a breaking upgrade as a bug
