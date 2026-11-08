@@ -4340,14 +4340,10 @@ ${ar}` : en;
 
   // Plenix 1.2.0 Timeline variant "grouped" (pds issue 987): grouped by year, each event tinted by its case area,
   // upcoming events outlined as Pending, and a legend that filters by area.
-  // Plenix 1.2.0 collapses a grouped row without a date (plenix-ds/pds issue 1055), so an undated pending event is placed at
-  // today (it shows "Pending", never a date).
-  const timelineToday = () => new Date().toISOString().slice(0, 10);
-
   function drawTimeline({ P, h, t, model, label }) {
     return h(P.Timeline, { variant: "grouped", legend: true, label: label || t("timelineTitle"),
       items: model.groups.flatMap((group) => group.items).map((item) => ({
-        id: item.id, time: item.date, dateTime: item.dateTime || timelineToday(), title: item.title,
+        id: item.id, time: item.date, dateTime: item.dateTime || undefined, title: item.title,
         description: item.description || undefined, icon: AREA_ICON[item.area], category: timelineCategory(item.area, t),
         upcoming: Boolean(item.pending || item.upcoming),
       })) });
@@ -4615,7 +4611,7 @@ ${ar}` : en;
         { icon: "calendar", title: t("keyDates") },
         // Until the owner picks a Key Dates variant (issue 239): the case timeline's grouped variant, key milestones only.
         h(P.Timeline, { variant: "grouped", label: t("keyDates"),
-          items: summaryTimeline.map(({ area, date, ...item }) => ({ ...item, dateTime: item.dateTime || timelineToday(), icon: AREA_ICON[area], category: timelineCategory(area, t) })) }),
+          items: summaryTimeline.map(({ area, date, ...item }) => ({ ...item, icon: AREA_ICON[area], category: timelineCategory(area, t) })) }),
       ),
     );
     return h(CaseRecordPage, { api, lang, user, caseId, record, readOnly: !openProceeding(record), onChanged: retry },
