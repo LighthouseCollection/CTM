@@ -163,12 +163,14 @@ test("timeline API items: own EN/AR title per kind, pending first", () => {
 
 // D-0060 (issue 260): the parties for the EntityHeader versus variant, applicant first; photo_url (council only) or
 // initials; one party gives one avatar. Until Plenix ships the variant the header keeps the folder icon box.
-test("case header people: applicant then respondent, photo or initials, icon box kept", () => {
+test("case header people: applicant then respondent, photo or initials; versus, one avatar or the icon box", () => {
   assert.deepEqual(plain(C.caseHeaderPeople({ name: "Anna Example", photo_url: "/api/files/1/?view=1" }, { name: "Ben Example" })),
-    [{ person: "Anna Example", src: "/api/files/1/?view=1" }, { person: "Ben Example" }]);
-  assert.deepEqual(plain(C.caseHeaderPeople({ name: "Anna Example" }, null)), [{ person: "Anna Example" }]);
+    [{ name: "Anna Example", src: "/api/files/1/?view=1" }, { name: "Ben Example" }]);
+  assert.deepEqual(plain(C.caseHeaderPeople({ name: "Anna Example" }, null)), [{ name: "Anna Example" }]);
   const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  assert.match(src, /media: \{ icon: "folder", hue: "purple", box: true \},/);
+  assert.match(src, /if \(people\.length === 2\) return \{ versus: people, decorative: true \};/);
+  assert.match(src, /if \(people\.length === 1\) return \{ person: people\[0\]\.name, src: people\[0\]\.src \};/);
+  assert.match(src, /return \{ icon: "folder", hue: "purple", box: true \};/);
 });
 
 // D-0059 (issue 259): an open case with no member shows Unassigned wherever its status shows; the header's member
