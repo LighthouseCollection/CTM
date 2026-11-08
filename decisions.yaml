@@ -474,8 +474,9 @@ decisions:
     why: Owner 2026-11-07 (#222) "this is not correct, it needs to be updated based on the pds"; Plenix DataGrid guide (one line per cell, detail in a SidePanel)
     options: [Truncated text + detail panel (chosen), Button + dialog per cell (before)]
     decided_by: agent:ctm3-product-lead
-    status: active
-    review_only: "Checked by ctm3-design-critic (G5b) on #222 and #217"
+    status: superseded
+    superseded_by: D-0062
+    review_only: "Superseded by D-0062 (#271): the row detail panel is withdrawn; the cell wraps to two lines with a tooltip"
 
   - id: D-0052
     date: 2026-11-07
@@ -546,3 +547,13 @@ decisions:
     decided_by: owner
     status: active
     review_only: "Checked by ctm3-design-critic (G5b) against DESIGN.md section 4 and the study; Plenix visual-regression baselines once shipped"
+
+  - id: D-0062
+    date: 2026-11-08
+    area: design
+    decision: No side panel opens when an agenda row is clicked (withdraws the D-0051 detail panel); the Previous recommendation cell wraps to two lines ending in "…" with the full text in a tooltip on hover or keyboard focus, and "Not recorded" when empty (until Plenix supports a two-line cell and a cell tooltip, one line with "…" and the full text on hover); Open and Move stay as the row actions
+    why: Owner 2026-11-08 (#271) "I never asked for this" about the right side panel on an agenda row
+    options: [Two-line cell + tooltip and no row panel (chosen), Truncated cell + row SidePanel (D-0051, withdrawn)]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/council-shell.test.cjs }
