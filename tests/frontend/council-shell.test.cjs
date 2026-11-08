@@ -378,7 +378,7 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
   // D-0050 (#217): the case status is a Plenix Badge, never plain text.
   // D-0059 (issue 259): the same badge as the header, with Unassigned for an open case without a member.
-  assert.ok(councilCase.includes('status: ((badge) => h(P.Badge, { tone: badge.tone }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)),'));
+  assert.ok(councilCase.includes('status: ((badge) => h(P.Badge, { tone: badge.tone, icon: badge.icon }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)),'));
   assert.match(councilCase, /actions: canEditSummary && !summaryEditing/);
   assert.match(councilCase, /fact_code: "case_card\.summary"/);
   // D-0050 groups: the card is "Marriage"; "Church marriage" and "Outside the Coptic Church" are its groups.
