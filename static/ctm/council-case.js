@@ -427,6 +427,7 @@ ${ar}` : en;
       assignPlaceholder: "Choose a council member",
       assignEntityName: "council members",
       assignedToast: "Assigned to {name}",
+      unassignedToast: "The case has no council member now.",
       undo: "Undo",
       lastHearingDate: "Last Hearing Date",
       children: "Children",
@@ -938,6 +939,7 @@ ${ar}` : en;
       assignPlaceholder: "اختر عضوًا في المجلس",
       assignEntityName: "أعضاء المجلس",
       assignedToast: "عُيِّنت القضية إلى {name}",
+      unassignedToast: "لم يعد للقضية عضو مجلس مكلّف.",
       undo: "تراجع",
       lastHearingDate: "تاريخ آخر جلسة",
       children: "الأبناء",
@@ -3216,6 +3218,20 @@ ${ar}` : en;
     if (current && !changing)
       return h(P.Inline, { gap: "sm", align: "center" }, h(P.Text, { variant: "strong" }, current.name),
         h(P.Button, { size: "xs", variant: "ghost", icon: "pencil", onClick: () => { setProblem(null); setChanging(true); } }, t("assignChange")));
+    async function unassign() {
+      setPending(true);
+      setProblem(null);
+      try {
+        await api(`/api/cases/${encodeURIComponent(record.id)}/assignment/`, { method: "DELETE" });
+        setChanging(false);
+        onAssigned(null);
+        if (toast) toast.show(t("unassignedToast"), { tone: "info" });
+      } catch (error) {
+        setProblem(base.serverMessage(error, bt));
+      } finally {
+        setPending(false);
+      }
+    }
     async function assign(memberId, previous) {
       const member = members.find((row) => row.id === memberId);
       setPending(true);
@@ -3225,7 +3241,8 @@ ${ar}` : en;
         setChanging(false);
         onAssigned({ id: memberId, name: member?.name || "—" });
         if (toast) toast.show(t("assignedToast", { name: member?.name || "—" }), { tone: "success",
-          ...(previous ? { action: { label: t("undo"), onAction: () => assign(previous.id, null) } } : {}) });
+          // Undo puts back the previous member, or removes the first assignment (DELETE, audited as case_unassigned).
+          action: { label: t("undo"), onAction: () => (previous ? assign(previous.id, null) : unassign()) } });
       } catch (error) {
         setProblem(base.serverMessage(error, bt));
       } finally {
@@ -3250,10 +3267,10 @@ ${ar}` : en;
     const [assigned, setAssigned] = R.useState(null);
     const shown = record || state.data;
     const manager = shown ? caseManager(shown) : null;
-    const current = assigned || (manager ? { id: shown.assigned_member_id || null, name: manager } : null);
+    const current = assigned?.removed ? null : assigned || (manager ? { id: shown.assigned_member_id || null, name: manager } : null);
     const assigneeValue = shown && shown.can_assign === true && shown.status === "open"
-      ? h(HeaderAssignment, { api, lang, record: shown, current, onAssigned: (member) => { setAssigned(member); if (onChanged) onChanged(); } })
-      : assigned ? assigned.name : undefined;
+      ? h(HeaderAssignment, { api, lang, record: shown, current, onAssigned: (member) => { setAssigned(member || { removed: true }); if (onChanged) onChanged(); } })
+      : assigned ? (assigned.removed ? base.translator(lang)("unassigned") : assigned.name) : undefined;
     const className = fill ? "plx-u-flex-1 plx-u-min-h-0" : undefined;
     const body = h(P.Stack, { gap: "lg", className },
       title ? h(P.Text, { as: "h2", variant: "heading" }, title) : null,
