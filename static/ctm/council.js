@@ -1929,6 +1929,22 @@
   // Present / Absent SegmentedControl that never folds into a dropdown. A change saves at once; a failed save puts the
   // row back and names the member. "Mark all present" / "Mark the rest present" sets only members with no record and
   // never overwrites Absent.
+  // Issue 229 (backend PR 233): the attendance API's `roster` lists every council seat holder with title, voting, photo and
+  // present (null when not recorded); `items` keeps only recorded rows. Rows of former members (in `items`, not in
+  // `roster`) stay at the end, read-only. Without `roster` (an older server) this returns null.
+  function rosterRowsFrom(response) {
+    if (!response || !Array.isArray(response.roster)) return null;
+    const rows = response.roster.map((row) => ({
+      id: row.member_id, name: row.member_name, role: row.title || row.member_role,
+      seat: row.voting === true ? "voting" : row.voting === false ? "non_voting" : undefined,
+      photo_url: row.photo_url || undefined, present: row.present ?? null, former: row.member_active === false,
+    }));
+    const known = new Set(rows.map((row) => row.id));
+    for (const row of response.items || [])
+      if (!known.has(row.member_id)) rows.push({ id: row.member_id, name: row.member_name, role: row.member_role, present: row.present, former: true });
+    return rows;
+  }
+
   const ROSTER_ORDER = { president: 0, presiding: 0, secretary: 1 };
   function rosterOrder(rows, lang) {
     const byName = new Intl.Collator(lang === "ar" ? "ar" : "en");
@@ -2016,6 +2032,7 @@
           ...hearing,
           plannedSessions: (sessions.items || []).filter((s) => s.state === "planned"),
           hearingAttendance: attendance.items,
+          hearingRoster: rosterRowsFrom(attendance),
         })),
       [hearingId],
     );
@@ -2141,7 +2158,7 @@
                   ? h(P.Dialog, { open: true, size: "md", title: t("hearingAttendance"), description: t("hearingAttendanceHelp"), closeLabel: t("close"), onClose: () => setAttendanceOpen(false) },
                       h(P.Stack, { gap: "md" },
                         h(AttendanceRoster, { lang, readOnly: !canManage(user) || !writable,
-                          rows: state.data.hearingAttendance.map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, seat: row.seat, photo_url: row.photo_url, present: row.present, former: Boolean(row.former) })),
+                          rows: state.data.hearingRoster || state.data.hearingAttendance.map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, seat: row.seat, photo_url: row.photo_url, present: row.present, former: Boolean(row.former) })),
                           onRecord: (memberId, present) => api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }).then(() => retry()) }),
                       ),
                     )
@@ -2602,6 +2619,7 @@
         ]).then(([agenda, cases, members, sessions, attendance]) => ({
           loadedAt: Date.now(),
           attendance: attendance.items,
+          roster: rosterRowsFrom(attendance),
           session: agenda.session,
           items: agenda.items,
           cases: cases.items,
@@ -2983,6 +3001,7 @@
               session,
               members: data.members,
               attendance: data.attendance,
+              roster: data.roster,
               key: `${sessionId}-${data.loadedAt}`,
               onSaved: retry,
             }),
@@ -3788,6 +3807,7 @@
     pluralWord,
     AttendanceRoster,
     rosterOrder,
+    rosterRowsFrom,
     rosterUnrecorded,
     rosterSummary,
     SessionAnswers: guarded(SessionAnswers),

@@ -645,10 +645,10 @@
   const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
   const heading = (value) => text(value, { as: "h1", variant: "title" });
   // Issue 229: the shared council AttendanceRoster (no table; Present / Absent per member, saved at once).
-  function SessionAttendance({ sessionId, session, members, initial, t, onSaved }) {
+  function SessionAttendance({ sessionId, session, members, initial, roster, t, onSaved }) {
     const Roster = councilModule?.AttendanceRoster;
     const records = initial || [];
-    const rows = [
+    const rows = roster || [
       ...(members || []).map((member) => ({ id: member.id, name: member.name, role: member.role, seat: member.seat, photo_url: member.photo_url,
         present: records.find((item) => item.member_id === member.id)?.present ?? null })),
       ...records.filter((row) => !(members || []).some((member) => member.id === row.member_id))
@@ -1846,8 +1846,8 @@
           mode: page === "sessions" ? "current" : page === "sessionsUpcoming" ? "upcoming" : "archived",
           onOpen: (id) => go("session", id),
           onCase: (id, origin) => openCase(id, origin || { page, labelKey: page === "sessionsUpcoming" ? "backUpcomingSessions" : page === "sessionsArchived" ? "backArchivedSessions" : "backCurrentSessions" }),
-          renderAttendance: ({ session, members, attendance, key, onSaved }) => h(SessionAttendance, {
-            key, onSaved, sessionId: session.id, session, members, initial: attendance, t,
+          renderAttendance: ({ session, members, attendance, roster, key, onSaved }) => h(SessionAttendance, {
+            key, onSaved, sessionId: session.id, session, members, initial: attendance, roster, t,
           }),
         });
       if (councilModule && council && page === "session")
@@ -1860,7 +1860,7 @@
           onCase: (id) => openCase(id, { page: "session", selection, labelKey: "backTribunalSession" }),
           onBack: () => go("sessions"),
           onSession: (id) => go("session", id),
-          renderAttendance: ({ session, members, attendance, key, onSaved }) =>
+          renderAttendance: ({ session, members, attendance, roster, key, onSaved }) =>
             h(SessionAttendance, {
               key,
               onSaved,
@@ -1868,6 +1868,7 @@
               session,
               members,
               initial: attendance,
+              roster,
               t,
             }),
         });
