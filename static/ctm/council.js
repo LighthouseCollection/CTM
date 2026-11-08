@@ -605,6 +605,16 @@
       hearingAttendance: "Attendance at this hearing",
       hearingAttendanceHelp: "Taken from the session attendance when the case was presented. Correct an individual member's presence here.",
       presentLabel: "Present",
+      rosterPresentOf: "{present} of {total} present",
+      rosterNotRecorded: "{n} not recorded",
+      markAllPresent: "Mark all present",
+      markRestPresent: "Mark the rest present",
+      rosterSaveFailed: "Not saved for {names}. Try again.",
+      attendanceOf: "Attendance: {name}",
+      seatVoting: "Voting",
+      seatNonVoting: "Non-voting",
+      noSeatHolders: "No council seat holders",
+      formerMember: "Former council member",
       absentLabel: "Absent",
       noHearingAttendance: "No attendance is recorded for this hearing.",
       upcomingSessions: "Upcoming sessions",
@@ -991,6 +1001,16 @@
       hearingAttendance: "الحضور في هذه الجلسة",
       hearingAttendanceHelp: "مأخوذ من حضور جلسة المجلس عند عرض القضية. صحّح حضور أي عضو هنا.",
       presentLabel: "حاضر",
+      rosterPresentOf: "{present} من {total} حاضرون",
+      rosterNotRecorded: "{n} لم يُسجَّل حضورهم",
+      markAllPresent: "تسجيل حضور الجميع",
+      markRestPresent: "تسجيل حضور الباقين",
+      rosterSaveFailed: "لم يُحفظ لـ {names}. حاول مرة أخرى.",
+      attendanceOf: "الحضور: {name}",
+      seatVoting: "له حق التصويت",
+      seatNonVoting: "بلا حق التصويت",
+      noSeatHolders: "لا يوجد أصحاب مقاعد في المجلس",
+      formerMember: "عضو سابق في المجلس",
       absentLabel: "غائب",
       noHearingAttendance: "لا يوجد حضور مسجَّل لهذه الجلسة.",
       upcomingSessions: "الجلسات القادمة",
@@ -1880,6 +1900,81 @@
 
   // Hearing outcome: internal text and recommendations are revised silently; only the
   // first record sends the default pending update (plus any message) to applicants.
+  // Issue 229 (D-0053; design docs/implementation/slices/ctm3-229-attendance/design.md): one attendance roster for the
+  // session, the hearing and the case hearing dialog. No table: a list of Plenix UserCards (compact), each with a
+  // Present / Absent SegmentedControl that never folds into a dropdown. A change saves at once; a failed save puts the
+  // row back and names the member. "Mark all present" / "Mark the rest present" sets only members with no record and
+  // never overwrites Absent.
+  const ROSTER_ORDER = { president: 0, presiding: 0, secretary: 1 };
+  function rosterOrder(rows, lang) {
+    const byName = new Intl.Collator(lang === "ar" ? "ar" : "en");
+    return (rows || []).slice().sort((a, b) =>
+      (a.former ? 1 : 0) - (b.former ? 1 : 0)
+      || (ROSTER_ORDER[a.role] ?? 2) - (ROSTER_ORDER[b.role] ?? 2)
+      || byName.compare(a.name || "", b.name || ""));
+  }
+  // The members "Mark the rest present" sets: active rows with no record (Absent is a record and is kept).
+  function rosterUnrecorded(rows, overrides = {}) {
+    return (rows || []).filter((row) => !row.former && (row.id in overrides ? overrides[row.id] : row.present) == null);
+  }
+  function rosterSummary(rows, overrides = {}) {
+    const active = (rows || []).filter((row) => !row.former);
+    const value = (row) => (row.id in overrides ? overrides[row.id] : row.present);
+    return { present: active.filter((row) => value(row) === true).length, total: active.length, unrecorded: active.filter((row) => value(row) == null).length };
+  }
+
+  function AttendanceRoster({ lang, rows, readOnly, onRecord, label }) {
+    const R = window.React,
+      P = window.Plenix,
+      h = R.createElement,
+      t = translator(lang);
+    const [overrides, setOverrides] = R.useState({});
+    const [busy, setBusy] = R.useState(false);
+    const [failed, setFailed] = R.useState([]);
+    const n = (value) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(value);
+    const ordered = rosterOrder(rows, lang);
+    const value = (row) => (row.id in overrides ? overrides[row.id] : row.present);
+    async function save(list, present) {
+      setBusy(true);
+      setFailed([]);
+      setOverrides((old) => ({ ...old, ...Object.fromEntries(list.map((row) => [row.id, present])) }));
+      const misses = [];
+      for (const row of list) {
+        try {
+          await onRecord(row.id, present);
+        } catch (error) {
+          misses.push(row);
+        }
+      }
+      if (misses.length) {
+        setOverrides((old) => { const next = { ...old }; for (const row of misses) delete next[row.id]; return next; });
+        setFailed(misses.map((row) => row.name || "—"));
+      }
+      setBusy(false);
+    }
+    if (!ordered.length) return h(P.EmptyState, { title: t("noSeatHolders") });
+    const summary = rosterSummary(rows, overrides);
+    const rest = rosterUnrecorded(ordered, overrides); // in the order shown
+    const seatText = (row) => [t(row.role === "president" || row.role === "presiding" ? "titlePresiding" : row.role === "secretary" ? "titleSecretary" : "titleMember"),
+      row.seat === "voting" ? t("seatVoting") : row.seat === "non_voting" ? t("seatNonVoting") : null, row.former ? t("formerMember") : null].filter(Boolean).join(" · ");
+    const list = h(P.Stack, { gap: "none" }, ...ordered.flatMap((row, index) => [
+      h(P.UserCard, { key: row.id, variant: "compact", name: row.name || "—", src: row.photo_url || undefined, secondary: seatText(row), headingLevel: 3,
+        actions: h(P.SegmentedControl, { size: "sm", fold: "never", label: t("attendanceOf", { name: row.name || "—" }),
+          value: value(row) === true ? "present" : value(row) === false ? "absent" : undefined, readOnly: readOnly || busy || row.former,
+          options: [{ value: "present", label: t("presentLabel"), icon: "check" }, { value: "absent", label: t("absentLabel"), icon: "close" }],
+          onChange: (choice) => value(row) !== (choice === "present") && save([row], choice === "present") }) }),
+      index < ordered.length - 1 ? h(P.Divider, { key: `${row.id}-divider` }) : null,
+    ]).filter(Boolean));
+    const body = h(P.Stack, { gap: "md" },
+      h(P.Inline, { justify: "between", align: "center", gap: "sm" },
+        h(P.Text, { variant: "strong" }, t("rosterPresentOf", { present: n(summary.present), total: n(summary.total) }) + (summary.unrecorded ? ` · ${t("rosterNotRecorded", { n: n(summary.unrecorded) })}` : "")),
+        readOnly ? null : h(P.Button, { icon: "check", disabled: busy || !rest.length, onClick: () => save(rest, true) },
+          t(summary.unrecorded === summary.total ? "markAllPresent" : "markRestPresent"))),
+      list,
+      failed.length ? h(P.Notice, { tone: "danger" }, t("rosterSaveFailed", { names: failed.join(", ") })) : null);
+    return readOnly ? h(P.ReadOnly, { reason: label || t("closedReadOnly") }, body) : body;
+  }
+
   function HearingOutcomeDialog({ api, lang, user, hearingId, sessionId, title, onClose, onSaved }) {
     const R = window.React,
       P = window.Plenix,
@@ -1902,24 +1997,7 @@
     );
     const [timing, setTiming] = R.useState("immediate");
     const [deferSession, setDeferSession] = R.useState(sessionId || "");
-    const [attendanceFailure, setAttendanceFailure] = R.useState(null);
-    const [attendanceSaving, setAttendanceSaving] = R.useState(false);
     const [attendanceOpen, setAttendanceOpen] = R.useState(false);
-    async function recordPresence(memberId, present) {
-      setAttendanceSaving(true);
-      setAttendanceFailure(null);
-      try {
-        await api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, {
-          method: "POST",
-          body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }),
-        });
-        retry();
-      } catch (error) {
-        setAttendanceFailure(serverMessage(error, t));
-      } finally {
-        setAttendanceSaving(false);
-      }
-    }
     const [form, setForm] = R.useState(null);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
@@ -2036,16 +2114,11 @@
                   ? h(P.Button, { size: "sm", icon: "settings-users", onClick: () => setAttendanceOpen(true) }, t("hearingAttendance"))
                   : null,
                 attendanceOpen
-                  ? h(P.Dialog, { open: true, size: "lg", title: t("hearingAttendance"), description: t("hearingAttendanceHelp"), closeLabel: t("cancel"), onClose: () => !attendanceSaving && setAttendanceOpen(false) },
+                  ? h(P.Dialog, { open: true, size: "md", title: t("hearingAttendance"), description: t("hearingAttendanceHelp"), closeLabel: t("close"), onClose: () => setAttendanceOpen(false) },
                       h(P.Stack, { gap: "md" },
-                        h(P.Table, { label: t("hearingAttendance"), index: "member_id", data: state.data.hearingAttendance, columns: [
-        { title: t("councilMember"), field: "member_name", rowLabel: true, kind: "wrap", render: (row) => h(P.Stack, { gap: "none" }, h(P.Text, { as: "div", variant: "strong" }, row.member_name), h(P.Text, { as: "div", variant: "secondary" }, row.member_role === "president" ? "Presiding" : row.member_role === "secretary" ? "Secretary" : "Member")) },
-        { title: t("hearingAttendance"), field: "present", render: (row) => h(P.SegmentedControl, { size: "sm", label: `${t("hearingAttendance")}: ${row.member_name}`, value: row.present === true ? "present" : row.present === false ? "absent" : undefined, readOnly: attendanceSaving || !canManage(user) || !writable,
-          options: [{ value: "present", label: t("presentLabel"), icon: "check" }, { value: "absent", label: t("absentLabel"), icon: "close" }],
-          onChange: (choice) => recordPresence(row.member_id, choice === "present") }) },
-      ] }),
-                        !state.data.hearingAttendance.length ? h(P.EmptyState, { title: t("noHearingAttendance") }) : null,
-                        attendanceFailure ? h(P.Notice, { tone: "danger" }, attendanceFailure) : null,
+                        h(AttendanceRoster, { lang, readOnly: !canManage(user) || !writable,
+                          rows: state.data.hearingAttendance.map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, seat: row.seat, photo_url: row.photo_url, present: row.present, former: Boolean(row.former) })),
+                          onRecord: (memberId, present) => api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }).then(() => retry()) }),
                       ),
                     )
                   : null,
@@ -2802,7 +2875,7 @@
       dialog?.kind === "attendance" && renderAttendance
         ? h(
             P.Dialog,
-            { open: true, size: "lg", title: t("attendance"), onClose: () => !pending && setDialog(null) },
+            { open: true, size: "md", title: t("attendance"), closeLabel: t("close"), onClose: () => setDialog(null) },
             renderAttendance({
               session,
               members: data.members,
@@ -3637,6 +3710,10 @@
     ReviewWorkspace: guarded(ReviewWorkspace),
     SessionList: guarded(SessionList),
     SessionWorkspace: guarded(SessionWorkspace),
+    AttendanceRoster,
+    rosterOrder,
+    rosterUnrecorded,
+    rosterSummary,
     SessionAnswers: guarded(SessionAnswers),
     canSendReminders,
     sessionAnswerable,
