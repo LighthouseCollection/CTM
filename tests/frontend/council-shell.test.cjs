@@ -807,12 +807,27 @@ test("ctm3-48 part 3: council vote is a Plenix Table with tone buttons and icon 
   assert.match(vote, /h\(P\.Badge, \{ key: choice, tone: VOTE_BADGES\[choice\]\.tone, icon: VOTE_BADGES\[choice\]\.icon \}/);
 });
 
-test("ctm3-48 part 3: attendance is a SegmentedControl per member in a Plenix Table (three places)", () => {
-  for (const file of ["app.js", "council.js", "council-case.js"]) {
-    const src = fs.readFileSync(`static/ctm/${file}`, "utf8");
-    assert.match(src, /h\(P\.SegmentedControl, \{/, file);
-    assert.match(src, /options: \[\{ value: "present"/, file);
-  }
+// Issue 229 (D-0053, ctm3-229-attendance/design.md): every attendance view uses the one AttendanceRoster;
+// no Table or DataGrid; the Present / Absent control never folds into a dropdown.
+test("issue 229: every attendance view renders the shared AttendanceRoster, no table", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  const app = fs.readFileSync("static/ctm/app.js", "utf8");
+  const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const body = (src, name) => { const i = src.indexOf(`function ${name}(`); return src.slice(i, src.indexOf("\n  }\n", i)); };
+  const roster = body(council, "AttendanceRoster");
+  assert.match(roster, /h\(P\.SegmentedControl, \{ size: "sm", fold: "never",/);
+  assert.match(roster, /h\(P\.UserCard, \{ key: row\.id, variant: "compact",/);
+  assert.doesNotMatch(roster, /P\.Table|P\.DataGrid/);
+  const sessionAttendance = body(app, "SessionAttendance");
+  assert.match(sessionAttendance, /h\(Roster, \{/);
+  assert.doesNotMatch(sessionAttendance, /P\.Table|P\.DataGrid|SegmentedControl/);
+  const hearing = body(councilCase, "HearingAttendance");
+  assert.match(hearing, /h\(base\.AttendanceRoster, \{/);
+  assert.doesNotMatch(hearing, /P\.Table|P\.DataGrid|SegmentedControl/);
+  const outcome = body(council, "HearingOutcomeDialog");
+  assert.match(outcome, /h\(AttendanceRoster, \{/);
+  assert.doesNotMatch(outcome, /label: t\("hearingAttendance"\), index: "member_id"/);
+  assert.equal((council.match(/h\(P\.SegmentedControl, \{ size: "sm", label: `\$\{t\("hearingAttendance"\)/g) || []).length, 0);
 });
 
 test("ctm3-48 part 3: timeline is Plenix Timeline grouped by year; past hearings a Plenix Table", () => {

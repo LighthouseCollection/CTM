@@ -644,35 +644,22 @@
   }
   const text = (value, props = {}) => h(P.Text, { as: "p", ...props }, value);
   const heading = (value) => text(value, { as: "h1", variant: "title" });
+  // Issue 229: the shared council AttendanceRoster (no table; Present / Absent per member, saved at once).
   function SessionAttendance({ sessionId, session, members, initial, t, onSaved }) {
-    const [records, setRecords] = R.useState(initial),
-      [pending, setPending] = R.useState(false),
-      [failed, setFailed] = R.useState(false);
-    async function record(memberId, present) {
-      if (pending || !session.can_record_attendance) return;
-      const previous = records;
-      setRecords((old) => [...old.filter((row) => row.member_id !== memberId), { member_id: memberId, present }]);
-      setPending(true); setFailed(false);
-      try {
-        await api(`/api/sessions/${sessionId}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present }) });
-        if (onSaved) onSaved();
-      } catch { setRecords(previous); setFailed(true); }
-      finally { setPending(false); }
-    }
-    const roster = [
-      ...members.map((member) => ({ ...member, active: true })),
-      ...records.filter((row) => !members.some((member) => member.id === row.member_id)).map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, active: false })),
+    const Roster = councilModule?.AttendanceRoster;
+    const records = initial || [];
+    const rows = [
+      ...(members || []).map((member) => ({ id: member.id, name: member.name, role: member.role, seat: member.seat, photo_url: member.photo_url,
+        present: records.find((item) => item.member_id === member.id)?.present ?? null })),
+      ...records.filter((row) => !(members || []).some((member) => member.id === row.member_id))
+        .map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, present: row.present, former: true })),
     ];
-    return h(P.Stack, { gap: "md" },
-      h(P.Table, { label: t("attendance"), index: "id", data: roster.map((member) => ({ ...member, present: records.find((item) => item.member_id === member.id)?.present })), columns: [
-        { title: t("councilMember"), field: "name", rowLabel: true, kind: "wrap", render: (row) => h(P.Stack, { gap: "none" }, h(P.Text, { as: "div", variant: "strong" }, row.name), row.role ? h(P.Text, { as: "div", variant: "secondary" }, row.role === "president" ? "Presiding" : row.role === "secretary" ? "Secretary" : "Member") : null) },
-        { title: t("attendance"), field: "present", render: (row) => h(P.SegmentedControl, { size: "sm", label: `${t("attendance")}: ${row.name}`, value: row.present === true ? "present" : row.present === false ? "absent" : undefined, readOnly: pending || !session.can_record_attendance || !row.active,
-          options: [{ value: "present", label: t("present"), icon: "check" }, { value: "absent", label: t("absent"), icon: "close" }],
-          onChange: (choice) => record(row.id, choice === "present") }) },
-      ] }),
-      failed ? h(P.Notice, { tone: "danger" }, t("error")) : null,
-    );
+    if (!Roster) return h(P.Notice, { tone: "danger" }, t("error"));
+    return h(Roster, { lang: document.documentElement.lang === "ar" ? "ar" : "en", rows, readOnly: !session.can_record_attendance,
+      onRecord: (memberId, present) => api(`/api/sessions/${sessionId}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present }) })
+        .then(() => { if (onSaved) onSaved(); }) });
   }
+
   function NotificationInbox({ initial, t, onCase, lang }) {
     const [rows, setRows] = R.useState(initial.items),
       [next, setNext] = R.useState(initial.next_offset);

@@ -3639,7 +3639,7 @@ ${ar}` : en;
       finally { setSaving(false); }
     };
     const attendanceDialog = current && attendanceOpen
-      ? h(P.Dialog, { open: true, size: "lg", title: t("councilAttendance"), description: t("councilAttendanceHelp"), closeLabel: t("cancel"), onClose: () => setAttendanceOpen(false) },
+      ? h(P.Dialog, { open: true, size: "md", title: t("councilAttendance"), description: t("councilAttendanceHelp"), closeLabel: base.translator(lang)("close"), onClose: () => setAttendanceOpen(false) },
         h(HearingAttendance, { api, lang, user, sessionId: current.session.id, hearingId })
       )
       : null;
@@ -3678,23 +3678,17 @@ ${ar}` : en;
       items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] }), attendanceDialog);
   }
 
+  // Issue 229: the shared council AttendanceRoster (no table; Present / Absent per member, saved at once).
   function HearingAttendance({ api, lang, user, sessionId, hearingId }) {
-    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
+    const P = window.Plenix, h = window.React.createElement, t = translator(lang);
     const [state, retry] = base.useLoad(() => hearingId ? api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/?hearing_id=${encodeURIComponent(hearingId)}`) : Promise.resolve({ items: [] }), [sessionId, hearingId]);
-    const [saving, setSaving] = R.useState(false), [failure, setFailure] = R.useState(null);
-    const readonly = saving || !hearingId || user?.role === "member";
-    const roleLabel = (role) => t(role === "president" ? "presiding" : role === "secretary" ? "councilSecretary" : "councilMemberRole");
-    const record = async (memberId, present) => { setSaving(true); setFailure(null); try { await api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }); retry(); } catch (error) { setFailure(base.serverMessage(error, bt)); } finally { setSaving(false); } };
-    return state.pending ? base.loadingView(P, h, t) : state.error ? base.loadFailure(P, h, t, retry, state.error) : h(P.Stack, { gap: "md" },
-      h(P.Table, { label: t("councilAttendance"), index: "member_id", data: state.data.items || [], columns: [
-        { title: t("councilMember"), field: "member_name", rowLabel: true, kind: "wrap", render: (row) => h(P.Stack, { gap: "none" }, h(P.Text, { as: "div", variant: "strong" }, row.member_name), h(P.Text, { as: "div", variant: "secondary" }, roleLabel(row.member_role))) },
-        { title: t("councilAttendance"), field: "present", render: (row) => h(P.SegmentedControl, { size: "sm", label: `${t("councilAttendance")}: ${row.member_name}`, value: row.present === true ? "present" : row.present === false ? "absent" : undefined, readOnly: readonly,
-          options: [{ value: "present", label: bt("presentLabel"), icon: "check" }, { value: "absent", label: bt("absentLabel"), icon: "close" }],
-          onChange: (choice) => record(row.member_id, choice === "present") }) },
-      ] }),
-      failure ? h(P.Notice, { tone: "danger" }, failure) : null,
-    );
+    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.error) return base.loadFailure(P, h, t, retry, state.error);
+    return h(base.AttendanceRoster, { lang, readOnly: !hearingId || user?.role === "member",
+      rows: (state.data.items || []).map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, seat: row.seat, photo_url: row.photo_url, present: row.present, former: Boolean(row.former) })),
+      onRecord: (memberId, present) => api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }).then(() => retry()) });
   }
+
 
   // ---------- Petition and council notes ----------
   // Formal petitions preserve only petition material. Identity and application profile
