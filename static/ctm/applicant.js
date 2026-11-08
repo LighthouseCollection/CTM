@@ -410,10 +410,13 @@
           onProjectionRefresh: refreshProjection,
         }) });
       body = h(P.Stack, { gap: "lg" },
-        text(`${t("status")}: ${t(record.status === "expired" ? "expiredStatus" :
-          ["draft","submitted","returned","accepted","withdrawn","deleted","declined"].includes(record.status) ? record.status : "statusUnknown")}`),
-        record.case_number ? h(P.Text,{variant:"secondary"},`${t("caseReference")}: `,
-          h("bdi",{dir:"ltr"},record.case_number)) : null,
+        // D-0050 (issue 217): status and case reference are description-list items; the status is a Badge.
+        h(P.PropertyList, { layout: "stacked" },
+          h(P.PropertyList.Item, { label: t("status") }, h(P.Badge, {
+            tone: { submitted: "active", returned: "action-required", accepted: "success", declined: "negative", expired: "waiting" }[record.status] || "neutral" },
+            t(record.status === "expired" ? "expiredStatus" :
+              ["draft","submitted","returned","accepted","withdrawn","deleted","declined"].includes(record.status) ? record.status : "statusUnknown"))),
+          record.case_number ? h(P.PropertyList.Item, { label: t("caseReference"), data: true }, record.case_number) : null),
         state.editable ? h(P.DraftState, {
           version: state.version,
           saveState: state.saving ? "saving" : state.error ? "failed" : state.saved ? "saved" : undefined,
