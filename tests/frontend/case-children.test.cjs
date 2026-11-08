@@ -186,3 +186,28 @@ test("unassigned status: server display_status, header fact tone and picker inva
   assert.equal(council.split("status: t(caseListStatus(row)),").length - 1, 3);
   assert.match(council, /row\.display_status === "unassigned" \? "statusUnassigned"/);
 });
+
+// Issue 176 (D-0044): admin, president and secretary delete a case from the header's More menu; the dialog names the
+// case and its consequence, the typed case number enables "Delete case", and the app goes back to the list with a toast.
+test("delete case: More menu for the three roles, typed number, DELETE body, toast and back to the list", () => {
+  const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const app = fs.readFileSync("static/ctm/app.js", "utf8");
+  assert.match(src, /const CASE_DELETERS = \["admin", "president", "secretary"\];/);
+  assert.match(src, /moreActions: CASE_DELETERS\.includes\(user\?\.role\) \? \[\{ icon: "trash", label: t\("deleteCase"\), danger: true,/);
+  assert.match(src, /const matches = typed\.trim\(\) === number;/);
+  assert.match(src, /disabled: pending \|\| !matches, onClick: remove \}, t\("deleteCase"\)/);
+  assert.match(src, /method: "DELETE", body: JSON\.stringify\(\{ confirm_number: typed\.trim\(\), reason: reason\.trim\(\) \|\| null \}\)/);
+  assert.match(src, /deleteCaseTitle: "Delete case \{number\}\?"/);
+  assert.match(src, /deleteCaseConsequence: "Its filings, documents, hearings and votes are deleted too\. This can't be undone\."/);
+  assert.match(src, /deleteCase: "حذف القضية"/);
+  assert.equal(src.split("h(CaseRecordPage, { api, lang, caseId").length - 1, 0, "every tab passes the user to its header");
+  assert.match(app, /leaveDeletedCase\.current = \(\) => \{ setCaseOrigin\(null\); go\(council \? "cases" : "past"\); \};/);
+  assert.match(app, /h\(P\.ToastProvider, null, h\(CaseDeletedToast,/);
+  assert.match(app, /caseDeleted: "Case \{number\} was deleted\."/);
+});
+
+// Issue 176: a 204 reply (DELETE) has no body; the shared api() must not read one and report a failure.
+test("api(): a 204 reply resolves to null instead of failing on an empty body", () => {
+  const app = fs.readFileSync("static/ctm/app.js", "utf8");
+  assert.match(app, /return response\.status === 204 \? null : response\.json\(\);/);
+});

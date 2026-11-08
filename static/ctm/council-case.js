@@ -419,6 +419,11 @@ ${ar}` : en;
       caseClosedReadOnly: "This case is closed and read-only.",
       caseActions: "Case actions",
       moreActions: "More actions",
+      deleteCase: "Delete case",
+      deleteCaseTitle: "Delete case {number}?",
+      deleteCaseConsequence: "Its filings, documents, hearings and votes are deleted too. This can't be undone.",
+      deleteCaseTypeNumber: "Type the case number {number} to confirm",
+      deleteCaseReason: "Reason (optional)",
       applicant: "Applicant",
       respondent: "Respondent",
       reasonForDivorce: "Reason Seeking Divorce",
@@ -958,6 +963,11 @@ ${ar}` : en;
       caseClosedReadOnly: "هذه القضية مغلقة ومتاحة للقراءة فقط.",
       caseActions: "إجراءات القضية",
       moreActions: "المزيد من الإجراءات",
+      deleteCase: "حذف القضية",
+      deleteCaseTitle: "حذف القضية {number}؟",
+      deleteCaseConsequence: "تُحذف معها أيضًا طلباتها ومستنداتها وجلساتها وأصواتها. لا يمكن التراجع عن ذلك.",
+      deleteCaseTypeNumber: "اكتب رقم القضية {number} للتأكيد",
+      deleteCaseReason: "السبب (اختياري)",
       applicant: "مقدم الطلب",
       respondent: "الطرف الآخر",
       reasonForDivorce: "سبب طلب الطلاق",
@@ -2281,7 +2291,7 @@ ${ar}` : en;
     // A new interview opens its interview tab; an external priest request stays here, where its private link is issued.
     const requests = h(RequestsPanel, { api, lang, user, caseId, reports, onCompleted, onCreated: (id, note) => { if (note !== "externalDraftSaved") setTab("interviews"); } });
     const interviewReports = h(RequestsPanel, { api, lang, user, caseId, reports, mode: "interviews", onCompleted });
-    return h(CaseRecordPage, { api, lang, caseId, fill: true }, h(P.Tabs, {
+    return h(CaseRecordPage, { api, lang, user, caseId, fill: true }, h(P.Tabs, {
       variant: "contained", label: t("reports"), value: tab, onChange: setTab,
       items: [
         { value: "reports", label: t("completedReports"), content: completedReports },
@@ -2779,7 +2789,7 @@ ${ar}` : en;
     );
     return h(
       CaseRecordPage,
-      { api, lang, caseId, record },
+      { api, lang, user, caseId, record },
       h(P.Panel, { icon: "doc-text", title: t("decisionVoting"), className: "ctm-decision-voting-workspace" }, detail),
       current
         ? h(CouncilVoteRecord, {
@@ -2925,7 +2935,7 @@ ${ar}` : en;
     return null;
   }
 
-  function CaseAudit({ api, lang, caseId }) {
+  function CaseAudit({ api, lang, user, caseId }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -2944,7 +2954,7 @@ ${ar}` : en;
     const rows = window.CTMUI.filterAudit(loaded, filters);
     return h(
       CaseRecordPage,
-      { api, lang, caseId, title: t("caseAudit"), fill: true },
+      { api, lang, user, caseId, title: t("caseAudit"), fill: true },
       h(window.CTMUI.AuditFilters, { rows: loaded, filters, onChange: setFilters, lang }),
       h(P.Text, { variant: "secondary" }, t("auditCount", { n: rows.length })),
       h(window.CTMShell.Workspace, {
@@ -3002,7 +3012,7 @@ ${ar}` : en;
     }, (call) => call ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, call.person), h(P.Text, { variant: "secondary" }, call.occurred), h(P.Text, { as: "p", variant: "strong" }, call.outcome), call.notes ? h(P.Text, { as: "p" }, call.notes) : null) : h(P.EmptyState, { title: t("noCalls") }));
     const callFact = countFact("phone", t("callLog"), calls.length, canWrite ? { label: t("recordCall"), icon: "add", name: t("recordCall"), onClick: () => setComposing(true) } : null);
     return h(R.Fragment, null, callDialog,
-      h(CaseRecordPage, { api, lang, caseId, record, title: t("callLog"), facts: [callFact], readOnly: record.status !== "open", fill: true },
+      h(CaseRecordPage, { api, lang, user, caseId, record, title: t("callLog"), facts: [callFact], readOnly: record.status !== "open", fill: true },
         notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
         h(P.Tabs, {
           variant: "contained", label: t("callLog"), value: tab,
@@ -3199,7 +3209,7 @@ ${ar}` : en;
     const rows = [...requests, ...reports].map((row) => ({ ...row, title: row.restricted ? t("restrictedAssessment") : row.title }));
     const assessmentFact = countFact("lock", t("assessments"), rows.length, canWrite ? { label: t("newAssessment"), icon: "add", name: t("newAssessment"), onClick: () => setComposing(true) } : null);
     return h(R.Fragment, null, requestDialog, sendDialog,
-      h(CaseRecordPage, { api, lang, caseId, record, title: t("assessments"), facts: [assessmentFact], readOnly: !proceeding, fill: true },
+      h(CaseRecordPage, { api, lang, user, caseId, record, title: t("assessments"), facts: [assessmentFact], readOnly: !proceeding, fill: true },
         h(P.Notice, { tone: "info" }, t("assessmentPrivacy")),
         h(P.Notice, { tone: "warning" }, t("releaseTextPending")),
         notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
@@ -3324,7 +3334,46 @@ ${ar}` : en;
       problem ? h(P.Text, { variant: "secondary", role: "alert" }, problem) : null);
   }
 
-  function CaseRecordPage({ api, lang, caseId, record, title, facts, readOnly, fill, onChanged, children }) {
+  // Issue 176 (D-0044): admin, president and secretary delete a case from the header's More menu. The dialog names
+  // the case and what goes with it; the user types the case number (the server checks it too) and may give a reason.
+  // On success the app goes back to the case list and shows a toast ("ctm:case-deleted").
+  const CASE_DELETERS = ["admin", "president", "secretary"];
+
+  function DeleteCaseDialog({ api, lang, record, onClose }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
+    const [typed, setTyped] = R.useState("");
+    const [reason, setReason] = R.useState("");
+    const [pending, setPending] = R.useState(false);
+    const [problem, setProblem] = R.useState(null);
+    const number = String(record.number || "");
+    const matches = typed.trim() === number;
+    async function remove() {
+      setPending(true);
+      setProblem(null);
+      try {
+        await api(`/api/cases/${encodeURIComponent(record.id)}/`, { method: "DELETE", body: JSON.stringify({ confirm_number: typed.trim(), reason: reason.trim() || null }) });
+        onClose();
+        window.dispatchEvent(new window.CustomEvent("ctm:case-deleted", { detail: { number } }));
+      } catch (error) {
+        setProblem(base.serverMessage(error, bt));
+        setPending(false);
+      }
+    }
+    return h(P.Dialog, { open: true, size: "sm", role: "alertdialog", icon: "trash", onClose: pending ? undefined : onClose,
+      title: t("deleteCaseTitle", { number }),
+      footer: h(P.Inline, { gap: "sm", justify: "end" },
+        h(P.Button, { disabled: pending, onClick: onClose }, bt("cancel")),
+        h(P.Button, { variant: "danger", icon: "trash", loading: pending, disabled: pending || !matches, onClick: remove }, t("deleteCase"))) },
+      h(P.Stack, { gap: "md" },
+        h(P.Text, { as: "p" }, t("deleteCaseConsequence")),
+        h(P.Field, { label: t("deleteCaseTypeNumber", { number }) },
+          h(P.Input, { value: typed, autoComplete: "off", spellCheck: false, dir: "ltr", disabled: pending, onChange: (event) => setTyped(event.target.value) })),
+        h(P.Field, { label: t("deleteCaseReason") },
+          h(P.Textarea, { rows: 2, autoGrow: true, maxLength: 500, value: reason, disabled: pending, onChange: (event) => setReason(event.target.value) })),
+        problem ? h(P.Notice, { tone: "danger", role: "alert" }, problem) : null));
+  }
+
+  function CaseRecordPage({ api, lang, user, caseId, record, title, facts, readOnly, fill, onChanged, children }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     // Issue 237: a tab that passes its own case record may lack the assigned member (the case detail sends only the
     // history), so the header fills it in the same way; until then it shows the record as given.
@@ -3333,6 +3382,7 @@ ${ar}` : en;
       [caseId, record],
     );
     const [assigned, setAssigned] = R.useState(null);
+    const [deleting, setDeleting] = R.useState(false);
     const shown = state.data && (!record || state.data.id === record.id) ? { ...(record || {}), ...state.data } : record;
     const manager = shown ? caseManager(shown) : null;
     const current = assigned || (manager ? { id: shown.assigned_member_id || null, name: manager } : null);
@@ -3349,7 +3399,9 @@ ${ar}` : en;
     // The ToastProvider carries the assignment toast (AppShell gives none, plenix-requests PLX-021).
     return h(P.ToastProvider, null, h(P.RecordPage, { className },
       h(P.Stack, { gap: "lg", className },
-        shown ? h(P.EntityHeader, caseHeaderProps(shown, lang, facts, assigneeValue, Boolean(assigned))) : null,
+        shown ? h(P.EntityHeader, { ...caseHeaderProps(shown, lang, facts, assigneeValue, Boolean(assigned)),
+          moreActions: CASE_DELETERS.includes(user?.role) ? [{ icon: "trash", label: t("deleteCase"), danger: true, onSelect: () => setDeleting(true) }] : undefined }) : null,
+        deleting && shown ? h(DeleteCaseDialog, { api, lang, record: shown, onClose: () => setDeleting(false) }) : null,
         readOnly ? h(P.ReadOnly, { reason: t("caseClosedReadOnly"), className }, body) : body)));
   }
 
@@ -3654,7 +3706,7 @@ ${ar}` : en;
     const err = (key) => (problem === key ? t(key) : undefined);
     return h(
       CaseRecordPage,
-      { api, lang, caseId, record, title: t("partiesTitle") },
+      { api, lang, user, caseId, record, title: t("partiesTitle") },
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       ...record.parties.map((party) => {
         const profile = spouseProfileValues(record, party);
@@ -3820,7 +3872,7 @@ ${ar}` : en;
       { title: bt("councilSession"), field: "date", render: (row) => row.session.date },
       { title: t("actions"), field: "open", render: (row) => h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open")) },
     ] }) : h(P.EmptyState, { title: t("noHearings") });
-    return h(CaseRecordPage, { api, lang, caseId, title: t("hearingsTitle") }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
+    return h(CaseRecordPage, { api, lang, user, caseId, title: t("hearingsTitle") }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
       items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] }), attendanceDialog);
   }
 
@@ -3882,13 +3934,13 @@ ${ar}` : en;
     return [...byCode.values()].sort((a, b) => String(a.fact_code).localeCompare(String(b.fact_code)));
   }
 
-  function PetitionWorkspace({ api, lang, caseId }) {
+  function PetitionWorkspace({ api, lang, user, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
     const [state, retry] = base.useLoad(() => api("/api/applications/").then((apps) => ({ petitions: casePetitions(apps.items, caseId) })), [caseId]);
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { petitions } = state.data;
-    return h(CaseRecordPage, { api, lang, caseId, title: t("petitionTitle") },
+    return h(CaseRecordPage, { api, lang, user, caseId, title: t("petitionTitle") },
       ...petitions.map((row) => {
         const answers = petitionAnswers(row.answers);
         const filingParty = row.filing_party_name ? h(
@@ -3944,7 +3996,7 @@ ${ar}` : en;
     ) : null;
     const noteFact = countFact("message", t("internalNotes"), notes.length, canWrite ? { label: t("addNote"), icon: "add", name: t("addNote"), onClick: () => { setEditing(null); setText(""); setFailure(null); setComposing(true); } } : null);
     return h(R.Fragment, null, noteDialog,
-      h(CaseRecordPage, { api, lang, caseId, record, title: t("internalNotes"), facts: [noteFact], readOnly: !(proceeding && proceeding.status === "open"), fill: true },
+      h(CaseRecordPage, { api, lang, user, caseId, record, title: t("internalNotes"), facts: [noteFact], readOnly: !(proceeding && proceeding.status === "open"), fill: true },
         h(P.Text, { as: "p", variant: "secondary" }, t("internalNotesHelp")),
         notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
         h(window.CTMShell.Workspace, {
@@ -4107,7 +4159,7 @@ ${ar}` : en;
       } catch (error) { setFailure(base.serverMessage(error, t)); }
       finally { setPending(false); }
     };
-    return h(CaseRecordPage, { api, lang, caseId, record, title: t("marriageTitle"), readOnly: !proceeding },
+    return h(CaseRecordPage, { api, lang, user, caseId, record, title: t("marriageTitle"), readOnly: !proceeding },
       h(P.Panel, { icon: "settings-users", title: t("marriageTitle"), actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, t("edit")) : null },
         h(P.Stack, { gap: "md" },
           editing ? h(P.Form, { onSubmit: save, label: t("marriageTitle"), noValidate: true },
@@ -4162,7 +4214,7 @@ ${ar}` : en;
     const civil = councilCardValues(record, "civil_divorce", separation.civil_divorce || {});
     const reconciliation = councilCardValues(record, "reconciliation", separation.reconciliation || {});
     const order = councilCardValues(record, "restraining_order", separation.restraining_orders?.[0] || {});
-    return h(CaseRecordPage, { api, lang, caseId, record, title: t("separation"), readOnly: !openProceeding(record) },
+    return h(CaseRecordPage, { api, lang, user, caseId, record, title: t("separation"), readOnly: !openProceeding(record) },
       h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "separation_details", title: t("separationDetails"), icon: "move", values: details, fields: [["marital_status", t("maritalStatus")], ["separation_date", t("dateOfSeparation"), "date"], ["initiated_by", t("initiatedBy")], ["reason", t("reasonForDivorce")]] }),
       h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "civil_divorce", title: t("civilDivorce"), icon: "document", values: civil, fields: [["filed", t("civilDivorceFiled")], ["date", t("dateOfCivilDivorce"), "date"], ["court", t("courtName")], ["location", t("courtLocation")], ["case_number", t("civilCaseNumber")], ["status", t("civilDivorceStatus")]] }),
       h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "restraining_order", title: t("restrainingOrder"), icon: "link", values: order, fields: [["filed", t("orderFiled")], ["date", t("dateOfRestrainingOrder"), "date"], ["expiration_date", t("restrainingOrderExpirationDate"), "date"], ["name_listed", t("orderNameListed")], ["court", t("courtName")], ["case_number", t("orderCaseNumber")], ["status", t("orderStatus")]] }),
@@ -4295,7 +4347,7 @@ ${ar}` : en;
       })) });
   }
 
-  function CaseTimeline({ api, lang, caseId }) {
+  function CaseTimeline({ api, lang, user, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const [state, retry] = base.useLoad(
       () => api(`/api/cases/${encodeURIComponent(caseId)}/`).then((record) => api(`/api/cases/${encodeURIComponent(caseId)}/timeline/`)
@@ -4307,7 +4359,7 @@ ${ar}` : en;
     if (state.pending && !state.data) return base.loadingView(P, h, t);
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const model = timelineModel(state.data.events, lang, t);
-    return h(CaseRecordPage, { api, lang, caseId, record: state.data.record, title: t("timelineTitle") },
+    return h(CaseRecordPage, { api, lang, user, caseId, record: state.data.record, title: t("timelineTitle") },
       h(P.Text, { variant: "secondary" }, t("timelineHelp")),
       model.groups.length ? drawTimeline({ P, h, t, model }) : h(P.EmptyState, { title: t("noTimeline") }),
     );
@@ -4560,7 +4612,7 @@ ${ar}` : en;
           items: summaryTimeline.map(({ area, date, ...item }) => ({ ...item, dateTime: item.dateTime || timelineToday(), icon: AREA_ICON[area], category: timelineCategory(area, t) })) }),
       ),
     );
-    return h(CaseRecordPage, { api, lang, caseId, record, readOnly: !openProceeding(record), onChanged: retry },
+    return h(CaseRecordPage, { api, lang, user, caseId, record, readOnly: !openProceeding(record), onChanged: retry },
       summaryPanels,
       reviewApplicationId && !reviewComplete ? h(ApplicationReviewActions, { api, lang, applicationId: reviewApplicationId, onDone: () => { setReviewComplete(true); retry(); } }) : null,
     );

@@ -204,6 +204,7 @@
       appeals: "Appeals",
       audit: "Case Audit",
       backCases: "Back to cases",
+      caseDeleted: "Case {number} was deleted.",
       backSessions: "Back to sessions",
       backHome: "Back to Home",
       backNotifications: "Back to Notifications",
@@ -419,6 +420,7 @@
       appeals: "التماسات إعادة النظر",
       audit: "سجل القضية",
       backCases: "العودة إلى القضايا",
+      caseDeleted: "حُذفت القضية {number}.",
       backSessions: "العودة إلى الجلسات",
       backHome: "العودة إلى الصفحة الرئيسية",
       backNotifications: "العودة إلى الإشعارات",
@@ -523,7 +525,8 @@
       }
       throw error;
     }
-    return response.json();
+    // 204 No Content (a DELETE such as the case delete, issue 176) has no body to read.
+    return response.status === 204 ? null : response.json();
   }
   function MessageComposer({ record, sessions, council, t, onSent, onClose }) {
     const [body, setBody] = R.useState(""),
@@ -1038,6 +1041,16 @@
     return null;
   }
 
+  function CaseDeletedToast({ text }) {
+    const toast = P.useToast ? P.useToast() : null;
+    R.useEffect(() => {
+      const show = (event) => toast && toast.show(text(event.detail?.number || ""), { tone: "success" });
+      window.addEventListener("ctm:case-deleted", show);
+      return () => window.removeEventListener("ctm:case-deleted", show);
+    });
+    return null;
+  }
+
   function App() {
     const initialRoute = routes?.parse(window.location.pathname) || { page: "home", selection: null };
     const [lang, setLang] = R.useState(() => {
@@ -1057,6 +1070,13 @@
     const [preferenceFailure, setPreferenceFailure] = R.useState(null);
     const [caseDetailOpen, setCaseDetailOpen] = R.useState(true);
     const [caseOrigin, setCaseOrigin] = R.useState(null);
+    // Issue 176: a deleted case closes; the app goes back to the case list (the toast is CaseDeletedToast).
+    const leaveDeletedCase = R.useRef(null);
+    R.useEffect(() => {
+      const onDeleted = () => leaveDeletedCase.current && leaveDeletedCase.current();
+      window.addEventListener("ctm:case-deleted", onDeleted);
+      return () => window.removeEventListener("ctm:case-deleted", onDeleted);
+    }, []);
     R.useEffect(() => setCaseDetailOpen(true), [page, selection]);
     const applicantGuard = R.useRef(null);
     const registerApplicantGuard = R.useCallback((guard) => {
@@ -1292,6 +1312,7 @@
       setCaseOrigin(origin || { page: council ? "cases" : "past", labelKey: "backCases" });
       go("case", id);
     };
+    leaveDeletedCase.current = () => { setCaseOrigin(null); go(council ? "cases" : "past"); };
     const returnToCaseOrigin = () => {
       const origin = caseOrigin || { page: council ? "cases" : "past", labelKey: "backCases" };
       setCaseOrigin(null);
@@ -1644,7 +1665,7 @@
           reviewApplicationId: caseOrigin?.applicationId,
         });
       if (page === "timeline" && council && councilModule?.CaseTimeline)
-        return h(councilModule.CaseTimeline, { key: selection, api, lang, caseId: selection });
+        return h(councilModule.CaseTimeline, { key: selection, api, lang, user, caseId: selection });
       if (page === "petition" && council && councilModule?.PetitionWorkspace)
         return h(councilModule.PetitionWorkspace, { key: selection, api, lang, user, caseId: selection });
       if (page === "parties" && council && councilModule?.CaseParties)
@@ -1683,7 +1704,7 @@
       if (page === "medical" && council && councilModule?.AssessmentsWorkspace)
         return h(councilModule.AssessmentsWorkspace, { key: selection, api, lang, user, caseId: selection });
       if (page === "audit" && council && councilModule?.CaseAudit)
-        return h(councilModule.CaseAudit, { key: selection, api, lang, caseId: selection });
+        return h(councilModule.CaseAudit, { key: selection, api, lang, user, caseId: selection });
       if (page === "appeals" && council && councilModule?.AppealsWorkspace)
         return h(councilModule.AppealsWorkspace, {
           key: selection,
@@ -1998,12 +2019,14 @@
       P.AppShell,
           { header, sideNav: nav, frame: "full", page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
-      h("div", { className: "plx-page-panes" }, caseNav,
-        h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
-          preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
-          content(),
+      // The app's toasts (AppShell gives none, PLX-021): today the case-deleted toast.
+      h(P.ToastProvider, null, h(CaseDeletedToast, { text: (number) => t("caseDeleted").replace("{number}", number) }),
+        h("div", { className: "plx-page-panes" }, caseNav,
+          h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
+            preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
+            content(),
+          )),
         )),
-      ),
     );
   }
   window.ReactDOM.createRoot(root).render(h(P.ThemeProvider, null, h(P.DirectionProvider, { follow: true }, h(App))));

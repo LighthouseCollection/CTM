@@ -201,7 +201,7 @@ test("application review: Decline and Accept are page actions in an ActionBar, t
 test("case page header and body share one Stack gap (issue 194)", () => {
   const source = require("node:fs").readFileSync("static/ctm/council-case.js", "utf8");
   const page = source.slice(source.indexOf("function CaseRecordPage("), source.indexOf("// ---------- Parties and case hearings"));
-  assert.match(page, /h\(P\.RecordPage, \{ className \},\s*h\(P\.Stack, \{ gap: "lg", className \},\s*shown \? h\(P\.EntityHeader, caseHeaderProps\(shown, lang, facts, assigneeValue, Boolean\(assigned\)\)\) : null,/);
+  assert.match(page, /h\(P\.RecordPage, \{ className \},\s*h\(P\.Stack, \{ gap: "lg", className \},\s*shown \? h\(P\.EntityHeader, \{ \.\.\.caseHeaderProps\(shown, lang, facts, assigneeValue, Boolean\(assigned\)\),/);
   assert.doesNotMatch(page, /header: shown/);
 });
 
