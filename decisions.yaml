@@ -541,7 +541,7 @@ decisions:
     date: 2026-11-07
     area: design
     decision: The case timeline groups events by year (year heading with a short line, 80 px between years, a faint rotated year beside each card), puts each event in its own container tinted by its case area (8 areas, Plenix category tokens), with the date in a calendar icon and no dots; Plenix ships it as a Timeline variation and CTM uses it. Spec in DESIGN.md section 4, study in docs/design/timeline-study.html
-    why: Owner 2026-11-07 (#242), iterated on the study: "lock this in as variation in pds, and implement in ctm"
+    why: Owner 2026-11-07 (#242), after iterating on the study, said "lock this in as variation in pds, and implement in ctm"
     options: [Year-grouped, area-coloured containers with calendar date (chosen), Thin dot timeline (before)]
     decided_by: owner
     status: active
