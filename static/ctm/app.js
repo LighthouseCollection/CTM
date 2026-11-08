@@ -1448,14 +1448,14 @@
             strings: { expand: t("paneExpand"), collapse: t("paneCollapse"), resize: t("paneResize"), back: t("paneBack") },
             rail: navigationRail(caseNavigationItems, selectCaseSection),
           },
-          h(
-              P.Button,
-              {
-                variant: "ghost",
-                onClick: returnToCaseOrigin,
-              },
-              t(caseOrigin?.labelKey || "backCases"),
-            ),
+          // D-0061 (issue 263): the way back is a quiet nav item at the top of the pane: a back arrow on the nav icon
+          // column (Plenix mirrors it in Arabic) and muted text, so Case Overview stays the pane's strongest text. The
+          // Plenix back-item pattern is requested in plenix-ds/pds issue 995; this is the closest documented NavList item.
+          h(P.NavList, {
+            label: t(caseOrigin?.labelKey || "backCases"),
+            onSelect: returnToCaseOrigin,
+            items: [{ id: "back", icon: h(P.Icon, { name: "arrow-left", "aria-hidden": true }), label: t(caseOrigin?.labelKey || "backCases"), muted: true }],
+          }),
           h(P.NavList, {
             label: t("overview"),
             value: page,
