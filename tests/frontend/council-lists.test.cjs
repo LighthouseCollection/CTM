@@ -3,6 +3,7 @@
 // WidgetGrid, Skeleton loading and read-only archives. Renders the real components with the test harness.
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 
 const { harness, load, find, byName, settle, textOf } = require("./harness.cjs");
 
@@ -39,14 +40,22 @@ const cases = [
   { id: "c2", number: "20261020-02", status: "closed", applicant_name: "Daniel Brooks", respondent_name: "Olivia Brooks", closed_at: "2026-10-30T10:00:00Z" },
 ];
 
-test("loading is a Skeleton announced as busy, not a spinner", () => {
+// D-0063 (issue 272, owner): no skeletons; a loading region is busy at once and shows the Plenix Spinner with a label
+// naming what loads after about a second (CTMShell.DelayedSpinner; a plain spinner where the shell is not loaded).
+test("loading is the Plenix spinner with a label, after a delay; no skeleton anywhere", () => {
   const [h, C] = boot();
-  const view = C.loadingView(new Proxy({}, { get: (_t, k) => k }), (type, props, ...children) => ({ type, props, children }), C.translator("en"));
-  assert.equal(view.type, "Stack");
+  const view = C.loadingView(new Proxy({}, { get: (_t, k) => k }), (type, props, ...children) => ({ type, props, children }), C.translator("en"), "Loading cases…");
   assert.equal(view.props.role, "status");
   assert.equal(view.props["aria-busy"], "true");
-  assert.equal(view.props["aria-label"], "Loading…");
-  assert.ok(view.children.length >= 3 && view.children.every((child) => child.type === "Skeleton"));
+  assert.equal(view.props["aria-label"], "Loading cases…");
+  for (const file of fs.readdirSync("static/ctm").filter((name) => name.endsWith(".js")))
+    assert.doesNotMatch(fs.readFileSync("static/ctm/" + file, "utf8"), /P\.Skeleton\b/, file);
+  const shell = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
+  assert.match(shell, /const timer = window\.setTimeout\(\(\) => setShown\(true\), delay\);/);
+  assert.match(shell, /function DelayedSpinner\(\{ label, className, delay = 1000 \}\)/);
+  assert.match(shell, /h\(P\.Spinner, \{ size: "md", label \}\), h\(P\.Text, \{ variant: "secondary", "aria-hidden": "true" \}, label\)/);
+  const caseSrc = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.equal(caseSrc.split("base.loadingView(P, h, t);").length - 1, 0, "case tabs name what loads");
 });
 
 test("case lists are a Listing with a searched command bar, row menu actions and row cards", () => {

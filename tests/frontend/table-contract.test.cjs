@@ -138,11 +138,12 @@ test("row card slots, card count and extra documented grid props pass through", 
   assert.equal(grid.props.pageSize,25);
   assert.equal("template" in mount({label:"Cases",rows:[],columns:[]}).props,false);
 });
-test("loading tables hold their place with Skeleton rows", () => {
-  const { h, S } = shell();
+// D-0063 (issue 272): a loading table is a busy region named after the grid; no Skeleton rows (the spinner follows after a second).
+test("loading tables are a busy region named after the grid, without skeletons", () => {
+  const { h, S } = shell({ setTimeout, clearTimeout });
   const tree = h.render(S.Table, { label: "Cases", rows: [], columns: [], loading: true });
   assert.equal(find(tree, n => nameOf(n.type) === "DataGrid").length, 0);
-  assert.ok(find(tree, n => nameOf(n.type) === "Skeleton").length >= 3);
+  assert.equal(find(tree, n => nameOf(n.type) === "Skeleton").length, 0);
   assert.equal(find(tree, n => n.props && n.props["aria-busy"] === "true")[0].props["aria-label"], "Cases");
 });
 test("workspaces draw the SplitWorkspace body: toolbar, SplitView of the grid and a reading pane", () => {

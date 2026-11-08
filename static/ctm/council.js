@@ -446,6 +446,10 @@
       conflict: "This record changed or conflicts with another saved record. Reload and try again.",
       expired: "Your session has expired. Sign in again to continue.",
       loading: "Loading…",
+      loadingCases: "Loading cases…",
+      loadingMembers: "Loading council members…",
+      loadingSession: "Loading the council session…",
+      loadingStatistics: "Loading statistics…",
       loadFailed: "Unable to load this information.",
       retry: "Try again",
       reviewOnlyAdmin:
@@ -857,6 +861,10 @@
       conflict: "تغيّر هذا السجل أو تعارض مع سجل محفوظ آخر. أعد التحميل وحاول مرة أخرى.",
       expired: "انتهت جلستك. سجّل الدخول مجددًا للمتابعة.",
       loading: "جارٍ التحميل…",
+      loadingCases: "جارٍ تحميل القضايا…",
+      loadingMembers: "جارٍ تحميل أعضاء المجلس…",
+      loadingSession: "جارٍ تحميل جلسة المجلس…",
+      loadingStatistics: "جارٍ تحميل الإحصاءات…",
       loadFailed: "تعذر تحميل هذه المعلومات.",
       retry: "إعادة المحاولة",
       reviewOnlyAdmin: "يقتصر قبول الطلبات أو إعادتها على مسؤول المجلس أو السكرتير.",
@@ -1256,11 +1264,11 @@
     return counts[lang === "ar" ? "ar" : "en"][key] || counts.en[key];
   }
 
-  // Loading: Skeleton rows hold the page's place (skeleton.md, DESIGN.md §3), announced as busy.
-  function loadingView(P, h, t) {
-    return h(P.Stack, { gap: "sm", role: "status", "aria-busy": "true", "aria-label": t("loading") },
-      h(P.Skeleton, { width: "240px", height: "24px" }),
-      ...[0, 1, 2, 3].map((key) => h(P.Skeleton, { key, height: "36px" })));
+  // Loading (D-0063): the Plenix spinner with a label naming what loads, after about a second; never a skeleton.
+  function loadingView(P, h, t, label) {
+    const text = label || t("loading");
+    return window.CTMShell?.DelayedSpinner ? h(window.CTMShell.DelayedSpinner, { label: text })
+      : h(P.Stack, { align: "center", role: "status", "aria-busy": "true", "aria-label": text }, h(P.Spinner, { size: "md", label: text }));
   }
 
   // Error boundary: a failure inside one council page shows a recoverable message
@@ -3328,7 +3336,7 @@
       onChange: (event) => setYear(event.target.value), options: years.map((value) => ({ value, label: value })) }) : undefined;
     const all = onNavigate ? h(P.Button, { variant: "ghost", onClick: () => onNavigate(window.CTMRoutes?.routeFor("statistics") || "/reports") }, t("allStatistics")) : undefined;
     let body, note;
-    if (state.pending && !data) body = h(P.Skeleton, { height: "240px" });
+    if (state.pending && !data) body = loadingView(P, h, t, t("loadingStatistics"));
     else if (state.error) body = h(P.Notice, { tone: "danger" }, serverMessage(state.error, t), " ", h(P.Button, { size: "sm", onClick: retry }, t("retry")));
     else {
       const { shown, hidden } = members
@@ -3406,14 +3414,14 @@
 
     // 1. The next council session leads the page.
     const leadRegion = () => {
-      if (dash.pending && !dash.data) return h(P.Skeleton, { height: "160px" });
+      if (dash.pending && !dash.data) return loadingView(P, h, t, t("loadingSession"));
       if (dash.error) return regionFailure(retryDash, dash.error);
       if (!leadId)
         return h(P.Panel, { icon: "calendar", title: t("upcomingSession") },
           h(P.EmptyState, { title: t("noUpcoming"),
             action: canManage(user) && onNavigate ? h(P.Button, { onClick: () => onNavigate(window.CTMRoutes?.routeFor("sessionsUpcoming") || "/sessions/upcoming") }, t("scheduleSession")) : undefined }));
       if (lead.error) return regionFailure(retryLead, lead.error);
-      if (!lead.data) return h(P.Skeleton, { height: "160px" });
+      if (!lead.data) return loadingView(P, h, t, t("loadingSession"));
       // Fields /api/dashboard/ sends (design §4) win over the ones read from the session endpoints.
       const sent = dash.data.upcoming_sessions[0];
       const session = { ...lead.data.session, ...Object.fromEntries(["starts_at", "location"].filter((key) => sent[key] != null).map((key) => [key, sent[key]])) };
@@ -3459,7 +3467,7 @@
     const casesRegion = () => {
       const allCases = onNavigate ? h(P.Button, { variant: "ghost", onClick: () => onNavigate(window.CTMRoutes?.routeFor("myCases") || "/cases/mine") }, t("allCases")) : null;
       let body;
-      if (cases.pending && !cases.data) body = h(P.Skeleton, { height: "120px" });
+      if (cases.pending && !cases.data) body = loadingView(P, h, t, t("loadingCases"));
       else if (cases.error) body = regionFailure(retryCases, cases.error);
       else {
         const rows = myCases(cases.data.items, user).map((row) => ({
@@ -3488,7 +3496,7 @@
     // 4. Council members: one person card each with their active cases (aggregate only, design §4).
     const membersRegion = () => {
       let body;
-      if (members.pending && !members.data) body = h(P.Skeleton, { height: "120px" });
+      if (members.pending && !members.data) body = loadingView(P, h, t, t("loadingMembers"));
       else if (members.error) body = regionFailure(retryMembers, members.error);
       else {
         const rows = homeMembers(members.data.items, lang);
