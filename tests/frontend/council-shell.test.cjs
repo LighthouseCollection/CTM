@@ -281,16 +281,17 @@ test("the session header is Plenix EntityHeader style 2: facts carry their actio
   // D-0055 (amends D-0042): each agenda section is a card (Panel with icon) with its table inside.
   const sections = sessionWorkspace.match(/h\(P\.Panel, \{ icon: "[\w-]+", title: t\("(\w+)"\) \}, agendaTable\((\d)\)\)/g) || [];
   assert.deepEqual(sections.map((s) => s.match(/t\("(\w+)"\) \}, agendaTable\((\d)\)/).slice(1).join(":")), ["scheduledCasesForHearing:2", "casesToAssign:1"]);
-  assert.match(sessionWorkspace, /current \? h\(P\.Inline, \{ align: "start", gap: "lg" \},[\s\S]*?h\(P\.Stack, \{ gap: "lg", grow: true \},/);
+  assert.match(sessionWorkspace, /current \? h\(P\.Stack, \{ gap: "lg" \},\s*h\(P\.Panel/);
   assert.doesNotMatch(agendaTable, /P\.Panel/);
   assert.match(agendaTable, /previousRecommendation/);
-  // Issue 222: the recommendation cell is text (one line, "…", full text on hover); no button or dialog in a cell.
-  assert.match(agendaTable, /render: \(row\) => recommendationText\(row\.previous_recommendation, t\)/);
+  // Issue 222: the recommendation cell is text; no button or dialog in a cell.
+  // D-0062 (issue 271): the text ending in "…" with the full text on hover; no row panel.
+  assert.match(agendaTable, /wrap: true, render: \(row\) => recommendationCell\(P, h, row\.previous_recommendation, t\)/);
+  assert.ok(council.includes('return h(P.Text, { as: "span", truncate: true, title: text, tabIndex: 0, dir: "auto", className: "plx-u-w-100p" }, text);'));
+  assert.match(council, /if \(!text\) return t\("notRecorded"\);/);
   assert.doesNotMatch(council, /PreviousRecommendationCell|readRecommendation/);
-  // The full text is in the agenda row's Plenix SidePanel, as a read-only field.
-  assert.match(sessionWorkspace, /agendaDetail \? h\(P\.SidePanel, \{/);
-  assert.match(sessionWorkspace, /h\(P\.PropertyList\.Item, \{ label: t\("previousRecommendation"\) \}/);
-  assert.match(sessionWorkspace, /onSelect: \(id\) => setAgendaDetail\(/);
+  assert.doesNotMatch(council, /P\.SidePanel|agendaDetail/);
+  assert.doesNotMatch(agendaTable, /onSelect:/);
   assert.doesNotMatch(agendaTable, /field: "record"/);
   assert.match(agendaTable, /title: t\("actions"\), field: "open_action"/);
   assert.match(council, /empty: t\(`part\$\{n\}Empty`\), isStatic: true/);

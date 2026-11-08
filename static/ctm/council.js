@@ -1306,11 +1306,20 @@
     });
   }
 
-  // Issue 222: a grid cell shows its text, never a button or a dialog. Plenix draws a text column on one line
-  // ending in "…" with the full text on hover; the full recommendation is also in the agenda row's SidePanel.
+  // Issue 222: a grid cell shows its text, never a button or a dialog.
   function recommendationText(value, t) {
     const text = String(value || "").trim().replace(/\s+/g, " ");
     return text || t("notRecorded");
+  }
+
+  // D-0062 (issue 271, withdraws D-0051's row panel): no panel; the cell shows the text ending in "…" and the full
+  // text on hover; empty is "Not recorded". Plenix 1.2.0 gaps (logged on pds): the grid keeps one line in its rows
+  // (column wrap and Text lines are ignored), and a Plenix Tooltip in a cell does not shrink (no "…") and draws the
+  // text on one very long line. Until Plenix fixes them: Text truncate with the full text as its title.
+  function recommendationCell(P, h, value, t) {
+    const text = String(value || "").trim().replace(/\s+/g, " ");
+    if (!text) return t("notRecorded");
+    return h(P.Text, { as: "span", truncate: true, title: text, tabIndex: 0, dir: "auto", className: "plx-u-w-100p" }, text);
   }
 
 
@@ -1794,7 +1803,7 @@
           archiveTable(t("casesPresented"), archivedItems.presented, t("part2Empty"), caseColumns([
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
             { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
-            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, render: (row) => recommendationText(row.previous_recommendation, t) },
+            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, wrap: true, render: (row) => recommendationCell(P, h, row.previous_recommendation, t) },
           ])),
         ) : null,
       ));
@@ -2643,7 +2652,6 @@
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     const [adjournEnd, setAdjournEnd] = R.useState("");
-    const [agendaDetail, setAgendaDetail] = R.useState(null); // issue 222: the agenda row shown in the SidePanel
 
     if (state.pending && !state.data) return loadingView(P, h, t);
     if (state.error) return loadFailure(P, h, t, retry, state.error);
@@ -2904,13 +2912,12 @@
             { title: t("applicant"), field: "applicant", width: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
             { title: t("respondent"), field: "respondent", width: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: t("previousRecommendation"), field: "previous_recommendation", width: "12rem", pill: false, render: (row) => recommendationText(row.previous_recommendation, t) },
+            { title: t("previousRecommendation"), field: "previous_recommendation", width: "12rem", pill: false, wrap: true, render: (row) => recommendationCell(P, h, row.previous_recommendation, t) },
             { title: t("actions"), field: "open_action", minWidth: "9rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ];
-      return h(window.CTMShell.Table, { className: "ctm-session-agenda-grid", label: title, rows, columns, empty: t(`part${n}Empty`), isStatic: true,
-        selected: agendaDetail?.id ?? null, onSelect: (id) => setAgendaDetail(rows.find((row) => row.id === id) || null) });
+      return h(window.CTMShell.Table, { className: "ctm-session-agenda-grid", label: title, rows, columns, empty: t(`part${n}Empty`), isStatic: true });
     };
 
     return h(
@@ -2931,21 +2938,11 @@
         ? h(SessionAnswers, { key: session.id, api, lang, user, session }) : null,
       // D-0042 (owner, issue 171): no agenda tabs. Two full-width sections, one below the other, each with
       // its heading and its own table: Hearings, then To assign (peer sections, stack.md gap "section").
-      current ? h(P.Inline, { align: "start", gap: "lg" },
-        // D-0055 (owner, amends D-0042): each agenda section is its own card; the heading is the card header
-        // (Plenix Panel title with icon) and the table sits in the card body.
-        h(P.Stack, { gap: "lg", grow: true },
-          h(P.Panel, { icon: "event_available", title: t("scheduledCasesForHearing") }, agendaTable(2)),
-          h(P.Panel, { icon: "folder", title: t("casesToAssign") }, agendaTable(1))),
-        agendaDetail ? h(P.SidePanel, { title: agendaDetail.case_number || t("caseNumber"), icon: "folder",
-          actions: h(P.Button, { iconOnly: true, icon: "close", label: t("close"), variant: "ghost", onClick: () => setAgendaDetail(null) }) },
-          h(P.PropertyList, { layout: "stacked" },
-            h(P.PropertyList.Item, { label: t("applicant") }, agendaDetail.applicant?.name || t("notRecorded")),
-            h(P.PropertyList.Item, { label: t("respondent") }, agendaDetail.respondent?.name || t("notRecorded")),
-            h(P.PropertyList.Item, { label: t("assignedTo") }, agendaDetail.assigned_member_name || t("unassigned")),
-            h(P.PropertyList.Item, { label: t("previousRecommendation") },
-              h(P.Text, { as: "p", dir: "auto" }, String(agendaDetail.previous_recommendation || "").trim() || t("notRecorded")))),
-          h(P.Inline, { gap: "sm" }, h(P.Button, { size: "sm", icon: "open", onClick: () => onCase(agendaDetail.case_id) }, t("open")))) : null,
+      // D-0055: each agenda section is its own card (Panel title with icon). D-0062: no panel opens from a row;
+      // Open and Move are the row actions.
+      current ? h(P.Stack, { gap: "lg" },
+        h(P.Panel, { icon: "event_available", title: t("scheduledCasesForHearing") }, agendaTable(2)),
+        h(P.Panel, { icon: "folder", title: t("casesToAssign") }, agendaTable(1)),
       ) : h(P.Stack, { gap: "lg" }, part(1), part(2)),
       data.items.length && !data.items.some((row) => "hearing_id" in row) ? h(P.Notice, { tone: "info" }, t("outcomeDependency")) : null,
       dialog?.kind === "outcome"
