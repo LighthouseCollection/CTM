@@ -5,12 +5,11 @@ decision, decree, comms), a civil date or pending, upcoming, a stable kind with
 params (the screen shows EN/AR), an English title and description, and its
 source. Council only; message bodies never appear. Fictional data.
 """
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 from django.utils import timezone
 
-from tribunal import models as m
 from tribunal.services.communications import log_call
 from tribunal.services.council import assign_case, create_session, place_agenda
 from tests.test_case_delete import decided  # noqa: F401  (fixture)
@@ -46,18 +45,19 @@ def test_every_event_has_an_area_date_and_text(granted_roles, client, people, de
     assert not any(row["upcoming"] or row["pending"] for row in items)
 
 
-def test_assignment_hearings_and_communications(granted_roles, client, people, decided):
-    party = decided.parties.get(slot="A")
-    log_call(people["admin"], decided.pk, party.pk, timezone.now() - timedelta(days=1), "Reached", "Synthetic call")
-    soon = timezone.localdate() + timedelta(days=10)
-    upcoming = create_session(people["admin"], soon, location="Hall 2")
-    if decided.assigned_member_id is None:
-        assign_case(people["admin"], decided.pk, people["member"].pk, people["president"].pk)
-    items = timeline(granted_roles, client, people["secretary"], decided).json()["items"]
-    calls = [row for row in items if row["kind"] == "call_logged"]
-    assert calls and calls[0]["area"] == "comms" and "Synthetic call" not in calls[0]["description"]
-    assert any(row["kind"] == "manager_assigned" and row["area"] == "assign" for row in items)
-    assert upcoming  # session exists; placing needs an open proceeding, covered below
+def test_assignment_and_communications(granted_roles, client, people, ready_application):
+    from tribunal.services.applications import submit_application
+    app = ready_application
+    submit_application(app.owner, app.pk, "timeline-comms", {"accepted": True, "name": "John Smith"})
+    app.refresh_from_db()
+    assign_case(people["admin"], app.case_id, people["member"].pk, people["president"].pk)
+    party = app.case.parties.get(slot="A")
+    log_call(people["admin"], app.case_id, party.pk, timezone.now() - timedelta(days=1), "Reached", "Synthetic call")
+    items = timeline(granted_roles, client, people["secretary"], app.case).json()["items"]
+    call = next(row for row in items if row["kind"] == "call_logged")
+    assert call["area"] == "comms" and "Synthetic call" not in call["description"]
+    assigned = next(row for row in items if row["kind"] == "manager_assigned")
+    assert assigned["area"] == "assign" and assigned["params"]["member"] == "member Test"
 
 
 def test_upcoming_hearing_is_marked_and_listed_first(granted_roles, client, people, ready_application):
