@@ -50,12 +50,7 @@ def snapshot(session):
             m.AgendaItem.objects.filter(session=session).count())
 
 
-PRESIDENT_NOTICES = pytest.mark.xfail(
-    strict=True, reason="#224: the outbox rule lets the president queue only session_reminder notices, so "
-    "re-activating needs the invite rows the president can't read or write (database follow-up)")
-
-
-@pytest.mark.parametrize("role", ["admin", pytest.param("president", marks=PRESIDENT_NOTICES), "secretary"])
+@pytest.mark.parametrize("role", ["admin", "president", "secretary"])
 def test_in_progress_goes_back_to_draft_and_again_without_losing_anything(granted_roles, client, people,
                                                                           in_progress, role):
     session, hearing = in_progress
