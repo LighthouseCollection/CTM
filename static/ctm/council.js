@@ -572,6 +572,7 @@
       deferred: "Deferred — awaiting manual placement",
       assigned: "Assigned case manager",
       unassigned: "Not yet assigned",
+      statusUnassigned: "Unassigned",
       notRecorded: "Not Recorded",
       close: "Close",
       recordAssignment: "Record assignment",
@@ -981,6 +982,7 @@
       deferred: "مؤجلة — في انتظار الجدولة اليدوية",
       assigned: "مسؤول القضية",
       unassigned: "لم يُعيَّن بعد",
+      statusUnassigned: "غير معيَّنة",
       notRecorded: "غير مسجل",
       close: "إغلاق",
       recordAssignment: "تسجيل التعيين",
@@ -2532,6 +2534,11 @@
     return String(forms[rule] || forms.other || "").replace("{n}", new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(n));
   }
 
+  // Issue 259 (D-0059): the server's display_status ("unassigned" for an open case with no member) wins.
+  function caseListStatus(row) {
+    return row.status === "closed" ? "closed" : row.display_status === "unassigned" ? "statusUnassigned" : "open";
+  }
+
   function pickerRows(items, query, t, lang) {
     const q = String(query || "").trim().toLowerCase();
     return (items || []).map((row) => ({
@@ -2540,7 +2547,7 @@
       parties: (row.party_names || []).map((name) => isolate(name)).join(` ${t("versus")} `) || "—",
       filed: row.filed_at ? formatDate(row.filed_at, lang) : t("notRecorded"),
       grounds: groundsText(row.grounds, "", t) || "—",
-      status: t(row.status === "closed" ? "closed" : "open"),
+      status: t(caseListStatus(row)),
       member: row.assigned_member || t("unassigned"),
       recommendation: recommendationText(row.recommendation_preview, t),
       search: [row.number, ...(row.party_names || [])].join(" ").toLowerCase(),
@@ -3457,7 +3464,7 @@
       else {
         const rows = myCases(cases.data.items, user).map((row) => ({
           id: row.id, case_id: row.id, number: row.number, spouses: spousesText(row) || "—",
-          status: t(row.status === "closed" ? "closed" : "open"),
+          status: t(caseListStatus(row)),
           next_step: row.next_step ? t(row.next_step) : "",
         }));
         body = rows.length
@@ -3575,7 +3582,7 @@
       respondent: { name: row.respondent_name || "—", gender: row.respondent_gender === "M" ? "male" : row.respondent_gender === "F" ? "female" : undefined },
       reason: groundsText(row.grounds, row.reason, t) || "—",
       manager: row.assigned_member || t("unassigned"),
-      status: t(row.status === "closed" ? "closed" : "open"),
+      status: t(caseListStatus(row)),
       closedAt: row.closed_at ? row.closed_at.slice(0, 10) : "—",
     }));
     const columns = archived

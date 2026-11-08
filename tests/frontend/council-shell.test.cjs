@@ -377,7 +377,8 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
   assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
   // D-0050 (#217): the case status is a Plenix Badge, never plain text.
-  assert.ok(councilCase.includes('status: h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed"))'));
+  // D-0059 (issue 259): the same badge as the header, with Unassigned for an open case without a member.
+  assert.ok(councilCase.includes('status: ((badge) => h(P.Badge, { tone: badge.tone }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)),'));
   assert.match(councilCase, /actions: canEditSummary && !summaryEditing/);
   assert.match(councilCase, /fact_code: "case_card\.summary"/);
   // D-0050 groups: the card is "Marriage"; "Church marriage" and "Outside the Coptic Church" are its groups.

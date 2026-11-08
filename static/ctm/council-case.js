@@ -3233,13 +3233,25 @@ ${ar}` : en;
     return [applicant, respondent].filter(Boolean).map((party) => ({ person: party.name || "—", src: party.photo_url || undefined }));
   }
 
-  function caseHeaderProps(record, lang, facts, assigneeValue) {
+  // Issue 259 (D-0059): the server's display_status is "unassigned" for an open case with no member (council only);
+  // every place that shows the case status shows it. assignedNow: the header just assigned a member, so it is open.
+  function caseStatusOf(record, assignedNow) {
+    if (record?.status === "open" && record.display_status === "unassigned" && !assignedNow) return "unassigned";
+    return record?.status === "open" ? "open" : "closed";
+  }
+
+  function caseStatusBadge(status, t, bt) {
+    return status === "unassigned" ? { tone: "action-required", label: bt("statusUnassigned") }
+      : status === "open" ? { tone: "success", label: t("active") } : { tone: "neutral", label: bt("closed") };
+  }
+
+  function caseHeaderProps(record, lang, facts, assigneeValue, assignedNow) {
     const t = translator(lang), bt = base.translator(lang);
     const parties = record.parties || [];
     const applicant = parties.find((party) => party.slot === "A") || parties[0] || null;
     const respondent = parties.find((party) => party.slot === "B") || parties.find((party) => party !== applicant) || null;
     const names = [applicant, respondent].filter(Boolean).map((party) => base.isolate(party.name));
-    const open = record.status === "open";
+    const status = caseStatusOf(record, assignedNow);
     return {
       // Issue 109 (owner, 2026-11-05): the decided icon box (record-page.md media box), the spouses' names as the
       // title and the case number as the small line under it. Without names the case number is the title.
@@ -3248,8 +3260,10 @@ ${ar}` : en;
       media: { icon: "folder", hue: "purple", box: true },
       title: names.length ? names.join(` ${bt("versus")} `) : base.isolate(record.number),
       subtitle: names.length ? base.isolate(record.number) : undefined,
-      status: { tone: open ? "success" : "neutral", label: open ? t("active") : bt("closed") },
-      facts: [{ icon: "person", label: t("assignedCouncilMember"), value: assigneeValue ?? (caseManager(record) || bt("unassigned")) }, ...(facts || [])],
+      status: caseStatusBadge(status, t, bt),
+      // Red tones draw the eye to the member slot while nothing is chosen (D-0059; Plenix fact tone).
+      facts: [{ icon: "person", label: t("assignedCouncilMember"), value: assigneeValue ?? (caseManager(record) || bt("unassigned")),
+        ...(status === "unassigned" ? { tone: "danger" } : {}) }, ...(facts || [])],
       strings: { status: bt("statusLabel"), more: t("moreActions") },
       // A tab that fills the room (split list and detail) must never squeeze the header.
       className: "plx-u-shrink-0",
@@ -3299,8 +3313,10 @@ ${ar}` : en;
       }
     }
     return h(P.Stack, { gap: "xs" },
-      h(P.EntityPicker, { kind: "people", label: t("assignedCouncilMember"), disabled: pending || state.pending,
-        placeholder: t("assignPlaceholder"), entityName: t("assignEntityName"),
+      h(P.EntityPicker, { kind: "people", label: t("assignedCouncilMember"), disabled: pending || state.pending, invalid: !current,
+        // D-0059: the input is as wide as its placeholder (the HTML size attribute, which EntityPicker passes on), so
+        // "Choose a council member" is never cut off; the header tile grows with it.
+        placeholder: t("assignPlaceholder"), entityName: t("assignEntityName"), size: t("assignPlaceholder").length + 2,
         options: members.map((row) => ({ value: row.id, label: row.name || row.id, description: t(row.role === "president" ? "presiding" : row.role === "secretary" ? "councilSecretary" : "councilMemberRole"), src: row.photo_url || undefined })),
         value: current?.id || null, onChange: (value) => value && value !== current?.id && assign(value, current) }),
       changing ? h(P.Inline, null, h(P.Button, { size: "xs", variant: "ghost", disabled: pending, onClick: () => setChanging(false) }, bt("cancel"))) : null,
@@ -3332,7 +3348,7 @@ ${ar}` : en;
     // The ToastProvider carries the assignment toast (AppShell gives none, plenix-requests PLX-021).
     return h(P.ToastProvider, null, h(P.RecordPage, { className },
       h(P.Stack, { gap: "lg", className },
-        shown ? h(P.EntityHeader, caseHeaderProps(shown, lang, facts, assigneeValue)) : null,
+        shown ? h(P.EntityHeader, caseHeaderProps(shown, lang, facts, assigneeValue, Boolean(assigned))) : null,
         readOnly ? h(P.ReadOnly, { reason: t("caseClosedReadOnly"), className }, body) : body)));
   }
 
@@ -4507,7 +4523,7 @@ ${ar}` : en;
       { title: t("marriageTitle"), fields: [["marriage_duration", t("marriageDuration")], ["children", t("children")], ["reason", t("reasonForDivorce")]] },
     ];
     const summaryReadValues = {
-      case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed")), assigned_member: manager || bt("unassigned"),
+      case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: ((badge) => h(P.Badge, { tone: badge.tone }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)), assigned_member: manager || bt("unassigned"),
       applicant: applicant?.name, respondent: respondent?.name, reason: summary.reason, marriage_duration: marriageDuration(record.marriage?.church_marriage_date, lang),
       children: summary.children?.length ? h(P.Stack, { gap: "xs" }, ...summary.children.map((child, index) => h(P.Text, { key: index }, childLine(child, lang, t)))) : t("noChildren"), last_hearing_date: summaryDate(summary.last_hearing_date, lang),
     };
@@ -4550,6 +4566,7 @@ ${ar}` : en;
     caseHeaderPeople,
     timelineModel,
     timelineApiEvents,
+    caseStatusOf,
     HeaderAssignment,
     caseHeaderProps,
     GroupedReadFields,
