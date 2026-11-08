@@ -1367,7 +1367,9 @@ def notifications(request):
     qs = m.Notification.objects.filter(recipient=request.user)
 
     def later_after(notice, moment):
-        return qs.filter(case_id=notice.case_id, kind=notice.kind, created_at__gt=moment).exists()
+        from tribunal.services.assignment_notices import KINDS
+        # The database stamps created_at; issued_at is when the change was made.
+        return qs.filter(case_id=notice.case_id, kind__in=KINDS, payload__issued_at__gte=moment).exists()
 
     hidden = [row.pk for row in qs.select_related("case")
               if not notice_visible(row.key) or not party_notice_visible(row, later_after)]

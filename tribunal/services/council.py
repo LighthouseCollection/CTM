@@ -88,15 +88,16 @@ def _unassign_case(actor, case_id, president_id):
                                  session__state__in={"draft", "planned"}).exists():
         raise ValidationError("This case is scheduled for a hearing. Remove it from the hearing agenda first.")
     previous = case.assigned_member
+    event = audit(actor, "case_unassigned", case, case, metadata={"previous_member_id": str(previous.pk)})
+    # Told while still the case manager: the notice rules accept the current manager.
+    notify(previous, "case_unassigned", event, case=case, payload={"assigned_member": None})
     case.assigned_member = None
     case.save(update_fields=["assigned_member"])
-    event = audit(actor, "case_unassigned", case, case, metadata={"previous_member_id": str(previous.pk)})
-    notify(previous, "assignment_changed", event, case=case, payload={"assigned_member": None})
     # #237: inside the undo window the parties' pending notice is discarded and they
     # hear nothing; after it, they are told the case has no manager for now.
     from .assignment_notices import discard_pending, notify_parties
     if not discard_pending(case):
-        notify_parties(case, event, None)
+        notify_parties(case, event, None, kind="case_unassigned")
     return case
 
 

@@ -17,6 +17,7 @@ from tribunal import models as m
 from tribunal.services.common import notify
 
 KIND = "assignment_changed"
+KINDS = {KIND, "case_unassigned"}  # one stream of "who manages this case" notices
 
 
 def window():
@@ -28,19 +29,21 @@ def discard_pending(case):
     now = timezone.now()
     parties = case.parties.exclude(account__isnull=True).values_list("account_id", flat=True)
     return m.Outbox.objects.filter(
-        case=case, kind=KIND, recipient_id__in=list(parties), delivered_at__isnull=True,
+        case=case, kind__in=KINDS, recipient_id__in=list(parties), delivered_at__isnull=True,
         discarded_at__isnull=True, due_at__gt=now,
     ).update(discarded_at=now)
 
 
-def notify_parties(case, record, member):
+def notify_parties(case, record, member, kind=KIND):
     """Tell each party (after the window) who manages the case now; member may be None."""
-    visible_after = timezone.now() + window()
+    issued_at = timezone.now()
+    visible_after = issued_at + window()
     for party in case.parties.select_related("account").all():
         if party.account:
-            notify(party.account, KIND, record, case=case, due_at=visible_after, payload={
+            notify(party.account, kind, record, case=case, due_at=visible_after, payload={
                 "assigned_member": f"{member.first_name} {member.last_name}".strip() if member else None,
                 "assigned_member_id": str(member.pk) if member else None,
+                "issued_at": issued_at.isoformat(),
                 "visible_after": visible_after.isoformat(),
             })
 
@@ -49,7 +52,7 @@ def party_notice_visible(notice, later_keys_after):
     """In-app rule: shown after its window, unless an Undo or Change inside the
     window superseded it (the manager differs and no later notice came after it)."""
     payload = notice.payload or {}
-    if notice.kind != KIND or "visible_after" not in payload:
+    if notice.kind not in KINDS or "visible_after" not in payload:
         return True
     try:
         visible_after = datetime.fromisoformat(payload["visible_after"])
@@ -60,4 +63,4 @@ def party_notice_visible(notice, later_keys_after):
     current = str(notice.case.assigned_member_id) if notice.case and notice.case.assigned_member_id else None
     if current == payload.get("assigned_member_id"):
         return True
-    return later_keys_after(notice, visible_after)
+    return later_keys_after(notice, payload["visible_after"])

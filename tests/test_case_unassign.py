@@ -84,7 +84,8 @@ def party_accounts(case):
 def inbox(granted_roles, client, account):
     client.force_login(account)
     with granted_roles("ctm_app", session=True):
-        return [row for row in client.get("/api/notifications/").json()["items"] if row["kind"] == "assignment_changed"]
+        return [row for row in client.get("/api/notifications/").json()["items"]
+                if row["kind"] in {"assignment_changed", "case_unassigned"}]
 
 
 def test_party_notice_waits_for_the_undo_window(granted_roles, client, people, assigned, settings):
@@ -105,7 +106,7 @@ def test_undo_inside_the_window_tells_the_parties_nothing(granted_roles, client,
     later = timezone.now() + timedelta(hours=1)
     with patch("django.utils.timezone.now", return_value=later):
         assert inbox(granted_roles, client, party) == []
-    assert m.Notification.objects.filter(recipient=people["member"], kind="assignment_changed").count() >= 2
+    assert m.Notification.objects.filter(recipient=people["member"], kind="case_unassigned").exists()
 
 
 def test_change_inside_the_window_replaces_the_first_notice(granted_roles, client, people, assigned):
@@ -125,7 +126,8 @@ def test_unassign_after_the_window_tells_the_parties(granted_roles, client, peop
     later = timezone.now() + timedelta(seconds=settings.CTM_ASSIGNMENT_UNDO_WINDOW_SECONDS + 60)
     with patch("django.utils.timezone.now", return_value=later):
         assert unassign(granted_roles, client, people["admin"], assigned).status_code == 200
-    first = m.Outbox.objects.filter(kind="assignment_changed", recipient=party, case=assigned).order_by("created_at")
+    first = m.Outbox.objects.filter(kind__in={"assignment_changed", "case_unassigned"}, recipient=party,
+                                    case=assigned).order_by("created_at")
     assert first.count() == 2 and first[0].discarded_at is None  # the first notice was due and stands
     assert first[1].payload["assigned_member"] is None
     with patch("django.utils.timezone.now", return_value=later + timedelta(hours=1)):
