@@ -833,10 +833,13 @@ test("issue 229: every attendance view renders the shared AttendanceRoster, no t
 
 test("ctm3-48 part 3: timeline is Plenix Timeline grouped by year; past hearings a Plenix Table", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  // D-0058: one model (timelineModel) and one drawing (drawTimeline) that becomes the Plenix variation.
+  const draw = councilCase.slice(councilCase.indexOf("function drawTimeline("), councilCase.indexOf("function CaseTimeline("));
+  assert.match(draw, /h\(P\.SectionHeading, \{ level: 2 \}, group\.year\)/);
+  assert.match(draw, /h\(P\.Timeline, \{ label:/);
+  assert.match(draw, /dateTime: item\.dateTime/);
   const timeline = councilCase.slice(councilCase.indexOf("function CaseTimeline("));
-  assert.match(timeline, /h\(P\.SectionHeading, \{ level: 2 \}, group\.year\)/);
-  assert.match(timeline, /h\(P\.Timeline, \{ label:/);
-  assert.match(timeline, /dateTime: event\.timestamp/);
+  assert.match(timeline, /drawTimeline\(\{ P, h, t, model: shown \}\)/);
   assert.match(councilCase, /h\(P\.Table, \{ label: t\("pastHearings"\)/);
 });
 
