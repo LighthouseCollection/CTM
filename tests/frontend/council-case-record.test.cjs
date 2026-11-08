@@ -206,7 +206,7 @@ test("case page header and body share one Stack gap (issue 194)", () => {
 });
 
 // Issue 237 (D-0056): the header's assign slot: a people picker for those who may assign, text for everyone else.
-test("case header: assign control for can_assign, text otherwise; Change once assigned; Undo only with a previous member", async () => {
+test("case header: assign control for can_assign, text otherwise; Change once assigned; Undo puts back the previous member or removes the first assignment", async () => {
   const { harness, load, byName, textOf, settle } = require("./harness.cjs");
   const h = harness();
   h.React.Component = class { constructor(p) { this.props = p; } };
@@ -235,6 +235,8 @@ test("case header: assign control for can_assign, text otherwise; Change once as
   assert.match(textOf(tree), /Fr\. Zed/);
   assert.match(textOf(byName(tree, "Button")[0]), /Change/);
   const source = require("node:fs").readFileSync("static/ctm/council-case.js", "utf8");
-  assert.match(source, /\.\.\.\(previous \? \{ action: \{ label: t\("undo"\), onAction: \(\) => assign\(previous\.id, null\) \} \} : \{\}\)/);
+  // Undo: the previous member back, or (first assignment) DELETE the assignment.
+  assert.match(source, /action: \{ label: t\("undo"\), onAction: \(\) => \(previous \? assign\(previous\.id, null\) : unassign\(\)\) \}/);
+  assert.match(source, /\/assignment\/`, \{ method: "DELETE" \}\)/);
   assert.match(source, /return h\(P\.ToastProvider, null, h\(P\.RecordPage,/);
 });
