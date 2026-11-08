@@ -201,6 +201,40 @@ test("application review: Decline and Accept are page actions in an ActionBar, t
 test("case page header and body share one Stack gap (issue 194)", () => {
   const source = require("node:fs").readFileSync("static/ctm/council-case.js", "utf8");
   const page = source.slice(source.indexOf("function CaseRecordPage("), source.indexOf("// ---------- Parties and case hearings"));
-  assert.match(page, /h\(P\.RecordPage, \{ className \},\s*h\(P\.Stack, \{ gap: "lg", className \},\s*shown \? h\(P\.EntityHeader, caseHeaderProps\(shown, lang, facts\)\) : null,/);
+  assert.match(page, /h\(P\.RecordPage, \{ className \},\s*h\(P\.Stack, \{ gap: "lg", className \},\s*shown \? h\(P\.EntityHeader, caseHeaderProps\(shown, lang, facts, assigneeValue\)\) : null,/);
   assert.doesNotMatch(page, /header: shown/);
+});
+
+// Issue 237 (D-0056): the header's assign slot: a people picker for those who may assign, text for everyone else.
+test("case header: assign control for can_assign, text otherwise; Change once assigned; Undo only with a previous member", async () => {
+  const { harness, load, byName, textOf, settle } = require("./harness.cjs");
+  const h = harness();
+  h.React.Component = class { constructor(p) { this.props = p; } };
+  h.React.Component.prototype.isReactComponent = {};
+  const shows = [];
+  const C = load(h, { document: { documentElement: { lang: "en" } } });
+  const P = C.__plenix || null;
+  const posted = [];
+  const api = async (url, options) => { if (options) posted.push([url, options.body]); return url === "/api/council/members/" ? { items: [{ id: "m1", name: "Fr. Abe", role: "member" }, { id: "m2", name: "Fr. Zed", role: "member" }] } : {}; };
+  let assigned = null;
+  // member without assignment rights: text only
+  let tree = h.render(C.HeaderAssignment, { api, lang: "en", record: { id: "c1", can_assign: false }, current: null, onAssigned() {} });
+  assert.equal(String(tree.type === undefined ? tree : textOf(tree)).includes("Not yet assigned"), true);
+  // secretary, unassigned: an EntityPicker of the council members
+  const props = { api, lang: "en", record: { id: "c1", can_assign: true }, current: null, onAssigned: (m) => { assigned = m; } };
+  h.render(C.HeaderAssignment, props); await settle();
+  tree = h.render(C.HeaderAssignment, props);
+  const picker = byName(tree, "EntityPicker")[0];
+  assert.equal(picker.props.kind, "people");
+  assert.deepEqual(JSON.parse(JSON.stringify(picker.props.options.map((o) => o.label))), ["Fr. Abe", "Fr. Zed"]);
+  await picker.props.onChange("m2"); await settle();
+  assert.deepEqual(posted.at(-1), ["/api/cases/c1/assignment/", JSON.stringify({ member_id: "m2" })]);
+  assert.deepEqual(JSON.parse(JSON.stringify(assigned)), { id: "m2", name: "Fr. Zed" });
+  // assigned: the name with Change
+  tree = h.render(C.HeaderAssignment, { ...props, current: { id: "m2", name: "Fr. Zed" } });
+  assert.match(textOf(tree), /Fr\. Zed/);
+  assert.match(textOf(byName(tree, "Button")[0]), /Change/);
+  const source = require("node:fs").readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(source, /\.\.\.\(previous \? \{ action: \{ label: t\("undo"\), onAction: \(\) => assign\(previous\.id, null\) \} \} : \{\}\)/);
+  assert.match(source, /return h\(P\.ToastProvider, null, h\(P\.RecordPage,/);
 });

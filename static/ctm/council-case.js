@@ -423,6 +423,11 @@ ${ar}` : en;
       respondent: "Respondent",
       reasonForDivorce: "Reason Seeking Divorce",
       assignedCouncilMember: "Assigned Council Member",
+      assignChange: "Change",
+      assignPlaceholder: "Choose a council member",
+      assignEntityName: "council members",
+      assignedToast: "Assigned to {name}",
+      undo: "Undo",
       lastHearingDate: "Last Hearing Date",
       children: "Children",
       noChildren: "No children recorded",
@@ -929,6 +934,11 @@ ${ar}` : en;
       respondent: "الطرف الآخر",
       reasonForDivorce: "سبب طلب الطلاق",
       assignedCouncilMember: "عضو المجلس المكلّف",
+      assignChange: "تغيير",
+      assignPlaceholder: "اختر عضوًا في المجلس",
+      assignEntityName: "أعضاء المجلس",
+      assignedToast: "عُيِّنت القضية إلى {name}",
+      undo: "تراجع",
       lastHearingDate: "تاريخ آخر جلسة",
       children: "الأبناء",
       noChildren: "لا يوجد أبناء مسجلون",
@@ -1320,10 +1330,11 @@ ${ar}` : en;
   // Older servers omit assigned_member_id from case detail; add the shown manager
   // name from the case list so the display fallback above can work.
   async function withAssignee(api, record) {
-    if (!record || record.assigned_member_id !== undefined || record.assigned_member !== undefined) return record;
+    if (!record || record.assigned_member_id !== undefined) return record;
     const list = await api("/api/cases/");
     const row = (list.items || []).find((c) => c.id === record.id);
-    return { ...record, assigned_member: row ? row.assigned_member : null };
+    // Issue 237: the header's assign control needs the member's id as well as the name.
+    return { ...record, assigned_member: record.assigned_member ?? (row ? row.assigned_member : null), assigned_member_id: row ? row.assigned_member_id : null };
   }
 
   // ---------- Report requests ----------
@@ -3158,7 +3169,7 @@ ${ar}` : en;
     return history && history.length ? history[history.length - 1].member : record.assigned_member || null;
   }
 
-  function caseHeaderProps(record, lang, facts) {
+  function caseHeaderProps(record, lang, facts, assigneeValue) {
     const t = translator(lang), bt = base.translator(lang);
     const parties = record.parties || [];
     const applicant = parties.find((party) => party.slot === "A") || parties[0] || null;
@@ -3172,7 +3183,7 @@ ${ar}` : en;
       title: names.length ? names.join(` ${bt("versus")} `) : base.isolate(record.number),
       subtitle: names.length ? base.isolate(record.number) : undefined,
       status: { tone: open ? "success" : "neutral", label: open ? t("active") : bt("closed") },
-      facts: [{ icon: "person", label: t("assignedCouncilMember"), value: caseManager(record) || bt("unassigned") }, ...(facts || [])],
+      facts: [{ icon: "person", label: t("assignedCouncilMember"), value: assigneeValue ?? (caseManager(record) || bt("unassigned")) }, ...(facts || [])],
       strings: { status: bt("statusLabel"), more: t("moreActions") },
       // A tab that fills the room (split list and detail) must never squeeze the header.
       className: "plx-u-shrink-0",
@@ -3187,13 +3198,62 @@ ${ar}` : en;
   // record: the case the tab already loaded; without it the page loads the case for its header alone and
   // leaves the header out when that read is refused, so the tab still opens and nothing hints at the case.
   // readOnly: the case is closed: the body is a ReadOnly region with its reason (read-only-state.md).
-  function CaseRecordPage({ api, lang, caseId, record, title, facts, readOnly, fill, children }) {
+  // Issue 237 (D-0056): the header's "Assigned council member" slot. For those the server lets assign
+  // (record.can_assign: admin, secretary, president) an unassigned case shows a people picker (Plenix EntityPicker,
+  // avatar and name); choosing assigns at once through the same assignment API and audit as the summary edit, with a
+  // toast. Once assigned, the member shows with Change. Everyone else sees text. Undo puts back the previous member;
+  // the first assignment of a case has no Undo, because the server has no way to unassign.
+  function HeaderAssignment({ api, lang, record, current, onAssigned }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
+    const [changing, setChanging] = R.useState(false);
+    const [pending, setPending] = R.useState(false);
+    const [problem, setProblem] = R.useState(null);
+    const toast = P.useToast ? P.useToast() : null;
+    const canAssign = record?.can_assign === true;
+    const [state] = base.useLoad(() => canAssign ? api("/api/council/members/") : Promise.resolve({ items: [] }), [canAssign]);
+    if (!canAssign) return current ? current.name : bt("unassigned");
+    const members = base.assignableMembers(state.data?.items || []);
+    if (current && !changing)
+      return h(P.Inline, { gap: "sm", align: "center" }, h(P.Text, { variant: "strong" }, current.name),
+        h(P.Button, { size: "xs", variant: "ghost", icon: "pencil", onClick: () => { setProblem(null); setChanging(true); } }, t("assignChange")));
+    async function assign(memberId, previous) {
+      const member = members.find((row) => row.id === memberId);
+      setPending(true);
+      setProblem(null);
+      try {
+        await api(`/api/cases/${encodeURIComponent(record.id)}/assignment/`, { method: "POST", body: JSON.stringify({ member_id: memberId }) });
+        setChanging(false);
+        onAssigned({ id: memberId, name: member?.name || "—" });
+        if (toast) toast.show(t("assignedToast", { name: member?.name || "—" }), { tone: "success",
+          ...(previous ? { action: { label: t("undo"), onAction: () => assign(previous.id, null) } } : {}) });
+      } catch (error) {
+        setProblem(base.serverMessage(error, bt));
+      } finally {
+        setPending(false);
+      }
+    }
+    return h(P.Stack, { gap: "xs" },
+      h(P.EntityPicker, { kind: "people", label: t("assignedCouncilMember"), disabled: pending || state.pending,
+        placeholder: t("assignPlaceholder"), entityName: t("assignEntityName"),
+        options: members.map((row) => ({ value: row.id, label: row.name || row.id, description: t(row.role === "president" ? "presiding" : row.role === "secretary" ? "councilSecretary" : "councilMemberRole"), src: row.photo_url || undefined })),
+        value: current?.id || null, onChange: (value) => value && value !== current?.id && assign(value, current) }),
+      changing ? h(P.Inline, null, h(P.Button, { size: "xs", variant: "ghost", disabled: pending, onClick: () => setChanging(false) }, bt("cancel"))) : null,
+      problem ? h(P.Text, { variant: "secondary", role: "alert" }, problem) : null);
+  }
+
+  function CaseRecordPage({ api, lang, caseId, record, title, facts, readOnly, fill, onChanged, children }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const [state] = base.useLoad(
       () => (record ? Promise.resolve(null) : api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r))),
       [caseId, Boolean(record)],
     );
+    const [assigned, setAssigned] = R.useState(null);
     const shown = record || state.data;
+    const manager = shown ? caseManager(shown) : null;
+    const current = assigned || (manager ? { id: shown.assigned_member_id || null, name: manager } : null);
+    const assigneeValue = shown && shown.can_assign === true && shown.status === "open"
+      ? h(HeaderAssignment, { api, lang, record: shown, current, onAssigned: (member) => { setAssigned(member); if (onChanged) onChanged(); } })
+      : assigned ? assigned.name : undefined;
     const className = fill ? "plx-u-flex-1 plx-u-min-h-0" : undefined;
     const body = h(P.Stack, { gap: "lg", className },
       title ? h(P.Text, { as: "h2", variant: "heading" }, title) : null,
@@ -3201,10 +3261,11 @@ ${ar}` : en;
     // Issue 194: RecordPage draws no gap between its header and its body (Plenix 0.93.1), so the case header and the
     // first card touched. The header and the body share one Stack with the body's own gap (lg), so every card on the
     // case page is the same distance apart. The read-only region still covers the body only.
-    return h(P.RecordPage, { className },
+    // The ToastProvider carries the assignment toast (AppShell gives none, plenix-requests PLX-021).
+    return h(P.ToastProvider, null, h(P.RecordPage, { className },
       h(P.Stack, { gap: "lg", className },
-        shown ? h(P.EntityHeader, caseHeaderProps(shown, lang, facts)) : null,
-        readOnly ? h(P.ReadOnly, { reason: t("caseClosedReadOnly"), className }, body) : body));
+        shown ? h(P.EntityHeader, caseHeaderProps(shown, lang, facts, assigneeValue)) : null,
+        readOnly ? h(P.ReadOnly, { reason: t("caseClosedReadOnly"), className }, body) : body)));
   }
 
   // ---------- Parties and case hearings ----------
@@ -4366,13 +4427,15 @@ ${ar}` : en;
         h(P.Timeline, { label: t("keyDates"), items: summaryTimeline }),
       ),
     );
-    return h(CaseRecordPage, { api, lang, caseId, record, readOnly: !openProceeding(record) },
+    return h(CaseRecordPage, { api, lang, caseId, record, readOnly: !openProceeding(record), onChanged: retry },
       summaryPanels,
       reviewApplicationId && !reviewComplete ? h(ApplicationReviewActions, { api, lang, applicationId: reviewApplicationId, onDone: () => { setReviewComplete(true); retry(); } }) : null,
     );
   }
 
   Object.assign(window.CTMCouncil, {
+    HeaderAssignment,
+    caseHeaderProps,
     GroupedReadFields,
     groupedEdit,
     childForm,
