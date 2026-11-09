@@ -14,7 +14,7 @@
  *               button column (kind "actions" or a field named actions / *_action(s)) stays "table", because
  *               0.86.0 cannot measure buttons and would cut them off; move them to rowMenu to get the row cards.
  *   typeIcons   the column type icon before each header title (default now: true)
- *   loading     true: the Plenix spinner with the grid's name, after about a second (D-0064, no skeletons)
+ *   loading     true: the Plenix LoadingState in the grid's empty row, after about a second (D-0064, pds#1032; no skeletons)
  *   openKey     the open row (aria-current); default: selected
  *   template, layout, keyColumns   the row card slots (data-grid.md "Row cards")
  *   cardCount   the plural count over the row cards, e.g. { one: "{n} case", other: "{n} cases" } (EN/AR from callers)
@@ -122,18 +122,12 @@
   // A column of row buttons (Open, Edit, Delete): the actions column kinds and fields named *_action(s).
   const buttonColumn = (column) => column.kind === "actions" || /(^|_)actions?$/.test(column.field || "");
 
-  // D-0064 (issue 272, owner): no skeleton or shimmer placeholders. A region that loads is announced as busy at once
-  // and shows the Plenix Spinner with a label naming what loads, centred, only after about a second (a quick load
-  // shows nothing). Plenix is asked to make this its default (pds issue 1032).
-  function DelayedSpinner({ label, className, delay = 1000 }) {
-    const [shown, setShown] = window.React.useState(false);
-    window.React.useEffect(() => {
-      const timer = window.setTimeout(() => setShown(true), delay);
-      return () => window.clearTimeout(timer);
-    }, [delay]);
-    return h(P.Stack, { align: "center", justify: "center", className: className || "plx-u-flex-1", role: "status", "aria-busy": "true", "aria-label": label },
-      // The Spinner names itself for screen readers; the same words show under it (aria-hidden, so they are read once).
-      shown ? h(P.Stack, { gap: "sm", align: "center" }, h(P.Spinner, { size: "md", label }), h(P.Text, { variant: "secondary", "aria-hidden": "true" }, label)) : null);
+  // D-0064 (issue 272, owner): no skeleton or shimmer placeholders. A region that loads shows the Plenix LoadingState (pds#1032,
+  // ADR 0042): a ring with a label naming what loads, centred, only after about a second (a quick load shows nothing), and
+  // announced once. The region is busy at once.
+  function DelayedSpinner({ label, className, delay }) {
+    return h(P.Stack, { align: "center", justify: "center", className: className || "plx-u-flex-1", "aria-busy": "true" },
+      h(P.LoadingState, { label, size: "lg", ...(delay !== undefined ? { delay } : {}) }));
   }
 
   function Loading({ label, className }) {
@@ -145,7 +139,6 @@
     grid, projected }) {
     // Every CTM collection keeps native grid controls, including read-only records (isStatic is kept for
     // callers; read-only data must not disable column resizing, sorting or header menus).
-    if (loading) return h(Loading, { label, className });
     const { gridRows, gridColumns } = projected || project(rows, columns);
     // 0.86.0 sizes "auto" columns from their measured text; a column of row buttons has no text to measure, so
     // the title takes its room and the buttons are cut off. Such grids keep the fixed table until their
@@ -153,7 +146,7 @@
     const layoutMode = narrow || ((columns || []).some(buttonColumn) ? "table" : "auto");
     const open = openKey !== undefined ? openKey : selected === undefined ? undefined : selected ?? null;
     return h(P.DataGrid, {
-      label, data: gridRows, columns: gridColumns, index: "id", className,
+      label, data: gridRows, columns: gridColumns, index: "id", className, loading,
       density: "compact", cells: "pill", typeIcons, wrapHeaders: false,
       narrow: layoutMode, empty, mode: "fill", headerMenu: true,
       rowMenu, rowMenuButton: !!rowMenu,

@@ -226,15 +226,13 @@ test("users and roles: council seat and voting switches from the seats API", () 
   assert.match(src, /councilSeat: "مقعد في المجلس", votingSeat: "التصويت"/);
 });
 
-// Issue 273 (D-0050, pds D-0106): every read-only list on the case pages is a stacked PropertyList (label over its
-// value tile), never the default "columns" layout (label beside the value); read-only groups are PropertyGroups
-// drawn by readGroup, the one place to switch to the named Plenix read-only variation.
-test("read-only case cards: stacked PropertyLists in PropertyGroups, sentence-case labels", () => {
+// Issue 273/289 (D-0050, pds D-0106, pds#1129): read-only groups are PropertyGroups drawn by readGroup with variant "tiles"
+// (two tiles per row, label over value); the lists inside carry no layout of their own.
+test("read-only case cards: tile PropertyGroups, lists without a layout, sentence-case labels", () => {
   const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  const lists = [...src.matchAll(/h\(\s*P\.PropertyList,\s*([^,]+),/g)].map((m) => m[1].trim());
-  assert.ok(lists.length > 5);
-  assert.deepEqual(lists.filter((props) => !/layout: "stacked"/.test(props)), [], "a PropertyList without layout stacked");
-  assert.match(src, /function readGroup\(P, h, title, \.\.\.children\) \{\n\s*return h\(P\.PropertyGroup, \{ heading: title, level: 3/);
+  assert.doesNotMatch(src, /layout: "stacked"/, "no stacked layout: the tiles variant replaces it");
+  assert.doesNotMatch(src, /readGroup\([^\n]*caseColumns/, "no Columns wrapper around a read-only group");
+  assert.match(src, /function readGroup\(P, h, title, \.\.\.children\) \{\n\s*return h\(P\.PropertyGroup, \{ heading: title, level: 3, variant: "tiles"/);
   assert.match(src, /readGroup\(P, h, group\.title, h\(CaseReadFields/);
   for (const [key, label] of [["caseNumber", "Case number"], ["filingDate", "Filing date"], ["assignedCouncilMember", "Assigned council member"], ["lastHearingDate", "Last hearing date"]])
     assert.ok(src.includes(`      ${key}: "${label}",`), key);

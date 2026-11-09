@@ -329,7 +329,7 @@
           if (last && last.__pairs) last.__pairs.push(node); else { const run = [node]; run.__pairs = run; out.push(run); }
         } else out.push(node);
         return out;
-      }, []).map((node, index) => Array.isArray(node) ? h(P.PropertyList, { key: "answers-" + index }, ...node) : node);
+      }, []).map((node, index) => Array.isArray(node) ? h(P.PropertyList, { variant: "tiles", key: "answers-" + index }, ...node) : node);
       const renderField = (field, answers=state.answers, change=session.change, readOnly=review) => {
         const value = answers[field.code];
         const fieldLabel = label(field, lang);
@@ -411,7 +411,7 @@
         }) });
       body = h(P.Stack, { gap: "lg" },
         // D-0050 (issue 217): status and case reference are description-list items; the status is a Badge.
-        h(P.PropertyList, { layout: "stacked" },
+        h(P.PropertyList, { variant: "tiles" },
           h(P.PropertyList.Item, { label: t("status") }, h(P.Badge, {
             tone: { submitted: "active", returned: "action-required", accepted: "success", declined: "negative", expired: "waiting" }[record.status] || "neutral" },
             t(record.status === "expired" ? "expiredStatus" :

@@ -40,20 +40,20 @@ const cases = [
   { id: "c2", number: "20261020-02", status: "closed", applicant_name: "Daniel Brooks", respondent_name: "Olivia Brooks", closed_at: "2026-10-30T10:00:00Z" },
 ];
 
-// D-0064 (issue 272, owner): no skeletons; a loading region is busy at once and shows the Plenix Spinner with a label
-// naming what loads after about a second (CTMShell.DelayedSpinner; a plain spinner where the shell is not loaded).
-test("loading is the Plenix spinner with a label, after a delay; no skeleton anywhere", () => {
+// D-0064 (issue 272, owner), pds#1032 (ADR 0042): no skeletons; a loading region is busy at once and shows the Plenix LoadingState (a ring
+// and a label naming what loads, after about a second; CTMShell.DelayedSpinner draws it, and so does the fallback where the shell is not loaded).
+test("loading is the Plenix LoadingState with a label, after a delay; no skeleton anywhere", () => {
   const [h, C] = boot();
   const view = C.loadingView(new Proxy({}, { get: (_t, k) => k }), (type, props, ...children) => ({ type, props, children }), C.translator("en"), "Loading cases…");
-  assert.equal(view.props.role, "status");
   assert.equal(view.props["aria-busy"], "true");
-  assert.equal(view.props["aria-label"], "Loading cases…");
+  assert.equal(view.children[0].type, "LoadingState");
+  assert.equal(view.children[0].props.label, "Loading cases…");
   for (const file of fs.readdirSync("static/ctm").filter((name) => name.endsWith(".js")))
     assert.doesNotMatch(fs.readFileSync("static/ctm/" + file, "utf8"), /P\.Skeleton\b/, file);
   const shell = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
-  assert.match(shell, /const timer = window\.setTimeout\(\(\) => setShown\(true\), delay\);/);
-  assert.match(shell, /function DelayedSpinner\(\{ label, className, delay = 1000 \}\)/);
-  assert.match(shell, /h\(P\.Spinner, \{ size: "md", label \}\), h\(P\.Text, \{ variant: "secondary", "aria-hidden": "true" \}, label\)/);
+  assert.match(shell, /function DelayedSpinner\(\{ label, className, delay \}\)/);
+  assert.match(shell, /h\(P\.LoadingState, \{ label, size: "lg"/);
+  assert.doesNotMatch(shell, /P\.Spinner\b/, "no plain Spinner for a region");
   const caseSrc = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.equal(caseSrc.split("base.loadingView(P, h, t);").length - 1, 0, "case tabs name what loads");
 });

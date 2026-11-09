@@ -1797,7 +1797,7 @@ ${ar}` : en;
         controls.projected
           ? h(
               P.PropertyList,
-              { layout: "stacked" },
+              { variant: "tiles" },
               controls.priestName ? h(P.PropertyList.Item, { label: t("priestName") }, base.isolate(controls.priestName)) : null,
               h(
                 P.PropertyList.Item,
@@ -2079,7 +2079,7 @@ ${ar}` : en;
         form.fileId
           ? h(
               P.PropertyList,
-              { layout: "stacked" },
+              { variant: "tiles" },
               h(P.PropertyList.Item, { label: w("File") }, base.isolate(form.fileName)),
               h(P.PropertyList.Item, { label: t("returnedCheckState") }, h(P.Badge, { tone: form.scan === "clean" ? "success" : form.scan === "rejected" ? "danger" : "neutral" }, t("scan_" + form.scan))),
               variant === "recording" ? h(P.PropertyList.Item, { label: t("recDuration") }, form.durationMs === null ? t("recDurationUnknown") : base.isolate(formatDuration(form.durationMs))) : null,
@@ -2168,7 +2168,7 @@ ${ar}` : en;
       // D-0050 groups (groups.md): Request · Record.
       readGroup(P, h, t("groupRequest"), h(
         P.PropertyList,
-        { layout: "stacked" },
+        { variant: "tiles" },
         h(P.PropertyList.Item, { label: t("title") }, request.title),
         h(P.PropertyList.Item, { label: base.translator(lang)("statusLabel") }, h(P.Badge, { tone: request.state === "draft" ? "neutral" : request.state === "sent" ? "active" : "success" }, t(request.state))),
         h(P.PropertyList.Item, { label: t("method") }, t(request.kind)),
@@ -2177,7 +2177,7 @@ ${ar}` : en;
       )),
       readGroup(P, h, t("groupRecord"), h(
         P.PropertyList,
-        { layout: "stacked" },
+        { variant: "tiles" },
         request.author ? h(P.PropertyList.Item, { label: t("preparedBy") }, request.author) : null,
         request.created_at ? h(P.PropertyList.Item, { label: t("createdAt"), data: true }, base.formatWhen(request.created_at, lang)) : null,
         request.sent_at ? h(P.PropertyList.Item, { label: t(interview ? "startedAt" : "sentAt"), data: true }, base.formatWhen(request.sent_at, lang)) : null,
@@ -2556,9 +2556,9 @@ ${ar}` : en;
         { icon: "doc-text", title: t("votedOn"), description: decision.number ? `${t("version")} ${decision.number}` : undefined },
         h(
           P.PropertyList,
-          { layout: "stacked" },
+          { variant: "tiles" },
           h(P.PropertyList.Item, { label: t("decisionType") }, typeLabel(decision.type)),
-          h(P.PropertyList.Item, { label: t("grounds") }, decision.grounds),
+          h(P.PropertyList.Item, { label: t("grounds"), span: "full" }, decision.grounds),
           Object.keys(decision.entitlements || {}).length
             ? h(
                 P.PropertyList.Item,
@@ -2569,7 +2569,7 @@ ${ar}` : en;
                 }),
               )
             : null,
-          decision.conditions ? h(P.PropertyList.Item, { label: t("conditions") }, decision.conditions) : null,
+          decision.conditions ? h(P.PropertyList.Item, { label: t("conditions"), span: "full" }, decision.conditions) : null,
           decision.actor ? h(P.PropertyList.Item, { label: t("recordedBy") }, `${decision.actor} · ${base.formatWhen(decision.timestamp, lang)}`) : null,
         ),
       ),
@@ -2586,7 +2586,7 @@ ${ar}` : en;
           !readAvailable ? h(P.Notice, { tone: "warning" }, t("sessionVotesNotice")) : null,
           h(
             P.PropertyList,
-            { layout: "stacked" },
+            { variant: "tiles" },
             ...rows.map((row) =>
               h(
                 P.PropertyList.Item,
@@ -2638,7 +2638,7 @@ ${ar}` : en;
               P.Stack,
               { gap: "sm" },
               h(P.Badge, { tone: "success" }, t("approved")),
-              h(P.PropertyList, { layout: "stacked" },
+              h(P.PropertyList, { variant: "tiles" },
                 h(P.PropertyList.Item, { label: t("president") }, decision.approval.president || "—"),
                 decision.approval.actor && decision.approval.actor !== decision.approval.president
                   ? h(P.PropertyList.Item, { label: t("recordedBy") }, `${decision.approval.actor}${decision.approval.timestamp ? " · " + base.formatWhen(decision.approval.timestamp, lang) : ""}`)
@@ -3435,11 +3435,11 @@ ${ar}` : en;
     return h(P.SectionHeading, { level: 3 }, title);
   }
 
-  // Issue 273 (D-0050, pds D-0106): a read-only group is a Plenix PropertyGroup (its own heading) around stacked
-  // PropertyLists. This is the one place that draws a read-only group, so the named Plenix read-only variation
+  // Issue 273 (D-0050, pds D-0106): a read-only group is a Plenix PropertyGroup (its own heading) around
+  // PropertyLists (tiles variant). This is the one place that draws a read-only group, so the named Plenix read-only variation
   // switches here with one prop when it ships. Edit forms keep groupHeading above their fields.
   function readGroup(P, h, title, ...children) {
-    return h(P.PropertyGroup, { heading: title, level: 3, key: typeof title === "string" ? title : undefined }, ...children);
+    return h(P.PropertyGroup, { heading: title, level: 3, variant: "tiles", key: typeof title === "string" ? title : undefined }, ...children);
   }
 
   // groups: [{ title, fields: [[key, label, type]] }] drawn with CaseReadFields; an empty group is left out.
@@ -3456,16 +3456,14 @@ ${ar}` : en;
   }
 
   function profileList(P, h, items) {
-    return h(P.PropertyList, { layout: "stacked" }, ...items);
+    return h(P.PropertyList, null, ...items);
   }
 
   function spouseProfileSection(P, h, t, title, icon, values, twoColumns = false) {
     const fields = values.filter(([, value]) => value);
     if (!fields.length) return null;
     return readGroup(P, h, title,
-      twoColumns
-        ? caseColumns(P, h, fields.map(([label, value]) => profileList(P, h, [h(P.PropertyList.Item, { key: label, label: t(label) }, value)])), 2, "medium")
-        : profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value))));
+      profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value))));
   }
 
   function spouseProfileValues(record, party) {
@@ -3588,7 +3586,7 @@ ${ar}` : en;
             failure ? h(P.Notice, { tone: "danger" }, failure) : null,
             h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveContact"))),
           )
-        : readGroup(P, h, t("contact"), caseColumns(P, h, fields.map(([key, label]) => profileList(P, h, [h(P.PropertyList.Item, { key, label }, values[key] || "—")])), 2, "medium")),
+        : readGroup(P, h, t("contact"), profileList(P, h, fields.map(([key, label]) => h(P.PropertyList.Item, { key, label }, values[key] || "—")))),
     );
   }
 
@@ -3960,7 +3958,7 @@ ${ar}` : en;
         ) : null;
         return h(P.Panel, { icon: "doc-text", key: row.id, title: h(P.Inline, { gap: "md", align: "center", wrap: true }, h(P.Text, { as: "span" }, t("petition")), filingParty), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
           h(P.Stack, { gap: "sm" },
-            answers.length ? h(P.PropertyList, { layout: "stacked" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
+            answers.length ? h(P.PropertyList, { variant: "tiles" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
           ),
         );
       }),
@@ -4120,6 +4118,9 @@ ${ar}` : en;
         children.length && !open ? h(P.Inline, null, h(P.Button, { size: "sm", icon: "add", disabled, onClick: () => start(-1) }, t("addChild"))) : null));
   }
 
+  // a long-text value (notes, a recommendation) takes the whole row of the read-only tiles (Plenix PropertyList.Item span)
+  const LONG_TEXT = new Set(["textarea", "longtext", "notes"]);
+
   function CaseReadFields({ P, h, fields, values, lang, columns = 3 }) {
     const language = lang || window.document.documentElement.lang;
     const show = (value, type) => {
@@ -4129,7 +4130,7 @@ ${ar}` : en;
         return new Intl.DateTimeFormat(language === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(String(value) + "T00:00:00Z"));
       return String(value);
     };
-    return caseColumns(P, h, fields.map(([key, label, type = "text"]) => h(P.PropertyList, { layout: "stacked", key }, h(P.PropertyList.Item, { label }, show(values[key], type)))), columns, "wide");
+    return h(P.PropertyList, null, ...fields.map(([key, label, type = "text"]) => h(P.PropertyList.Item, { key, label, span: LONG_TEXT.has(type) ? "full" : undefined }, show(values[key], type))));
   }
 
   function CaseMarriage({ api, lang, user, caseId }) {
@@ -4579,7 +4580,7 @@ ${ar}` : en;
     const summaryGroups = [
       { title: t("groupCase"), fields: [["case_number", t("caseNumber")], ["filing_date", t("filingDate")], ["status", bt("statusLabel")], ["assigned_member", t("assignedCouncilMember")], ["last_hearing_date", t("lastHearingDate")]] },
       { title: t("groupSpouses"), fields: [["applicant", t("applicant")], ["respondent", t("respondent")]] },
-      { title: t("marriageTitle"), fields: [["marriage_duration", t("marriageDuration")], ["children", t("children")], ["reason", t("reasonForDivorce")]] },
+      { title: t("marriageTitle"), fields: [["marriage_duration", t("marriageDuration")], ["children", t("children"), "longtext"], ["reason", t("reasonForDivorce"), "longtext"]] },
     ];
     const summaryReadValues = {
       case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: ((badge) => h(P.Badge, { tone: badge.tone, icon: badge.icon }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)), assigned_member: manager || bt("unassigned"),
