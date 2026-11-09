@@ -284,11 +284,11 @@ test("the session header is Plenix EntityHeader style 2: facts carry their actio
   assert.match(sessionWorkspace, /current \? h\(P\.Stack, \{ gap: "lg" \},\s*h\(P\.Panel/);
   assert.doesNotMatch(agendaTable, /P\.Panel/);
   assert.match(agendaTable, /previousRecommendation/);
-  // D-0062 (issue 271): no row panel.
-  // pds#1147 (Plenix 1.5.0): the column shows two lines and a corner icon opens the whole text in a Dialog; no Text truncate workaround.
-  assert.match(agendaTable, /field: "previous_recommendation", minWidth: "14rem", pill: false, overflow: "dialog", lines: 2, render: \(row\) => recommendationText\(row\.previous_recommendation, t\)/);
-  assert.doesNotMatch(council, /recommendationCell|truncate: true/);
-  assert.match(council, /return text \|\| t\("notRecorded"\);/);
+  // Issue 222: the recommendation cell is text; no button or dialog in a cell.
+  // D-0062 (issue 271): the text ending in "…" with the full text on hover; no row panel.
+  assert.match(agendaTable, /wrap: true, render: \(row\) => recommendationCell\(P, h, row\.previous_recommendation, t\)/);
+  assert.ok(council.includes('return h(P.Text, { as: "span", truncate: true, overflow: "dialog", overflowLabel: t("previousRecommendation"), dir: "auto", className: "plx-u-w-100p" }, text);'), "the cut recommendation keeps a corner icon that opens the whole text (pds 1122)");
+  assert.match(council, /if \(!text\) return t\("notRecorded"\);/);
   assert.doesNotMatch(council, /PreviousRecommendationCell|readRecommendation/);
   assert.doesNotMatch(council, /P\.SidePanel|agendaDetail/);
   assert.doesNotMatch(agendaTable, /onSelect:/);
@@ -891,7 +891,7 @@ test("session form rows are spaced and its fields fill their columns (#117)", ()
 test("long-text grid columns use overflow dialog with two lines", () => {
   const read = (file) => fs.readFileSync(`static/ctm/${file}`, "utf8");
   const council = read("council.js");
-  for (const field of ["previous_recommendation", "reason", "grounds", "recommendation"])
+  for (const field of ["reason", "grounds", "recommendation"])
     assert.match(council, new RegExp(`field: "${field}"[^}]*overflow: "dialog", lines: 2`), field);
   assert.match(read("council-case.js"), /field: "preview", kind: "wrap", overflow: "dialog", lines: 2/);
   assert.match(read("app.js"), /field: "body", kind: "wrap", overflow: "dialog", lines: 2/);

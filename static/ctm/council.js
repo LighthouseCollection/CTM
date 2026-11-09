@@ -1320,8 +1320,17 @@
     return text || t("notRecorded");
   }
 
-  // D-0062 (issue 271), pds#1147: the cell shows two lines of the text; a corner icon on the hovered or active cell opens the whole text in a Dialog
-  // (Plenix 1.5.0, column overflow "dialog"). Empty is "Not recorded".
+  // D-0062 (issue 271, withdraws D-0051's row panel): no panel; the cell shows the text ending in "…" and the full
+  // text on hover; empty is "Not recorded". Plenix 1.2.0 gaps (logged on pds): the grid keeps one line in its rows
+  // (column wrap and Text lines are ignored), and a Plenix Tooltip in a cell does not shrink (no "…") and draws the
+  // text on one very long line. Until Plenix fixes them: Text truncate with the full text as its title.
+  function recommendationCell(P, h, value, t) {
+    const text = String(value || "").trim().replace(/\s+/g, " ");
+    if (!text) return t("notRecorded");
+    // pds 1.4.0 (issue 1122): the cut text keeps a corner icon that opens the whole recommendation in a Dialog titled with the column's name
+    return h(P.Text, { as: "span", truncate: true, overflow: "dialog", overflowLabel: t("previousRecommendation"), dir: "auto", className: "plx-u-w-100p" }, text);
+  }
+
 
   const feeLabel = (row, t) => (row.fee ? t(row.fee.status) : t("unknown"));
   const REVIEW_URL = "/api/applications/?state=awaiting_review";
@@ -1803,7 +1812,7 @@
           archiveTable(t("casesPresented"), archivedItems.presented, t("part2Empty"), caseColumns([
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
             { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
-            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, overflow: "dialog", lines: 2, render: (row) => recommendationText(row.previous_recommendation, t) },
+            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, wrap: true, render: (row) => recommendationCell(P, h, row.previous_recommendation, t) },
           ])),
         ) : null,
       ));
@@ -2912,7 +2921,7 @@
             { title: t("applicant"), field: "applicant", width: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
             { title: t("respondent"), field: "respondent", width: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: t("previousRecommendation"), field: "previous_recommendation", width: "12rem", pill: false, overflow: "dialog", lines: 2, render: (row) => recommendationText(row.previous_recommendation, t) },
+            { title: t("previousRecommendation"), field: "previous_recommendation", width: "12rem", pill: false, wrap: true, render: (row) => recommendationCell(P, h, row.previous_recommendation, t) },
             { title: t("actions"), field: "open_action", minWidth: "9rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },

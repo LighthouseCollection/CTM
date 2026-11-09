@@ -28,3 +28,7 @@ test("long text outside a list is a Text with lines, overflow dialog and its lab
   assert.match(read("council-media.js"), /lines: 3, overflow: "dialog", overflowLabel: label \}, typeof answer/, "the answer panels");
   assert.match(read("app.js"), /text\(shown\.observations, \{ lines: 3, overflow: "dialog", overflowLabel: t\("observations"\) \}\)/);
 });
+
+test("the previous recommendation in the agenda grids opens its whole text in a Dialog", () => {
+  assert.match(read("council.js"), /P\.Text, \{ as: "span", truncate: true, overflow: "dialog", overflowLabel: t\("previousRecommendation"\)/);
+});
