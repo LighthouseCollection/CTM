@@ -2558,7 +2558,7 @@ ${ar}` : en;
           P.PropertyList,
           { variant: "tiles" },
           h(P.PropertyList.Item, { label: t("decisionType") }, typeLabel(decision.type)),
-          h(P.PropertyList.Item, { label: t("grounds") }, decision.grounds),
+          h(P.PropertyList.Item, { label: t("grounds"), span: "full", lines: 3 }, decision.grounds),
           Object.keys(decision.entitlements || {}).length
             ? h(
                 P.PropertyList.Item,
@@ -2569,7 +2569,7 @@ ${ar}` : en;
                 }),
               )
             : null,
-          decision.conditions ? h(P.PropertyList.Item, { label: t("conditions") }, decision.conditions) : null,
+          decision.conditions ? h(P.PropertyList.Item, { label: t("conditions"), span: "full", lines: 3 }, decision.conditions) : null,
           decision.actor ? h(P.PropertyList.Item, { label: t("recordedBy") }, `${decision.actor} · ${base.formatWhen(decision.timestamp, lang)}`) : null,
         ),
       ),
@@ -3464,7 +3464,7 @@ ${ar}` : en;
     const fields = values.filter(([, value]) => value);
     if (!fields.length) return null;
     return readGroup(P, h, title,
-      profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label), span: longValue(value) ? "full" : undefined }, value))));
+      profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label), span: longValue(value) ? "full" : undefined, lines: longValue(value) ? 3 : undefined }, value))));
   }
 
   // a value of more than 80 characters, or with a line break, is long text: its tile takes the whole row (Plenix Item.span)
@@ -4134,7 +4134,7 @@ ${ar}` : en;
       return String(value);
     };
     // pds D-0132: one PropertyList in the tiles variation; the tiles are two per row, and a long value (notes, grounds) takes the whole row
-    return h(P.PropertyList, null, ...fields.map(([key, label, type = "text"]) => h(P.PropertyList.Item, { key, label, span: longValue(values[key]) ? "full" : undefined }, show(values[key], type))));
+    return h(P.PropertyList, null, ...fields.map(([key, label, type = "text"]) => h(P.PropertyList.Item, { key, label, span: longValue(values[key]) ? "full" : undefined, lines: longValue(values[key]) ? 3 : undefined }, show(values[key], type))));
   }
 
   function CaseMarriage({ api, lang, user, caseId }) {

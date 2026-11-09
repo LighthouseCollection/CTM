@@ -1364,11 +1364,11 @@
               P.PropertyList,
               { variant: "tiles" },
               ...answerEntries(report, conflict.answers).map(([code, answer]) =>
-                h(P.PropertyList.Item, { key: code, label: label(code) },
+                h(P.PropertyList.Item, { key: code, label: label(code), lines: 3 },
                   h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer))),
               ),
               conflict.observations
-                ? h(P.PropertyList.Item, { label: t("observations") }, h(P.Text, { as: "p", dir: "auto" }, conflict.observations))
+                ? h(P.PropertyList.Item, { label: t("observations"), span: "full", lines: 3 }, h(P.Text, { as: "p", dir: "auto" }, conflict.observations))
                 : null,
             ),
           )

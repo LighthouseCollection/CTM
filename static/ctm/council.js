@@ -1495,7 +1495,7 @@
                 P.PropertyList,
                 { variant: "tiles" },
                 ...labelled.map(([code, label, value]) =>
-                  h(P.PropertyList.Item, { key: code, label: label || code }, answerText(value, t)),
+                  h(P.PropertyList.Item, { key: code, label: label || code, lines: 3 }, answerText(value, t)),
                 ),
               )
             : h(P.EmptyState, { title: t("noAnswers") }),
