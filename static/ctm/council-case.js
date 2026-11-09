@@ -419,6 +419,7 @@ ${ar}` : en;
       caseClosedReadOnly: "This case is closed and read-only.",
       caseActions: "Case actions",
       moreActions: "More actions",
+      loadingCase: "Loading the case…",
       deleteCase: "Delete case",
       deleteCaseTitle: "Delete case {number}?",
       deleteCaseConsequence: "Its filings, documents, hearings and votes are deleted too. This can't be undone.",
@@ -963,6 +964,7 @@ ${ar}` : en;
       caseClosedReadOnly: "هذه القضية مغلقة ومتاحة للقراءة فقط.",
       caseActions: "إجراءات القضية",
       moreActions: "المزيد من الإجراءات",
+      loadingCase: "جارٍ تحميل القضية…",
       deleteCase: "حذف القضية",
       deleteCaseTitle: "حذف القضية {number}؟",
       deleteCaseConsequence: "تُحذف معها أيضًا طلباتها ومستنداتها وجلساتها وأصواتها. لا يمكن التراجع عن ذلك.",
@@ -2248,7 +2250,7 @@ ${ar}` : en;
     const [selected, select] = R.useState(null);
     const [editing, setEditing] = R.useState(!interviewOnly);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, questions, caseRow } = state.data;
     const requests = state.data.requests.filter((row) => interviewOnly ? row.kind === "interview" : row.kind !== "interview");
@@ -2723,7 +2725,7 @@ ${ar}` : en;
     );
     const [local, setLocal] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, members, caseRow, proceeding, versions } = state.data;
     const readAvailable = versions !== null;
@@ -2948,7 +2950,7 @@ ${ar}` : en;
       [caseId],
     );
     const [filters, setFilters] = R.useState({});
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const loaded = auditRows(state.data.items, state.data.members, lang);
     const rows = window.CTMUI.filterAudit(loaded, filters);
@@ -2977,7 +2979,7 @@ ${ar}` : en;
     const [selected, select] = R.useState(null), [tab, setTab] = R.useState("received"), [composing, setComposing] = R.useState(false);
     const [form, setForm] = R.useState({ party: "", occurred: "", direction: "sent", outcome: "", notes: "" });
     const [problem, setProblem] = R.useState(null), [pending, setPending] = R.useState(false), [failure, setFailure] = R.useState(null), [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, calls } = state.data;
     const canWrite = writerFor(user, null, record) && record.status === "open";
@@ -3072,7 +3074,7 @@ ${ar}` : en;
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     const [confirm, setConfirm] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, requests, reports } = state.data;
     const proceeding = openProceeding(record);
@@ -3679,7 +3681,7 @@ ${ar}` : en;
     const [notice, setNotice] = R.useState(null);
     const [expandedParties, setExpandedParties] = R.useState({});
     const [editingParty, setEditingParty] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const record = state.data;
     const manage = base.canManage(user);
@@ -3822,7 +3824,7 @@ ${ar}` : en;
         }),
       [caseId],
     );
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const rows = state.data || [];
     const current = rows.find(({ session, item }) => session.state !== "closed" && item.state !== "heard") || rows[0] || null;
@@ -3886,7 +3888,7 @@ ${ar}` : en;
   function HearingAttendance({ api, lang, user, sessionId, hearingId }) {
     const P = window.Plenix, h = window.React.createElement, t = translator(lang);
     const [state, retry] = base.useLoad(() => hearingId ? api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/?hearing_id=${encodeURIComponent(hearingId)}`) : Promise.resolve({ items: [] }), [sessionId, hearingId]);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     return h(base.AttendanceRoster, { lang, readOnly: !hearingId || user?.role === "member",
       rows: base.rosterRowsFrom(state.data) || (state.data.items || []).map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, seat: row.seat, photo_url: row.photo_url, present: row.present, former: Boolean(row.former) })),
@@ -3943,7 +3945,7 @@ ${ar}` : en;
   function PetitionWorkspace({ api, lang, user, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
     const [state, retry] = base.useLoad(() => api("/api/applications/").then((apps) => ({ petitions: casePetitions(apps.items, caseId) })), [caseId]);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { petitions } = state.data;
     return h(CaseRecordPage, { api, lang, user, caseId, title: t("petitionTitle") },
@@ -3979,7 +3981,7 @@ ${ar}` : en;
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, proceeding, notes } = state.data;
     const canWrite = writerFor(user, null, record) && proceeding && proceeding.status === "open";
@@ -4136,7 +4138,7 @@ ${ar}` : en;
     const [form, setForm] = R.useState({});
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const record = state.data;
     const marriage = councilCardValues(record, "marriage", record.marriage || {}), value = (item) => item || "—";
@@ -4211,7 +4213,7 @@ ${ar}` : en;
   function CaseSeparation({ api, lang, user, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`), [caseId]);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const record = state.data, separation = record.separation || {};
     const initiator = separation.initiated_by;
@@ -4358,7 +4360,7 @@ ${ar}` : en;
         .catch(() => api(`/api/cases/${encodeURIComponent(caseId)}/audit/`).then((audit) => ({ record, events: timelineEvents(audit.items, record, lang) })))),
       [caseId, lang],
     );
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const model = timelineModel(state.data.events, lang, t);
     return h(CaseRecordPage, { api, lang, user, caseId, record: state.data.record, title: t("timelineTitle") },
@@ -4490,7 +4492,7 @@ ${ar}` : en;
         }),
       [caseId],
     );
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, members, facts } = state.data;
     const bt = base.translator(lang);

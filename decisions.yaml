@@ -568,3 +568,14 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: test, ref: tests/frontend/shell-frame.test.cjs }
+
+  - id: D-0064
+    date: 2026-11-08
+    area: design
+    decision: No skeleton or shimmer placeholders anywhere in CTM; a region that loads uses the Plenix spinner with a label naming what loads (LoadingState, and loading on DataGrid and ListingPage), shown after about a second, announced as busy at once (Plenix D-0130)
+    why: Owner 2026-11-08 (#272, pds#1032) "I do not want this loading style view"; again 2026-11-09 (#289) "use the regular standard way similar to fluent"
+    options: [Labeled spinner after a second (chosen), Skeleton bars (before)]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/council-lists.test.cjs }
+
