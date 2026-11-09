@@ -769,7 +769,7 @@ test("ctm3-48 part 2: grids are Plenix Columns that collapse to one column on na
   assert.match(councilCase, /function caseColumns\(P, h, items, count, collapseBelow\)/);
   assert.match(councilCase, /h\(P\.Columns, \{ count, collapseBelow \}/);
   assert.match(councilCase, /, 3, "wide"\)/, "#13 edit forms: three columns");
-  assert.match(councilCase, /, 2, "medium"\)/, "#8 spouse profile: two columns");
+  assert.doesNotMatch(councilCase, /, 2, "medium"\)/, "#8 spouse profile: no CTM columns, the tiles variation lays out two per row (pds D-0132)");
   assert.match(council, /h\(P\.Columns, \{ count: 2, collapseBelow: "wide" \}/, "#16 session form");
 });
 

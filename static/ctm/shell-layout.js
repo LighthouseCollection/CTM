@@ -127,7 +127,7 @@
   // shows nothing). Plenix is asked to make this its default (pds issue 1032).
   // Plenix 1.3 (pds D-0130, ADR 0042): LoadingState is the spinner with its label, centred, after about a second; it announces itself once.
   function DelayedSpinner({ label, className, delay = "region" }) {
-    return h(P.Stack, { align: "center", justify: "center", className: className || "plx-u-flex-1", "aria-busy": "true" },
+    return h(P.Stack, { align: "center", justify: "center", className: className || "plx-u-flex-1", "aria-busy": "true", "aria-label": label },
       h(P.LoadingState, { label, delay }));
   }
 
