@@ -1364,8 +1364,8 @@
               P.PropertyList,
               { variant: "tiles" },
               ...answerEntries(report, conflict.answers).map(([code, answer]) =>
-                h(P.PropertyList.Item, { key: code, label: label(code) },
-                  h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer))),
+                h(P.PropertyList.Item, { key: code, label: label(code), lines: 3 },
+                  typeof answer === "string" ? answer : JSON.stringify(answer)),
               ),
               conflict.observations
                 ? h(P.PropertyList.Item, { label: t("observations"), lines: 3, span: "full" }, conflict.observations)
@@ -1918,7 +1918,7 @@
           );
         const question = (report.questions || []).find((q) => q.code === code);
         const label = question ? `${code} — ${base.isolate((lang === "ar" && question.ar) || question.en || code)}` : code === "files" ? t("response") : code === "testimony" ? t("priestTestimony") : code;
-        return h(P.Panel, { icon: "document", key: code, title: label }, h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer)));
+        return h(P.Panel, { icon: "document", key: code, title: label }, h(P.Text, { as: "p", dir: "auto", lines: 3, overflow: "dialog", overflowLabel: label }, typeof answer === "string" ? answer : JSON.stringify(answer)));
       }),
       shown.observations ? h(P.Panel, { icon: "document", title: t("observations") }, h(P.Text, { as: "p", dir: "auto", lines: 3, overflow: "dialog", overflowLabel: t("observations") }, shown.observations)) : null,
       access === "unknown" ? h(P.Text, { variant: "secondary" }, t("revisionPending")) : null,

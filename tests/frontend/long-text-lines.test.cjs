@@ -24,5 +24,7 @@ test("the case profile and the case card fields clamp their long values", () => 
 
 test("long text outside a list is a Text with lines, overflow dialog and its label", () => {
   assert.match(read("council-media.js"), /P\.Text, \{ as: "p", dir: "auto", lines: 3, overflow: "dialog", overflowLabel: t\("observations"\) \}/);
+  assert.match(read("council-media.js"), /label: label\(code\), lines: 3 \}/, "the conflict answers");
+  assert.match(read("council-media.js"), /lines: 3, overflow: "dialog", overflowLabel: label \}, typeof answer/, "the answer panels");
   assert.match(read("app.js"), /text\(shown\.observations, \{ lines: 3, overflow: "dialog", overflowLabel: t\("observations"\) \}\)/);
 });
