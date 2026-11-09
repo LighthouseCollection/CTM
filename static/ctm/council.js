@@ -1314,7 +1314,7 @@
     });
   }
 
-  // A grid cell shows its text; the corner icon of a column with overflow "dialog" is Plenix's (pds#1147), not the cell's.
+  // A grid cell shows its text; the corner icon of a column with overflow "dialog" is Plenix's, not the cell's.
   function recommendationText(value, t) {
     const text = String(value || "").trim().replace(/\s+/g, " ");
     return text || t("notRecorded");
