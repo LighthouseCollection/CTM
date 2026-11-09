@@ -326,10 +326,10 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.doesNotMatch(councilCase, /spouseIdentity\(P, h, t, party\)/);
   assert.match(councilCase, /collapsible: true/);
   assert.match(councilCase, /profile\?\.contact/);
-  assert.match(councilCase, /function spouseProfileSection\(P, h, t, title, icon, values, twoColumns = false\)/);
+  assert.match(councilCase, /function spouseProfileSection\(P, h, t, title, icon, values\)/);
   assert.match(councilCase, /function SpouseContactSection\(\{ api, P, h, t, user, record, party, onSaved \}\)/);
   assert.match(councilCase, /h\(SpouseContactSection, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
-  assert.match(councilCase, /twoColumns\s*\? caseColumns\(P, h, fields\.map/);
+  assert.match(councilCase, /readGroup\(P, h, title,\s*profileList\(P, h, fields\.map/, "the tiles variation lays the fields out two per row itself");
   assert.match(councilCase, /size: "2xl",\s*label: party\.name/);
   assert.match(councilCase, /t\("personalDetails"\), "person", \[/);
   assert.doesNotMatch(councilCase, /t\("personalDetails"\), "user", \[/);
