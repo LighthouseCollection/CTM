@@ -255,7 +255,7 @@
         { gap: "md" },
         h(
           P.PropertyList,
-          null,
+          { variant: "tiles" },
           h(P.PropertyList.Item, { label: t("requestFor") }, isolate(request.title)),
           h(P.PropertyList.Item, { label: t("caseNumber"), data: true }, h("bdi", { dir: "ltr" }, request.case_number)),
           request.subject ? h(P.PropertyList.Item, { label: t("regarding") }, isolate(request.subject)) : null,

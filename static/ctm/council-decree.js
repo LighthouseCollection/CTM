@@ -372,7 +372,7 @@
         { icon: "doc-text", title: t("issuedTitle") },
         h(
           P.PropertyList,
-          null,
+          { variant: "tiles" },
           h(P.PropertyList.Item, { label: t("decreeId"), data: true }, decree.reference),
           h(P.PropertyList.Item, { label: t("certificateLanguage") }, t(decree.language)),
           decree.issued_at ? h(P.PropertyList.Item, { label: t("issuedAt"), data: true }, base.formatWhen(decree.issued_at, lang)) : null,
@@ -447,7 +447,7 @@
       { icon: "doc-text", title: base.typeLabel(decision.type) },
       h(P.Stack, { gap: "md" },
         h(P.Notice, { tone: "info" }, t("templateNotice")),
-        h(P.PropertyList, { layout: "stacked" },
+        h(P.PropertyList, { variant: "tiles" },
           h(P.PropertyList.Item, { label: t("decisionType") }, base.typeLabel(decision.type)),
           decision.grounds ? h(P.PropertyList.Item, { label: t("grounds") }, decision.grounds) : null,
           decision.conditions ? h(P.PropertyList.Item, { label: t("conditions") }, decision.conditions) : null,
@@ -604,7 +604,7 @@
         { gap: "md" },
         h(
           P.PropertyList,
-          null,
+          { variant: "tiles" },
           h(P.PropertyList.Item, { label: t("storedFile") }, h(P.Button, { size: "xs", href: `/api/files/${encodeURIComponent(work.file.id)}/` }, t("download"))),
           h(P.PropertyList.Item, { label: t("signer") }, signerName),
         ),
@@ -641,7 +641,7 @@
         { gap: "md" },
         h(
           P.PropertyList,
-          null,
+          { variant: "tiles" },
           h(P.PropertyList.Item, { label: t("decreeId"), data: true }, reference),
           h(P.PropertyList.Item, { label: t("certificateLanguage") }, t(work.language)),
           h(P.PropertyList.Item, { label: t("signer") }, signerName),
@@ -750,7 +750,7 @@
           { icon: "doc-text", title: t("approvedDecision") },
           h(
             P.PropertyList,
-            { layout: "stacked" },
+            { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("decisionType") }, base.typeLabel(current.type)),
             h(P.PropertyList.Item, { label: t("decreeId"), data: true }, reference),
             h(P.PropertyList.Item, { label: t("president") }, current.approval?.president || ""),
@@ -857,7 +857,7 @@
       { gap: "lg" },
       h(
         P.PropertyList,
-        null,
+        { variant: "tiles" },
         row.applicant_name ? h(P.PropertyList.Item, { label: t("appellant") }, row.applicant_name) : null,
         h(P.PropertyList.Item, { label: t("statusLabel") }, h(P.Badge, { tone: pendingAppeal ? "active" : row.status === "accepted" ? "success" : "neutral" }, t("appeal_" + row.status))),
         row.submitted_at ? h(P.PropertyList.Item, { label: t("submittedAt"), data: true }, base.formatWhen(row.submitted_at, lang)) : null,
@@ -869,7 +869,7 @@
         answers.length
           ? h(
               P.PropertyList,
-              { layout: "stacked" },
+              { variant: "tiles" },
               ...answers.map(([code, value]) =>
                 h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, base.translator(lang))),
               ),
@@ -904,7 +904,7 @@
             { icon: "doc-text", title: t("appealOutcome") },
             h(
               P.PropertyList,
-              null,
+              { variant: "tiles" },
               h(P.PropertyList.Item, { label: t("appealResult") }, t(row.disposition.result === "accept" ? "appeal_accepted" : "appeal_declined")),
               h(P.PropertyList.Item, { label: t("recordedBy") }, `${row.disposition.actor} · ${base.formatWhen(row.disposition.timestamp, lang)}`),
               row.disposition.explanation ? h(P.PropertyList.Item, { label: t("appealExplanation") }, row.disposition.explanation) : null,

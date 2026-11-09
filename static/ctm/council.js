@@ -1418,7 +1418,7 @@
       { gap: "lg" },
       h(
         P.PropertyList,
-        null,
+        { variant: "tiles" },
         row.case_number ? h(P.PropertyList.Item, { label: t("reference"), data: true }, h("bdi", { dir: "ltr" }, row.case_number)) : h(P.PropertyList.Item, { label: t("reference") }, t("unnumbered")),
         row.applicant_name ? h(P.PropertyList.Item, { label: t("applicant") }, row.applicant_name) : null,
         row.submitted_at ? h(P.PropertyList.Item, { label: t("submittedAt"), data: true }, formatWhen(row.submitted_at, lang)) : null,
@@ -1474,7 +1474,7 @@
           answers.length
             ? h(
                 P.PropertyList,
-                { layout: "stacked" },
+                { variant: "tiles" },
                 ...labelled.map(([code, label, value]) =>
                   h(P.PropertyList.Item, { key: code, label: label || code }, answerText(value, t)),
                 ),
@@ -2932,7 +2932,7 @@
           h(P.Panel, { icon: "folder", title: t("casesToAssign") }, agendaTable(1))),
         agendaDetail ? h(P.SidePanel, { title: agendaDetail.case_number || t("caseNumber"), icon: "folder",
           actions: h(P.Button, { iconOnly: true, icon: "close", label: t("close"), variant: "ghost", onClick: () => setAgendaDetail(null) }) },
-          h(P.PropertyList, { layout: "stacked" },
+          h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("applicant") }, agendaDetail.applicant?.name || t("notRecorded")),
             h(P.PropertyList.Item, { label: t("respondent") }, agendaDetail.respondent?.name || t("notRecorded")),
             h(P.PropertyList.Item, { label: t("assignedTo") }, agendaDetail.assigned_member_name || t("unassigned")),
@@ -3423,16 +3423,16 @@
       return h(P.Panel, { icon: "calendar", title: sessionLabel(date, t), description: t("upcomingSession"),
         actions: h(P.Button, { variant: "primary", icon: "open", onClick: openLead }, t("openSession")) },
         h(P.Columns, { count: 3, collapseBelow: "wide" },
-          h(P.PropertyList, null,
+          h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("sessionWhen") }, formatSessionStart(session.starts_at, lang) || t("timeNotRecorded"))),
-          h(P.PropertyList, null,
+          h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("location") }, session.location || t("notRecorded"))),
-          h(P.PropertyList, null,
+          h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("agendaItems"), data: true }, n(agendaCount))),
-          answers ? h(P.PropertyList, null,
+          answers ? h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("yourAnswer") },
               h(P.Badge, { tone: answerTone(mine?.answer), icon: mine?.answer === "attend" ? "check" : mine?.answer === "not_attend" ? "close" : undefined }, t(answerKey(mine?.answer))))) : null,
-          confirmed ? h(P.PropertyList, null,
+          confirmed ? h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("confirmedColumn") }, confirmed)) : null,
         ));
     };
