@@ -125,15 +125,10 @@
   // D-0064 (issue 272, owner): no skeleton or shimmer placeholders. A region that loads is announced as busy at once
   // and shows the Plenix Spinner with a label naming what loads, centred, only after about a second (a quick load
   // shows nothing). Plenix is asked to make this its default (pds issue 1032).
-  function DelayedSpinner({ label, className, delay = 1000 }) {
-    const [shown, setShown] = window.React.useState(false);
-    window.React.useEffect(() => {
-      const timer = window.setTimeout(() => setShown(true), delay);
-      return () => window.clearTimeout(timer);
-    }, [delay]);
-    return h(P.Stack, { align: "center", justify: "center", className: className || "plx-u-flex-1", role: "status", "aria-busy": "true", "aria-label": label },
-      // The Spinner names itself for screen readers; the same words show under it (aria-hidden, so they are read once).
-      shown ? h(P.Stack, { gap: "sm", align: "center" }, h(P.Spinner, { size: "md", label }), h(P.Text, { variant: "secondary", "aria-hidden": "true" }, label)) : null);
+  // Plenix 1.3 (pds D-0130, ADR 0042): LoadingState is the spinner with its label, centred, after about a second; it announces itself once.
+  function DelayedSpinner({ label, className, delay = "region" }) {
+    return h(P.Stack, { align: "center", justify: "center", className: className || "plx-u-flex-1", "aria-busy": "true" },
+      h(P.LoadingState, { label, delay }));
   }
 
   function Loading({ label, className }) {

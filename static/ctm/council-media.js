@@ -1009,7 +1009,7 @@
               h(P.Text, { variant: "data", "aria-live": "polite" }, `${t("elapsed")}: ${formatDuration(length)}`),
             )
           : null,
-        progress ? h(P.Inline, { gap: "sm" }, h(P.Spinner, { size: "sm", label: t(progress) }), h(P.Text, null, t(progress))) : null,
+        progress ? h(P.Spinner, { size: "sm", label: t(progress), labelPosition: "after" }) : null,
         blobUrl && ["stopped", "recovered", "interrupted"].includes(status)
           ? h(P.MediaPlayer, { key: blobUrl, src: blobUrl, kind: "audio", label: t("playbackLabel"), strings: mediaStrings(t) })
           : null,

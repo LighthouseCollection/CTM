@@ -1268,7 +1268,7 @@
   function loadingView(P, h, t, label) {
     const text = label || t("loading");
     return window.CTMShell?.DelayedSpinner ? h(window.CTMShell.DelayedSpinner, { label: text })
-      : h(P.Stack, { align: "center", role: "status", "aria-busy": "true", "aria-label": text }, h(P.Spinner, { size: "md", label: text }));
+      : h(P.Stack, { align: "center", "aria-busy": "true" }, h(P.LoadingState, { label: text }));
   }
 
   // Error boundary: a failure inside one council page shows a recoverable message

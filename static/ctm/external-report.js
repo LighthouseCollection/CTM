@@ -241,7 +241,7 @@
       }),
     });
     let body;
-    if (state === "loading") body = h(P.Inline, { gap: "sm" }, h(P.Spinner, { size: "sm", label: t("loading") }), h(P.Text, null, t("loading")));
+    if (state === "loading") body = h(P.LoadingState, { label: t("loading") });
     else if (state === "malformed") body = h(P.Notice, { tone: "warning" }, t("malformed"));
     else if (state === "unavailable")
       body = h(P.Notice, { tone: "warning" }, h(P.Stack, { gap: "xs" }, h(P.Text, { variant: "strong" }, t("unavailable")), h(P.Text, null, t("unavailableDetail"))));

@@ -776,7 +776,7 @@ test("ctm3-48 part 2: grids are Plenix Columns that collapse to one column on na
 test("ctm3-48 part 2: read mode is a PropertyList, never a read-only input", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   const read = councilCase.slice(councilCase.indexOf("function CaseReadFields("), councilCase.indexOf("function CaseMarriage("));
-  assert.match(read, /P\.PropertyList, \{ layout: "stacked"/);
+  assert.match(read, /P\.PropertyList, null, \.\.\.fields\.map/, "one PropertyList that inherits the group's tiles variation");
   assert.doesNotMatch(read, /readOnly: true|P\.Input/);
   assert.match(read, /timeZone: "UTC"/, "date-only values never shift a day");
 });

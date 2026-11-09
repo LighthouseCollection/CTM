@@ -45,15 +45,14 @@ const cases = [
 test("loading is the Plenix spinner with a label, after a delay; no skeleton anywhere", () => {
   const [h, C] = boot();
   const view = C.loadingView(new Proxy({}, { get: (_t, k) => k }), (type, props, ...children) => ({ type, props, children }), C.translator("en"), "Loading cases…");
-  assert.equal(view.props.role, "status");
   assert.equal(view.props["aria-busy"], "true");
-  assert.equal(view.props["aria-label"], "Loading cases…");
+  assert.equal(view.children[0].type, "LoadingState", "the plain fallback is Plenix LoadingState (pds D-0130)");
+  assert.equal(view.children[0].props.label, "Loading cases…");
   for (const file of fs.readdirSync("static/ctm").filter((name) => name.endsWith(".js")))
     assert.doesNotMatch(fs.readFileSync("static/ctm/" + file, "utf8"), /P\.Skeleton\b/, file);
   const shell = fs.readFileSync("static/ctm/shell-layout.js", "utf8");
-  assert.match(shell, /const timer = window\.setTimeout\(\(\) => setShown\(true\), delay\);/);
-  assert.match(shell, /function DelayedSpinner\(\{ label, className, delay = 1000 \}\)/);
-  assert.match(shell, /h\(P\.Spinner, \{ size: "md", label \}\), h\(P\.Text, \{ variant: "secondary", "aria-hidden": "true" \}, label\)/);
+  assert.match(shell, /function DelayedSpinner\(\{ label, className, delay = "region" \}\)/);
+  assert.match(shell, /h\(P\.LoadingState, \{ label, delay \}\)/);
   const caseSrc = fs.readFileSync("static/ctm/council-case.js", "utf8");
   assert.equal(caseSrc.split("base.loadingView(P, h, t);").length - 1, 0, "case tabs name what loads");
 });
