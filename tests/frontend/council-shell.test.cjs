@@ -886,3 +886,13 @@ test("session form rows are spaced and its fields fill their columns (#117)", ()
   assert.equal((form.match(/h\(P\.Columns, \{ count: 2, collapseBelow: "wide" \}/g) || []).length, 2, "one Columns per row");
   assert.doesNotMatch(form, /width: "sm"/);
 });
+
+// pds#1147 (Plenix 1.5.0, pds#1122): a long-text grid column shows two lines and a corner icon that opens the whole text in a Dialog.
+test("long-text grid columns use overflow dialog with two lines", () => {
+  const read = (file) => fs.readFileSync(`static/ctm/${file}`, "utf8");
+  const council = read("council.js");
+  for (const field of ["reason", "grounds", "recommendation"])
+    assert.match(council, new RegExp(`field: "${field}"[^}]*overflow: "dialog", lines: 2`), field);
+  assert.match(read("council-case.js"), /field: "preview", kind: "wrap", overflow: "dialog", lines: 2/);
+  assert.match(read("app.js"), /field: "body", kind: "wrap", overflow: "dialog", lines: 2/);
+});

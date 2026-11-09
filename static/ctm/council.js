@@ -1314,7 +1314,7 @@
     });
   }
 
-  // Issue 222: a grid cell shows its text, never a button or a dialog.
+  // A grid cell shows its text; the corner icon of a column with overflow "dialog" is Plenix's, not the cell's.
   function recommendationText(value, t) {
     const text = String(value || "").trim().replace(/\s+/g, " ");
     return text || t("notRecorded");
@@ -1803,7 +1803,7 @@
         archiveAgendaState.error ? h(P.Notice, { tone: "danger" }, serverMessage(archiveAgendaState.error, t)) : null,
         !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { icon: "folder", title: t("assignedCases") },
           archiveTable(t("assignedCases"), archivedItems.assigned, t("part1Empty"), caseColumns([
-            { title: t("reason"), field: "reason", minWidth: "9rem", pill: false, render: (row) => groundsText(row.grounds, row.reason, t) || t("notRecorded") },
+            { title: t("reason"), field: "reason", minWidth: "9rem", pill: false, overflow: "dialog", lines: 2, render: (row) => groundsText(row.grounds, row.reason, t) || t("notRecorded") },
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
             { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
           ])),
@@ -2602,9 +2602,9 @@
       { title: t("caseNumber"), field: "number", kind: "data", width: "8rem" },
       { title: t("pickerParties"), field: "parties", kind: "name", width: "12rem" },
       { title: t("pickerFiled"), field: "filed", width: "6.5rem" },
-      { title: t("reason"), field: "grounds", width: "6rem" },
+      { title: t("reason"), field: "grounds", width: "6rem", overflow: "dialog", lines: 2 },
       ...(part === 2 ? [{ title: t("assignedTo"), field: "member", width: "8rem" }] : []),
-      { title: t("pickerRecommendation"), field: "recommendation", width: part === 2 ? "9rem" : "17rem" },
+      { title: t("pickerRecommendation"), field: "recommendation", width: part === 2 ? "9rem" : "17rem", overflow: "dialog", lines: 2 },
     ];
     let body;
     if (state.pending && !state.data) body = loadingView(P, h, t);
@@ -2909,7 +2909,7 @@
         ? [
             { title: t("applicant"), field: "applicant", kind: "name", width: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
             { title: t("respondent"), field: "respondent", width: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
-            { title: t("reason"), field: "reason", minWidth: "6.5rem" },
+            { title: t("reason"), field: "reason", minWidth: "6.5rem", overflow: "dialog", lines: 2 },
             { title: t("yearsMarried"), field: "married_years", minWidth: "7.5rem", pill: false, render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
             { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
             { title: t("actions"), field: "open_action", minWidth: "9rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
@@ -3604,7 +3604,7 @@
           { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
           { title: t("caseApplicant"), field: "applicant", type: "person", kind: "name", sorter: "string" },
           { title: t("caseRespondent"), field: "respondent", type: "person", kind: "name", sorter: "string" },
-          { title: t("caseReason"), field: "reason", sorter: "string" },
+          { title: t("caseReason"), field: "reason", sorter: "string", overflow: "dialog", lines: 2 },
           ...(view === "active" ? [{ title: t("caseAssignee"), field: "manager", type: "person", kind: "name", sorter: "string" }] : []),
           { title: t("statusLabel"), field: "status", maxWidth: "--plx-ref-size-240px", sorter: "string" },
         ];
