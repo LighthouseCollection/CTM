@@ -355,7 +355,7 @@
             : typeof value === "boolean" ? t(value ? "yes" : "no")
             : options.find(o => o.value === value)?.label || String(value);
         if (readOnly || !state.editable) {
-          const pair = h(P.PropertyList.Item, { key: field.code, label: fieldLabel }, h("span", { dir: "auto" }, display));
+          const pair = h(P.PropertyList.Item, { key: field.code, label: fieldLabel, lines: 3 }, h("span", { dir: "auto" }, display));
           pairs.add(pair); return pair;
         }
         // Required stays announced, but never blocks the Wizard on an incomplete draft (the server checks at filing).

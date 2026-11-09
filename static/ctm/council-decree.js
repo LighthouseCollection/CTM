@@ -449,8 +449,8 @@
         h(P.Notice, { tone: "info" }, t("templateNotice")),
         h(P.PropertyList, { variant: "tiles" },
           h(P.PropertyList.Item, { label: t("decisionType") }, base.typeLabel(decision.type)),
-          decision.grounds ? h(P.PropertyList.Item, { label: t("grounds") }, decision.grounds) : null,
-          decision.conditions ? h(P.PropertyList.Item, { label: t("conditions") }, decision.conditions) : null,
+          decision.grounds ? h(P.PropertyList.Item, { label: t("grounds"), lines: 3, span: "full" }, decision.grounds) : null,
+          decision.conditions ? h(P.PropertyList.Item, { label: t("conditions"), lines: 3, span: "full" }, decision.conditions) : null,
         ),
       ),
     );
@@ -871,7 +871,7 @@
               P.PropertyList,
               { variant: "tiles" },
               ...answers.map(([code, value]) =>
-                h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, base.translator(lang))),
+                h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code, lines: 3 }, base.answerText(value, base.translator(lang))),
               ),
             )
           : h(P.EmptyState, { title: t("noAnswers") }),
@@ -907,7 +907,7 @@
               { variant: "tiles" },
               h(P.PropertyList.Item, { label: t("appealResult") }, t(row.disposition.result === "accept" ? "appeal_accepted" : "appeal_declined")),
               h(P.PropertyList.Item, { label: t("recordedBy") }, `${row.disposition.actor} · ${base.formatWhen(row.disposition.timestamp, lang)}`),
-              row.disposition.explanation ? h(P.PropertyList.Item, { label: t("appealExplanation") }, row.disposition.explanation) : null,
+              row.disposition.explanation ? h(P.PropertyList.Item, { label: t("appealExplanation"), lines: 3, span: "full" }, row.disposition.explanation) : null,
             ),
           )
         : null,

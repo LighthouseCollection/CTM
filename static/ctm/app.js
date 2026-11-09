@@ -799,7 +799,7 @@
         );
       }),
       shown.observations
-        ? h(P.Panel, { icon: "document", title: t("observations") }, text(shown.observations))
+        ? h(P.Panel, { icon: "document", title: t("observations") }, text(shown.observations, { lines: 3, overflow: "dialog", overflowLabel: t("observations") }))
         : null,
     );
   }
