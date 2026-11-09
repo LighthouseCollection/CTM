@@ -28,7 +28,7 @@
       enroll: "Add council member", first_name: "First name", last_name: "Last name", emailField: "Email", save: "Add member", added: "Council member added.",
       emailInvalid: "Enter a valid email address.", roleRequired: "Choose a council role.", namesRequired: "Enter first and last names.",
       translation_prompt: "Translation instructions", translation_routing: "Translation routing", tribunal_contact: "Tribunal contact", email_templates: "Email templates", document_categories: "Document categories", recommended_doctors: "Recommended doctors",
-      settingsTitle: "CTM Settings", settingsNav: "Settings sections", usersRoles: "Users & Roles", tribunalConfig: "Tribunal Config", dataRecords: "Data & Records", auditSecurity: "Audit & Security",
+      settingsTitle: "CTM Settings", settingsNav: "Settings sections", usersRoles: "Users & Roles", councilSeat: "Council seat", votingSeat: "Voting", seatYes: "Yes", seatNo: "No", tribunalConfig: "Tribunal Config", dataRecords: "Data & Records", auditSecurity: "Audit & Security",
       users: "Users", activeMembers: "Active Members", previousMembers: "Previous Members", memberView: "Members shown", searchMembers: "Search members",
       addStaff: "Add staff user", editStaff: "Edit staff user", manageAccess: "Manage access", edit: "Edit", archive: "Archive", restore: "Restore", cancel: "Cancel", saveChanges: "Save changes",
       archiveStaff: "Archive staff user", restoreStaff: "Restore staff user", archiveConfirm: "Archive {name}? Their account access will be disabled.", restoreConfirm: "Restore {name}? Their account access will be enabled.", thisUser: "this user",
@@ -65,7 +65,7 @@
       enroll: "إضافة عضو إلى المجلس", first_name: "الاسم الأول", last_name: "اسم العائلة", emailField: "البريد الإلكتروني", save: "إضافة العضو", added: "تمت إضافة عضو المجلس.",
       emailInvalid: "أدخل بريدًا إلكترونيًا صالحًا.", roleRequired: "اختر دورًا في المجلس.", namesRequired: "أدخل الاسم الأول واسم العائلة.",
       translation_prompt: "تعليمات الترجمة", translation_routing: "توجيه الترجمة", tribunal_contact: "بيانات الاتصال بالمحكمة", email_templates: "قوالب البريد الإلكتروني", document_categories: "فئات المستندات", recommended_doctors: "الأطباء الموصى بهم",
-      settingsTitle: "إعدادات CTM", settingsNav: "أقسام الإعدادات", usersRoles: "المستخدمون والأدوار", tribunalConfig: "إعدادات المحكمة", dataRecords: "البيانات والسجلات", auditSecurity: "التدقيق والأمان",
+      settingsTitle: "إعدادات CTM", settingsNav: "أقسام الإعدادات", usersRoles: "المستخدمون والأدوار", councilSeat: "مقعد في المجلس", votingSeat: "التصويت", seatYes: "نعم", seatNo: "لا", tribunalConfig: "إعدادات المحكمة", dataRecords: "البيانات والسجلات", auditSecurity: "التدقيق والأمان",
       users: "المستخدمون", activeMembers: "الأعضاء الحاليون", previousMembers: "الأعضاء السابقون", memberView: "الأعضاء المعروضون", searchMembers: "البحث في الأعضاء",
       addStaff: "إضافة مستخدم من الموظفين", editStaff: "تحرير مستخدم من الموظفين", manageAccess: "إدارة الوصول", edit: "تحرير", archive: "أرشفة", restore: "استعادة", cancel: "إلغاء", saveChanges: "حفظ التغييرات",
       archiveStaff: "أرشفة مستخدم من الموظفين", restoreStaff: "استعادة مستخدم من الموظفين", archiveConfirm: "هل تريد أرشفة {name}؟ سيتم تعطيل وصوله إلى الحساب.", restoreConfirm: "هل تريد استعادة {name}؟ سيتم تمكين وصوله إلى الحساب.", thisUser: "هذا المستخدم",
@@ -286,6 +286,34 @@
     const [view, setView] = R.useState("active"), [enrolling, setEnrolling] = R.useState(false), [editing, setEditing] = R.useState(null), [archiveTarget, setArchiveTarget] = R.useState(null), [saving, setSaving] = R.useState(false), [failure, setFailure] = R.useState(null);
     const visibleRows = rows.filter((row) => view === "active" ? row.active : !row.active);
     const fullName = (row) => `${row.first_name || ""} ${row.last_name || ""}`.trim();
+    // Issue 175 (D-0043): each active staff account's council seat and voting seat, apart from its role
+    // (GET/POST /api/council/seats/, backend PR 183). Admin, secretary and president change them (can_edit); voting needs a seat.
+    const [seats, setSeats] = R.useState({ items: [], canEdit: false }), [seatSaving, setSeatSaving] = R.useState(null);
+    R.useEffect(() => {
+      let live = true;
+      api("/api/council/seats/").then((data) => live && setSeats({ items: data?.items || [], canEdit: data?.can_edit === true }))
+        .catch(() => live && setSeats({ items: [], canEdit: false }));
+      return () => { live = false; };
+    }, [rows]);
+    const seatOf = (row) => seats.items.find((item) => String(item.id) === String(row.id)) || null;
+    async function changeSeat(row, seated, voting) {
+      if (seatSaving) return;
+      setSeatSaving(row.id); setFailure(null);
+      try {
+        const saved = await api(`/api/council/seats/${encodeURIComponent(row.id)}/`, { method: "POST", body: JSON.stringify({ seated, voting: seated && voting }) });
+        setSeats((old) => ({ ...old, items: old.items.map((item) => String(item.id) === String(row.id) ? { ...item, seated: saved.seated, voting: saved.voting } : item) }));
+      } catch (error) { setFailure(window.CTMCouncil.serverMessage(error, t)); }
+      finally { setSeatSaving(null); }
+    }
+    const seatCell = (row, field) => {
+      const seat = seatOf(row);
+      if (!seat) return "—";
+      const on = field === "seated" ? Boolean(seat.seated) : Boolean(seat.seated && seat.voting);
+      if (!seats.canEdit) return t(on ? "seatYes" : "seatNo");
+      return h(P.Switch, { label: t(field === "seated" ? "councilSeat" : "votingSeat"), "aria-label": `${t(field === "seated" ? "councilSeat" : "votingSeat")}: ${fullName(row)}`, checked: on,
+        disabled: Boolean(seatSaving) || (field === "voting" && !seat.seated),
+        onChange: (event) => field === "seated" ? changeSeat(row, event.target.checked, event.target.checked ? seat.voting : false) : changeSeat(row, true, event.target.checked) });
+    };
     const updateMember = async (event) => {
       event.preventDefault();
       if (!editing || saving) return;
@@ -310,6 +338,10 @@
       { title: t("role"), field: "role", render: (row) => t(row.role) },
       { title: t("emailField"), field: "email", kind: "data" },
       { title: t("activeCases"), field: "active_case_count", type: "number", kind: "data" },
+      ...(view === "active" ? [
+        { title: t("councilSeat"), field: "council_seat", width: "9rem", sortable: false, pill: false, render: (row) => seatCell(row, "seated") },
+        { title: t("votingSeat"), field: "voting_seat", width: "8rem", sortable: false, pill: false, render: (row) => seatCell(row, "voting") },
+      ] : []),
       { title: t("status"), field: "status", render: (row) => t(row.active ? "active" : "archived") },
     ];
     const rowMenu = (row) => [
@@ -321,6 +353,7 @@
     const name = archiveTarget ? fullName(archiveTarget) || t("thisUser") : t("thisUser");
     return h(P.Stack, { gap: "md", className: "plx-u-flex-1 plx-u-min-h-0" },
       h(P.Text, { as: "h2", variant: "heading" }, t("users")),
+      failure && !editing && !archiveTarget ? h(P.Notice, { tone: "danger", onDismiss: () => setFailure(null) }, failure) : null,
       h(window.CTMShell.Listing, {
         label: t(view === "active" ? "activeMembers" : "previousMembers"), rows: visibleRows, columns, rowMenu, loading: pending,
         empty: t(view === "active" ? "noActive" : "noPrevious"),

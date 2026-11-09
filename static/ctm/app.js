@@ -177,6 +177,7 @@
       reference: "Case number",
       assigned: "Assigned case manager",
       unassigned: "Not yet assigned",
+      statusUnassigned: "Unassigned",
       summary: "Summary",
       overview: "Case Overview",
       paneExpand: "Expand {name}",
@@ -203,6 +204,7 @@
       appeals: "Appeals",
       audit: "Case Audit",
       backCases: "Back to cases",
+      caseDeleted: "Case {number} was deleted.",
       backSessions: "Back to sessions",
       backHome: "Back to Home",
       backNotifications: "Back to Notifications",
@@ -391,6 +393,7 @@
       reference: "رقم القضية",
       assigned: "مسؤول القضية",
       unassigned: "لم يُعيّن بعد",
+      statusUnassigned: "غير معيَّنة",
       summary: "الملخص",
       overview: "نظرة عامة على القضية",
       paneExpand: "توسيع {name}",
@@ -417,6 +420,7 @@
       appeals: "التماسات إعادة النظر",
       audit: "سجل القضية",
       backCases: "العودة إلى القضايا",
+      caseDeleted: "حُذفت القضية {number}.",
       backSessions: "العودة إلى الجلسات",
       backHome: "العودة إلى الصفحة الرئيسية",
       backNotifications: "العودة إلى الإشعارات",
@@ -521,7 +525,8 @@
       }
       throw error;
     }
-    return response.json();
+    // 204 No Content (a DELETE such as the case delete, issue 176) has no body to read.
+    return response.status === 204 ? null : response.json();
   }
   function MessageComposer({ record, sessions, council, t, onSent, onClose }) {
     const [body, setBody] = R.useState(""),
@@ -1036,6 +1041,16 @@
     return null;
   }
 
+  function CaseDeletedToast({ text }) {
+    const toast = P.useToast ? P.useToast() : null;
+    R.useEffect(() => {
+      const show = (event) => toast && toast.show(text(event.detail?.number || ""), { tone: "success" });
+      window.addEventListener("ctm:case-deleted", show);
+      return () => window.removeEventListener("ctm:case-deleted", show);
+    });
+    return null;
+  }
+
   function App() {
     const initialRoute = routes?.parse(window.location.pathname) || { page: "home", selection: null };
     const [lang, setLang] = R.useState(() => {
@@ -1055,6 +1070,13 @@
     const [preferenceFailure, setPreferenceFailure] = R.useState(null);
     const [caseDetailOpen, setCaseDetailOpen] = R.useState(true);
     const [caseOrigin, setCaseOrigin] = R.useState(null);
+    // Issue 176: a deleted case closes; the app goes back to the case list (the toast is CaseDeletedToast).
+    const leaveDeletedCase = R.useRef(null);
+    R.useEffect(() => {
+      const onDeleted = () => leaveDeletedCase.current && leaveDeletedCase.current();
+      window.addEventListener("ctm:case-deleted", onDeleted);
+      return () => window.removeEventListener("ctm:case-deleted", onDeleted);
+    }, []);
     R.useEffect(() => setCaseDetailOpen(true), [page, selection]);
     const applicantGuard = R.useRef(null);
     const registerApplicantGuard = R.useCallback((guard) => {
@@ -1258,7 +1280,7 @@
       const loginHeader = brandHeader();
       // Sign-in: the Auth page with SsoButtons (sign-in.md, single-sign-on.md). SignInForm is left out on
       // purpose: through 0.88.0 it still always draws a password field, and CTM has no passwords (plenix-requests.md PLX-015).
-      return h(P.AppShell, { page: "form", frame: "full", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
+      return h(P.AppShell, { page: "form", frame: "centered", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
         h(P.PageContent, null, h(P.Stack, { gap: "none", grow: true },
           loginHeader,
           h(P.Stack, { grow: true, justify: "center", align: "center", inset: "lg" }, h(P.Auth, {
@@ -1290,6 +1312,7 @@
       setCaseOrigin(origin || { page: council ? "cases" : "past", labelKey: "backCases" });
       go("case", id);
     };
+    leaveDeletedCase.current = () => { setCaseOrigin(null); go(council ? "cases" : "past"); };
     const returnToCaseOrigin = () => {
       const origin = caseOrigin || { page: council ? "cases" : "past", labelKey: "backCases" };
       setCaseOrigin(null);
@@ -1437,6 +1460,11 @@
       setCaseDetailOpen(true);
       go(id, selection);
     };
+    // The parent's name for the pane's "Back to {name}" row: the origin's own back label without the paneBack frame.
+    const backParent = (t, key) => {
+      const [before, after = ""] = t("paneBack").split("{name}"), label = t(key);
+      return label.startsWith(before) && label.endsWith(after) ? label.slice(before.length, label.length - after.length) : label;
+    };
     const caseNav = caseContext
       ? h(
           P.SecondaryPane,
@@ -1445,17 +1473,11 @@
             title: t("overview"), label: t("overview"), icon: navigationIcon("case"),
             collapsible: true, resizable: true, defaultCollapsed: false, width: "md",
             detailOpen: caseDetailOpen, onBack: () => setCaseDetailOpen(false),
+            // D-0061 (issue 263): the Plenix back-to-parent row above the pane title (pds issue 995, shipped in 1.2.0).
+            back: { parent: backParent(t, caseOrigin?.labelKey || "backCases"), onClick: returnToCaseOrigin },
             strings: { expand: t("paneExpand"), collapse: t("paneCollapse"), resize: t("paneResize"), back: t("paneBack") },
             rail: navigationRail(caseNavigationItems, selectCaseSection),
           },
-          // D-0061 (issue 263): the way back is a quiet nav item at the top of the pane: a back arrow on the nav icon
-          // column (Plenix mirrors it in Arabic) and muted text, so Case Overview stays the pane's strongest text. The
-          // Plenix back-item pattern is requested in plenix-ds/pds issue 995; this is the closest documented NavList item.
-          h(P.NavList, {
-            label: t(caseOrigin?.labelKey || "backCases"),
-            onSelect: returnToCaseOrigin,
-            items: [{ id: "back", icon: h(P.Icon, { name: "arrow-left", "aria-hidden": true }), label: t(caseOrigin?.labelKey || "backCases"), muted: true }],
-          }),
           h(P.NavList, {
             label: t("overview"),
             value: page,
@@ -1642,7 +1664,7 @@
           reviewApplicationId: caseOrigin?.applicationId,
         });
       if (page === "timeline" && council && councilModule?.CaseTimeline)
-        return h(councilModule.CaseTimeline, { key: selection, api, lang, caseId: selection });
+        return h(councilModule.CaseTimeline, { key: selection, api, lang, user, caseId: selection });
       if (page === "petition" && council && councilModule?.PetitionWorkspace)
         return h(councilModule.PetitionWorkspace, { key: selection, api, lang, user, caseId: selection });
       if (page === "parties" && council && councilModule?.CaseParties)
@@ -1681,7 +1703,7 @@
       if (page === "medical" && council && councilModule?.AssessmentsWorkspace)
         return h(councilModule.AssessmentsWorkspace, { key: selection, api, lang, user, caseId: selection });
       if (page === "audit" && council && councilModule?.CaseAudit)
-        return h(councilModule.CaseAudit, { key: selection, api, lang, caseId: selection });
+        return h(councilModule.CaseAudit, { key: selection, api, lang, user, caseId: selection });
       if (page === "appeals" && council && councilModule?.AppealsWorkspace)
         return h(councilModule.AppealsWorkspace, {
           key: selection,
@@ -1994,14 +2016,16 @@
     }
     return h(
       P.AppShell,
-          { header, sideNav: nav, frame: "full", page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
+          { header, sideNav: nav, frame: "centered", page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
-      h("div", { className: "plx-page-panes" }, caseNav,
-        h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
-          preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
-          content(),
+      // The app's toasts (AppShell gives none, PLX-021): today the case-deleted toast.
+      h(P.ToastProvider, null, h(CaseDeletedToast, { text: (number) => t("caseDeleted").replace("{number}", number) }),
+        h("div", { className: "plx-page-panes" }, caseNav,
+          h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
+            preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
+            content(),
+          )),
         )),
-      ),
     );
   }
   window.ReactDOM.createRoot(root).render(h(P.ThemeProvider, null, h(P.DirectionProvider, { follow: true }, h(App))));

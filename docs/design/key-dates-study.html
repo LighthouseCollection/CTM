@@ -1,0 +1,158 @@
+<title>Key Dates Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<style>
+/* Layout: five Key Dates designs side by side, each inside the decided card frame (D-0050); options bar on top. Level 1 = focal point, 2 = event, 3 = status. */
+:root{
+  --bg:#f3f4f7; --surface:#ffffff; --ink:#1f2430; --ink2:#3b4252; --muted:#5d6577; --faint:#8a92a3; --line:#e2e5ec;
+  --brand:#1d4f91; --brand-soft:#e9f0f9; --gold:#8a5a00; --gold-soft:#fbf3e2; --good:#1f7a45; --good-soft:#e8f4ec;
+  --porcelain:#fbfaf9; --oyster:#f8f6f3; --warm:#8a7a6c; --accent:#2c64d8; --accent-soft:#e8effc;
+  --f:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14171d; --surface:#1d2129; --ink:#e9ecf2; --ink2:#cfd5e0; --muted:#a3abbb; --faint:#7b8396; --line:#2e3440;
+  --brand:#8fb4ea; --brand-soft:#1f2c44; --gold:#f0c46b; --gold-soft:#3a2e14; --good:#6fd39b; --good-soft:#1b3326;
+  --porcelain:#1f2023; --oyster:#222224; --warm:#b3a394; --accent:#7ea4f2; --accent-soft:#223154; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171d; --surface:#1d2129; --ink:#e9ecf2; --ink2:#cfd5e0; --muted:#a3abbb; --faint:#7b8396; --line:#2e3440;
+  --brand:#8fb4ea; --brand-soft:#1f2c44; --gold:#f0c46b; --gold-soft:#3a2e14; --good:#6fd39b; --good-soft:#1b3326;
+  --porcelain:#1f2023; --oyster:#222224; --warm:#b3a394; --accent:#7ea4f2; --accent-soft:#223154; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.45}
+.wrap{max-width:1500px;margin:0 auto;padding-inline:20px;padding-block:28px 48px;display:grid;gap:20px}
+h1{font-size:1.5rem;margin:0}
+.lede{margin:4px 0 0;color:var(--muted);max-width:80ch}
+.opts{display:flex;flex-wrap:wrap;gap:16px;align-items:end;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.opts label{display:grid;gap:3px;font-size:12px;font-weight:600;color:var(--muted)}
+.opts select{font:inherit;font-size:13px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px;align-items:start}
+.v h2{font-size:13px;margin:0 0 8px;color:var(--ink2)} .v h2 small{font-weight:400;color:var(--faint)}
+/* decided card frame (D-0050) */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-width:0}
+.card-h{display:flex;align-items:center;gap:10px;padding:16px 20px 12px;position:relative;border-radius:8px 8px 0 0;background:linear-gradient(to bottom,var(--porcelain),var(--surface))}
+.card-h::after{content:"";position:absolute;inset-inline:20px;bottom:0;height:1px;background:var(--line)}
+.card-h h3{margin:0;font-size:14px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.07em}
+.card-h svg{width:18px;height:18px;fill:none;stroke:var(--ink2);stroke-width:1.6}
+.card-b{padding:16px 20px 20px}
+ol{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.num{font-variant-numeric:tabular-nums}
+/* status chips (level 3) */
+.st{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--good-soft);color:var(--good)} .st.now{background:var(--brand-soft);color:var(--brand)} .st.next{background:transparent;color:var(--faint);box-shadow:inset 0 0 0 1px var(--line)}
+.body[data-status="text"] .st{background:none!important;box-shadow:none!important;padding:0}
+.body[data-status="text"] .st::before{display:none}
+.body[data-status="off"] .st{display:none}
+.note{color:var(--muted);font-size:12px}
+/* item surfaces by state */
+.done .box{background:var(--porcelain);border-color:color-mix(in oklab,var(--porcelain) 88%,var(--warm))}
+.now .box{background:var(--brand-soft);border-color:color-mix(in oklab,var(--brand-soft) 70%,var(--brand))}
+.next .box{background:var(--surface);border-color:var(--line);border-style:dashed}
+
+/* A: calendar tile + event */
+.A li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:stretch}
+.A .tile{border:1px solid;border-radius:8px;display:grid;place-items:center;text-align:center;padding:6px 4px;line-height:1.05}
+.A .tile b{display:block;font-size:22px} .A .tile span{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.A .tile i{display:block;font-style:normal;font-size:11px;color:var(--faint)}
+.A li.done .tile{background:var(--porcelain);border-color:color-mix(in oklab,var(--porcelain) 85%,var(--warm))}
+.A li.now .tile{background:var(--brand);border-color:var(--brand);color:var(--surface)} .A li.now .tile span,.A li.now .tile i{color:color-mix(in oklab,var(--surface) 80%,var(--brand))}
+.A li.next .tile{border-style:dashed;border-color:var(--line);color:var(--faint)}
+.A .txt{display:grid;align-content:center;gap:3px}
+.A .ev{font-weight:600;font-size:14px}
+/* B: tinted container, date as headline */
+.B .box{border:1px solid;border-radius:8px;padding:10px 12px;display:grid;gap:2px}
+.B .dt{font-size:16px;font-weight:700;color:var(--ink)} .B .next .dt{color:var(--faint)}
+.B .row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.B .ev{font-size:13px;font-weight:500;color:var(--ink2)}
+/* C: rail with tinted containers */
+.C ol{gap:0}
+.C li{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;position:relative;padding-bottom:10px}
+.C li::before{content:"";position:absolute;inset-inline-start:9px;top:18px;bottom:-2px;width:2px;background:var(--line)}
+.C li:last-child::before{display:none}
+.C .dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);background:var(--surface);margin-top:8px;z-index:1}
+.C .done .dot{background:var(--good);border-color:var(--good)} .C .now .dot{background:var(--surface);border-color:var(--brand);box-shadow:inset 0 0 0 4px var(--brand)}
+.C .box{border:1px solid;border-radius:8px;padding:9px 12px;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;align-items:baseline}
+.C .dt{font-size:13px;font-weight:700;color:var(--brand);white-space:nowrap} .C .next .dt{color:var(--faint)}
+.C .ev{font-weight:600}
+.C .st{grid-column:2;justify-self:start;margin-top:3px}
+/* D: two-column ledger rows */
+.D ol{gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.D li{display:grid;grid-template-columns:118px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;border-top:1px solid var(--line)}
+.D li:first-child{border-top:0}
+.D li.done{background:var(--porcelain)} .D li.now{background:var(--brand-soft)}
+.D .dt{font-weight:700;font-size:14px} .D .next .dt{color:var(--faint);font-weight:500}
+.D .ev{font-weight:500}
+/* E: event first (alternative focal) */
+.E .box{border:1px solid;border-radius:8px;padding:10px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px}
+.E .ev{font-size:15px;font-weight:700} .E .dt{color:var(--muted);font-size:13px} .E .st{grid-row:1 / span 2;grid-column:2;align-self:center}
+.E .next .ev{color:var(--faint)}
+/* F: horizontal stepper */
+.F ol{display:flex;gap:0;overflow-x:auto;padding-bottom:4px}
+.F li{flex:1 0 110px;display:grid;justify-items:center;text-align:center;gap:4px;position:relative;padding:0 4px}
+.F li::before{content:"";position:absolute;top:13px;inset-inline-start:-50%;width:100%;height:2px;background:var(--line);z-index:0}
+.F li:first-child::before{display:none}
+.F li.done::before,.F li.now::before{background:var(--good)}
+.F .dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:var(--surface);z-index:1;display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--faint)}
+.F .done .dot{background:var(--good);border-color:var(--good);color:var(--surface)} .F .now .dot{border-color:var(--brand);color:var(--brand)}
+.F .dt{font-weight:700;font-size:13px} .F .next .dt{color:var(--faint);font-weight:500}
+.F .ev{font-size:12px;color:var(--ink2)}
+@media (max-width:420px){.D li{grid-template-columns:96px minmax(0,1fr)} .D .st{grid-column:2}}
+.foot{font-size:12px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <header><h1>Key Dates: six designs</h1>
+  <p class="lede">The same five milestones of a fictional case, each in the decided card frame. Level 1 is the focal point (the date), level 2 the event, level 3 the status. Done items sit on porcelain, the current item on soft navy, upcoming items on a dashed outline. Use the options to change order and how status shows, then tell me the letter you like.</p></header>
+  <div class="opts">
+    <label for="order">Order<select id="order"><option value="new">Latest first (as today)</option><option value="old">Oldest first</option></select></label>
+    <label for="status">Status (level 3)<select id="status"><option value="chip">Coloured chip</option><option value="text">Text only</option><option value="off">Hidden</option></select></label>
+    <label for="notes">Notes under events<select id="notes"><option value="on">Show</option><option value="off">Hide</option></select></label>
+  </div>
+  <div class="grid" id="grid"></div>
+  <p class="foot">Colours follow D-0050 (porcelain, navy, gold family). Fictional demo data.</p>
+</div>
+
+<script>
+(function(){
+  var items=[
+    {d:[2010,5,12],ev:"Church marriage",st:"done",note:""},
+    {d:[2026,9,22],ev:"Case filed",st:"done",note:"Application received and logged."},
+    {d:null,ev:"Recommendation",st:"now",note:"Not yet assigned",pend:"In progress"},
+    {d:null,ev:"Council review & decision",st:"next",note:"Awaiting council review and decision.",pend:"Pending"},
+    {d:null,ev:"Decree issued",st:"next",note:"",pend:"Pending"}
+  ];
+  var M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var STN={done:"Completed",now:"Current",next:"Upcoming"};
+  function full(i){return i.d?M[i.d[1]]+" "+i.d[2]+", "+i.d[0]:(i.pend||"Pending")}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function st(i){return '<span class="st '+i.st+'">'+STN[i.st]+'</span>'}
+  function note(i,on){return on&&i.note?'<div class="note">'+esc(i.note)+'</div>':''}
+  var V={
+    A:{t:"A · Calendar tile",s:"date as a calendar tile",f:function(i,n){
+      var tile=i.d?'<span>'+M[i.d[1]]+'</span><b class="num">'+i.d[2]+'</b><i class="num">'+i.d[0]+'</i>':'<span>'+(i.st==="now"?"Now":"Next")+'</span><b>·</b><i>'+esc(i.pend||"")+'</i>';
+      return '<li class="'+i.st+'"><div class="tile">'+tile+'</div><div class="txt"><div class="ev">'+esc(i.ev)+'</div>'+note(i,n)+'<div>'+st(i)+'</div></div></li>'}},
+    B:{t:"B · Tinted containers",s:"date as the headline",f:function(i,n){
+      return '<li class="'+i.st+'"><div class="box"><div class="row"><span class="dt num">'+full(i)+'</span>'+st(i)+'</div><div class="ev">'+esc(i.ev)+'</div>'+note(i,n)+'</div></li>'}},
+    C:{t:"C · Rail + containers",s:"timeline line kept, each item in a container",f:function(i,n){
+      return '<li class="'+i.st+'"><span class="dot" aria-hidden="true"></span><div class="box"><span class="dt num">'+full(i)+'</span><span class="ev">'+esc(i.ev)+'</span>'+(n&&i.note?'<span></span><span class="note">'+esc(i.note)+'</span>':'')+'<span></span>'+st(i)+'</div></li>'}},
+    D:{t:"D · Ledger rows",s:"compact, one line per milestone",f:function(i,n){
+      return '<li class="'+i.st+'"><span class="dt num">'+full(i)+'</span><span><span class="ev">'+esc(i.ev)+'</span>'+note(i,n)+'</span>'+st(i)+'</li>'}},
+    E:{t:"E · Event first",s:"alternative: event as level 1",f:function(i,n){
+      return '<li class="'+i.st+'"><div class="box"><div class="ev">'+esc(i.ev)+'</div><div class="dt num">'+full(i)+'</div>'+st(i)+(n&&i.note?'<div class="note">'+esc(i.note)+'</div>':'')+'</div></li>'}},
+    F:{t:"F · Horizontal steps",s:"progress across the card",f:function(i,n,k){
+      return '<li class="'+i.st+'"><span class="dot num" aria-hidden="true">'+(i.st==="done"?"✓":k+1)+'</span><span class="dt num">'+full(i)+'</span><span class="ev">'+esc(i.ev)+'</span>'+st(i)+'</li>'}}
+  };
+  function render(){
+    var order=document.getElementById("order").value,status=document.getElementById("status").value,n=document.getElementById("notes").value==="on";
+    var list=items.slice(); if(order==="new")list.reverse();
+    var html=Object.keys(V).map(function(k){var v=V[k];var lst=(k==="F")?items.slice():list;
+      return '<section class="v '+k+'"><h2>'+v.t+' <small>'+v.s+'</small></h2><div class="card"><div class="card-h"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4zM8 3v5M16 3v5M4 10h16"/></svg><h3>Key dates</h3></div><div class="card-b body" data-status="'+status+'"><ol>'+lst.map(function(i,ix){return v.f(i,n,ix)}).join("")+'</ol></div></div></section>'}).join("");
+    document.getElementById("grid").innerHTML=html;
+    try{localStorage.setItem("kd",JSON.stringify({order:order,status:status,notes:n?"on":"off"}))}catch(e){}
+  }
+  try{var s=JSON.parse(localStorage.getItem("kd")||"null");if(s){document.getElementById("order").value=s.order;document.getElementById("status").value=s.status;document.getElementById("notes").value=s.notes}}catch(e){}
+  ["order","status","notes"].forEach(function(id){document.getElementById(id).addEventListener("change",render)});
+  render();
+})();
+</script>
