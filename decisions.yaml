@@ -414,7 +414,8 @@ decisions:
     why: Owner 2026-11-07 (#170) "the dashboard looks like crap"; the narrow centered column with grey bands came from frame "centered" on every page
     options: [Full window (chosen), Centered 1366px frame]
     decided_by: owner
-    status: active
+    status: superseded
+    superseded_by: D-0063
     check: { kind: test, ref: tests/frontend/shell-frame.test.cjs }
 
   - id: D-0046
@@ -557,3 +558,13 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: test, ref: tests/frontend/council-shell.test.cjs }
+
+  - id: D-0063
+    date: 2026-11-09
+    area: design
+    decision: CTM opens in the Plenix 1366px centered frame (AppShell frame "centered") with the header's toggle to expand to the full window and back, remembered per person; supersedes D-0045. A page that looks cramped in the frame is fixed in its own layout (page kind, columns), not by dropping the frame
+    why: Owner 2026-11-09 (CTM#289) "I approved to have the default view that is based on the default size (fluent) with the ability to expand full view"; owner D-0093 in Plenix (pds#862) "for ctm it needs to be 1366 as default". D-0045 had read the owner's #170 "the dashboard looks like crap" as dropping the frame, which he did not say
+    options: [1366 frame with expand toggle (chosen), Full window always (D-0045, superseded)]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/shell-frame.test.cjs }

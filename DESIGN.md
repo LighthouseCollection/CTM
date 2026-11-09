@@ -72,8 +72,11 @@ A row of buttons never mixes `primary` with `danger`.
 - One thing leads each page; one primary action; extra actions in a menu.
   Related items grouped (space before lines). Pages end on purpose.
 - Cases are a workspace table, never navigation entries.
-- Pages fill the window: `AppShell frame="full"` (D-0045). A page that should
-  be narrow gets it from its page kind (form, settings), never from the frame.
+- The app opens in the 1366px frame: `AppShell frame="centered"` (D-0063, owner
+  D-0093 in Plenix). People expand it to the full window and back with the
+  header's toggle, remembered per person. A page that should be narrow gets it
+  from its page kind (form, settings); a page that looks cramped is fixed in its
+  own layout, never by dropping the frame.
 - Navigation panes (D-0047): the main `NavPane` keeps the Plenix shell
   navigation width and folds to its rail while a case is open; the case
   `SecondaryPane` uses `width="md"` (D-0048: the longest term must fit; terms
