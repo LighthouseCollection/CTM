@@ -284,11 +284,11 @@ test("the session header is Plenix EntityHeader style 2: facts carry their actio
   assert.match(sessionWorkspace, /current \? h\(P\.Stack, \{ gap: "lg" \},\s*h\(P\.Panel/);
   assert.doesNotMatch(agendaTable, /P\.Panel/);
   assert.match(agendaTable, /previousRecommendation/);
-  // Issue 222: the recommendation cell is text; no button or dialog in a cell.
-  // D-0062 (issue 271): the text ending in "…" with the full text on hover; no row panel.
-  assert.match(agendaTable, /wrap: true, render: \(row\) => recommendationCell\(P, h, row\.previous_recommendation, t\)/);
-  assert.ok(council.includes('return h(P.Text, { as: "span", truncate: true, title: text, tabIndex: 0, dir: "auto", className: "plx-u-w-100p" }, text);'));
-  assert.match(council, /if \(!text\) return t\("notRecorded"\);/);
+  // D-0062 (issue 271): no row panel.
+  // pds#1147 (Plenix 1.5.0): the column shows two lines and a corner icon opens the whole text in a Dialog; no Text truncate workaround.
+  assert.match(agendaTable, /field: "previous_recommendation", minWidth: "14rem", pill: false, overflow: "dialog", lines: 2, render: \(row\) => recommendationText\(row\.previous_recommendation, t\)/);
+  assert.doesNotMatch(council, /recommendationCell|truncate: true/);
+  assert.match(council, /return text \|\| t\("notRecorded"\);/);
   assert.doesNotMatch(council, /PreviousRecommendationCell|readRecommendation/);
   assert.doesNotMatch(council, /P\.SidePanel|agendaDetail/);
   assert.doesNotMatch(agendaTable, /onSelect:/);
@@ -885,4 +885,14 @@ test("session form rows are spaced and its fields fill their columns (#117)", ()
   assert.match(form, /h\(P\.Stack, \{ gap: "xl" \},\s*h\(P\.Columns, \{ count: 2, collapseBelow: "wide" \},\s*h\(P\.Field, \{ label: t\("sessionDate"\)/);
   assert.equal((form.match(/h\(P\.Columns, \{ count: 2, collapseBelow: "wide" \}/g) || []).length, 2, "one Columns per row");
   assert.doesNotMatch(form, /width: "sm"/);
+});
+
+// pds#1147 (Plenix 1.5.0, pds#1122): a long-text grid column shows two lines and a corner icon that opens the whole text in a Dialog.
+test("long-text grid columns use overflow dialog with two lines", () => {
+  const read = (file) => fs.readFileSync(`static/ctm/${file}`, "utf8");
+  const council = read("council.js");
+  for (const field of ["previous_recommendation", "reason", "grounds", "recommendation"])
+    assert.match(council, new RegExp(`field: "${field}"[^}]*overflow: "dialog", lines: 2`), field);
+  assert.match(read("council-case.js"), /field: "preview", kind: "wrap", overflow: "dialog", lines: 2/);
+  assert.match(read("app.js"), /field: "body", kind: "wrap", overflow: "dialog", lines: 2/);
 });

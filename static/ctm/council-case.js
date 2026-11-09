@@ -4015,7 +4015,7 @@ ${ar}` : en;
         h(window.CTMShell.Workspace, {
           label: t("internalNotes"), selected, onSelect: select,
           rows: notes.map((note) => ({ ...note, id: note.note_id, title: note.author || t("note"), preview: note.text, recorded: base.formatWhen(note.timestamp, lang) })), empty: t("noNotes"),
-          columns: [{ title: t("note"), field: "title", kind: "name" }, { title: t("recordedAt"), field: "recorded" }, { title: t("note"), field: "preview", kind: "wrap" }],
+          columns: [{ title: t("note"), field: "title", kind: "name" }, { title: t("recordedAt"), field: "recorded" }, { title: t("note"), field: "preview", kind: "wrap", overflow: "dialog", lines: 2 }],
         }, (note) => note ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h2", variant: "title" }, note.title), h(P.Text, { variant: "secondary" }, `${t("version")} ${note.version} · ${note.recorded}`), h(P.Text, { as: "p" }, note.text), note.can_edit && canWrite ? h(P.Button, { size: "sm", icon: "edit", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); setComposing(true); } }, t("editNote")) : null) : h(P.EmptyState, { title: t("noNotes") })),
       ),
     );

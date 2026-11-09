@@ -1314,22 +1314,14 @@
     });
   }
 
-  // Issue 222: a grid cell shows its text, never a button or a dialog.
+  // A grid cell shows its text; the corner icon of a column with overflow "dialog" is Plenix's (pds#1147), not the cell's.
   function recommendationText(value, t) {
     const text = String(value || "").trim().replace(/\s+/g, " ");
     return text || t("notRecorded");
   }
 
-  // D-0062 (issue 271, withdraws D-0051's row panel): no panel; the cell shows the text ending in "…" and the full
-  // text on hover; empty is "Not recorded". Plenix 1.2.0 gaps (logged on pds): the grid keeps one line in its rows
-  // (column wrap and Text lines are ignored), and a Plenix Tooltip in a cell does not shrink (no "…") and draws the
-  // text on one very long line. Until Plenix fixes them: Text truncate with the full text as its title.
-  function recommendationCell(P, h, value, t) {
-    const text = String(value || "").trim().replace(/\s+/g, " ");
-    if (!text) return t("notRecorded");
-    return h(P.Text, { as: "span", truncate: true, title: text, tabIndex: 0, dir: "auto", className: "plx-u-w-100p" }, text);
-  }
-
+  // D-0062 (issue 271), pds#1147: the cell shows two lines of the text; a corner icon on the hovered or active cell opens the whole text in a Dialog
+  // (Plenix 1.5.0, column overflow "dialog"). Empty is "Not recorded".
 
   const feeLabel = (row, t) => (row.fee ? t(row.fee.status) : t("unknown"));
   const REVIEW_URL = "/api/applications/?state=awaiting_review";
@@ -1802,7 +1794,7 @@
         archiveAgendaState.error ? h(P.Notice, { tone: "danger" }, serverMessage(archiveAgendaState.error, t)) : null,
         !archiveAgendaState.pending && !archiveAgendaState.error ? h(P.Panel, { icon: "folder", title: t("assignedCases") },
           archiveTable(t("assignedCases"), archivedItems.assigned, t("part1Empty"), caseColumns([
-            { title: t("reason"), field: "reason", minWidth: "9rem", pill: false, render: (row) => groundsText(row.grounds, row.reason, t) || t("notRecorded") },
+            { title: t("reason"), field: "reason", minWidth: "9rem", pill: false, overflow: "dialog", lines: 2, render: (row) => groundsText(row.grounds, row.reason, t) || t("notRecorded") },
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
             { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
           ])),
@@ -1811,7 +1803,7 @@
           archiveTable(t("casesPresented"), archivedItems.presented, t("part2Empty"), caseColumns([
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
             { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
-            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, wrap: true, render: (row) => recommendationCell(P, h, row.previous_recommendation, t) },
+            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, overflow: "dialog", lines: 2, render: (row) => recommendationText(row.previous_recommendation, t) },
           ])),
         ) : null,
       ));
@@ -2601,9 +2593,9 @@
       { title: t("caseNumber"), field: "number", kind: "data", width: "8rem" },
       { title: t("pickerParties"), field: "parties", kind: "name", width: "12rem" },
       { title: t("pickerFiled"), field: "filed", width: "6.5rem" },
-      { title: t("reason"), field: "grounds", width: "6rem" },
+      { title: t("reason"), field: "grounds", width: "6rem", overflow: "dialog", lines: 2 },
       ...(part === 2 ? [{ title: t("assignedTo"), field: "member", width: "8rem" }] : []),
-      { title: t("pickerRecommendation"), field: "recommendation", width: part === 2 ? "9rem" : "17rem" },
+      { title: t("pickerRecommendation"), field: "recommendation", width: part === 2 ? "9rem" : "17rem", overflow: "dialog", lines: 2 },
     ];
     let body;
     if (state.pending && !state.data) body = loadingView(P, h, t);
@@ -2908,7 +2900,7 @@
         ? [
             { title: t("applicant"), field: "applicant", kind: "name", width: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
             { title: t("respondent"), field: "respondent", width: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
-            { title: t("reason"), field: "reason", minWidth: "6.5rem" },
+            { title: t("reason"), field: "reason", minWidth: "6.5rem", overflow: "dialog", lines: 2 },
             { title: t("yearsMarried"), field: "married_years", minWidth: "7.5rem", pill: false, render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
             { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
             { title: t("actions"), field: "open_action", minWidth: "9rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
@@ -2920,7 +2912,7 @@
             { title: t("applicant"), field: "applicant", width: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
             { title: t("respondent"), field: "respondent", width: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: t("previousRecommendation"), field: "previous_recommendation", width: "12rem", pill: false, wrap: true, render: (row) => recommendationCell(P, h, row.previous_recommendation, t) },
+            { title: t("previousRecommendation"), field: "previous_recommendation", width: "12rem", pill: false, overflow: "dialog", lines: 2, render: (row) => recommendationText(row.previous_recommendation, t) },
             { title: t("actions"), field: "open_action", minWidth: "9rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
@@ -3603,7 +3595,7 @@
           { title: t("caseNumber"), field: "number", kind: "data", sorter: "string" },
           { title: t("caseApplicant"), field: "applicant", type: "person", kind: "name", sorter: "string" },
           { title: t("caseRespondent"), field: "respondent", type: "person", kind: "name", sorter: "string" },
-          { title: t("caseReason"), field: "reason", sorter: "string" },
+          { title: t("caseReason"), field: "reason", sorter: "string", overflow: "dialog", lines: 2 },
           ...(view === "active" ? [{ title: t("caseAssignee"), field: "manager", type: "person", kind: "name", sorter: "string" }] : []),
           { title: t("statusLabel"), field: "status", maxWidth: "--plx-ref-size-240px", sorter: "string" },
         ];
