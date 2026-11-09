@@ -326,10 +326,10 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.doesNotMatch(councilCase, /spouseIdentity\(P, h, t, party\)/);
   assert.match(councilCase, /collapsible: true/);
   assert.match(councilCase, /profile\?\.contact/);
-  assert.match(councilCase, /function spouseProfileSection\(P, h, t, title, icon, values, twoColumns = false\)/);
+  assert.match(councilCase, /function spouseProfileSection\(P, h, t, title, icon, values\)/);
   assert.match(councilCase, /function SpouseContactSection\(\{ api, P, h, t, user, record, party, onSaved \}\)/);
   assert.match(councilCase, /h\(SpouseContactSection, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
-  assert.match(councilCase, /twoColumns\s*\? caseColumns\(P, h, fields\.map/);
+  assert.match(councilCase, /readGroup\(P, h, title,\s*profileList\(P, h, fields\.map/, "the tiles variation lays the fields out two per row itself");
   assert.match(councilCase, /size: "2xl",\s*label: party\.name/);
   assert.match(councilCase, /t\("personalDetails"\), "person", \[/);
   assert.doesNotMatch(councilCase, /t\("personalDetails"\), "user", \[/);
@@ -374,7 +374,7 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /caseSummary: "Case Summary"/);
   // D-0050 groups (groups.md): Case · Spouses · Marriage.
   assert.match(councilCase, /GroupedReadFields, \{ P, h, groups: summaryGroups, values: summaryReadValues, lang, columns: 2 \}/);
-  assert.match(councilCase, /reasonForDivorce: "Reason Seeking Divorce"/);
+  assert.match(councilCase, /reasonForDivorce: "Reason seeking divorce"/);
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
   assert.match(councilCase, /h\(P\.Timeline, \{ variant: "grouped", label: t\("keyDates"\),\s*items: summaryTimeline\.map\(/);
   // D-0050 (#217): the case status is a Plenix Badge, never plain text.
@@ -769,14 +769,14 @@ test("ctm3-48 part 2: grids are Plenix Columns that collapse to one column on na
   assert.match(councilCase, /function caseColumns\(P, h, items, count, collapseBelow\)/);
   assert.match(councilCase, /h\(P\.Columns, \{ count, collapseBelow \}/);
   assert.match(councilCase, /, 3, "wide"\)/, "#13 edit forms: three columns");
-  assert.match(councilCase, /, 2, "medium"\)/, "#8 spouse profile: two columns");
+  assert.doesNotMatch(councilCase, /, 2, "medium"\)/, "#8 spouse profile: no CTM columns, the tiles variation lays out two per row (pds D-0132)");
   assert.match(council, /h\(P\.Columns, \{ count: 2, collapseBelow: "wide" \}/, "#16 session form");
 });
 
 test("ctm3-48 part 2: read mode is a PropertyList, never a read-only input", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   const read = councilCase.slice(councilCase.indexOf("function CaseReadFields("), councilCase.indexOf("function CaseMarriage("));
-  assert.match(read, /P\.PropertyList, \{ layout: "stacked"/);
+  assert.match(read, /P\.PropertyList, null, \.\.\.fields\.map/, "one PropertyList that inherits the group's tiles variation");
   assert.doesNotMatch(read, /readOnly: true|P\.Input/);
   assert.match(read, /timeZone: "UTC"/, "date-only values never shift a day");
 });

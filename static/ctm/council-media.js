@@ -1009,7 +1009,7 @@
               h(P.Text, { variant: "data", "aria-live": "polite" }, `${t("elapsed")}: ${formatDuration(length)}`),
             )
           : null,
-        progress ? h(P.Inline, { gap: "sm" }, h(P.Spinner, { size: "sm", label: t(progress) }), h(P.Text, null, t(progress))) : null,
+        progress ? h(P.Spinner, { size: "sm", label: t(progress), labelPosition: "after" }) : null,
         blobUrl && ["stopped", "recovered", "interrupted"].includes(status)
           ? h(P.MediaPlayer, { key: blobUrl, src: blobUrl, kind: "audio", label: t("playbackLabel"), strings: mediaStrings(t) })
           : null,
@@ -1362,7 +1362,7 @@
             },
             h(
               P.PropertyList,
-              { layout: "stacked" },
+              { variant: "tiles" },
               ...answerEntries(report, conflict.answers).map(([code, answer]) =>
                 h(P.PropertyList.Item, { key: code, label: label(code) },
                   h(P.Text, { as: "p", dir: "auto" }, typeof answer === "string" ? answer : JSON.stringify(answer))),
@@ -1498,7 +1498,7 @@
                   { gap: "sm" },
                   h(
                     P.PropertyList,
-                    null,
+                    { variant: "tiles" },
                     h(P.PropertyList.Item, { label: t("submittedOn"), data: true }, base.formatWhen(recording.created_at, lang)),
                     h(P.PropertyList.Item, { label: t("recDuration"), data: true }, recording.duration_ms != null ? formatDuration(recording.duration_ms) : t("durationUnknown")),
                     recording.byte_count ? h(P.PropertyList.Item, { label: t("size"), data: true }, formatBytes(recording.byte_count, lang)) : null,
@@ -1651,7 +1651,7 @@
     const segments = timedSegments(data.segments);
     const meta = h(
       P.PropertyList,
-      null,
+      { variant: "tiles" },
       h(P.PropertyList.Item, { label: t("transcriptLanguage") }, codeLabel(t, "lang", data.language)),
       h(P.PropertyList.Item, { label: t("transcriptKind") }, codeLabel(t, "kind", data.kind)),
       h(P.PropertyList.Item, { label: t("version") }, String(data.version)),
@@ -1875,7 +1875,7 @@
       { gap: "md" },
       h(
         P.PropertyList,
-        null,
+        { variant: "tiles" },
         h(P.PropertyList.Item, { label: t("reportFor") }, report.subject || ""),
         h(P.PropertyList.Item, { label: t("version") }, String(shown.version ?? report.version ?? "")),
         report.author ? h(P.PropertyList.Item, { label: t(councilSource ? "paperRecordedBy" : "reportAuthor") }, base.isolate(report.author)) : null,
@@ -2103,7 +2103,7 @@
       { gap: "md" },
       h(
         P.PropertyList,
-        null,
+        { variant: "tiles" },
         h(P.PropertyList.Item, { label: t("category"), data: true }, file.category),
         h(P.PropertyList.Item, { label: t("version") }, String(file.version)),
         file.byte_count ? h(P.PropertyList.Item, { label: t("size"), data: true }, formatBytes(file.byte_count, lang)) : null,

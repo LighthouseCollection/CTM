@@ -225,3 +225,18 @@ test("users and roles: council seat and voting switches from the seats API", () 
   assert.match(src, /councilSeat: "Council seat", votingSeat: "Voting"/);
   assert.match(src, /councilSeat: "مقعد في المجلس", votingSeat: "التصويت"/);
 });
+
+// Issue 273, 289 (D-0050, pds D-0106, D-0132): every read-only group on the case pages is a PropertyGroup in the named "tiles" variation,
+// drawn by readGroup, the one place that switches it; the lists inside it carry no layout (an explicit layout wins over the variation).
+test("read-only case cards: PropertyGroup variant tiles, no explicit layout, sentence-case labels", () => {
+  const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const lists = [...src.matchAll(/h\(\s*P\.PropertyList,\s*([^,]+),/g)].map((m) => m[1].trim());
+  assert.ok(lists.length > 5);
+  assert.deepEqual(lists.filter((props) => /layout:/.test(props)), [], "a PropertyList with its own layout");
+  assert.match(src, /function readGroup\(P, h, title, \.\.\.children\) \{\n\s*return h\(P\.PropertyGroup, \{ heading: title, level: 3, variant: "tiles"/);
+  assert.match(src, /readGroup\(P, h, group\.title, h\(CaseReadFields/);
+  assert.doesNotMatch(src.slice(src.indexOf("function spouseProfileSection("), src.indexOf("function spouseProfileValues(")), /caseColumns/, "tiles lay out two per row themselves");
+  assert.match(src, /span: longValue\(/, "long text takes the whole row (Item.span)");
+  for (const [key, label] of [["caseNumber", "Case number"], ["filingDate", "Filing date"], ["assignedCouncilMember", "Assigned council member"], ["lastHearingDate", "Last hearing date"]])
+    assert.ok(src.includes(`      ${key}: "${label}",`), key);
+});

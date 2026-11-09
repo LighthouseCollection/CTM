@@ -411,8 +411,8 @@ ${ar}` : en;
       declineApplicationHelp: "Explain why the application is being declined. This reason will be emailed to the applicant.",
       declineReason: "Reason for decline",
       declineReasonRequired: "Enter a reason for declining this application.",
-      caseNumber: "Case Number",
-      filingDate: "Filing Date",
+      caseNumber: "Case number",
+      filingDate: "Filing date",
       pending: "Pending",
       inProgress: "In progress",
       active: "Active",
@@ -427,14 +427,14 @@ ${ar}` : en;
       deleteCaseReason: "Reason (optional)",
       applicant: "Applicant",
       respondent: "Respondent",
-      reasonForDivorce: "Reason Seeking Divorce",
-      assignedCouncilMember: "Assigned Council Member",
+      reasonForDivorce: "Reason seeking divorce",
+      assignedCouncilMember: "Assigned council member",
       assignChange: "Change",
       assignPlaceholder: "Choose a council member",
       assignEntityName: "council members",
       assignedToast: "Assigned to {name}",
       undo: "Undo",
-      lastHearingDate: "Last Hearing Date",
+      lastHearingDate: "Last hearing date",
       children: "Children",
       noChildren: "No children recorded",
       noChildrenShort: "No children",
@@ -547,38 +547,38 @@ ${ar}` : en;
       groupRecord: "Record",
       separation: "Separation",
       churchMarriage: "Church Marriage",
-      marriedOutsideCoptic: "Were You Married Outside the Coptic Orthodox Church?",
-      outsideDenomination: "Religious Denomination Officiating",
-      outsideMarriageDate: "Date of Marriage Outside Coptic Church",
-      churchMarriageDate: "Date of Church Marriage",
-      dateOfSeparation: "Date of Separation",
+      marriedOutsideCoptic: "Were you married outside the Coptic Orthodox Church?",
+      outsideDenomination: "Religious denomination officiating",
+      outsideMarriageDate: "Date of marriage outside Coptic Church",
+      churchMarriageDate: "Date of church marriage",
+      dateOfSeparation: "Date of separation",
       separationDetails: "Separation Details",
       civilDivorce: "Civil Divorce",
       restrainingOrder: "Restraining Order",
       reconciliation: "Reconciliation",
-      maritalStatus: "Current Marital Status",
-      initiatedBy: "Initiated By",
-      civilDivorceFiled: "Civil Divorce Filed?",
-      courtName: "Name of Court",
-      courtLocation: "Court Street Address / Location",
-      civilCaseNumber: "Civil Case Number",
-      civilDivorceStatus: "Civil Divorce Status",
-      orderFiled: "Restraining Order Filed?",
-      orderNameListed: "Name Listed on Order",
-      orderCaseNumber: "Restraining Order Case Number",
-      orderStatus: "Restraining Order Status",
-      reconciliationAttempted: "Clergy Counseling / Reconciliation Attempted?",
-      permitPreviouslyApplied: "Previously Applied for Ecclesiastical Marriage Permit?",
-      permitWhen: "When Did You Previously Apply?",
-      permitWhere: "Where Did You Previously Apply?",
-      decisionOutcome: "Decision Outcome",
-      dateOfCivilDivorce: "Date of Civil Divorce",
-      dateOfRestrainingOrder: "Date of Restraining Order",
-      restrainingOrderExpirationDate: "Restraining Order Expiration Date",
-      officiatingPriest: "Officiating Priest",
-      marriageDuration: "Marriage Duration",
-      churchName: "Church Name",
-      churchLocation: "Church Address / Location",
+      maritalStatus: "Current marital status",
+      initiatedBy: "Initiated by",
+      civilDivorceFiled: "Civil divorce filed?",
+      courtName: "Name of court",
+      courtLocation: "Court street address / location",
+      civilCaseNumber: "Civil case number",
+      civilDivorceStatus: "Civil divorce status",
+      orderFiled: "Restraining order filed?",
+      orderNameListed: "Name listed on order",
+      orderCaseNumber: "Restraining order case number",
+      orderStatus: "Restraining order status",
+      reconciliationAttempted: "Clergy counseling / reconciliation attempted?",
+      permitPreviouslyApplied: "Previously applied for ecclesiastical marriage permit?",
+      permitWhen: "When did you previously apply?",
+      permitWhere: "Where did you previously apply?",
+      decisionOutcome: "Decision outcome",
+      dateOfCivilDivorce: "Date of civil divorce",
+      dateOfRestrainingOrder: "Date of restraining order",
+      restrainingOrderExpirationDate: "Restraining order expiration date",
+      officiatingPriest: "Officiating priest",
+      marriageDuration: "Marriage duration",
+      churchName: "Church name",
+      churchLocation: "Church address / location",
       internalNotes: "Internal notes",
       internalNotesHelp: "Council only. Never shown to applicants.",
       note: "Note",
@@ -592,7 +592,7 @@ ${ar}` : en;
       portalAccount: "Portal account",
       registered: "Registered",
       notRegistered: "Not registered",
-      personalDetails: "Personal Details",
+      personalDetails: "Personal details",
       contact: "Contact",
       editContact: "Edit contact",
       saveContact: "Save contact",
@@ -605,24 +605,24 @@ ${ar}` : en;
       photoOf: "{name}’s photo",
       photoUploadFailed: "The photo could not be uploaded.",
       career: "Career",
-      churchAffiliation: "Church Affiliation",
-      otherNamesKnownBy: "Other Names Known By",
-      placeOfBirth: "Place of Birth",
+      churchAffiliation: "Church affiliation",
+      otherNamesKnownBy: "Other names known by",
+      placeOfBirth: "Place of birth",
       nationality: "Nationality",
-      awarenessOfApplication: "Awareness of Application",
+      awarenessOfApplication: "Awareness of application",
       address: "Address",
-      mobileNumber: "Mobile Number",
-      emailAddress: "Email Address",
-      immigrationStatus: "Immigration Status",
-      residingWith: "Residing With",
+      mobileNumber: "Mobile number",
+      emailAddress: "Email address",
+      immigrationStatus: "Immigration status",
+      residingWith: "Residing with",
       education: "Education",
-      yearOfGraduation: "Year of Graduation",
+      yearOfGraduation: "Year of graduation",
       occupation: "Occupation",
       denomination: "Denomination",
-      nameOfBishop: "Name of Bishop",
+      nameOfBishop: "Name of bishop",
       diocese: "Diocese",
-      parishName: "Parish Name",
-      fatherOfConfession: "Father of Confession",
+      parishName: "Parish name",
+      fatherOfConfession: "Father of confession",
       noParties: "No spouses are recorded.",
       addParty: "Add the other spouse",
       addPartyHelp: "Record the other spouse by name and email. They are linked automatically after registering with a matching verified email. No account is created for them and no invitation acceptance is needed.",
@@ -1797,7 +1797,7 @@ ${ar}` : en;
         controls.projected
           ? h(
               P.PropertyList,
-              null,
+              { variant: "tiles" },
               controls.priestName ? h(P.PropertyList.Item, { label: t("priestName") }, base.isolate(controls.priestName)) : null,
               h(
                 P.PropertyList.Item,
@@ -2079,7 +2079,7 @@ ${ar}` : en;
         form.fileId
           ? h(
               P.PropertyList,
-              null,
+              { variant: "tiles" },
               h(P.PropertyList.Item, { label: w("File") }, base.isolate(form.fileName)),
               h(P.PropertyList.Item, { label: t("returnedCheckState") }, h(P.Badge, { tone: form.scan === "clean" ? "success" : form.scan === "rejected" ? "danger" : "neutral" }, t("scan_" + form.scan))),
               variant === "recording" ? h(P.PropertyList.Item, { label: t("recDuration") }, form.durationMs === null ? t("recDurationUnknown") : base.isolate(formatDuration(form.durationMs))) : null,
@@ -2166,8 +2166,7 @@ ${ar}` : en;
       P.Stack,
       { gap: "md" },
       // D-0050 groups (groups.md): Request · Record.
-      groupHeading(P, h, t("groupRequest")),
-      h(
+      readGroup(P, h, t("groupRequest"), h(
         P.PropertyList,
         null,
         h(P.PropertyList.Item, { label: t("title") }, request.title),
@@ -2175,16 +2174,15 @@ ${ar}` : en;
         h(P.PropertyList.Item, { label: t("method") }, t(request.kind)),
         request.subject_name ? h(P.PropertyList.Item, { label: t("subject") }, request.subject_name) : null,
         request.language ? h(P.PropertyList.Item, { label: t("language") }, t(request.language)) : null,
-      ),
-      groupHeading(P, h, t("groupRecord")),
-      h(
+      )),
+      readGroup(P, h, t("groupRecord"), h(
         P.PropertyList,
         null,
         request.author ? h(P.PropertyList.Item, { label: t("preparedBy") }, request.author) : null,
         request.created_at ? h(P.PropertyList.Item, { label: t("createdAt"), data: true }, base.formatWhen(request.created_at, lang)) : null,
         request.sent_at ? h(P.PropertyList.Item, { label: t(interview ? "startedAt" : "sentAt"), data: true }, base.formatWhen(request.sent_at, lang)) : null,
         request.parent_report_id ? h(P.PropertyList.Item, { label: t("parent") }, t("followUpYes")) : null,
-      ),
+      )),
       external
         ? h(P.Notice, { tone: "info" }, t("externalNoQuestions"))
         : h(
@@ -2558,7 +2556,7 @@ ${ar}` : en;
         { icon: "doc-text", title: t("votedOn"), description: decision.number ? `${t("version")} ${decision.number}` : undefined },
         h(
           P.PropertyList,
-          { layout: "stacked" },
+          { variant: "tiles" },
           h(P.PropertyList.Item, { label: t("decisionType") }, typeLabel(decision.type)),
           h(P.PropertyList.Item, { label: t("grounds") }, decision.grounds),
           Object.keys(decision.entitlements || {}).length
@@ -2588,7 +2586,7 @@ ${ar}` : en;
           !readAvailable ? h(P.Notice, { tone: "warning" }, t("sessionVotesNotice")) : null,
           h(
             P.PropertyList,
-            null,
+            { variant: "tiles" },
             ...rows.map((row) =>
               h(
                 P.PropertyList.Item,
@@ -2640,7 +2638,7 @@ ${ar}` : en;
               P.Stack,
               { gap: "sm" },
               h(P.Badge, { tone: "success" }, t("approved")),
-              h(P.PropertyList, { layout: "stacked" },
+              h(P.PropertyList, { variant: "tiles" },
                 h(P.PropertyList.Item, { label: t("president") }, decision.approval.president || "—"),
                 decision.approval.actor && decision.approval.actor !== decision.approval.president
                   ? h(P.PropertyList.Item, { label: t("recordedBy") }, `${decision.approval.actor}${decision.approval.timestamp ? " · " + base.formatWhen(decision.approval.timestamp, lang) : ""}`)
@@ -3437,10 +3435,17 @@ ${ar}` : en;
     return h(P.SectionHeading, { level: 3 }, title);
   }
 
+  // Issue 273 (D-0050, pds D-0106): a read-only group is a Plenix PropertyGroup (its own heading) around stacked
+  // PropertyLists. This is the one place that draws a read-only group, so the named Plenix read-only variation
+  // switches here with one prop when it ships. Edit forms keep groupHeading above their fields.
+  function readGroup(P, h, title, ...children) {
+    return h(P.PropertyGroup, { heading: title, level: 3, variant: "tiles", key: typeof title === "string" ? title : undefined }, ...children);
+  }
+
   // groups: [{ title, fields: [[key, label, type]] }] drawn with CaseReadFields; an empty group is left out.
   function GroupedReadFields({ P, h, groups, values, lang, columns = 2 }) {
     return h(P.Stack, { gap: "xl" }, ...groups.filter((group) => group.fields.length).map((group) =>
-      h(P.Stack, { gap: "sm", key: group.title }, groupHeading(P, h, group.title), h(CaseReadFields, { P, h, fields: group.fields, values, lang, columns }))));
+      readGroup(P, h, group.title, h(CaseReadFields, { P, h, fields: group.fields, values, lang, columns }))));
   }
 
   // The edit form's groups: the same titles and order as read mode; each field drawn by field(key, label, type).
@@ -3451,20 +3456,20 @@ ${ar}` : en;
   }
 
   function profileList(P, h, items) {
-    return h(P.PropertyList, { layout: "stacked" }, ...items);
+    return h(P.PropertyList, null, ...items);
   }
 
-  function spouseProfileSection(P, h, t, title, icon, values, twoColumns = false) {
+  // pds D-0132: the tiles variation lays the fields out two per row itself; a long value takes the whole row.
+  function spouseProfileSection(P, h, t, title, icon, values) {
     const fields = values.filter(([, value]) => value);
     if (!fields.length) return null;
-    return h(
-      P.Stack,
-      { gap: "sm", key: title },
-      groupHeading(P, h, title),
-      twoColumns
-        ? caseColumns(P, h, fields.map(([label, value]) => profileList(P, h, [h(P.PropertyList.Item, { key: label, label: t(label) }, value)])), 2, "medium")
-        : profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label) }, value))),
-    );
+    return readGroup(P, h, title,
+      profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label), span: longValue(value) ? "full" : undefined }, value))));
+  }
+
+  // a value of more than 80 characters, or with a line break, is long text: its tile takes the whole row (Plenix Item.span)
+  function longValue(value) {
+    return typeof value === "string" && (value.length > 80 || value.indexOf("\n") >= 0);
   }
 
   function spouseProfileValues(record, party) {
@@ -3578,7 +3583,7 @@ ${ar}` : en;
     return h(
       P.Stack,
       { gap: "sm" },
-      groupHeading(P, h, t("contact")),
+      editing ? groupHeading(P, h, t("contact")) : null,
       editing
         ? h(
             P.Form,
@@ -3587,7 +3592,7 @@ ${ar}` : en;
             failure ? h(P.Notice, { tone: "danger" }, failure) : null,
             h(P.FormActions, { sticky: false }, h(P.Button, { disabled: pending, onClick: () => setEditing(false) }, t("cancel")), h(P.Button, { type: "submit", variant: "primary", loading: pending, disabled: pending }, t("saveContact"))),
           )
-        : caseColumns(P, h, fields.map(([key, label]) => profileList(P, h, [h(P.PropertyList.Item, { key, label }, values[key] || "—")])), 2, "medium"),
+        : readGroup(P, h, t("contact"), profileList(P, h, fields.map(([key, label]) => h(P.PropertyList.Item, { key, label }, values[key] || "—")))),
     );
   }
 
@@ -3754,20 +3759,20 @@ ${ar}` : en;
                     ["placeOfBirth", profile.personal?.place_of_birth],
                     ["nationality", profile.personal?.nationality],
                     ["awarenessOfApplication", profile.personal?.awareness_of_application],
-                  ], true),
+                  ]),
                   h(SpouseContactSection, { api, P, h, t, user, record, party, onSaved: retry }),
                   spouseProfileSection(P, h, t, t("career"), "document", [
                     ["education", profile.career?.education],
                     ["yearOfGraduation", profile.career?.graduation_year],
                     ["occupation", profile.career?.occupation],
-                  ], true),
+                  ]),
                   spouseProfileSection(P, h, t, t("churchAffiliation"), "settings-users", [
                     ["denomination", profile.church_affiliation?.denomination],
                     ["nameOfBishop", profile.church_affiliation?.bishop],
                     ["diocese", profile.church_affiliation?.diocese],
                     ["parishName", profile.church_affiliation?.parish],
                     ["fatherOfConfession", profile.church_affiliation?.confessor],
-                  ], true),
+                  ]),
                 ),
               ),
         );
@@ -3959,7 +3964,7 @@ ${ar}` : en;
         ) : null;
         return h(P.Panel, { icon: "doc-text", key: row.id, title: h(P.Inline, { gap: "md", align: "center", wrap: true }, h(P.Text, { as: "span" }, t("petition")), filingParty), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
           h(P.Stack, { gap: "sm" },
-            answers.length ? h(P.PropertyList, { layout: "stacked" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
+            answers.length ? h(P.PropertyList, { variant: "tiles" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
           ),
         );
       }),
@@ -4128,7 +4133,8 @@ ${ar}` : en;
         return new Intl.DateTimeFormat(language === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(String(value) + "T00:00:00Z"));
       return String(value);
     };
-    return caseColumns(P, h, fields.map(([key, label, type = "text"]) => h(P.PropertyList, { layout: "stacked", key }, h(P.PropertyList.Item, { label }, show(values[key], type)))), columns, "wide");
+    // pds D-0132: one PropertyList in the tiles variation; the tiles are two per row, and a long value (notes, grounds) takes the whole row
+    return h(P.PropertyList, null, ...fields.map(([key, label, type = "text"]) => h(P.PropertyList.Item, { key, label, span: longValue(values[key]) ? "full" : undefined }, show(values[key], type))));
   }
 
   function CaseMarriage({ api, lang, user, caseId }) {
