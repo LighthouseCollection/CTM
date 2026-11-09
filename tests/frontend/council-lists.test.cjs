@@ -40,7 +40,7 @@ const cases = [
   { id: "c2", number: "20261020-02", status: "closed", applicant_name: "Daniel Brooks", respondent_name: "Olivia Brooks", closed_at: "2026-10-30T10:00:00Z" },
 ];
 
-// D-0063 (issue 272, owner): no skeletons; a loading region is busy at once and shows the Plenix Spinner with a label
+// D-0064 (issue 272, owner): no skeletons; a loading region is busy at once and shows the Plenix Spinner with a label
 // naming what loads after about a second (CTMShell.DelayedSpinner; a plain spinner where the shell is not loaded).
 test("loading is the Plenix spinner with a label, after a delay; no skeleton anywhere", () => {
   const [h, C] = boot();

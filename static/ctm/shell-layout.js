@@ -14,7 +14,7 @@
  *               button column (kind "actions" or a field named actions / *_action(s)) stays "table", because
  *               0.86.0 cannot measure buttons and would cut them off; move them to rowMenu to get the row cards.
  *   typeIcons   the column type icon before each header title (default now: true)
- *   loading     true: the Plenix spinner with the grid's name, after about a second (D-0063, no skeletons)
+ *   loading     true: the Plenix spinner with the grid's name, after about a second (D-0064, no skeletons)
  *   openKey     the open row (aria-current); default: selected
  *   template, layout, keyColumns   the row card slots (data-grid.md "Row cards")
  *   cardCount   the plural count over the row cards, e.g. { one: "{n} case", other: "{n} cases" } (EN/AR from callers)
@@ -122,7 +122,7 @@
   // A column of row buttons (Open, Edit, Delete): the actions column kinds and fields named *_action(s).
   const buttonColumn = (column) => column.kind === "actions" || /(^|_)actions?$/.test(column.field || "");
 
-  // D-0063 (issue 272, owner): no skeleton or shimmer placeholders. A region that loads is announced as busy at once
+  // D-0064 (issue 272, owner): no skeleton or shimmer placeholders. A region that loads is announced as busy at once
   // and shows the Plenix Spinner with a label naming what loads, centred, only after about a second (a quick load
   // shows nothing). Plenix is asked to make this its default (pds issue 1032).
   function DelayedSpinner({ label, className, delay = 1000 }) {

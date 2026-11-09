@@ -414,7 +414,8 @@ decisions:
     why: Owner 2026-11-07 (#170) "the dashboard looks like crap"; the narrow centered column with grey bands came from frame "centered" on every page
     options: [Full window (chosen), Centered 1366px frame]
     decided_by: owner
-    status: active
+    status: superseded
+    superseded_by: D-0063
     check: { kind: test, ref: tests/frontend/shell-frame.test.cjs }
 
   - id: D-0046
@@ -474,8 +475,9 @@ decisions:
     why: Owner 2026-11-07 (#222) "this is not correct, it needs to be updated based on the pds"; Plenix DataGrid guide (one line per cell, detail in a SidePanel)
     options: [Truncated text + detail panel (chosen), Button + dialog per cell (before)]
     decided_by: agent:ctm3-product-lead
-    status: active
-    review_only: "Checked by ctm3-design-critic (G5b) on #222 and #217"
+    status: superseded
+    superseded_by: D-0062
+    review_only: "Superseded by D-0062 (#271): the row detail panel is withdrawn; the cell wraps to two lines with a tooltip"
 
   - id: D-0052
     date: 2026-11-07
@@ -546,3 +548,34 @@ decisions:
     decided_by: owner
     status: active
     review_only: "Checked by ctm3-design-critic (G5b) against DESIGN.md section 4 and the study; Plenix visual-regression baselines once shipped"
+
+  - id: D-0062
+    date: 2026-11-08
+    area: design
+    decision: No side panel opens when an agenda row is clicked (withdraws the D-0051 detail panel); the Previous recommendation cell wraps to two lines ending in "…" with the full text in a tooltip on hover or keyboard focus, and "Not recorded" when empty (until Plenix supports a two-line cell and a cell tooltip, one line with "…" and the full text on hover); Open and Move stay as the row actions
+    why: Owner 2026-11-08 (#271) "I never asked for this" about the right side panel on an agenda row
+    options: [Two-line cell + tooltip and no row panel (chosen), Truncated cell + row SidePanel (D-0051, withdrawn)]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/council-shell.test.cjs }
+
+  - id: D-0063
+    date: 2026-11-09
+    area: design
+    decision: CTM opens in the Plenix 1366px centered frame (AppShell frame "centered") with the header's toggle to expand to the full window and back, remembered per person; supersedes D-0045. A page that looks cramped in the frame is fixed in its own layout (page kind, columns), not by dropping the frame
+    why: Owner 2026-11-09 (CTM#289) "I approved to have the default view that is based on the default size (fluent) with the ability to expand full view"; owner D-0093 in Plenix (pds#862) "for ctm it needs to be 1366 as default". D-0045 had read the owner's #170 "the dashboard looks like crap" as dropping the frame, which he did not say
+    options: [1366 frame with expand toggle (chosen), Full window always (D-0045, superseded)]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/shell-frame.test.cjs }
+
+  - id: D-0064
+    date: 2026-11-08
+    area: design
+    decision: No skeleton or shimmer placeholders anywhere in CTM; a region that loads uses the Plenix spinner with a label naming what loads (LoadingState, and loading on DataGrid and ListingPage), shown after about a second, announced as busy at once (Plenix D-0130)
+    why: Owner 2026-11-08 (#272, pds#1032) "I do not want this loading style view"; again 2026-11-09 (#289) "use the regular standard way similar to fluent"
+    options: [Labeled spinner after a second (chosen), Skeleton bars (before)]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/council-lists.test.cjs }
+

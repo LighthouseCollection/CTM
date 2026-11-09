@@ -1280,7 +1280,7 @@
       const loginHeader = brandHeader();
       // Sign-in: the Auth page with SsoButtons (sign-in.md, single-sign-on.md). SignInForm is left out on
       // purpose: through 0.88.0 it still always draws a password field, and CTM has no passwords (plenix-requests.md PLX-015).
-      return h(P.AppShell, { page: "form", frame: "full", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
+      return h(P.AppShell, { page: "form", frame: "centered", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
         h(P.PageContent, null, h(P.Stack, { gap: "none", grow: true },
           loginHeader,
           h(P.Stack, { grow: true, justify: "center", align: "center", inset: "lg" }, h(P.Auth, {
@@ -2016,7 +2016,7 @@
     }
     return h(
       P.AppShell,
-          { header, sideNav: nav, frame: "full", page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
+          { header, sideNav: nav, frame: "centered", page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       // The app's toasts (AppShell gives none, PLX-021): today the case-deleted toast.
       h(P.ToastProvider, null, h(CaseDeletedToast, { text: (number) => t("caseDeleted").replace("{number}", number) }),

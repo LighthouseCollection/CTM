@@ -138,7 +138,7 @@ test("row card slots, card count and extra documented grid props pass through", 
   assert.equal(grid.props.pageSize,25);
   assert.equal("template" in mount({label:"Cases",rows:[],columns:[]}).props,false);
 });
-// D-0063 (issue 272): a loading table is a busy region named after the grid; no Skeleton rows (the spinner follows after a second).
+// D-0064 (issue 272): a loading table is a busy region named after the grid; no Skeleton rows (the spinner follows after a second).
 test("loading tables are a busy region named after the grid, without skeletons", () => {
   const { h, S } = shell({ setTimeout, clearTimeout });
   const tree = h.render(S.Table, { label: "Cases", rows: [], columns: [], loading: true });
