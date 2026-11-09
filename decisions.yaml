@@ -414,7 +414,8 @@ decisions:
     why: Owner 2026-11-07 (#170) "the dashboard looks like crap"; the narrow centered column with grey bands came from frame "centered" on every page
     options: [Full window (chosen), Centered 1366px frame]
     decided_by: owner
-    status: active
+    status: superseded
+    superseded_by: D-0063
     check: { kind: test, ref: tests/frontend/shell-frame.test.cjs }
 
   - id: D-0046
@@ -474,8 +475,9 @@ decisions:
     why: Owner 2026-11-07 (#222) "this is not correct, it needs to be updated based on the pds"; Plenix DataGrid guide (one line per cell, detail in a SidePanel)
     options: [Truncated text + detail panel (chosen), Button + dialog per cell (before)]
     decided_by: agent:ctm3-product-lead
-    status: active
-    review_only: "Checked by ctm3-design-critic (G5b) on #222 and #217"
+    status: superseded
+    superseded_by: D-0062
+    review_only: "Superseded by D-0062 (#271): the row detail panel is withdrawn; the cell wraps to two lines with a tooltip"
 
   - id: D-0052
     date: 2026-11-07
@@ -516,3 +518,64 @@ decisions:
     decided_by: owner
     status: active
     review_only: "Checked by ctm3-design-critic (G5b) against DESIGN.md section 4 on every screen in the #217 inventory"
+
+  - id: D-0056
+    date: 2026-11-07
+    area: workflow
+    decision: On an unassigned case, admin, secretary and president assign a council member from the case header (people picker, toast with Undo, then Change); the parties' notice is held for an undo window and discarded if undone, and a later change sends a short "case manager changed" notice
+    why: Owner 2026-11-07 (#237) "when something is not assigned, the top assign council member needs to be drop down"; undo-notice ruling by the product lead
+    options: [Assign in the header with held party notice (chosen), Assign only through Edit summary (before)]
+    decided_by: owner
+    status: active
+    review_only: "Enforced by the #237 backend and frontend tests"
+
+  - id: D-0057
+    date: 2026-11-07
+    area: design
+    decision: Each spouse is a standard collapsible case card whose title is only the person's name with an Applicant or Respondent badge and photo or initials; all other details are read-only fields in the body; Edit in the header actions; Change photo is a small icon in the photo corner (smallest text link under the photo as fallback), everywhere a photo can be changed
+    why: Owner 2026-11-07 (#240) "card is not consistent ... the title should only be name of person with indicator ... the expand/collapse arrow not consistent" and "change photo ... should be discreet"
+    options: [Standard card, name + role title, corner photo icon (chosen), Custom row card with inline buttons (before)]
+    decided_by: owner
+    status: active
+    review_only: "Checked by ctm3-design-critic (G5b) on #240"
+
+  - id: D-0058
+    date: 2026-11-07
+    area: design
+    decision: The case timeline groups events by year (year heading with a short line, 80 px between years, a faint rotated year beside each card), puts each event in its own container tinted by its case area (8 areas, Plenix category tokens), with the date in a calendar icon and no dots; Plenix ships it as a Timeline variation and CTM uses it. Spec in DESIGN.md section 4, study in docs/design/timeline-study.html
+    why: Owner 2026-11-07 (#242), after iterating on the study, said "lock this in as variation in pds, and implement in ctm"
+    options: [Year-grouped, area-coloured containers with calendar date (chosen), Thin dot timeline (before)]
+    decided_by: owner
+    status: active
+    review_only: "Checked by ctm3-design-critic (G5b) against DESIGN.md section 4 and the study; Plenix visual-regression baselines once shipped"
+
+  - id: D-0062
+    date: 2026-11-08
+    area: design
+    decision: No side panel opens when an agenda row is clicked (withdraws the D-0051 detail panel); the Previous recommendation cell wraps to two lines ending in "…" with the full text in a tooltip on hover or keyboard focus, and "Not recorded" when empty (until Plenix supports a two-line cell and a cell tooltip, one line with "…" and the full text on hover); Open and Move stay as the row actions
+    why: Owner 2026-11-08 (#271) "I never asked for this" about the right side panel on an agenda row
+    options: [Two-line cell + tooltip and no row panel (chosen), Truncated cell + row SidePanel (D-0051, withdrawn)]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/council-shell.test.cjs }
+
+  - id: D-0063
+    date: 2026-11-09
+    area: design
+    decision: CTM opens in the Plenix 1366px centered frame (AppShell frame "centered") with the header's toggle to expand to the full window and back, remembered per person; supersedes D-0045. A page that looks cramped in the frame is fixed in its own layout (page kind, columns), not by dropping the frame
+    why: Owner 2026-11-09 (CTM#289) "I approved to have the default view that is based on the default size (fluent) with the ability to expand full view"; owner D-0093 in Plenix (pds#862) "for ctm it needs to be 1366 as default". D-0045 had read the owner's #170 "the dashboard looks like crap" as dropping the frame, which he did not say
+    options: [1366 frame with expand toggle (chosen), Full window always (D-0045, superseded)]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/shell-frame.test.cjs }
+
+  - id: D-0064
+    date: 2026-11-08
+    area: design
+    decision: No skeleton or shimmer placeholders anywhere in CTM; a region that loads uses the Plenix spinner with a label naming what loads (LoadingState, and loading on DataGrid and ListingPage), shown after about a second, announced as busy at once (Plenix D-0130)
+    why: Owner 2026-11-08 (#272, pds#1032) "I do not want this loading style view"; again 2026-11-09 (#289) "use the regular standard way similar to fluent"
+    options: [Labeled spinner after a second (chosen), Skeleton bars (before)]
+    decided_by: owner
+    status: active
+    check: { kind: test, ref: tests/frontend/council-lists.test.cjs }
+

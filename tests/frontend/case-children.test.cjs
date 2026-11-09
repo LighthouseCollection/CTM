@@ -163,12 +163,67 @@ test("timeline API items: own EN/AR title per kind, pending first", () => {
 
 // D-0060 (issue 260): the parties for the EntityHeader versus variant, applicant first; photo_url (council only) or
 // initials; one party gives one avatar. Until Plenix ships the variant the header keeps the folder icon box.
-test("case header people: applicant then respondent, photo or initials, icon box kept", () => {
+test("case header people: applicant then respondent, photo or initials; versus, one avatar or the icon box", () => {
   assert.deepEqual(plain(C.caseHeaderPeople({ name: "Anna Example", photo_url: "/api/files/1/?view=1" }, { name: "Ben Example" })),
-    [{ person: "Anna Example", src: "/api/files/1/?view=1" }, { person: "Ben Example" }]);
-  assert.deepEqual(plain(C.caseHeaderPeople({ name: "Anna Example" }, null)), [{ person: "Anna Example" }]);
+    [{ name: "Anna Example", src: "/api/files/1/?view=1" }, { name: "Ben Example" }]);
+  assert.deepEqual(plain(C.caseHeaderPeople({ name: "Anna Example" }, null)), [{ name: "Anna Example" }]);
   const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  assert.match(src, /media: \{ icon: "folder", hue: "purple", box: true \},/);
+  assert.match(src, /if \(people\.length === 2\) return \{ versus: people, decorative: true \};/);
+  assert.match(src, /if \(people\.length === 1\) return \{ person: people\[0\]\.name, src: people\[0\]\.src \};/);
+  assert.match(src, /return \{ icon: "folder", hue: "purple", box: true \};/);
+});
+
+// D-0059 (issue 259): an open case with no member shows Unassigned wherever its status shows; the header's member
+// fact turns danger and the picker invalid while nothing is chosen (Plenix props, no CSS).
+test("unassigned status: server display_status, header fact tone and picker invalid", () => {
+  assert.equal(C.caseStatusOf({ status: "open", display_status: "unassigned" }), "unassigned");
+  assert.equal(C.caseStatusOf({ status: "open", display_status: "unassigned" }, true), "open");
+  assert.equal(C.caseStatusOf({ status: "open", display_status: "open" }), "open");
+  assert.equal(C.caseStatusOf({ status: "closed", display_status: "closed" }), "closed");
+  const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  assert.match(src, /status === "unassigned" \? \{ tone: "action-required", icon: "warning", label: bt\("statusUnassigned"\) \}/);
+  assert.match(src, /\.\.\.\(status === "unassigned" \? \{ tone: "danger" \} : \{\}\)/);
+  assert.match(src, /h\(P\.EntityPicker, \{ kind: "people", [^}]*invalid: !current,/);
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.equal(council.split("status: t(caseListStatus(row)),").length - 1, 3);
+  assert.match(council, /row\.display_status === "unassigned" \? "statusUnassigned"/);
+});
+
+// Issue 176 (D-0044): admin, president and secretary delete a case from the header's More menu; the dialog names the
+// case and its consequence, the typed case number enables "Delete case", and the app goes back to the list with a toast.
+test("delete case: More menu for the three roles, typed number, DELETE body, toast and back to the list", () => {
+  const src = fs.readFileSync("static/ctm/council-case.js", "utf8");
+  const app = fs.readFileSync("static/ctm/app.js", "utf8");
+  assert.match(src, /const CASE_DELETERS = \["admin", "president", "secretary"\];/);
+  assert.match(src, /moreActions: CASE_DELETERS\.includes\(user\?\.role\) \? \[\{ icon: "trash", label: t\("deleteCase"\), danger: true,/);
+  assert.match(src, /const matches = typed\.trim\(\) === number;/);
+  assert.match(src, /disabled: pending \|\| !matches, onClick: remove \}, t\("deleteCase"\)/);
+  assert.match(src, /method: "DELETE", body: JSON\.stringify\(\{ confirm_number: typed\.trim\(\), reason: reason\.trim\(\) \|\| null \}\)/);
+  assert.match(src, /deleteCaseTitle: "Delete case \{number\}\?"/);
+  assert.match(src, /deleteCaseConsequence: "Its filings, documents, hearings and votes are deleted too\. This can't be undone\."/);
+  assert.match(src, /deleteCase: "حذف القضية"/);
+  assert.equal(src.split("h(CaseRecordPage, { api, lang, caseId").length - 1, 0, "every tab passes the user to its header");
+  assert.match(app, /leaveDeletedCase\.current = \(\) => \{ setCaseOrigin\(null\); go\(council \? "cases" : "past"\); \};/);
+  assert.match(app, /h\(P\.ToastProvider, null, h\(CaseDeletedToast,/);
+  assert.match(app, /caseDeleted: "Case \{number\} was deleted\."/);
+});
+
+// Issue 176: a 204 reply (DELETE) has no body; the shared api() must not read one and report a failure.
+test("api(): a 204 reply resolves to null instead of failing on an empty body", () => {
+  const app = fs.readFileSync("static/ctm/app.js", "utf8");
+  assert.match(app, /return response\.status === 204 \? null : response\.json\(\);/);
+});
+
+// Issue 175 (D-0043): Users & Roles shows each active account's council seat and voting seat as Plenix Switches for
+// those the server lets edit (can_edit: admin, secretary, president), text for others; voting needs a seat.
+test("users and roles: council seat and voting switches from the seats API", () => {
+  const src = fs.readFileSync("static/ctm/ui-workspaces.js", "utf8");
+  assert.match(src, /api\("\/api\/council\/seats\/"\)\.then\(\(data\) => live && setSeats\(\{ items: data\?\.items \|\| \[\], canEdit: data\?\.can_edit === true \}\)\)/);
+  assert.match(src, /method: "POST", body: JSON\.stringify\(\{ seated, voting: seated && voting \}\)/);
+  assert.match(src, /if \(!seats\.canEdit\) return t\(on \? "seatYes" : "seatNo"\);/);
+  assert.match(src, /disabled: Boolean\(seatSaving\) \|\| \(field === "voting" && !seat\.seated\)/);
+  assert.match(src, /councilSeat: "Council seat", votingSeat: "Voting"/);
+  assert.match(src, /councilSeat: "مقعد في المجلس", votingSeat: "التصويت"/);
 });
 
 // Issue 273 (D-0050, pds D-0106): every read-only list on the case pages is a stacked PropertyList (label over its

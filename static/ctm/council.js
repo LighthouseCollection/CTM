@@ -446,6 +446,10 @@
       conflict: "This record changed or conflicts with another saved record. Reload and try again.",
       expired: "Your session has expired. Sign in again to continue.",
       loading: "Loading…",
+      loadingCases: "Loading cases…",
+      loadingMembers: "Loading council members…",
+      loadingSession: "Loading the council session…",
+      loadingStatistics: "Loading statistics…",
       loadFailed: "Unable to load this information.",
       retry: "Try again",
       reviewOnlyAdmin:
@@ -572,6 +576,7 @@
       deferred: "Deferred — awaiting manual placement",
       assigned: "Assigned case manager",
       unassigned: "Not yet assigned",
+      statusUnassigned: "Unassigned",
       notRecorded: "Not Recorded",
       close: "Close",
       recordAssignment: "Record assignment",
@@ -856,6 +861,10 @@
       conflict: "تغيّر هذا السجل أو تعارض مع سجل محفوظ آخر. أعد التحميل وحاول مرة أخرى.",
       expired: "انتهت جلستك. سجّل الدخول مجددًا للمتابعة.",
       loading: "جارٍ التحميل…",
+      loadingCases: "جارٍ تحميل القضايا…",
+      loadingMembers: "جارٍ تحميل أعضاء المجلس…",
+      loadingSession: "جارٍ تحميل جلسة المجلس…",
+      loadingStatistics: "جارٍ تحميل الإحصاءات…",
       loadFailed: "تعذر تحميل هذه المعلومات.",
       retry: "إعادة المحاولة",
       reviewOnlyAdmin: "يقتصر قبول الطلبات أو إعادتها على مسؤول المجلس أو السكرتير.",
@@ -981,6 +990,7 @@
       deferred: "مؤجلة — في انتظار الجدولة اليدوية",
       assigned: "مسؤول القضية",
       unassigned: "لم يُعيَّن بعد",
+      statusUnassigned: "غير معيَّنة",
       notRecorded: "غير مسجل",
       close: "إغلاق",
       recordAssignment: "تسجيل التعيين",
@@ -1254,11 +1264,11 @@
     return counts[lang === "ar" ? "ar" : "en"][key] || counts.en[key];
   }
 
-  // Loading: Skeleton rows hold the page's place (skeleton.md, DESIGN.md §3), announced as busy.
-  function loadingView(P, h, t) {
-    return h(P.Stack, { gap: "sm", role: "status", "aria-busy": "true", "aria-label": t("loading") },
-      h(P.Skeleton, { width: "240px", height: "24px" }),
-      ...[0, 1, 2, 3].map((key) => h(P.Skeleton, { key, height: "36px" })));
+  // Loading (D-0064): the Plenix spinner with a label naming what loads, after about a second; never a skeleton.
+  function loadingView(P, h, t, label) {
+    const text = label || t("loading");
+    return window.CTMShell?.DelayedSpinner ? h(window.CTMShell.DelayedSpinner, { label: text })
+      : h(P.Stack, { align: "center", role: "status", "aria-busy": "true", "aria-label": text }, h(P.Spinner, { size: "md", label: text }));
   }
 
   // Error boundary: a failure inside one council page shows a recoverable message
@@ -1304,11 +1314,20 @@
     });
   }
 
-  // Issue 222: a grid cell shows its text, never a button or a dialog. Plenix draws a text column on one line
-  // ending in "…" with the full text on hover; the full recommendation is also in the agenda row's SidePanel.
+  // Issue 222: a grid cell shows its text, never a button or a dialog.
   function recommendationText(value, t) {
     const text = String(value || "").trim().replace(/\s+/g, " ");
     return text || t("notRecorded");
+  }
+
+  // D-0062 (issue 271, withdraws D-0051's row panel): no panel; the cell shows the text ending in "…" and the full
+  // text on hover; empty is "Not recorded". Plenix 1.2.0 gaps (logged on pds): the grid keeps one line in its rows
+  // (column wrap and Text lines are ignored), and a Plenix Tooltip in a cell does not shrink (no "…") and draws the
+  // text on one very long line. Until Plenix fixes them: Text truncate with the full text as its title.
+  function recommendationCell(P, h, value, t) {
+    const text = String(value || "").trim().replace(/\s+/g, " ");
+    if (!text) return t("notRecorded");
+    return h(P.Text, { as: "span", truncate: true, title: text, tabIndex: 0, dir: "auto", className: "plx-u-w-100p" }, text);
   }
 
 
@@ -1792,7 +1811,7 @@
           archiveTable(t("casesPresented"), archivedItems.presented, t("part2Empty"), caseColumns([
             { title: t("assignedTo"), field: "assigned_member_name", minWidth: "12rem", pill: false, render: (row) => row.assigned_member_name || t("unassigned") },
             { title: t("statusLabel"), field: "status", minWidth: "9rem", pill: false, render: (row) => t(row.status) },
-            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, render: (row) => recommendationText(row.previous_recommendation, t) },
+            { title: t("previousRecommendation"), field: "previous_recommendation", minWidth: "14rem", pill: false, wrap: true, render: (row) => recommendationCell(P, h, row.previous_recommendation, t) },
           ])),
         ) : null,
       ));
@@ -2532,6 +2551,11 @@
     return String(forms[rule] || forms.other || "").replace("{n}", new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(n));
   }
 
+  // Issue 259 (D-0059): the server's display_status ("unassigned" for an open case with no member) wins.
+  function caseListStatus(row) {
+    return row.status === "closed" ? "closed" : row.display_status === "unassigned" ? "statusUnassigned" : "open";
+  }
+
   function pickerRows(items, query, t, lang) {
     const q = String(query || "").trim().toLowerCase();
     return (items || []).map((row) => ({
@@ -2540,7 +2564,7 @@
       parties: (row.party_names || []).map((name) => isolate(name)).join(` ${t("versus")} `) || "—",
       filed: row.filed_at ? formatDate(row.filed_at, lang) : t("notRecorded"),
       grounds: groundsText(row.grounds, "", t) || "—",
-      status: t(row.status === "closed" ? "closed" : "open"),
+      status: t(caseListStatus(row)),
       member: row.assigned_member || t("unassigned"),
       recommendation: recommendationText(row.recommendation_preview, t),
       search: [row.number, ...(row.party_names || [])].join(" ").toLowerCase(),
@@ -2636,7 +2660,6 @@
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     const [adjournEnd, setAdjournEnd] = R.useState("");
-    const [agendaDetail, setAgendaDetail] = R.useState(null); // issue 222: the agenda row shown in the SidePanel
 
     if (state.pending && !state.data) return loadingView(P, h, t);
     if (state.error) return loadFailure(P, h, t, retry, state.error);
@@ -2897,13 +2920,12 @@
             { title: t("applicant"), field: "applicant", width: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
             { title: t("respondent"), field: "respondent", width: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: t("previousRecommendation"), field: "previous_recommendation", width: "12rem", pill: false, render: (row) => recommendationText(row.previous_recommendation, t) },
+            { title: t("previousRecommendation"), field: "previous_recommendation", width: "12rem", pill: false, wrap: true, render: (row) => recommendationCell(P, h, row.previous_recommendation, t) },
             { title: t("actions"), field: "open_action", minWidth: "9rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ];
-      return h(window.CTMShell.Table, { className: "ctm-session-agenda-grid", label: title, rows, columns, empty: t(`part${n}Empty`), isStatic: true,
-        selected: agendaDetail?.id ?? null, onSelect: (id) => setAgendaDetail(rows.find((row) => row.id === id) || null) });
+      return h(window.CTMShell.Table, { className: "ctm-session-agenda-grid", label: title, rows, columns, empty: t(`part${n}Empty`), isStatic: true });
     };
 
     return h(
@@ -2924,21 +2946,11 @@
         ? h(SessionAnswers, { key: session.id, api, lang, user, session }) : null,
       // D-0042 (owner, issue 171): no agenda tabs. Two full-width sections, one below the other, each with
       // its heading and its own table: Hearings, then To assign (peer sections, stack.md gap "section").
-      current ? h(P.Inline, { align: "start", gap: "lg" },
-        // D-0055 (owner, amends D-0042): each agenda section is its own card; the heading is the card header
-        // (Plenix Panel title with icon) and the table sits in the card body.
-        h(P.Stack, { gap: "lg", grow: true },
-          h(P.Panel, { icon: "event_available", title: t("scheduledCasesForHearing") }, agendaTable(2)),
-          h(P.Panel, { icon: "folder", title: t("casesToAssign") }, agendaTable(1))),
-        agendaDetail ? h(P.SidePanel, { title: agendaDetail.case_number || t("caseNumber"), icon: "folder",
-          actions: h(P.Button, { iconOnly: true, icon: "close", label: t("close"), variant: "ghost", onClick: () => setAgendaDetail(null) }) },
-          h(P.PropertyList, { variant: "tiles" },
-            h(P.PropertyList.Item, { label: t("applicant") }, agendaDetail.applicant?.name || t("notRecorded")),
-            h(P.PropertyList.Item, { label: t("respondent") }, agendaDetail.respondent?.name || t("notRecorded")),
-            h(P.PropertyList.Item, { label: t("assignedTo") }, agendaDetail.assigned_member_name || t("unassigned")),
-            h(P.PropertyList.Item, { label: t("previousRecommendation") },
-              h(P.Text, { as: "p", dir: "auto" }, String(agendaDetail.previous_recommendation || "").trim() || t("notRecorded")))),
-          h(P.Inline, { gap: "sm" }, h(P.Button, { size: "sm", icon: "open", onClick: () => onCase(agendaDetail.case_id) }, t("open")))) : null,
+      // D-0055: each agenda section is its own card (Panel title with icon). D-0062: no panel opens from a row;
+      // Open and Move are the row actions.
+      current ? h(P.Stack, { gap: "lg" },
+        h(P.Panel, { icon: "event_available", title: t("scheduledCasesForHearing") }, agendaTable(2)),
+        h(P.Panel, { icon: "folder", title: t("casesToAssign") }, agendaTable(1)),
       ) : h(P.Stack, { gap: "lg" }, part(1), part(2)),
       data.items.length && !data.items.some((row) => "hearing_id" in row) ? h(P.Notice, { tone: "info" }, t("outcomeDependency")) : null,
       dialog?.kind === "outcome"
@@ -3321,7 +3333,7 @@
       onChange: (event) => setYear(event.target.value), options: years.map((value) => ({ value, label: value })) }) : undefined;
     const all = onNavigate ? h(P.Button, { variant: "ghost", onClick: () => onNavigate(window.CTMRoutes?.routeFor("statistics") || "/reports") }, t("allStatistics")) : undefined;
     let body, note;
-    if (state.pending && !data) body = h(P.Skeleton, { height: "240px" });
+    if (state.pending && !data) body = loadingView(P, h, t, t("loadingStatistics"));
     else if (state.error) body = h(P.Notice, { tone: "danger" }, serverMessage(state.error, t), " ", h(P.Button, { size: "sm", onClick: retry }, t("retry")));
     else {
       const { shown, hidden } = members
@@ -3399,14 +3411,14 @@
 
     // 1. The next council session leads the page.
     const leadRegion = () => {
-      if (dash.pending && !dash.data) return h(P.Skeleton, { height: "160px" });
+      if (dash.pending && !dash.data) return loadingView(P, h, t, t("loadingSession"));
       if (dash.error) return regionFailure(retryDash, dash.error);
       if (!leadId)
         return h(P.Panel, { icon: "calendar", title: t("upcomingSession") },
           h(P.EmptyState, { title: t("noUpcoming"),
             action: canManage(user) && onNavigate ? h(P.Button, { onClick: () => onNavigate(window.CTMRoutes?.routeFor("sessionsUpcoming") || "/sessions/upcoming") }, t("scheduleSession")) : undefined }));
       if (lead.error) return regionFailure(retryLead, lead.error);
-      if (!lead.data) return h(P.Skeleton, { height: "160px" });
+      if (!lead.data) return loadingView(P, h, t, t("loadingSession"));
       // Fields /api/dashboard/ sends (design §4) win over the ones read from the session endpoints.
       const sent = dash.data.upcoming_sessions[0];
       const session = { ...lead.data.session, ...Object.fromEntries(["starts_at", "location"].filter((key) => sent[key] != null).map((key) => [key, sent[key]])) };
@@ -3452,12 +3464,12 @@
     const casesRegion = () => {
       const allCases = onNavigate ? h(P.Button, { variant: "ghost", onClick: () => onNavigate(window.CTMRoutes?.routeFor("myCases") || "/cases/mine") }, t("allCases")) : null;
       let body;
-      if (cases.pending && !cases.data) body = h(P.Skeleton, { height: "120px" });
+      if (cases.pending && !cases.data) body = loadingView(P, h, t, t("loadingCases"));
       else if (cases.error) body = regionFailure(retryCases, cases.error);
       else {
         const rows = myCases(cases.data.items, user).map((row) => ({
           id: row.id, case_id: row.id, number: row.number, spouses: spousesText(row) || "—",
-          status: t(row.status === "closed" ? "closed" : "open"),
+          status: t(caseListStatus(row)),
           next_step: row.next_step ? t(row.next_step) : "",
         }));
         body = rows.length
@@ -3481,7 +3493,7 @@
     // 4. Council members: one person card each with their active cases (aggregate only, design §4).
     const membersRegion = () => {
       let body;
-      if (members.pending && !members.data) body = h(P.Skeleton, { height: "120px" });
+      if (members.pending && !members.data) body = loadingView(P, h, t, t("loadingMembers"));
       else if (members.error) body = regionFailure(retryMembers, members.error);
       else {
         const rows = homeMembers(members.data.items, lang);
@@ -3575,7 +3587,7 @@
       respondent: { name: row.respondent_name || "—", gender: row.respondent_gender === "M" ? "male" : row.respondent_gender === "F" ? "female" : undefined },
       reason: groundsText(row.grounds, row.reason, t) || "—",
       manager: row.assigned_member || t("unassigned"),
-      status: t(row.status === "closed" ? "closed" : "open"),
+      status: t(caseListStatus(row)),
       closedAt: row.closed_at ? row.closed_at.slice(0, 10) : "—",
     }));
     const columns = archived

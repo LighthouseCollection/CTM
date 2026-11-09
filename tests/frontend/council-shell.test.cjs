@@ -281,16 +281,17 @@ test("the session header is Plenix EntityHeader style 2: facts carry their actio
   // D-0055 (amends D-0042): each agenda section is a card (Panel with icon) with its table inside.
   const sections = sessionWorkspace.match(/h\(P\.Panel, \{ icon: "[\w-]+", title: t\("(\w+)"\) \}, agendaTable\((\d)\)\)/g) || [];
   assert.deepEqual(sections.map((s) => s.match(/t\("(\w+)"\) \}, agendaTable\((\d)\)/).slice(1).join(":")), ["scheduledCasesForHearing:2", "casesToAssign:1"]);
-  assert.match(sessionWorkspace, /current \? h\(P\.Inline, \{ align: "start", gap: "lg" \},[\s\S]*?h\(P\.Stack, \{ gap: "lg", grow: true \},/);
+  assert.match(sessionWorkspace, /current \? h\(P\.Stack, \{ gap: "lg" \},\s*h\(P\.Panel/);
   assert.doesNotMatch(agendaTable, /P\.Panel/);
   assert.match(agendaTable, /previousRecommendation/);
-  // Issue 222: the recommendation cell is text (one line, "…", full text on hover); no button or dialog in a cell.
-  assert.match(agendaTable, /render: \(row\) => recommendationText\(row\.previous_recommendation, t\)/);
+  // Issue 222: the recommendation cell is text; no button or dialog in a cell.
+  // D-0062 (issue 271): the text ending in "…" with the full text on hover; no row panel.
+  assert.match(agendaTable, /wrap: true, render: \(row\) => recommendationCell\(P, h, row\.previous_recommendation, t\)/);
+  assert.ok(council.includes('return h(P.Text, { as: "span", truncate: true, title: text, tabIndex: 0, dir: "auto", className: "plx-u-w-100p" }, text);'));
+  assert.match(council, /if \(!text\) return t\("notRecorded"\);/);
   assert.doesNotMatch(council, /PreviousRecommendationCell|readRecommendation/);
-  // The full text is in the agenda row's Plenix SidePanel, as a read-only field.
-  assert.match(sessionWorkspace, /agendaDetail \? h\(P\.SidePanel, \{/);
-  assert.match(sessionWorkspace, /h\(P\.PropertyList\.Item, \{ label: t\("previousRecommendation"\) \}/);
-  assert.match(sessionWorkspace, /onSelect: \(id\) => setAgendaDetail\(/);
+  assert.doesNotMatch(council, /P\.SidePanel|agendaDetail/);
+  assert.doesNotMatch(agendaTable, /onSelect:/);
   assert.doesNotMatch(agendaTable, /field: "record"/);
   assert.match(agendaTable, /title: t\("actions"\), field: "open_action"/);
   assert.match(council, /empty: t\(`part\$\{n\}Empty`\), isStatic: true/);
@@ -359,9 +360,9 @@ test("case back navigation retains the workspace that opened the case", () => {
   assert.match(app, /const openCase = \(id, origin\) =>/);
   assert.match(app, /const returnToCaseOrigin = \(\) =>/);
   // D-0061 (issue 263): a quiet NavList back item (arrow icon, muted text), never a full-width button.
-  assert.ok(app.includes('onSelect: returnToCaseOrigin,'));
-  assert.ok(app.includes('items: [{ id: "back", icon: h(P.Icon, { name: "arrow-left", "aria-hidden": true }), label: t(caseOrigin?.labelKey || "backCases"), muted: true }]'));
-  assert.doesNotMatch(app, /onClick: returnToCaseOrigin/);
+  // Plenix 1.2.0 SecondaryPane back row (pds issue 995): "Back to {name}" with the origin as the parent.
+  assert.ok(app.includes('back: { parent: backParent(t, caseOrigin?.labelKey || "backCases"), onClick: returnToCaseOrigin },'));
+  assert.ok(!app.includes('id: "back", icon: h(P.Icon'));
   assert.match(app, /page: "search", labelKey: "backSearchResults"/);
   assert.match(app, /onOpen: \(id\) => openCase\(id, \{ page, labelKey:/);
   assert.match(app, /page: "session", selection, labelKey: "backTribunalSession"/);
@@ -375,9 +376,10 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /GroupedReadFields, \{ P, h, groups: summaryGroups, values: summaryReadValues, lang, columns: 2 \}/);
   assert.match(councilCase, /reasonForDivorce: "Reason seeking divorce"/);
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
-  assert.match(councilCase, /h\(P\.Timeline, \{ label: t\("keyDates"\), items: summaryTimeline \}\)/);
+  assert.match(councilCase, /h\(P\.Timeline, \{ variant: "grouped", label: t\("keyDates"\),\s*items: summaryTimeline\.map\(/);
   // D-0050 (#217): the case status is a Plenix Badge, never plain text.
-  assert.ok(councilCase.includes('status: h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed"))'));
+  // D-0059 (issue 259): the same badge as the header, with Unassigned for an open case without a member.
+  assert.ok(councilCase.includes('status: ((badge) => h(P.Badge, { tone: badge.tone, icon: badge.icon }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)),'));
   assert.match(councilCase, /actions: canEditSummary && !summaryEditing/);
   assert.match(councilCase, /fact_code: "case_card\.summary"/);
   // D-0050 groups: the card is "Marriage"; "Church marriage" and "Outside the Coptic Church" are its groups.
@@ -648,7 +650,7 @@ test("case hearing header is rendered above its tabs and Hearings uses the balan
   const hearing = councilCase.slice(councilCase.indexOf("function CaseHearings"), councilCase.indexOf("function HearingAttendance"));
   // #97 slice 3: a Plenix EntityHeader section, inside the case RecordPage, above the tabs.
   assert.match(hearing, /const currentHeader = current \? h\(P\.EntityHeader, \{\s*kind: "section"/);
-  assert.match(hearing, /return h\(CaseRecordPage, \{ api, lang, caseId, title: t\("hearingsTitle"\) \}, currentHeader, h\(P\.Tabs/);
+  assert.match(hearing, /return h\(CaseRecordPage, \{ api, lang, user, caseId, title: t\("hearingsTitle"\) \}, currentHeader, h\(P\.Tabs/);
   assert.match(app, /id === "hearings"\s*\? h\(P\.Icon, \{ name: "balance"/);
 });
 
@@ -658,7 +660,6 @@ test("council can edit a spouse contact through a versioned case finding", () =>
   assert.match(councilCase, /function SpouseContactSection\(/);
   assert.match(councilCase, /fact_code: `case_card\.contact_\$\{party\.id\}`/);
   assert.match(councilCase, /h\(SpouseContactSection, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
-  assert.match(councilCase, /P\.SectionHeading, \{ level: 2 \}/);
 });
 
 test("case navigation uses the requested Material folder icons", () => {
@@ -838,11 +839,14 @@ test("ctm3-48 part 3: timeline is Plenix Timeline grouped by year; past hearings
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
   // D-0058: one model (timelineModel) and one drawing (drawTimeline) that becomes the Plenix variation.
   const draw = councilCase.slice(councilCase.indexOf("function drawTimeline("), councilCase.indexOf("function CaseTimeline("));
-  assert.match(draw, /h\(P\.SectionHeading, \{ level: 2 \}, group\.year\)/);
-  assert.match(draw, /h\(P\.Timeline, \{ label:/);
+  // Plenix 1.2.0 grouped variant (pds issue 987): grouped by year, area as category, legend filters; no CTM tabs.
+  assert.match(draw, /h\(P\.Timeline, \{ variant: "grouped", legend: true, label:/);
   assert.match(draw, /dateTime: item\.dateTime/);
-  const timeline = councilCase.slice(councilCase.indexOf("function CaseTimeline("));
-  assert.match(timeline, /drawTimeline\(\{ P, h, t, model: shown \}\)/);
+  assert.match(draw, /category: timelineCategory\(item\.area, t\),/);
+  assert.match(draw, /upcoming: Boolean\(item\.pending \|\| item\.upcoming\)/);
+  const timeline = councilCase.slice(councilCase.indexOf("function CaseTimeline("), councilCase.indexOf("// ---------- Case summary"));
+  assert.match(timeline, /drawTimeline\(\{ P, h, t, model \}\)/);
+  assert.doesNotMatch(timeline, /P\.Tabs/);
   assert.match(councilCase, /h\(P\.Table, \{ label: t\("pastHearings"\)/);
 });
 

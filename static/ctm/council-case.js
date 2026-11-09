@@ -419,6 +419,12 @@ ${ar}` : en;
       caseClosedReadOnly: "This case is closed and read-only.",
       caseActions: "Case actions",
       moreActions: "More actions",
+      loadingCase: "Loading the case…",
+      deleteCase: "Delete case",
+      deleteCaseTitle: "Delete case {number}?",
+      deleteCaseConsequence: "Its filings, documents, hearings and votes are deleted too. This can't be undone.",
+      deleteCaseTypeNumber: "Type the case number {number} to confirm",
+      deleteCaseReason: "Reason (optional)",
       applicant: "Applicant",
       respondent: "Respondent",
       reasonForDivorce: "Reason seeking divorce",
@@ -958,6 +964,12 @@ ${ar}` : en;
       caseClosedReadOnly: "هذه القضية مغلقة ومتاحة للقراءة فقط.",
       caseActions: "إجراءات القضية",
       moreActions: "المزيد من الإجراءات",
+      loadingCase: "جارٍ تحميل القضية…",
+      deleteCase: "حذف القضية",
+      deleteCaseTitle: "حذف القضية {number}؟",
+      deleteCaseConsequence: "تُحذف معها أيضًا طلباتها ومستنداتها وجلساتها وأصواتها. لا يمكن التراجع عن ذلك.",
+      deleteCaseTypeNumber: "اكتب رقم القضية {number} للتأكيد",
+      deleteCaseReason: "السبب (اختياري)",
       applicant: "مقدم الطلب",
       respondent: "الطرف الآخر",
       reasonForDivorce: "سبب طلب الطلاق",
@@ -2236,7 +2248,7 @@ ${ar}` : en;
     const [selected, select] = R.useState(null);
     const [editing, setEditing] = R.useState(!interviewOnly);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, questions, caseRow } = state.data;
     const requests = state.data.requests.filter((row) => interviewOnly ? row.kind === "interview" : row.kind !== "interview");
@@ -2279,7 +2291,7 @@ ${ar}` : en;
     // A new interview opens its interview tab; an external priest request stays here, where its private link is issued.
     const requests = h(RequestsPanel, { api, lang, user, caseId, reports, onCompleted, onCreated: (id, note) => { if (note !== "externalDraftSaved") setTab("interviews"); } });
     const interviewReports = h(RequestsPanel, { api, lang, user, caseId, reports, mode: "interviews", onCompleted });
-    return h(CaseRecordPage, { api, lang, caseId, fill: true }, h(P.Tabs, {
+    return h(CaseRecordPage, { api, lang, user, caseId, fill: true }, h(P.Tabs, {
       variant: "contained", label: t("reports"), value: tab, onChange: setTab,
       items: [
         { value: "reports", label: t("completedReports"), content: completedReports },
@@ -2711,7 +2723,7 @@ ${ar}` : en;
     );
     const [local, setLocal] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, members, caseRow, proceeding, versions } = state.data;
     const readAvailable = versions !== null;
@@ -2777,7 +2789,7 @@ ${ar}` : en;
     );
     return h(
       CaseRecordPage,
-      { api, lang, caseId, record },
+      { api, lang, user, caseId, record },
       h(P.Panel, { icon: "doc-text", title: t("decisionVoting"), className: "ctm-decision-voting-workspace" }, detail),
       current
         ? h(CouncilVoteRecord, {
@@ -2923,7 +2935,7 @@ ${ar}` : en;
     return null;
   }
 
-  function CaseAudit({ api, lang, caseId }) {
+  function CaseAudit({ api, lang, user, caseId }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -2936,13 +2948,13 @@ ${ar}` : en;
       [caseId],
     );
     const [filters, setFilters] = R.useState({});
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const loaded = auditRows(state.data.items, state.data.members, lang);
     const rows = window.CTMUI.filterAudit(loaded, filters);
     return h(
       CaseRecordPage,
-      { api, lang, caseId, title: t("caseAudit"), fill: true },
+      { api, lang, user, caseId, title: t("caseAudit"), fill: true },
       h(window.CTMUI.AuditFilters, { rows: loaded, filters, onChange: setFilters, lang }),
       h(P.Text, { variant: "secondary" }, t("auditCount", { n: rows.length })),
       h(window.CTMShell.Workspace, {
@@ -2965,7 +2977,7 @@ ${ar}` : en;
     const [selected, select] = R.useState(null), [tab, setTab] = R.useState("received"), [composing, setComposing] = R.useState(false);
     const [form, setForm] = R.useState({ party: "", occurred: "", direction: "sent", outcome: "", notes: "" });
     const [problem, setProblem] = R.useState(null), [pending, setPending] = R.useState(false), [failure, setFailure] = R.useState(null), [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, calls } = state.data;
     const canWrite = writerFor(user, null, record) && record.status === "open";
@@ -3000,7 +3012,7 @@ ${ar}` : en;
     }, (call) => call ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, call.person), h(P.Text, { variant: "secondary" }, call.occurred), h(P.Text, { as: "p", variant: "strong" }, call.outcome), call.notes ? h(P.Text, { as: "p" }, call.notes) : null) : h(P.EmptyState, { title: t("noCalls") }));
     const callFact = countFact("phone", t("callLog"), calls.length, canWrite ? { label: t("recordCall"), icon: "add", name: t("recordCall"), onClick: () => setComposing(true) } : null);
     return h(R.Fragment, null, callDialog,
-      h(CaseRecordPage, { api, lang, caseId, record, title: t("callLog"), facts: [callFact], readOnly: record.status !== "open", fill: true },
+      h(CaseRecordPage, { api, lang, user, caseId, record, title: t("callLog"), facts: [callFact], readOnly: record.status !== "open", fill: true },
         notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
         h(P.Tabs, {
           variant: "contained", label: t("callLog"), value: tab,
@@ -3060,7 +3072,7 @@ ${ar}` : en;
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
     const [confirm, setConfirm] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, requests, reports } = state.data;
     const proceeding = openProceeding(record);
@@ -3197,7 +3209,7 @@ ${ar}` : en;
     const rows = [...requests, ...reports].map((row) => ({ ...row, title: row.restricted ? t("restrictedAssessment") : row.title }));
     const assessmentFact = countFact("lock", t("assessments"), rows.length, canWrite ? { label: t("newAssessment"), icon: "add", name: t("newAssessment"), onClick: () => setComposing(true) } : null);
     return h(R.Fragment, null, requestDialog, sendDialog,
-      h(CaseRecordPage, { api, lang, caseId, record, title: t("assessments"), facts: [assessmentFact], readOnly: !proceeding, fill: true },
+      h(CaseRecordPage, { api, lang, user, caseId, record, title: t("assessments"), facts: [assessmentFact], readOnly: !proceeding, fill: true },
         h(P.Notice, { tone: "info" }, t("assessmentPrivacy")),
         h(P.Notice, { tone: "warning" }, t("releaseTextPending")),
         notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
@@ -3228,27 +3240,48 @@ ${ar}` : en;
   // portrait (CASE_PHOTO) through the permission-checked file URL; the server sends it to council users only, so an
   // applicant never gets the other party's photo. Until the variant ships the header keeps the folder icon below.
   function caseHeaderPeople(applicant, respondent) {
-    return [applicant, respondent].filter(Boolean).map((party) => ({ person: party.name || "—", src: party.photo_url || undefined }));
+    return [applicant, respondent].filter(Boolean).map((party) => ({ name: party.name || "—", src: party.photo_url || undefined }));
   }
 
-  function caseHeaderProps(record, lang, facts, assigneeValue) {
+  // Issue 259 (D-0059): the server's display_status is "unassigned" for an open case with no member (council only);
+  // every place that shows the case status shows it. assignedNow: the header just assigned a member, so it is open.
+  function caseStatusOf(record, assignedNow) {
+    if (record?.status === "open" && record.display_status === "unassigned" && !assignedNow) return "unassigned";
+    return record?.status === "open" ? "open" : "closed";
+  }
+
+  function caseStatusBadge(status, t, bt) {
+    // Issue 273: the status Badge carries its icon (the header status tile takes the same one).
+    return status === "unassigned" ? { tone: "action-required", icon: "warning", label: bt("statusUnassigned") }
+      : status === "open" ? { tone: "success", icon: "circle-check", label: t("active") } : { tone: "neutral", icon: "lock", label: bt("closed") };
+  }
+
+  function caseHeaderMedia(people) {
+    if (people.length === 2) return { versus: people, decorative: true };
+    if (people.length === 1) return { person: people[0].name, src: people[0].src };
+    return { icon: "folder", hue: "purple", box: true };
+  }
+
+  function caseHeaderProps(record, lang, facts, assigneeValue, assignedNow) {
     const t = translator(lang), bt = base.translator(lang);
     const parties = record.parties || [];
     const applicant = parties.find((party) => party.slot === "A") || parties[0] || null;
     const respondent = parties.find((party) => party.slot === "B") || parties.find((party) => party !== applicant) || null;
     const names = [applicant, respondent].filter(Boolean).map((party) => base.isolate(party.name));
-    const open = record.status === "open";
+    const status = caseStatusOf(record, assignedNow);
     return {
       // Issue 109 (owner, 2026-11-05): the decided icon box (record-page.md media box), the spouses' names as the
       // title and the case number as the small line under it. Without names the case number is the title.
-      // D-0060: when the Plenix versus variant (pds issue 991) ships, this becomes its media with
-      // caseHeaderPeople(applicant, respondent) (one party: one avatar); until then the icon box stays.
-      media: { icon: "folder", hue: "purple", box: true },
+      // D-0060 (issue 260): the parties' photos with "vs." (Plenix media.versus, pds issue 991, shipped in 1.2.0); one
+      // party: one avatar; none: the folder icon box. The title already names them, so the media is decorative.
+      media: caseHeaderMedia(caseHeaderPeople(applicant, respondent)),
       title: names.length ? names.join(` ${bt("versus")} `) : base.isolate(record.number),
       subtitle: names.length ? base.isolate(record.number) : undefined,
-      status: { tone: open ? "success" : "neutral", label: open ? t("active") : bt("closed") },
-      facts: [{ icon: "person", label: t("assignedCouncilMember"), value: assigneeValue ?? (caseManager(record) || bt("unassigned")) }, ...(facts || [])],
-      strings: { status: bt("statusLabel"), more: t("moreActions") },
+      status: caseStatusBadge(status, t, bt),
+      // Red tones draw the eye to the member slot while nothing is chosen (D-0059; Plenix fact tone).
+      facts: [{ icon: "person", label: t("assignedCouncilMember"), value: assigneeValue ?? (caseManager(record) || bt("unassigned")),
+        ...(status === "unassigned" ? { tone: "danger" } : {}) }, ...(facts || [])],
+      strings: { status: bt("statusLabel"), more: t("moreActions"), vs: bt("versus") },
       // A tab that fills the room (split list and detail) must never squeeze the header.
       className: "plx-u-shrink-0",
     };
@@ -3297,15 +3330,56 @@ ${ar}` : en;
       }
     }
     return h(P.Stack, { gap: "xs" },
-      h(P.EntityPicker, { kind: "people", label: t("assignedCouncilMember"), disabled: pending || state.pending,
-        placeholder: t("assignPlaceholder"), entityName: t("assignEntityName"),
+      h(P.EntityPicker, { kind: "people", label: t("assignedCouncilMember"), disabled: pending || state.pending, invalid: !current,
+        // D-0059: the input is as wide as its placeholder (the HTML size attribute, which EntityPicker passes on), so
+        // "Choose a council member" is never cut off; the header tile grows with it.
+        placeholder: t("assignPlaceholder"), entityName: t("assignEntityName"), size: t("assignPlaceholder").length + 2,
         options: members.map((row) => ({ value: row.id, label: row.name || row.id, description: t(row.role === "president" ? "presiding" : row.role === "secretary" ? "councilSecretary" : "councilMemberRole"), src: row.photo_url || undefined })),
         value: current?.id || null, onChange: (value) => value && value !== current?.id && assign(value, current) }),
       changing ? h(P.Inline, null, h(P.Button, { size: "xs", variant: "ghost", disabled: pending, onClick: () => setChanging(false) }, bt("cancel"))) : null,
       problem ? h(P.Text, { variant: "secondary", role: "alert" }, problem) : null);
   }
 
-  function CaseRecordPage({ api, lang, caseId, record, title, facts, readOnly, fill, onChanged, children }) {
+  // Issue 176 (D-0044): admin, president and secretary delete a case from the header's More menu. The dialog names
+  // the case and what goes with it; the user types the case number (the server checks it too) and may give a reason.
+  // On success the app goes back to the case list and shows a toast ("ctm:case-deleted").
+  const CASE_DELETERS = ["admin", "president", "secretary"];
+
+  function DeleteCaseDialog({ api, lang, record, onClose }) {
+    const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
+    const [typed, setTyped] = R.useState("");
+    const [reason, setReason] = R.useState("");
+    const [pending, setPending] = R.useState(false);
+    const [problem, setProblem] = R.useState(null);
+    const number = String(record.number || "");
+    const matches = typed.trim() === number;
+    async function remove() {
+      setPending(true);
+      setProblem(null);
+      try {
+        await api(`/api/cases/${encodeURIComponent(record.id)}/`, { method: "DELETE", body: JSON.stringify({ confirm_number: typed.trim(), reason: reason.trim() || null }) });
+        onClose();
+        window.dispatchEvent(new window.CustomEvent("ctm:case-deleted", { detail: { number } }));
+      } catch (error) {
+        setProblem(base.serverMessage(error, bt));
+        setPending(false);
+      }
+    }
+    return h(P.Dialog, { open: true, size: "sm", role: "alertdialog", icon: "trash", onClose: pending ? undefined : onClose,
+      title: t("deleteCaseTitle", { number }),
+      footer: h(P.Inline, { gap: "sm", justify: "end" },
+        h(P.Button, { disabled: pending, onClick: onClose }, bt("cancel")),
+        h(P.Button, { variant: "danger", icon: "trash", loading: pending, disabled: pending || !matches, onClick: remove }, t("deleteCase"))) },
+      h(P.Stack, { gap: "md" },
+        h(P.Text, { as: "p" }, t("deleteCaseConsequence")),
+        h(P.Field, { label: t("deleteCaseTypeNumber", { number }) },
+          h(P.Input, { value: typed, autoComplete: "off", spellCheck: false, dir: "ltr", disabled: pending, onChange: (event) => setTyped(event.target.value) })),
+        h(P.Field, { label: t("deleteCaseReason") },
+          h(P.Textarea, { rows: 2, autoGrow: true, maxLength: 500, value: reason, disabled: pending, onChange: (event) => setReason(event.target.value) })),
+        problem ? h(P.Notice, { tone: "danger", role: "alert" }, problem) : null));
+  }
+
+  function CaseRecordPage({ api, lang, user, caseId, record, title, facts, readOnly, fill, onChanged, children }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     // Issue 237: a tab that passes its own case record may lack the assigned member (the case detail sends only the
     // history), so the header fills it in the same way; until then it shows the record as given.
@@ -3314,6 +3388,7 @@ ${ar}` : en;
       [caseId, record],
     );
     const [assigned, setAssigned] = R.useState(null);
+    const [deleting, setDeleting] = R.useState(false);
     const shown = state.data && (!record || state.data.id === record.id) ? { ...(record || {}), ...state.data } : record;
     const manager = shown ? caseManager(shown) : null;
     const current = assigned || (manager ? { id: shown.assigned_member_id || null, name: manager } : null);
@@ -3330,7 +3405,9 @@ ${ar}` : en;
     // The ToastProvider carries the assignment toast (AppShell gives none, plenix-requests PLX-021).
     return h(P.ToastProvider, null, h(P.RecordPage, { className },
       h(P.Stack, { gap: "lg", className },
-        shown ? h(P.EntityHeader, caseHeaderProps(shown, lang, facts, assigneeValue)) : null,
+        shown ? h(P.EntityHeader, { ...caseHeaderProps(shown, lang, facts, assigneeValue, Boolean(assigned)),
+          moreActions: CASE_DELETERS.includes(user?.role) ? [{ icon: "trash", label: t("deleteCase"), danger: true, onSelect: () => setDeleting(true) }] : undefined }) : null,
+        deleting && shown ? h(DeleteCaseDialog, { api, lang, record: shown, onClose: () => setDeleting(false) }) : null,
         readOnly ? h(P.ReadOnly, { reason: t("caseClosedReadOnly"), className }, body) : body)));
   }
 
@@ -3609,7 +3686,7 @@ ${ar}` : en;
     const [notice, setNotice] = R.useState(null);
     const [expandedParties, setExpandedParties] = R.useState({});
     const [editingParty, setEditingParty] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const record = state.data;
     const manage = base.canManage(user);
@@ -3642,7 +3719,7 @@ ${ar}` : en;
     const err = (key) => (problem === key ? t(key) : undefined);
     return h(
       CaseRecordPage,
-      { api, lang, caseId, record, title: t("partiesTitle") },
+      { api, lang, user, caseId, record, title: t("partiesTitle") },
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
       ...record.parties.map((party) => {
         const profile = spouseProfileValues(record, party);
@@ -3752,7 +3829,7 @@ ${ar}` : en;
         }),
       [caseId],
     );
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const rows = state.data || [];
     const current = rows.find(({ session, item }) => session.state !== "closed" && item.state !== "heard") || rows[0] || null;
@@ -3808,7 +3885,7 @@ ${ar}` : en;
       { title: bt("councilSession"), field: "date", render: (row) => row.session.date },
       { title: t("actions"), field: "open", render: (row) => h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open")) },
     ] }) : h(P.EmptyState, { title: t("noHearings") });
-    return h(CaseRecordPage, { api, lang, caseId, title: t("hearingsTitle") }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
+    return h(CaseRecordPage, { api, lang, user, caseId, title: t("hearingsTitle") }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
       items: [{ value: "current", label: t("currentHearing", { date: current?.session?.date || "—" }), content: currentContent }, { value: "past", label: t("pastHearings"), content: pastContent }] }), attendanceDialog);
   }
 
@@ -3816,7 +3893,7 @@ ${ar}` : en;
   function HearingAttendance({ api, lang, user, sessionId, hearingId }) {
     const P = window.Plenix, h = window.React.createElement, t = translator(lang);
     const [state, retry] = base.useLoad(() => hearingId ? api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/?hearing_id=${encodeURIComponent(hearingId)}`) : Promise.resolve({ items: [] }), [sessionId, hearingId]);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     return h(base.AttendanceRoster, { lang, readOnly: !hearingId || user?.role === "member",
       rows: base.rosterRowsFrom(state.data) || (state.data.items || []).map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, seat: row.seat, photo_url: row.photo_url, present: row.present, former: Boolean(row.former) })),
@@ -3870,13 +3947,13 @@ ${ar}` : en;
     return [...byCode.values()].sort((a, b) => String(a.fact_code).localeCompare(String(b.fact_code)));
   }
 
-  function PetitionWorkspace({ api, lang, caseId }) {
+  function PetitionWorkspace({ api, lang, user, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
     const [state, retry] = base.useLoad(() => api("/api/applications/").then((apps) => ({ petitions: casePetitions(apps.items, caseId) })), [caseId]);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { petitions } = state.data;
-    return h(CaseRecordPage, { api, lang, caseId, title: t("petitionTitle") },
+    return h(CaseRecordPage, { api, lang, user, caseId, title: t("petitionTitle") },
       ...petitions.map((row) => {
         const answers = petitionAnswers(row.answers);
         const filingParty = row.filing_party_name ? h(
@@ -3909,7 +3986,7 @@ ${ar}` : en;
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
     const [notice, setNotice] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, proceeding, notes } = state.data;
     const canWrite = writerFor(user, null, record) && proceeding && proceeding.status === "open";
@@ -3932,7 +4009,7 @@ ${ar}` : en;
     ) : null;
     const noteFact = countFact("message", t("internalNotes"), notes.length, canWrite ? { label: t("addNote"), icon: "add", name: t("addNote"), onClick: () => { setEditing(null); setText(""); setFailure(null); setComposing(true); } } : null);
     return h(R.Fragment, null, noteDialog,
-      h(CaseRecordPage, { api, lang, caseId, record, title: t("internalNotes"), facts: [noteFact], readOnly: !(proceeding && proceeding.status === "open"), fill: true },
+      h(CaseRecordPage, { api, lang, user, caseId, record, title: t("internalNotes"), facts: [noteFact], readOnly: !(proceeding && proceeding.status === "open"), fill: true },
         h(P.Text, { as: "p", variant: "secondary" }, t("internalNotesHelp")),
         notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
         h(window.CTMShell.Workspace, {
@@ -4067,7 +4144,7 @@ ${ar}` : en;
     const [form, setForm] = R.useState({});
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const record = state.data;
     const marriage = councilCardValues(record, "marriage", record.marriage || {}), value = (item) => item || "—";
@@ -4096,7 +4173,7 @@ ${ar}` : en;
       } catch (error) { setFailure(base.serverMessage(error, t)); }
       finally { setPending(false); }
     };
-    return h(CaseRecordPage, { api, lang, caseId, record, title: t("marriageTitle"), readOnly: !proceeding },
+    return h(CaseRecordPage, { api, lang, user, caseId, record, title: t("marriageTitle"), readOnly: !proceeding },
       h(P.Panel, { icon: "settings-users", title: t("marriageTitle"), actions: canWrite && !editing ? h(P.Button, { size: "sm", onClick: startEditing }, t("edit")) : null },
         h(P.Stack, { gap: "md" },
           editing ? h(P.Form, { onSubmit: save, label: t("marriageTitle"), noValidate: true },
@@ -4142,7 +4219,7 @@ ${ar}` : en;
   function CaseSeparation({ api, lang, user, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     const [state, retry] = base.useLoad(() => api(`/api/cases/${encodeURIComponent(caseId)}/`), [caseId]);
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const record = state.data, separation = record.separation || {};
     const initiator = separation.initiated_by;
@@ -4151,7 +4228,7 @@ ${ar}` : en;
     const civil = councilCardValues(record, "civil_divorce", separation.civil_divorce || {});
     const reconciliation = councilCardValues(record, "reconciliation", separation.reconciliation || {});
     const order = councilCardValues(record, "restraining_order", separation.restraining_orders?.[0] || {});
-    return h(CaseRecordPage, { api, lang, caseId, record, title: t("separation"), readOnly: !openProceeding(record) },
+    return h(CaseRecordPage, { api, lang, user, caseId, record, title: t("separation"), readOnly: !openProceeding(record) },
       h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "separation_details", title: t("separationDetails"), icon: "move", values: details, fields: [["marital_status", t("maritalStatus")], ["separation_date", t("dateOfSeparation"), "date"], ["initiated_by", t("initiatedBy")], ["reason", t("reasonForDivorce")]] }),
       h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "civil_divorce", title: t("civilDivorce"), icon: "document", values: civil, fields: [["filed", t("civilDivorceFiled")], ["date", t("dateOfCivilDivorce"), "date"], ["court", t("courtName")], ["location", t("courtLocation")], ["case_number", t("civilCaseNumber")], ["status", t("civilDivorceStatus")]] }),
       h(CouncilEditablePanel, { api, P, h, t, user, record, onSaved: retry, scope: "restraining_order", title: t("restrainingOrder"), icon: "link", values: order, fields: [["filed", t("orderFiled")], ["date", t("dateOfRestrainingOrder"), "date"], ["expiration_date", t("restrainingOrderExpirationDate"), "date"], ["name_listed", t("orderNameListed")], ["court", t("courtName")], ["case_number", t("orderCaseNumber")], ["status", t("orderStatus")]] }),
@@ -4264,19 +4341,24 @@ ${ar}` : en;
     return { areas: TIMELINE_AREAS.filter((area) => items.some((item) => item.area === area)), groups };
   }
 
-  function drawTimeline({ P, h, t, model }) {
-    return h(P.Stack, { gap: "xl" }, ...model.groups.map((group) => h(P.Stack, { key: group.year, gap: "sm" },
-      h(P.SectionHeading, { level: 2 }, group.year),
-      h(P.Timeline, { label: `${t("timelineTitle")} ${group.year}`, items: group.items.map((item) => ({
-        id: item.id, time: item.upcoming ? `${item.date} · ${t("timelineUpcoming")}` : item.date, dateTime: item.dateTime || undefined,
-        title: item.title, description: item.description || undefined, icon: AREA_ICON[item.area],
-        badge: h(P.Badge, { tone: item.pending || item.upcoming ? "waiting" : "neutral", size: "sm" }, item.areaLabel),
-      })) }))));
+  // A case area as a Plenix Timeline category: its label is the tag, its slot (1 to 8, in TIMELINE_AREAS order) the tint.
+  function timelineCategory(area, t) {
+    return { id: area, label: t(`timelineArea_${area}`), color: String(TIMELINE_AREAS.indexOf(area) + 1) };
   }
 
-  function CaseTimeline({ api, lang, caseId }) {
+  // Plenix 1.2.0 Timeline variant "grouped" (pds issue 987): grouped by year, each event tinted by its case area,
+  // upcoming events outlined as Pending, and a legend that filters by area.
+  function drawTimeline({ P, h, t, model, label }) {
+    return h(P.Timeline, { variant: "grouped", legend: true, label: label || t("timelineTitle"),
+      items: model.groups.flatMap((group) => group.items).map((item) => ({
+        id: item.id, time: item.date, dateTime: item.dateTime || undefined, title: item.title,
+        description: item.description || undefined, icon: AREA_ICON[item.area], category: timelineCategory(item.area, t),
+        upcoming: Boolean(item.pending || item.upcoming),
+      })) });
+  }
+
+  function CaseTimeline({ api, lang, user, caseId }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
-    const [tab, setTab] = R.useState("all");
     const [state, retry] = base.useLoad(
       () => api(`/api/cases/${encodeURIComponent(caseId)}/`).then((record) => api(`/api/cases/${encodeURIComponent(caseId)}/timeline/`)
         .then((timeline) => ({ record, events: timelineApiEvents(timeline.items, lang, t) }))
@@ -4284,17 +4366,12 @@ ${ar}` : en;
         .catch(() => api(`/api/cases/${encodeURIComponent(caseId)}/audit/`).then((audit) => ({ record, events: timelineEvents(audit.items, record, lang) })))),
       [caseId, lang],
     );
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const model = timelineModel(state.data.events, lang, t);
-    const shown = tab === "all" ? model : { ...model, groups: model.groups.map((group) => ({ ...group, items: group.items.filter((item) => item.area === tab) })).filter((group) => group.items.length) };
-    const content = shown.groups.length ? drawTimeline({ P, h, t, model: shown }) : h(P.EmptyState, { title: t("noTimeline") });
-    return h(CaseRecordPage, { api, lang, caseId, record: state.data.record, title: t("timelineTitle") },
+    return h(CaseRecordPage, { api, lang, user, caseId, record: state.data.record, title: t("timelineTitle") },
       h(P.Text, { variant: "secondary" }, t("timelineHelp")),
-      h(P.Tabs, { variant: "contained", label: t("timelineTitle"), value: tab, onChange: setTab,
-        // The legend that filters by case area (D-0058); only the areas this case has.
-        items: [{ value: "all", label: t("timelineAll"), content }, ...model.areas.map((area) => ({ value: area, label: t(`timelineArea_${area}`), content }))],
-      }),
+      model.groups.length ? drawTimeline({ P, h, t, model }) : h(P.EmptyState, { title: t("noTimeline") }),
     );
   }
 
@@ -4421,7 +4498,7 @@ ${ar}` : en;
         }),
       [caseId],
     );
-    if (state.pending && !state.data) return base.loadingView(P, h, t);
+    if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     const { record, members, facts } = state.data;
     const bt = base.translator(lang);
@@ -4441,34 +4518,30 @@ ${ar}` : en;
     };
     const latestAudit = (action) => [...facts.audit].filter((row) => row.action === action).sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)))[0];
     const summaryTimeline = [];
-    const timelineBadge = (tone, label) => h(P.Badge, { tone, size: "sm" }, label);
     summaryTimeline.push({
-      id: "decree", title: t("decreeIssued"), time: facts.decision?.issued ? summaryDate(facts.decision.issuedAt, lang) : t("pending"),
-      badge: timelineBadge(facts.decision?.issued ? "success" : "neutral", facts.decision?.issued ? t("completed") : t("upcoming")),
+      id: "decree", area: "decree", title: t("decreeIssued"), time: facts.decision?.issued ? summaryDate(facts.decision.issuedAt, lang) : t("pending"),
+      dateTime: facts.decision?.issued ? facts.decision.issuedAt : undefined, upcoming: !facts.decision?.issued,
     });
     summaryTimeline.push({
-      id: "decision", title: t("councilReviewDecision"), time: facts.decision?.approved ? t("approved") : t("pending"),
-      description: facts.decision?.approved ? null : t("awaitingCouncilReview"),
-      badge: timelineBadge(facts.decision?.approved ? "success" : "neutral", facts.decision?.approved ? t("completed") : t("upcoming")),
+      id: "decision", area: "decision", title: t("councilReviewDecision"), time: facts.decision?.approved ? t("approved") : t("pending"),
+      description: facts.decision?.approved ? null : t("awaitingCouncilReview"), upcoming: !facts.decision?.approved,
     });
     if (record.status === "open") summaryTimeline.push({
-      id: "recommendation", title: t("recommendationPending"), time: t("inProgress"),
-      description: manager ? t("awaitingRecommendation", { member: manager }) : bt("unassigned"),
-      badge: timelineBadge("success", t("current")),
+      id: "recommendation", area: "decision", title: t("recommendationPending"), time: t("inProgress"),
+      description: manager ? t("awaitingRecommendation", { member: manager }) : bt("unassigned"), upcoming: true,
     });
     const hearing = latestAudit("case_heard");
     if (hearing) summaryTimeline.push({
-      id: `hearing-${hearing.id}`, title: t("hearing"), time: summaryDate(hearing.timestamp, lang), description: auditLabel(hearing.action, lang), badge: timelineBadge("active", t("completed")),
+      id: `hearing-${hearing.id}`, area: "hearing", title: t("hearing"), time: summaryDate(hearing.timestamp, lang), dateTime: hearing.timestamp, description: auditLabel(hearing.action, lang),
     });
     const assigned = latestAudit("case_assigned");
     if (assigned) summaryTimeline.push({
-      id: `assigned-${assigned.id}`, title: t("caseAssigned"), time: summaryDate(assigned.timestamp, lang),
+      id: `assigned-${assigned.id}`, area: "assign", title: t("caseAssigned"), time: summaryDate(assigned.timestamp, lang), dateTime: assigned.timestamp,
       description: manager || null,
-      badge: timelineBadge("active", t("completed")),
     });
     const filed = latestAudit("application_submitted");
     if (summary.filing_date) summaryTimeline.push({
-      id: "filed", title: t("caseFiled"), time: summaryDate(filed?.timestamp || summary.filing_date, lang), description: t("caseFiledDescription"), badge: timelineBadge("active", t("completed")),
+      id: "filed", area: "application", title: t("caseFiled"), time: summaryDate(filed?.timestamp || summary.filing_date, lang), dateTime: filed?.timestamp || summary.filing_date, description: t("caseFiledDescription"),
     });
     const applicationDates = [
       { id: "church-marriage", title: t("churchMarriageDate"), date: record.marriage?.church_marriage_date },
@@ -4483,8 +4556,9 @@ ${ar}` : en;
     for (const applicationDate of applicationDates.filter((item) => isSubmittedDate(item.date)))
       summaryTimeline.push({
         ...applicationDate,
+        area: "marriage",
         time: summaryDate(applicationDate.date, lang),
-        badge: timelineBadge("active", t("completed")),
+        dateTime: applicationDate.date,
       });
     const canEditSummary = writerFor(user, null, record) && openProceeding(record)?.status === "open";
     const startSummaryEdit = () => {
@@ -4513,7 +4587,7 @@ ${ar}` : en;
       { title: t("marriageTitle"), fields: [["marriage_duration", t("marriageDuration")], ["children", t("children")], ["reason", t("reasonForDivorce")]] },
     ];
     const summaryReadValues = {
-      case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: h(P.Badge, { tone: record.status === "open" ? "success" : "neutral" }, record.status === "open" ? t("active") : bt("closed")), assigned_member: manager || bt("unassigned"),
+      case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: ((badge) => h(P.Badge, { tone: badge.tone, icon: badge.icon }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)), assigned_member: manager || bt("unassigned"),
       applicant: applicant?.name, respondent: respondent?.name, reason: summary.reason, marriage_duration: marriageDuration(record.marriage?.church_marriage_date, lang),
       children: summary.children?.length ? h(P.Stack, { gap: "xs" }, ...summary.children.map((child, index) => h(P.Text, { key: index }, childLine(child, lang, t)))) : t("noChildren"), last_hearing_date: summaryDate(summary.last_hearing_date, lang),
     };
@@ -4543,10 +4617,12 @@ ${ar}` : en;
       h(
         P.Panel,
         { icon: "calendar", title: t("keyDates") },
-        h(P.Timeline, { label: t("keyDates"), items: summaryTimeline }),
+        // Until the owner picks a Key Dates variant (issue 239): the case timeline's grouped variant, key milestones only.
+        h(P.Timeline, { variant: "grouped", label: t("keyDates"),
+          items: summaryTimeline.map(({ area, date, ...item }) => ({ ...item, icon: AREA_ICON[area], category: timelineCategory(area, t) })) }),
       ),
     );
-    return h(CaseRecordPage, { api, lang, caseId, record, readOnly: !openProceeding(record), onChanged: retry },
+    return h(CaseRecordPage, { api, lang, user, caseId, record, readOnly: !openProceeding(record), onChanged: retry },
       summaryPanels,
       reviewApplicationId && !reviewComplete ? h(ApplicationReviewActions, { api, lang, applicationId: reviewApplicationId, onDone: () => { setReviewComplete(true); retry(); } }) : null,
     );
@@ -4556,6 +4632,7 @@ ${ar}` : en;
     caseHeaderPeople,
     timelineModel,
     timelineApiEvents,
+    caseStatusOf,
     HeaderAssignment,
     caseHeaderProps,
     GroupedReadFields,
