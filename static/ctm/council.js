@@ -1327,7 +1327,8 @@
   function recommendationCell(P, h, value, t) {
     const text = String(value || "").trim().replace(/\s+/g, " ");
     if (!text) return t("notRecorded");
-    return h(P.Text, { as: "span", truncate: true, title: text, tabIndex: 0, dir: "auto", className: "plx-u-w-100p" }, text);
+    // pds 1.4.0 (issue 1122): the cut text keeps a corner icon that opens the whole recommendation in a Dialog titled with the column's name
+    return h(P.Text, { as: "span", truncate: true, overflow: "dialog", overflowLabel: t("previousRecommendation"), dir: "auto", className: "plx-u-w-100p" }, text);
   }
 
 

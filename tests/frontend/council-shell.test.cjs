@@ -287,7 +287,7 @@ test("the session header is Plenix EntityHeader style 2: facts carry their actio
   // Issue 222: the recommendation cell is text; no button or dialog in a cell.
   // D-0062 (issue 271): the text ending in "…" with the full text on hover; no row panel.
   assert.match(agendaTable, /wrap: true, render: \(row\) => recommendationCell\(P, h, row\.previous_recommendation, t\)/);
-  assert.ok(council.includes('return h(P.Text, { as: "span", truncate: true, title: text, tabIndex: 0, dir: "auto", className: "plx-u-w-100p" }, text);'));
+  assert.ok(council.includes('return h(P.Text, { as: "span", truncate: true, overflow: "dialog", overflowLabel: t("previousRecommendation"), dir: "auto", className: "plx-u-w-100p" }, text);'), "the cut recommendation keeps a corner icon that opens the whole text (pds 1122)");
   assert.match(council, /if \(!text\) return t\("notRecorded"\);/);
   assert.doesNotMatch(council, /PreviousRecommendationCell|readRecommendation/);
   assert.doesNotMatch(council, /P\.SidePanel|agendaDetail/);
