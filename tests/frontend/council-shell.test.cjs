@@ -376,7 +376,7 @@ test("case summary shows case details and recorded key-date milestones", () => {
   assert.match(councilCase, /GroupedReadFields, \{ P, h, groups: summaryGroups, values: summaryReadValues, lang, columns: 2 \}/);
   assert.match(councilCase, /reasonForDivorce: "Reason seeking divorce"/);
   assert.doesNotMatch(councilCase, /h\(P\.DataPill, \{ gender, fill: true \}, party\.name\)/);
-  assert.match(councilCase, /h\(P\.Timeline, \{ variant: "grouped", label: t\("keyDates"\),\s*items: summaryTimeline\.map\(/);
+  assert.match(councilCase, /h\(P\.Timeline, \{ variant: "grouped", density: "compact", label: t\("keyDates"\),\s*items: summaryTimeline\.map\(/);
   // D-0050 (#217): the case status is a Plenix Badge, never plain text.
   // D-0059 (issue 259): the same badge as the header, with Unassigned for an open case without a member.
   assert.ok(councilCase.includes('status: ((badge) => h(P.Badge, { tone: badge.tone, icon: badge.icon }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)),'));
