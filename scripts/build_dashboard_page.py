@@ -100,7 +100,9 @@ def owner_decisions(open_numbers, owner_input, waiting=()):
                             for m in CARD_OPT.finditer(post["body"])],
                 "applied": applied.group(1) if applied else "", "at": post["at"],
             }
-        if n in waiting and f"#{n}" not in found:
+        planned = {card["id"] for card in owner_input}
+        # one entry per issue: a decision card or a plan.yaml question on the same issue wins
+        if n in waiting and f"#{n}" not in planned and not any(v["issue"] == n for v in found.values()):
             asks = [(post, m) for post in posts for m in OWNER_ASK.finditer(post["body"])]
             post, ask = asks[-1] if asks else ({"body": "", "at": ""}, None)
             found[f"#{n}"] = {
@@ -116,7 +118,7 @@ def owner_decisions(open_numbers, owner_input, waiting=()):
     for d in found.values():
         a = answers.get(d["id"])
         d["answer"] = a if a and a["at"] >= (d["at"] or "") else None  # counts only after the card
-    return sorted(found.values(), key=lambda d: d["id"])
+    return sorted(found.values(), key=lambda d: (d["id"].startswith("#"), d["issue"], d["id"]))
 
 
 def decision_rows(runs, bd):
