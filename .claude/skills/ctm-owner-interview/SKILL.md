@@ -43,6 +43,8 @@ asked to see options; Arabic pictures only on request.
 2. Screen decisions also get a row in `decisions/screens.md`:
    `| YYYY-MM-DD | screen | element | decision | D-0123 | Locked |`.
 3. Label the issue `decision`.
+4. If the owner must still answer, also label it `waiting-for-owner` so the
+   dashboard page lists it; remove that label once the answer is applied.
 
 ## When the owner replies
 
