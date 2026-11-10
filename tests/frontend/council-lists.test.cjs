@@ -271,7 +271,8 @@ test("council home: lead session, one row of tiles, My cases grid, in that order
   assert.match(text, /Attending/);
   assert.match(text, /Confirmed/);
   assert.match(text, /1 of 4/);
-  const open = lead.props.actions;
+  // Owner, 2026-11-10: the session's status badge sits beside Open session in the actions.
+  const open = byName(lead.props.actions, "Button")[0];
   assert.equal(open.props.variant, "primary");
   open.props.onClick();
   same(moved, ["/sessions/s1"]);
@@ -444,7 +445,7 @@ test("council home lists council members as person cards in their order; a suppr
   assert.ok(cards.every((card) => card.props.type === "person" && card.props.menu === undefined));
   assert.equal(cards[1].props.unit, undefined);
   assert.equal(cards[0].props.unit, "active cases");
-  assert.equal(panel.props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
+  assert.equal(panel.props.description, undefined); // owner, 2026-11-10: no note on hidden counts
   const ar = C.translator("ar");
   for (const key of ["case.next.completeness_review", "case.next.applicant_correction", "case.next.hearing", "case.next.assignment", "case.next.investigation", "councilMembers", "hiddenValue", "titlePresiding"])
     assert.notEqual(ar(key), C.translator("en")(key), key);
@@ -466,20 +467,20 @@ test("home statistics leave suppressed counts out, say so, and draw no donut tot
   const bars = byName(await chart("members"), "BarChart")[0];
   same(bars.props.categories, ["Fr. C", "Fr. A"]);
   same(bars.props.series[0].values, [12, 9]);
-  assert.equal(bars.props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
+  assert.equal(bars.props.description, undefined); // owner, 2026-11-10: no note on hidden counts
   const pieTree = await chart("grounds");
   const pie = byName(pieTree, "PieChart")[0];
   same(pie.props.data.map((part) => [part.label, part.value]), [["Abuse", 7], ["Abandonment", 6]]);
   assert.equal(pie.props.variant, "donut");
   assert.equal(String(pie.props.centerValue).trim(), "", "no center total");
-  assert.equal(pie.props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
+  assert.equal(pie.props.description, undefined); // owner, 2026-11-10: no note on hidden counts
   const panel = byName(pieTree, "Panel")[0];
   same(panel.props.actions.props.options.map((option) => option.value), ["2026", "2025"]);
   assert.ok(asked.includes("/api/statistics/summary/"));
   // Every count hidden: say so, never "no cases".
   same(C.visibleCounts([{ id: 1, count: null, suppressed: true }], (row) => row.id), { shown: [], hidden: true });
   const ar = C.translator("ar");
-  for (const key of ["statsCasesPerMember", "statsCasesByReason", "statsHidden", "statsAllHidden", "allStatistics"]) assert.notEqual(ar(key), C.translator("en")(key), key);
+  for (const key of ["statsCasesPerMember", "statsCasesByReason", "statsAllHidden", "allStatistics"]) assert.notEqual(ar(key), C.translator("en")(key), key);
 });
 
 test("home statistics: the chart caption is hidden and the hidden-count note shows once, on the Panel", async () => {
@@ -489,5 +490,5 @@ test("home statistics: the chart caption is hidden and the hidden-count note sho
   h.render(C.HomeStatChart, props); await settle();
   const tree = h.render(C.HomeStatChart, props);
   assert.equal(byName(tree, "BarChart")[0].props.hideCaption, true);
-  assert.equal(byName(tree, "Panel")[0].props.description, "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.");
+  assert.equal(byName(tree, "Panel")[0].props.description, undefined); // owner, 2026-11-10: no note on hidden counts
 });

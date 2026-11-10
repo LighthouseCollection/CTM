@@ -58,7 +58,7 @@ def session_card(session, actor):
     from tribunal.services.session_reminders import SENDER_ROLES, council_recipients, latest_answers
     answers = latest_answers(session)
     mine = answers.get(actor.pk)
-    card = {"id": str(session.pk), "date": session.date.isoformat(),
+    card = {"id": str(session.pk), "date": session.date.isoformat(), "state": session.state,
             "starts_at": session.starts_at.isoformat() if session.starts_at else None,
             "location": session_display_location(session.location) or None,
             "agenda_count": session.agenda.count(),

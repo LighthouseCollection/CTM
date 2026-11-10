@@ -104,3 +104,13 @@ def test_members_list_never_hides_a_single_count(granted_roles, client, people):
     hidden = [row for row in rows if row["suppressed"]]
     assert len(hidden) == 2 and all(row["active_cases"] is None for row in hidden)
     assert {row["id"] for row in hidden} == {str(people["secretary"].pk), str(people["president"].pk)}
+
+
+def test_dashboard_session_card_includes_a_draft_session(granted_roles, client, people, upcoming):
+    # Owner, 2026-11-10: Home leads with the next open session, Draft or In progress, and says which.
+    m.CouncilSession.objects.filter(pk=upcoming.pk).update(state="draft")
+    card = get(granted_roles, client, people["secretary"], "/api/dashboard/").json()["upcoming_sessions"][0]
+    assert card["id"] == str(upcoming.pk) and card["state"] == "draft"
+    m.CouncilSession.objects.filter(pk=upcoming.pk).update(state="planned")
+    card = get(granted_roles, client, people["secretary"], "/api/dashboard/").json()["upcoming_sessions"][0]
+    assert card["state"] == "planned"
