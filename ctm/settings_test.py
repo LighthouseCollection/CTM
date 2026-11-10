@@ -17,3 +17,9 @@ MEDIA_ROOT = BASE_DIR / ".test-media"
 MIDDLEWARE = [
     item for item in MIDDLEWARE if item != "whitenoise.middleware.WhiteNoiseMiddleware"
 ]
+# Tests render templates without running collectstatic, so they keep the plain
+# storage (no manifest lookup). Production uses the hashed storage (#308).
+STORAGES = {
+    **STORAGES,
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
