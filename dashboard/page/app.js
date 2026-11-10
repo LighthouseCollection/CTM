@@ -1,8 +1,8 @@
 /* CTM 3.0 dashboard on CTM's Plenix pin (PLENIX_BASE in ctm/settings.py), built from the CDN's documented
-   ListingPage template (listing-page.md): AppShell with a NavPane + NavList on the left, the section's title
-   row, a CommandBar with CommandBarSearch and the count (command-bar.md, use-collection-view.md), the full-room
-   DataGrid (data-grid.md: compact, pill cells, header menus, typed columns) and the chosen row in the
-   SidePanel on the right as a PropertyList. Data: data.js, a snapshot taken from GitHub by build_dashboard_page.py. */
+   SplitWorkspace template (listing-page.md): AppShell with a NavPane + NavList on the left, the section's title
+   row, a CommandBar with search, filters, sort and columns (command-bar.md, use-collection-view.md), then the
+   SplitWorkspace split: the DataGrid (data-grid.md: compact, pill cells, header menus, typed columns) and the
+   chosen row's details beside it (owner, 2026-11-10). Data: data.js, a snapshot taken from GitHub by build_dashboard_page.py. */
 (function () {
   'use strict';
   var R = window.React, P = window.Plenix, h = R.createElement;
@@ -13,7 +13,7 @@
     var d = new Date(iso);
     return isNaN(d) ? iso : d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
-  function role(r) { return String(r).replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
+  function role(r) { return String(r).replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }).replace(/\bQa\b/, 'QA').replace(/\bI18n\b/, 'i18n'); }
   function link(href, text) { return h(P.Link, { href: href, external: true }, text); }
   // Statuses are badges with an icon (owner rule), never a dot.
   var SEV = { S1: ['negative', 'warning'], S2: ['action-required', 'warning'], S3: ['waiting', 'clock'], S4: ['neutral', 'info'] };
@@ -32,7 +32,7 @@
     return h(P.Badge, { tone: 'negative', icon: 'warning', size: 'sm' }, 'Down (' + code + ')');
   }
   function sevBadge(t) { var v = SEV[t.sev] || SEV.S4; return h(P.Badge, { tone: v[0], icon: v[1], size: 'sm' }, t.sev); }
-  // The chosen row in the side panel: notes and banners first, then its facts as a stacked PropertyList.
+  // The chosen record: notes and banners first, then its facts as a stacked PropertyList.
   function Detail(props) { return h(P.Stack, { gap: 'lg' }, props.children); }
   function Facts(props) { return h(P.PropertyList, { layout: 'stacked' }, props.children); }
   function Field(props) { return h(P.PropertyList.Item, { label: props.label, data: props.data }, props.children); }
@@ -45,6 +45,7 @@
     answered: ['success', 'check', 'You answered'],
   };
   function statusBadge(d) { var v = STATUS[d.status]; return h(P.Badge, { tone: v[0], icon: v[1], size: 'sm' }, v[2]); }
+  var URL = /https?:\/\/\S+/g;
   function plain(t) { return String(t || '').replace(/\*\*/g, '').replace(/`/g, ''); }
   function optionText(o) { var t = plain(o.text); return (t.charAt(0).toUpperCase() + t.slice(1)).split(' — risk: '); }
 
@@ -200,16 +201,14 @@
       toolbar: h(P.Stack, { gap: 'md' },
         s.live.code === 200 ? null : h(P.Banner, { tone: 'danger', title: 'The live site is down' },
           'ctm.lighthouseway.org answers ' + s.live.code + ': the proxy is up, the CTM app behind it is not. Release Engineer has it: ', link(GH + '/issues/63', '#63'), '.'),
-        h(P.Inline, { gap: 'md', wrap: true },
-          h(P.MetricCard, { layout: 'tile', icon: 'flag', title: 'Waiting on you', value: String(needAnswer.length), href: '#owner' }),
-          h(P.MetricCard, { layout: 'tile', icon: 'checklist', title: 'Team to-do', value: String(tasks.length), href: '#todo',
-            footer: urgent.length + ' urgent (S1/S2)' }),
-          h(P.MetricCard, { layout: 'tile', icon: 'task_alt', title: 'Done, last 3 days', value: String(D.mergedPrs.length + D.closedIssues.length), href: '#done',
-            footer: D.mergedPrs.length + ' merged · ' + D.closedIssues.length + ' closed' }),
-          h(P.MetricCard, { layout: 'tile', icon: 'article', title: 'Active decisions', value: String(active.length), href: '#decisions',
-            footer: noCheck.length + ' without a check yet' }),
-          h(P.MetricCard, { layout: 'tile', icon: 'fact_check', title: 'Decision checks failing', value: String(failing.length), href: '#decisions',
-            footer: failing.map(function (d) { return d.id; }).join(', ') || 'None' }))),
+        h(P.ContentGrid, { size: 'md', label: 'Summary' },
+          h(P.MetricCard, { icon: 'flag', title: 'Waiting on you', value: String(needAnswer.length), href: '#owner', context: 'Questions to answer' }),
+          h(P.MetricCard, { icon: 'checklist', title: 'Team to-do', value: String(tasks.length), href: '#todo', context: urgent.length + ' urgent (S1/S2)' }),
+          h(P.MetricCard, { icon: 'task_alt', title: 'Done', value: String(D.mergedPrs.length + D.closedIssues.length), href: '#done',
+            context: 'Last 3 days: ' + D.mergedPrs.length + ' merged, ' + D.closedIssues.length + ' closed' }),
+          h(P.MetricCard, { icon: 'article', title: 'Active decisions', value: String(active.length), href: '#decisions', context: noCheck.length + ' without a check yet' }),
+          h(P.MetricCard, { icon: 'fact_check', title: 'Checks failing', value: String(failing.length), href: '#decisions',
+            context: failing.map(function (d) { return d.id; }).join(', ') || 'None failing' }))),
       text: function (r) { return r.site + ' ' + r.url; },
       columns: [
         { title: 'Site', field: 'site', kind: 'name' },
@@ -239,9 +238,10 @@
       detailTitle: function (d) { return d.id; },
       detail: function (d) {
         return h(Detail, null,
-          h(P.Heading, { level: 2, size: 4 }, plain(d.title)),
+          h(P.Heading, { level: 2, size: 4 }, plain(d.title).replace(URL, '').replace(/[\s:]+$/, '')),
           h(Facts, null,
             h(Field, { label: 'Status' }, statusBadge(d)),
+            (plain(d.title).match(URL) || []).map(function (u) { return h(Field, { key: u, label: 'Link' }, link(u, 'Open the link')); }),
             d.context ? h(Field, { label: 'Context' }, plain(d.context)) : null,
             h(Field, { label: 'On GitHub' }, link(d.url, '#' + d.issue))),
           d.applied ? h(P.Banner, { tone: 'info', title: 'Applied for now: ' + d.applied }, 'The team went ahead with the recommended option so work did not stop. Pick another option to change it.') : null,
@@ -253,10 +253,9 @@
       description: 'The team’s open issues, in the Product Lead’s order, then by severity.',
       text: function (t) { return '#' + t.number + ' ' + t.title + ' ' + t.owners.join(' '); },
       columns: [
-        { title: 'Order', field: 'rank', type: 'number', width: 72 },
-        { title: 'Issue', field: 'title', kind: 'name', lines: 2, minWidth: 320, pill: false, render: function (t) { return '#' + t.number + ' ' + t.title; } },
+        { title: 'Order', field: 'rank', type: 'number', width: 72, pill: false },
+        { title: 'Issue', field: 'title', kind: 'name', lines: 2, pill: false, render: function (t) { return '#' + t.number + ' ' + t.title; } },
         { title: 'Severity', field: 'sev', kind: 'center', width: 88, pill: false, filter: 'list', render: sevBadge },
-        { title: 'Owner', field: 'owners', width: 200, maxWidth: 200, render: function (t) { return t.owners.map(role).join(', ') || 'Not assigned'; } },
         { title: 'Updated', field: 'updated', type: 'date', width: 136 },
       ],
       detailTitle: function (t) { return '#' + t.number; },
@@ -275,13 +274,13 @@
       },
     },
     {
-      id: 'decisions', label: 'Decisions', icon: 'article', title: 'Decisions', noun: ['decision', 'decisions'], rows: decisionRows,
+      id: 'decisions', label: 'Decisions', icon: 'article', title: 'Decisions', noun: ['decision', 'decisions'], rows: decisionRows, sort: [{ field: 'date', dir: 'desc' }],
       description: 'Every recorded decision, newest first, with the check that enforces it on main.',
       text: function (d) { return d.id + ' ' + d.decision + ' ' + (d.area || ''); },
       columns: [
         { title: 'Id', field: 'id', kind: 'data', width: 88 },
         { title: 'Decision', field: 'decision', kind: 'name', lines: 2, overflow: 'dialog', pill: false },
-        { title: 'Date', field: 'date', type: 'date', width: 136 },
+        { title: 'Date', field: 'date', type: 'date', width: 152 },
         { title: 'Status', field: 'status', kind: 'center', width: 136, pill: false, filter: 'list', render: decisionStatus },
         { title: 'Check', field: 'state', kind: 'center', width: 136, pill: false, filter: 'list', render: function (d) { return stateBadge(d.state); } },
       ],
@@ -342,7 +341,7 @@
       text: function (r) { return r.agent; },
       columns: [
         { title: 'Role', field: 'agent', kind: 'name' },
-        { title: 'Open items', field: 'count', type: 'number', width: 120 },
+        { title: 'Open items', field: 'count', type: 'number', width: 120, pill: false },
       ],
       detailTitle: function (r) { return r.agent; },
       detail: function (r) {
@@ -390,35 +389,44 @@
     return left;
   }
 
-  // One section on the ListingPage template: the command bar's search and the grid share one useCollectionView
-  // state (use-collection-view.md); the chosen row shows in the side panel, else a prompt to choose one.
+  // One section on the SplitWorkspace template (owner, 2026-11-10: the menu on the left, then the split screen
+  // with the DataGrid and the chosen row's details beside it). The title row and the command bar sit above both
+  // panes; the bar's search, filters, sort and columns share one useCollectionView state with the grid.
   function Section(props) {
     var sec = props.sec, key = sec.index || 'id';
     var fields = sec.columns.map(function (c) {
-      return { value: c.field, label: c.title, get: function (r) { var v = r[c.field]; return v && typeof v === 'object' ? v.label || v.name : v; } };
+      return { value: c.field, label: c.title, kind: c.type, get: function (r) { var v = r[c.field]; return v && typeof v === 'object' ? v.label || v.name : v; } };
     });
-    var view = P.useCollectionView(fields, { text: sec.text, data: sec.rows });
+    var view = P.useCollectionView(fields, { text: sec.text, data: sec.rows, sort: sec.sort });
     var shown = view.count(sec.rows);
     var record = props.openKey == null ? null : sec.rows.filter(function (r) { return r[key] === props.openKey; })[0];
     var bar = h(P.CommandBar, {
       label: sec.title,
-      find: h(P.CommandBarSearch, Object.assign({}, view.searchProps, { placeholder: 'Search ' + sec.noun[1] })),
+      find: h(R.Fragment, null,
+        h(P.CommandBarSearch, Object.assign({}, view.searchProps, { placeholder: 'Search ' + sec.noun[1] })),
+        h(P.FilterPanel, view.filterProps)),
+      view: h(R.Fragment, null, h(P.SortPanel, view.sortProps), h(P.ColumnsMenu, view.columnsProps)),
       count: shown + ' ' + sec.noun[shown === 1 ? 0 : 1],
     });
-    return h(P.ListingPage, {
-      title: sec.title, description: sec.description, sideNav: props.nav, label: sec.title,
-      toolbar: sec.toolbar ? h(P.Stack, { gap: 'md' }, sec.toolbar, bar) : bar,
+    return h(P.SplitWorkspace, {
+      sideNav: props.nav,
+      paneTitle: sec.title,
+      defaultSize: 760, // the grid's starting width: most of the room goes to the list; the divider still moves
+      title: record ? sec.detailTitle(record) : sec.title,
+      toolbar: h(P.Stack, { gap: 'md' },
+        h(P.RecordPage.Header, { title: sec.title, description: sec.description }),
+        sec.toolbar || null, bar),
       rows: sec.rows, columns: sec.columns,
-      empty: 'Nothing here.',
       grid: Object.assign({
         index: key, density: 'compact', cells: 'pill', headerMenu: true, mode: 'fill', wrapHeaders: false,
+        empty: 'Nothing in ' + sec.label + ' right now.',
         openKey: record ? props.openKey : null,
         onRowClick: function (r) { props.onOpen(r[key]); },
       }, view.tableProps),
-      detailTitle: record ? sec.detailTitle(record) : sec.title,
-      detail: record ? sec.detail(record) : h(P.EmptyState, { title: 'Nothing selected' }, 'Choose a row to see its details here.'),
-      onDetailClose: function () { props.onOpen(null); },
-    });
+      detailOpen: !!record,
+      actions: record ? h(P.Button, { variant: 'subtle', size: 'sm', onClick: function () { props.onOpen(null); } }, 'Close') : null,
+      empty: h(P.EmptyState, { title: 'Nothing selected' }, 'Choose a row to see its details here.'),
+    }, record ? sec.detail(record) : null);
   }
 
   function App() {
