@@ -4617,8 +4617,8 @@ ${ar}` : en;
       h(
         P.Panel,
         { icon: "calendar", title: t("keyDates") },
-        // Until the owner picks a Key Dates variant (issue 239): the case timeline's grouped variant, key milestones only.
-        h(P.Timeline, { variant: "grouped", label: t("keyDates"),
+        // Key Dates (issue 239, owner 2026-11-10, Plenix issue 1152, D-0145): Plenix's compact grouped Timeline, key milestones only; no CTM CSS.
+        h(P.Timeline, { variant: "grouped", density: "compact", label: t("keyDates"),
           items: summaryTimeline.map(({ area, date, ...item }) => ({ ...item, icon: AREA_ICON[area], category: timelineCategory(area, t) })) }),
       ),
     );
