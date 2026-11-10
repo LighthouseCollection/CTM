@@ -112,7 +112,8 @@
     var chosen = d.options.filter(function (o) { return o.key === choice; })[0];
     var other = choice === 'other';
     var ready = other ? note.trim().length > 0 : !!chosen;
-    var body = '**Answer to ' + d.id + ': ' + (other ? 'Other' : choice) + '**\n\n' +
+    // nothing chosen yet (a question with no recommended option): no answer text until a choice is made
+    var body = !ready ? '' : '**Answer to ' + d.id + ': ' + (other ? 'Other' : choice) + '**\n\n' +
       (other ? note.trim() : optionText(chosen)[0] + (note.trim() ? '\n\nNote: ' + note.trim() : '')) +
       '\n\n_Sent from the CTM 3.0 dashboard._';
     function post() {
