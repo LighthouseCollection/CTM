@@ -1343,10 +1343,13 @@
       timeZone: "America/Los_Angeles",
     }).format(d);
   }
-  const reviewMeta = (row, t, lang) =>
-    [isolate(row.applicant_name), row.submitted_at ? formatWhen(row.submitted_at, lang) : null, `${t("fee")}: ${feeLabel(row, t)}`]
-      .filter(Boolean)
-      .join(" · ");
+  // The applicant's name, the submission time in the data font (issue 325) and the fee, one line.
+  const reviewMeta = (row, t, lang) => {
+    const h = window.React.createElement, P = window.Plenix;
+    const when = row.submitted_at ? h(P.Text, { variant: "data" }, formatWhen(row.submitted_at, lang)) : null;
+    return h(window.React.Fragment, null, ...[isolate(row.applicant_name), when, `${t("fee")}: ${feeLabel(row, t)}`]
+      .filter(Boolean).flatMap((part, index) => index ? [" · ", part] : [part]));
+  };
 
   // Home panel for admin/secretary. Members never see this queue.
   function ReviewQueuePanel({ api, lang, user, onOpen }) {
@@ -1377,7 +1380,7 @@
                 ...rows.slice(0, 5).map((row) =>
                   h(P.Card, { icon: "doc-text",
                     key: row.id,
-                    title: row.case_number || t("unnumbered"),
+                    title: row.case_number ? h(P.Text, { variant: "data" }, row.case_number) : t("unnumbered"),
                     meta: reviewMeta(row, t, lang),
                     onOpen,
                   }),
@@ -1449,7 +1452,7 @@
             { icon: "progress", title: t("previousReturns") },
             h(P.List, {
               variant: "bullets",
-              items: returns.map((r) => ({ children: `${formatWhen(r.timestamp, lang)} · ${r.actor}: ${r.instructions}` })),
+              items: returns.map((r) => ({ children: [h(P.Text, { key: "w", variant: "data" }, formatWhen(r.timestamp, lang)), ` · ${r.actor}: ${r.instructions}`] })),
             }),
           )
         : null,
@@ -1608,9 +1611,9 @@
         cardCount: plural(lang, "applicationsCount"),
         template: { title: "title", subtitle: "applicant_name", date: "submitted", primary: "fee_status" },
         columns: [
-          { title: t("caseNumber"), field: "title", kind: "name", minWidth: "9rem" },
+          { title: t("caseNumber"), field: "title", kind: "name", minWidth: "9rem", pill: (value, row) => ({ data: Boolean(row.case_number) }) },
           { title: t("applicant"), field: "applicant_name", type: "person", minWidth: "11rem" },
-          { title: t("submitted"), field: "submitted", minWidth: "11rem" },
+          { title: t("submitted"), field: "submitted", minWidth: "11rem", pill: (value, row) => ({ data: Boolean(row.submitted_at) }) },
           { title: t("fee"), field: "fee_status", minWidth: "7rem" },
         ],
       }, (chosen) => h(ReviewDetail, {
@@ -1764,12 +1767,12 @@
 
     const manage = mode === "upcoming" && canManage(user);
     const columns = [
-      { title: t("sessionDate"), field: "date", kind: "name", width: "8rem" },
-      { title: t("sessionTime"), field: "session_time", width: "8rem" },
+      { title: t("sessionDate"), field: "date", kind: ["name", "data"], width: "8rem" },
+      { title: t("sessionTime"), field: "session_time", width: "8rem", pill: (value, row) => ({ data: Boolean(row.starts_at) }) },
       ...(mode === "archived" ? [
-        { title: t("adjournEndTime"), field: "adjourned_time", width: "10rem" },
-        { title: t("assignedCases"), field: "assigned_case_count", width: "9rem" },
-        { title: t("caseHearings"), field: "hearing_case_count", width: "9rem" },
+        { title: t("adjournEndTime"), field: "adjourned_time", width: "10rem", pill: (value, row) => ({ data: Boolean(row.adjourned_at) }) },
+        { title: t("assignedCases"), field: "assigned_case_count", type: "number", width: "9rem" },
+        { title: t("caseHearings"), field: "hearing_case_count", type: "number", width: "9rem" },
       ] : []),
       ...(showConfirmed ? [{ title: t("confirmedColumn"), field: "confirmed", width: "11rem" }] : []),
       { title: t("statusLabel"), field: "state", pill: false, render: (row) => h(P.Badge, { tone: sessionStatusTone(row.state) }, t(sessionStatusKey(row.state))) },
@@ -1781,7 +1784,7 @@
     };
     const open = (row) => onOpen && onOpen(row.id);
     const caseColumns = (extra) => [
-      { title: t("caseNumber"), field: "case_number", kind: "name", minWidth: "8rem" },
+      { title: t("caseNumber"), field: "case_number", kind: ["name", "data"], minWidth: "8rem" },
       { title: t("applicant"), field: "applicant", type: "person", minWidth: "10rem" },
       { title: t("respondent"), field: "respondent", type: "person", minWidth: "10rem" },
       ...extra,
@@ -1900,8 +1903,8 @@
       compact ? P.Stack : P.Card,
       compact ? { gap: "xs" } : {
         icon: "calendar",
-        title: titled ? hearingTitle(row.party_names, session.date, t) : row.case_number,
-        meta: [titled ? isolate(row.case_number) : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`].filter(Boolean).join(" · "),
+        title: titled ? hearingTitle(row.party_names, session.date, t) : h(P.Text, { variant: "data" }, row.case_number),
+        meta: h(R.Fragment, null, titled ? h(P.Text, { variant: "data" }, isolate(row.case_number)) : null, titled ? " · " : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`),
         actions: h(P.Inline, { gap: "xs", wrap: true }, ...actions),
       },
       compact ? h(P.Text, { variant: "secondary" }, [titled ? hearingTitle(row.party_names, session.date, t) : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`].filter(Boolean).join(" · ")) : null,
@@ -1929,7 +1932,9 @@
             h(
               P.Text,
               { variant: "secondary" },
-              `${t("testimony")}: ${a.party_name} · ${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)} · ${t(a.state === "cancelled" ? "cancelled" : a.response ? "response_" + a.response : "awaitingResponse")}`,
+              `${t("testimony")}: ${a.party_name} · `,
+              h(P.Text, { variant: "data" }, `${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)}`),
+              ` · ${t(a.state === "cancelled" ? "cancelled" : a.response ? "response_" + a.response : "awaitingResponse")}`,
             ),
             flags.cancelTestimony && a.state !== "cancelled" && onCancelTestimony
               ? h(P.Button, { size: "2xs", onClick: () => onCancelTestimony(a) }, t("cancelInvitation"))
@@ -2189,7 +2194,7 @@
                         variant: "bullets",
                         items: [...outcomes]
                           .reverse()
-                          .map((o) => ({ children: `${formatWhen(o.timestamp, lang)} · ${o.actor}` })),
+                          .map((o) => ({ children: [h(P.Text, { key: "w", variant: "data" }, formatWhen(o.timestamp, lang)), ` · ${o.actor}`] })),
                       }),
                     )
                   : null,
@@ -2455,7 +2460,7 @@
                 h(
                   P.Inline,
                   { key: a.id, wrap: true, align: "end" },
-                  h(P.Text, { variant: "strong" }, `${a.party_name} · ${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)}`),
+                  h(P.Text, { variant: "strong" }, `${a.party_name} · `, h(P.Text, { variant: "data" }, `${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)}`)),
                   h(P.Field, { label: `${t("startTime")} · ${a.party_name}` }, h(P.Input, { type: "time", width: "sm", value: form.times[a.id]?.start || "", disabled: pending, onChange: (e) => setTime(a.id, "start", e.target.value) })),
                   h(P.Field, { label: `${t("endTime")} · ${a.party_name}` }, h(P.Input, { type: "time", width: "sm", value: form.times[a.id]?.end || "", disabled: pending, onChange: (e) => setTime(a.id, "end", e.target.value) })),
                 ),
@@ -2536,7 +2541,7 @@
             columns: [
               { title: t("councilMember"), field: "name", kind: "name", rowLabel: true },
               { title: t("answerColumn"), field: "answer", minWidth: "9rem", pill: false, render: (row) => h(P.Badge, { tone: answerTone(row.answer) }, t(answerKey(row.answer))) },
-              { title: t("answeredAt"), field: "answered", minWidth: "12rem" },
+              { title: t("answeredAt"), field: "answered", kind: "data", minWidth: "12rem" },
             ] })) : null,
       ));
   }
@@ -2562,6 +2567,7 @@
       number: row.number,
       parties: (row.party_names || []).map((name) => isolate(name)).join(` ${t("versus")} `) || "—",
       filed: row.filed_at ? formatDate(row.filed_at, lang) : t("notRecorded"),
+      filed_at: row.filed_at,
       grounds: groundsText(row.grounds, "", t) || "—",
       status: t(caseListStatus(row)),
       member: row.assigned_member || t("unassigned"),
@@ -2599,7 +2605,7 @@
     const columns = [
       { title: t("caseNumber"), field: "number", kind: "data", width: "8rem" },
       { title: t("pickerParties"), field: "parties", kind: "name", width: "12rem" },
-      { title: t("pickerFiled"), field: "filed", width: "6.5rem" },
+      { title: t("pickerFiled"), field: "filed", width: "6.5rem", pill: (value, row) => ({ data: Boolean(row.filed_at) }) },
       { title: t("reason"), field: "grounds", width: "6rem", overflow: "dialog", lines: 2 },
       ...(part === 2 ? [{ title: t("assignedTo"), field: "member", width: "8rem" }] : []),
       { title: t("pickerRecommendation"), field: "recommendation", width: part === 2 ? "9rem" : "17rem", overflow: "dialog", lines: 2 },
@@ -2915,7 +2921,7 @@
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ]
         : [
-            { title: "#", field: "hearing_number", kind: "name", width: "5rem" },
+            { title: "#", field: "hearing_number", kind: ["name", "data"], width: "5rem" },
             { title: t("applicant"), field: "applicant", width: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
             { title: t("respondent"), field: "respondent", width: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
@@ -3101,7 +3107,7 @@
           ? h(
               P.Stack,
               { gap: "md" },
-              h(P.Text, { as: "p", variant: "strong" }, dialog.row.case_number),
+              h(P.Text, { as: "p", variant: "data" }, dialog.row.case_number),
               !presidentRows.length ? h(P.Notice, { tone: "warning" }, t("noPresident")) : null,
               h(
                 P.Field,
@@ -3691,7 +3697,7 @@
           { title: t("respondent"), field: "respondent", type: "person", minWidth: "11rem" },
           { title: t("statusLabel"), field: "status", minWidth: "9rem" },
           { title: t("assignedTo"), field: "assigned_to", type: "person", minWidth: "12rem" },
-          { title: t("submitted"), field: "submitted", minWidth: "12rem" },
+          { title: t("submitted"), field: "submitted", minWidth: "12rem", pill: (value, row) => ({ data: Boolean(row.submitted_at) }) },
         ],
       });
     };

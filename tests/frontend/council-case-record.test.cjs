@@ -62,7 +62,9 @@ function assertCaseHeader(tree, record) {
   // parties' photos with "vs." (media.versus), initials without a photo.
   assert.match(String(header.title), /Applicant Synthetic/);
   assert.match(String(header.title), /Respondent Synthetic/);
-  assert.match(String(header.subtitle), new RegExp(record.number));
+  // Issue 325: the case number is drawn as data (Text variant "data").
+  assert.equal(header.subtitle.props.variant, "data");
+  assert.match(header.subtitle.children.join(""), new RegExp(record.number));
   assert.deepEqual(JSON.parse(JSON.stringify(header.media)).versus.map((party) => party.name), ["Applicant Synthetic", "Respondent Synthetic"]);
   assert.equal(header.media.decorative, true);
   assert.equal(header.status.label, record.status === "open" ? "Active" : "Closed");
@@ -101,7 +103,8 @@ test("Arabic case header: status and manager words in Arabic; the case number st
   const { api } = server(routesFor(record));
   const { tree } = await mount("CaseMarriage", { api, lang: "ar", user: secretary, caseId: record.id });
   const header = caseHeaders(tree)[0].props;
-  assert.equal(header.subtitle, "⁨20261020-04⁩");
+  assert.equal(header.subtitle.props.variant, "data");
+  assert.equal(header.subtitle.children.join(""), "⁨20261020-04⁩");
   assert.equal(header.status.label, "نشطة");
   assert.ok(header.facts.some((fact) => fact.value === "لم يُعيَّن بعد"));
   assert.match(header.title, / ضد /);

@@ -2,6 +2,7 @@
 // Fast deterministic gate for CTM frontend rules. Run: node scripts/check_frontend_contract.cjs
 // 1. One Plenix CDN version everywhere (the version pinned in ctm/settings.py).
 // 2. No raw colors, numeric font sizes, !important or inline style props in council/applicant JS.
+// 3. Data font: known data fields marked as data, names not (scripts/check_data_font.cjs, #325).
 // Exit 1 on violations. Use --warn to report without failing.
 const fs = require('fs');
 const path = require('path');
@@ -71,6 +72,12 @@ for (const f of uiFiles) {
       if (re.test(line)) problems.push(`${r}:${i + 1}: ${msg}`);
     }
   });
+}
+
+// 3. The data font rule (#325, owner 2026-11-10): known data fields carry the Plenix data marking, names never do.
+const { findDataFontProblems } = require('./check_data_font.cjs');
+for (const f of uiFiles.filter((f) => f.endsWith('.js') && path.dirname(f) === path.join(root, 'static', 'ctm'))) {
+  problems.push(...findDataFontProblems(fs.readFileSync(f, 'utf8'), rel(f)));
 }
 
 if (problems.length) {

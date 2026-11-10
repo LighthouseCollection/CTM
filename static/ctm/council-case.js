@@ -2570,7 +2570,7 @@ ${ar}` : en;
               )
             : null,
           decision.conditions ? h(P.PropertyList.Item, { label: t("conditions"), lines: 3, span: "full" }, decision.conditions) : null,
-          decision.actor ? h(P.PropertyList.Item, { label: t("recordedBy") }, `${decision.actor} · ${base.formatWhen(decision.timestamp, lang)}`) : null,
+          decision.actor ? h(P.PropertyList.Item, { label: t("recordedBy") }, decision.actor, " · ", h(P.Text, { variant: "data" }, base.formatWhen(decision.timestamp, lang))) : null,
         ),
       ),
       notice ? h(P.Notice, { tone: "success", onDismiss: () => setNotice(null) }, t(notice)) : null,
@@ -2641,7 +2641,7 @@ ${ar}` : en;
               h(P.PropertyList, { variant: "tiles" },
                 h(P.PropertyList.Item, { label: t("president") }, decision.approval.president || "—"),
                 decision.approval.actor && decision.approval.actor !== decision.approval.president
-                  ? h(P.PropertyList.Item, { label: t("recordedBy") }, `${decision.approval.actor}${decision.approval.timestamp ? " · " + base.formatWhen(decision.approval.timestamp, lang) : ""}`)
+                  ? h(P.PropertyList.Item, { label: t("recordedBy") }, decision.approval.actor, ...(decision.approval.timestamp ? [" · ", h(P.Text, { variant: "data" }, base.formatWhen(decision.approval.timestamp, lang))] : []))
                   : null),
             )
           : canApprove
@@ -2763,7 +2763,7 @@ ${ar}` : en;
             h(P.List, {
               variant: "bullets",
               items: earlier.map((v) => ({
-                children: `${t("version")} ${v.number} · ${typeLabel(v.type)} · ${v.actor || ""} · ${base.formatWhen(v.timestamp, lang)}${v.approval ? " · " + t("approved") : ""}`,
+                children: [`${t("version")} `, h(P.Text, { key: "n", variant: "data" }, String(v.number)), ` · ${typeLabel(v.type)} · ${v.actor || ""} · `, h(P.Text, { key: "w", variant: "data" }, base.formatWhen(v.timestamp, lang)), v.approval ? ` · ${t("approved")}` : ""],
               })),
             }),
           )
@@ -2963,7 +2963,7 @@ ${ar}` : en;
       }, (row) => h(P.Stack, null,
         h(P.Text, { as: "h2", variant: "title" }, row.label),
         h(P.Text, null, row.actor === "system" ? t("systemActor") : row.actor || t("otherAccount")),
-        h(P.Text, null, base.formatWhen(row.timestamp, lang)),
+        h(P.Text, { variant: "data" }, base.formatWhen(row.timestamp, lang)),
         h(P.Text, { variant: "data" }, row.action),
         row.source ? h(P.Text, null, row.source) : null,
         row.source_id ? h(P.Text, { variant: "data" }, row.source_id) : null,
@@ -3008,8 +3008,8 @@ ${ar}` : en;
     ) : null;
     const workspace = h(window.CTMShell.Workspace, {
       label: t("callLog"), rows, selected, onSelect: select, empty: t("noCalls"), showDetailWhenEmpty: true,
-      columns: [{ title: t("callParty"), field: "person", kind: "name" }, { title: t("callOutcome"), field: "outcome" }, { title: t("callTime"), field: "occurred" }],
-    }, (call) => call ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, call.person), h(P.Text, { variant: "secondary" }, call.occurred), h(P.Text, { as: "p", variant: "strong" }, call.outcome), call.notes ? h(P.Text, { as: "p" }, call.notes) : null) : h(P.EmptyState, { title: t("noCalls") }));
+      columns: [{ title: t("callParty"), field: "person", kind: "name" }, { title: t("callOutcome"), field: "outcome" }, { title: t("callTime"), field: "occurred", kind: "data" }],
+    }, (call) => call ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, call.person), h(P.Text, { variant: "data" }, call.occurred), h(P.Text, { as: "p", variant: "strong" }, call.outcome), call.notes ? h(P.Text, { as: "p" }, call.notes) : null) : h(P.EmptyState, { title: t("noCalls") }));
     const callFact = countFact("phone", t("callLog"), calls.length, canWrite ? { label: t("recordCall"), icon: "add", name: t("recordCall"), onClick: () => setComposing(true) } : null);
     return h(R.Fragment, null, callDialog,
       h(CaseRecordPage, { api, lang, user, caseId, record, title: t("callLog"), facts: [callFact], readOnly: record.status !== "open", fill: true },
@@ -3182,7 +3182,7 @@ ${ar}` : en;
                   ? h(P.Card, { icon: "lock", key: row.id, title: t("restrictedAssessment"), meta: t("restrictedAssessmentHelp") })
                   : h(
                       P.Card,
-                      { icon: "doc-text", key: row.id, title: row.title, meta: [t(row.kind), row.subject, row.date].filter(Boolean).join(" · ") },
+                      { icon: "doc-text", key: row.id, title: row.title, meta: h(R.Fragment, null, [t(row.kind), row.subject].filter(Boolean).join(" · "), row.date && (row.kind || row.subject) ? " · " : null, row.date ? h(P.Text, { variant: "data" }, row.date) : null) },
                       ...((row.answers && Array.isArray(row.answers.files) ? row.answers.files : []).map((id) =>
                         h(P.Button, { key: id, size: "xs", href: `/api/files/${encodeURIComponent(id)}/` }, t("download")),
                       )),
@@ -3276,7 +3276,8 @@ ${ar}` : en;
       // party: one avatar; none: the folder icon box. The title already names them, so the media is decorative.
       media: caseHeaderMedia(caseHeaderPeople(applicant, respondent)),
       title: names.length ? names.join(` ${bt("versus")} `) : base.isolate(record.number),
-      subtitle: names.length ? base.isolate(record.number) : undefined,
+      // Issue 325: the case number is data, in the data font (text.md variant "data").
+      subtitle: names.length ? window.React.createElement(window.Plenix.Text, { variant: "data" }, base.isolate(record.number)) : undefined,
       status: caseStatusBadge(status, t, bt),
       // Red tones draw the eye to the member slot while nothing is chosen (D-0059; Plenix fact tone).
       facts: [{ icon: "person", label: t("assignedCouncilMember"), value: assigneeValue ?? (caseManager(record) || bt("unassigned")),
@@ -3464,7 +3465,7 @@ ${ar}` : en;
     const fields = values.filter(([, value]) => value);
     if (!fields.length) return null;
     return readGroup(P, h, title,
-      profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label), span: longValue(value) ? "full" : undefined, lines: longValue(value) ? 3 : undefined }, value))));
+      profileList(P, h, fields.map(([label, value]) => h(P.PropertyList.Item, { key: label, label: t(label), data: /^(yearOf|dateOf)/.test(label) || undefined, span: longValue(value) ? "full" : undefined, lines: longValue(value) ? 3 : undefined }, value))));
   }
 
   // a value of more than 80 characters, or with a line break, is long text: its tile takes the whole row (Plenix Item.span)
@@ -3882,7 +3883,7 @@ ${ar}` : en;
     ) : h(P.EmptyState, { title: t("noHearings") });
     const pastContent = past.length ? h(P.Table, { label: t("pastHearings"), index: "key", data: past.map((row) => ({ ...row, key: row.item.id })), columns: [
       { title: t("caseLabel"), field: "key", rowLabel: true, kind: "wrap", render: (row) => title(row) },
-      { title: bt("councilSession"), field: "date", render: (row) => row.session.date },
+      { title: bt("councilSession"), field: "date", kind: "data", render: (row) => row.session.date },
       { title: t("actions"), field: "open", render: (row) => h(P.Button, { size: "sm", icon: "open", onClick: () => onSession(row.session.id) }, bt("open")) },
     ] }) : h(P.EmptyState, { title: t("noHearings") });
     return h(CaseRecordPage, { api, lang, user, caseId, title: t("hearingsTitle") }, currentHeader, h(P.Tabs, { variant: "contained", label: t("hearingsTitle"), value: tab, onChange: setTab,
@@ -3962,7 +3963,7 @@ ${ar}` : en;
           h(P.Text, { as: "span", variant: "strong" }, row.filing_party_name),
           row.filing_party_role ? h(P.Badge, { tone: row.filing_party_role === "applicant" ? "info" : "waiting" }, t(row.filing_party_role)) : null,
         ) : null;
-        return h(P.Panel, { icon: "doc-text", key: row.id, title: h(P.Inline, { gap: "md", align: "center", wrap: true }, h(P.Text, { as: "span" }, t("petition")), filingParty), description: [bt("state_" + row.status), row.submitted_at ? base.formatWhen(row.submitted_at, lang) : null].filter(Boolean).join(" · "), collapsible: true },
+        return h(P.Panel, { icon: "doc-text", key: row.id, title: h(P.Inline, { gap: "md", align: "center", wrap: true }, h(P.Text, { as: "span" }, t("petition")), filingParty), description: h(R.Fragment, null, bt("state_" + row.status), row.submitted_at ? " · " : null, row.submitted_at ? h(P.Text, { variant: "data" }, base.formatWhen(row.submitted_at, lang)) : null), collapsible: true },
           h(P.Stack, { gap: "sm" },
             answers.length ? h(P.PropertyList, { variant: "tiles" }, ...answers.map(([code, value]) => h(P.PropertyList.Item, { key: code, label: base.fieldLabel(row, code, lang) || code, lines: 3 }, base.answerText(value, bt)))) : h(P.EmptyState, { title: bt("noAnswers") }),
           ),
@@ -4015,8 +4016,8 @@ ${ar}` : en;
         h(window.CTMShell.Workspace, {
           label: t("internalNotes"), selected, onSelect: select,
           rows: notes.map((note) => ({ ...note, id: note.note_id, title: note.author || t("note"), preview: note.text, recorded: base.formatWhen(note.timestamp, lang) })), empty: t("noNotes"),
-          columns: [{ title: t("note"), field: "title", kind: "name" }, { title: t("recordedAt"), field: "recorded" }, { title: t("note"), field: "preview", kind: "wrap", overflow: "dialog", lines: 2 }],
-        }, (note) => note ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h2", variant: "title" }, note.title), h(P.Text, { variant: "secondary" }, `${t("version")} ${note.version} · ${note.recorded}`), h(P.Text, { as: "p" }, note.text), note.can_edit && canWrite ? h(P.Button, { size: "sm", icon: "edit", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); setComposing(true); } }, t("editNote")) : null) : h(P.EmptyState, { title: t("noNotes") })),
+          columns: [{ title: t("note"), field: "title", kind: "name" }, { title: t("recordedAt"), field: "recorded", kind: "data" }, { title: t("note"), field: "preview", kind: "wrap", overflow: "dialog", lines: 2 }],
+        }, (note) => note ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h2", variant: "title" }, note.title), h(P.Text, { variant: "secondary" }, `${t("version")} `, h(P.Text, { variant: "data" }, String(note.version)), " · ", h(P.Text, { variant: "data" }, note.recorded)), h(P.Text, { as: "p" }, note.text), note.can_edit && canWrite ? h(P.Button, { size: "sm", icon: "edit", onClick: () => { setEditing(note.note_id); setText(note.text); setFailure(null); setComposing(true); } }, t("editNote")) : null) : h(P.EmptyState, { title: t("noNotes") })),
       ),
     );
   }
@@ -4134,7 +4135,10 @@ ${ar}` : en;
       return String(value);
     };
     // pds D-0132: one PropertyList in the tiles variation; the tiles are two per row, and a long value (notes, grounds) takes the whole row
-    return h(P.PropertyList, null, ...fields.map(([key, label, type = "text"]) => h(P.PropertyList.Item, { key, label, span: longValue(values[key]) ? "full" : undefined, lines: longValue(values[key]) ? 3 : undefined }, show(values[key], type))));
+    // Issue 325: dates, case numbers and years are data (property-list.md Item.data); a placeholder or a component is not.
+    const isData = (key, type, value) => (type === "date" || /^(case_number|number|reference|[a-z_]*_date|[a-z_]*_year)$/.test(key)) &&
+      value !== undefined && value !== null && value !== "" && value !== "—" && !(typeof value === "object" && value.$$typeof);
+    return h(P.PropertyList, null, ...fields.map(([key, label, type = "text"]) => h(P.PropertyList.Item, { key, label, data: isData(key, type, values[key]) || undefined, span: longValue(values[key]) ? "full" : undefined, lines: longValue(values[key]) ? 3 : undefined }, show(values[key], type))));
   }
 
   function CaseMarriage({ api, lang, user, caseId }) {

@@ -56,19 +56,19 @@
       loading?h(P.Text,{role:"status"},t("loading")):null,
       error?h(P.Notice,{tone:"danger",role:"alert"},t("unavailable")):null,
       data?h(P.Stack,null,
-        h(P.Text,null,`${t("fee")}: ${money(data.fee)} · ${t(statusKey(data.fee.status,"fee"))}`),
+        h(P.Text,null,`${t("fee")}: `,h(P.Text,{variant:"data"},money(data.fee)),` · ${t(statusKey(data.fee.status,"fee"))}`),
         h(P.Text,null,t(data.verified_payment?"verified":"unverified")),h(P.Notice,null,t("separate")),
         !data.events.length&&!data.checkouts.length?h(P.Text,null,t("none")):null,
         // Checkout attempts and payment events are read-only CTMShell tables (data-grid.md); times keep the server offset.
         data.checkouts.length?h(Shell.Table,{label:t("attempts"),rows:data.checkouts,narrow:"auto",columns:[
           {title:t("state"),field:"state",render:row=>t(statusKey(row.state,"checkout"))},
           {title:t("version"),field:"version",type:"number",render:row=>row.version},
-          {title:t("time"),field:"timestamp",render:row=>row.timestamp}]}):null,
+          {title:t("time"),field:"timestamp",kind:"data",render:row=>row.timestamp}]}):null,
         data.events.length?h(Shell.Table,{label:t("events"),rows:data.events,narrow:"auto",columns:[
           {title:t("event"),field:"kind",render:row=>t(statusKey(row.kind,"event"))},
           {title:t("amount"),field:"amount_minor",type:"number",render:row=>money(row)},
           {title:t("basis"),field:"amount_basis",render:row=>row.amount_basis==="cumulative_refunded"?t("cumulative"):t("single")},
-          {title:t("time"),field:"timestamp",render:row=>row.timestamp}]}):null):null));
+          {title:t("time"),field:"timestamp",kind:"data",render:row=>row.timestamp}]}):null):null));
   }
   window.CTMApplicantPayments={validProjection,statusKey,PaymentHistory};
 })();
