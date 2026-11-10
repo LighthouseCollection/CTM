@@ -2014,14 +2014,18 @@
         );
       return h(P.EmptyState, { title: t("unavailable") });
     }
+    // Split list/detail pages: their panes scroll on their own inside a bounded column.
+    const masterDetail = ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page);
     return h(
       P.AppShell,
-          { header, sideNav: nav, frame: "centered", page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
+          // #324: the Plenix footer (page-structures-footer.md, status-region.md) ends every page with its spacing.
+          { header, sideNav: nav, footer: h(P.StatusBar, { start: t(council ? "council" : "applicant") }), frame: "centered", page: masterDetail ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       // The app's toasts (AppShell gives none, PLX-021): today the case-deleted toast.
       h(P.ToastProvider, null, h(CaseDeletedToast, { text: (number) => t("caseDeleted").replace("{number}", number) }),
         h("div", { className: "plx-page-panes" }, caseNav,
-          h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
+          // #324: other pages scroll in PageContent, so its bottom padding (space above the footer) stays.
+          h(P.PageContent, null, h(P.Stack, { className: masterDetail ? "plx-u-flex-1 plx-u-min-h-0" : "plx-u-flex-1" },
             preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
             content(),
           )),
