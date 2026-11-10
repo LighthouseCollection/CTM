@@ -4617,7 +4617,7 @@ ${ar}` : en;
       h(
         P.Panel,
         { icon: "calendar", title: t("keyDates") },
-        // Key Dates (issue 239, owner 2026-11-10, pds#1152, D-0145): Plenix's compact grouped Timeline, key milestones only; no CTM CSS.
+        // Key Dates (issue 239, owner 2026-11-10, Plenix issue 1152, D-0145): Plenix's compact grouped Timeline, key milestones only; no CTM CSS.
         h(P.Timeline, { variant: "grouped", density: "compact", label: t("keyDates"),
           items: summaryTimeline.map(({ area, date, ...item }) => ({ ...item, icon: AREA_ICON[area], category: timelineCategory(area, t) })) }),
       ),
