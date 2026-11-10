@@ -3342,13 +3342,13 @@
       if (!shown.length)
         body = h(P.EmptyState, { title: hidden ? t("statsAllHidden", { year: shownYear }) : t("statsNoCases", { year: shownYear }) });
       else if (members)
-        body = h(P.BarChart, { title, description, hideCaption: true, categories: shown.map((part) => part.label),
+        body = h(P.BarChart, { title, hideCaption: true, categories: shown.map((part) => part.label),
           series: [{ id: "cases", label: t("statsCases"), values: shown.map((part) => part.value) }],
           valueLabel: t("statsCases"), showValues: true, legend: false, format: (value) => number.format(value),
           strings: { category: t("councilMember"), total: t("statsCases") } });
       else
         // No center total (design: it would let a hidden count be worked out); the legend shows each part only.
-        body = h(P.PieChart, { title, description, hideCaption: true, variant: "donut", data: shown, centerValue: " ", centerLabel: " ",
+        body = h(P.PieChart, { title, hideCaption: true, variant: "donut", data: shown, centerValue: " ", centerLabel: " ",
           format: (value) => number.format(value),
           strings: { part: t("reason"), value: t("statsCases"), share: t("statsShare"), total: t("statsCases"), other: t("statsOther") } });
     }
