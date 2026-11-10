@@ -583,7 +583,7 @@ decisions:
   - id: D-0065
     date: 2026-11-10
     area: performance
-    decision: "Performance rule 1: the app frame and its code are cached, so the screen appears at once. CTM static files are precompressed (gzip, brotli) and served under content-hashed names with immutable one-year caching; the shell HTML is not cached long. Standard in docs/implementation/performance.md"
+    decision: "Performance rule 1: the app frame and its code are cached, so the screen appears at once. CTM static files are precompressed (gzip, brotli) and served under content-hashed names with immutable caching (max-age 315360000); the shell HTML is not cached long. Standard in docs/implementation/performance.md"
     why: Owner 2026-11-10 (#311) "The app frame and its code are cached, so the screen appears at once"
     options: ["Hashed, compressed, immutable static files (chosen)", "60-second caching with hand-bumped ?v= stamps (before)"]
     decided_by: owner
@@ -643,7 +643,7 @@ decisions:
   - id: D-0071
     date: 2026-11-10
     area: performance
-    decision: "Performance rule 7: speed is measured; main content within 2.5 s (LCP) and a click answered within 0.2 s (INP); a CI check on fictional data fails the build when a page passes its budget or is more than 10% slower than main; budgets in one config file. Built on #314. Standard in docs/implementation/performance.md"
+    decision: "Performance rule 7: speed is measured; main content within 2.5 s (LCP) and a click answered within 0.2 s (INP); a CI check on fictional data fails the build when a page gets slower. Agent detail (agent, #314; tunable without the owner): regression ratio 10% over main, noise floors, budgets in one config file, and a page already over budget on main fails only when it gets slower. Standard in docs/implementation/performance.md"
     why: Owner 2026-11-10 (#311) "Speed is measured ... with a check that fails the build when a page gets slower"
     options: ["CI budget check (chosen)", "No measurement (before)"]
     decided_by: owner

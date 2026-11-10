@@ -87,9 +87,12 @@ Where a rule meets an earlier decision, the earlier decision stays in force:
   0.2 s (INP).
 - A CI check loads the main pages on fictional data and records LCP, INP (or
   Total Blocking Time as its stand-in), the request count and the JavaScript
-  bytes. It fails the build when a page passes its budget or gets more than
-  10% slower than `main`.
-- The budgets live in one config file. Built on CTM#314.
+  bytes. It fails the build when a page gets slower.
+- Agent detail (agent, CTM#314; tunable without the owner): "slower" means
+  more than 10% over `main`, above the noise floors; the budgets live in one
+  config file.
+- A page already over its budget on `main` fails only when it gets slower.
+  Built on CTM#314.
 
 ### 8. Idle prefetch of larger data, within limits (D-0072, limits D-0073)
 
