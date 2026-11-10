@@ -3300,16 +3300,17 @@ ${ar}` : en;
   // avatar and name); choosing assigns at once through the same assignment API and audit as the summary edit, with a
   // toast. Once assigned, the member shows with Change. Everyone else sees text. Undo puts back the previous member;
   // the first assignment of a case has no Undo, because the server has no way to unassign.
-  function HeaderAssignment({ api, lang, record, current, onAssigned }) {
+  // members: the list the page already read (the case summary), so the control does not read it again.
+  function HeaderAssignment({ api, lang, record, members: given, current, onAssigned }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
     const [changing, setChanging] = R.useState(false);
     const [pending, setPending] = R.useState(false);
     const [problem, setProblem] = R.useState(null);
     const toast = P.useToast ? P.useToast() : null;
     const canAssign = record?.can_assign === true;
-    const [state] = base.useLoad(() => canAssign ? api("/api/council/members/") : Promise.resolve({ items: [] }), [canAssign]);
+    const [state] = base.useLoad(() => canAssign && !given ? api("/api/council/members/") : Promise.resolve({ items: given || [] }), [canAssign, Boolean(given)]);
     if (!canAssign) return current ? current.name : bt("unassigned");
-    const members = base.assignableMembers(state.data?.items || []);
+    const members = base.assignableMembers(given || state.data?.items || []);
     if (current && !changing)
       return h(P.Inline, { gap: "sm", align: "center" }, h(P.Text, { variant: "strong" }, current.name),
         h(P.Button, { size: "xs", variant: "ghost", icon: "pencil", onClick: () => { setProblem(null); setChanging(true); } }, t("assignChange")));
@@ -3344,6 +3345,9 @@ ${ar}` : en;
   // the case and what goes with it; the user types the case number (the server checks it too) and may give a reason.
   // On success the app goes back to the case list and shows a toast ("ctm:case-deleted").
   const CASE_DELETERS = ["admin", "president", "secretary"];
+  // The roles that hold assignment authority by role (tribunal/services/staff_roles.py assignment_recorder). Others may
+  // hold it through a staff role; the case record's can_assign decides for everyone.
+  const ASSIGNERS = ["admin", "secretary"];
 
   function DeleteCaseDialog({ api, lang, record, onClose }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang), bt = base.translator(lang);
@@ -3379,7 +3383,7 @@ ${ar}` : en;
         problem ? h(P.Notice, { tone: "danger", role: "alert" }, problem) : null));
   }
 
-  function CaseRecordPage({ api, lang, user, caseId, record, title, facts, readOnly, fill, onChanged, children }) {
+  function CaseRecordPage({ api, lang, user, caseId, record, members, title, facts, readOnly, fill, onChanged, children }) {
     const R = window.React, P = window.Plenix, h = R.createElement, t = translator(lang);
     // Issue 237: a tab that passes its own case record may lack the assigned member (the case detail sends only the
     // history), so the header fills it in the same way; until then it shows the record as given.
@@ -3393,7 +3397,7 @@ ${ar}` : en;
     const manager = shown ? caseManager(shown) : null;
     const current = assigned || (manager ? { id: shown.assigned_member_id || null, name: manager } : null);
     const assigneeValue = shown && shown.can_assign === true && shown.status === "open"
-      ? h(HeaderAssignment, { api, lang, record: shown, current, onAssigned: (member) => { setAssigned(member); if (onChanged) onChanged(); } })
+      ? h(HeaderAssignment, { api, lang, record: shown, members, current, onAssigned: (member) => { setAssigned(member); if (onChanged) onChanged(); } })
       : assigned ? assigned.name : undefined;
     const className = fill ? "plx-u-flex-1 plx-u-min-h-0" : undefined;
     const body = h(P.Stack, { gap: "lg", className },
@@ -4477,14 +4481,19 @@ ${ar}` : en;
     const [summaryPending, setSummaryPending] = R.useState(false);
     const [summaryFailure, setSummaryFailure] = R.useState(null);
     const [reviewComplete, setReviewComplete] = R.useState(false);
+    // Issue 308: the case record, its requests and its audit start together. The members list starts with them for
+    // an administrator or secretary (who assign), and otherwise only once the record says this user may assign.
     const [state, retry] = base.useLoad(
-      () =>
-        api(`/api/cases/${encodeURIComponent(caseId)}/`).then((r) => withAssignee(api, r)).then(async (record) => {
-          const [requests, members, audit] = await Promise.all([
-            api(`/api/cases/${encodeURIComponent(caseId)}/requests/`),
-            record.can_assign ? api("/api/council/members/") : Promise.resolve({ items: [] }),
-            api(`/api/cases/${encodeURIComponent(caseId)}/audit/`),
-          ]);
+      () => {
+        const id = encodeURIComponent(caseId);
+        const early = ASSIGNERS.includes(user?.role) ? api("/api/council/members/") : null;
+        if (early) early.catch(() => {}); // unused when the record says no; a real failure still reaches the await
+        return Promise.all([
+          api(`/api/cases/${id}/`).then((r) => withAssignee(api, r)),
+          api(`/api/cases/${id}/requests/`),
+          api(`/api/cases/${id}/audit/`),
+        ]).then(async ([record, requests, audit]) => {
+          const members = record.can_assign ? await (early || api("/api/council/members/")) : { items: [] };
           const proceeding = openProceeding(record) || [...(record.proceedings || [])].sort((a, b) => (b.sequence || 0) - (a.sequence || 0))[0];
           let versions = null;
           if (proceeding) {
@@ -4495,7 +4504,8 @@ ${ar}` : en;
             }
           }
           return { record, members: members.items, facts: summaryFacts(record, requests.items, versions, audit.items) };
-        }),
+        });
+      },
       [caseId],
     );
     if (state.pending && !state.data) return base.loadingView(P, h, t, t("loadingCase"));
@@ -4622,7 +4632,7 @@ ${ar}` : en;
           items: summaryTimeline.map(({ area, date, ...item }) => ({ ...item, icon: AREA_ICON[area], category: timelineCategory(area, t) })) }),
       ),
     );
-    return h(CaseRecordPage, { api, lang, user, caseId, record, readOnly: !openProceeding(record), onChanged: retry },
+    return h(CaseRecordPage, { api, lang, user, caseId, record, members, readOnly: !openProceeding(record), onChanged: retry },
       summaryPanels,
       reviewApplicationId && !reviewComplete ? h(ApplicationReviewActions, { api, lang, applicationId: reviewApplicationId, onDone: () => { setReviewComplete(true); retry(); } }) : null,
     );

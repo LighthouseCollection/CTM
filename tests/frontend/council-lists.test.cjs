@@ -244,11 +244,11 @@ test("archived sessions are a split workspace whose reading pane is read-only", 
 test("council home: lead session, one row of tiles, My cases grid, in that order (issue 170 AC-2, AC-3, AC-4)", async () => {
   const [h, C] = boot();
   const later = "2099-01-10";
-  const api = async (url) => url === "/api/dashboard/" ? { my_cases: 2, review_queue: 10, upcoming_sessions: [{ id: "s1", date: later }] }
+  // The lead session is the dashboard's card (tribunal/services/home.py session_card); Home reads no session endpoint (#308).
+  const api = async (url) => url === "/api/dashboard/" ? { my_cases: 2, review_queue: 10, upcoming_sessions: [{ id: "s1", date: later, state: "planned",
+      starts_at: "2099-01-11T02:00:00Z", location: "Synthetic Hall", agenda_count: 3, my_answer: "attend", confirmed: 1, invited: 4 }] }
     : url === "/api/notifications/" ? { unread_count: 0 }
-    : url === "/api/sessions/" ? { items: [{ id: "s1", date: later, starts_at: "2099-01-11T02:00:00Z", location: "Synthetic Hall", state: "planned" }] }
-    : url === "/api/sessions/s1/agenda/" ? { items: [{ id: "a1" }, { id: "a2" }, { id: "a3" }] }
-    : url === "/api/sessions/s1/answers/" ? { members: [{ member_id: "sec", answer: "attend", answered_at: "2099-01-01T00:00:00Z" }], confirmed: 1, total: 4 }
+    : url.startsWith("/api/sessions/") ? assert.fail(`Home reads ${url}`)
     : url.startsWith("/api/cases/") ? { items: [
         { id: "c1", number: "20261020-01", status: "open", assigned_member_id: "sec", applicant_name: "Emily Carter", applicant_gender: "F", respondent_name: "James Carter", respondent_gender: "M" },
         { id: "c2", number: "20261020-02", status: "open", assigned_member_id: "other", applicant_name: "Other Person" },
