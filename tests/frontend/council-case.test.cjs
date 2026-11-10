@@ -392,3 +392,8 @@ test("professional assessments use a request dialog instead of a side-pane form"
   assert.match(workspace, /P\.Dialog/);
   assert.doesNotMatch(workspace, /orientation:\s*"stacked"/);
 });
+
+test("Key Dates uses Plenix's compact grouped Timeline (issue 239, pds#1152)", () => {
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "..", "static", "ctm", "council-case.js"), "utf8");
+  assert.match(src, /h\(P\.Timeline, \{ variant: "grouped", density: "compact", label: t\("keyDates"\)/);
+});
