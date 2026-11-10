@@ -443,6 +443,10 @@ test("council home lists council members as person cards in their order; a suppr
   same(cards.map((card) => [card.props.title, card.props.person.role, card.props.value ?? null]),
     [["H.G. Presiding", "Presiding", "9"], ["Sec Retary", "Secretary", "Hidden"], ["Fr. Abe Member", "Member", "12"], ["Fr. Zed Member", "Member", "7"]]);
   assert.ok(cards.every((card) => card.props.type === "person" && card.props.menu === undefined));
+  // Issue 323 / pds#1240: the compact person tile, 5 to 6 in a row; columns would override itemSize.
+  assert.ok(cards.every((card) => card.props.layout === "tile"), "person tiles");
+  assert.equal(grid.props.itemSize, "sm");
+  assert.equal(grid.props.columns, undefined);
   assert.equal(cards[1].props.unit, undefined);
   assert.equal(cards[0].props.unit, "active cases");
   assert.equal(panel.props.description, undefined); // owner, 2026-11-10: no note on hidden counts

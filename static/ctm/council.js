@@ -3501,7 +3501,8 @@
       return h(P.Panel, { icon: "folder-open", title: t("myCases"), actions: allCases || undefined }, body);
     };
 
-    // 4. Council members: one person card each with their active cases (aggregate only, design §4).
+    // 4. Council members: one compact person tile each with their active cases (aggregate only, design §4);
+    // itemSize sm fits 5 to 6 in a row (owner request, Plenix issue 1240).
     const membersRegion = () => {
       let body;
       if (members.pending && !members.data) body = loadingView(P, h, t, t("loadingMembers"));
@@ -3509,8 +3510,8 @@
       else {
         const rows = homeMembers(members.data.items, lang);
         body = rows.length
-          ? h(P.WidgetGrid, { label: t("councilMembers"), columns: 4, items: rows.map((row) => ({ ...row, id: String(row.id) })),
-              renderItem: (row) => h(P.MetricCard, { key: row.id, type: "person", size: "sm", title: row.name || "—", headingLevel: 3,
+          ? h(P.WidgetGrid, { label: t("councilMembers"), itemSize: "sm", items: rows.map((row) => ({ ...row, id: String(row.id) })),
+              renderItem: (row) => h(P.MetricCard, { key: row.id, type: "person", layout: "tile", size: "sm", title: row.name || "—", headingLevel: 3,
                 person: { name: row.name || "—", role: t(memberTitleKey(row.title)), src: row.photo_url || undefined },
                 value: row.suppressed ? t("hiddenValue") : n(row.active_cases), unit: row.suppressed ? undefined : t("activeCasesUnit") }) })
           : h(P.EmptyState, { title: t("noMembers") });
