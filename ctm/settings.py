@@ -130,6 +130,13 @@ USE_I18N = True
 STATIC_URL = "/static/"
 STATIC_ROOT = Path(os.environ.get("CTM_STATIC_ROOT", BASE_DIR / "staticfiles"))
 STATICFILES_DIRS = [BASE_DIR / "static"]
+# #308: WhiteNoise precompresses every static file (gzip + brotli) at
+# collectstatic time and serves content-hashed names (app.<hash>.js) with
+# "max-age=315360000, immutable". Unhashed paths keep WHITENOISE_MAX_AGE (60 s).
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 MEDIA_ROOT = Path(os.environ.get("CTM_MEDIA_ROOT", BASE_DIR / "private-media"))
 FILE_UPLOAD_PERMISSIONS = 0o600
 DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024
