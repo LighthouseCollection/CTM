@@ -95,7 +95,7 @@
   function AnswerForm(props) {
     var d = props.d;
     var rec = (d.options.filter(function (o) { return o.recommended; })[0] || {}).key || '';
-    var cs = R.useState(d.applied || rec), choice = cs[0], setChoice = cs[1];
+    var cs = R.useState(d.applied || rec || (d.options.length ? '' : 'other')), choice = cs[0], setChoice = cs[1];
     var ns = R.useState(''), note = ns[0], setNote = ns[1];
     var cp = R.useState(false), copied = cp[0], setCopied = cp[1];
     var ls = R.useState(''), login = ls[0], setLogin = ls[1];

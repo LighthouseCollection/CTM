@@ -115,6 +115,12 @@ once and post a decision card (`ctm-owner-interview` skill):
 
 - **Pictures:** screenshots CI already takes are always shared (PR, issue,
   dashboard). Extra pictures only when you ask.
+- **Waiting for the owner:** anything only the owner can do or decide (a
+  choice, a check on the live site, a secret) gets the label
+  `waiting-for-owner` on its open issue and a comment
+  `**For the owner:** <one-line question>`, with card-style options if there
+  are any. The dashboard page lists it on its own. Once the owner answers
+  (on the page or in chat), the role applies the answer and removes the label.
 - **Never ask twice:** every decision is a `decision` issue and an entry in
   `decisions.yaml` with the check that enforces it.
 - **Feedback register:** each owner comment goes open -> accepted -> applied,

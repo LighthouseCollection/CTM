@@ -5,6 +5,9 @@ ctm/settings.py), app.js, data.js (window.CTM_DATA), data.json (the same, fetche
 and the latest CI screenshots.
 The owner's answers come back as "**Answer to <id>: <choice>**" comments in the
 decision's own issue; this script reads them so answered decisions leave "To decide".
+An open issue labeled waiting-for-owner shows up as a question on its own: its latest
+"**For the owner:** <question>" comment is the question (with card-style options, if any),
+otherwise the issue title. Removing the label takes it off the page.
 
 Run (CI):  uv run --no-project --with pyyaml==6.0.3 python scripts/build_dashboard_page.py --out _site
 Needs GH_TOKEN and GITHUB_REPOSITORY. Reads public repository data only; writes no secrets.
@@ -36,6 +39,8 @@ CARD_OPT = re.compile(r"^\*\*([A-Z])( \(Recommended\))?\*\* — (.+)$", re.M)
 CARD_APPLIED = re.compile(r"\*\*Applied: ([A-Z])\.\*\*")
 CARD_CONTEXT = re.compile(r"^Context: (.+)$", re.M)
 ANSWER = re.compile(r"\*\*Answer to (\S+): ([^*]+)\*\*")
+OWNER_ASK = re.compile(r"^\*\*For the owner:\*\* (.+)$", re.M)
+WAITING = "waiting-for-owner"
 
 
 def gh(*args):
@@ -71,8 +76,8 @@ def plenix_base():
     return m.group(1)
 
 
-def owner_decisions(open_numbers, owner_input):
-    """Decision cards on open issues plus owner input still needed; newest card per decision id."""
+def owner_decisions(open_numbers, owner_input, waiting=()):
+    """Decision cards on open issues, waiting-for-owner issues and owner input still needed; newest card per decision id."""
     found, answers = {}, {}
     for n in open_numbers:
         issue = gh("issue", "view", str(n), "--json", "number,title,url,body,comments")
@@ -94,6 +99,16 @@ def owner_decisions(open_numbers, owner_input):
                 "options": [{"key": m.group(1), "recommended": bool(m.group(2)), "text": m.group(3).strip()}
                             for m in CARD_OPT.finditer(post["body"])],
                 "applied": applied.group(1) if applied else "", "at": post["at"],
+            }
+        if n in waiting and f"#{n}" not in found:
+            asks = [(post, m) for post in posts for m in OWNER_ASK.finditer(post["body"])]
+            post, ask = asks[-1] if asks else ({"body": "", "at": ""}, None)
+            found[f"#{n}"] = {
+                "id": f"#{n}", "title": ask.group(1).strip() if ask else issue["title"], "issue": n, "url": issue["url"],
+                "context": issue["title"] if ask else "",
+                "options": [{"key": m.group(1), "recommended": bool(m.group(2)), "text": m.group(3).strip()}
+                            for m in CARD_OPT.finditer(post["body"])],
+                "applied": "", "at": post["at"],
             }
     for card in owner_input:
         if card["issue"] in open_numbers:
@@ -189,7 +204,8 @@ def build(out):
         "generatedAt": now.isoformat(timespec="minutes"),
         "mainSha": (os.environ.get("GITHUB_SHA") or subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=ROOT).stdout.strip())[:7],
         "tasks": tasks,
-        "ownerDecisions": owner_decisions([i["number"] for i in issues], plan.get("owner_input", [])),
+        "ownerDecisions": owner_decisions([i["number"] for i in issues], plan.get("owner_input", []),
+                                          {i["number"] for i in issues if WAITING in [x["name"] for x in i["labels"]]}),
         "openPrs": gh("pr", "list", "-s", "open", "--json", "number,title,url,isDraft,headRefName"),
         "mergedPrs": gh("pr", "list", "-s", "merged", "-L", "40", "--search", f"merged:>={since}", "--json", "number,title,url,mergedAt"),
         "closedIssues": gh("issue", "list", "-s", "closed", "-L", "40", "--search", f"closed:>={since}", "--json", "number,title,url,closedAt"),
