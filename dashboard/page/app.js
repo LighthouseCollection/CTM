@@ -1,6 +1,8 @@
-/* CTM 3.0 dashboard on CTM's Plenix pin (0.88.0), built from the CDN's documented templates:
-   SplitWorkspace (AppShell + SplitView: a DataGrid list, the chosen row in a ReadingPane) with a
-   NavPane + NavList on the left. Data: data.js, a snapshot taken from GitHub by collect.py. */
+/* CTM 3.0 dashboard on CTM's Plenix pin (PLENIX_BASE in ctm/settings.py), built from the CDN's documented
+   SplitWorkspace template (listing-page.md): AppShell with a NavPane + NavList on the left, the section's title
+   row, a CommandBar with search, filters, sort and columns (command-bar.md, use-collection-view.md), then the
+   SplitWorkspace split: the DataGrid (data-grid.md: compact, pill cells, header menus, typed columns) and the
+   chosen row's details beside it (owner, 2026-11-10). Data: data.js, a snapshot taken from GitHub by build_dashboard_page.py. */
 (function () {
   'use strict';
   var R = window.React, P = window.Plenix, h = R.createElement;
@@ -11,37 +13,39 @@
     var d = new Date(iso);
     return isNaN(d) ? iso : d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
-  function role(r) { return String(r).replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
+  function role(r) { return String(r).replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }).replace(/\bQa\b/, 'QA').replace(/\bI18n\b/, 'i18n'); }
   function link(href, text) { return h(P.Link, { href: href, external: true }, text); }
-  var SEV = { S1: 'danger', S2: 'negative', S3: 'waiting', S4: 'neutral' };
+  // Statuses are badges with an icon (owner rule), never a dot.
+  var SEV = { S1: ['negative', 'warning'], S2: ['action-required', 'warning'], S3: ['waiting', 'clock'], S4: ['neutral', 'info'] };
   var STATE = {
-    success: ['success', 'check', 'Pass'], failure: ['negative', 'warning', 'Fail'], cancelled: ['neutral', null, 'Cancelled'],
-    skipped: ['neutral', null, 'Skipped'], review: ['neutral', 'info', 'Review only'], present: ['success', 'check', 'In place'],
+    success: ['success', 'check', 'Pass'], failure: ['negative', 'warning', 'Fail'], cancelled: ['neutral', 'info', 'Cancelled'],
+    skipped: ['neutral', 'info', 'Skipped'], review: ['neutral', 'info', 'Review only'], present: ['success', 'check', 'In place'],
   };
   function stateBadge(s) {
     var v = STATE[s] || ['waiting', 'clock', s || 'No run yet'];
-    return h(P.Badge, { tone: v[0], icon: v[1] || undefined, size: 'sm' }, v[2]);
+    return h(P.Badge, { tone: v[0], icon: v[1], size: 'sm' }, v[2]);
   }
   function siteBadge(code) {
     if (code === 200) return h(P.Badge, { tone: 'success', icon: 'check', size: 'sm' }, 'Up');
-    if (!code) return h(P.Badge, { tone: 'neutral', size: 'sm' }, 'Not running');
-    if (code === 404) return h(P.Badge, { tone: 'neutral', size: 'sm' }, 'Not built yet');
+    if (!code) return h(P.Badge, { tone: 'neutral', icon: 'info', size: 'sm' }, 'Not running');
+    if (code === 404) return h(P.Badge, { tone: 'neutral', icon: 'info', size: 'sm' }, 'Not built yet');
     return h(P.Badge, { tone: 'negative', icon: 'warning', size: 'sm' }, 'Down (' + code + ')');
   }
-  function sevBadge(t) { return h(P.Badge, { tone: SEV[t.sev] || 'neutral', size: 'sm' }, t.sev); }
-  // One labelled fact in the reading pane.
-  function Field(props) {
-    return h(P.Stack, { gap: 'xs' }, h(P.Text, { variant: 'secondary' }, props.label), h('div', null, props.children));
-  }
+  function sevBadge(t) { var v = SEV[t.sev] || SEV.S4; return h(P.Badge, { tone: v[0], icon: v[1], size: 'sm' }, t.sev); }
+  // The chosen record: notes and banners first, then its facts as a stacked PropertyList.
   function Detail(props) { return h(P.Stack, { gap: 'lg' }, props.children); }
+  function Facts(props) { return h(P.PropertyList, { layout: 'stacked' }, props.children); }
+  function Field(props) { return h(P.PropertyList.Item, { label: props.label, data: props.data }, props.children); }
+
 
   /* ---- Owner decisions: the questions waiting for the owner, kept apart from the team's to-do list ---- */
   var STATUS = {
-    open: ['action-required', 'Needs your answer'],
-    applied: ['waiting', 'Applied for now'],
-    answered: ['success', 'You answered'],
+    open: ['action-required', 'flag', 'Needs your answer'],
+    applied: ['waiting', 'clock', 'Applied for now'],
+    answered: ['success', 'check', 'You answered'],
   };
-  function statusBadge(d) { var v = STATUS[d.status]; return h(P.Badge, { tone: v[0], size: 'sm' }, v[1]); }
+  function statusBadge(d) { var v = STATUS[d.status]; return h(P.Badge, { tone: v[0], icon: v[1], size: 'sm' }, v[2]); }
+  var URL = /https?:\/\/\S+/g;
   function plain(t) { return String(t || '').replace(/\*\*/g, '').replace(/`/g, ''); }
   function optionText(o) { var t = plain(o.text); return (t.charAt(0).toUpperCase() + t.slice(1)).split(' — risk: '); }
 
@@ -184,151 +188,181 @@
       check: 'Your answer is being applied; the team records it in decisions.yaml.', kind: 'review only', state: 'review', url: null };
   }).concat(D.decisions.slice().reverse()).map(function (d) { return Object.assign({}, d, { owner: answerOf[d.id] || null }); });
   function decisionStatus(d) {
-    if (d.status === 'answered') return h(P.Badge, { tone: 'success', size: 'sm' }, 'You answered');
-    if (d.status === 'active') return h(P.Badge, { tone: 'active', size: 'sm' }, d.owner ? 'Active · you answered' : 'Active');
-    return h(P.Badge, { tone: 'neutral', size: 'sm' }, d.superseded_by ? 'Replaced' : d.status);
+    if (d.status === 'answered') return h(P.Badge, { tone: 'success', icon: 'check', size: 'sm' }, 'You answered');
+    if (d.status === 'active') return h(P.Badge, { tone: 'active', icon: 'check', size: 'sm' }, d.owner ? 'Active · you answered' : 'Active');
+    return h(P.Badge, { tone: 'neutral', icon: 'info', size: 'sm' }, d.superseded_by ? 'Replaced' : d.status);
   }
 
   var SECTIONS = [
     {
-      id: 'overview', label: 'Overview', icon: 'dashboard', title: 'Sites',
+      id: 'overview', label: 'Overview', icon: 'dashboard', title: 'Overview', noun: ['site', 'sites'],
+      description: 'What waits on you, the team’s work and the sites, rebuilt from GitHub every 15 minutes.',
       rows: siteRows,
       toolbar: h(P.Stack, { gap: 'md' },
         s.live.code === 200 ? null : h(P.Banner, { tone: 'danger', title: 'The live site is down' },
           'ctm.lighthouseway.org answers ' + s.live.code + ': the proxy is up, the CTM app behind it is not. Release Engineer has it: ', link(GH + '/issues/63', '#63'), '.'),
-        h(P.Inline, { gap: 'md', wrap: true },
-          h(P.Metric, { card: true, value: String(needAnswer.length), label: 'Waiting on you', description: owner.length + ' decisions in all' }),
-          h(P.Metric, { card: true, value: String(tasks.length), label: 'Team to-do', description: urgent.length + ' urgent (S1/S2)' }),
-          h(P.Metric, { card: true, value: String(D.mergedPrs.length), label: 'Merged, last 3 days', description: D.closedIssues.length + ' issues closed' }),
-          h(P.Metric, { card: true, value: String(active.length), label: 'Active decisions', description: noCheck.length + ' without a check yet' }),
-          h(P.Metric, { card: true, value: String(failing.length), label: 'Decision checks failing', description: failing.map(function (d) { return d.id; }).join(', ') || 'None' }))),
+        h(P.ContentGrid, { size: 'md', label: 'Summary' },
+          h(P.MetricCard, { icon: 'flag', title: 'Waiting on you', value: String(needAnswer.length), href: '#owner', context: 'Questions to answer' }),
+          h(P.MetricCard, { icon: 'checklist', title: 'Team to-do', value: String(tasks.length), href: '#todo', context: urgent.length + ' urgent (S1/S2)' }),
+          h(P.MetricCard, { icon: 'task_alt', title: 'Done', value: String(D.mergedPrs.length + D.closedIssues.length), href: '#done',
+            context: 'Last 3 days: ' + D.mergedPrs.length + ' merged, ' + D.closedIssues.length + ' closed' }),
+          h(P.MetricCard, { icon: 'article', title: 'Active decisions', value: String(active.length), href: '#decisions', context: noCheck.length + ' without a check yet' }),
+          h(P.MetricCard, { icon: 'fact_check', title: 'Checks failing', value: String(failing.length), href: '#decisions',
+            context: failing.map(function (d) { return d.id; }).join(', ') || 'None failing' }))),
+      text: function (r) { return r.site + ' ' + r.url; },
       columns: [
         { title: 'Site', field: 'site', kind: 'name' },
-        { title: 'Status', field: 'code', kind: 'center', render: function (r) { return siteBadge(r.code); } },
+        { title: 'Status', field: 'code', kind: 'center', width: 144, pill: false, sorter: 'number', render: function (r) { return siteBadge(r.code); } },
         { title: 'Address', field: 'url', kind: 'data' },
       ],
+      detailTitle: function (r) { return r.site; },
       detail: function (r) {
-        return h(Detail, null,
+        return h(Facts, null,
           h(Field, { label: 'Status' }, siteBadge(r.code)),
           h(Field, { label: 'Address' }, link(r.url, r.url)),
-          h(Field, { label: 'Notes' }, h(P.Text, null, r.info)),
+          h(Field, { label: 'Notes' }, r.info),
           r.issue ? h(Field, { label: 'Tracked in' }, link(GH + '/issues/' + r.issue, '#' + r.issue)) : null);
       },
     },
     {
-      id: 'owner', label: 'To decide', icon: 'flag', title: 'Decisions waiting on you', rows: toDecide,
-      toolbar: h(P.Stack, { gap: 'sm' },
-        posted ? h(P.Banner, { tone: 'success', title: 'Answer to ' + posted.id + ' posted' },
-          'It is in the thread under your name and now listed under Decisions. ', link(posted.url, 'See your comment'), '.') : null,
-        h(P.Text, { variant: 'secondary' }, 'Questions only you can decide, apart from the team’s to-do list. Once answered, they move to Decisions. Choose a row to answer.')),
+      id: 'owner', label: 'To decide', icon: 'flag', title: 'Waiting on you', noun: ['question', 'questions'], rows: toDecide,
+      description: 'Questions only you can answer. Choose one to answer it on the right; answered ones move to Decisions.',
+      toolbar: posted ? h(P.Banner, { tone: 'success', title: 'Answer to ' + posted.id + ' posted' },
+        'It is in the thread under your name and now listed under Decisions. ', link(posted.url, 'See your comment'), '.') : null,
+      text: function (d) { return d.id + ' ' + plain(d.title) + ' ' + plain(d.context); },
       columns: [
-        { title: 'Decision', field: 'id', kind: 'data', width: 88 },
-        { title: 'Question', field: 'title', kind: 'name', render: function (d) { return plain(d.title); } },
-        { title: 'Status', field: 'status', kind: 'center', width: 168, render: statusBadge },
+        { title: 'Issue', field: 'id', kind: 'data', width: 88 },
+        { title: 'Question', field: 'title', kind: 'name', lines: 2, pill: false, render: function (d) { return plain(d.title); } },
+        { title: 'Status', field: 'status', kind: 'center', width: 176, pill: false, render: statusBadge },
       ],
+      detailTitle: function (d) { return d.id; },
       detail: function (d) {
         return h(Detail, null,
-          h(P.Heading, { level: 2, size: 4 }, d.id + ' · ' + plain(d.title)),
-          h(P.Inline, { gap: 'sm', wrap: true }, statusBadge(d), link(d.url, 'Open #' + d.issue)),
-          d.context ? h(Field, { label: 'Context' }, h(P.Text, null, plain(d.context))) : null,
+          h(P.Heading, { level: 2, size: 4 }, plain(d.title).replace(URL, '').replace(/[\s:]+$/, '')),
+          h(Facts, null,
+            h(Field, { label: 'Status' }, statusBadge(d)),
+            (plain(d.title).match(URL) || []).map(function (u) { return h(Field, { key: u, label: 'Link' }, link(u, 'Open the link')); }),
+            d.context ? h(Field, { label: 'Context' }, plain(d.context)) : null,
+            h(Field, { label: 'On GitHub' }, link(d.url, '#' + d.issue))),
           d.applied ? h(P.Banner, { tone: 'info', title: 'Applied for now: ' + d.applied }, 'The team went ahead with the recommended option so work did not stop. Pick another option to change it.') : null,
           h(AnswerForm, { d: d, key: d.id, onAnswered: onAnswered }));
       },
     },
     {
-      id: 'todo', label: 'To do', icon: 'checklist', title: 'Tasks to do', rows: tasks, index: 'number',
+      id: 'todo', label: 'To do', icon: 'checklist', title: 'Team to-do', noun: ['issue', 'issues'], rows: tasks, index: 'number',
+      description: 'The team’s open issues, in the Product Lead’s order, then by severity.',
+      text: function (t) { return '#' + t.number + ' ' + t.title + ' ' + t.owners.join(' '); },
       columns: [
-        { title: '#', field: 'rank', kind: 'data', width: 56 },
-        { title: 'Issue', field: 'title', kind: 'name', render: function (t) { return '#' + t.number + ' ' + t.title; } },
-        { title: 'Severity', field: 'sev', kind: 'center', width: 96, render: sevBadge },
-        { title: 'Owner', field: 'owners', render: function (t) { return t.owners.map(role).join(', ') || 'Not assigned'; } },
+        { title: 'Order', field: 'rank', type: 'number', width: 72, pill: false },
+        { title: 'Issue', field: 'title', kind: 'name', lines: 2, pill: false, render: function (t) { return '#' + t.number + ' ' + t.title; } },
+        { title: 'Severity', field: 'sev', kind: 'center', width: 88, pill: false, filter: 'list', render: sevBadge },
+        { title: 'Updated', field: 'updated', type: 'date', width: 136 },
       ],
+      detailTitle: function (t) { return '#' + t.number; },
       detail: function (t) {
         return h(Detail, null,
-          h(P.Heading, { level: 2, size: 4 }, link(t.url, '#' + t.number + ' ' + t.title)),
-          h(P.Inline, { gap: 'sm', wrap: true }, sevBadge(t), t.type ? h(P.Badge, { tone: 'neutral', size: 'sm' }, t.type) : null,
-            ownerIssues[t.number] ? h(P.Badge, { tone: 'info', size: 'sm' }, 'Has your decision ' + ownerIssues[t.number].id) : null),
-          h(Field, { label: 'Next step' }, h(P.Text, null, t.next)),
-          h(Field, { label: 'Owner' }, h(P.Text, null, t.owners.length ? t.owners.map(role).join(', ') : 'Not assigned')),
-          t.areas.length ? h(Field, { label: 'Area' }, h(P.Text, null, t.areas.join(', '))) : null,
-          h(Field, { label: 'Last updated' }, h(P.Text, null, fmt(t.updated))));
+          h(P.Heading, { level: 2, size: 4 }, t.title),
+          h(Facts, null,
+            h(Field, { label: 'Severity' }, sevBadge(t)),
+            ownerIssues[t.number] ? h(Field, { label: 'Your decision' }, h(P.Badge, { tone: 'action-required', icon: 'flag', size: 'sm' }, ownerIssues[t.number].id)) : null,
+            h(Field, { label: 'Next step' }, t.next),
+            h(Field, { label: 'Owner' }, t.owners.length ? t.owners.map(role).join(', ') : 'Not assigned'),
+            t.areas.length ? h(Field, { label: 'Area' }, t.areas.join(', ')) : null,
+            t.type ? h(Field, { label: 'Kind' }, t.type) : null,
+            h(Field, { label: 'Last updated', data: true }, fmt(t.updated)),
+            h(Field, { label: 'On GitHub' }, link(t.url, '#' + t.number))));
       },
     },
     {
-      id: 'decisions', label: 'Decisions', icon: 'article', title: 'Decisions', rows: decisionRows,
+      id: 'decisions', label: 'Decisions', icon: 'article', title: 'Decisions', noun: ['decision', 'decisions'], rows: decisionRows, sort: [{ field: 'date', dir: 'desc' }],
+      description: 'Every recorded decision, newest first, with the check that enforces it on main.',
+      text: function (d) { return d.id + ' ' + d.decision + ' ' + (d.area || ''); },
       columns: [
         { title: 'Id', field: 'id', kind: 'data', width: 88 },
-        { title: 'Decision', field: 'decision', kind: 'name' },
-        { title: 'Status', field: 'status', kind: 'center', width: 168, render: decisionStatus },
-        { title: 'Check', field: 'state', kind: 'center', width: 120, render: function (d) { return stateBadge(d.state); } },
+        { title: 'Decision', field: 'decision', kind: 'name', lines: 2, overflow: 'dialog', pill: false },
+        { title: 'Date', field: 'date', type: 'date', width: 152 },
+        { title: 'Status', field: 'status', kind: 'center', width: 136, pill: false, filter: 'list', render: decisionStatus },
+        { title: 'Check', field: 'state', kind: 'center', width: 136, pill: false, filter: 'list', render: function (d) { return stateBadge(d.state); } },
       ],
+      detailTitle: function (d) { return d.id; },
       detail: function (d) {
         return h(Detail, null,
-          h(P.Heading, { level: 2, size: 4 }, d.id),
           h(P.Text, null, d.decision),
           d.owner ? h(P.Banner, { tone: 'success', title: 'Your answer: ' + d.owner.answer.choice },
             d.owner.answer.text, ' ', link(d.owner.answer.url, 'See it on #' + d.owner.issue), '.') : null,
-          h(Field, { label: 'Decided by' }, h(P.Text, null, (d.by === 'owner' ? 'Owner' : role(String(d.by).replace('agent:ctm3-', ''))) + ', ' + d.date)),
-          h(Field, { label: 'Area' }, h(P.Text, null, d.area || '—')),
-          h(Field, { label: 'Status' }, h(P.Text, null, d.status + (d.superseded_by ? ', replaced by ' + d.superseded_by : ''))),
-          h(Field, { label: d.kind === 'review only' ? 'No check yet' : 'Check (' + d.kind + ')' },
-            h(P.Stack, { gap: 'xs' }, d.url ? link(d.url, stateBadge(d.state)) : stateBadge(d.state), h(P.Text, { variant: 'secondary' }, d.check))));
+          h(Facts, null,
+            h(Field, { label: 'Status' }, decisionStatus(d)),
+            d.superseded_by ? h(Field, { label: 'Replaced by' }, d.superseded_by) : null,
+            h(Field, { label: 'Decided by' }, (d.by === 'owner' ? 'Owner' : role(String(d.by).replace('agent:ctm3-', ''))) + ', ' + d.date),
+            h(Field, { label: 'Area' }, d.area || '—'),
+            h(Field, { label: d.kind === 'review only' ? 'No check yet' : 'Check (' + d.kind + ')' },
+              h(P.Stack, { gap: 'xs' }, d.url ? link(d.url, stateBadge(d.state)) : stateBadge(d.state), h(P.Text, { variant: 'secondary' }, d.check)))));
       },
     },
     {
-      id: 'done', label: 'Done', icon: 'task_alt', title: 'Done in the last 3 days', rows: doneRows,
+      id: 'done', label: 'Done', icon: 'task_alt', title: 'Done in the last 3 days', noun: ['item', 'items'], rows: doneRows,
+      description: 'Merged pull requests and closed issues.',
+      text: function (x) { return '#' + x.number + ' ' + x.title; },
       columns: [
-        { title: 'What', field: 'title', kind: 'name', render: function (x) { return '#' + x.number + ' ' + x.title; } },
-        { title: 'Kind', field: 'kind', width: 128 },
-        { title: 'When', field: 'at', kind: 'data', width: 136, render: function (x) { return fmt(x.at); } },
+        { title: 'What', field: 'title', kind: 'name', lines: 2, pill: false, render: function (x) { return '#' + x.number + ' ' + x.title; } },
+        { title: 'Kind', field: 'kind', filter: 'list', width: 144 },
+        { title: 'When', field: 'at', type: 'date', width: 136 },
       ],
+      detailTitle: function (x) { return '#' + x.number; },
       detail: function (x) {
         return h(Detail, null,
-          h(P.Heading, { level: 2, size: 4 }, link(x.url, '#' + x.number + ' ' + x.title)),
-          h(Field, { label: 'Kind' }, h(P.Text, null, x.kind)),
-          h(Field, { label: 'When' }, h(P.Text, null, fmt(x.at))));
+          h(P.Heading, { level: 2, size: 4 }, x.title),
+          h(Facts, null,
+            h(Field, { label: 'Kind' }, x.kind),
+            h(Field, { label: 'When', data: true }, fmt(x.at)),
+            h(Field, { label: 'On GitHub' }, link(x.url, '#' + x.number))));
       },
     },
     {
-      id: 'checks', label: 'Checks', icon: 'fact_check', title: 'Latest check runs on main', rows: D.workflows, index: 'file',
+      id: 'checks', label: 'Checks', icon: 'fact_check', title: 'Latest check runs on main', noun: ['workflow', 'workflows'], rows: D.workflows, index: 'file',
+      description: 'The newest run of each workflow on main.',
+      text: function (w) { return w.name + ' ' + w.file; },
       columns: [
         { title: 'Workflow', field: 'name', kind: 'name' },
-        { title: 'Result', field: 'conclusion', kind: 'center', width: 120, render: function (w) { return stateBadge(w.conclusion); } },
-        { title: 'When', field: 'at', kind: 'data', width: 136, render: function (w) { return fmt(w.at); } },
+        { title: 'Result', field: 'conclusion', kind: 'center', width: 144, pill: false, filter: 'list', render: function (w) { return stateBadge(w.conclusion); } },
+        { title: 'When', field: 'at', type: 'date', width: 136 },
       ],
+      detailTitle: function (w) { return w.name; },
       detail: function (w) {
-        return h(Detail, null,
-          h(P.Heading, { level: 2, size: 4 }, w.name),
-          h(Field, { label: 'Result' }, link(w.url, stateBadge(w.conclusion))),
-          h(Field, { label: 'File' }, h(P.Text, { variant: 'data' }, w.file)),
-          h(Field, { label: 'When' }, h(P.Text, null, fmt(w.at))));
+        return h(Facts, null,
+          h(Field, { label: 'Result' }, w.url ? link(w.url, stateBadge(w.conclusion)) : stateBadge(w.conclusion)),
+          h(Field, { label: 'File', data: true }, w.file),
+          h(Field, { label: 'When', data: true }, fmt(w.at)));
       },
     },
     {
-      id: 'team', label: 'Team', icon: 'groups', title: 'Team', rows: teamRows,
+      id: 'team', label: 'Team', icon: 'groups', title: 'Team', noun: ['role', 'roles'], rows: teamRows,
+      description: 'Open issues per role.',
+      text: function (r) { return r.agent; },
       columns: [
         { title: 'Role', field: 'agent', kind: 'name' },
-        { title: 'Open items', field: 'count', kind: 'data', width: 112 },
+        { title: 'Open items', field: 'count', type: 'number', width: 120, pill: false },
       ],
+      detailTitle: function (r) { return r.agent; },
       detail: function (r) {
-        return h(Detail, null,
-          h(P.Heading, { level: 2, size: 4 }, r.agent),
-          h(P.Stack, { gap: 'sm' }, r.items.map(function (t) {
-            return h(P.Inline, { key: t.number, gap: 'sm' }, sevBadge(t), link(t.url, '#' + t.number + ' ' + t.title));
-          })));
+        return h(P.Stack, { gap: 'sm' }, r.items.map(function (t) {
+          return h(P.Inline, { key: t.number, gap: 'sm' }, sevBadge(t), link(t.url, '#' + t.number + ' ' + t.title));
+        }));
       },
     },
     {
-      id: 'screenshots', label: 'Screenshots', icon: 'image', title: 'Latest CI screenshots', rows: D.shots, index: 'file',
+      id: 'screenshots', label: 'Screenshots', icon: 'image', title: 'Latest CI screenshots', noun: ['screenshot', 'screenshots'], rows: D.shots, index: 'file',
+      description: 'From the ci-screenshots branch. Synthetic data only.',
+      text: function (x) { return x.name + ' ' + x.run; },
       columns: [
         { title: 'Screenshot', field: 'name', kind: 'name' },
-        { title: 'Run', field: 'run', kind: 'data' },
+        { title: 'Run', field: 'run', kind: 'data', width: 200 },
       ],
+      detailTitle: function (x) { return x.name; },
       detail: function (x) {
         return h(Detail, null,
-          h(P.Heading, { level: 2, size: 4 }, link(x.url, x.name)),
-          h(P.Text, { variant: 'secondary' }, 'From the ci-screenshots branch (' + x.run + '). Synthetic data only.'),
-          h('img', { src: x.file, alt: x.name, className: 'shot' }));
+          h('img', { src: x.file, alt: x.name, className: 'shot' }),
+          h(Facts, null, h(Field, { label: 'Run', data: true }, x.run), h(Field, { label: 'File' }, link(x.url, x.name))));
       },
     },
   ];
@@ -355,6 +389,46 @@
     return left;
   }
 
+  // One section on the SplitWorkspace template (owner, 2026-11-10: the menu on the left, then the split screen
+  // with the DataGrid and the chosen row's details beside it). The title row and the command bar sit above both
+  // panes; the bar's search, filters, sort and columns share one useCollectionView state with the grid.
+  function Section(props) {
+    var sec = props.sec, key = sec.index || 'id';
+    var fields = sec.columns.map(function (c) {
+      return { value: c.field, label: c.title, kind: c.type, get: function (r) { var v = r[c.field]; return v && typeof v === 'object' ? v.label || v.name : v; } };
+    });
+    var view = P.useCollectionView(fields, { text: sec.text, data: sec.rows, sort: sec.sort });
+    var shown = view.count(sec.rows);
+    var record = props.openKey == null ? null : sec.rows.filter(function (r) { return r[key] === props.openKey; })[0];
+    var bar = h(P.CommandBar, {
+      label: sec.title,
+      find: h(R.Fragment, null,
+        h(P.CommandBarSearch, Object.assign({}, view.searchProps, { placeholder: 'Search ' + sec.noun[1] })),
+        h(P.FilterPanel, view.filterProps)),
+      view: h(R.Fragment, null, h(P.SortPanel, view.sortProps), h(P.ColumnsMenu, view.columnsProps)),
+      count: shown + ' ' + sec.noun[shown === 1 ? 0 : 1],
+    });
+    return h(P.SplitWorkspace, {
+      sideNav: props.nav,
+      paneTitle: sec.title,
+      defaultSize: 760, // the grid's starting width: most of the room goes to the list; the divider still moves
+      title: record ? sec.detailTitle(record) : sec.title,
+      toolbar: h(P.Stack, { gap: 'md' },
+        h(P.RecordPage.Header, { title: sec.title, description: sec.description }),
+        sec.toolbar || null, bar),
+      rows: sec.rows, columns: sec.columns,
+      grid: Object.assign({
+        index: key, density: 'compact', cells: 'pill', headerMenu: true, mode: 'fill', wrapHeaders: false,
+        empty: 'Nothing in ' + sec.label + ' right now.',
+        openKey: record ? props.openKey : null,
+        onRowClick: function (r) { props.onOpen(r[key]); },
+      }, view.tableProps),
+      detailOpen: !!record,
+      actions: record ? h(P.Button, { variant: 'subtle', size: 'sm', onClick: function () { props.onOpen(null); } }, 'Close') : null,
+      empty: h(P.EmptyState, { title: 'Nothing selected' }, 'Choose a row to see its details here.'),
+    }, record ? sec.detail(record) : null);
+  }
+
   function App() {
     var st = R.useState(fromHash()), current = st[0], setCurrent = st[1];
     var op = R.useState({}), open = op[0], setOpen = op[1];
@@ -379,10 +453,11 @@
       document.addEventListener('visibilitychange', onVisible);
       return function () { clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
     }, []);
+    function openRow(id, value) { setOpen(function (o) { var n = Object.assign({}, o); n[id] = value; return n; }); }
     function onAnswered(id, answer) {
       setLocal(function (l) { var n = Object.assign({}, l); n[id] = answer; return n; });
       setPosted({ id: id, url: answer.url });
-      setOpen(function (o) { var n = Object.assign({}, o); n.owner = null; return n; });
+      openRow('owner', null);
     }
     var SECTIONS = R.useMemo(function () { return derive(data, local, onAnswered, posted); }, [data, local, posted]);
     R.useEffect(function () {
@@ -391,9 +466,6 @@
       return function () { window.removeEventListener('hashchange', onHash); };
     }, []);
     var sec = SECTIONS.filter(function (x) { return x.id === current; })[0];
-    var key = sec.index || 'id';
-    var openKey = open[sec.id] != null ? open[sec.id] : null;
-    var record = openKey == null ? null : sec.rows.filter(function (r) { return r[key] === openKey; })[0];
 
     var nav = h(P.NavPane, {
       label: 'Dashboard sections', title: 'CTM 3.0 Dashboard',
@@ -404,23 +476,8 @@
       items: SECTIONS.map(function (x) { return { id: x.id, label: x.label, icon: x.icon, count: x.id === 'overview' ? undefined : x.rows.length }; }),
     }));
 
-    return h(P.SplitWorkspace, {
-      key: sec.id,
-      sideNav: nav,
-      paneTitle: sec.title,
-      title: record ? sec.label + ' details' : sec.label,
-      toolbar: sec.toolbar || null,
-      rows: sec.rows,
-      columns: sec.columns,
-      grid: {
-        index: key, openKey: openKey,
-        empty: 'Nothing here.',
-        onRowClick: function (r) { var n = {}; for (var k in open) n[k] = open[k]; n[sec.id] = r[key]; setOpen(n); },
-      },
-      detailOpen: !!record,
-      actions: record ? h(P.Button, { variant: 'subtle', size: 'sm', onClick: function () { var n = {}; for (var k in open) n[k] = open[k]; n[sec.id] = null; setOpen(n); } }, 'Close') : null,
-      empty: h(P.EmptyState, { title: 'Nothing selected' }, 'Choose a row to see its details here.'),
-    }, record ? sec.detail(record) : null);
+    return h(Section, { key: sec.id, sec: sec, nav: nav, openKey: open[sec.id] != null ? open[sec.id] : null,
+      onOpen: function (value) { openRow(sec.id, value); } });
   }
 
   window.ReactDOM.createRoot(document.getElementById('root')).render(h(App));
