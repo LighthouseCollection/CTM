@@ -579,3 +579,93 @@ decisions:
     status: active
     check: { kind: test, ref: tests/frontend/council-lists.test.cjs }
 
+
+  - id: D-0065
+    date: 2026-11-10
+    area: performance
+    decision: "Performance rule 1: the app frame and its code are cached, so the screen appears at once. CTM static files are precompressed (gzip, brotli) and served under content-hashed names with immutable one-year caching; the shell HTML is not cached long. Standard in docs/implementation/performance.md"
+    why: Owner 2026-11-10 (#311) "The app frame and its code are cached, so the screen appears at once"
+    options: ["Hashed, compressed, immutable static files (chosen)", "60-second caching with hand-bumped ?v= stamps (before)"]
+    decided_by: owner
+    status: active
+    check: { kind: config, ref: ctm/settings.py }
+
+  - id: D-0066
+    date: 2026-11-10
+    area: performance
+    decision: "Performance rule 2: code loads per screen, with the next likely screens fetched while idle (within D-0073's limits); applicant screens never load council code and the sign-in page loads only the shared shell. Standard in docs/implementation/performance.md"
+    why: Owner 2026-11-10 (#311) "Code loads per screen, with the next likely screens fetched while idle"
+    options: ["Per-screen code with idle prefetch (chosen)", "All 25 CTM files on every page (before)"]
+    decided_by: owner
+    status: active
+    review_only: "Reviewed by ctm3-code-reviewer (G5a) against docs/implementation/performance.md until the #308 frontend test lands; then replaced by that check"
+
+  - id: D-0067
+    date: 2026-11-10
+    area: performance
+    decision: "Performance rule 3: one data request per screen, sent in parallel, never in a chain; the session comes with the page HTML, the shell never fetches what the screen fetches, no address is fetched twice per screen, and a save refetches only what it changed. Standard in docs/implementation/performance.md"
+    why: Owner 2026-11-10 (#311) "One data request per screen, sent in parallel, never in a chain"; #308 measured 3 to 6 chained steps per page
+    options: ["Parallel, deduplicated requests (chosen)", "Chained requests per component (before)"]
+    decided_by: owner
+    status: active
+    review_only: "Reviewed by ctm3-code-reviewer (G5a) against docs/implementation/performance.md until the #308 request-waterfall test lands; then replaced by that check"
+
+  - id: D-0068
+    date: 2026-11-10
+    area: performance
+    decision: "Performance rule 4: data already seen shows at once, then refreshes quietly in the background; forms being edited are never replaced; votes, decisions, decree issue and release, payments and anything about to be signed or sent are always fetched fresh; kept data is memory only and cleared on sign-out. Standard in docs/implementation/performance.md"
+    why: Owner 2026-11-10 (#311) "Data you've seen shows at once, then refreshes quietly in the background"
+    options: ["Show kept data, refresh quietly (chosen)", "Clear and refetch on every navigation (before)"]
+    decided_by: owner
+    status: active
+    review_only: "Reviewed by ctm3-code-reviewer (G5a) and ctm3-security-reviewer (G5e) against docs/implementation/performance.md until the #308 loader test lands; then replaced by that check"
+
+  - id: D-0069
+    date: 2026-11-10
+    area: performance
+    decision: "Performance rule 5: lists load one page at a time from the server (25 to 50 rows), with search, sort and filters done on the server; counts only count rows the user may see. Contract designed first on #312. Standard in docs/implementation/performance.md"
+    why: Owner 2026-11-10 (#311) "Lists load one page at a time from the server (the first 25 to 50 rows), with search and sort done on the server"
+    options: ["Server paging, search and sort (chosen)", "Whole list downloaded and sorted in the browser (before)"]
+    decided_by: owner
+    status: active
+    review_only: "Reviewed by ctm3-solution-architect (G3) on the #312 design until its backend and frontend tests land; then replaced by those checks"
+
+  - id: D-0070
+    date: 2026-11-10
+    area: performance
+    decision: "Performance rule 6: saves show at once on screen while the server confirms, and undo with the server's reason if it refuses; votes, decisions, decree issue and release, payments, signing and sending always wait for the server. Built on #313. Standard in docs/implementation/performance.md"
+    why: Owner 2026-11-10 (#311) "Saves show at once on screen while the server confirms, and undo if the server refuses"; the exclusions follow CLAUDE.md "Never fake success"
+    options: ["Optimistic saves with undo, legal and financial actions excluded (chosen)", "Wait for the server on every save (before)"]
+    decided_by: owner
+    status: active
+    review_only: "Reviewed by ctm3-code-reviewer (G5a) against docs/implementation/performance.md until the #313 tests land; then replaced by those checks"
+
+  - id: D-0071
+    date: 2026-11-10
+    area: performance
+    decision: "Performance rule 7: speed is measured; main content within 2.5 s (LCP) and a click answered within 0.2 s (INP); a CI check on fictional data fails the build when a page passes its budget or is more than 10% slower than main; budgets in one config file. Built on #314. Standard in docs/implementation/performance.md"
+    why: Owner 2026-11-10 (#311) "Speed is measured ... with a check that fails the build when a page gets slower"
+    options: ["CI budget check (chosen)", "No measurement (before)"]
+    decided_by: owner
+    status: active
+    review_only: "Enforced by the #314 CI job once it lands (it then becomes this decision's check); until then reviewed by ctm3-release-engineer (G8)"
+
+  - id: D-0072
+    date: 2026-11-10
+    area: performance
+    decision: "Performance rule 8: when idle, the site may fetch larger data in the background so it is ready; only what this user may see and is likely to open next, in small pages, paused while the user is active, never files, Professional Assessments, medical, audit or notifications, memory only, cleared on sign-out. Numeric limits in D-0073. Standard in docs/implementation/performance.md"
+    why: Owner 2026-11-10 (#311), the owner's own idea, with those limits in his words
+    options: ["Idle prefetch within the owner's limits (chosen)", "No background loading"]
+    decided_by: owner
+    status: active
+    review_only: "Reviewed by ctm3-security-reviewer (G5e) against docs/implementation/performance.md rule 8 until the #308 prefetch test lands; then replaced by that check"
+
+  - id: D-0073
+    date: 2026-11-10
+    area: performance
+    decision: "Idle prefetch limits for D-0072: one step ahead of the current screen only; at most 50 rows per request; starts from an idle callback after 2 s with no input and stops at the next key, click, scroll or touch; at most 2 prefetch requests in flight and 10 prefetched replies kept per screen; never while the tab is hidden, under save-data, or on 2G or slower; no localStorage, sessionStorage, IndexedDB, Cache API or service worker for API data; cleared on sign-out, 401, expired session or account change"
+    why: The owner's rule 8 says "small pages" and "paused while the user is active" without numbers; these are the smallest values that still make the next screen ready, and they are cheap to change
+    options: ["A Conservative limits as above (chosen)", "B Looser limits (whole lists, 4 in flight, prefetch while active)"]
+    decided_by: agent:ctm3-product-lead
+    status: active
+    review_only: "Reviewed by ctm3-security-reviewer (G5e) until the #308 prefetch test asserts these limits; then replaced by that check"
