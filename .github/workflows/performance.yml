@@ -68,12 +68,12 @@ jobs:
         run: |
           base="${PR_BASE:-$(git rev-parse HEAD~1)}"
           git worktree add --detach "$RUNNER_TEMP/base" "$base"
-      - name: Measure this change
+      - name: Measure this change and main side by side
         continue-on-error: true   # a missing result is reported as unknown by the verdict step
-        run: uv run --group browser python scripts/browser_perf_budget.py --out "$RUNNER_TEMP/perf-head.json" 2>&1 | tee "$RUNNER_TEMP/perf-head.log"
-      - name: Measure main
-        continue-on-error: true
-        run: uv run --group browser python scripts/browser_perf_budget.py --app-root "$RUNNER_TEMP/base" --out "$RUNNER_TEMP/perf-base.json" 2>&1 | tee "$RUNNER_TEMP/perf-base.log"
+        run: |
+          uv run --group browser python scripts/browser_perf_budget.py \
+            --out "$RUNNER_TEMP/perf-head.json" --base-root "$RUNNER_TEMP/base" --base-out "$RUNNER_TEMP/perf-base.json" \
+            2>&1 | tee "$RUNNER_TEMP/perf.log"
       - name: Budget verdict
         run: |
           python3 scripts/check_perf_budget.py --head "$RUNNER_TEMP/perf-head.json" --base "$RUNNER_TEMP/perf-base.json" \
