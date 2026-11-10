@@ -272,7 +272,7 @@ test("council home: lead session, one row of tiles, My cases grid, in that order
   assert.match(text, /Confirmed/);
   assert.match(text, /1 of 4/);
   // Owner, 2026-11-10: the session's status badge sits beside Open session in the actions.
-  const open = [].concat(lead.props.actions.props.children).find((child) => child && child.props && child.props.variant === "primary");
+  const open = byName(lead.props.actions, "Button")[0];
   assert.equal(open.props.variant, "primary");
   open.props.onClick();
   same(moved, ["/sessions/s1"]);
