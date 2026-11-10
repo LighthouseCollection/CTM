@@ -22,7 +22,7 @@ DATASET = "ctm-western-workflow-demo-v1"
 ROSTER = [
     ("H.E. Metropolitan", "Serapion", "bishopserapion@lacopts.org", "president"),
     ("Fr. Mauritius", "Mikhail", "frmauritiusmikhail@lacopts.org", "secretary"),
-    ("Fr. Youhana", "Ibrahim", "fryouhanaibrahim@lacopts.org", "member"),
+    ("Fr. Youhanna", "Ibrahim", "fryouhannaibrahim@lacopts.org", "member"),
     ("Fr. Antony", "Attallah", "frantonyattallah@lacopts.org", "member"),
     ("Fr. Boules", "Mikhail", "frpaul@lacopts.org", "member"),
     ("Fr. Youhanna", "Youssef", "fryouhannayoussef@lacopts.org", "member"),
