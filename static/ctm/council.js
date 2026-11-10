@@ -711,7 +711,6 @@
       statsYear: "Year",
       statsShare: "Share",
       statsOther: "Other",
-      statsHidden: "Counts under 5 are hidden, sometimes with one more so they cannot be worked out.",
       statsAllHidden: "Every count in {year} is hidden.",
       statsNoCases: "No cases in {year}.",
       allStatistics: "All statistics",
@@ -1123,7 +1122,6 @@
       statsYear: "السنة",
       statsShare: "النسبة",
       statsOther: "أخرى",
-      statsHidden: "الأعداد الأقل من 5 مخفية، وأحيانًا عدد آخر معها حتى لا يمكن استنتاجها.",
       statsAllHidden: "كل الأعداد في {year} مخفية.",
       statsNoCases: "لا توجد قضايا في {year}.",
       allStatistics: "كل الإحصاءات",
@@ -3333,16 +3331,14 @@
     const picker = years.length ? h(P.Select, { size: "sm", label: t("statsYear"), "aria-label": t("statsYear"), value: shownYear,
       onChange: (event) => setYear(event.target.value), options: years.map((value) => ({ value, label: value })) }) : undefined;
     const all = onNavigate ? h(P.Button, { variant: "ghost", onClick: () => onNavigate(window.CTMRoutes?.routeFor("statistics") || "/reports") }, t("allStatistics")) : undefined;
-    let body, note;
+    let body;
     if (state.pending && !data) body = loadingView(P, h, t, t("loadingStatistics"));
     else if (state.error) body = h(P.Notice, { tone: "danger" }, serverMessage(state.error, t), " ", h(P.Button, { size: "sm", onClick: retry }, t("retry")));
     else {
       const { shown, hidden } = members
         ? visibleCounts(data.cases_per_member, (row) => row.name || "—")
         : visibleCounts(data.cases_by_ground, (row) => groundsText([row.code], row.code, t));
-      const description = hidden ? t("statsHidden") : undefined;
-      // The chart caption repeats the Panel title, so it is hidden (the chart keeps its name); the note shows once.
-      note = shown.length ? description : undefined;
+      // The owner removed the note on hidden counts (2026-11-10); hidden counts still read "Hidden".
       if (!shown.length)
         body = h(P.EmptyState, { title: hidden ? t("statsAllHidden", { year: shownYear }) : t("statsNoCases", { year: shownYear }) });
       else if (members)
@@ -3356,7 +3352,7 @@
           format: (value) => number.format(value),
           strings: { part: t("reason"), value: t("statsCases"), share: t("statsShare"), total: t("statsCases"), other: t("statsOther") } });
     }
-    return h(P.Panel, { icon: members ? "settings-users" : "chart", title, description: note, actions: picker, footer: all }, body);
+    return h(P.Panel, { icon: members ? "settings-users" : "chart", title, actions: picker, footer: all }, body);
   }
 
   // Council Home (issue 170, D-0046; design docs/implementation/slices/ctm3-170-home/design.md). Top to bottom:
@@ -3428,13 +3424,17 @@
       const mine = answers ? ownAnswer(answers, user) : null;
       const confirmed = confirmedText(answers, t, "confirmedCount");
       const date = session.date || dash.data.upcoming_sessions[0].date;
+      // Owner, 2026-11-10: the lead session may be Draft or In progress; its status shows as a badge.
+      const state = sent.state || session.state;
       // Today's session opens Tribunal Sessions, Current (owner, 2026-10-22); a later one opens its own page,
       // because Current lists only sessions dated today or earlier.
       const openLead = () => date <= todayInLosAngeles() || !onNavigate
         ? onSession && onSession(leadId)
         : onNavigate(window.CTMRoutes?.routeFor("session", leadId) || "/sessions/" + leadId);
       return h(P.Panel, { icon: "calendar", title: sessionLabel(date, t), description: t("upcomingSession"),
-        actions: h(P.Button, { variant: "primary", icon: "open", onClick: openLead }, t("openSession")) },
+        actions: h(P.Inline, { gap: "sm", align: "center" },
+          state ? h(P.Badge, { tone: sessionStatusTone(state), icon: state === "planned" ? "clock" : "pencil" }, t(sessionStatusKey(state))) : null,
+          h(P.Button, { variant: "primary", icon: "open", onClick: openLead }, t("openSession"))) },
         h(P.Columns, { count: 3, collapseBelow: "wide" },
           h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("sessionWhen") }, formatSessionStart(session.starts_at, lang) || t("timeNotRecorded"))),
@@ -3506,9 +3506,8 @@
           : h(P.EmptyState, { title: t("noMembers") });
       }
       // Issue 208: a hidden count can be 5 or more (one more is hidden so it cannot be worked out), so it reads
-      // "Hidden", with one note on the Panel.
-      const anyHidden = Boolean(members.data?.items?.some((row) => row.suppressed));
-      return h(P.Panel, { icon: "settings-users", title: t("councilMembers"), description: anyHidden ? t("statsHidden") : undefined }, body);
+      // "Hidden"; the owner removed the note that explained it (2026-11-10).
+      return h(P.Panel, { icon: "settings-users", title: t("councilMembers") }, body);
     };
 
     // 5. Statistics summary: two charts side by side, each with its year; the full set lives on Statistics.

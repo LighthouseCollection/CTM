@@ -2138,7 +2138,8 @@ def publish_questionnaire(request):
 
 def _upcoming_sessions(actor):
     from tribunal.services.home import session_card
-    sessions = list(m.CouncilSession.objects.filter(state="planned", date__gte=timezone.localdate()).order_by("date")[:5])
+    # Owner, 2026-11-10: Home leads with the next open session, Draft or In progress (as Upcoming sessions does).
+    sessions = list(m.CouncilSession.objects.filter(state__in=("draft", "planned"), date__gte=timezone.localdate()).order_by("date")[:5])
     # #170: the first upcoming session is the Home card; the rest stay date-only.
     return [session_card(s, actor) if index == 0 else {"id": str(s.pk), "date": s.date.isoformat()}
             for index, s in enumerate(sessions)]
