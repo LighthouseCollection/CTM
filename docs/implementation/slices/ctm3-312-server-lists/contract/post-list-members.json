@@ -1,0 +1,177 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/api/lists/members/",
+    "headers": {
+      "Content-Type": "application/json",
+      "X-CSRFToken": "<csrftoken cookie>"
+    },
+    "body": {
+      "page": 1,
+      "size": 50,
+      "sort": [
+        {
+          "field": "last_name",
+          "dir": "asc"
+        }
+      ],
+      "q": "demo",
+      "filters": {
+        "active": true
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b",
+          "first_name": "Fr. Demo",
+          "last_name": "Member",
+          "email": "member@example.org",
+          "role": "member",
+          "active": true,
+          "email_verified": true,
+          "profile_version": 1,
+          "active_case_count": 3,
+          "status_version": 0,
+          "can_suspend": true,
+          "can_reactivate": false
+        }
+      ],
+      "page": 1,
+      "size": 50,
+      "total": 1,
+      "has_more": false
+    }
+  },
+  "errors": [
+    {
+      "when": "not signed in",
+      "status": 401,
+      "body": {
+        "error": "authentication_required"
+      }
+    },
+    {
+      "when": "GET or another method",
+      "status": 405,
+      "body": {
+        "error": "method_not_allowed"
+      }
+    },
+    {
+      "when": "CSRF header missing or wrong",
+      "status": 403,
+      "body": {
+        "detail": "CSRF Failed"
+      }
+    },
+    {
+      "when": "unknown list name, e.g. /api/lists/drafts/",
+      "status": 404,
+      "body": {
+        "error": "resource_or_input_invalid"
+      }
+    },
+    {
+      "when": "page not an integer from 1 to 1000000",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "page must be an integer from 1 to 1000000."
+        ]
+      }
+    },
+    {
+      "when": "size not an integer from 1 to 100",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "size must be an integer from 1 to 100."
+        ]
+      }
+    },
+    {
+      "when": "sort field not allowed for this list and role",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported sort field: <field>."
+        ]
+      }
+    },
+    {
+      "when": "more than 3 sort entries or dir not asc/desc",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Use up to 3 sort entries, each with dir asc or desc."
+        ]
+      }
+    },
+    {
+      "when": "q shorter than 2 or longer than 200 characters after trimming (empty is allowed)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Search text must be 2 to 200 characters."
+        ]
+      }
+    },
+    {
+      "when": "filter key not allowed for this list and role",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported filter: <key>."
+        ]
+      }
+    },
+    {
+      "when": "unknown top-level body key",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported list option: <key>."
+        ]
+      }
+    },
+    {
+      "when": "actor is not an existing admin",
+      "status": 403,
+      "body": {
+        "error": "forbidden",
+        "detail": "Administrator required."
+      }
+    },
+    {
+      "when": "filters.role not member, president, secretary or admin",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported member role filter."
+        ]
+      }
+    },
+    {
+      "when": "filters.active not a boolean",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "active must be true or false."
+        ]
+      }
+    }
+  ]
+}
