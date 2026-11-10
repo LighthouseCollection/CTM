@@ -476,7 +476,7 @@ test("case navigation groups notes and communications outside Case Overview", ()
 });
 
 test("api() keeps CSRF on every request and lets FormData set its own type", () => {
-  const start = app.indexOf("async function api(");
+  const start = app.indexOf("async function fetchApi(");
   const body = app.slice(start, app.indexOf("function MessageComposer", start));
   assert.match(body, /"X-CSRFToken": csrf\(\)/);
   assert.match(body, /options\.body instanceof FormData/);
