@@ -135,7 +135,7 @@ it is ready when opened. Every prefetch keeps all of these limits:
 | 4 Seen data at once | D-0068 | Review until the #308 test lands | #308 |
 | 5 Server pages | D-0069 | Review until the #312 tests land | #312 |
 | 6 Saves at once, undo | D-0070 | Review until the #313 tests land | #313 |
-| 7 Measured, build fails | D-0071 | Review until the #314 CI job lands | #314 |
+| 7 Measured, build fails | D-0071 | CI job `speed-budget` in `.github/workflows/performance.yml` | Done, #314 |
 | 8 Idle prefetch | D-0072, D-0073 | Review until the #308 test lands | #308 |
 
 When a rule's check lands, its decision's `review_only` reason is replaced by
