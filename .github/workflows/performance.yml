@@ -1,0 +1,95 @@
+name: CTM speed budget
+# Owner performance rule 7 (#311, #314): load the main pages on the fictional
+# dataset, record LCP, TBT (INP stand-in), requests and JavaScript bytes, and
+# fail when a page goes over its budget or gets slower than main. Budgets live
+# in scripts/perf_budgets.json. Not a required check yet ("required once stable").
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: speed-budget-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  speed-budget:
+    name: Speed budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write   # one sticky comment with the numbers on the PR
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ctm_validation
+          POSTGRES_USER: ctm_validation
+          POSTGRES_PASSWORD: ci-isolated-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ctm_validation"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Disposable CI cluster only: each measurement creates and drops its own database.
+      CTM_PERF_DATABASE_URL: postgres://ctm_validation:ci-isolated-only@localhost:5432/ctm_validation
+      DJANGO_SECRET_KEY: ci-only-not-production
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.8.22'
+      - name: Install Python and the browser
+        run: |
+          uv sync --frozen --python 3.12 --group browser
+          uv run --group browser playwright install --with-deps chromium
+      - name: Provision least-privileged runtime roles in the CI database
+        env:
+          CTM_APP_PASSWORD: ci-ctm-app-only
+          CTM_WORKER_PASSWORD: ci-ctm-worker-only
+        run: |
+          db="${{ job.services.postgres.id }}"
+          docker cp deploy/postgres/init.sql "$db:/tmp/ctm-init.sql"
+          docker exec -i --env CTM_APP_PASSWORD --env CTM_WORKER_PASSWORD --env CTM_INIT_SQL=/tmp/ctm-init.sql "$db" bash -s < deploy/postgres/00-init-roles.sh
+      - name: Check out main for the comparison
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          base="${PR_BASE:-$(git rev-parse HEAD~1)}"
+          git worktree add --detach "$RUNNER_TEMP/base" "$base"
+      - name: Measure this change and main side by side
+        continue-on-error: true   # a missing result is reported as unknown by the verdict step
+        run: |
+          uv run --group browser python scripts/browser_perf_budget.py \
+            --out "$RUNNER_TEMP/perf-head.json" --base-root "$RUNNER_TEMP/base" --base-out "$RUNNER_TEMP/perf-base.json" \
+            2>&1 | tee "$RUNNER_TEMP/perf.log"
+      - name: Budget verdict
+        run: |
+          python3 scripts/check_perf_budget.py --head "$RUNNER_TEMP/perf-head.json" --base "$RUNNER_TEMP/perf-base.json" \
+            --markdown "$RUNNER_TEMP/perf.md" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Post the numbers on the pull request
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          [ -s "$RUNNER_TEMP/perf.md" ] || { echo "No report to post."; exit 0; }
+          existing="$(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --jq '.[] | select(.body | startswith("<!-- ctm-speed-budget -->")) | .id' | sed -n 1p)"
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$existing" -F "body=@$RUNNER_TEMP/perf.md" > /dev/null
+          else
+            gh api --method POST "repos/$REPO/issues/$PR_NUMBER/comments" -F "body=@$RUNNER_TEMP/perf.md" > /dev/null
+          fi

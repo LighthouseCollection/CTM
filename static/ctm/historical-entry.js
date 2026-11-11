@@ -89,7 +89,7 @@
       notice ? h(P.Notice,{tone:"success"},t(notice)) : null,
       failure ? h(P.Notice,{tone:"danger"},failure) : null,
       saved?.payload?.parties?.some((party) => party.account_id) ? h(P.PropertyList, { variant: "tiles" }, ...saved.payload.parties.filter((party) => party.account_id).map((party) => h(P.PropertyList.Item, { key: party.slot, label: `${partyTitle(party.slot)} — ${t("linkedAccount")}`, data: true }, party.account_id))) : null,
-      saved ? h(P.PropertyList,{ variant: "tiles" },h(P.PropertyList.Item,{label:t("reference"),data:true},saved.id),h(P.PropertyList.Item,{label:t("version")},saved.version)) : null,
+      saved ? h(P.PropertyList,{ variant: "tiles" },h(P.PropertyList.Item,{label:t("reference"),data:true},saved.id),h(P.PropertyList.Item,{label:t("version"),data:true},saved.version)) : null,
       published ? h(P.Stack, { gap: "md" },
         h(P.FormSection, { title: t("caseDetails"), headingLevel: 3 }, h(P.PropertyList, { variant: "tiles" },
           ...["number", "status", "closed_at"].filter((key) => form[key]).map((key) => h(P.PropertyList.Item, { key, label: t(key) }, key === "status" ? h(P.Badge, { tone: form[key] === "open" ? "success" : "neutral" }, t(form[key])) : form[key])),

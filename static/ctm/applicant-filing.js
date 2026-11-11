@@ -130,7 +130,7 @@
     return h(P.Panel, { icon: "doc-text", title: t("title") }, h(P.Stack, null,
       application.status==="draft"&&window.CTMApplicantRecovery?h(window.CTMApplicantRecovery.Recovery,{
         application,api,lang,disabled:dirty||state.busy||state.attempted,onBlockChange:setRecoveryBlocked,onCheckout}):null,
-      h(P.Text, null, `${t("fee")}: ${amount || "—"} · ${t(["due","paid","waived","historical_exempt"].includes(fee?.status) ? fee.status : "unknown")}`),
+      h(P.Text, null, `${t("fee")}: `, amount ? h(P.Text, { variant: "data" }, amount) : "—", ` · ${t(["due","paid","waived","historical_exempt"].includes(fee?.status) ? fee.status : "unknown")}`),
       h(P.Text, {variant:"secondary"}, t("notRefundable")),
       application.status === "returned" ? h(P.Notice, null, t("returnNotice")) : null,
       typeof application.return_instructions === "string" && application.return_instructions.trim()

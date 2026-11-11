@@ -71,7 +71,7 @@
   const session=R.useMemo(()=>createReadSession(api,render),[row.id,row.receipts[0].read_at,api]);
   const readAt=session.state.read_at||row.receipts[0].read_at;
   return h(P.Stack,null,h(P.Text,null,readAt?t('readAt'):t('unread')),
-   readAt?h(P.Text,null,h('bdi',{dir:'ltr'},readAt)):null,
+   readAt?h(P.Text,{variant:'data'},h('bdi',{dir:'ltr'},readAt)):null,
    session.state.error?h(P.Notice,{tone:'warning',role:'alert'},t(session.state.error)):null,
    !readAt?h(P.Button,{disabled:disabled||session.state.attempted,onClick:async()=>{onStart();try{await session.send(row,party,true);}finally{onEnd();}}},t('read')):null);
  }
@@ -108,7 +108,7 @@
    loading?h(P.Text,{role:'status'},t('loading')):null,error?h(P.Notice,{tone:'warning',role:'alert'},t('unavailable')):null,
    record?h(P.Stack,null,h(P.Text,null,t('readHelp')),!rows.length&&!loading?h(P.Text,null,t('empty')):null,
     ...rows.map(row=>h(P.Panel,{ icon: "doc-text",key:row.id,title:row.sender},h(P.Stack,null,
-     h(P.Text,null,h('bdi',{dir:'ltr'},row.timestamp)),h(P.Text,null,row.body),row.file_links.length?h(P.Text,null,t('attachments')):null,
+     h(P.Text,{variant:'data'},h('bdi',{dir:'ltr'},row.timestamp)),h(P.Text,null,row.body),row.file_links.length?h(P.Text,null,t('attachments')):null,
      h(ReadCopy,{row,party,api,t,disabled:loading||busy,onStart:()=>setReading(n=>n+1),onEnd:()=>setReading(n=>Math.max(0,n-1))})))),
     next!==null?h(P.Button,{disabled:loading||busy,onClick:()=>load(next)},t('more')):null,
     !canSend(record,caseId)?h(P.Notice,null,t('readonly')):null,

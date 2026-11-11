@@ -560,7 +560,12 @@ function api(req, res, url, body) {
     return json(res, 200, {
       my_cases: state.cases.filter((c) => c.status === "open" && c.assigned === me().id).length,
       review_queue: admin() ? state.applications.filter((a) => a.kind === "petition" && a.status === "submitted" && a.origin !== "closed_case_intake").length : null,
-      upcoming_sessions: state.sessions.filter((s) => s.state === "planned").map((s) => ({ id: s.id, date: s.date })),
+      // The real projection (tribunal/api.py _upcoming_sessions, services/home.py session_card): the first session is
+      // the Home card; the rest are date-only. No one has answered in the fixture.
+      upcoming_sessions: state.sessions.filter((s) => s.state === "planned").sort((a, b) => a.date.localeCompare(b.date)).map((s, index) => index ? { id: s.id, date: s.date }
+        : { id: s.id, date: s.date, state: s.state, starts_at: s.starts_at || null, location: s.location || null,
+            agenda_count: state.agenda.filter((x) => x.session === s.id).length, my_answer: null,
+            confirmed: ["secretary", "president"].includes(role) ? 0 : null, invited: ["secretary", "president"].includes(role) ? members().length : null }),
     });
   if ((m = p.match(/^\/api\/cases\/([^/]+)\/parties\/$/))) {
     if (!admin()) return json(res, 403, { error: "forbidden", detail: "Administrator or secretary required." });

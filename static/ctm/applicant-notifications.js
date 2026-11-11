@@ -49,9 +49,9 @@
    h(P.Text,{as:'h1',variant:'display'},t('title')),h(P.Text,null,t('help')),
    h(P.Inline,{wrap:true},h(P.Button,{disabled:loading||busy>0,onClick:()=>load(0)},t('refresh'))),
    loading?h(P.Text,{role:'status'},t('loading')):null,error?h(P.Notice,{tone:'warning',role:'alert'},t('unavailable')):null,
-   count!==null?h(P.Text,null,t('count'),': ',h('bdi',{dir:'ltr'},String(count))):null,
+   count!==null?h(P.Text,null,t('count'),': ',h(P.Text,{variant:'data'},h('bdi',{dir:'ltr'},String(count)))):null,
    ...rows.filter(row=>sessionFor(row).state.error).map(row=>h(P.Notice,{key:"error-"+row.id,tone:'warning',role:'alert'},
-    h('bdi',{dir:'ltr'},row.case_number||t('update')),': ',t(sessionFor(row).state.error))),
+    row.case_number?h(P.Text,{variant:'data'},h('bdi',{dir:'ltr'},row.case_number)):t('update'),': ',t(sessionFor(row).state.error))),
    // The private list is a Plenix ResourceList (resource-list.md): read state and time at the row end, its actions after.
    h(P.ResourceList,{label:t('title'),
     emptyState:!loading&&!error?h(P.EmptyState,{title:t('empty')}):null,

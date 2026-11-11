@@ -113,7 +113,7 @@
         h(P.Panel,{ icon: "progress",title:t("history")},h(P.Stack,null,
           !data.supplements.length?h(P.Text,null,t("none")):null,
           ...data.supplements.map(row=>h(P.Panel,{ icon: "doc-text",key:row.id,title:t("ownEntry")},h(P.Stack,null,
-            h(P.Text,null,h("bdi",{dir:"ltr"},row.timestamp)),h(P.Text,null,row.text),...row.manifest.map(file=>{const current=files.find(item=>item.id===file.id&&safeEvidence(item));return current?h(P.Stack,{key:file.id},...renderFiles([current])):h(P.Text,{key:file.id},t("retainedEvidence"));})))))),
+            h(P.Text,{variant:"data"},h("bdi",{dir:"ltr"},row.timestamp)),h(P.Text,null,row.text),...row.manifest.map(file=>{const current=files.find(item=>item.id===file.id&&safeEvidence(item));return current?h(P.Stack,{key:file.id},...renderFiles([current])):h(P.Text,{key:file.id},t("retainedEvidence"));})))))),
         !allowed?h(P.Notice,null,t("closed")):null,
         h(P.Text,null,t("help")),h(P.Text,null,t("uploadHelp")),
         state.error?h(P.Notice,{role:"alert",tone:"danger"},t(state.error)):null,

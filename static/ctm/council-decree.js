@@ -887,7 +887,7 @@
                   ...row.supplements.map((s) =>
                     h(
                       P.Card,
-                      { icon: "doc-text", key: s.id, title: base.formatWhen(s.timestamp, lang), meta: s.actor },
+                      { icon: "doc-text", key: s.id, title: h(P.Text, { variant: "data" }, base.formatWhen(s.timestamp, lang)), meta: s.actor },
                       s.text ? h(P.Text, { as: "p" }, s.text) : null,
                       ...(s.manifest || []).map((f) =>
                         h(P.Button, { key: f.id, size: "xs", href: `/api/files/${encodeURIComponent(f.id)}/` }, t("download")),
@@ -906,7 +906,7 @@
               P.PropertyList,
               { variant: "tiles" },
               h(P.PropertyList.Item, { label: t("appealResult") }, t(row.disposition.result === "accept" ? "appeal_accepted" : "appeal_declined")),
-              h(P.PropertyList.Item, { label: t("recordedBy") }, `${row.disposition.actor} · ${base.formatWhen(row.disposition.timestamp, lang)}`),
+              h(P.PropertyList.Item, { label: t("recordedBy") }, row.disposition.actor, " · ", h(P.Text, { variant: "data" }, base.formatWhen(row.disposition.timestamp, lang))),
               row.disposition.explanation ? h(P.PropertyList.Item, { label: t("appealExplanation"), lines: 3, span: "full" }, row.disposition.explanation) : null,
             ),
           )

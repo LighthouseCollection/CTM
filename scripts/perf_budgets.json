@@ -1,0 +1,27 @@
+{
+  "about": "Speed budgets for the main pages (#314, owner performance rule 7, #311). The one place budgets live; read by scripts/browser_perf_budget.py and scripts/check_perf_budget.py.",
+  "viewport": { "width": 1440, "height": 900 },
+  "runs": 5,
+  "budgets": {
+    "lcp_ms": 2500,
+    "tbt_ms": 200
+  },
+  "regression": {
+    "max_ratio": 0.10,
+    "metrics": ["lcp_ms", "tbt_ms", "requests", "js_bytes"],
+    "noise_floor": {
+      "lcp_ms": 150,
+      "tbt_ms": 100,
+      "requests": 1,
+      "js_bytes": 1024
+    }
+  },
+  "pages": [
+    { "id": "sign-in", "label": "Sign-in", "account": null, "path": "/" },
+    { "id": "council-home", "label": "Council Home", "account": "manager", "path": "/" },
+    { "id": "case-list", "label": "Case list", "account": "manager", "path": "/cases/active" },
+    { "id": "case-page", "label": "Case page", "account": "manager", "path": "/cases/{case_id}" },
+    { "id": "current-session", "label": "Current session", "account": "manager", "path": "/sessions/current" },
+    { "id": "applicant-home", "label": "Applicant home", "account": "applicant", "path": "/" }
+  ]
+}

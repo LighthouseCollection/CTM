@@ -1654,7 +1654,7 @@
       { variant: "tiles" },
       h(P.PropertyList.Item, { label: t("transcriptLanguage") }, codeLabel(t, "lang", data.language)),
       h(P.PropertyList.Item, { label: t("transcriptKind") }, codeLabel(t, "kind", data.kind)),
-      h(P.PropertyList.Item, { label: t("version") }, String(data.version)),
+      h(P.PropertyList.Item, { label: t("version"), data: true }, String(data.version)),
       h(P.PropertyList.Item, { label: t("transcriptState") }, h(P.Badge, { tone: data.reviewed ? "success" : "warning" }, t(data.reviewed ? "stateReviewed" : "stateUnreviewed"))),
       data.timestamp ? h(P.PropertyList.Item, { label: t("transcriptSaved"), data: true }, base.formatWhen(data.timestamp, lang)) : null,
     );
@@ -1699,7 +1699,7 @@
               P.Stack,
               { gap: "xs" },
               ...segments.map((s, i) =>
-                h(P.Text, { key: i, as: "p", dir: "auto" }, `${base.isolate(`${formatDuration(s.start * 1000)}–${formatDuration(s.end * 1000)}`)} ${s.text}`),
+                h(P.Text, { key: i, as: "p", dir: "auto" }, h(P.Text, { variant: "data" }, base.isolate(`${formatDuration(s.start * 1000)}–${formatDuration(s.end * 1000)}`)), ` ${s.text}`),
               ),
             ),
           )
@@ -1877,7 +1877,7 @@
         P.PropertyList,
         { variant: "tiles" },
         h(P.PropertyList.Item, { label: t("reportFor") }, report.subject || ""),
-        h(P.PropertyList.Item, { label: t("version") }, String(shown.version ?? report.version ?? "")),
+        h(P.PropertyList.Item, { label: t("version"), data: true }, String(shown.version ?? report.version ?? "")),
         report.author ? h(P.PropertyList.Item, { label: t(councilSource ? "paperRecordedBy" : "reportAuthor") }, base.isolate(report.author)) : null,
         councilSource && report.date ? h(P.PropertyList.Item, { label: t(paper ? "paperReceivedOn" : "recordedOn"), data: true }, report.date) : null,
         report.submitted_at ? h(P.PropertyList.Item, { label: t("reportSubmitted"), data: true }, base.formatWhen(report.submitted_at, lang)) : null,
@@ -2105,7 +2105,7 @@
         P.PropertyList,
         { variant: "tiles" },
         h(P.PropertyList.Item, { label: t("category"), data: true }, file.category),
-        h(P.PropertyList.Item, { label: t("version") }, String(file.version)),
+        h(P.PropertyList.Item, { label: t("version"), data: true }, String(file.version)),
         file.byte_count ? h(P.PropertyList.Item, { label: t("size"), data: true }, formatBytes(file.byte_count, lang)) : null,
         file.created_at ? h(P.PropertyList.Item, { label: t("uploadedOn"), data: true }, base.formatWhen(file.created_at, lang)) : null,
       ),
