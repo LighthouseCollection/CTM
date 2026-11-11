@@ -209,7 +209,7 @@
           h(P.SegmentedControl, { label: t("notification_language"), value: user.notification_language, readOnly: saving, onChange: (value) => value !== user.notification_language && preference("notification_language", value), options: ["en", "ar"].map((value) => ({ value, label: t(value) })) })))),
       place("activity", h(P.SettingsSection, { title: t("activityLog") },
         loaded((data) => data.activity.length
-          ? h(P.List, { variant: "bullets", items: data.activity.map((item) => ({ children: `${item.action} · ${window.CTMCouncil.formatWhen(item.timestamp, lang)}` })) })
+          ? h(P.List, { variant: "bullets", items: data.activity.map((item) => ({ children: [`${item.action} · `, h(P.Text, { key: "w", variant: "data" }, window.CTMCouncil.formatWhen(item.timestamp, lang))] })) })
           : h(P.EmptyState, { title: t("noActivity") })))),
     ));
   }
@@ -522,7 +522,7 @@
             h(AuditFilters, { rows, filters, onChange: setFilters, lang, includeActor: false }),
             failedOr(() => h(window.CTMShell.Listing, {
               label: t("audit"), rows: filterAudit(rows, filters), loading: state.pending, empty: t("noRows"),
-              columns: [{ title: t("action"), field: "action", kind: "name" }, { title: t("source"), field: "source" }, { title: t("date"), field: "timestamp", render: (row) => base.formatWhen(row.timestamp, lang) }],
+              columns: [{ title: t("action"), field: "action", kind: "name" }, { title: t("source"), field: "source" }, { title: t("date"), field: "timestamp", kind: "data", render: (row) => base.formatWhen(row.timestamp, lang) }],
             })));
     return h(P.SettingsLayout, {
       className: "plx-u-flex-1 plx-u-min-h-0",

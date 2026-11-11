@@ -64,7 +64,7 @@
     loading?h(P.Text,{role:'status'},t('loading')):null,error?h(P.Notice,{tone:'warning',role:'alert'},t('unavailable')):null,
     data?h(P.Stack,null,!data.items.length?h(P.Text,null,t('empty')):null,
      data.items.length?h(P.Field,{label:t('version')},h(P.Select,{value:selected,onChange:event=>{setFieldPath(null);select(event.target.value);},options:data.items.map(item=>({value:String(item.version),label:String(item.version)}))})):null,
-     row?h(P.Stack,null,h(P.Text,null,t('actor'),': ',row.actor||t('unnamed')),h(P.Text,null,t('time'),': ',h('bdi',{dir:'ltr'},row.timestamp)),
+     row?h(P.Stack,null,h(P.Text,null,t('actor'),': ',row.actor||t('unnamed')),h(P.Text,null,t('time'),': ',h(P.Text,{variant:'data'},h('bdi',{dir:'ltr'},row.timestamp))),
       h(P.Text,{as:'h3'},t('changes')),!changes.length?h(P.Text,null,t('unchanged')):null,
       ...changes.map(change=>h(P.Button,{key:'indicator'+change.path,onClick:()=>setFieldPath(fieldPath===change.path?null:change.path),'aria-pressed':fieldPath===change.path},label(change.path)+': '+change.path)),
       // The changed values are one read-only CTMShell table (data-grid.md); saved paths and values stay Latin originals.
