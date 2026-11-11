@@ -6,11 +6,16 @@
      api() keeps cache: "no-store", so case data never stays on the computer after the tab closes.
    - Only the reads on KEEP are kept. Files, assessments, medical reports, audit, timeline, notifications,
      decisions, votes, decrees, payments, messages and the session are never kept and never loaded ahead.
-   - Kept per account. A different account, a 401 or any save (every method but GET) clears everything.
+   - Kept per account. A different account, a 401 or any save (every method but GET) clears everything. A sign-in
+     or sign-out in another tab is noticed without a round trip: the page gives watch() a function that returns the
+     sign-in marker (the CSRF cookie, which Django rotates at every login); when it differs the store is emptied
+     before the next read, refresh or load-ahead.
    - A repeat read within FRESH_MS comes from memory. Up to KEEP_MS, a page's first reads are drawn from memory
      at once and asked again quietly; the page draws again only if the answer changed.
    - Background reads (quiet refreshes and loading ahead) run at most BACKGROUND_MAX at a time, never while a
      read the user is waiting for is on its way, and never while the tab is hidden.
+   - Loading ahead starts only after IDLE_MS with no key, click, scroll or touch, waits again after the next input,
+     and never runs on a 2G or slower connection or when the browser asks to save data.
    The server still decides every read; this store only holds what it already sent to this account. */
 (() => {
   "use strict";
@@ -19,10 +24,11 @@
   const KEEP_MS = 5 * 60 * 1000;
   const MAX_ENTRIES = 50;
   const BACKGROUND_MAX = 2;
+  const IDLE_MS = 2000;
 
   // The reads that may be kept (paths as the modules ask for them). Everything else always goes to the server.
   const KEEP = [
-    /^\/api\/cases\/(\?[^#]*)?$/, // case lists (all, ?mine=1)
+    /^\/api\/cases\/(\?mine=1)?$/, // case lists (all, ?mine=1); never a search or filter query
     /^\/api\/cases\/[^/?#]+\/$/, // a case record
     /^\/api\/cases\/[^/?#]+\/requests\/$/, // a case's report requests (kind and status; never report content)
     /^\/api\/cases\/[^/?#]+\/parties\/$/,
@@ -48,6 +54,11 @@
   let backgroundRunning = 0;
   const queue = []; // { url, kind: "refresh" | "prefetch" }
   let hiddenAt = null;
+  let marker = null; // the sign-in marker seen when the account was set
+  let readMarker = null; // () => current marker, given by the page
+  let lastInput = 0; // when the user last pressed, clicked, scrolled or touched
+  const deferred = new Set(); // load-ahead addresses waiting for a quiet moment
+  let waiting = false;
 
   const now = () => Date.now();
   const parse = (text) => JSON.parse(text);
@@ -62,10 +73,33 @@
 
   function setAccount(id) {
     const next = id == null ? null : String(id);
+    marker = readMarker ? readMarker() : null;
     if (next === account) return;
     clear();
     account = next;
   }
+
+  // The page gives a function that returns the sign-in marker. Another tab signing in or out changes it.
+  function watch(getter) {
+    readMarker = typeof getter === "function" ? getter : null;
+    marker = readMarker ? readMarker() : null;
+  }
+
+  // True when the account may have changed in another tab; the store is emptied and starts again.
+  function accountMoved() {
+    if (!readMarker) return false;
+    const seen = readMarker();
+    if (seen === marker) return false;
+    marker = seen;
+    clear();
+    return true;
+  }
+
+  const slowLine = () => {
+    const c = typeof navigator !== "undefined" ? navigator.connection : null;
+    return Boolean(c && (c.saveData || c.effectiveType === "slow-2g" || c.effectiveType === "2g"));
+  };
+  const quiet = () => now() - lastInput >= IDLE_MS;
 
   function notify(url) {
     for (const reader of [...readers]) {
@@ -120,6 +154,7 @@
   let rawApi = null;
 
   function read(raw, url) {
+    accountMoved();
     const reader = current;
     if (reader) reader.urls.add(url);
     let entry = entries.get(url);
@@ -155,6 +190,7 @@
   }
 
   function schedule(url, kind) {
+    accountMoved();
     if (!rawApi || !keepable(url) || !account) return;
     if (queue.some((job) => job.url === url)) return;
     if (kind === "refresh") queue.unshift({ url, kind });
@@ -166,6 +202,14 @@
     while (backgroundRunning < BACKGROUND_MAX && queue.length) {
       if (userReads > 0 || hidden()) return; // resumes when the user's reads land or the tab shows again
       const job = queue.shift();
+      if (job.kind === "prefetch") {
+        if (slowLine()) continue;
+        if (!quiet()) {
+          deferred.add(job.url);
+          whenQuiet();
+          continue;
+        }
+      }
       const entry = entries.get(job.url);
       if (flying.has(job.url)) continue;
       if (job.kind === "prefetch" && entry && now() - entry.at < FRESH_MS) continue;
@@ -181,16 +225,35 @@
 
   const idle = (fn) =>
     typeof window !== "undefined" && typeof window.requestIdleCallback === "function"
-      ? window.requestIdleCallback(fn, { timeout: 2000 })
+      ? window.requestIdleCallback(fn)
       : setTimeout(fn, 300);
 
-  // Loads the likely next reads while the browser is idle. Never a read off KEEP; nothing on a data-saving connection.
+  // Waits for the browser to be idle and for IDLE_MS without input, then queues what was deferred.
+  function whenQuiet() {
+    if (waiting) return;
+    waiting = true;
+    const check = () => {
+      if (!quiet()) {
+        setTimeout(() => idle(check), Math.max(IDLE_MS - (now() - lastInput), 50));
+        return;
+      }
+      waiting = false;
+      const urls = [...deferred];
+      deferred.clear();
+      urls.forEach((url) => schedule(url, "prefetch"));
+    };
+    idle(check);
+  }
+
+  // Loads the likely next reads while the user is idle. Never a read off KEEP; nothing on a slow or data-saving connection.
   function prefetch(urls) {
     if (!account) return;
-    if (typeof navigator !== "undefined" && navigator.connection && navigator.connection.saveData) return;
+    accountMoved();
+    if (slowLine()) return;
     const wanted = (urls || []).filter(keepable);
     if (!wanted.length) return;
-    idle(() => wanted.forEach((url) => schedule(url, "prefetch")));
+    wanted.forEach((url) => deferred.add(url));
+    whenQuiet();
   }
 
   // A reader is one page loader. run() notes the reads its loader starts at once; onChange is called when one of
@@ -220,9 +283,13 @@
         readers.delete(self);
       },
     };
-    readers.add(self);
     return self;
   }
+
+  // Any input pushes loading ahead back by IDLE_MS (passive listeners; nothing else happens on input).
+  if (typeof document !== "undefined" && typeof document.addEventListener === "function")
+    for (const name of ["keydown", "pointerdown", "wheel", "scroll", "touchstart"])
+      document.addEventListener(name, () => (lastInput = now()), { passive: true, capture: true });
 
   // Back on the tab after a while: ask again for what the open pages drew.
   if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
@@ -242,11 +309,12 @@
   window.CTMData = {
     wrap,
     setAccount,
+    watch,
     clear,
     reader,
     prefetch,
     keepable,
     size: () => entries.size,
-    limits: Object.freeze({ FRESH_MS, KEEP_MS, MAX_ENTRIES, BACKGROUND_MAX }),
+    limits: Object.freeze({ FRESH_MS, KEEP_MS, MAX_ENTRIES, BACKGROUND_MAX, IDLE_MS }),
   };
 })();

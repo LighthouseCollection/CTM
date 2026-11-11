@@ -19,6 +19,7 @@ function load({ hold = false } = {}) {
   const idle = [];
   const listeners = {};
   const document = { visibilityState: "visible", addEventListener: (name, fn) => { listeners[name] = fn; } };
+  const timers = [];
   const window = { requestIdleCallback: (fn) => idle.push(fn) };
   const navigator = { connection: { saveData: false } };
   const asked = [];
@@ -38,7 +39,7 @@ function load({ hold = false } = {}) {
     if (!hold) return answer();
     return new Promise((resolve, reject) => held.push(() => answer().then(resolve, reject)));
   };
-  vm.runInNewContext(source, { window, document, navigator, Date: FakeDate, Promise, JSON, Map, Set, Object, String, setTimeout }, { filename: "data.js" });
+  vm.runInNewContext(source, { window, document, navigator, Date: FakeDate, Promise, JSON, Map, Set, Object, String, setTimeout: (fn) => timers.push(fn) }, { filename: "data.js" });
   const store = window.CTMData;
   return {
     store, raw, asked, server, document, navigator,
@@ -47,6 +48,8 @@ function load({ hold = false } = {}) {
     advance: (ms) => { clock += ms; },
     release: () => held.splice(0).forEach((go) => go()),
     held: () => held.length,
+    input: (name = "keydown") => listeners[name]?.(),
+    timers: () => timers.splice(0).forEach((fn) => fn()),
     runIdle: () => idle.splice(0).forEach((fn) => fn()),
     show: (state) => { document.visibilityState = state; listeners.visibilitychange?.(); },
   };
@@ -163,6 +166,7 @@ test("a page's first reads are drawn from memory at once and refreshed quietly; 
   h.advance(60_000);
   let changes = 0;
   const reader = h.store.reader(() => { changes += 1; });
+  reader.open();
   const shown = await reader.run(() => h.api("/api/sessions/"));
   assert.deepEqual(shown, { items: [1] }, "drawn from memory at once");
   await tick();
@@ -186,6 +190,7 @@ test("a later read of an older copy (not a page's first read) waits for the serv
   assert.equal(h.gets().length, 2);
   h.advance(5 * 60_000 + 1);
   const reader = h.store.reader(() => {});
+  reader.open();
   await reader.run(() => h.api("/api/council/members/"));
   assert.equal(h.gets().length, 3, "an expired copy is never drawn");
 });
@@ -197,6 +202,7 @@ test("a refused quiet refresh forgets the copy and makes the page ask again", as
   h.advance(20_000);
   let changes = 0;
   const reader = h.store.reader(() => { changes += 1; });
+  reader.open();
   h.server.status["/api/cases/c-1/"] = 403; // access was withdrawn since the copy was kept
   await reader.run(() => h.api("/api/cases/c-1/"));
   await tick();
@@ -211,6 +217,7 @@ test("loading ahead: allow-listed only, at most 2 at a time, never while the use
   h.store.setAccount("u-1");
   const user = h.api("/api/dashboard/");
   h.store.prefetch(["/api/cases/", "/api/sessions/s-1/agenda/", "/api/council/members/", "/api/cases/c-1/audit/", "/api/files/", null]);
+  h.advance(3000);
   h.runIdle();
   assert.deepEqual(h.gets(), ["/api/dashboard/"], "nothing loads ahead while a user read is on its way");
   h.release();
@@ -228,6 +235,7 @@ test("loading ahead: allow-listed only, at most 2 at a time, never while the use
   assert.ok(!h.gets().some((url) => url.includes("audit") || url.includes("files")));
   // Already kept: not loaded again.
   h.store.prefetch(["/api/cases/"]);
+  h.advance(3000);
   h.runIdle();
   await tick();
   assert.equal(h.gets().length, 4);
@@ -235,6 +243,7 @@ test("loading ahead: allow-listed only, at most 2 at a time, never while the use
   h.advance(11_000);
   h.show("hidden");
   h.store.prefetch(["/api/sessions/"]);
+  h.advance(3000);
   h.runIdle();
   await tick();
   assert.equal(h.gets().length, 4);
@@ -246,9 +255,86 @@ test("loading ahead: allow-listed only, at most 2 at a time, never while the use
   // A connection that asks to save data loads nothing ahead.
   h.navigator.connection.saveData = true;
   h.store.prefetch(["/api/applications/"]);
+  h.advance(3000);
   h.runIdle();
   await tick();
   assert.ok(!h.gets().includes("/api/applications/"));
+});
+
+test("loading ahead waits for 2 seconds without input and starts again after the next input", async () => {
+  const h = load();
+  h.store.setAccount("u-1");
+  h.input();
+  h.store.prefetch(["/api/sessions/s-1/agenda/"]);
+  h.advance(1000);
+  h.runIdle();
+  await tick();
+  assert.deepEqual(h.gets(), [], "input 1 second ago: nothing yet");
+  h.advance(1500);
+  h.timers();
+  h.runIdle();
+  await tick();
+  assert.deepEqual(h.gets(), ["/api/sessions/s-1/agenda/"]);
+  // Input after the job was queued but before it ran: the job waits again.
+  h.store.prefetch(["/api/council/members/"]);
+  h.advance(3000);
+  h.runIdle();
+  h.input("pointerdown");
+  await tick();
+  h.input("scroll");
+  h.store.prefetch(["/api/sessions/"]);
+  h.runIdle();
+  await tick();
+  assert.equal(h.gets().includes("/api/sessions/"), false);
+  h.advance(2500);
+  h.timers();
+  h.runIdle();
+  await tick();
+  assert.ok(h.gets().includes("/api/sessions/"));
+});
+
+test("no loading ahead on a 2G or slower connection", async () => {
+  for (const type of ["slow-2g", "2g"]) {
+    const h = load();
+    h.store.setAccount("u-1");
+    h.navigator.connection.effectiveType = type;
+    h.store.prefetch(["/api/sessions/"]);
+    h.advance(3000);
+    h.runIdle();
+    h.timers();
+    await tick();
+    assert.deepEqual(h.gets(), [], type);
+  }
+  const ok = load();
+  ok.store.setAccount("u-1");
+  ok.navigator.connection.effectiveType = "4g";
+  ok.store.prefetch(["/api/sessions/"]);
+  ok.advance(3000);
+  ok.runIdle();
+  await tick();
+  assert.deepEqual(ok.gets(), ["/api/sessions/"]);
+});
+
+test("a sign-in or sign-out in another tab empties the store before the next read", async () => {
+  const h = load();
+  let cookie = "token-a";
+  h.store.watch(() => cookie);
+  h.store.setAccount("u-1");
+  h.server.replies["/api/cases/"] = { items: ["a"] };
+  await h.api("/api/cases/");
+  assert.equal(h.store.size(), 1);
+  cookie = "token-b"; // another tab signed in as someone else
+  h.server.replies["/api/cases/"] = { items: ["b"] };
+  const seen = await h.api("/api/cases/");
+  assert.deepEqual(seen, { items: ["b"] }, "drawn from the server, not from the other account's copy");
+  assert.deepEqual(h.gets(), ["/api/cases/", "/api/cases/"]);
+  // The same holds for a page's first reads (no quiet refresh of the old copy) and for loading ahead.
+  cookie = "token-c";
+  await h.store.reader(() => {}).run(() => h.api("/api/cases/"));
+  assert.equal(h.gets().length, 3);
+  cookie = "token-d";
+  h.store.prefetch(["/api/sessions/"]);
+  assert.equal(h.store.size(), 0);
 });
 
 test("back on the tab after a while, the open pages' first reads are asked again", async () => {
@@ -257,6 +343,7 @@ test("back on the tab after a while, the open pages' first reads are asked again
   h.server.replies["/api/dashboard/"] = { n: 1 };
   let changes = 0;
   const reader = h.store.reader(() => { changes += 1; });
+  reader.open();
   await reader.run(() => h.api("/api/dashboard/"));
   h.show("hidden");
   h.advance(30_000);

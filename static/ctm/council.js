@@ -3402,11 +3402,12 @@
       [user?.id],
     );
     const leadId = dash.data?.upcoming_sessions?.[0]?.id || null;
-    // Issue 308: once Home has its own data, the likely next pages (the case list and the next session's agenda) load
-    // while the browser is idle. A click never waits for them (data.js).
+    // Issue 308: once Home has its own data, the likely next page (the next session's agenda) loads
+    // while the user is idle. The full case list is not loaded ahead until the server pages it (issue 312). A click never
+    // waits for it (data.js).
     R.useEffect(() => {
       if (dash.data && window.CTMData)
-        window.CTMData.prefetch(["/api/cases/", leadId ? `/api/sessions/${encodeURIComponent(leadId)}/agenda/` : null]);
+        window.CTMData.prefetch([leadId ? `/api/sessions/${encodeURIComponent(leadId)}/agenda/` : null]);
     }, [Boolean(dash.data), leadId]);
     // Issue 308: /api/dashboard/ sends the lead session's card (time, place, agenda size and answers, issue 116), so Home
     // starts no session reads of its own. The two charts share one statistics read.
