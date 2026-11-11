@@ -32,3 +32,12 @@
 ## Gaps
 - Loading a case ahead on row hover needs a DataGrid row-hover or row-focus event (Plenix request; CTM#310 is related).
 - Session in the page HTML: backend request on #308.
+
+## Review round 1 fixes (code-review-1.md, PR 321)
+
+- Blocker 1: `CTMData.watch(csrf)` gives the store the CSRF cookie as a sign-in marker (Django rotates it at login). `read()`, `schedule()` and `prefetch()` empty the store when it differs. Ran: new test "a sign-in or sign-out in another tab empties the store". Not verified live: that Entra sign-in rotates `csrftoken`.
+- Blocker 2: load-ahead starts only after 2 s without keydown/pointerdown/wheel/scroll/touchstart (no forcing idle timeout); jobs wait again after new input; skipped on `slow-2g`/`2g`/saveData. Ran: two new tests.
+- Blocker 3: Home prefetches only the agenda; the case-list prefetch waits for the paged list (issue 312).
+- Minor: case-list pattern narrowed to `(\?mine=1)?$`; readers register in `open()` only (app.js shell now opens its reader).
+- Not done: before/after timings stay Planned (no live numbers in this session). `sharedReads` removal left for step 3.
+- Ran: `node --test tests/frontend/*.test.cjs` 584/584; `check_frontend_contract.cjs` OK.

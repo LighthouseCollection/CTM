@@ -531,6 +531,8 @@
   // Issue 308: every call goes through the tab's memory store (data.js): kept reads come back at once, a read already
   // on its way is shared, and any save clears what is kept. Without the store, calls go straight to the server.
   const api = window.CTMData ? window.CTMData.wrap(fetchApi) : fetchApi;
+  // Issue 308: the CSRF cookie changes at every sign-in, so another tab's sign-in or sign-out empties the store here.
+  window.CTMData?.watch(csrf);
   function MessageComposer({ record, sessions, council, t, onSent, onClose }) {
     const [body, setBody] = R.useState(""),
       [recipients, setRecipients] = R.useState([]);
@@ -1088,6 +1090,10 @@
       const onDeleted = () => leaveDeletedCase.current && leaveDeletedCase.current();
       window.addEventListener("ctm:case-deleted", onDeleted);
       return () => window.removeEventListener("ctm:case-deleted", onDeleted);
+    }, []);
+    R.useEffect(() => {
+      shellReader.current?.open();
+      return () => shellReader.current?.close();
     }, []);
     R.useEffect(() => setCaseDetailOpen(true), [page, selection]);
     const applicantGuard = R.useRef(null);
