@@ -40,8 +40,33 @@
             "currency": "usd",
             "status": "paid"
           },
+          "applicant_name": "Demo Mina Applicant",
+          "respondent_name": "Demo Respondent",
+          "applicant_gender": "F",
+          "respondent_gender": "M",
+          "assigned_to": "Fr. Demo Member",
           "submitted_at": "2026-10-20T17:04:00+00:00",
-          "applicant_name": "Demo Mina Applicant"
+          "submitted_version": 3,
+          "questionnaire": {
+            "id": "0d1e2f3a-4b5c-4d6e-8f7a-8b9c0d1e2f3a",
+            "version": 2,
+            "published": true,
+            "definition": {
+              "sections": []
+            },
+            "declaration_en": "Demo declaration.",
+            "declaration_ar": "إقرار تجريبي."
+          },
+          "manifest": [
+            {
+              "file_id": "4a5b6c7d-8e9f-4a0b-8c1d-2e3f4a5b6c7d",
+              "category": "marriage_certificate",
+              "name": "demo-certificate.pdf",
+              "scan_state": "clean"
+            }
+          ],
+          "reviews": [],
+          "can_review": true
         }
       ],
       "page": 1,
@@ -50,14 +75,15 @@
       "has_more": false
     }
   },
-  "note": "items use the existing application_data projection unchanged; the example shows only some answers.",
+  "note": "council item = application_data(app, council actor): the 13 encoded keys then staff_application_data keys, in this order. Council filings (kind appeal, or origin closed_case_intake; the council_consideration view) also carry supplements, disposition, eligible_hearings, can_record_result. An applicant's own item has a different tail (own_filing_actions, can_edit, can_checkout, can_submit ...); the contract test for applicants asserts application_data output, not this file. Example answers are shortened.",
   "errors": [
     {
       "when": "not signed in",
       "status": 401,
       "body": {
         "error": "authentication_required"
-      }
+      },
+      "note": "Only reached with a valid CSRF token (a browser session always has one). A bare unauthenticated POST gets the CSRF 403 first."
     },
     {
       "when": "GET or another method",
@@ -67,11 +93,11 @@
       }
     },
     {
-      "when": "CSRF header missing or wrong",
+      "when": "CSRF header missing or wrong (also an unauthenticated POST without a token)",
       "status": 403,
-      "body": {
-        "detail": "CSRF Failed"
-      }
+      "body": null,
+      "content_type": "text/html",
+      "note": "Django CsrfViewMiddleware answers with its HTML 403 page (no CSRF_FAILURE_VIEW). It runs before the endpoint, so it is also what an unauthenticated POST without a token gets instead of 401. CTMServerList treats any non-JSON error as a generic failure (Retry row) and never parses the body."
     },
     {
       "when": "unknown list name, e.g. /api/lists/drafts/",
@@ -81,7 +107,7 @@
       }
     },
     {
-      "when": "page not an integer from 1 to 1000000",
+      "when": "page not an integer from 1 to 1000000 (also the string \"1\", true, 1.5)",
       "status": 422,
       "body": {
         "error": "validation",
@@ -91,7 +117,7 @@
       }
     },
     {
-      "when": "size not an integer from 1 to 100",
+      "when": "size not an integer from 1 to 100 (also the string \"50\", true, 1.5)",
       "status": 422,
       "body": {
         "error": "validation",

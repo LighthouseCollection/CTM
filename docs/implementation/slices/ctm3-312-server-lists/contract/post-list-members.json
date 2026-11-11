@@ -52,7 +52,8 @@
       "status": 401,
       "body": {
         "error": "authentication_required"
-      }
+      },
+      "note": "Only reached with a valid CSRF token (a browser session always has one). A bare unauthenticated POST gets the CSRF 403 first."
     },
     {
       "when": "GET or another method",
@@ -62,11 +63,11 @@
       }
     },
     {
-      "when": "CSRF header missing or wrong",
+      "when": "CSRF header missing or wrong (also an unauthenticated POST without a token)",
       "status": 403,
-      "body": {
-        "detail": "CSRF Failed"
-      }
+      "body": null,
+      "content_type": "text/html",
+      "note": "Django CsrfViewMiddleware answers with its HTML 403 page (no CSRF_FAILURE_VIEW). It runs before the endpoint, so it is also what an unauthenticated POST without a token gets instead of 401. CTMServerList treats any non-JSON error as a generic failure (Retry row) and never parses the body."
     },
     {
       "when": "unknown list name, e.g. /api/lists/drafts/",
@@ -76,7 +77,7 @@
       }
     },
     {
-      "when": "page not an integer from 1 to 1000000",
+      "when": "page not an integer from 1 to 1000000 (also the string \"1\", true, 1.5)",
       "status": 422,
       "body": {
         "error": "validation",
@@ -86,7 +87,7 @@
       }
     },
     {
-      "when": "size not an integer from 1 to 100",
+      "when": "size not an integer from 1 to 100 (also the string \"50\", true, 1.5)",
       "status": 422,
       "body": {
         "error": "validation",
@@ -150,7 +151,7 @@
       "status": 403,
       "body": {
         "error": "forbidden",
-        "detail": "Administrator required."
+        "detail": "An existing administrator must authorize council role grants."
       }
     },
     {

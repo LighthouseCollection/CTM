@@ -60,7 +60,8 @@
       "status": 401,
       "body": {
         "error": "authentication_required"
-      }
+      },
+      "note": "Only reached with a valid CSRF token (a browser session always has one). A bare unauthenticated POST gets the CSRF 403 first."
     },
     {
       "when": "GET or another method",
@@ -70,11 +71,11 @@
       }
     },
     {
-      "when": "CSRF header missing or wrong",
+      "when": "CSRF header missing or wrong (also an unauthenticated POST without a token)",
       "status": 403,
-      "body": {
-        "detail": "CSRF Failed"
-      }
+      "body": null,
+      "content_type": "text/html",
+      "note": "Django CsrfViewMiddleware answers with its HTML 403 page (no CSRF_FAILURE_VIEW). It runs before the endpoint, so it is also what an unauthenticated POST without a token gets instead of 401. CTMServerList treats any non-JSON error as a generic failure (Retry row) and never parses the body."
     },
     {
       "when": "unknown list name, e.g. /api/lists/drafts/",
@@ -84,7 +85,7 @@
       }
     },
     {
-      "when": "page not an integer from 1 to 1000000",
+      "when": "page not an integer from 1 to 1000000 (also the string \"1\", true, 1.5)",
       "status": 422,
       "body": {
         "error": "validation",
@@ -94,7 +95,7 @@
       }
     },
     {
-      "when": "size not an integer from 1 to 100",
+      "when": "size not an integer from 1 to 100 (also the string \"50\", true, 1.5)",
       "status": 422,
       "body": {
         "error": "validation",
@@ -154,7 +155,7 @@
       }
     },
     {
-      "when": "applicant sends filters.mine, filters.assigned, filters.ground or a council-only sort field",
+      "when": "applicant sends filters.mine, filters.assigned, filters.ground or a council-only sort field (applicant search is number only, never refused: other text just matches nothing)",
       "status": 403,
       "body": {
         "error": "forbidden",
@@ -180,6 +181,40 @@
           "ids must list 1 to 100 case ids."
         ]
       }
+    },
+    {
+      "when": "filters.ground not one of infidelity, abandonment, abuse, faith, addiction, concealment",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "ground must be one of the six ground codes."
+        ]
+      }
+    }
+  ],
+  "extra_requests": [
+    {
+      "purpose": "council filter by ground (command-bar Select)",
+      "body": {
+        "page": 1,
+        "size": 50,
+        "q": "",
+        "filters": {
+          "status": "open",
+          "ground": "abandonment"
+        }
+      }
+    },
+    {
+      "purpose": "council search by manager full name",
+      "body": {
+        "page": 1,
+        "size": 50,
+        "q": "Fr. Demo Member",
+        "filters": {}
+      },
+      "returns": "the case above; q matches Concat(first_name, ' ', last_name)"
     }
   ]
 }

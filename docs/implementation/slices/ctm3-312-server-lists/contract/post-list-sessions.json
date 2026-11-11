@@ -32,8 +32,11 @@
           "assigned_case_count": 4,
           "hearing_case_count": 2,
           "state": "planned",
-          "can_edit": true,
-          "can_delete": false
+          "can_manage": true,
+          "can_close": true,
+          "can_activate": false,
+          "can_reschedule": true,
+          "can_record_attendance": true
         }
       ],
       "page": 1,
@@ -42,14 +45,15 @@
       "has_more": false
     }
   },
-  "note": "items use the existing session_data projection unchanged (capability keys come from session_capabilities).",
+  "note": "items are encoded(session, **session_data) exactly: id, then session_data keys, ending with the five session_capabilities keys (can_manage, can_close, can_activate, can_reschedule, can_record_attendance).",
   "errors": [
     {
       "when": "not signed in",
       "status": 401,
       "body": {
         "error": "authentication_required"
-      }
+      },
+      "note": "Only reached with a valid CSRF token (a browser session always has one). A bare unauthenticated POST gets the CSRF 403 first."
     },
     {
       "when": "GET or another method",
@@ -59,11 +63,11 @@
       }
     },
     {
-      "when": "CSRF header missing or wrong",
+      "when": "CSRF header missing or wrong (also an unauthenticated POST without a token)",
       "status": 403,
-      "body": {
-        "detail": "CSRF Failed"
-      }
+      "body": null,
+      "content_type": "text/html",
+      "note": "Django CsrfViewMiddleware answers with its HTML 403 page (no CSRF_FAILURE_VIEW). It runs before the endpoint, so it is also what an unauthenticated POST without a token gets instead of 401. CTMServerList treats any non-JSON error as a generic failure (Retry row) and never parses the body."
     },
     {
       "when": "unknown list name, e.g. /api/lists/drafts/",
@@ -73,7 +77,7 @@
       }
     },
     {
-      "when": "page not an integer from 1 to 1000000",
+      "when": "page not an integer from 1 to 1000000 (also the string \"1\", true, 1.5)",
       "status": 422,
       "body": {
         "error": "validation",
@@ -83,7 +87,7 @@
       }
     },
     {
-      "when": "size not an integer from 1 to 100",
+      "when": "size not an integer from 1 to 100 (also the string \"50\", true, 1.5)",
       "status": 422,
       "body": {
         "error": "validation",
@@ -169,6 +173,64 @@
           "date_from must not follow date_to."
         ]
       }
+    },
+    {
+      "when": "filters.ids not a list of 1 to 100 UUIDs, filters.case not a UUID, filters.part not 1 or 2, filters.state not a list of 1 to 3 of draft|planned|closed",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "ids must be 1 to 100 UUIDs."
+        ]
+      }
+    }
+  ],
+  "extra_requests": [
+    {
+      "purpose": "lookup by ids (Home lead session)",
+      "body": {
+        "page": 1,
+        "size": 100,
+        "filters": {
+          "ids": [
+            "3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b"
+          ]
+        }
+      },
+      "returns": "same item shape; ids the actor cannot read are omitted"
+    },
+    {
+      "purpose": "hearings of one case (case page, decree)",
+      "body": {
+        "page": 1,
+        "size": 50,
+        "filters": {
+          "case": "7f3c2a10-5b1e-4c55-9a51-0c6f1d2e8a01",
+          "part": 2
+        }
+      },
+      "returns": "sessions holding an agenda item of that case with that part, newest date first; each item also has agenda_item_id and agenda_item_part"
+    },
+    {
+      "purpose": "session pickers (hearing defer, agenda transfer, message composer)",
+      "body": {
+        "page": 1,
+        "size": 100,
+        "sort": [
+          {
+            "field": "date",
+            "dir": "asc"
+          }
+        ],
+        "filters": {
+          "state": [
+            "draft",
+            "planned"
+          ],
+          "date_from": "2026-11-11"
+        }
+      },
+      "returns": "same item shape"
     }
   ]
 }
