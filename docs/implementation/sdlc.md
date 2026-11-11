@@ -156,6 +156,7 @@ after every upgrade run and daily.
 | Frontend behaviour | `node --test tests/frontend/*.test.cjs` |
 | Backend behaviour | `backend.yml` PostgreSQL suite (required once green, DR-009) |
 | CDN still works | `plenix-upgrade.yml` (files exist, shell tests, `browser_cdn_smoke.py`) |
+| Pages stay fast (owner performance rule 7, #311) | `performance.yml` speed budget: main pages on the fictional dataset vs main, budgets in `scripts/perf_budgets.json`, numbers posted on the PR (required once stable, #314) |
 
 Local: lefthook runs the fast checks before commit (`lefthook.yml`).
 Agent hooks: SessionStart loads `docs/lessons.md` and open decisions; a Stop
