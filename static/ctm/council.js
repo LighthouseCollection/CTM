@@ -1239,6 +1239,17 @@
 
   // ---------- Views ----------
 
+  // Issue 308: reads asked for while the same read is still on its way share its one request (two charts on Home
+  // ask for the same summary). Only GET reads are shared; anything else goes straight to the server.
+  function sharedReads(api) {
+    const flying = new Map();
+    return (url, options) => {
+      if (options && options.method && options.method !== "GET") return api(url, options);
+      if (!flying.has(url)) flying.set(url, api(url, options).finally(() => flying.delete(url)));
+      return flying.get(url);
+    };
+  }
+
   function useLoad(loader, deps) {
     const R = window.React;
     const [state, setState] = R.useState({ data: null, error: null, pending: true });
@@ -3374,21 +3385,9 @@
       [user?.id],
     );
     const leadId = dash.data?.upcoming_sessions?.[0]?.id || null;
-    // The lead session's time, place and agenda come from the session endpoints until /api/dashboard/ sends them.
-    const [lead, retryLead] = useLoad(
-      () => leadId
-        ? Promise.all([
-            api("/api/sessions/"),
-            api(`/api/sessions/${encodeURIComponent(leadId)}/agenda/`),
-            api(`/api/sessions/${encodeURIComponent(leadId)}/answers/`).catch(() => null),
-          ]).then(([sessions, agenda, answers]) => ({
-            session: (sessions.items || []).find((row) => row.id === leadId) || agenda.session || { id: leadId },
-            agendaCount: (agenda.items || []).length,
-            answers,
-          }))
-        : Promise.resolve(null),
-      [leadId],
-    );
+    // Issue 308: /api/dashboard/ sends the lead session's card (time, place, agenda size and answers, issue 116), so Home
+    // starts no session reads of its own. The two charts share one statistics read.
+    const sharedApi = R.useMemo(() => sharedReads(api), [api]);
     const [cases, retryCases] = useLoad(() => api("/api/cases/?mine=1"), [user?.id]);
     const [members, retryMembers] = useLoad(() => api("/api/dashboard/members/"), [user?.id]);
 
@@ -3414,18 +3413,15 @@
         return h(P.Panel, { icon: "calendar", title: t("upcomingSession") },
           h(P.EmptyState, { title: t("noUpcoming"),
             action: canManage(user) && onNavigate ? h(P.Button, { onClick: () => onNavigate(window.CTMRoutes?.routeFor("sessionsUpcoming") || "/sessions/upcoming") }, t("scheduleSession")) : undefined }));
-      if (lead.error) return regionFailure(retryLead, lead.error);
-      if (!lead.data) return loadingView(P, h, t, t("loadingSession"));
-      // Fields /api/dashboard/ sends (design §4) win over the ones read from the session endpoints.
-      const sent = dash.data.upcoming_sessions[0];
-      const session = { ...lead.data.session, ...Object.fromEntries(["starts_at", "location"].filter((key) => sent[key] != null).map((key) => [key, sent[key]])) };
-      const agendaCount = typeof sent.agenda_count === "number" ? sent.agenda_count : lead.data.agendaCount;
-      const answers = lead.data.answers;
-      const mine = answers ? ownAnswer(answers, user) : null;
-      const confirmed = confirmedText(answers, t, "confirmedCount");
-      const date = session.date || dash.data.upcoming_sessions[0].date;
+      // The dashboard card (tribunal/services/home.py session_card): my_answer for everyone; confirmed and invited
+      // only for the roles that send reminders (a member never learns how others answered, issue 116 AC-5).
+      const session = dash.data.upcoming_sessions[0];
+      const agendaCount = session.agenda_count;
+      const mine = session.my_answer ? { answer: session.my_answer } : null;
+      const confirmed = confirmedText({ confirmed: session.confirmed, total: session.invited }, t, "confirmedCount");
+      const date = session.date;
       // Owner, 2026-11-10: the lead session may be Draft or In progress; its status shows as a badge.
-      const state = sent.state || session.state;
+      const state = session.state;
       // Today's session opens Tribunal Sessions, Current (owner, 2026-10-22); a later one opens its own page,
       // because Current lists only sessions dated today or earlier.
       const openLead = () => date <= todayInLosAngeles() || !onNavigate
@@ -3442,9 +3438,9 @@
             h(P.PropertyList.Item, { label: t("location") }, session.location || t("notRecorded"))),
           h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("agendaItems"), data: true }, n(agendaCount))),
-          answers ? h(P.PropertyList, { variant: "tiles" },
+          h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("yourAnswer") },
-              h(P.Badge, { tone: answerTone(mine?.answer), icon: mine?.answer === "attend" ? "check" : mine?.answer === "not_attend" ? "close" : undefined }, t(answerKey(mine?.answer))))) : null,
+              h(P.Badge, { tone: answerTone(mine?.answer), icon: mine?.answer === "attend" ? "check" : mine?.answer === "not_attend" ? "close" : undefined }, t(answerKey(mine?.answer))))),
           confirmed ? h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("confirmedColumn") }, confirmed)) : null,
         ));
@@ -3513,7 +3509,7 @@
     // 5. Statistics summary: two charts side by side, each with its year; the full set lives on Statistics.
     const statsRegion = () => h(P.WidgetGrid, { label: t("statsSummary"), columns: 2,
       items: [{ id: "members" }, { id: "grounds" }],
-      renderItem: (item) => h(HomeStatChart, { key: item.id, api, lang, kind: item.id, onNavigate }) });
+      renderItem: (item) => h(HomeStatChart, { key: item.id, api: sharedApi, lang, kind: item.id, onNavigate }) });
 
     return h(P.Stack, { gap: "lg", onClickCapture: follow },
       h(P.Text, { as: "h1", variant: "title" }, t("homeTitle")),

@@ -1144,6 +1144,9 @@
         request = api(`/api/cases/${selection}/reports/`);
       else if (["documents", "evidence"].includes(page) && selection)
         request = Promise.resolve({});
+      // Issue 308: council Home and the case summary load their own data; the shell loads nothing for them.
+      else if (councilModule && user.portal === "council" && ((page === "home" && councilModule.CouncilHome) || (page === "case" && councilModule.CaseSummary)))
+        request = Promise.resolve({});
       else if (page === "case" && selection)
         request = api(`/api/cases/${selection}/`);
       else if (page === "communications" && selection)
