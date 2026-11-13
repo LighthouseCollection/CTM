@@ -14,3 +14,8 @@ Add short, definitive rules here as the project needs them, each by a PR that li
 - **The old CTM3 framework is still checked by CI.** `agents.config.yaml`, `.claude/agents/ctm3-*.md`, `scripts/check_registry.cjs` and `tests/frontend/role-registry.test.cjs` stay until the team retires them in one PR that keeps every required check green, and updates D-0025 and D-0041 in the same PR.
 - **Database paths:** `scripts/db_owner_guard.cjs` still asks for the label `agent:ctm3-database-engineer` on PRs that change `tribunal/migrations/`, `tribunal/db/` or `deploy/postgres/`.
 - **The old team's notes** are in the project's notes folder on the agent host (`notes/`). They are history; the rules and decisions win.
+
+### Reading the Plenix specification (added 2026-11-13)
+The published specification site (https://design-system.lighthouseway.org) asks for a sign-in from the agent host, so agents can't open its pages there. The CDN files (`/cdn/`) don't need a sign-in.
+- Read the specification from the Plenix repository on the agent host, at the version this project uses: `git -C /home/agents/pds/work/pds show v<version>:<path>`. Start with `DESIGN.md` (the design contract) and `platform/design-system/STANDARD.md`. A component's behavior is in its source and tests under `platform/`. Never change that folder: it belongs to the PDS team.
+- When only a page of the published site settles a question, say so on the issue; a member opens it.
