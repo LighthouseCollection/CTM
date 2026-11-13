@@ -171,10 +171,19 @@
     return fetchText(raw, url, false).then(parse);
   }
 
+  const LIST_QUERY = /^\/api\/lists\/[^/?#]+\/(?:[?#].*)?$/;
+
   function wrap(raw) {
     rawApi = raw;
     return function api(url, options = {}) {
       const method = String(options.method || "GET").toUpperCase();
+      if (method === "POST" && LIST_QUERY.test(String(url))) {
+        // A server-paged list query is a read sent as POST: it is never kept and never clears what is kept.
+        return raw(url, options).catch((error) => {
+          if (error && error.status === 401) clear();
+          throw error;
+        });
+      }
       if (method !== "GET") {
         // A save may change anything this account can see: forget everything before and after it.
         clear();
