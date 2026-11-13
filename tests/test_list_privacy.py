@@ -148,3 +148,46 @@ def test_parity_without_any_submission(people):
     assert assert_parity(legacy) == {"abuse"}
     empty = file_petition(case, a, owner, {"grounds": [], "reason": ["faith"]})
     assert assert_parity(empty) == {"faith"}
+
+
+FILING_TABLES = ("tribunal_answerrevision", "tribunal_submission", "tribunal_completenessreview")
+
+
+def filing_queries(client, granted_roles):
+    """Queries on the filing tables for one page of cases, through both list routes."""
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    counts = []
+    with granted_roles("ctm_app", session=True):
+        for fetch in [lambda: post(client, "cases", {"size": 100}), lambda: client.get("/api/cases/")]:
+            with CaptureQueriesContext(connection) as captured:
+                response = fetch()
+            assert response.status_code == 200
+            counts.append(sum(any(table in query["sql"] for table in FILING_TABLES)
+                              for query in captured.captured_queries))
+    return counts, response.json()["items"]
+
+
+def test_case_page_reads_filings_in_constant_queries(client, granted_roles, people):
+    """#369 Speed budget: council_revision uses the page's prefetch, never queries per row,
+    and still hides the private correction of a returned filing (SEC-312-2)."""
+    returned = returned_with_private_abuse(people["applicant"], people, "perf-369")
+    for index in range(2):
+        owner = account(f"demo.small{index}@example.test", "Demo", f"Small{index}")
+        case, (party,) = make_case(f"20261113-0{index}", [(f"Demo Small {index}", owner)])
+        file_petition(case, party, owner, {"grounds": ["abuse"]})
+    login(client, people["secretary"])
+    small, before = filing_queries(client, granted_roles)
+    for index in range(2, 8):
+        owner = account(f"demo.big{index}@example.test", "Demo", f"Big{index}")
+        case, (party,) = make_case(f"20261113-0{index}", [(f"Demo Big {index}", owner)])
+        file_petition(case, party, owner, {"grounds": ["faith"]})
+    other = account("demo.perf.returned@example.test", "Demo", "Returned")
+    second = returned_with_private_abuse(other, people, "perf-369-b", "2012-08-09")
+    big, items = filing_queries(client, granted_roles)
+    assert len(items) == len(before) + 7
+    assert big == small, (small, big)
+    rows = {row["id"]: row for row in items}
+    for app in [returned, second]:
+        assert rows[str(app.case_id)]["grounds"] == ["abandonment"]
