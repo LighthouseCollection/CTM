@@ -34,3 +34,23 @@ test("the invitation version, start and end are PropertyList items", () => {
   assert.doesNotMatch(s, /`\$\{t\("(version|start|end)"\)\}: /);
   for (const k of ["version", "start", "end"]) assert.match(s, new RegExp(`PropertyList\\.Item,\\s*\\{\\s*label:\\s*t\\("${k}"\\)`));
 });
+
+test("the invitation UTC-offset note stays above the times it describes ('below')", () => {
+  const s = src("applicant-appointments.js");
+  const body = s.slice(s.indexOf("function Invitation"));
+  assert.ok(body.indexOf('t("time")') < body.indexOf("h(P.PropertyList"), "note must precede the PropertyList");
+});
+
+test("the fee 'due' Badge uses the same tone as council-decree.js (action-required)", () => {
+  for (const f of ["applicant-filing.js", "applicant-payments.js"]) {
+    const s = src(f);
+    assert.match(s, /due:\s*"action-required"/, f);
+    assert.doesNotMatch(s, /due:\s*"waiting"/, f);
+  }
+});
+
+test("the report date and version are PropertyList items, not 'date · Version n' text", () => {
+  const app = src("app.js");
+  assert.doesNotMatch(app, /text\(`\$\{report\.date\} · /);
+  assert.match(app, /PropertyList\.Item, \{ label: t\("version"\), data: true \}, String\(shown\.version\)/);
+});

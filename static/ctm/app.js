@@ -766,8 +766,10 @@
       P.Stack,
       null,
       heading(report.title),
-      h(P.PropertyList, { variant: "tiles" }, h(P.PropertyList.Item, { label: t("subject") }, report.subject)),
-      text(`${report.date} · ${t("version")} ${shown.version}`),
+      h(P.PropertyList, { variant: "tiles" },
+        h(P.PropertyList.Item, { label: t("subject") }, report.subject),
+        h(P.PropertyList.Item, { label: t("date") }, report.date),
+        h(P.PropertyList.Item, { label: t("version"), data: true }, String(shown.version))),
       report.parent_report_id
         ? h(P.Button, { onClick: onOriginal }, t("originalReport"))
         : null,

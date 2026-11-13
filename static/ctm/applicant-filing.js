@@ -132,7 +132,7 @@
         application,api,lang,disabled:dirty||state.busy||state.attempted,onBlockChange:setRecoveryBlocked,onCheckout}):null,
       h(P.PropertyList, { variant: "tiles" }, h(P.PropertyList.Item, { label: t("fee") },
         h(P.Inline, { gap: "sm", align: "center", wrap: true }, h(P.Text, { variant: "data" }, amount || "—"),
-          h(P.Badge, { tone: { due: "waiting", paid: "success", waived: "neutral", historical_exempt: "neutral" }[fee?.status] || "neutral" },
+          h(P.Badge, { tone: { due: "action-required", paid: "success", waived: "neutral", historical_exempt: "neutral" }[fee?.status] || "neutral" },
             t(["due","paid","waived","historical_exempt"].includes(fee?.status) ? fee.status : "unknown"))))),
       h(P.Text, {variant:"secondary"}, t("notRefundable")),
       application.status === "returned" ? h(P.Notice, null, t("returnNotice")) : null,

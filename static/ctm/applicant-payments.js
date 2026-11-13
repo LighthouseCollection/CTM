@@ -58,7 +58,7 @@
       data?h(P.Stack,null,
         h(P.PropertyList,{variant:"tiles"},h(P.PropertyList.Item,{label:t("fee")},
           h(P.Inline,{gap:"sm",align:"center",wrap:true},h(P.Text,{variant:"data"},money(data.fee)),
-            h(P.Badge,{tone:{due:"waiting",paid:"success",waived:"neutral",historical_exempt:"neutral"}[data.fee.status]||"neutral"},t(statusKey(data.fee.status,"fee")))))),
+            h(P.Badge,{tone:{due:"action-required",paid:"success",waived:"neutral",historical_exempt:"neutral"}[data.fee.status]||"neutral"},t(statusKey(data.fee.status,"fee")))))),
         h(P.Text,null,t(data.verified_payment?"verified":"unverified")),h(P.Notice,null,t("separate")),
         !data.events.length&&!data.checkouts.length?h(P.Text,null,t("none")):null,
         // Checkout attempts and payment events are read-only CTMShell tables (data-grid.md); times keep the server offset.
