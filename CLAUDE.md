@@ -1,11 +1,11 @@
-# CTM 3.0 — instructions for Claude Code and Codex
+# CTM — instructions for Claude Code and Codex
 
-CTM restarted as **CTM 3.0** on 2026-11-04 (D-0028): same repository, server and
-code, one team (`ctm3-*` agents, sessions titled "CTM3 - <role>"). The CTM 2.0
-streams and their docs (`CLAUDE-START-HERE.md`, `stream-*.md`, `governance.md`)
-are retired history. This file is the operating manual every session and agent follows. The full delivery system (team, SDLC,
-intake, decisions, enforcement) is `docs/implementation/sdlc.md`. The design
-contract is `DESIGN.md`. Lessons from past mistakes: `docs/lessons.md`.
+CTM is run by the **CTM4** agent team, set up with the dispatch kit from 2026-11-13 (D-0074): same repository,
+server and code. **Every agent first reads `.agents/RULES.md`**: the team's rules (roles, who merges, how work
+is claimed, handed over and signed). Then it reads `docs/project-rules.md`, this file and `docs/lessons.md`.
+Where this file and `.agents/RULES.md` differ on how the team works, `.agents/RULES.md` wins. This file holds
+what is true about CTM itself. The design contract is `DESIGN.md`. The CTM3 team (`ctm3-*` agents,
+`docs/implementation/sdlc.md` section 2) and the CTM 2.0 streams are retired history.
 
 ## Non-negotiable rules
 
@@ -29,62 +29,37 @@ contract is `DESIGN.md`. Lessons from past mistakes: `docs/lessons.md`.
   Honest "unavailable" placeholders are fine for OCR/audio.
 - No passwords. Council = Microsoft Entra preauthorized tenant/object id.
 - Linux PostgreSQL CI is authoritative. Windows Python crashes are not app failures.
-- Ownership: only `ctm3-database-engineer` writes migrations, RLS and grants;
+- Ownership: only the database engineer writes migrations, RLS and grants;
   services belong to the backend owner. UI work never edits
   `tribunal/migrations/`, `tribunal/db/`, `services/` or `policy.py`. Demo/seed
   data goes in the gated `seed_demo` command, never in a migration.
+  (`scripts/db_owner_guard.cjs` still looks for the old label
+  `agent:ctm3-database-engineer` on such PRs.)
 - Never revive removed workflows (replacement decrees, passwords, fixed 17:00 send).
 - The repository is **public**: never commit or screenshot real case data or secrets.
 
-## Rules for every role
+## Working rules that stay
 
-- **Autonomy (owner decision 2026-11-04, D-0001):** all permissions are bypassed.
-  Every agent may push, merge, run `git clean -fdx` (own worktree only), deploy,
-  run migrations against the real database and work with real data — the
-  automated way: required checks green before merge (`gh pr merge --auto`),
-  backup before migrations and deploys, health check and automatic rollback
-  after deploy; never copy real case data into git or print secrets.
-- **GitHub is the only channel.** Work items are issues; hand-offs are issue
-  assignments (`agent:` labels), role mentions and PR reviews. Sign every
-  GitHub comment `— <role>` until the GitHub App identities exist.
-- **Never stop to wait for the owner.** If intent can be read two ways, apply
-  the recommended option and post a decision card (`ctm-owner-interview`
-  skill); record it in `decisions.yaml` with the check that enforces it. Do
-  not ask when the answer is in `decisions.yaml`, the code, `DESIGN.md` or the
-  build spec. Church law, fees, deadlines and institutional wording are never
-  invented: park that item on a `decision` issue and continue with the rest.
-- **Artifacts are files** in `docs/implementation/slices/<id>/`, not chat.
+- **Merging and deploying (D-0074):** agents push branches and open PRs; a member
+  merges. Every merge to `main` deploys the live site through CI
+  (`.github/workflows/deploy.yml`: required checks first, backup, health check,
+  automatic rollback). The Plenix upgrade below merges itself.
+- **GitHub is the only channel.** Work items are issues; status is generated from
+  GitHub (the pinned "CTM dashboard" and "Daily summary" issues).
+- **Never stop to wait for the owner (D-0003).** If intent can be read two ways,
+  apply the recommended option and post a decision card; record it in
+  `decisions.yaml` with the check that enforces it. Church law, fees, deadlines
+  and institutional wording are never invented: park that item on a `decision`
+  issue and continue with the rest.
 - **Evidence** is reported as Ran / Skipped / Planned / Manual, each with a path.
-  No completion claim without command output from this session; another
-  agent's report is a claim until `git log`, the diff and the checks confirm it.
-- **Pictures** only when the owner asks. Every screenshot a check already took
-  is shared: `ci-screenshots` branch, the PR, the linked issue, the dashboard.
-- Integrate small and often: a change reaches a PR the same day.
-- Bugs: root cause before fixes (`ctm-debug`); stop after 3 failed fixes. New
-  behavior is test-first (`ctm-tdd`).
-- Roles and concurrency come from the role registry `agents.config.yaml`
-  (D-0025, D-0041, adjustable): at most `slots` sessions on long work, plus
-  `short_tasks_max` small tasks, each capped at `short_task_cap_min` (then it
-  queues for a long-work slot). Memory sets the real limit. Documents name a
-  setting, never its value (`scripts/check_registry.cjs`).
-
-## The team (details: `docs/implementation/sdlc.md` section 2)
-
-| Always-on | Gate | On demand | Gate |
-|---|---|---|---|
-| `ctm3-product-lead` (intake, spec, decisions) | G1 | `ctm3-code-reviewer` | G5a |
-| `ctm3-design-director` (`DESIGN.md`, screens) | G2 | `ctm3-design-critic` | G5b |
-| `ctm3-solution-architect` (contracts, ADRs) | G3 | `ctm3-a11y-rtl-auditor` | G5c |
-| `ctm3-delivery-lead` (plan, ledger, merge order) | G4 | `ctm3-qa-engineer` | G5d |
-| `ctm3-database-engineer`, `ctm3-backend-engineer`, `ctm3-frontend-engineer` | red -> green | `ctm3-security-reviewer` | G5e |
-| `ctm3-i18n-engineer` (EN/AR) | G6 | `ctm3-debugger` | failing test first |
-| `ctm3-technical-writer` (messages, docs) | G7 | `ctm3-drift-auditor` | weekly audit |
-| `ctm3-release-engineer` (CI, merge, deploy, Plenix upgrade) | G8 | `ctm3-media-pipeline-engineer` | parked |
-
-Run one slice end to end with **`/ctm-slice <request>`**. Owner reports come in
-as GitHub issues (templates: Bug, Feature, UI/UX, Question) and go to
-`ctm3-product-lead`. Status lives on GitHub only: the pinned "CTM dashboard"
-and "Daily summary" issues are generated by `.github/workflows/dashboard.yml`.
+  No completion claim without command output from this session.
+- **Pictures** only when the owner asks (D-0004). Every screenshot a check already
+  took is shared: `ci-screenshots` branch, the PR, the linked issue, the dashboard.
+- Bugs: root cause before fixes; stop after 3 failed fixes. New behavior is test-first.
+- The old CTM3 role registry `agents.config.yaml` and `.claude/agents/ctm3-*.md`
+  stay only because CI still checks them (D-0025, D-0041). The team's registry is
+  `.agents/agents.config.yaml`. Owner reports come in as GitHub issues and go to
+  the PM, "CTM4 - PM".
 
 Plenix CDN updates reach CTM automatically (`.github/workflows/plenix-upgrade.yml`:
 every 30 minutes, bump every pin, verify every CDN file, run the frontend,
@@ -97,11 +72,8 @@ one `Plenix <v> breaks CTM` bug, copied to `plenix-ds/pds` for the PDS team). Ho
 ```sh
 node scripts/check_frontend_contract.cjs --base origin/main   # CDN pin + styling (changed files)
 node scripts/check_migration_diff.cjs                         # migration lint vs origin/main
-node scripts/check_ownership.cjs --slice <id>                  # changed files vs owners block
-node scripts/check_slice_trace.cjs <id>                        # acceptance IDs: brief -> design -> evidence
 node scripts/check_i18n.cjs --base origin/main                 # EN/AR keys, new problems only
 uv run --no-project --with pyyaml==6.0.3 python scripts/check_decisions.py  # every decision has a check
-node scripts/check_registry.cjs                               # role registry + no setting values in docs
 opengrep scan --config .opengrep/ctm.yml --baseline-commit origin/main --error
 node --test tests/frontend/*.test.cjs                          # frontend contracts
 uv run pytest --ds=ctm.settings_postgres_test -q               # needs isolated CTM_TEST_DATABASE_URL

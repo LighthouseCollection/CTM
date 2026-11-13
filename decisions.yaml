@@ -19,7 +19,8 @@ decisions:
     why: The owner is the product stakeholder and reporter, not an approval step
     options: [Full autonomy (chosen), Lead-only merges with owner taps]
     decided_by: owner
-    status: active
+    status: superseded
+    superseded_by: D-0074
     review_only: A permission setting (.claude/settings.json), enforced by the safety nets in sdlc.md section 3, not by a code rule
 
   - id: D-0002
@@ -579,3 +580,12 @@ decisions:
     status: active
     check: { kind: test, ref: tests/frontend/council-lists.test.cjs }
 
+  - id: D-0074
+    date: 2026-11-13
+    area: process
+    decision: CTM is run by the CTM4 agent team, set up with dispatch kit 3.4 (Project Plan 3.4) and led by the PM "CTM4 - PM"; the team follows .agents/RULES.md. Merging changes from full autonomy to PR-only - agents push branches and open PRs, and a member merges, because every merge deploys the live site. The rest of D-0001 stands (git clean -fdx in an own worktree only, real migrations and data the automated way, backups before migrations and deploys, health check and automatic rollback after deploy)
+    why: The owner restarted the agent teams on one shared kit and plan on 2026-11-13; merges deploy production, so a member merges
+    options: [PR-only (chosen), Self-merge through auto-merge (before, D-0001)]
+    decided_by: owner
+    status: active
+    check: { kind: config, ref: .agents/agents.config.yaml }
