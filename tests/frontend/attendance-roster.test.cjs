@@ -210,3 +210,37 @@ test("Mark the rest present is never disabled while saving: it shows the Plenix 
   assert.ok(!byName(tree, "Button")[0].props.loading, "loading ends after a refusal");
   assert.ok(!byName(tree, "Button")[0].props.disabled);
 });
+
+// Issue 313 (G5c finding 2): focus moves to the summary because the bulk button was the source, not because several
+// members were saved. With exactly one unrecorded member the button still turns off, so focus must still move.
+test("Mark the rest present moves focus to the summary even when only one member was unrecorded", async () => {
+  const h = harness();
+  h.React.Component = class { constructor(p) { this.props = p; } };
+  h.React.Component.prototype.isReactComponent = {};
+  const focused = [];
+  const document = { getElementById: (id) => ({ focus: () => focused.push(id) }) };
+  const C = load(h, {}, { document });
+  const one = rows.map((r) => (r.id === "s" ? { ...r, present: true } : r)); // only m1 is left unrecorded
+  const props = { lang: "en", rows: one, readOnly: false, savePath: ATTENDANCE_PATH, onRecord: async () => {} };
+  let tree = h.render(C.AttendanceRoster, props);
+  const summary = byName(tree, "Text").find((x) => /1 not recorded/.test(textOf(x)));
+  assert.ok(summary, "exactly one unrecorded");
+  await byName(tree, "Button")[0].props.onClick();
+  await settle();
+  tree = h.render(C.AttendanceRoster, props);
+  assert.deepEqual(focused, [summary.props.id], "focus moved to the summary");
+});
+
+test("a single Present / Absent choice does not move focus", async () => {
+  const h = harness();
+  h.React.Component = class { constructor(p) { this.props = p; } };
+  h.React.Component.prototype.isReactComponent = {};
+  const focused = [];
+  const C = load(h, {}, { document: { getElementById: (id) => ({ focus: () => focused.push(id) }) } });
+  const props = { lang: "en", rows, readOnly: false, savePath: ATTENDANCE_PATH, onRecord: async () => {} };
+  let tree = h.render(C.AttendanceRoster, props);
+  await byName(tree, "SegmentedControl").find((c) => /Fr\. Abe/.test(c.props.label)).props.onChange("present");
+  await settle();
+  h.render(C.AttendanceRoster, props);
+  assert.deepEqual(focused, []);
+});

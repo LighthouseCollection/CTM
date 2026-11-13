@@ -2022,8 +2022,8 @@
     const [overrides, setOverrides] = R.useState({});
     const [busy, setBusy] = R.useState(false);
     const [failed, setFailed] = R.useState([]);
-    // Issue 313 (G5c): when "Mark the rest present" finishes and nothing is left, its button turns off; focus moves to the
-    // summary (tabIndex -1) so a keyboard user is not dropped to the page start.
+    // Issue 313 (G5c): when "Mark the rest present" (the bulk flag, whatever the member count) finishes and nothing is left, its
+    // button turns off; focus moves to the summary (tabIndex -1) so a keyboard user is not dropped to the page start.
     const summaryId = R.useId ? R.useId() : "attendance-summary"; // Text takes no ref, so focus goes by id
     const [refocus, setRefocus] = R.useState(0);
     R.useEffect(() => { const el = refocus && typeof document !== "undefined" ? document.getElementById(summaryId) : null; if (el && el.focus) el.focus(); }, [refocus]);
@@ -2032,7 +2032,7 @@
     const value = (row) => (row.id in overrides ? overrides[row.id] : row.present);
     // Issue 313: each choice shows at once and is sent in the background (CTMOptimistic); a refused one is put back.
     // savePath is the endpoint saved to; without it the helper keeps this confirm-first (shown after the server agrees).
-    async function save(list, present) {
+    async function save(list, present, bulk) {
       setBusy(true);
       setFailed([]);
       const O = window.CTMOptimistic;
@@ -2042,7 +2042,7 @@
       const misses = list.filter((row, i) => !outcomes[i].ok);
       if (misses.length) setFailed(misses.map((row) => row.name || "—"));
       setBusy(false);
-      if (list.length > 1 && !misses.length) setRefocus((count) => count + 1);
+      if (bulk && !misses.length) setRefocus((count) => count + 1);
     }
     if (!ordered.length) return h(P.EmptyState, { title: t("noSeatHolders") });
     const summary = rosterSummary(rows, overrides);
@@ -2060,7 +2060,7 @@
     const body = h(P.Stack, { gap: "md" },
       h(P.Inline, { justify: "between", align: "center", gap: "sm" },
         h(P.Text, { variant: "strong", role: "status", "aria-live": "polite", "aria-atomic": true, tabIndex: -1, id: summaryId }, t("rosterPresentOf", { present: n(summary.present), total: n(summary.total) }) + (summary.unrecorded ? ` · ${t("rosterNotRecorded", { n: n(summary.unrecorded) })}` : "")),
-        readOnly ? null : h(P.Button, { icon: "check", loading: busy, disabled: !busy && !rest.length, onClick: () => save(rest, true) },
+        readOnly ? null : h(P.Button, { icon: "check", loading: busy, disabled: !busy && !rest.length, onClick: () => save(rest, true, true) },
           t(summary.unrecorded === summary.total ? "markAllPresent" : "markRestPresent"))),
       list,
       failed.length ? h(P.Notice, { tone: "danger" }, t("rosterSaveFailed", { names: failed.join(", ") })) : null);
