@@ -51,6 +51,10 @@ and institutional terms still go to the owner or the institution.
 | Permissions | Permissions | الأذونات | Microsoft (OneDrive "أذونات المشاركة"); `permissions` | Accepted - Microsoft (D-0037); was الصلاحيات |
 | Save status | Saved / Not saved | تم الحفظ / لم يتم الحفظ | Microsoft Office save status; `savedShort`, `notSaved` | Accepted - Microsoft (D-0037); was محفوظ / غير محفوظ |
 | More actions | More actions | المزيد من الإجراءات | Microsoft "المزيد من …" pattern; `moreActions` | Accepted - Microsoft (D-0037); was مزيد من الإجراءات |
+| Reminder (session email, button) | Reminder | تذكير (التذكير، التذكيرات) | `sendReminderNow`, `reminderHourLimit`; session emails (#360) | Proposed (#360) |
+| Sign in (instruction) | Sign in to CTM | سجّل الدخول إلى CTM | Microsoft "تسجيل الدخول"; `signIn`, `expired` | Proposed (#360) |
+| Attendance answer | I will attend / I will not attend | سأحضر / لن أحضر | `willAttend`, `willNotAttend` (#116) | Proposed (#360) |
+| Time zone in emails | {time} Los Angeles time | {time} بتوقيت لوس أنجلوس | Session emails (#360) | Proposed (#360) |
 
 ## Tone
 
