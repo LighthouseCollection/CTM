@@ -10,7 +10,7 @@ Date: 2026-10-20. Scope: reconcile detailed relational documentation and permiss
 - [Permission matrix](CTM-permissions.md): applicant/member/assigned/admin/secretary/service access with explicit ownership and lifecycle conditions.
 - [Applicant/council reconciliation](questionnaire-council-reconciliation.md) and [prototype mapping](prototype-to-data-map.md): aligned to canonical names and approved additions/exclusions.
 
-The original working document is preserved verbatim in `archive/CTM-data-architecture-pre-reconciliation-2026-10-20.md`, SHA-256 `59bd8e122cceee5e4415febbf73dae0bf21fa602d2cf25a55036b2f87894325f`. It is not an active implementation specification. Raw prototype inventory/JSON/source manifest remain source evidence, not overridden production policy.
+The original working document was preserved verbatim in `archive/CTM-data-architecture-pre-reconciliation-2026-10-20.md` (removed in #337; it remains in git history), SHA-256 `59bd8e122cceee5e4415febbf73dae0bf21fa602d2cf25a55036b2f87894325f`. It is not an active implementation specification. Raw prototype inventory/JSON/source manifest remain source evidence, not overridden production policy.
 
 ## 2. Decision-to-schema-and-permission traceability
 

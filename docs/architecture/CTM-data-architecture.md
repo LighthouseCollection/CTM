@@ -15,7 +15,7 @@ Reconciled 2026-10-20 against all confirmed decisions. Documentation only: no ap
 4. [Questionnaire/council reconciliation](questionnaire-council-reconciliation.md) maps current applicant questions to council fields and separates proposed/deferred items.
 5. [Reconciliation report](CTM-reconciliation-report.md) records changes, traceability and documentation verification.
 
-The earlier 196 KB working architecture with accumulated proposals/overrides is preserved in [the archive](archive/CTM-data-architecture-pre-reconciliation-2026-10-20.md). It is historical context, not a current schema or permissions specification. The prototype inventory is also evidence rather than approved production policy.
+The earlier 196 KB working architecture with accumulated proposals/overrides is kept only in git history (the archive copy was removed in #337). It is historical context, not a current schema or permissions specification. The prototype inventory is also evidence rather than approved production policy.
 
 ## 1. Product and deployment boundary
 

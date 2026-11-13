@@ -24,7 +24,7 @@ Preserve template/category/question versions and actual selected order. Removing
 
 The free-form [priest testimony template](CTM-priest-testimony-template-draft.md) is a separate link-based report identifying the marriage and subject party, not a priest being interviewed through this bank.
 
-Earlier flat bilingual draft revision 2 is retained in archive/CTM-guided-interview-template-draft-v2-before-category-review.md for wording provenance. It is not the current selection model.
+Earlier flat bilingual draft revision 2 is kept only in git history (archive copy removed in #337) for wording provenance. It is not the current selection model.
 
 ## Investigation hierarchy, source context and evaluation releases
 
