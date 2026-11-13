@@ -52,21 +52,58 @@ def council_recipients():
     ).order_by("id")
 
 
+# Arabic approved by a member on #360 (rows in docs/i18n/arabic-proposals.md); #366 puts it
+# after the English in the same body. Arabic-Indic digits in the Arabic half
+# (docs/i18n/arabic.md); the sign-in URL stays Latin at the end of its line.
+SUBJECTS_AR = {
+    "session_invite": "جلسة المجلس في CTM بتاريخ {date}",
+    "session_update": "تم التحديث: جلسة المجلس في CTM بتاريخ {date}",
+    "session_cancel": "تم الإلغاء: جلسة المجلس في CTM بتاريخ {date}",
+    "session_reminder": "تذكير: جلسة المجلس في CTM بتاريخ {date}",
+}
+OPENINGS_AR = {
+    "session_invite": "تمت دعوتك إلى جلسة المجلس في CTM.",
+    "session_update": "طرأ تغيير على جلسة المجلس في CTM.",
+    "session_cancel": "أُلغيت جلسة المجلس في CTM في هذا التاريخ.",
+    "session_reminder": "تذكير: موعد جلسة المجلس في CTM بعد يومين.",
+}
+SIGN_IN_ATTEND = "Sign in to CTM to say whether you will attend: {url}"
+SIGN_IN_DETAILS = "Sign in to CTM for details: {url}"
+SIGN_IN_ATTEND_AR = "سجّل الدخول إلى CTM لتُعلمنا هل ستحضر أم لا: {url}"
+SIGN_IN_DETAILS_AR = "سجّل الدخول إلى CTM للاطلاع على التفاصيل: {url}"
+BODY_SEPARATOR = "\n\n---\n\n"
+_ARABIC_INDIC = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
+
+
+def arabic_digits(text: str) -> str:
+    return text.translate(_ARABIC_INDIC)
+
+
 def _message(kind, session):
     when = session.starts_at.astimezone(LA)
-    lines = [
+    day = session.date.isoformat()
+    clock = when.strftime("%H:%M")
+    attend = kind != "session_cancel"
+    english = "\n".join([
         OPENINGS[kind],
         "",
-        f"Date: {session.date.isoformat()}",
-        f"Time: {when.strftime('%H:%M')} Los Angeles time",
+        f"Date: {day}",
+        f"Time: {clock} Los Angeles time",
         f"Location: {session.location}",
         "",
-    ]
-    if kind != "session_cancel":
-        lines.append(f"Sign in to CTM to say whether you will attend: {SIGN_IN_URL}")
-    else:
-        lines.append(f"Sign in to CTM for details: {SIGN_IN_URL}")
-    return SUBJECTS[kind].format(date=session.date.isoformat()), "\n".join(lines)
+        (SIGN_IN_ATTEND if attend else SIGN_IN_DETAILS).format(url=SIGN_IN_URL),
+    ])
+    arabic = "\n".join([
+        OPENINGS_AR[kind],
+        "",
+        f"التاريخ: {arabic_digits(day)}",
+        f"الوقت: {arabic_digits(clock)} بتوقيت لوس أنجلوس",
+        f"الموقع: {session.location}",
+        "",
+        (SIGN_IN_ATTEND_AR if attend else SIGN_IN_DETAILS_AR).format(url=SIGN_IN_URL),
+    ])
+    subject = f"{SUBJECTS[kind].format(date=day)} / {SUBJECTS_AR[kind].format(date=arabic_digits(day))}"
+    return subject, english + BODY_SEPARATOR + arabic
 
 
 def _payload(kind, session, *, manual=False):

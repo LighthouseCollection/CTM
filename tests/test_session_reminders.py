@@ -66,7 +66,7 @@ def test_planned_session_with_a_start_time_invites_every_active_council_account(
     assert all(row.case_id is None for row in invites)
     payload = invites[0].payload
     assert "METHOD:PUBLISH" in payload["ics"] and "SEQUENCE:0" in payload["ics"]
-    assert payload["subject"] == f"CTM Council Session {day.isoformat()}"
+    assert payload["subject"].startswith(f"CTM Council Session {day.isoformat()} / ")
 
 
 def test_automatic_reminder_is_queued_for_two_days_before_the_start(people, planned):
@@ -193,7 +193,7 @@ def test_invite_is_delivered_with_the_calendar_file(people, planned, mailoutbox)
     Outbox.objects.filter(kind="session_reminder").delete()
     assert dispatch_outbox() == len(COUNCIL)
     message = mailoutbox[0]
-    assert message.subject == f"CTM Council Session {planned.date.isoformat()}"
+    assert message.subject.startswith(f"CTM Council Session {planned.date.isoformat()} / ")
     assert "https://ctm.lighthouseway.org" in message.body
     name, content, mimetype = message.attachments[0]
     assert name == "ctm-council-session.ics"
@@ -248,3 +248,82 @@ def test_api_secretary_send_now_and_email_state(granted_roles, people, planned, 
         response = client.post(f"/api/sessions/{planned.pk}/reminders/")
         assert response.status_code == 422
         assert EMAIL_UNAVAILABLE in response.json()["messages"]
+
+
+# #366: English first, then the member-approved Arabic (#360), one body ------------
+
+ARABIC = {  # kind: (subject, opening, sign-in line), exactly as approved on #360
+    "session_invite": ("جلسة المجلس في CTM بتاريخ {date}", "تمت دعوتك إلى جلسة المجلس في CTM.",
+                       "سجّل الدخول إلى CTM لتُعلمنا هل ستحضر أم لا: {url}"),
+    "session_update": ("تم التحديث: جلسة المجلس في CTM بتاريخ {date}", "طرأ تغيير على جلسة المجلس في CTM.",
+                       "سجّل الدخول إلى CTM لتُعلمنا هل ستحضر أم لا: {url}"),
+    "session_cancel": ("تم الإلغاء: جلسة المجلس في CTM بتاريخ {date}",
+                       "أُلغيت جلسة المجلس في CTM في هذا التاريخ.",
+                       "سجّل الدخول إلى CTM للاطلاع على التفاصيل: {url}"),
+    "session_reminder": ("تذكير: جلسة المجلس في CTM بتاريخ {date}", "تذكير: موعد جلسة المجلس في CTM بعد يومين.",
+                         "سجّل الدخول إلى CTM لتُعلمنا هل ستحضر أم لا: {url}"),
+}
+ENGLISH = {
+    "session_invite": ("CTM Council Session {date}", "You are invited to the CTM council session."),
+    "session_update": ("Updated: CTM Council Session {date}", "The CTM council session has changed."),
+    "session_cancel": ("Cancelled: CTM Council Session {date}",
+                       "The CTM council session on this date is cancelled."),
+    "session_reminder": ("Reminder: CTM Council Session {date}",
+                         "Reminder: the CTM council session is in two days."),
+}
+SEPARATOR = "\n\n---\n\n"
+
+
+def indic(text):
+    return text.translate(str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩"))
+
+
+def every_kind(people, planned):
+    """The payload of each of the four email kinds (an update, then a move that cancels and re-invites)."""
+    update_session(people["secretary"], planned.pk, planned.date, starts_at=planned.starts_at, location="Hall 9")
+    new_day = future_day(20)
+    reschedule_session(people["admin"], planned.pk, new_day, {}, "Hall changed")
+    found = {}
+    for kind in ENGLISH:
+        row = Outbox.objects.filter(kind=kind).order_by("-id").first()
+        assert row is not None, kind
+        found[kind] = row.payload
+    return found
+
+
+def test_every_email_kind_has_english_then_arabic_in_one_body(people, planned):
+    from tribunal.services.session_calendar import SIGN_IN_URL
+    for kind, payload in every_kind(people, planned).items():
+        english, arabic = payload["body"].split(SEPARATOR)
+        assert english.startswith(ENGLISH[kind][1])
+        assert arabic.startswith(ARABIC[kind][1])
+        assert arabic.endswith(ARABIC[kind][2].format(url=SIGN_IN_URL))
+        assert english.endswith(SIGN_IN_URL) and arabic.splitlines()[-1].endswith(SIGN_IN_URL)  # URL stays Latin
+        for label in ("Date: ", "Time: ", "Location: "):
+            assert label in english
+        for label in ("التاريخ: ", "الوقت: ", "الموقع: "):
+            assert label in arabic
+        assert " بتوقيت لوس أنجلوس" in arabic
+        day = english.split("Date: ")[1].splitlines()[0]
+        en_subject, ar_subject = payload["subject"].split(" / ")
+        assert en_subject == ENGLISH[kind][0].format(date=day)
+        assert ar_subject == ARABIC[kind][0].format(date=indic(day))
+
+
+def test_arabic_half_uses_arabic_indic_digits_only(people, planned):
+    from tribunal.services.session_calendar import SIGN_IN_URL
+    for kind, payload in every_kind(people, planned).items():
+        english, arabic = payload["body"].split(SEPARATOR)
+        lines = arabic.replace(SIGN_IN_URL, "").splitlines()
+        assert not [l for l in lines if not l.startswith("الموقع: ") and any(c in "0123456789" for c in l)], kind
+        assert f"التاريخ: {indic(english.split('Date: ')[1].splitlines()[0])}" in lines
+        clock = english.split("Time: ")[1].split(" Los")[0]
+        assert f"الوقت: {indic(clock)} بتوقيت لوس أنجلوس" in lines
+        assert not any(c in "0123456789" for c in payload["subject"].split(" / ")[1])
+
+
+def test_calendar_summary_stays_english(people, planned):
+    for payload in every_kind(people, planned).values():
+        summary = payload["ics"].split("SUMMARY:")[1].splitlines()[0]
+        assert summary.startswith("CTM Council Session ")
+        assert not any("\u0600" <= ch <= "\u06ff" for ch in summary)
