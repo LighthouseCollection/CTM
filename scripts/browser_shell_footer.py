@@ -43,6 +43,7 @@ from playwright.sync_api import sync_playwright
 BEFORE = os.environ.get("CTM_FOOTER_BEFORE") == "1"
 TAG = "before" if BEFORE else "after"
 CASE = {
+    "assigned_member_id": "synthetic",
     "id": "11111111-1111-1111-1111-111111111111",
     "number": "20261021-01",
     "status": "open",
@@ -101,15 +102,21 @@ def run(browser, portal, lang):
     padding = page.locator(".plx-page-content").evaluate("e => parseFloat(getComputedStyle(e).paddingBottom)")
     assert padding > 0 and content["y"] + content["height"] + padding <= top + 0.5, (content, padding, top)
     if portal == "council" and lang == "en":
-        # A split list/detail page keeps its bounded column (its panes scroll on their own) above the footer.
-        page.get_by_role("button", name="All Active Cases", exact=True).click()
-        page.get_by_text("20261021-01").first.wait_for()
-        assert "plx-u-min-h-0" in page.locator(".plx-page-content > .plx-stack").get_attribute("class")
-        pc = page.locator(".plx-page-content")
-        assert pc.evaluate("e => e.scrollHeight <= e.clientHeight + 1"), "the list/detail column does not overflow"
-        box = pc.bounding_box()
-        assert box["y"] + box["height"] <= top + 0.5
-        page.screenshot(path=".tmp/ctm-footer-council-en-after-cases.png")
+        # Every page that renders a bounded part (split list/detail, Listing) keeps its bounded column above the
+        # footer, derived from what the page renders (PageColumn), not from a page list (G5a on PR #327).
+        for nav_name, shot_name in (("All Active Cases", "cases"), ("My Cases", "my-cases")):
+            page.get_by_role("button", name=nav_name, exact=True).click()
+            page.get_by_text("20261021-01").first.wait_for()
+            column = page.locator(".plx-page-content > .plx-stack")
+            page.wait_for_function(
+                "() => document.querySelector('.plx-page-content > .plx-stack').classList.contains('plx-u-min-h-0')"
+            )
+            assert "plx-u-min-h-0" in column.get_attribute("class"), nav_name
+            pc = page.locator(".plx-page-content")
+            assert pc.evaluate("e => e.scrollHeight <= e.clientHeight + 1"), f"{nav_name}: the column does not overflow"
+            box = pc.bounding_box()
+            assert box["y"] + box["height"] <= top + 0.5, nav_name
+            page.screenshot(path=f".tmp/ctm-footer-council-en-after-{shot_name}.png")
     page.close()
 
 
