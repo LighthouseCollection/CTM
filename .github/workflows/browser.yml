@@ -1,0 +1,151 @@
+name: CTM browser checks
+# Issue #51, lesson L-08: browser scripts that gate a claim run in CI on every pull request.
+# Real Plenix CDN, PostgreSQL service, fictional data only (D-0016). Desktop width only.
+# Screenshots go up as a run artifact and to the ci-screenshots branch (for the dashboard).
+# Not a required check yet: a member makes it required later. Never cancels a run (L-12).
+# A script listed below that is not on the branch yet is reported as Skipped, so the check
+# picks it up by itself when its pull request merges (browser_shell_footer.py: #327,
+# browser_key_dates.py: #345).
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: browser-checks-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  browser:
+    name: Browser checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ctm_validation
+          POSTGRES_USER: ctm_validation
+          POSTGRES_PASSWORD: ci-isolated-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ctm_validation"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Disposable CI cluster only.
+      CTM_TEST_DATABASE_URL: postgres://ctm_validation:ci-isolated-only@localhost:5432/ctm_validation
+      DJANGO_SECRET_KEY: ci-only-not-production
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.8.22'
+      - name: Install Python and the browser
+        run: |
+          uv sync --frozen --python 3.12 --group browser
+          uv run --group browser playwright install --with-deps chromium
+      - name: Provision least-privileged runtime roles in the CI database
+        env:
+          CTM_APP_PASSWORD: ci-ctm-app-only
+          CTM_WORKER_PASSWORD: ci-ctm-worker-only
+        run: |
+          db="${{ job.services.postgres.id }}"
+          docker cp deploy/postgres/init.sql "$db:/tmp/ctm-init.sql"
+          docker exec -i --env CTM_APP_PASSWORD --env CTM_WORKER_PASSWORD --env CTM_INIT_SQL=/tmp/ctm-init.sql "$db" bash -s < deploy/postgres/00-init-roles.sh
+      - name: Run the browser scripts
+        run: |
+          mkdir -p .tmp
+          failed=0
+          {
+            echo "### Browser checks"
+            echo
+            echo "| Script | Result |"
+            echo "|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for script in scripts/browser_shell_footer.py scripts/browser_cdn_smoke.py scripts/browser_key_dates.py; do
+            if [ ! -f "$script" ]; then
+              echo "Skipped: $script is not on this branch"
+              echo "| \`$script\` | Skipped (not on this branch) |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+            echo "::group::$script"
+            if uv run --group browser python "$script"; then
+              echo "| \`$script\` | Ran: pass |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| \`$script\` | Ran: FAIL |" >> "$GITHUB_STEP_SUMMARY"
+              failed=1
+            fi
+            echo "::endgroup::"
+          done
+          exit "$failed"
+      - name: Upload the screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: browser-screenshots
+          path: .tmp/*.png
+          if-no-files-found: ignore
+          retention-days: 14
+
+  publish-screenshots:
+    # Only this job can write, and it runs no browser code: it copies the PNG files of the run
+    # to the ci-screenshots branch. Not for fork pull requests (their token is read-only).
+    name: Screenshots to ci-screenshots
+    needs: browser
+    if: >-
+      always() && needs.browser.result != 'skipped' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: browser-screenshots
+          path: shots-in
+        continue-on-error: true
+      - name: Push to ci-screenshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if ! ls shots-in/*.png >/dev/null 2>&1; then echo "Skipped: no screenshots in this run"; exit 0; fi
+          dir="browser/${PR_NUMBER:+pr-$PR_NUMBER/}run-$RUN_ID"
+          url="https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          git init -q shots && cd shots
+          git config user.name "ctm-bot"; git config user.email "ctm-bot@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            if git fetch -q "$url" ci-screenshots 2>/dev/null; then
+              git checkout -q -B ci-screenshots FETCH_HEAD
+            else
+              git checkout -q --orphan ci-screenshots
+            fi
+            mkdir -p "$dir" && cp ../shots-in/*.png "$dir/"
+            git add "$dir" && git commit -qm "Screenshots: browser checks run $RUN_ID"
+            if git push -q "$url" ci-screenshots; then
+              {
+                echo "### Screenshots"
+                echo "Branch \`ci-screenshots\`, folder \`$dir\`."
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "Push raced with another run (attempt $attempt); fetching again."
+            git reset -q --hard
+            sleep $((attempt * 3))
+          done
+          echo "Could not push the screenshots after 5 attempts" >&2
+          exit 1
