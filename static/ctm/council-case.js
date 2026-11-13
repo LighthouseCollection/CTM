@@ -2993,7 +2993,7 @@ ${ar}` : en;
       } catch (error) { setFailure(base.serverMessage(error, t)); } finally { setPending(false); }
     }
     const err = (key) => (problem === key ? t(key) : undefined);
-    const callDialog = composing ? h(P.Dialog, { open: true, title: t("recordCall"), size: "lg", onClose: () => !pending && setComposing(false) },
+    const callDialog = composing ? h(P.Dialog, { closeLabel: base.translator(lang)("close"), open: true, title: t("recordCall"), size: "lg", onClose: () => !pending && setComposing(false) },
       h(P.Form, { onSubmit: save, label: t("recordCall"), noValidate: true },
         h(P.FormSection, { title: t("recordCall") },
           h(P.Field, { label: t("callParty"), required: true, error: err("chooseCallParty") }, h(P.Select, { value: form.party, disabled: pending, onChange: (e) => update({ party: e.target.value }), options: [{ value: "", label: t("chooseCallParty") }, ...record.parties.map((p) => ({ value: p.id, label: p.name }))] })),
@@ -3127,7 +3127,7 @@ ${ar}` : en;
     }
     const err = (key) => (problem === key ? t(key) : undefined);
     const requestDialog = composing
-      ? h(P.Dialog, { open: true, title: t("newAssessment"), size: "lg", onClose: () => !pending && setComposing(false) },
+      ? h(P.Dialog, { closeLabel: base.translator(lang)("close"), open: true, title: t("newAssessment"), size: "lg", onClose: () => !pending && setComposing(false) },
           h(P.Form, { onSubmit: create, label: t("newAssessment"), noValidate: true },
             h(P.FormSection, { title: t("newAssessment") },
               h(P.Field, { label: t("subject"), required: true, error: err("chooseSubject") }, h(P.Select, { value: form.party, disabled: pending, onChange: (e) => update({ party: e.target.value }), options: [{ value: "", label: t("chooseSubject") }, ...record.parties.filter((p) => p.can_receive).map((p) => ({ value: p.id, label: p.name }))] })),
@@ -3370,7 +3370,7 @@ ${ar}` : en;
         setPending(false);
       }
     }
-    return h(P.Dialog, { open: true, size: "sm", role: "alertdialog", icon: "trash", onClose: pending ? undefined : onClose,
+    return h(P.Dialog, { closeLabel: base.translator(lang)("close"), open: true, size: "sm", role: "alertdialog", icon: "trash", onClose: pending ? undefined : onClose,
       title: t("deleteCaseTitle", { number }),
       footer: h(P.Inline, { gap: "sm", justify: "end" },
         h(P.Button, { disabled: pending, onClick: onClose }, bt("cancel")),
@@ -4005,7 +4005,7 @@ ${ar}` : en;
       } catch (error) { setFailure(base.serverMessage(error, t)); }
       finally { setPending(false); }
     }
-    const noteDialog = composing ? h(P.Dialog, { open: true, title: t(editing ? "editingNote" : "addNote"), size: "lg", onClose: () => !pending && setComposing(false) },
+    const noteDialog = composing ? h(P.Dialog, { closeLabel: base.translator(lang)("close"), open: true, title: t(editing ? "editingNote" : "addNote"), size: "lg", onClose: () => !pending && setComposing(false) },
       h(P.Form, { onSubmit: save, label: t(editing ? "editingNote" : "addNote"), noValidate: true },
         h(P.Field, { label: t(editing ? "editingNote" : "addNote"), description: editing ? t("editNoteHelp") : undefined }, h(P.Textarea, { rows: 5, autoGrow: true, value: text, maxLength: 50000, disabled: pending, onChange: (e) => { setText(e.target.value); setFailure(null); } })),
         failure ? h(P.Notice, { tone: "danger" }, failure) : null,
@@ -4456,11 +4456,10 @@ ${ar}` : en;
         onConfirm: () => !pending && submit("accept"),
         onCancel: () => !pending && setMode(null),
       }, failure && mode === "accept" ? h(P.Notice, { tone: "danger" }, failure) : null),
-      h(P.Dialog, {
+      h(P.Dialog, { closeLabel: base.translator(lang)("close"),
         open: mode === "reject",
         title: t("declineApplicationTitle"),
         description: t("declineApplicationHelp"),
-        closeLabel: base.translator(lang)("cancel"),
         onClose: () => !pending && setMode(null),
         footer: h(P.Inline, { justify: "end" },
           h(P.Button, { disabled: pending, onClick: () => setMode(null) }, base.translator(lang)("cancel")),
