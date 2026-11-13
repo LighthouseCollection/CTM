@@ -766,8 +766,10 @@
       P.Stack,
       null,
       heading(report.title),
-      text(`${t("subject")}: ${report.subject}`),
-      text(`${report.date} · ${t("version")} ${shown.version}`),
+      h(P.PropertyList, { variant: "tiles" },
+        h(P.PropertyList.Item, { label: t("subject") }, report.subject),
+        h(P.PropertyList.Item, { label: t("date") }, report.date),
+        h(P.PropertyList.Item, { label: t("version"), data: true }, String(shown.version))),
       report.parent_report_id
         ? h(P.Button, { onClick: onOriginal }, t("originalReport"))
         : null,
@@ -1805,7 +1807,7 @@
       if (page === "case")
         return h(P.RecordPage, {
             header: h(P.RecordPage.Header, { title: data.number,
-              description: `${t("status")}: ${t(data.status)}`,
+              meta: h(P.Badge, { tone: { submitted: "active", returned: "action-required", accepted: "success", declined: "negative", expired: "waiting" }[data.status] || "neutral" }, t(data.status)),
               actions: h(P.Button, { variant: "ghost", onClick: () => go(council ? "cases" : "past") }, t("backCases")),
             }),
           },
