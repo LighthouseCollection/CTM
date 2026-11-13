@@ -319,10 +319,11 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /t\("personalDetails"\)/);
   assert.match(councilCase, /t\("churchAffiliation"\)/);
   assert.match(councilCase, /party\.photo_url/);
-  assert.match(councilCase, /icon: h\(SpousePhotoUpload, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
-  assert.match(councilCase, /function spouseHeaderTitle/);
-  assert.match(councilCase, /title: spouseHeaderTitle\(P, h, t, party\)/);
-  assert.match(councilCase, /collapsible: true,\s*expanded: Boolean\(expandedParties\[party\.id\]\)/);
+  // #240 (D-0057): the photo is the Avatar in the icon spot; the title is the name and a role badge (council-spouse-cards.test.cjs).
+  assert.match(councilCase, /icon: h\(P\.Avatar, \{ src: party\.photo_url \|\| undefined, name: party\.name, size: "sm"/);
+  assert.match(councilCase, /title: spouseTitle\(P, h, t, party\)/);
+  assert.doesNotMatch(councilCase, /spouseHeaderTitle/);
+  assert.match(councilCase, /collapsible: true,\s*toggleOn: "header",\s*expanded: Boolean\(expandedParties\[party\.id\]\)/);
   assert.doesNotMatch(councilCase, /spouseIdentity\(P, h, t, party\)/);
   assert.match(councilCase, /collapsible: true/);
   assert.match(councilCase, /profile\?\.contact/);
@@ -330,7 +331,6 @@ test("spouse cards use the submitted council profile projection and remain colla
   assert.match(councilCase, /function SpouseContactSection\(\{ api, P, h, t, user, record, party, onSaved \}\)/);
   assert.match(councilCase, /h\(SpouseContactSection, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
   assert.match(councilCase, /readGroup\(P, h, title,\s*profileList\(P, h, fields\.map/, "the tiles variation lays the fields out two per row itself");
-  assert.match(councilCase, /size: "2xl",\s*label: party\.name/);
   assert.match(councilCase, /t\("personalDetails"\), "person", \[/);
   assert.doesNotMatch(councilCase, /t\("personalDetails"\), "user", \[/);
   // D-0050 (#217): the spouse sections are group headings (Plenix SectionHeading), with no icon and no line.
@@ -708,11 +708,11 @@ test("table pills keep the CDN categories: CTM overrides no pill color (#97 slic
 
 test("council spouse cards offer authorized profile-photo uploads", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  assert.match(councilCase, /function SpousePhotoUpload\(/);
+  assert.match(councilCase, /function SpousePhotoChange\(/);
   assert.match(councilCase, /form\.append\("category", "CASE_PHOTO"\)/);
   assert.match(councilCase, /form\.append\("context", party\.id\)/);
   assert.match(councilCase, /form\.append\("case_id", record\.id\)/);
-  assert.match(councilCase, /h\(SpousePhotoUpload, \{ api, P, h, t, user, record, party, onSaved: retry \}\)/);
+  assert.match(councilCase, /h\(SpousePhotoChange, \{ api, P, h, t, record, party, onSaved: retry \}\)/);
 });
 
 test("council-facing copy never uses presidential terminology", () => {
@@ -781,9 +781,9 @@ test("ctm3-48 part 2: read mode is a PropertyList, never a read-only input", () 
   assert.match(read, /timeZone: "UTC"/, "date-only values never shift a day");
 });
 
-test("ctm3-48 part 2: spouse photo change is Plenix AvatarUpload with EN and AR words", () => {
+test("ctm3-48 part 2: spouse photo change is Plenix AvatarUpload (in a dialog, #240) with EN and AR words", () => {
   const councilCase = fs.readFileSync("static/ctm/council-case.js", "utf8");
-  const upload = councilCase.slice(councilCase.indexOf("function SpousePhotoUpload("), councilCase.indexOf("function spouseHeaderTitle("));
+  const upload = councilCase.slice(councilCase.indexOf("function SpousePhotoChange("), councilCase.indexOf("function spouseTitle("));
   assert.match(upload, /h\(P\.AvatarUpload, \{/);
   assert.match(upload, /size: "2xl"/);
   assert.match(upload, /crop: false/);
