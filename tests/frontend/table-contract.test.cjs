@@ -250,9 +250,13 @@ test("session list and agenda columns are fitted to their content (#118, #114, #
   assert.doesNotMatch(list, /minWidth/);
   const agenda = council.slice(council.indexOf("const title = first ? t(\"casesToAssign\")"), council.indexOf("ctm-session-agenda-grid"));
   assert.equal((agenda.match(/title: t\("actions"\), field: "open_action", minWidth: "9rem"/g) || []).length, 2);
-  // Every hearings-agenda column has a width, so Plenix's fixed table does not stretch one past the room (PLX-025).
+  // Every hearings-agenda column except "#" has a width, so Plenix's fixed table does not stretch one past the room (PLX-025).
   const hearings = agenda.slice(agenda.indexOf('title: "#"'));
-  for (const field of ["hearing_number", "applicant", "respondent", "assigned_member_name", "previous_recommendation"])
+  for (const field of ["applicant", "respondent", "assigned_member_name", "previous_recommendation"])
     assert.match(hearings, new RegExp(`field: "${field}",[^\\n]*width: "`), field);
-  assert.match(hearings, /title: "#", field: "hearing_number", kind: \["name", "data"\], width: "5rem"/, "#110: the 80px floor (PLX-024)");
+  // #110: Plenix 1.1.0+ (D-0108, #966) draws a column with no `width` or `minWidth` as wide as its content (at least
+  // 32px), so "#" sets neither and fits its one or two digits.
+  const ordinal = hearings.slice(0, hearings.indexOf("\n"));
+  assert.match(ordinal, /title: "#", field: "hearing_number", kind: \["name", "data"\] \}/, "#110: content-sized ordinal");
+  assert.doesNotMatch(ordinal, /width|minWidth/i, "#110: no width on the # column");
 });
