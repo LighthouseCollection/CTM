@@ -443,6 +443,10 @@ test("council home lists council members as person cards in their order; a suppr
   same(cards.map((card) => [card.props.title, card.props.person.role, card.props.value ?? null]),
     [["H.G. Presiding", "Presiding", "9"], ["Sec Retary", "Secretary", "Hidden"], ["Fr. Abe Member", "Member", "12"], ["Fr. Zed Member", "Member", "7"]]);
   assert.ok(cards.every((card) => card.props.type === "person" && card.props.menu === undefined));
+  // Issue 323 / pds#1240: the compact person tile, 5 to 6 in a row; columns would override itemSize.
+  assert.ok(cards.every((card) => card.props.layout === "tile"), "person tiles");
+  assert.equal(grid.props.itemSize, "sm");
+  assert.equal(grid.props.columns, undefined);
   assert.equal(cards[1].props.unit, undefined);
   assert.equal(cards[0].props.unit, "active cases");
   assert.equal(panel.props.description, undefined); // owner, 2026-11-10: no note on hidden counts
@@ -491,4 +495,32 @@ test("home statistics: the chart caption is hidden and the hidden-count note sho
   const tree = h.render(C.HomeStatChart, props);
   assert.equal(byName(tree, "BarChart")[0].props.hideCaption, true);
   assert.equal(byName(tree, "Panel")[0].props.description, undefined); // owner, 2026-11-10: no note on hidden counts
+});
+
+// Issue 323 (owner, 2026-11-10): the two Home chart cards are the same height. The bar chart has no legend under
+// its plot, so the donut's legend sits beside it; "Show the data" and its table caption are in the reader's language.
+test("home statistics: the donut legend sits beside it and the chart data words are translated", async () => {
+  const [h, C] = boot();
+  const summary = { year: 2026, years: [2026], threshold: 5,
+    cases_per_member: [{ id: "1", name: "Fr. A", count: 9, suppressed: false }, { id: "2", name: "Fr. B", count: 7, suppressed: false }],
+    cases_by_ground: [{ code: "abuse", count: 7, suppressed: false }, { code: "faith", count: 6, suppressed: false }] };
+  async function chart(kind, lang) {
+    const props = { api: async () => summary, lang, kind, onNavigate() {} };
+    h.render(C.HomeStatChart, props); await settle();
+    return h.render(C.HomeStatChart, props);
+  }
+  for (const lang of ["en", "ar"]) {
+    const t = C.translator(lang);
+    const bar = byName(await chart("members", lang), "BarChart")[0];
+    const pie = byName(await chart("grounds", lang), "PieChart")[0];
+    assert.equal(bar.props.legend, false);
+    assert.equal(pie.props.legendPosition, "end");
+    for (const props of [bar.props, pie.props]) {
+      assert.equal(props.strings.showData, t("statsShowData"));
+      assert.equal(props.strings.table, t("statsDataTable"));
+      assert.match(props.strings.table, /\{title\}/, "Plenix fills in the chart title");
+    }
+  }
+  const en = C.translator("en"), ar = C.translator("ar");
+  for (const key of ["statsShowData", "statsDataTable"]) assert.notEqual(ar(key), en(key), key);
 });

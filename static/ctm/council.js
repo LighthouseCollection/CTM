@@ -711,6 +711,8 @@
       statsYear: "Year",
       statsShare: "Share",
       statsOther: "Other",
+      statsShowData: "Show the data",
+      statsDataTable: "{title}: data",
       statsAllHidden: "Every count in {year} is hidden.",
       statsNoCases: "No cases in {year}.",
       allStatistics: "All statistics",
@@ -1122,6 +1124,8 @@
       statsYear: "السنة",
       statsShare: "النسبة",
       statsOther: "أخرى",
+      statsShowData: "عرض البيانات",
+      statsDataTable: "{title}: البيانات",
       statsAllHidden: "كل الأعداد في {year} مخفية.",
       statsNoCases: "لا توجد قضايا في {year}.",
       allStatistics: "كل الإحصاءات",
@@ -3348,6 +3352,8 @@
     const picker = years.length ? h(P.Select, { size: "sm", label: t("statsYear"), "aria-label": t("statsYear"), value: shownYear,
       onChange: (event) => setYear(event.target.value), options: years.map((value) => ({ value, label: value })) }) : undefined;
     const all = onNavigate ? h(P.Button, { variant: "ghost", onClick: () => onNavigate(window.CTMRoutes?.routeFor("statistics") || "/reports") }, t("allStatistics")) : undefined;
+    // ChartFrame's words (chart-foundations.md strings): Plenix fills in {title} itself.
+    const frame = { showData: t("statsShowData"), table: t("statsDataTable") };
     let body;
     if (state.pending && !data) body = loadingView(P, h, t, t("loadingStatistics"));
     else if (state.error) body = h(P.Notice, { tone: "danger" }, serverMessage(state.error, t), " ", h(P.Button, { size: "sm", onClick: retry }, t("retry")));
@@ -3362,12 +3368,14 @@
         body = h(P.BarChart, { title, hideCaption: true, categories: shown.map((part) => part.label),
           series: [{ id: "cases", label: t("statsCases"), values: shown.map((part) => part.value) }],
           valueLabel: t("statsCases"), showValues: true, legend: false, format: (value) => number.format(value),
-          strings: { category: t("councilMember"), total: t("statsCases") } });
+          strings: { ...frame, category: t("councilMember"), total: t("statsCases") } });
       else
         // No center total (design: it would let a hidden count be worked out); the legend shows each part only.
+        // The legend sits beside the donut, as the bar chart has none under its plot: both cards are then as tall (issue 323).
         body = h(P.PieChart, { title, hideCaption: true, variant: "donut", data: shown, centerValue: " ", centerLabel: " ",
+          legendPosition: "end",
           format: (value) => number.format(value),
-          strings: { part: t("reason"), value: t("statsCases"), share: t("statsShare"), total: t("statsCases"), other: t("statsOther") } });
+          strings: { ...frame, part: t("reason"), value: t("statsCases"), share: t("statsShare"), total: t("statsCases"), other: t("statsOther") } });
     }
     return h(P.Panel, { icon: members ? "settings-users" : "chart", title, actions: picker, footer: all }, body);
   }
@@ -3493,7 +3501,8 @@
       return h(P.Panel, { icon: "folder-open", title: t("myCases"), actions: allCases || undefined }, body);
     };
 
-    // 4. Council members: one person card each with their active cases (aggregate only, design §4).
+    // 4. Council members: one compact person tile each with their active cases (aggregate only, design §4);
+    // itemSize sm fits 5 to 6 in a row (owner request, Plenix issue 1240).
     const membersRegion = () => {
       let body;
       if (members.pending && !members.data) body = loadingView(P, h, t, t("loadingMembers"));
@@ -3501,8 +3510,8 @@
       else {
         const rows = homeMembers(members.data.items, lang);
         body = rows.length
-          ? h(P.WidgetGrid, { label: t("councilMembers"), columns: 4, items: rows.map((row) => ({ ...row, id: String(row.id) })),
-              renderItem: (row) => h(P.MetricCard, { key: row.id, type: "person", size: "sm", title: row.name || "—", headingLevel: 3,
+          ? h(P.WidgetGrid, { label: t("councilMembers"), itemSize: "sm", items: rows.map((row) => ({ ...row, id: String(row.id) })),
+              renderItem: (row) => h(P.MetricCard, { key: row.id, type: "person", layout: "tile", size: "sm", title: row.name || "—", headingLevel: 3,
                 person: { name: row.name || "—", role: t(memberTitleKey(row.title)), src: row.photo_url || undefined },
                 value: row.suppressed ? t("hiddenValue") : n(row.active_cases), unit: row.suppressed ? undefined : t("activeCasesUnit") }) })
           : h(P.EmptyState, { title: t("noMembers") });
