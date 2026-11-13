@@ -248,3 +248,56 @@ def test_api_secretary_send_now_and_email_state(granted_roles, people, planned, 
         response = client.post(f"/api/sessions/{planned.pk}/reminders/")
         assert response.status_code == 422
         assert EMAIL_UNAVAILABLE in response.json()["messages"]
+
+
+# #365 (#359 backend): deleting an announced Draft session ------------------------
+
+def announced_draft(people, planned):
+    """In progress (invites queued), answered, then returned to Draft (D-0052)."""
+    from tribunal.services.council import return_session_to_planned
+    answer_session(people["member"], planned.pk, "attend")
+    answer_session(people["president"], planned.pk, "not_attend")
+    return_session_to_planned(people["admin"], planned.pk)
+    planned.refresh_from_db()
+    assert planned.state == "draft"
+    return planned
+
+
+def test_deleting_an_announced_draft_queues_a_cancel_and_removes_the_answers(people, planned):
+    from tribunal.services.council import delete_draft_session
+    draft = announced_draft(people, planned)
+    session_id = draft.pk
+    delete_draft_session(people["admin"], session_id)
+    assert not CouncilSession.objects.filter(pk=session_id).exists()
+    assert not SessionResponse.objects.filter(session_id=session_id).exists()
+    cancels = Outbox.objects.filter(kind="session_cancel", payload__session=str(session_id))
+    assert cancels.count() == len(COUNCIL)
+    ics = cancels.first().payload["ics"]
+    assert "METHOD:CANCEL" in ics and f"UID:council-session-{session_id}@" in ics and "SEQUENCE:1" in ics
+
+
+def test_deleting_an_announced_draft_through_the_api_is_not_a_server_error(granted_roles, people, planned, client):
+    draft = announced_draft(people, planned)
+    login(client, people["secretary"])
+    with granted_roles("ctm_app", session=True):
+        response = client.delete(f"/api/sessions/{draft.pk}/")
+    assert response.status_code == 204, response.content
+    assert not CouncilSession.objects.filter(pk=draft.pk).exists()
+    assert Outbox.objects.filter(kind="session_cancel", payload__session=str(draft.pk)).count() == len(COUNCIL)
+
+
+def test_deleting_a_draft_that_was_never_announced_queues_no_cancel(people, email):
+    from tribunal.services.council import delete_draft_session
+    day = future_day()
+    draft = create_session(people["admin"], day, starts_at=at(day), location="Hall 2", state="draft")
+    delete_draft_session(people["admin"], draft.pk)
+    assert not Outbox.objects.filter(payload__session=str(draft.pk)).exists()
+
+
+def test_deleting_an_announced_draft_without_email_set_up_fakes_no_send(people, planned, settings):
+    from tribunal.services.council import delete_draft_session
+    draft = announced_draft(people, planned)
+    settings.EMAIL_HOST = ""
+    delete_draft_session(people["admin"], draft.pk)
+    assert not CouncilSession.objects.filter(pk=draft.pk).exists()
+    assert not Outbox.objects.filter(kind="session_cancel", payload__session=str(draft.pk)).exists()
