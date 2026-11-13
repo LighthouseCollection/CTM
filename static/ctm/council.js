@@ -2964,7 +2964,11 @@
     return h(
       P.Stack,
       { gap: "lg" },
-      !current && onBack ? h(P.Inline, null, h(P.Button, { variant: "ghost", onClick: onBack }, t("backSessions"))) : null,
+      !current && onBack ? h(P.Link, { back: true, href: window.CTMRoutes?.routeFor("sessions"), onClick: (event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button) return;
+        event.preventDefault();
+        onBack();
+      } }, t("backSessions")) : null,
       h(P.EntityHeader, {
         media: { icon: "calendar", hue: "blue" },
         title: sessionLabel(session.date, t),
