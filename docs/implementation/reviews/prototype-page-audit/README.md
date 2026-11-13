@@ -476,15 +476,15 @@ No new product code or database mutation was performed. Existing worker test res
 
 ## Evidence and limits
 
-- `audit-results.json`:33 page records,30 findings and prototype SHA-256 inventory.
-- `prototype-inventory.json`: visible text/input identifiers with line numbers for every HTML page.
-- `prototype-extracted.txt`: readable extraction; includes fictional prototype samples.
+- `audit-results.json` (kept in git history): 33 page records,30 findings and prototype SHA-256 inventory.
+- `prototype-inventory.json` (kept in git history): visible text/input identifiers with line numbers for every HTML page.
+- `prototype-extracted.txt` (kept in git history): readable extraction; includes fictional prototype samples.
 - Source inspection includes selected inline scripts/shared app.js for dynamic controls. Not every handler was executed.
 - No browser screenshot/click-through audit or production DB query. No live provider/OCR/transcription claim.
 - Adjacent public applicant pages outside requested ctm-admin tree were not independently audited. Full application-field coverage is a follow-on dependency.
 - Current source anchors refer to pinned branch files, not the localhost build.
 
-- `field-mapping-review.csv`: 48 detailed prototype field mappings with explicit unresolved application-code/JSON-path qualifiers. This is a reconciliation worksheet, not a completed equivalence claim.
+- `field-mapping-review.csv` (kept in git history): 48 detailed prototype field mappings with explicit unresolved application-code/JSON-path qualifiers. This is a reconciliation worksheet, not a completed equivalence claim.
 
 ## Owner-supplied account/settings addendum
 

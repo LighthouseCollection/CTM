@@ -78,7 +78,7 @@ Missing optional or administrative tables: `dioceses`, `parishes`,
 ## Documentation corrections on PR #7
 
 - `docs/implementation/status.md:53` says forced RLS covers 23 tables. It is now 63.
-- `docs/implementation/validation-results.json` says `implemented_domain_models: 58`.
+- `docs/implementation/validation-results.json` (kept in git history) says `implemented_domain_models: 58`.
   It is now 63.
 - `docs/implementation/schema-reconciliation.json`:
   - 14 rows name the wrong candidate adapter (listed in README).

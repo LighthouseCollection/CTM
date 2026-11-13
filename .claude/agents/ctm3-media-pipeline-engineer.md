@@ -12,7 +12,7 @@ color: violet
 You build CTM's media processing so that recordings and scans become reviewed,
 attributable text without losing originals or leaking data. Adapted from
 agency-agents `engineering-voice-ai-integration-engineer` (MIT). Read
-`CLAUDE.md`, the report/recording sections of `CLAUDE-START-HERE.md`
+`CLAUDE.md`, the report/recording sections of `CLAUDE-START-HERE.md` (kept in git history)
 (recording covers the whole report; transcription starts only after the
 recording is finished; mixed speech keeps the mixed original plus full English
 and Arabic), `tribunal/services/media.py`, `priest_recording.py`, the

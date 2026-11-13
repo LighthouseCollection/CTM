@@ -177,11 +177,11 @@ Other backend claims:
 
 | Claim | Source | Verdict |
 | --- | --- | --- |
-| 63 domain models | `model-inventory.json`, `vm-frm-progress.md` | **Confirmed** (63 non-abstract models in `models.py`). |
+| 63 domain models | `model-inventory.json`, `vm-frm-progress.md` (kept in git history) | **Confirmed** (63 non-abstract models in `models.py`). |
 | 63/63 tables have forced RLS | `backend-status.md`, `core-policy-completion.md` | **Confirmed statically**: union of `MODELS` lists in 0011–0037 forced-RLS migrations plus explicit tables (CallRecord 0025, PendingPartyLink 0029, CaseNumberCounter 0031) = 63. |
 | Only new migrations 0036/0037/0038 in that delivery | `schema-gap-review.md` | **Confirmed** (0039 added later for the filing snapshot guard). |
 | "forced RLS on 23 private-source and council tables" | `status.md:53` | **Stale** (now 63). |
-| `implemented_domain_models: 58` | `validation-results.json` | **Stale** (now 63). |
+| `implemented_domain_models: 58` | `validation-results.json` (kept in git history) | **Stale** (now 63). |
 | Gap families in `schema-gap-review.md` (identity versions, account/provider history, marriage/related facts, case/party history, typed questions, typed citations, institution scope, delivery associations) | `schema-gap-review.md` | **Confirmed**. This review adds concrete items it does not name: raw session key, `staff_current_account` index, `decrees UNIQUE(proceeding_id)`, the Person overwrite path, and the enumeration CHECKs. |
 
 Applicant mapping (PR #5, AS01–AS08), against current backend `db82099`:
