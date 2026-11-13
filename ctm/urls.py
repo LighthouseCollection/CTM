@@ -5,6 +5,7 @@ from tribunal import auth
 from tribunal import priest_pdf_api
 from tribunal import priest_recording_api
 from tribunal import version_api
+from tribunal import list_api
 
 urlpatterns = [
     path("", api.shell),
@@ -32,6 +33,7 @@ urlpatterns = [
     path("api/payments/<uuid:intent_id>/retry/", api.retry_payment),
     path("integrations/stripe/", api.stripe_webhook),
     path("api/cases/", api.cases),
+    path("api/lists/<slug:name>/", list_api.list_view),
     path("api/cases/<uuid:case_id>/", api.case_detail),
     path("api/cases/<uuid:case_id>/assignment/", api.assign),
     path("api/cases/<uuid:case_id>/timeline/", api.case_timeline),
