@@ -1,4 +1,4 @@
-/* CTMServerList: the browser side of POST /api/lists/<name>/ (#312, task T5 / #370).
+/* CTMServerList: the browser side of POST /api/lists/<name>/ (issue 312, task T5, issue 370).
  *
  * query(api, list, body, signal) -> Promise<{items, page, size, total, has_more, facets?}>
  *   body is {page, size, sort, q, filters, facets}; total is null for lists the server filters row by row (audit).

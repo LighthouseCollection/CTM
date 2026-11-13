@@ -38,6 +38,19 @@
  *               a FilterPanel when filters is true) on one useCollectionView state with the grid
  *               (use-collection-view.md). placeholder and every visible word come from the caller (EN/AR).
  *
+ * Server mode (issues 312 and 370): `server: { list, filters, size, mode, mapRow, api }` on Table, Workspace and Listing.
+ *   The grid asks CTMServerList (server-list.js) for its rows, one page at a time, and `rows` is ignored.
+ *   list     the registered list name ("cases"); filters  the body's `filters`; size  the page size (default 50);
+ *   mode     "fill" (default; scrolls) or "pages"; mapRow(item) -> the row the columns read (default: the item);
+ *   api      the page's api function (app.js).
+ *   Columns: `serverSort: "<sort key>"` makes a column sortable (the server sorts); columns without it are not
+ *   sortable, and none is groupable (grouping one page misleads). Columns that have `render` must return a
+ *   string, number or boolean here, because the columns are drawn before any row has arrived.
+ *   The search box (search prop) still runs on useCollectionView, but only its text goes to the server (q,
+ *   debounced 300 ms, from two characters); its filter, sort and grouping are not given to the grid.
+ *   A change of list or filters starts the grid again from page 1. Ids already loaded are dropped from later pages.
+ *   When the server has no total (audit), the grid gets an estimate and `cardCount` is not drawn.
+ *
  * Why the template bodies and not <SplitWorkspace>/<ListingPage> themselves: in 0.86.0 both render their own
  * AppShell (a 100dvh frame with a second <main> and skip link). CTM already sits inside one AppShell (app.js),
  * so CTMShell draws the same parts the templates draw inside it: toolbar, then SplitView(DataGrid,
@@ -135,9 +148,73 @@
     return h(DelayedSpinner, { label, className });
   }
 
+  const SEARCH_DELAY = 300;
+  const SERVER_STRIPPED = ["filter", "sort", "groupBy"];
+
+  // Server mode (issue 312): the same DataGrid, fed by fetchRows instead of data. Hooks live here, not in Table.
+  function ServerTable({ label, columns, server, searchText, selected, onSelect, empty, className, rowMenu, narrow,
+    typeIcons = true, openKey, template, layout, keyColumns, cardCount, grid }) {
+    const [text, setText] = R.useState(searchText || "");
+    const [noTotal, setNoTotal] = R.useState(false);
+    const loaded = R.useRef(new Set());
+    const latest = R.useRef(null);
+    latest.current = { server, columns };
+    // Debounce: the grid restarts from page 1 only when the typing has paused.
+    R.useEffect(() => {
+      if ((searchText || "") === text) return undefined;
+      const timer = setTimeout(() => setText(searchText || ""), SEARCH_DELAY);
+      return () => clearTimeout(timer);
+    }, [searchText, text]);
+    const size = server.size || 50;
+    const { gridColumns } = project([], columns);
+    const sortKeys = new Map();
+    gridColumns.forEach((column, i) => { if (columns[i].serverSort) sortKeys.set(column.field, columns[i].serverSort); });
+    const serverColumns = gridColumns.map((column, i) => ({
+      ...column, groupable: false, sortable: !!columns[i].serverSort && column.sortable !== false,
+    }));
+    const fetchRows = async ({ page, size: pageSize, sort, search, signal }) => {
+      const { server: current, columns: currentColumns } = latest.current;
+      const body = { page, size: pageSize, filters: current.filters || {} };
+      const mapped = (sort || []).filter(level => sortKeys.has(level.field))
+        .map(level => ({ field: sortKeys.get(level.field), dir: level.dir === "desc" ? "desc" : "asc" }));
+      if (mapped.length) body.sort = mapped;
+      const q = String(search || "").trim();
+      if (q.length >= 2) body.q = q;
+      const result = await window.CTMServerList.query(current.api, current.list, body, signal);
+      if (page === 1) loaded.current = new Set();
+      const fresh = result.items.filter(item => !loaded.current.has(item.id));
+      fresh.forEach(item => loaded.current.add(item.id));
+      const mapRow = current.mapRow || (item => item);
+      const { gridRows } = project(fresh.map(mapRow), currentColumns);
+      const unknown = result.total == null;
+      setNoTotal(unknown);
+      return { rows: gridRows,
+        total: unknown ? (result.has_more ? page * pageSize + 1 : (page - 1) * pageSize + result.items.length) : result.total };
+    };
+    const open = openKey !== undefined ? openKey : selected === undefined ? undefined : selected ?? null;
+    const given = Object.fromEntries(Object.entries(grid || {}).filter(([key]) => !SERVER_STRIPPED.includes(key)));
+    const layoutMode = narrow || (columns.some(buttonColumn) ? "table" : "auto");
+    return h(P.DataGrid, {
+      key: server.list + ":" + JSON.stringify(server.filters || {}),
+      label, columns: serverColumns, index: "id", className,
+      density: "compact", cells: "pill", typeIcons, wrapHeaders: false,
+      narrow: layoutMode, empty, headerMenu: true,
+      rowMenu, rowMenuButton: !!rowMenu,
+      ...(open !== undefined ? { openKey: open } : {}),
+      ...(template ? { template } : {}), ...(layout ? { layout } : {}), ...(keyColumns ? { keyColumns } : {}),
+      ...(cardCount && !noTotal ? { strings: { cardCount } } : {}),
+      selected: selected ? [selected] : [],
+      onRowClick: onSelect ? (row) => onSelect(row.id) : undefined,
+      mode: server.mode || "fill", pageSize: size, fetchRows, search: text,
+      ...given,
+    });
+  }
+
   function Table({ label, rows, columns, selected, onSelect, empty, className, isStatic = true,
     rowMenu, narrow, typeIcons = true, loading = false, openKey, template, layout, keyColumns, cardCount,
-    grid, projected }) {
+    grid, projected, server, searchText }) {
+    if (server) return h(ServerTable, { label, columns: columns || [], server, searchText, selected, onSelect, empty,
+      className, rowMenu, narrow, typeIcons, openKey, template, layout, keyColumns, cardCount, grid });
     // Every CTM collection keeps native grid controls, including read-only records (isStatic is kept for
     // callers; read-only data must not disable column resizing, sorting or header menus).
     if (loading) return h(Loading, { label, className });
@@ -161,8 +238,8 @@
     });
   }
 
-  const tableProps = ({ rowMenu, narrow, typeIcons, loading, openKey, template, layout, keyColumns, cardCount, grid }) =>
-    ({ rowMenu, narrow, typeIcons, loading, openKey, template, layout, keyColumns, cardCount, grid });
+  const tableProps = ({ rowMenu, narrow, typeIcons, loading, openKey, template, layout, keyColumns, cardCount, grid, server }) =>
+    ({ rowMenu, narrow, typeIcons, loading, openKey, template, layout, keyColumns, cardCount, grid, server });
 
   // The command bar above a collection: the caller's commands, and the search and filters on one
   // useCollectionView state with the grid. Rendered only when a search is asked for, so the hook always runs.
@@ -185,7 +262,7 @@
         search.filters ? h(P.FilterPanel, view.filterProps) : null,
         commandBar?.find || null),
     });
-    return render(bar, { projected, grid: view.tableProps });
+    return render(bar, { projected, grid: view.tableProps, searchText: view.search });
   }
 
   function collection({ label, search, commandBar, toolbar, rows, columns }, draw) {
@@ -211,7 +288,8 @@
       h(P.SplitView, {
         label, firstLabel: label, orientation, defaultSize: orientation === "stacked" ? 320 : undefined,
         first: h(Table, { ...tableProps(props), label, rows, columns, selected: id, onSelect: onSelect || select, empty,
-          projected: extra.projected, grid: extra.grid ? { ...extra.grid, ...props.grid } : props.grid }),
+          projected: extra.projected, searchText: extra.searchText,
+        grid: extra.grid ? { ...extra.grid, ...props.grid } : props.grid }),
         second: h(P.ReadingPane, { label: chosen?.title || chosen?.name || label, actions: showing ? actions : null,
           empty: h(P.EmptyState, { title: emptyDetail }) },
           showing ? (typeof children === "function" ? children(chosen) : children) : null),
@@ -225,7 +303,8 @@
       bar,
       h(Table, { ...tableProps(props), label, rows, columns, empty, className, selected,
         onSelect: onOpen ? (rowId) => onOpen((rows || []).find((row) => row.id === rowId)) : undefined,
-        projected: extra.projected, grid: extra.grid ? { ...extra.grid, ...props.grid } : props.grid }),
+        projected: extra.projected, searchText: extra.searchText,
+        grid: extra.grid ? { ...extra.grid, ...props.grid } : props.grid }),
     ));
   }
 
