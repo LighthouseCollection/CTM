@@ -914,7 +914,7 @@ Decisions are recorded in `decisions/`, one file per decision (so two decision P
 |---|---|---|
 | in the project's own log (`decisions.yaml`) | Mode, project type, name, prefix (answering the intake authorizes Phase 0) | `Existing` / `Application` / `CTM` / `ctm` |
 | in the project's own log (`decisions.yaml`) | Design system and its published specification (**locked**) | `Plenix` at `https://design-system.lighthouseway.org/`, version `1.7.0 (pinned in ctm/settings.py; upgraded automatically by plenix-upgrade.yml, D-0005)` |
-| in the project's own log (`decisions.yaml`) | Repository, and for Existing the import source and cutover status | `LighthouseCollection/CTM`. Imported from CTM3 on VM 131 (folder /home/cc/ctm3, PM "CTM3 - PM"); old team stopped: not yet (cutover). |
+| in the project's own log (`decisions.yaml`) | Repository, and for Existing the import source and cutover status | `LighthouseCollection/CTM`. Imported from CTM3 on VM 131 (folder /home/cc/ctm3, PM "CTM3 - PM"); old team stopped: yes. |
 | in the project's own log (`decisions.yaml`) | Hosting and environments | `production https://ctm.lighthouseway.org/health/` |
 | in the project's own log (`decisions.yaml`) | Merge rights | `PR-only` |
 | in the project's own log (`decisions.yaml`) | Members and teams | `Fr. Raphael Maher (@LighthouseCollection, team core)` |
