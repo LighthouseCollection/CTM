@@ -148,6 +148,35 @@ def test_list_common_errors(client, people, when, name, payload):
     assert response.json() == expected_body(entry, payload)
 
 
+WRONG_TYPES = [
+    ("filters.status not open", {"filters": {"status": ["open"]}}),
+    ("filters.status not open", {"filters": {"status": {"value": "open"}}}),
+    ("sort field not allowed", {"sort": [{"field": ["number"], "dir": "asc"}]}),
+    ("sort field not allowed", {"sort": [{"field": {"name": "number"}, "dir": "asc"}]}),
+    ("more than 3 sort entries", {"sort": [{"field": "number", "dir": ["asc"]}]}),
+    ("more than 3 sort entries", {"sort": [{"field": "number", "dir": {"v": "asc"}}]}),
+    ("filters.ids not a list", {"filters": {"ids": [["00000000-0000-0000-0000-000000000000"]]}}),
+    ("filters.ids not a list", {"filters": {"ids": [{"id": "00000000-0000-0000-0000-000000000000"}]}}),
+    ("filters.ground not one of", {"filters": {"ground": ["abuse"]}}),
+    ("filters.ground not one of", {"filters": {"ground": {"code": "abuse"}}}),
+]
+
+
+@pytest.mark.parametrize("role", ["secretary", "applicant"])
+@pytest.mark.parametrize("when,payload", WRONG_TYPES)
+def test_list_wrongly_typed_json_values_are_422(client, people, contract_case, role, when, payload):
+    """G5a I-1: a list or object where a string belongs is a validation error, never 404/500."""
+    if role == "applicant" and "ground" in payload.get("filters", {}):
+        pytest.skip("ground is council-only: an applicant gets 403 for the key itself")
+    login(client, contract_case[1] if role == "applicant" else people[role])
+    response = post(client, "cases", payload)
+    assert response.status_code == 422, response.content
+    data = response.json()
+    assert data["error"] == "validation"
+    if "sort field" not in when:
+        assert data == contract_error("cases", when)["body"]
+
+
 def test_list_common_errors_signed_out_and_method(client, people):
     assert post(client, "cases", {}).json() == contract_error("cases", "not signed in")["body"]
     assert post(client, "cases", {}).status_code == 401

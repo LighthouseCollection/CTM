@@ -58,7 +58,8 @@ def normalize_q(value):
 
 
 def _refuse(spec, actor, key, message):
-    if key in spec.council_only and actor.role == "applicant":
+    # Only a string can name a council-only key; a list or object is a plain 422 (G5a I-1).
+    if isinstance(key, str) and key in spec.council_only and actor.role == "applicant":
         raise PermissionDenied(COUNCIL_ONLY)
     raise ValidationError(message)
 
@@ -67,7 +68,8 @@ def _sort(spec, actor, value):
     if value is None:
         return []
     if not isinstance(value, list) or len(value) > 3 or not all(
-            isinstance(row, dict) and set(row) <= {"field", "dir"} and row.get("dir") in {"asc", "desc"}
+            isinstance(row, dict) and set(row) <= {"field", "dir"} and isinstance(row.get("dir"), str)
+            and row["dir"] in {"asc", "desc"}
             for row in value):
         raise ValidationError("Use up to 3 sort entries, each with dir asc or desc.")
     allowed = spec.sorts(actor)
@@ -181,7 +183,7 @@ def case_queryset(actor):
 
 
 def _status_filter(qs, value):
-    if value not in {"open", "closed", "any"}:
+    if not isinstance(value, str) or value not in {"open", "closed", "any"}:
         raise ValidationError("status must be open, closed or any.")
     return qs if value == "any" else qs.filter(status=value)
 
