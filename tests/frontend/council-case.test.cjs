@@ -407,16 +407,16 @@ test("case summary read-only view uses the shorter labels in English and Arabic"
     assert.match(summaryGroups, new RegExp(`t\\("${key}"\\)`));
   for (const old of ["assignedCouncilMember", "lastHearingDate", "marriageDuration", "reasonForDivorce"])
     assert.doesNotMatch(summaryGroups, new RegExp(`t\\("${old}"\\)`));
-  assert.match(source, /summaryAssignedMember: "Council member"/);
+  assert.match(source, /summaryAssignedMember: "Assigned member"/);
   assert.match(source, /summaryLastHearing: "Last hearing"/);
   assert.match(source, /summaryMarriedFor: "Married for"/);
-  assert.match(source, /summaryGrounds: "Grounds"/);
+  assert.match(source, /summaryGrounds: "Reason"/);
   assert.match(source, /noChildrenSummary: "None recorded"/);
-  // Arabic reuses existing approved terms only (no new proposal).
+  // Arabic keeps the already-approved catalog wording (no new Arabic); English stays singular and keeps "assigned".
   assert.match(source, /summaryAssignedMember: "عضو المجلس"/);
-  assert.match(source, /summaryLastHearing: "آخر جلسة"/);
+  assert.match(source, /summaryLastHearing: "تاريخ آخر جلسة"/);
   assert.match(source, /summaryMarriedFor: "مدة الزواج"/);
-  assert.match(source, /summaryGrounds: "الأسباب"/);
+  assert.match(source, /summaryGrounds: "سبب طلب الطلاق"/);
   assert.match(source, /noChildrenSummary: "لا يوجد أبناء"/);
   // The summary's empty children value uses it; the editable forms keep the full strings.
   assert.match(source, /: t\("noChildrenSummary"\), last_hearing_date/);
