@@ -1568,16 +1568,11 @@
     );
     const header = h(P.AppHeader, {
       appName: "CTM",
-      brand: h(R.Fragment, null,
-        h(P.Image, {
-          src: "/static/ctm/tribunal-logo-36.svg",
-          alt: "", width: 36, height: 34, placeholder: "none", priority: true,
-        }),
-        h("span", { className: "plx-app-header__name" },
-          h("strong", { className: "plx-app-header__product" }, "DIOCESE OF LOS ANGELES"),
-          h("strong", { className: "plx-app-header__app" }, "CLERICAL TRIBUNAL MANAGEMENT"),
-        ),
-      ),
+      brand: {
+        logo: { src: "/static/ctm/tribunal-logo-36.svg", alt: "", width: 36, height: 34 },
+        organization: "DIOCESE OF LOS ANGELES",
+        application: "CLERICAL TRIBUNAL MANAGEMENT",
+      },
       brandHref: "/",
       switcher: false,
       nav: null,
@@ -2023,7 +2018,7 @@
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       // The app's toasts (AppShell gives none, PLX-021): today the case-deleted toast.
       h(P.ToastProvider, null, h(CaseDeletedToast, { text: (number) => t("caseDeleted").replace("{number}", number) }),
-        h("div", { className: "plx-page-panes" }, caseNav,
+        h(P.PagePanes, null, caseNav,
           h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
             preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
             content(),
