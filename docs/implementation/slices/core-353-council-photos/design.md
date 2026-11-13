@@ -21,12 +21,13 @@ Gate: G2, Design Director. Design only: no app code, no pictures (D-0004). Stora
 | `Dialog` | confirmation-dialog.md | Hosts the control from a row or card menu (`size="sm"`), when the layout has no details panel |
 | `ActionMenu` | action-menu.md | The existing row or card menu gets one item, "Council photo" |
 | `SettingsSection` | settings-page.md | Hosts the control inside a person's details panel, when the layout has one |
-| `Notice` | notice.md | save failures (with Retry), forbidden, conflict, not seated |
+| `Notice` | notice.md | save failures (with Try again), forbidden, conflict (with Use my photo), not seated |
 | `Toast` | toast.md | "Photo saved." / "Photo removed." only after the server confirmed |
-| `Avatar` | avatar.md | The photo on the Presiding fact and in the Settings list |
+| `Avatar` | avatar.md | The photo in a Settings > Users layout that already draws an avatar (`src`) |
+| `EntityHeader` | record-page.md | The session header's Presiding fact, unchanged: facts are `{ icon, label, value, action }` with no picture option, so it keeps its person icon (PLX-028) |
 | `MetricCard` | metric-card.md | Council Home member tiles, `type="person"`, `person.src` |
 | `UserCard` | user-card.md | Attendance rosters, `variant="compact"`, `src` |
-| `Button` | button.md | Only the `xs` Retry inside a failure `Notice`; every other button is inside `AvatarUpload` or `ConfirmDialog` |
+| `Button` | button.md | Only the `xs` buttons inside a `Notice` (Try again, Use my photo); every other button is inside `AvatarUpload` or `ConfirmDialog` |
 
 ## The control
 
@@ -73,8 +74,8 @@ button, Escape and the veil close it. Focus returns to the menu button (Plenix).
 
 | Layout | Host | Notes |
 |---|---|---|
-| Today | Row menu item, then `Dialog` | Today's Users table already has a row menu; the item shows only on seated rows (or rows with a photo) and only with `can_edit` |
-| A | Row menu item, then `Dialog` | Table rows stay one line; the list's `avatar-name` cell shows the saved photo |
+| Today | Row menu item, then `Dialog` | Today's Users table already has a row menu; the item shows only on seated rows (or rows with a photo) and only with `can_edit`. Its name column draws no avatar today (`ui-workspaces.js`, `columns`), and this design adds none: the photo shows in the control only |
+| A | Row menu item, then `Dialog` | Table rows stay one line; if the layout's name cell draws an avatar, it shows the saved photo |
 | B | The details panel's council seat section | First row, above Council seat and Voting; the list row's avatar shows the saved photo |
 | C | Row menu item, then `Dialog` | Same as A |
 | D | Card menu item, then `Dialog` | The card's own avatar (`UserCard src`) shows the saved photo; the card does not grow |
@@ -89,16 +90,20 @@ audit log (the log records actor, time and account, never the image).
 
 | Surface | Component | With a photo | Without one |
 |---|---|---|---|
-| Presiding fact, session header (#220, PR #352) | `Avatar size="sm"` beside the visible name | `src` = the president's photo URL | The person icon fact, as today |
+| Presiding fact, session header (#220, PR #352) | `EntityHeader` fact `{ icon, label, value, action }` (record-page.md, Header style 2) | **No photo yet.** The 1.8.0 spec documents no picture, `src` or element in a fact, so the fact keeps its person icon and the president's name. Requested as PLX-028; the builder adds the photo only once Plenix documents it | The person icon fact, as today |
 | Council Home, member tiles | `MetricCard type="person"` | `person.src` = the member's photo URL | As today (Plenix person card without a picture) |
 | Attendance roster and hearing attendance | `UserCard variant="compact"` | `src` = the member's photo URL | As today |
-| Settings > Users list | The picked layout's avatar (`Avatar`, `UserCard`) | `src` = the photo URL | Initials (Plenix `Avatar` default) |
+| Settings > Users list | `Avatar` or `UserCard`, only in a layout that already draws one (today's list draws none) | `src` = the photo URL | That layout's initials (Plenix `Avatar` default) |
 
+- **G1 AC-353-4, Presiding card.** Until PLX-028 is met, the Presiding card shows the name with the person icon, which
+  is the G1 fallback look. The tiles and rosters show the photo now. The builder must not draw a picture into the fact
+  by hand (no element in `value`, no CSS).
 - **Decorative beside the name.** On every display surface the visible name is right next to the photo, so the photo is
   decorative (no `label` on `Avatar`, empty alt), as G5c accepted on #352. Only inside the control does the picture carry
   a name (`photoAlt`), because there it is the thing being changed.
-- **Same size as today.** Each surface keeps its current avatar size; a photo replaces the initials or icon in place, so
-  no layout moves when photos arrive.
+- **No new avatars.** A photo goes only where a surface already draws a person picture (`MetricCard` person, `UserCard`,
+  a Users layout's `Avatar`), at that surface's current size, in place of its initials or icon. No layout moves when
+  photos arrive. Surfaces that draw only an icon or a name (the Presiding fact, today's Users list) stay as they are.
 - **Former members** (shown in attendance history) show their photo while one is stored, like any other staff member.
 
 ## States
@@ -117,10 +122,10 @@ is listed as missing in the build PR (DESIGN.md §3).
 | Remove: confirm | Dialog: "Remove {name}'s council photo?", Remove photo / Cancel | `ConfirmDialog destructive` | Yes |
 | Removing | Photo stays; control disabled; spinner, announced "Saving photo" | `disabled`, `Spinner` | Yes |
 | Removed | Initials in the square; toast "Photo removed." | `Toast` tone success | Yes |
-| Network or server error | Old photo stays; a danger notice under the field with Retry, which resends the same file (or the same removal) | `Notice tone="danger"` + `Button size="xs"` | Yes |
+| Network or server error | Old photo stays; a danger notice under the field with Try again (`retry`), which resends the same file (or the same removal); the chosen file is kept until then | `Notice tone="danger"` + `Button size="xs"` | Yes |
 | Forbidden | The server refused (rights changed meanwhile): danger notice, no data hints; the control goes away on reload | `Notice tone="danger"` `photoForbidden` | Yes |
 | Not seated | The seat was taken away meanwhile and the server refused an upload: info notice; Remove stays if a photo exists | `Notice tone="info"` `photoNotSeated` | Yes |
-| Conflict | Someone else changed the photo first (only if G3 versions photos): warning notice, the current photo is shown | `Notice tone="warning"` `photoConflict` | If G3 adds a version |
+| Conflict | Someone else changed or removed the photo first (only if G3 versions photos). The square shows the current saved photo (or initials); a warning notice names who changed it ({actor}). The person's chosen file is kept in the page (not shown as saved) and the notice's "Use my photo" button (`photoUseMine`) sends it again against the new version; dismissing the notice drops it. A conflicting removal has nothing to keep: the notice alone | `Notice tone="warning"` `photoConflict` + `actions` `Button size="xs"` | If G3 adds a version |
 | Read-only | Member role or no `can_edit`: no control; the photo shows only on display surfaces | (not drawn) | Yes |
 | Photo fails to load | The URL no longer loads (removed, expired or refused): the surface shows its "without a photo" look, never a broken image | `Avatar` fallback | Yes; builder verifies Plenix falls back, else a Plenix request |
 
@@ -152,13 +157,16 @@ CTM adds nothing for direction.
 | `photoRemoveTitle` | Remove {name}'s council photo? | Remove dialog title |
 | `photoRemoveMessage` | The council tiles and the Presiding card will show the person icon instead. You can add a new photo at any time. | Remove dialog message |
 | `photoRemoved` | Photo removed. | Success toast |
-| `photoSaveFailed` | The photo wasn't saved. Check your connection, then try again. | Danger notice under the field, with the existing `retry` key ("Retry") on its button |
-| `photoRemoveFailed` | The photo wasn't removed. Try again. | Same notice, after a failed removal |
+| `photoSaveFailed` | The photo wasn't saved. Check your connection. | Danger notice under the field; its button is the existing `retry` key ("Try again") |
+| `photoRemoveFailed` | The photo wasn't removed. Check your connection. | Same notice and button, after a failed removal |
 | `photoForbidden` | You can't change council photos. | Danger notice in place of the control |
 | `photoNotSeated` | Only council seat holders can have a council photo. | Info notice under the field |
-| `photoConflict` | Someone else changed this photo. The current photo is shown. | Warning notice under the field |
+| `photoConflict` | {actor} changed this photo first. Theirs is shown; yours wasn't saved. | Warning notice under the field |
+| `photoUseMine` | Use my photo | The conflict notice's button, at its end side; sends the kept file again |
 
-Existing keys reused: `cancel` (remove dialog), `retry` (failure notice). The seat words stay as they are.
+Existing keys reused: `cancel` (remove dialog) and `retry` ("Try again") on the failure notice's button (`app.js`, `council.js`).
+The seat words stay as they are. `{actor}` is the other person's name, isolated like `{name}`. The notices follow
+`docs/content/messaging.md`: what happened, then the fix, with the action on the button rather than repeated in the text.
 
 ## Accessibility
 
@@ -173,7 +181,10 @@ Existing keys reused: `cancel` (remove dialog), `retry` (failure notice). The se
 - The API gives, per staff account, `photo_url` (or null) and whether the caller may change it; the upload and removal
   answers return the new `photo_url` (or null) so the control can update without a second request.
 - The upload refusals need distinct codes the UI can map to `photoTooLarge`, `photoWrongContent`, `photoNotSeated`,
-  `photoForbidden` and (if versioned) `photoConflict`; anything else is `photoSaveFailed`.
+  `photoForbidden` and (if versioned) `photoConflict`; anything else is `photoSaveFailed`. A conflict answer carries
+  the current `photo_url`, its version and the name of who changed it (for `{actor}`).
 - If photo URLs expire, display surfaces need fresh URLs on each load; "Photo fails to load" covers the gap.
+- Plenix request PLX-028 (`docs/implementation/plenix-requests.md`): a picture in an `EntityHeader` fact. Until it is
+  documented, the Presiding fact keeps its icon.
 - The builder must not invent: other file types or sizes, a crop step, a photo on applicant-facing or document surfaces,
   a corner-icon variant, or any Arabic text.
