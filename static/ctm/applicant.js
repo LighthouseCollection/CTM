@@ -467,7 +467,11 @@
     return h(P.LocaleProvider, { locale: lang === "ar" ? "ar" : "en", dir: lang === "ar" ? "rtl" : "ltr" },
       h(P.Stack, { as: "section", gap: "lg", lang, dir: lang === "ar" ? "rtl" : "ltr" },
       h(P.Inline,{wrap:true},
-        button("back", () => navigate(onBack), { variant: "ghost" }),
+        h(P.Link, { back: true, href: window.CTMRoutes?.routeFor("applications"), onClick: (event) => {
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.button) return;
+          event.preventDefault();
+          navigate(onBack);
+        } }, t("back")),
         button("refreshApplication",reloadAnswers,{variant:"ghost"})),
       text(t("title"), { as: "h1", variant: "display" }),
       pending ? h(P.Notice, { tone: "warning", role: "alert", actions: h(P.Inline, { wrap: true },
