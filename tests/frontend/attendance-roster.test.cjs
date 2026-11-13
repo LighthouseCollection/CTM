@@ -180,3 +180,33 @@ test("all three attendance screens give the roster the endpoint they save to", (
   const council = fs.readFileSync("static/ctm/council.js", "utf8");
   assert.ok(/savePath:/.test(council));
 });
+
+// Issue 313 rework (G5c): the summary is a polite live region, and the bulk button keeps keyboard focus while saving.
+test("the attendance summary is a polite live region that is read whole", () => {
+  const [h, C] = boot();
+  const tree = h.render(C.AttendanceRoster, { lang: "en", rows, readOnly: false, onRecord: async () => {} });
+  const summary = byName(tree, "Text").find((x) => /1 of 4 present/.test(textOf(x)));
+  assert.ok(summary, "summary text found");
+  assert.equal(summary.props.role, "status");
+  assert.equal(summary.props["aria-live"], "polite");
+  assert.equal(summary.props["aria-atomic"], true);
+});
+
+test("Mark the rest present is never disabled while saving: it shows the Plenix loading state and stays focusable", async () => {
+  const [h, C] = boot();
+  const server = holdSave();
+  const props = { lang: "en", rows, readOnly: false, savePath: ATTENDANCE_PATH, onRecord: server.onRecord };
+  let tree = h.render(C.AttendanceRoster, props);
+  assert.ok(!byName(tree, "Button")[0].props.disabled, "enabled before");
+  const batch = byName(tree, "Button")[0].props.onClick();
+  tree = h.render(C.AttendanceRoster, props);
+  const button = byName(tree, "Button")[0];
+  assert.ok(!button.props.disabled, "not disabled while saving, so focus stays");
+  assert.equal(button.props.loading, true, "documented busy state");
+  server.calls.forEach((c) => c.reject(Object.assign(new Error("x"), { status: 403 })));
+  await batch;
+  await settle();
+  tree = h.render(C.AttendanceRoster, props);
+  assert.ok(!byName(tree, "Button")[0].props.loading, "loading ends after a refusal");
+  assert.ok(!byName(tree, "Button")[0].props.disabled);
+});
