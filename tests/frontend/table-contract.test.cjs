@@ -38,13 +38,12 @@ test("rich custom cells retain sizing and are not wrapped", () => {
   assert.equal(result.props.columns[0].minWidth,"12rem");
 });
 
-test("action columns stay bounded without disabling their resize handles", () => {
+test("action columns stay resizable and are not width-capped (#184)", () => {
   const result=mount({label:"Actions",rows:[],columns:[{field:"open_action",minWidth:"7rem",render:()=>({type:"Button"})}]});
   const column=result.props.columns[0];
   assert.equal(column.resizable,true);
   assert.equal(column.sortable,false);
   assert.equal("headerSort" in column,false);
-  assert.equal(column.maxWidth,"--plx-ref-size-240px");
   assert.equal(column.minWidth,"7rem");
   assert.equal(column.render({}).type,"Button");
 });
@@ -255,4 +254,26 @@ test("session list and agenda columns are fitted to their content (#118, #114, #
   for (const field of ["hearing_number", "applicant", "respondent", "assigned_member_name", "previous_recommendation"])
     assert.match(hearings, new RegExp(`field: "${field}",[^\\n]*width: "`), field);
   assert.match(hearings, /title: "#", field: "hearing_number", kind: \["name", "data"\], width: "5rem"/, "#110: the 80px floor (PLX-024)");
+});
+
+// #184 (D-0087, D-0091): Plenix 1.8.0 sizes and right-aligns (left in RTL) a kind "actions" column; CTM no longer
+// centers it or caps it at 240px. The kind and the missing cap do not depend on the language.
+test("action columns are kind actions with no width cap (#184)", () => {
+  for (const column of [{ field: "open_action" }, { field: "actions" }, { field: "x", kind: "actions" }]) {
+    const out = mount({ label: "Actions", rows: [], columns: [{ ...column, render: () => ({ type: "Button" }) }] }).props.columns[0];
+    assert.equal(out.kind, "actions", JSON.stringify(column));
+    assert.equal("maxWidth" in out, false, JSON.stringify(column));
+  }
+  const sized = mount({ label: "Agenda", rows: [], columns: [{ field: "open_action", minWidth: "9rem", render: () => ({ type: "Button" }) }] }).props.columns[0];
+  assert.equal(sized.width, "9rem");
+});
+
+// #184: dialogs use Plenix's default Close label (localized EN/AR by Plenix); none sets a "Cancel" close label.
+test("no dialog sets a Cancel close label (#184)", () => {
+  const offenders = [];
+  for (const file of fs.readdirSync("static/ctm").filter(f => f.endsWith(".js")))
+    fs.readFileSync("static/ctm/" + file, "utf8").split("\n").forEach((line, i) => {
+      if (/closeLabel:\s*(?:[\w.]+\([^)]*\))?\(?\s*["']?cancel/i.test(line) || /closeLabel[^,}]*\(["']cancel["']\)/.test(line)) offenders.push(`${file}:${i + 1}`);
+    });
+  assert.deepEqual(offenders, []);
 });

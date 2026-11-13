@@ -4460,7 +4460,6 @@ ${ar}` : en;
         open: mode === "reject",
         title: t("declineApplicationTitle"),
         description: t("declineApplicationHelp"),
-        closeLabel: base.translator(lang)("cancel"),
         onClose: () => !pending && setMode(null),
         footer: h(P.Inline, { justify: "end" },
           h(P.Button, { disabled: pending, onClick: () => setMode(null) }, base.translator(lang)("cancel")),

@@ -1555,7 +1555,6 @@
           open: mode === "reject",
           title: t("returnTitle"),
           description: t("returnHelp"),
-          closeLabel: t("cancel"),
           onClose: () => !pending && setMode(null),
           footer: h(
             P.Inline,
@@ -2126,7 +2125,6 @@
         size: "lg",
         title: t("hearingOutcome"),
         description: title,
-        closeLabel: t("cancel"),
         onClose: () => !pending && onClose(),
         footer: h(
           P.Inline,
@@ -2262,7 +2260,6 @@
         open: true,
         title: t("scheduleTestimony"),
         description: t("testimonyHelp"),
-        closeLabel: t("cancel"),
         onClose: () => !pending && onClose(),
         footer: h(
           P.Inline,
@@ -2436,7 +2433,6 @@
         size: "lg",
         title: t("rescheduleTitle"),
         description: t("rescheduleHelp"),
-        closeLabel: t("cancel"),
         onClose: () => !pending && onClose(),
         footer: h(
           P.Inline,
@@ -2634,7 +2630,7 @@
           strings: { cardCount: plural(lang, "casesCount"), perPage: t("tablePerPage"), range: t("tableRange"), count: t("tableCount"), pages: t("tablePages") } } }));
     return h(P.Dialog, {
       // "xl": room for every column as a table (a narrower dialog turns the grid into row cards).
-      open: true, size: "xl", title: t(part === 1 ? "pickerTitleAssign" : "pickerTitleHearing"), closeLabel: t("cancel"),
+      open: true, size: "xl", title: t(part === 1 ? "pickerTitleAssign" : "pickerTitleHearing"),
       onClose: () => !pending && onClose(),
       footer: h(P.Inline, null,
         h(P.Button, { disabled: pending, onClick: onClose }, t("cancel")),
@@ -3101,7 +3097,6 @@
           open: dialog?.kind === "assign",
           title: t("assignTitle"),
           description: t("assignHelp"),
-          closeLabel: t("cancel"),
           onClose: () => !pending && setDialog(null),
           footer: h(
             P.Inline,
