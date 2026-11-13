@@ -155,14 +155,22 @@ test("My account is a settings page; notification language is a segmented contro
   assert.doesNotMatch(source, /ctm-account-(hero|grid)/);
 });
 
-test("historical entry follows form-flow: sections, then one FormActions with the primary action last; admin only", async () => {
+test("historical entry: each section a Panel card, two-column forms, one FormActions per card with the primary action last; admin only", async () => {
   const { tree } = await mount("Workspace", { api: server().api, user: admin, lang: "en" });
   const form = byName(tree, "Form").find((f) => f.props.label === "Historical case entry");
-  same(byName(form, "FormSection").map((n) => n.props.title), ["Case details", "Party A", "Party B"]);
   const actions = byName(form, "FormActions")[0];
   const last = actions.children.filter(Boolean).at(-1);
   assert.equal(last.props.variant, "primary");
   assert.equal(last.props.type, "submit");
+  // Issue 329 (owner 2026-11-10): the same container layout as the other Settings screens: each section a Panel card
+  // with its icon heading, labels beside the fields (two-column form), each form's actions at the bottom of its card.
+  same(byName(tree, "Panel").map((n) => [n.props.title, Boolean(n.props.icon)]), [["Resume saved entry", true], ["Case details", true], ["Party A", true], ["Party B", true]]);
+  const resumeForm = byName(tree, "Form").find((f) => f.props.label === "Resume saved entry");
+  for (const f of [form, resumeForm]) assert.equal(f.props.layout, "two-column");
+  const panels = byName(tree, "Panel");
+  assert.equal(byName(panels[0], "FormActions").length, 1, "resume actions inside the resume card");
+  assert.equal(byName(panels.at(-1), "FormActions")[0], actions, "save and publish inside the last card");
+  assert.equal(byName(panels[0], "FormSection").length + byName(form, "FormSection").length, 0, "Panels replace the bare FormSection headings");
   const denied = await mount("Workspace", { api: server().api, user: secretary, lang: "en" });
   assert.equal(byName(denied.tree, "Form").length, 0);
 });

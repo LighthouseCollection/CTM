@@ -73,46 +73,59 @@
       } catch(error) {setFailure(base.serverMessage(error,t));}
       finally {setPending(false);}
     }
-    // Form flow (form-flow.md, form-actions.md): the title, then the form's sections, then one FormActions with the
-    // primary action last. FormFlow itself is not used: it replaces the server's explanation with one generic failure
-    // and keeps its unsaved state apart from CTM's navigation guard (docs/implementation/plenix-requests.md PLX-018).
+    // Issue 329 (owner 2026-11-10): the same container layout as the other Settings screens. Each section is a Panel card with
+    // its icon heading (D-0050/D-0055); the forms are two-column with each Field as a row (label at the start, the
+    // control at the end, as the Configuration SettingsRows; field.md: a long label does not run into an inline control); each form's FormActions sits at the bottom of its last card, the primary action last
+    // (form-actions.md: sticky false for a form in a card). FormFlow itself is not used: it replaces the server's
+    // explanation with one generic failure and keeps its unsaved state apart from CTM's navigation guard
+    // (docs/implementation/plenix-requests.md PLX-018).
     const partyTitle=(slot)=>t(slot === "A" ? "partyA" : "partyB");
     const disabled=pending||published;
+    const card=(key,icon,title,description,...body)=>h(P.Panel,{key,icon,title,description,headingLevel:3},h(P.Stack,{gap:"md"},...body));
+    const linked=(slot)=>{
+      const party=(saved?.payload?.parties || []).find((row) => row.slot === slot && row.account_id);
+      return party ? h(P.PropertyList,{variant:"tiles"},h(P.PropertyList.Item,{label:t("linkedAccount"),data:true},party.account_id)) : null;
+    };
+    const partyIcon="person";
     return h(P.Stack,{gap:"lg"},
       h(P.Text,{as:"h2",variant:"heading"},t("title")),h(P.Notice,{tone:"info"},t("help")),
-      h(P.Form,{label:t("resume"),noValidate:true,onSubmit:(event)=>{event.preventDefault();guard.navigate(resume);}},
-        h(P.FormSection,{title:t("resume"),description:t("resumeHelp"),headingLevel:3},
-          h(P.Field,{label:t("reference")},h(P.Input,{value:entry,data:true,disabled:pending,onChange:(e)=>setEntry(e.target.value)}))),
-        h(P.FormActions,{sticky:false},
-          h(P.Button,{disabled:pending,onClick:()=>guard.navigate(()=>{setForm(formFrom());setSaved(null);setEntry("");setNotice(null);setFailure(null);})},t("newEntry")),
-          h(P.Button,{type:"submit",disabled:pending},t("load")))),
+      h(P.Form,{label:t("resume"),layout:"two-column",noValidate:true,onSubmit:(event)=>{event.preventDefault();guard.navigate(resume);}},
+        card("resume","folder-open",t("resume"),t("resumeHelp"),
+          h(P.Field,{layout:"row",label:t("reference")},h(P.Input,{value:entry,data:true,disabled:pending,onChange:(e)=>setEntry(e.target.value)})),
+          saved ? h(P.PropertyList,{ variant: "tiles" },h(P.PropertyList.Item,{label:t("reference"),data:true},saved.id),h(P.PropertyList.Item,{label:t("version"),data:true},saved.version)) : null,
+          h(P.FormActions,{sticky:false},
+            h(P.Button,{disabled:pending,onClick:()=>guard.navigate(()=>{setForm(formFrom());setSaved(null);setEntry("");setNotice(null);setFailure(null);})},t("newEntry")),
+            h(P.Button,{type:"submit",disabled:pending},t("load"))))),
       notice ? h(P.Notice,{tone:"success"},t(notice)) : null,
       failure ? h(P.Notice,{tone:"danger"},failure) : null,
-      saved?.payload?.parties?.some((party) => party.account_id) ? h(P.PropertyList, { variant: "tiles" }, ...saved.payload.parties.filter((party) => party.account_id).map((party) => h(P.PropertyList.Item, { key: party.slot, label: `${partyTitle(party.slot)} — ${t("linkedAccount")}`, data: true }, party.account_id))) : null,
-      saved ? h(P.PropertyList,{ variant: "tiles" },h(P.PropertyList.Item,{label:t("reference"),data:true},saved.id),h(P.PropertyList.Item,{label:t("version"),data:true},saved.version)) : null,
-      published ? h(P.Stack, { gap: "md" },
-        h(P.FormSection, { title: t("caseDetails"), headingLevel: 3 }, h(P.PropertyList, { variant: "tiles" },
+      published ? h(P.Stack, { gap: "lg" }, ...((shown) => shown.map((slot, i) => {
+        const openCase = i === shown.length - 1 && onCase ? h(P.ActionBar, { sticky: false }, h(P.Button, { variant: "primary", onClick: () => onCase(saved.finalized_case_id) }, t("openCase"))) : null;
+        if (slot === "case") return card("case", "doc-text", t("caseDetails"), undefined, h(P.PropertyList, { variant: "tiles" },
           ...["number", "status", "closed_at"].filter((key) => form[key]).map((key) => h(P.PropertyList.Item, { key, label: t(key) }, key === "status" ? h(P.Badge, { tone: form[key] === "open" ? "success" : "neutral" }, t(form[key])) : form[key])),
-        )),
-        ...form.parties.filter((party) => party.name || party.legacy_reference).map((party) => h(P.FormSection, { key: party.slot, title: partyTitle(party.slot), headingLevel: 3 },
+        ), openCase);
+        const party = form.parties.find((row) => row.slot === slot);
+        return card(slot, partyIcon, partyTitle(slot), undefined,
           h(P.PropertyList, { variant: "tiles" }, ...["name", "legacy_reference"].filter((key) => party[key]).map((key) => h(P.PropertyList.Item, { key, label: t(key) }, party[key]))),
-        )),
-        onCase ? h(P.ActionBar, { sticky: false }, h(P.Button, { variant: "primary", onClick: () => onCase(saved.finalized_case_id) }, t("openCase"))) : null,
-      ) : h(P.Form,{label:t("title"),onSubmit:save,noValidate:true},
-        h(P.FormSection,{title:t("caseDetails"),headingLevel:3},
-          h(P.Field,{label:t("number"),required:true},h(P.Input,{value:form.number,maxLength:100,disabled,onChange:(e)=>update({number:e.target.value})})),
-          h(P.Field,{label:t("status"),required:true},h(P.Select,{value:form.status,disabled,onChange:(e)=>update({status:e.target.value}),options:[{value:"",label:t("choose")},...['open','closed'].map(value=>({value,label:t(value)}))]})),
-          form.status === "closed" ? h(P.Field,{label:t("closed_at"),description:t("timestampHelp")},h(P.Input,{value:form.closed_at,data:true,disabled,onChange:(e)=>update({closed_at:e.target.value})})) : null),
-        ...form.parties.map((party, index) => h(P.FormSection,
-          { key: party.slot, title: partyTitle(party.slot), headingLevel: 3 },
-          ...["name", "legacy_reference"].map((key) =>
-            h(P.Field, { key, label: t(key) }, h(P.Input, {
-              value: party[key], maxLength: key === "name" ? 300 : 150, disabled,
-              onChange: (event) => update({ parties: form.parties.map((row, i) => i === index ? { ...row, [key]: event.target.value } : row) }),
-            })),
-          ),
-        )),
-        h(P.FormActions,{sticky:false},h(P.Button,{disabled:pending||!saved||dirty,onClick:()=>setConfirm(true)},t("publish")),h(P.Button,{type:"submit",variant:"primary",disabled:pending,loading:pending},t("save")))),
+          linked(slot), openCase);
+      }))(["case", ...form.parties.filter((party) => party.name || party.legacy_reference || linked(party.slot)).map((party) => party.slot)]))
+      : h(P.Form,{label:t("title"),layout:"two-column",onSubmit:save,noValidate:true},
+        h(P.Stack,{gap:"lg"},
+          card("case","doc-text",t("caseDetails"),undefined,
+            h(P.Field,{layout:"row",label:t("number"),required:true},h(P.Input,{value:form.number,maxLength:100,disabled,onChange:(e)=>update({number:e.target.value})})),
+            h(P.Field,{layout:"row",label:t("status"),required:true},h(P.Select,{value:form.status,disabled,onChange:(e)=>update({status:e.target.value}),options:[{value:"",label:t("choose")},...['open','closed'].map(value=>({value,label:t(value)}))]})),
+            form.status === "closed" ? h(P.Field,{layout:"row",label:t("closed_at"),description:t("timestampHelp")},h(P.Input,{value:form.closed_at,data:true,disabled,onChange:(e)=>update({closed_at:e.target.value})})) : null),
+          ...form.parties.map((party, index) => card(party.slot, partyIcon, partyTitle(party.slot), undefined,
+            ...["name", "legacy_reference"].map((key) =>
+              h(P.Field, { key, layout: "row", label: t(key) }, h(P.Input, {
+                value: party[key], maxLength: key === "name" ? 300 : 150, disabled,
+                onChange: (event) => update({ parties: form.parties.map((row, i) => i === index ? { ...row, [key]: event.target.value } : row) }),
+              })),
+            ),
+            linked(party.slot),
+            index === form.parties.length - 1
+              ? h(P.FormActions,{sticky:false},h(P.Button,{disabled:pending||!saved||dirty,onClick:()=>setConfirm(true)},t("publish")),h(P.Button,{type:"submit",variant:"primary",disabled:pending,loading:pending},t("save")))
+              : null,
+          )))),
       h(P.ConfirmDialog,{open:confirm,title:t("confirm"),message:t("confirmHelp"),confirmLabel:t("publish"),cancelLabel:t("cancel"),onConfirm:publish,onCancel:()=>!pending&&setConfirm(false)},failure ? h(P.Notice,{tone:"danger"},failure):null),guard.dialog);
   }
   window.CTMHistorical=Object.freeze({formFrom,payloadFrom,problem,validPayload,Workspace});
