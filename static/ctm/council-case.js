@@ -600,6 +600,8 @@ ${ar}` : en;
       saveProfile: "Save profile",
       changePhoto: "Change photo",
       addPhoto: "Add photo",
+      collapseSpouse: "Collapse {name}",
+      expandSpouse: "Expand {name}",
       photoNotImage: "Choose an image file: JPEG, PNG, GIF or WebP.",
       photoTooLarge: "The picture is larger than {max}.",
       photoOf: "{name}’s photo",
@@ -1145,6 +1147,8 @@ ${ar}` : en;
       saveProfile: "حفظ ملف التعريف",
       changePhoto: "تغيير الصورة",
       addPhoto: "إضافة صورة",
+      collapseSpouse: "طي {name}",
+      expandSpouse: "توسيع {name}",
       photoNotImage: "اختر ملف صورة: JPEG أو PNG أو GIF أو WebP.",
       photoTooLarge: "الصورة أكبر من {max}.",
       photoOf: "صورة {name}",
@@ -3601,25 +3605,21 @@ ${ar}` : en;
     );
   }
 
-  function spousePhoto(P, h, party) {
-    // Avatar preserves the intended photograph and falls back to initials when a
-    // submitted file is unavailable; it never renders an error message in the card.
-    return h(P.Avatar, {
-      src: party.photo_url || undefined,
-      name: party.name,
-      size: "2xl",
-      label: party.name,
-    });
-  }
-
-  function SpousePhotoUpload({ api, P, h, t, user, record, party, onSaved }) {
+  // The photo is the Avatar in the Panel icon spot. Changing it is a small icon button in the header actions that opens
+  // a dialog with the Plenix AvatarUpload; it is never inside Edit (D-0057).
+  function SpousePhotoChange({ api, P, h, t, record, party, onSaved }) {
     const R = window.React;
+    const [open, setOpen] = R.useState(false);
     const [pending, setPending] = R.useState(false);
     const [failure, setFailure] = R.useState(null);
-    const canWrite = writerFor(user, null, record);
+    const close = () => {
+      if (pending) return;
+      setOpen(false);
+      setFailure(null);
+    };
     const upload = async (picture) => {
       const file = picture && (picture.file || picture.blob);
-      if (!file || !canWrite || pending) return;
+      if (!file || pending) return;
       setPending(true);
       setFailure(null);
       try {
@@ -3630,6 +3630,7 @@ ${ar}` : en;
         form.append("case_id", record.id);
         form.append("visibility", "council");
         await api("/api/files/", { method: "POST", body: form });
+        setOpen(false);
         onSaved();
       } catch (error) {
         setFailure(base.serverMessage(error, t) || t("photoUploadFailed"));
@@ -3637,43 +3638,42 @@ ${ar}` : en;
         setPending(false);
       }
     };
-    if (!canWrite) return spousePhoto(P, h, party);
-    // data-ctm-no-toggle: a click on the photo control does not open or close the spouse card.
     return h(
-      P.Stack,
-      { gap: "xs", "data-ctm-no-toggle": "" },
-      h(P.AvatarUpload, {
-        name: party.name,
-        src: party.photo_url || undefined,
-        size: "2xl",
-        crop: false,
-        removable: false,
-        accept: "image/jpeg,image/png,image/gif,image/webp",
-        disabled: pending,
-        onChange: upload,
-        strings: { change: t("changePhoto"), add: t("addPhoto"), notImage: t("photoNotImage"), tooLarge: t("photoTooLarge"), picture: t("photoOf") },
-      }),
-      failure ? h(P.Text, { as: "span", variant: "danger", role: "alert" }, failure) : null,
+      R.Fragment,
+      null,
+      h(P.Tooltip, { content: t("changePhoto") }, h(P.Button, { variant: "ghost", size: "sm", icon: "photo_camera", "aria-label": t("changePhoto"), onClick: () => setOpen(true) })),
+      open
+        ? h(
+            P.Dialog,
+            { open: true, size: "sm", title: t("changePhoto"), closeLabel: t("cancel"), onClose: close },
+            h(
+              P.Stack,
+              { gap: "sm" },
+              h(P.AvatarUpload, {
+                name: party.name,
+                src: party.photo_url || undefined,
+                size: "2xl",
+                crop: false,
+                removable: false,
+                accept: "image/jpeg,image/png,image/gif,image/webp",
+                disabled: pending,
+                onChange: upload,
+                strings: { change: t("changePhoto"), add: t("addPhoto"), notImage: t("photoNotImage"), tooLarge: t("photoTooLarge"), picture: t("photoOf") },
+              }),
+              failure ? h(P.Notice, { tone: "danger" }, failure) : null,
+            ),
+          )
+        : null,
     );
   }
 
-  function spouseHeaderTitle(P, h, t, party) {
-    const fact = (label, value, data) => h(
-      P.Inline,
-      { gap: "xs", align: "center" },
-      h(P.Text, { as: "span", variant: "caption" }, label),
-      data ? h(P.Text, { as: "span", variant: "data" }, value) : value,
-    );
+  // Header title: the name and the role badge, nothing else. Applicant is slot A.
+  function spouseTitle(P, h, t, party) {
     return h(
       P.Inline,
-      { gap: "md", align: "center", wrap: true },
+      { gap: "sm", align: "center", wrap: true },
       h(P.Text, { as: "span", variant: "strong" }, party.name),
-      party.reference ? fact(t("ctmId"), party.reference, true) : null,
-      fact(
-        t("portalAccount"),
-        h(P.Badge, { tone: party.can_receive ? "success" : "waiting" }, t(party.can_receive ? "registered" : "notRegistered")),
-        false,
-      ),
+      h(P.Badge, { tone: "neutral", icon: "person" }, t(party.slot === "B" ? "respondent" : "applicant")),
     );
   }
 
@@ -3729,27 +3729,29 @@ ${ar}` : en;
       ...record.parties.map((party) => {
         const profile = spouseProfileValues(record, party);
         const canEditProfile = writerFor(user, null, record) && openProceeding(record)?.status === "open";
-        const startEditingProfile = (event) => {
-          event.stopPropagation();
+        const startEditingProfile = () => {
           setEditingParty(party.id);
           setExpandedParties((current) => ({ ...current, [party.id]: true }));
         };
         return h(
           P.Panel,
           {
-            icon: h(SpousePhotoUpload, { api, P, h, t, user, record, party, onSaved: retry }),
+            icon: h(P.Avatar, { src: party.photo_url || undefined, name: party.name, size: "sm", label: party.name }),
             key: party.id,
-            title: spouseHeaderTitle(P, h, t, party),
+            title: spouseTitle(P, h, t, party),
             collapsible: true,
+            toggleOn: "header",
             expanded: Boolean(expandedParties[party.id]),
             onToggle: (next) => setExpandedParties((current) => ({ ...current, [party.id]: next })),
-            onClick: (event) => {
-              if (!event.target.closest(".plx-panel__header")) return;
-              if (event.target.closest(".plx-panel__toggle, [data-ctm-no-toggle], .ctm-spouse-profile-edit")) return;
-              setExpandedParties((current) => ({ ...current, [party.id]: !current[party.id] }));
-            },
-            actions: canEditProfile ? h(P.Button, { size: "sm", className: "ctm-spouse-profile-edit", onClick: startEditingProfile }, t("editProfile")) : null,
-            strings: { collapse: t("collapse"), expand: t("expand") },
+            actions: canEditProfile
+              ? h(
+                  P.Inline,
+                  { gap: "xs", align: "center" },
+                  h(SpousePhotoChange, { api, P, h, t, record, party, onSaved: retry }),
+                  h(P.Button, { size: "sm", onClick: startEditingProfile }, t("editProfile")),
+                )
+              : null,
+            strings: { collapse: t("collapseSpouse", { name: party.name }), expand: t("expandSpouse", { name: party.name }) },
           },
           editingParty === party.id
             ? h(SpouseProfileEditor, { api, P, h, t, record, party, profile, onSaved: () => { setEditingParty(null); retry(); }, onCancel: () => setEditingParty(null) })
@@ -3760,6 +3762,8 @@ ${ar}` : en;
                   P.Stack,
                   { gap: "section" },
                   spouseProfileSection(P, h, t, t("personalDetails"), "person", [
+                    ["ctmId", party.reference && base.isolate(party.reference)],
+                    ["portalAccount", h(P.Badge, { tone: party.can_receive ? "success" : "waiting" }, t(party.can_receive ? "registered" : "notRegistered"))],
                     ["otherNamesKnownBy", profile.personal?.other_names],
                     ["placeOfBirth", profile.personal?.place_of_birth],
                     ["nationality", profile.personal?.nationality],
