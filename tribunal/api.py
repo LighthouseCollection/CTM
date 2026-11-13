@@ -877,10 +877,13 @@ def case_detail(request, case_id):
     return response
 
 
-@endpoint(("POST",))
+@endpoint(("POST", "DELETE"))
 def assign(request, case_id):
-    from tribunal.services.council import assign_case
+    from tribunal.services.council import assign_case, unassign_case
 
+    if request.method == "DELETE":  # #237: Undo of a first assignment
+        case = unassign_case(request.user, case_id)
+        return JsonResponse({"case_id": str(case.pk), "assigned_member_id": None})
     data = body(request)
     return JsonResponse(
         encoded(
@@ -1369,8 +1372,16 @@ def message_acknowledge(request, message_id):
 @endpoint(("GET", "POST"))
 def notifications(request):
     from tribunal.services.filing_privacy import notice_visible
+    from tribunal.services.assignment_notices import party_notice_visible
     qs = m.Notification.objects.filter(recipient=request.user)
-    hidden = [pk for pk, key in qs.values_list("pk", "key") if not notice_visible(key)]
+
+    def later_after(notice, moment):
+        from tribunal.services.assignment_notices import KINDS
+        # The database stamps created_at; issued_at is when the change was made.
+        return qs.filter(case_id=notice.case_id, kind__in=KINDS, payload__issued_at__gte=moment).exists()
+
+    hidden = [row.pk for row in qs.select_related("case")
+              if not notice_visible(row.key) or not party_notice_visible(row, later_after)]
     qs = qs.exclude(pk__in=hidden)
     if request.method == "POST":
         updated = qs.filter(pk=body(request)["id"], read_at__isnull=True).update(

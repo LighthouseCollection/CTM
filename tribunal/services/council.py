@@ -49,6 +49,58 @@ def assign_case(actor, case_id, member_id, president_id=None):
             return _assign_case(actor, case_id, member_id, president_id)
 
 
+def unassign_case(actor, case_id, president_id=None):
+    """#237 / D-0056: clear the case manager (the Undo of a first assignment).
+
+    Same authority as recording an assignment. The assignment history stays;
+    one case_unassigned audit entry records who cleared it and the previous
+    manager. The database is told the new manager is none (empty context).
+    """
+    from .staff_roles import assignment_recorder
+    active(actor)
+    if not assignment_recorder(actor):  # before any lookup, so refusals read as refusals
+        raise PermissionDenied("Administrative assignment authority is required.")
+    with database_actor(actor):
+        if president_id is None:
+            president_id = (Account.objects.filter(is_active=True, role="president")
+                            .order_by("created_at", "pk").values_list("pk", flat=True).first())
+            if president_id is None:
+                raise ValidationError("An active president must authorize the change.")
+        with database_settings({"ctm.assignment_member": "", "ctm.assignment_president": str(president_id)}):
+            return _unassign_case(actor, case_id, president_id)
+
+
+@core_operation("assignment")
+def _unassign_case(actor, case_id, president_id):
+    from .staff_roles import assignment_president, assignment_recorder
+
+    active(actor)
+    if not assignment_recorder(actor):
+        raise PermissionDenied("Administrative assignment authority is required.")
+    case = Case.objects.select_for_update(of=("self",)).get(pk=case_id)
+    if case.status != "open":
+        raise ValidationError("A closed case's manager can't be changed.")
+    if case.assigned_member_id is None:
+        raise ValidationError("This case has no case manager to remove.")
+    if not assignment_president(Account.objects.get(pk=president_id, is_active=True)):
+        raise PermissionDenied("An active president must authorize the change.")
+    if AgendaItem.objects.filter(case=case, part=2, state__in={"scheduled", "time_exhausted"},
+                                 session__state__in={"draft", "planned"}).exists():
+        raise ValidationError("This case is scheduled for a hearing. Remove it from the hearing agenda first.")
+    previous = case.assigned_member
+    event = audit(actor, "case_unassigned", case, case, metadata={"previous_member_id": str(previous.pk)})
+    # Told while still the case manager: the notice rules accept the current manager.
+    notify(previous, "case_unassigned", event, case=case, payload={"assigned_member": None})
+    case.assigned_member = None
+    case.save(update_fields=["assigned_member"])
+    # #237: inside the undo window the parties' pending notice is discarded and they
+    # hear nothing; after it, they are told the case has no manager for now.
+    from .assignment_notices import discard_pending, notify_parties
+    if not discard_pending(case):
+        notify_parties(case, event, None, kind="case_unassigned")
+    return case
+
+
 @core_operation("assignment")
 def _assign_case(actor, case_id, member_id, president_id):
     from .staff_roles import assignment_president, assignment_recorder
@@ -75,17 +127,10 @@ def _assign_case(actor, case_id, member_id, president_id):
     audit(actor, "case_assigned", record, case)
     for recipient in {x for x in [previous, member] if x}:
         notify(recipient, "assignment_changed", record, case=case)
-    for party in case.parties.select_related("account").all():
-        if party.account:
-            notify(
-                party.account,
-                "assignment_changed",
-                record,
-                case=case,
-                payload={
-                    "assigned_member": f"{member.first_name} {member.last_name}".strip()
-                },
-            )
+    # #237: a change inside the undo window replaces the parties' pending notice.
+    from .assignment_notices import discard_pending, notify_parties
+    discard_pending(case)
+    notify_parties(case, record, member)
     return record
 
 
