@@ -117,6 +117,23 @@ def run(browser, portal, lang):
             box = pc.bounding_box()
             assert box["y"] + box["height"] <= top + 0.5, nav_name
             page.screenshot(path=f".tmp/ctm-footer-council-en-after-{shot_name}.png")
+    if portal == "applicant" and lang == "en":
+        # Fix round 2 on PR #327: applicant Documents/Evidence render a bare SplitView; the column must stay bounded
+        # (PageColumn derives it) so the list and reading pane scroll alone above the footer.
+        for section, heading in (("documents", "Documents"), ("evidence", "Evidence")):
+            page.goto(f"http://127.0.0.1:{PORT}/cases/{CASE['id']}/{section}", wait_until="domcontentloaded")
+            page.locator("main h1").filter(has_text=heading).first.wait_for()
+            page.locator(".plx-split-view").first.wait_for()
+            page.wait_for_function(
+                "() => document.querySelector('.plx-page-content > .plx-stack').classList.contains('plx-u-min-h-0')"
+            )
+            pc = page.locator(".plx-page-content")
+            assert pc.evaluate("e => e.scrollHeight <= e.clientHeight + 1"), f"{section}: the column does not overflow"
+            box = pc.bounding_box()
+            assert box["y"] + box["height"] <= top + 0.5, section
+            split = page.locator(".plx-split-view").first.bounding_box()
+            assert split["y"] + split["height"] <= top + 0.5, f"{section}: the split view ends above the footer"
+            page.screenshot(path=f".tmp/ctm-footer-applicant-en-after-{section}.png")
     page.close()
 
 

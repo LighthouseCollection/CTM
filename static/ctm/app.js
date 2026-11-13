@@ -991,7 +991,7 @@
         );
     return h(
       P.Stack,
-      null,
+      { className: "plx-u-flex-1 plx-u-min-h-0" },
       heading(t(section)),
       h(P.SplitView, {
         label: t(section),
@@ -1032,11 +1032,11 @@
     );
   }
   // #324: a page that renders a bounded part (Listing, Workspace, SettingsLayout, CasesTable: all carry
-  // plx-u-min-h-0) keeps a bounded column so its panes scroll alone; every other page scrolls in PageContent and
+  // plx-u-min-h-0; a bare SplitView is bounded too) keeps a bounded column so its panes scroll alone; every other page scrolls in PageContent and
   // keeps its bottom padding (Plenix's space above the footer). Derived from what the page renders, no page list.
   function holdsBoundedPart(start) {
     const column = start && start.parentElement;
-    return !!(column && column.querySelector(".plx-u-min-h-0"));
+    return !!(column && column.querySelector(".plx-u-min-h-0, .plx-split-view"));
   }
   function PageColumn({ pageKey, children }) {
     const [bounded, setBounded] = R.useState(false);

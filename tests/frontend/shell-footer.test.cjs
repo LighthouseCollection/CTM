@@ -42,9 +42,10 @@ function load(name) {
 
 test("holdsBoundedPart is true for any page whose column contains a bounded part (myCases, administration, settings…)", () => {
   const holdsBoundedPart = load("holdsBoundedPart");
-  const column = (selectors) => ({ querySelector: (s) => (selectors.includes(s) ? {} : null) });
+  const column = (selectors) => ({ querySelector: (s) => (s.split(",").some((part) => selectors.includes(part.trim())) ? {} : null) });
   const startIn = (col) => ({ parentElement: col });
   assert.equal(holdsBoundedPart(startIn(column([".plx-u-min-h-0"]))), true, "a Listing/Workspace/settings page");
+  assert.equal(holdsBoundedPart(startIn(column([".plx-split-view"]))), true, "a page that renders a SplitView (applicant Documents/Evidence)");
   assert.equal(holdsBoundedPart(startIn(column([]))), false, "a plain scrolling page such as Home");
   assert.equal(holdsBoundedPart(null), false);
   assert.equal(holdsBoundedPart({ parentElement: null }), false);
@@ -53,4 +54,10 @@ test("holdsBoundedPart is true for any page whose column contains a bounded part
 test("PageColumn re-checks as the page loads and keeps the bounded class only when needed", () => {
   assert.match(src, /new MutationObserver\(sync\)/);
   assert.match(src, /className: bounded \? "plx-u-flex-1 plx-u-min-h-0" : "plx-u-flex-1"/);
+});
+
+test("applicant CaseFiles (Documents/Evidence) keeps a bounded root around its SplitView (fix round 2 on PR #327)", () => {
+  const body = src.slice(src.indexOf("function CaseFiles("));
+  const root = body.slice(body.indexOf("heading(t(section)),") - 120, body.indexOf("h(P.SplitView"));
+  assert.match(root, /P\.Stack,\s*\{ className: "plx-u-flex-1 plx-u-min-h-0" \}/, "root Stack carries plx-u-min-h-0");
 });
