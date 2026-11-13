@@ -65,9 +65,11 @@
     const R=window.React,P=window.Plenix,h=R.createElement,t=key=>words[lang === "ar" ? "ar" : "en"][key];
     const s=session.state,disabled=!row.can_respond || s.busy || s.locked || s.acknowledged;
     return h(P.Stack,null,
-      h(P.Text,null,`${t("version")}: ${row.version}`),h(P.Text,null,t("time")),
-      h(P.Text,null,`${t("start")}: `,h(P.Text,{variant:"data"},h("bdi",{dir:"ltr"},row.starts_at))),
-      h(P.Text,null,`${t("end")}: `,h(P.Text,{variant:"data"},h("bdi",{dir:"ltr"},row.ends_at))),
+      h(P.PropertyList,{variant:"tiles"},
+        h(P.PropertyList.Item,{label:t("version"),data:true},String(row.version)),
+        h(P.PropertyList.Item,{label:t("start"),data:true},h("bdi",{dir:"ltr"},row.starts_at)),
+        h(P.PropertyList.Item,{label:t("end"),data:true},h("bdi",{dir:"ltr"},row.ends_at))),
+      h(P.Text,null,t("time")),
       h(P.Panel,{ icon: "doc-text",title:t("instructions")},h(P.Text,null,row.instructions)),
       h(P.Text,null,t(row.response === "confirm" ? "confirmResponse" : row.response === "reject" ? "rejectResponse" : "noResponse")),
       !row.can_respond ? h(P.Notice,null,t("closed")) : null,

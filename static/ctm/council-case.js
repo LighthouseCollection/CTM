@@ -1565,7 +1565,7 @@ ${ar}` : en;
       form.kind === EXTERNAL ? h(P.Notice, { tone: "info" }, t("externalNoQuestions")) : h(P.SplitView, {
         label: t("reportTemplates"),
         firstLabel: t("questionCategories"),
-        first: h(P.Panel, { title: t("questionCategories") }, h("div", {
+        first: h(P.Panel, { icon: "folder", title: t("questionCategories") }, h("div", {
           dir: form.language === "ar" ? "rtl" : undefined,
           lang: form.language === "ar" ? "ar" : undefined,
         }, h(P.NavList, {
