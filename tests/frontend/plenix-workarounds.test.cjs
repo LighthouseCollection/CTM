@@ -1,5 +1,5 @@
 // #264: CTM uses the Plenix 1.8.0 components instead of hand-built plx- markup.
-// (1) AppHeader draws the brand from `brand={{ logo, organization, application }}`;
+// (1) AppHeader keeps the hand-built brand: the 1.8.0 `brand` object clips the application line (PLX-028);
 // (2) PagePanes is the pane row, not a raw <div className="plx-page-panes">.
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
@@ -7,13 +7,14 @@ const fs = require("node:fs");
 
 const read = (file) => fs.readFileSync(file, "utf8");
 
-test("AppHeader brand is the documented object, not hand-built plx-app-header markup", () => {
+test("AppHeader brand stays the hand-built workaround until PLX-028 is fixed", () => {
+  // Plenix 1.8.0 clips the `brand.application` line ("CLERICAL TRIBUNAL MANAGEM...") although there is room, EN and AR.
   for (const file of ["static/ctm/app.js", "static/ctm/external-report.js"]) {
     const text = read(file);
-    assert.doesNotMatch(text, /plx-app-header__/, `${file} hand-builds plx-app-header markup`);
-    assert.match(text, /brand:\s*\{\s*logo:\s*\{[^}]*src:\s*"\/static\/ctm\/tribunal-logo-36\.svg"/, `${file} brand logo`);
-    assert.match(text, /organization:\s*"DIOCESE OF LOS ANGELES"/, `${file} organization`);
-    assert.match(text, /application:\s*"CLERICAL TRIBUNAL MANAGEMENT"/, `${file} application`);
+    assert.doesNotMatch(text, /brand:\s*\{/, `${file} uses the brand object (clipped, PLX-028)`);
+    assert.match(text, /plx-app-header__app/, `${file} brand application line`);
+    assert.match(text, /DIOCESE OF LOS ANGELES/, `${file} organization`);
+    assert.match(text, /CLERICAL TRIBUNAL MANAGEMENT/, `${file} application`);
   }
 });
 
@@ -23,9 +24,9 @@ test("the case pane row is P.PagePanes, not a raw plx-page-panes div", () => {
   assert.match(text, /h\(P\.PagePanes,\s*null,\s*caseNav/);
 });
 
-test("no hand-written plx- class other than plx-u-* utilities in the pages touched by #264", () => {
+test("no hand-written plx- class other than plx-u-* utilities and the PLX-028 header brand", () => {
   for (const file of ["static/ctm/app.js", "static/ctm/external-report.js"]) {
-    const bad = [...read(file).matchAll(/["'`]((?:[^"'`]*\s)?plx-(?!u-)[\w-]+[^"'`]*)["'`]/g)].map((m) => m[1]);
+    const bad = [...read(file).matchAll(/["'`]((?:[^"'`]*\s)?plx-(?!u-|app-header__)[\w-]+[^"'`]*)["'`]/g)].map((m) => m[1]);
     assert.deepEqual(bad, [], `${file} uses plx- component classes: ${bad.join(", ")}`);
   }
 });

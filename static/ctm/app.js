@@ -1568,11 +1568,17 @@
     );
     const header = h(P.AppHeader, {
       appName: "CTM",
-      brand: {
-        logo: { src: "/static/ctm/tribunal-logo-36.svg", alt: "", width: 36, height: 34 },
-        organization: "DIOCESE OF LOS ANGELES",
-        application: "CLERICAL TRIBUNAL MANAGEMENT",
-      },
+      // Hand-built brand: the Plenix 1.8.0 `brand` object clips the application line (PLX-028).
+      brand: h(R.Fragment, null,
+        h(P.Image, {
+          src: "/static/ctm/tribunal-logo-36.svg",
+          alt: "", width: 36, height: 34, placeholder: "none", priority: true,
+        }),
+        h("span", { className: "plx-app-header__name" },
+          h("strong", { className: "plx-app-header__product" }, "DIOCESE OF LOS ANGELES"),
+          h("strong", { className: "plx-app-header__app" }, "CLERICAL TRIBUNAL MANAGEMENT"),
+        ),
+      ),
       brandHref: "/",
       switcher: false,
       nav: null,
