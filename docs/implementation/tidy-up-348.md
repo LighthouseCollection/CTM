@@ -15,14 +15,14 @@ Checked 2026-11-13 against `main` at bcc8e79 (Plenix CDN 1.8.0). Verification on
 | #217 D-0050 sweep | partly done | spouse cards, #268 gaps, post-release screenshots |
 | #240 Spouse cards | partly done | title still has CTM ID and portal badge, no role badge, photo control, header click workaround |
 | #242 Timeline | done | PR #277, #306 |
-| #259 Unassigned | done (code) | placeholder cut still open as pds#993, needs browser look |
+| #259 Unassigned | done (code) | PR #276; placeholder cut still open as pds#993, needs browser look |
 | #260 Parties' photos | done | PR #278 |
 | #263 Back item | partly done | other panes still use ghost Buttons |
 | #264 Plenix 1.2 alignment | partly done | all four workarounds still on `main` |
 | #268 D-0050 gaps | not done | icon-less Panel, "Label: value" texts remain |
 | #272 No skeletons | done | PR #282 |
 | #273 PropertyGroup tiles | done | PR #275; guard test not found |
-| #310 Row hover | done (Plenix) | Plenix 1.6.2, CTM on 1.8.0 |
+| #310 Row hover | done (Plenix) | Plenix 1.7.0 (pds#1187), CTM on 1.8.0; no CTM change needed; no browser look |
 | #184 Actions column, Close label | not done | `kind: "center"`, 240px caps, `closeLabel: "Cancel"` |
 | #110 "#" column width | partly done | still `5rem`; needs browser look on 1.8.0 |
 | #220 Presiding photo | not done | person icon only |
