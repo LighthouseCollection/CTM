@@ -139,6 +139,26 @@ test("any save clears everything kept, and a read that started before it never f
   }
 });
 
+test("a list query (POST /api/lists/<name>/) is a read: it leaves kept entries intact and is never kept itself (#370)", async () => {
+  const h = load();
+  h.store.setAccount("u-1");
+  h.server.replies["/api/lists/cases/"] = { rows: [1] };
+  await h.api("/api/cases/c-1/");
+  assert.equal(h.store.size(), 1);
+  const first = await h.api("/api/lists/cases/", { method: "POST", body: "{}" });
+  assert.deepEqual(first, { rows: [1] });
+  assert.equal(h.store.size(), 1, "the kept entry survives the list query");
+  h.server.replies["/api/lists/cases/"] = { rows: [2] };
+  const second = await h.api("/api/lists/cases/", { method: "POST", body: "{}" });
+  assert.deepEqual(second, { rows: [2] }, "a second query asks the server again");
+  assert.equal(h.store.size(), 1);
+  await h.api("/api/cases/c-1/"); // still answered from memory
+  assert.deepEqual(h.asked.filter((a) => a.url === "/api/cases/c-1/").length, 1);
+  // Any other POST is still a save.
+  await h.api("/api/cases/c-1/assignment/", { method: "POST", body: "{}" });
+  assert.equal(h.store.size(), 0);
+});
+
 test("a 401 or a different account clears everything", async () => {
   const { store, api, server } = load();
   store.setAccount("u-1");

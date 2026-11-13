@@ -256,3 +256,114 @@ test("session list and agenda columns are fitted to their content (#118, #114, #
     assert.match(hearings, new RegExp(`field: "${field}",[^\\n]*width: "`), field);
   assert.match(hearings, /title: "#", field: "hearing_number", kind: \["name", "data"\], width: "5rem"/, "#110: the 80px floor (PLX-024)");
 });
+
+// #370 (T5 of #312): CTMShell server mode. `server: { list, filters, size, mode, mapRow, api }` replaces `rows`.
+// A tiny hook renderer stands in for React so ServerTable's state and effects can run.
+function renderServer(props, { serverList } = {}) {
+  const slots = []; let cursor = 0; const effects = [];
+  const React = {
+    createElement: (type, p, ...children) => ({ type, props: p, children }),
+    Fragment: "Fragment",
+    useState: (init) => { const i = cursor++; if (!(i in slots)) slots[i] = typeof init === "function" ? init() : init;
+      return [slots[i], (v) => { slots[i] = typeof v === "function" ? v(slots[i]) : v; }]; },
+    useRef: (init) => { const i = cursor++; if (!(i in slots)) slots[i] = { current: init }; return slots[i]; },
+    useMemo: (fn) => fn(), useCallback: (fn) => fn,
+    useEffect: (fn) => { effects.push(fn); },
+  };
+  const window = { React, Plenix: { DataGrid: "DataGrid" }, CTMServerList: serverList };
+  vm.runInNewContext(fs.readFileSync("static/ctm/shell-layout.js", "utf8"), { window, setTimeout, clearTimeout, Object, Map, Set, Array, JSON, Number });
+  const draw = () => { cursor = 0; effects.length = 0; let out = window.CTMShell.Table(props);
+    // Table returns the ServerTable element: run it as React would.
+    while (typeof out.type === "function") out = out.type(out.props);
+    return out; };
+  return { draw, window };
+}
+const COLUMNS = [{ title: "Number", field: "number", serverSort: "number" }, { title: "Status", field: "status" },
+  { title: "Manager", field: "assigned_member", serverSort: "manager" }];
+const casesFixture = () => JSON.parse(fs.readFileSync("docs/implementation/slices/ctm3-312-server-lists/contract/post-list-cases.json", "utf8"));
+const auditFixture = () => JSON.parse(fs.readFileSync("docs/implementation/slices/ctm3-312-server-lists/contract/post-list-audit.json", "utf8"));
+
+test("server mode maps __ctm_display sort to serverSort, sets sortable false without serverSort, groupable false, no data prop", async () => {
+  const bodies = [];
+  const serverList = { query: async (api, list, body) => { bodies.push({ list, body }); return { items: [], page: 1, size: 50, total: 0, has_more: false }; } };
+  const { draw } = renderServer({ label: "Cases", columns: COLUMNS, server: { list: "cases", filters: { status: "open" }, api: () => {} } }, { serverList });
+  const grid = draw();
+  assert.equal(grid.type, "DataGrid");
+  assert.equal("data" in grid.props, false);
+  assert.equal(grid.props.mode, "fill");
+  assert.equal(grid.props.pageSize, 50);
+  assert.equal(typeof grid.props.fetchRows, "function");
+  const [number, status, manager] = grid.props.columns;
+  assert.equal(number.sortable, true);
+  assert.equal(manager.sortable, true);
+  assert.equal(status.sortable, false);
+  assert.ok(grid.props.columns.every((c) => c.groupable === false));
+  const sortField = (c) => c.field;
+  await grid.props.fetchRows({ page: 1, size: 50, sort: [{ field: sortField(manager), dir: "desc" }], filters: [], search: "", signal: undefined });
+  assert.deepEqual(JSON.parse(JSON.stringify(bodies[0].body.sort)), [{ field: "manager", dir: "desc" }]);
+  assert.equal(bodies[0].list, "cases");
+  assert.deepEqual(JSON.parse(JSON.stringify(bodies[0].body.filters)), { status: "open" });
+  assert.equal(bodies[0].body.page, 1);
+  assert.equal(bodies[0].body.size, 50);
+  // a sort on a column with no server key is dropped, not sent
+  await grid.props.fetchRows({ page: 1, size: 50, sort: [{ field: sortField(status), dir: "asc" }], filters: [], signal: undefined });
+  assert.equal("sort" in bodies[1].body, false);
+});
+
+test("server mode sends search only from two characters and mode, size and a restart key follow the server prop", async () => {
+  const bodies = [];
+  const serverList = { query: async (api, list, body) => { bodies.push(body); return { items: [], page: 1, size: 10, total: 0, has_more: false }; } };
+  const make = (filters) => renderServer({ label: "Cases", columns: COLUMNS, server: { list: "cases", filters, size: 10, mode: "pages", api: () => {} } }, { serverList }).draw();
+  const open = make({ status: "open" }), any = make({ status: "any" });
+  assert.equal(open.props.mode, "pages");
+  assert.equal(open.props.pageSize, 10);
+  assert.notEqual(open.props.key, any.props.key);
+  await open.props.fetchRows({ page: 1, size: 10, sort: [], filters: [], search: "M", signal: undefined });
+  await open.props.fetchRows({ page: 1, size: 10, sort: [], filters: [], search: " Mina ", signal: undefined });
+  assert.equal("q" in bodies[0], false);
+  assert.equal(bodies[1].q, "Mina");
+});
+
+test("table-contract: fetchRows drops ids already loaded on page 2", async () => {
+  const { response } = casesFixture();
+  const first = response.body.items[0];
+  const second = { ...first, id: "00000000-0000-4000-8000-000000000002", number: "CASE-2" };
+  const pages = [{ items: [first], page: 1, size: 50, total: 3, has_more: true }, { items: [first, second], page: 2, size: 50, total: 3, has_more: false }];
+  const serverList = { query: async () => pages.shift() };
+  const grid = renderServer({ label: "Cases", columns: COLUMNS, server: { list: "cases", filters: {}, api: () => {} } }, { serverList }).draw();
+  const one = await grid.props.fetchRows({ page: 1, size: 50, sort: [], filters: [] });
+  const two = await grid.props.fetchRows({ page: 2, size: 50, sort: [], filters: [] });
+  assert.equal(one.rows.length, 1);
+  assert.deepEqual(two.rows.map((r) => r.id), [second.id]);
+  assert.equal(two.total, 3);
+  // page 1 again (a new sort or search) starts from nothing, so the first row comes back
+  pages.push({ items: [first], page: 1, size: 50, total: 3, has_more: true });
+  assert.equal((await grid.props.fetchRows({ page: 1, size: 50, sort: [], filters: [] })).rows.length, 1);
+});
+
+test("table-contract: total null gives has_more estimate and no cardCount", async () => {
+  const { response } = auditFixture();
+  const mkRows = (n) => Array.from({ length: n }, (_, i) => ({ ...response.body.items[0], id: "a" + i }));
+  let reply;
+  const serverList = { query: async () => reply };
+  const props = { label: "Audit", columns: [{ title: "Action", field: "action" }], cardCount: { one: "{n} event", other: "{n} events" },
+    server: { list: "audit", filters: {}, size: 50, api: () => {} } };
+  const { draw } = renderServer(props, { serverList });
+  let grid = draw();
+  assert.deepEqual(JSON.parse(JSON.stringify(grid.props.strings)), { cardCount: props.cardCount });
+  reply = { items: mkRows(50), page: 2, size: 50, total: null, has_more: true };
+  assert.equal((await grid.props.fetchRows({ page: 2, size: 50, sort: [], filters: [] })).total, 2 * 50 + 1);
+  reply = { items: mkRows(7), page: 3, size: 50, total: null, has_more: false };
+  assert.equal((await grid.props.fetchRows({ page: 3, size: 50, sort: [], filters: [] })).total, 2 * 50 + 7);
+  grid = draw();
+  assert.equal("strings" in grid.props, false);
+  // a list with a real total keeps its count
+  reply = { items: mkRows(2), page: 1, size: 50, total: 2, has_more: false };
+  assert.equal((await grid.props.fetchRows({ page: 1, size: 50, sort: [], filters: [] })).total, 2);
+});
+
+test("server mode: a failed request rejects, so the grid shows its own Retry row", async () => {
+  const serverList = { query: async () => { const e = new Error("request_failed"); e.status = 500; throw e; } };
+  const grid = renderServer({ label: "Cases", columns: COLUMNS, server: { list: "cases", filters: {}, api: () => {} } }, { serverList }).draw();
+  await assert.rejects(grid.props.fetchRows({ page: 1, size: 50, sort: [], filters: [] }), (e) => e.status === 500);
+});
