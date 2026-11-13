@@ -1031,6 +1031,28 @@
       ),
     );
   }
+  // #324: a page that renders a bounded part (Listing, Workspace, SettingsLayout, CasesTable: all carry
+  // plx-u-min-h-0) keeps a bounded column so its panes scroll alone; every other page scrolls in PageContent and
+  // keeps its bottom padding (Plenix's space above the footer). Derived from what the page renders, no page list.
+  function holdsBoundedPart(start) {
+    const column = start && start.parentElement;
+    return !!(column && column.querySelector(".plx-u-min-h-0"));
+  }
+  function PageColumn({ pageKey, children }) {
+    const [bounded, setBounded] = R.useState(false);
+    const start = R.useRef(null);
+    R.useLayoutEffect(() => {
+      const column = start.current && start.current.parentElement;
+      if (!column) return undefined;
+      const sync = () => setBounded(holdsBoundedPart(start.current));
+      sync();
+      const watch = new MutationObserver(sync);
+      watch.observe(column, { childList: true, subtree: true });
+      return () => watch.disconnect();
+    }, [pageKey]);
+    return h(P.Stack, { className: bounded ? "plx-u-flex-1 plx-u-min-h-0" : "plx-u-flex-1" }, h("span", { ref: start, hidden: true }), children);
+  }
+
   function CaseNavigationState({ caseId }) {
     const layout = P.useAppLayout();
     const previousCase = R.useRef(null);
@@ -2014,18 +2036,15 @@
         );
       return h(P.EmptyState, { title: t("unavailable") });
     }
-    // Split list/detail pages: their panes scroll on their own inside a bounded column.
-    const masterDetail = ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page);
     return h(
       P.AppShell,
           // #324: the Plenix footer (page-structures-footer.md, status-region.md) ends every page with its spacing.
-          { header, sideNav: nav, footer: h(P.StatusBar, { start: t(council ? "council" : "applicant") }), frame: "centered", page: masterDetail ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
+          { header, sideNav: nav, footer: h(P.StatusBar, { start: t(council ? "council" : "applicant") }), frame: "centered", page: ["sessions", "sessionsUpcoming", "sessionsArchived", "cases", "archived", "search", "communications", "calls", "reports", "hearings", "evidence", "documents", "medical", "decision", "appeals", "decree", "audit", "marriage", "notes", "separation"].includes(page) ? "master-detail" : "workspace", minSize: true, strings: { skip: t("skip"), minSize: { title: t("minSizeTitle"), text: t("minSizeText"), continue: t("minSizeContinue") } } },
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       // The app's toasts (AppShell gives none, PLX-021): today the case-deleted toast.
       h(P.ToastProvider, null, h(CaseDeletedToast, { text: (number) => t("caseDeleted").replace("{number}", number) }),
         h("div", { className: "plx-page-panes" }, caseNav,
-          // #324: other pages scroll in PageContent, so its bottom padding (space above the footer) stays.
-          h(P.PageContent, null, h(P.Stack, { className: masterDetail ? "plx-u-flex-1 plx-u-min-h-0" : "plx-u-flex-1" },
+          h(P.PageContent, null, h(PageColumn, { pageKey: page },
             preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
             content(),
           )),
