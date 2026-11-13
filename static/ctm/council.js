@@ -2014,7 +2014,7 @@
     return { present: active.filter((row) => value(row) === true).length, total: active.length, unrecorded: active.filter((row) => value(row) == null).length };
   }
 
-  function AttendanceRoster({ lang, rows, readOnly, onRecord, label }) {
+  function AttendanceRoster({ lang, rows, readOnly, onRecord, savePath, label }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -2025,22 +2025,17 @@
     const n = (value) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(value);
     const ordered = rosterOrder(rows, lang);
     const value = (row) => (row.id in overrides ? overrides[row.id] : row.present);
+    // Issue 313: each choice shows at once and is sent in the background (CTMOptimistic); a refused one is put back.
+    // savePath is the endpoint saved to; without it the helper keeps this confirm-first (shown after the server agrees).
     async function save(list, present) {
       setBusy(true);
       setFailed([]);
-      setOverrides((old) => ({ ...old, ...Object.fromEntries(list.map((row) => [row.id, present])) }));
-      const misses = [];
-      for (const row of list) {
-        try {
-          await onRecord(row.id, present);
-        } catch (error) {
-          misses.push(row);
-        }
-      }
-      if (misses.length) {
-        setOverrides((old) => { const next = { ...old }; for (const row of misses) delete next[row.id]; return next; });
-        setFailed(misses.map((row) => row.name || "—"));
-      }
+      const O = window.CTMOptimistic;
+      const show = (row) => setOverrides((old) => ({ ...old, [row.id]: present }));
+      const hide = (row) => setOverrides((old) => { const next = { ...old }; delete next[row.id]; return next; });
+      const outcomes = await Promise.all(list.map((row) => O.run({ path: savePath, save: () => onRecord(row.id, present), apply: () => show(row), revert: () => hide(row) })));
+      const misses = list.filter((row, i) => !outcomes[i].ok);
+      if (misses.length) setFailed(misses.map((row) => row.name || "—"));
       setBusy(false);
     }
     if (!ordered.length) return h(P.EmptyState, { title: t("noSeatHolders") });
@@ -2210,6 +2205,7 @@
                       h(P.Stack, { gap: "md" },
                         h(AttendanceRoster, { lang, readOnly: !canManage(user) || !writable,
                           rows: state.data.hearingRoster || state.data.hearingAttendance.map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, seat: row.seat, photo_url: row.photo_url, present: row.present, former: Boolean(row.former) })),
+                          savePath: `/api/sessions/${encodeURIComponent(sessionId)}/attendance/`,
                           onRecord: (memberId, present) => api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }).then(() => retry()) }),
                       ),
                     )

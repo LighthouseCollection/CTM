@@ -121,7 +121,7 @@ const nameOf = (type) => (type && type[PLENIX] && type.displayName) || "";
 function load(h, extra = {}) {
   const window = { React: h.React, Plenix, addEventListener() {}, removeEventListener() {}, ...extra };
   const context = { window, console };
-  for (const file of ["council.js", "council-case.js", "council-decree.js", "council-media.js"])
+  for (const file of ["optimistic.js", "council.js", "council-case.js", "council-decree.js", "council-media.js"])
     vm.runInNewContext(fs.readFileSync(`static/ctm/${file}`, "utf8"), context);
   return window.CTMCouncil;
 }

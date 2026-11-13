@@ -3902,6 +3902,7 @@ ${ar}` : en;
     if (state.error) return base.loadFailure(P, h, t, retry, state.error);
     return h(base.AttendanceRoster, { lang, readOnly: !hearingId || user?.role === "member",
       rows: base.rosterRowsFrom(state.data) || (state.data.items || []).map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, seat: row.seat, photo_url: row.photo_url, present: row.present, former: Boolean(row.former) })),
+      savePath: `/api/sessions/${encodeURIComponent(sessionId)}/attendance/`,
       onRecord: (memberId, present) => api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }).then(() => retry()) });
   }
 
