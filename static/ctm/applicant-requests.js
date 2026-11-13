@@ -52,7 +52,7 @@
     const chosen=rows.find(row=>row.id===openId)||rows[0]||null;
     const detail=row=>h(P.Stack,null,
       h(P.Text,null,t(row.kind)," · ",t(row.state)),
-      h(P.Text,null,t("sentAt"),": ",h("bdi",{dir:"ltr"},row.sent_at)),
+      h(P.Text,null,t("sentAt"),": ",h(P.Text,{variant:"data"},h("bdi",{dir:"ltr"},row.sent_at))),
       row.instructions?h(P.Panel,{ icon: "doc-text",title:t("instructions")},h(P.Text,{dir:"auto"},row.instructions)):null,
       row.questions.length?h(P.Panel,{ icon: "doc-text",title:t("questions")},h(P.List,{variant:"bullets",items:row.questions.map(q=>({
         children:h("span",{lang:row.language==="both"?lang:row.language,dir:row.language==="ar"||row.language==="both"&&lang==="ar"?"rtl":"ltr"},questionText(q,row,lang))
@@ -70,7 +70,7 @@
         columns:[{title:t("request"),field:"title",render:row=>row.title},
           {title:t("kind"),field:"kind",render:row=>t(row.kind)},
           {title:t("status"),field:"state",render:row=>t(row.state)},
-          {title:t("sentAt"),field:"sent_at",render:row=>row.sent_at}]},
+          {title:t("sentAt"),field:"sent_at",kind:"data",render:row=>row.sent_at}]},
         chosen?detail(chosen):null)
     ));
   }

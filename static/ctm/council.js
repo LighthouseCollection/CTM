@@ -1239,6 +1239,17 @@
 
   // ---------- Views ----------
 
+  // Issue 308: reads asked for while the same read is still on its way share its one request (two charts on Home
+  // ask for the same summary). Only GET reads are shared; anything else goes straight to the server.
+  function sharedReads(api) {
+    const flying = new Map();
+    return (url, options) => {
+      if (options && options.method && options.method !== "GET") return api(url, options);
+      if (!flying.has(url)) flying.set(url, api(url, options).finally(() => flying.delete(url)));
+      return flying.get(url);
+    };
+  }
+
   function useLoad(loader, deps) {
     const R = window.React;
     const [state, setState] = R.useState({ data: null, error: null, pending: true });
@@ -1343,10 +1354,13 @@
       timeZone: "America/Los_Angeles",
     }).format(d);
   }
-  const reviewMeta = (row, t, lang) =>
-    [isolate(row.applicant_name), row.submitted_at ? formatWhen(row.submitted_at, lang) : null, `${t("fee")}: ${feeLabel(row, t)}`]
-      .filter(Boolean)
-      .join(" · ");
+  // The applicant's name, the submission time in the data font (issue 325) and the fee, one line.
+  const reviewMeta = (row, t, lang) => {
+    const h = window.React.createElement, P = window.Plenix;
+    const when = row.submitted_at ? h(P.Text, { variant: "data" }, formatWhen(row.submitted_at, lang)) : null;
+    return h(window.React.Fragment, null, ...[isolate(row.applicant_name), when, `${t("fee")}: ${feeLabel(row, t)}`]
+      .filter(Boolean).flatMap((part, index) => index ? [" · ", part] : [part]));
+  };
 
   // Home panel for admin/secretary. Members never see this queue.
   function ReviewQueuePanel({ api, lang, user, onOpen }) {
@@ -1377,7 +1391,7 @@
                 ...rows.slice(0, 5).map((row) =>
                   h(P.Card, { icon: "doc-text",
                     key: row.id,
-                    title: row.case_number || t("unnumbered"),
+                    title: row.case_number ? h(P.Text, { variant: "data" }, row.case_number) : t("unnumbered"),
                     meta: reviewMeta(row, t, lang),
                     onOpen,
                   }),
@@ -1449,7 +1463,7 @@
             { icon: "progress", title: t("previousReturns") },
             h(P.List, {
               variant: "bullets",
-              items: returns.map((r) => ({ children: `${formatWhen(r.timestamp, lang)} · ${r.actor}: ${r.instructions}` })),
+              items: returns.map((r) => ({ children: [h(P.Text, { key: "w", variant: "data" }, formatWhen(r.timestamp, lang)), ` · ${r.actor}: ${r.instructions}`] })),
             }),
           )
         : null,
@@ -1608,9 +1622,9 @@
         cardCount: plural(lang, "applicationsCount"),
         template: { title: "title", subtitle: "applicant_name", date: "submitted", primary: "fee_status" },
         columns: [
-          { title: t("caseNumber"), field: "title", kind: "name", minWidth: "9rem" },
+          { title: t("caseNumber"), field: "title", kind: "name", minWidth: "9rem", pill: (value, row) => ({ data: Boolean(row.case_number) }) },
           { title: t("applicant"), field: "applicant_name", type: "person", minWidth: "11rem" },
-          { title: t("submitted"), field: "submitted", minWidth: "11rem" },
+          { title: t("submitted"), field: "submitted", minWidth: "11rem", pill: (value, row) => ({ data: Boolean(row.submitted_at) }) },
           { title: t("fee"), field: "fee_status", minWidth: "7rem" },
         ],
       }, (chosen) => h(ReviewDetail, {
@@ -1764,12 +1778,12 @@
 
     const manage = mode === "upcoming" && canManage(user);
     const columns = [
-      { title: t("sessionDate"), field: "date", kind: "name", width: "8rem" },
-      { title: t("sessionTime"), field: "session_time", width: "8rem" },
+      { title: t("sessionDate"), field: "date", kind: ["name", "data"], width: "8rem" },
+      { title: t("sessionTime"), field: "session_time", width: "8rem", pill: (value, row) => ({ data: Boolean(row.starts_at) }) },
       ...(mode === "archived" ? [
-        { title: t("adjournEndTime"), field: "adjourned_time", width: "10rem" },
-        { title: t("assignedCases"), field: "assigned_case_count", width: "9rem" },
-        { title: t("caseHearings"), field: "hearing_case_count", width: "9rem" },
+        { title: t("adjournEndTime"), field: "adjourned_time", width: "10rem", pill: (value, row) => ({ data: Boolean(row.adjourned_at) }) },
+        { title: t("assignedCases"), field: "assigned_case_count", type: "number", width: "9rem" },
+        { title: t("caseHearings"), field: "hearing_case_count", type: "number", width: "9rem" },
       ] : []),
       ...(showConfirmed ? [{ title: t("confirmedColumn"), field: "confirmed", width: "11rem" }] : []),
       { title: t("statusLabel"), field: "state", pill: false, render: (row) => h(P.Badge, { tone: sessionStatusTone(row.state) }, t(sessionStatusKey(row.state))) },
@@ -1781,7 +1795,7 @@
     };
     const open = (row) => onOpen && onOpen(row.id);
     const caseColumns = (extra) => [
-      { title: t("caseNumber"), field: "case_number", kind: "name", minWidth: "8rem" },
+      { title: t("caseNumber"), field: "case_number", kind: ["name", "data"], minWidth: "8rem" },
       { title: t("applicant"), field: "applicant", type: "person", minWidth: "10rem" },
       { title: t("respondent"), field: "respondent", type: "person", minWidth: "10rem" },
       ...extra,
@@ -1900,8 +1914,8 @@
       compact ? P.Stack : P.Card,
       compact ? { gap: "xs" } : {
         icon: "calendar",
-        title: titled ? hearingTitle(row.party_names, session.date, t) : row.case_number,
-        meta: [titled ? isolate(row.case_number) : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`].filter(Boolean).join(" · "),
+        title: titled ? hearingTitle(row.party_names, session.date, t) : h(P.Text, { variant: "data" }, row.case_number),
+        meta: h(R.Fragment, null, titled ? h(P.Text, { variant: "data" }, isolate(row.case_number)) : null, titled ? " · " : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`),
         actions: h(P.Inline, { gap: "xs", wrap: true }, ...actions),
       },
       compact ? h(P.Text, { variant: "secondary" }, [titled ? hearingTitle(row.party_names, session.date, t) : null, `${t("assigned")}: ${assignedName ? isolate(assignedName) : t("unassigned")}`].filter(Boolean).join(" · ")) : null,
@@ -1929,7 +1943,9 @@
             h(
               P.Text,
               { variant: "secondary" },
-              `${t("testimony")}: ${a.party_name} · ${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)} · ${t(a.state === "cancelled" ? "cancelled" : a.response ? "response_" + a.response : "awaitingResponse")}`,
+              `${t("testimony")}: ${a.party_name} · `,
+              h(P.Text, { variant: "data" }, `${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)}`),
+              ` · ${t(a.state === "cancelled" ? "cancelled" : a.response ? "response_" + a.response : "awaitingResponse")}`,
             ),
             flags.cancelTestimony && a.state !== "cancelled" && onCancelTestimony
               ? h(P.Button, { size: "2xs", onClick: () => onCancelTestimony(a) }, t("cancelInvitation"))
@@ -2189,7 +2205,7 @@
                         variant: "bullets",
                         items: [...outcomes]
                           .reverse()
-                          .map((o) => ({ children: `${formatWhen(o.timestamp, lang)} · ${o.actor}` })),
+                          .map((o) => ({ children: [h(P.Text, { key: "w", variant: "data" }, formatWhen(o.timestamp, lang)), ` · ${o.actor}`] })),
                       }),
                     )
                   : null,
@@ -2455,7 +2471,7 @@
                 h(
                   P.Inline,
                   { key: a.id, wrap: true, align: "end" },
-                  h(P.Text, { variant: "strong" }, `${a.party_name} · ${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)}`),
+                  h(P.Text, { variant: "strong" }, `${a.party_name} · `, h(P.Text, { variant: "data" }, `${formatTime(a.starts_at, lang)}–${formatTime(a.ends_at, lang)}`)),
                   h(P.Field, { label: `${t("startTime")} · ${a.party_name}` }, h(P.Input, { type: "time", width: "sm", value: form.times[a.id]?.start || "", disabled: pending, onChange: (e) => setTime(a.id, "start", e.target.value) })),
                   h(P.Field, { label: `${t("endTime")} · ${a.party_name}` }, h(P.Input, { type: "time", width: "sm", value: form.times[a.id]?.end || "", disabled: pending, onChange: (e) => setTime(a.id, "end", e.target.value) })),
                 ),
@@ -2536,7 +2552,7 @@
             columns: [
               { title: t("councilMember"), field: "name", kind: "name", rowLabel: true },
               { title: t("answerColumn"), field: "answer", minWidth: "9rem", pill: false, render: (row) => h(P.Badge, { tone: answerTone(row.answer) }, t(answerKey(row.answer))) },
-              { title: t("answeredAt"), field: "answered", minWidth: "12rem" },
+              { title: t("answeredAt"), field: "answered", kind: "data", minWidth: "12rem" },
             ] })) : null,
       ));
   }
@@ -2562,6 +2578,7 @@
       number: row.number,
       parties: (row.party_names || []).map((name) => isolate(name)).join(` ${t("versus")} `) || "—",
       filed: row.filed_at ? formatDate(row.filed_at, lang) : t("notRecorded"),
+      filed_at: row.filed_at,
       grounds: groundsText(row.grounds, "", t) || "—",
       status: t(caseListStatus(row)),
       member: row.assigned_member || t("unassigned"),
@@ -2599,7 +2616,7 @@
     const columns = [
       { title: t("caseNumber"), field: "number", kind: "data", width: "8rem" },
       { title: t("pickerParties"), field: "parties", kind: "name", width: "12rem" },
-      { title: t("pickerFiled"), field: "filed", width: "6.5rem" },
+      { title: t("pickerFiled"), field: "filed", width: "6.5rem", pill: (value, row) => ({ data: Boolean(row.filed_at) }) },
       { title: t("reason"), field: "grounds", width: "6rem", overflow: "dialog", lines: 2 },
       ...(part === 2 ? [{ title: t("assignedTo"), field: "member", width: "8rem" }] : []),
       { title: t("pickerRecommendation"), field: "recommendation", width: part === 2 ? "9rem" : "17rem", overflow: "dialog", lines: 2 },
@@ -2915,7 +2932,7 @@
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ]
         : [
-            { title: "#", field: "hearing_number", kind: "name", width: "5rem" },
+            { title: "#", field: "hearing_number", kind: ["name", "data"], width: "5rem" },
             { title: t("applicant"), field: "applicant", width: "10.5rem", pill: false, render: (row) => personPill(row.applicant?.name, "applicant", row.applicant?.gender) },
             { title: t("respondent"), field: "respondent", width: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
@@ -3101,7 +3118,7 @@
           ? h(
               P.Stack,
               { gap: "md" },
-              h(P.Text, { as: "p", variant: "strong" }, dialog.row.case_number),
+              h(P.Text, { as: "p", variant: "data" }, dialog.row.case_number),
               !presidentRows.length ? h(P.Notice, { tone: "warning" }, t("noPresident")) : null,
               h(
                 P.Field,
@@ -3374,21 +3391,9 @@
       [user?.id],
     );
     const leadId = dash.data?.upcoming_sessions?.[0]?.id || null;
-    // The lead session's time, place and agenda come from the session endpoints until /api/dashboard/ sends them.
-    const [lead, retryLead] = useLoad(
-      () => leadId
-        ? Promise.all([
-            api("/api/sessions/"),
-            api(`/api/sessions/${encodeURIComponent(leadId)}/agenda/`),
-            api(`/api/sessions/${encodeURIComponent(leadId)}/answers/`).catch(() => null),
-          ]).then(([sessions, agenda, answers]) => ({
-            session: (sessions.items || []).find((row) => row.id === leadId) || agenda.session || { id: leadId },
-            agendaCount: (agenda.items || []).length,
-            answers,
-          }))
-        : Promise.resolve(null),
-      [leadId],
-    );
+    // Issue 308: /api/dashboard/ sends the lead session's card (time, place, agenda size and answers, issue 116), so Home
+    // starts no session reads of its own. The two charts share one statistics read.
+    const sharedApi = R.useMemo(() => sharedReads(api), [api]);
     const [cases, retryCases] = useLoad(() => api("/api/cases/?mine=1"), [user?.id]);
     const [members, retryMembers] = useLoad(() => api("/api/dashboard/members/"), [user?.id]);
 
@@ -3414,18 +3419,15 @@
         return h(P.Panel, { icon: "calendar", title: t("upcomingSession") },
           h(P.EmptyState, { title: t("noUpcoming"),
             action: canManage(user) && onNavigate ? h(P.Button, { onClick: () => onNavigate(window.CTMRoutes?.routeFor("sessionsUpcoming") || "/sessions/upcoming") }, t("scheduleSession")) : undefined }));
-      if (lead.error) return regionFailure(retryLead, lead.error);
-      if (!lead.data) return loadingView(P, h, t, t("loadingSession"));
-      // Fields /api/dashboard/ sends (design §4) win over the ones read from the session endpoints.
-      const sent = dash.data.upcoming_sessions[0];
-      const session = { ...lead.data.session, ...Object.fromEntries(["starts_at", "location"].filter((key) => sent[key] != null).map((key) => [key, sent[key]])) };
-      const agendaCount = typeof sent.agenda_count === "number" ? sent.agenda_count : lead.data.agendaCount;
-      const answers = lead.data.answers;
-      const mine = answers ? ownAnswer(answers, user) : null;
-      const confirmed = confirmedText(answers, t, "confirmedCount");
-      const date = session.date || dash.data.upcoming_sessions[0].date;
+      // The dashboard card (tribunal/services/home.py session_card): my_answer for everyone; confirmed and invited
+      // only for the roles that send reminders (a member never learns how others answered, issue 116 AC-5).
+      const session = dash.data.upcoming_sessions[0];
+      const agendaCount = session.agenda_count;
+      const mine = session.my_answer ? { answer: session.my_answer } : null;
+      const confirmed = confirmedText({ confirmed: session.confirmed, total: session.invited }, t, "confirmedCount");
+      const date = session.date;
       // Owner, 2026-11-10: the lead session may be Draft or In progress; its status shows as a badge.
-      const state = sent.state || session.state;
+      const state = session.state;
       // Today's session opens Tribunal Sessions, Current (owner, 2026-10-22); a later one opens its own page,
       // because Current lists only sessions dated today or earlier.
       const openLead = () => date <= todayInLosAngeles() || !onNavigate
@@ -3442,9 +3444,9 @@
             h(P.PropertyList.Item, { label: t("location") }, session.location || t("notRecorded"))),
           h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("agendaItems"), data: true }, n(agendaCount))),
-          answers ? h(P.PropertyList, { variant: "tiles" },
+          h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("yourAnswer") },
-              h(P.Badge, { tone: answerTone(mine?.answer), icon: mine?.answer === "attend" ? "check" : mine?.answer === "not_attend" ? "close" : undefined }, t(answerKey(mine?.answer))))) : null,
+              h(P.Badge, { tone: answerTone(mine?.answer), icon: mine?.answer === "attend" ? "check" : mine?.answer === "not_attend" ? "close" : undefined }, t(answerKey(mine?.answer))))),
           confirmed ? h(P.PropertyList, { variant: "tiles" },
             h(P.PropertyList.Item, { label: t("confirmedColumn") }, confirmed)) : null,
         ));
@@ -3513,7 +3515,7 @@
     // 5. Statistics summary: two charts side by side, each with its year; the full set lives on Statistics.
     const statsRegion = () => h(P.WidgetGrid, { label: t("statsSummary"), columns: 2,
       items: [{ id: "members" }, { id: "grounds" }],
-      renderItem: (item) => h(HomeStatChart, { key: item.id, api, lang, kind: item.id, onNavigate }) });
+      renderItem: (item) => h(HomeStatChart, { key: item.id, api: sharedApi, lang, kind: item.id, onNavigate }) });
 
     return h(P.Stack, { gap: "lg", onClickCapture: follow },
       h(P.Text, { as: "h1", variant: "title" }, t("homeTitle")),
@@ -3691,7 +3693,7 @@
           { title: t("respondent"), field: "respondent", type: "person", minWidth: "11rem" },
           { title: t("statusLabel"), field: "status", minWidth: "9rem" },
           { title: t("assignedTo"), field: "assigned_to", type: "person", minWidth: "12rem" },
-          { title: t("submitted"), field: "submitted", minWidth: "12rem" },
+          { title: t("submitted"), field: "submitted", minWidth: "12rem", pill: (value, row) => ({ data: Boolean(row.submitted_at) }) },
         ],
       });
     };

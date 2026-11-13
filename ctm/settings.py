@@ -184,4 +184,4 @@ CLAMAV_HOST = os.environ.get("CLAMAV_HOST", "")
 CLAMAV_PORT = int(os.environ.get("CLAMAV_PORT", "3310"))
 CTM_SCAN_REQUIRED = True
 CTM_TRIBUNAL_ID = os.environ.get("CTM_TRIBUNAL_ID", "")
-PLENIX_BASE = "https://design-system.lighthouseway.org/cdn/1.6.1/"
+PLENIX_BASE = "https://design-system.lighthouseway.org/cdn/1.8.0/"

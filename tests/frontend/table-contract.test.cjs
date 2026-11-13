@@ -254,5 +254,5 @@ test("session list and agenda columns are fitted to their content (#118, #114, #
   const hearings = agenda.slice(agenda.indexOf('title: "#"'));
   for (const field of ["hearing_number", "applicant", "respondent", "assigned_member_name", "previous_recommendation"])
     assert.match(hearings, new RegExp(`field: "${field}",[^\\n]*width: "`), field);
-  assert.match(hearings, /title: "#", field: "hearing_number", kind: "name", width: "5rem"/, "#110: the 80px floor (PLX-024)");
+  assert.match(hearings, /title: "#", field: "hearing_number", kind: \["name", "data"\], width: "5rem"/, "#110: the 80px floor (PLX-024)");
 });

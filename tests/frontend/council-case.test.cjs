@@ -22,7 +22,8 @@ test("case module extends the council namespace", () => {
 
 test("an unassigned open case offers the council-member picker without a president field", () => {
   assert.match(source, /api\("\/api\/council\/members\/"\)/);
-  assert.match(source, /record\.can_assign \? api\("\/api\/council\/members\/"\)/);
+  // Issue 308: an administrator or secretary starts the members read early; it is used only when the record allows.
+  assert.match(source, /record\.can_assign \? await \(early \|\| api\("\/api\/council\/members\/"\)\)/);
   assert.match(source, /base\.assignableMembers\(members\)/);
   assert.match(source, /P\.Select,/);
   assert.match(source, /api\(`\/api\/cases\/\$\{encodeURIComponent\(caseId\)\}\/assignment\/`,/);

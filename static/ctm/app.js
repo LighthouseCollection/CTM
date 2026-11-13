@@ -718,7 +718,7 @@
           id: row.id,
           name: row.case_number || t("caseUpdate"),
           description: t("event_" + row.kind) === t("unknown") ? t("caseUpdate") : t("event_" + row.kind),
-          meta: `${when.format(new Date(row.timestamp))} · ${t(row.read ? "read" : "unread")}`,
+          meta: h(R.Fragment, null, h(P.Text, { variant: "data" }, when.format(new Date(row.timestamp))), ` · ${t(row.read ? "read" : "unread")}`),
           thumbnail: { icon: "doc-text" },
           actions: h(
             P.Inline,
@@ -810,7 +810,7 @@
     const reading = chosen ? h(ReportDetail, { key: chosen.id, report: chosen, t, lang, onOriginal: () => select(chosen.parent_report_id) }) : h(P.EmptyState, { title: t("chooseReport") });
     return h(window.CTMShell.Workspace, {
       label: t("reports"), rows: reports, selected, onSelect: select, empty: t("noReports"), showDetailWhenEmpty: true,
-      columns: [{ title: "Completed by", field: "completedBy", kind: "name" }, { title: "Date received", field: "dateReceived" }],
+      columns: [{ title: "Completed by", field: "completedBy", kind: "name" }, { title: "Date received", field: "dateReceived", kind: "data" }],
     }, reading);
   }
   function CaseFiles({ caseId, section, council, t }) {
@@ -899,7 +899,7 @@
         h(P.Card, { icon: "doc-text",
           key: row.id,
           title: row.name,
-          meta: `${row.category} · ${t("version")} ${row.version}`,
+          meta: h(R.Fragment, null, h(P.Text, { variant: "data" }, row.category), ` · ${t("version")} `, h(P.Text, { variant: "data" }, String(row.version))),
           onOpen: () => select(row.id),
         }),
       ),
@@ -1010,11 +1010,11 @@
     const isSent = (row) => String(row.sender_id) === String(user.id);
     const rows = data.messages.filter((row) => tab === "sent" ? isSent(row) : !isSent(row));
     const chosen = rows.find((row) => row.id === selected) || null;
-    const detail = chosen ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, chosen.sender), h(P.Text, { variant: "secondary" }, new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(chosen.timestamp))), text(chosen.body)) : h(P.EmptyState, { title: t("noMessages") });
+    const detail = chosen ? h(P.Stack, { gap: "md" }, h(P.Text, { as: "h1", variant: "title" }, chosen.sender), h(P.Text, { variant: "data" }, new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(chosen.timestamp))), text(chosen.body)) : h(P.EmptyState, { title: t("noMessages") });
     const workspace = h(window.CTMShell.Workspace, {
       label: t("communications"), rows, selected, onSelect: select, empty: t("noMessages"),
       showDetailWhenEmpty: true,
-      columns: [{ title: "From", field: "sender", kind: "name" }, { title: t("message"), field: "body", kind: "wrap", overflow: "dialog", lines: 2 }, { title: t("date"), field: "timestamp", render: (row) => new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(row.timestamp)) }],
+      columns: [{ title: "From", field: "sender", kind: "name" }, { title: t("message"), field: "body", kind: "wrap", overflow: "dialog", lines: 2 }, { title: t("date"), field: "timestamp", kind: "data", render: (row) => new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(row.timestamp)) }],
     }, detail);
     return h(R.Fragment, null,
       composing ? h(MessageComposer, { key: `compose-${selection}`, record: data.record, sessions: data.sessions, council, t, onSent: () => { setComposing(false); reload((n) => n + 1); }, onClose: () => setComposing(false) }) : null,
@@ -1143,6 +1143,9 @@
       else if (page === "reports" && selection)
         request = api(`/api/cases/${selection}/reports/`);
       else if (["documents", "evidence"].includes(page) && selection)
+        request = Promise.resolve({});
+      // Issue 308: council Home and the case summary load their own data; the shell loads nothing for them.
+      else if (councilModule && user.portal === "council" && ((page === "home" && councilModule.CouncilHome) || (page === "case" && councilModule.CaseSummary)))
         request = Promise.resolve({});
       else if (page === "case" && selection)
         request = api(`/api/cases/${selection}/`);
