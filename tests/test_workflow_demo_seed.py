@@ -318,3 +318,14 @@ def test_rerun_moves_an_existing_future_hearing_into_the_past(settings, tmp_path
     assert hearing.agenda.session.date <= timezone.localdate() and hearing.agenda.state == "presented"
     assert m.AgendaItem.objects.filter(pk=item.pk, session=later).exists()  # the future placement stays as upcoming
     _assert_demo_dates_are_realistic()
+
+
+def test_roster_uses_the_owner_confirmed_council_addresses():
+    """#299: Fr. Youhanna Youssef is frjohnyoussef@; Fr. Youhanna Ibrahim has two n's; the deleted address never returns."""
+    from tribunal.management.commands.seed_workflow_demo import ROSTER
+
+    emails = {email: (first, last) for first, last, email, _role in ROSTER}
+    assert emails["frjohnyoussef@lacopts.org"] == ("Fr. Youhanna", "Youssef")
+    assert emails["fryouhannaibrahim@lacopts.org"] == ("Fr. Youhanna", "Ibrahim")
+    assert "fryouhannayoussef@lacopts.org" not in emails
+    assert "fryouhanaibrahim@lacopts.org" not in emails
