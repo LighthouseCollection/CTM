@@ -183,13 +183,13 @@ def test_case_page_reads_filings_in_constant_queries(client, granted_roles, peop
     returned = returned_with_private_abuse(people["applicant"], people, "perf-369")
     for index in range(2):
         owner = account(f"demo.small{index}@example.test", "Demo", f"Small{index}")
-        case, (party,) = make_case(f"20261113-0{index}", [(f"Demo Small {index}", owner)])
+        case, (party,) = make_case(f"20200101-{index:02d}", [(f"Demo Small {index}", owner)])
         file_petition(case, party, owner, {"grounds": ["abuse"]})
     login(client, people["secretary"])
     small, before = filing_queries(client, granted_roles)
     for index in range(2, 8):
         owner = account(f"demo.big{index}@example.test", "Demo", f"Big{index}")
-        case, (party,) = make_case(f"20261113-0{index}", [(f"Demo Big {index}", owner)])
+        case, (party,) = make_case(f"20200101-{index:02d}", [(f"Demo Big {index}", owner)])
         file_petition(case, party, owner, {"grounds": ["faith"]})
     other = account("demo.perf.returned@example.test", "Demo", "Returned")
     second = returned_with_private_abuse(other, people, "perf-369-b", "2012-08-09")
