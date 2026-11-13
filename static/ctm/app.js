@@ -1209,6 +1209,14 @@
         active = false;
       };
     }, [user?.id, user?.portal, page, selection, revision]);
+    // D-0061 (issue 263): every "Back to ..." item is the quiet Plenix back Link: chevron (mirrored in Arabic),
+    // start-aligned, a real route href. A modified click keeps its browser meaning (new tab).
+    const backLink = (label, id, selected = null) =>
+      h(P.Link, { back: true, href: routes?.routeFor(id, selected), onClick: (event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button) return;
+        event.preventDefault();
+        go(id, selected);
+      } }, label);
     const go = (id, selected = null, guarded = false) => {
       if (id === page && selected === selection) return;
       const move = () => {
@@ -1806,7 +1814,7 @@
         return h(P.RecordPage, {
             header: h(P.RecordPage.Header, { title: data.number,
               description: `${t("status")}: ${t(data.status)}`,
-              actions: h(P.Button, { variant: "ghost", onClick: () => go(council ? "cases" : "past") }, t("backCases")),
+              actions: backLink(t("backCases"), council ? "cases" : "past"),
             }),
           },
           !council && data.can_start_petition === true && window.CTMApplicantAppeals?.StartPetition
@@ -1901,11 +1909,7 @@
         return h(
           P.Stack,
           null,
-          h(
-            P.Button,
-            { variant: "ghost", onClick: () => go("sessions") },
-            t("backSessions"),
-          ),
+          backLink(t("backSessions"), "sessions"),
           heading(`${t("councilSession")} ${data.session.date}`),
           h(SessionAttendance, {
             key: selection,
