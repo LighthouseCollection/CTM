@@ -19,7 +19,7 @@ Consequences:
 - Easier: one contract and one adapter for every grid; permission rules for counts and search live in one place and are tested once per list.
 - Harder: reads through POST are not HTTP-cacheable. The in-memory cache of #308 must key on path and body.
 - Offset pages can drift when rows are added between pages. The frontend adapter drops rows whose id it has already shown.
-- Migration: index-only migration (`0078_list_indexes`). Rollback: revert the frontend first, then the route. The GET endpoints keep working throughout.
+- Migration: index-only migration (`0079_list_indexes`). Rollback: revert the frontend first, then the route. The GET endpoints keep working throughout.
 
 Alternatives considered:
 - Query parameters on the existing GET endpoints: cacheable and smaller, but search text (names) would land in URLs and access logs. That breaks the rule `runSearch` already follows. Rejected.
