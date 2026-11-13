@@ -94,3 +94,153 @@ test("the server roster (title, voting, photo, present) becomes roster rows; for
   const tree = h.render(C.AttendanceRoster, { lang: "en", rows, readOnly: false, onRecord: async () => {} });
   assert.equal(byName(tree, "UserCard")[0].props.secondary, "Presiding · Voting");
 });
+
+// Issue 313 (performance rule 6): Present / Absent shows at once, is sent in the background and is put back if refused.
+const ATTENDANCE_PATH = "/api/sessions/s-1/attendance/";
+function holdSave() {
+  const calls = [];
+  const onRecord = (id, present) => new Promise((resolve, reject) => calls.push({ id, present, resolve, reject }));
+  return { calls, onRecord };
+}
+
+test("a Present / Absent choice shows at once, before the server answers", async () => {
+  const [h, C] = boot();
+  const server = holdSave();
+  const props = { lang: "en", rows, readOnly: false, savePath: ATTENDANCE_PATH, onRecord: server.onRecord };
+  let tree = h.render(C.AttendanceRoster, props);
+  assert.match(textOf(tree), /1 of 4 present · 2 not recorded/);
+  const control = byName(tree, "SegmentedControl").find((c) => /Fr\. Abe/.test(c.props.label));
+  control.props.onChange("present");
+  tree = h.render(C.AttendanceRoster, props);
+  assert.equal(server.calls.length, 1, "sent in the background");
+  assert.match(textOf(tree), /2 of 4 present · 1 not recorded/, "shown while the save is still on its way");
+  server.calls[0].resolve();
+  await settle();
+  tree = h.render(C.AttendanceRoster, props);
+  assert.match(textOf(tree), /2 of 4 present · 1 not recorded/, "stays when the server agrees");
+  assert.equal(byName(tree, "Notice").length, 0);
+});
+
+test("a refused Present / Absent choice is put back and the approved message names the member", async () => {
+  const [h, C] = boot();
+  const server = holdSave();
+  const props = { lang: "en", rows, readOnly: false, savePath: ATTENDANCE_PATH, onRecord: server.onRecord };
+  let tree = h.render(C.AttendanceRoster, props);
+  byName(tree, "SegmentedControl").find((c) => /Fr\. Abe/.test(c.props.label)).props.onChange("present");
+  tree = h.render(C.AttendanceRoster, props);
+  assert.match(textOf(tree), /2 of 4 present/);
+  server.calls[0].reject(Object.assign(new Error("request_failed"), { status: 403 }));
+  await settle();
+  tree = h.render(C.AttendanceRoster, props);
+  assert.match(textOf(tree), /1 of 4 present · 2 not recorded/, "the old value is back");
+  assert.match(textOf(byName(tree, "Notice")[0]), /Not saved for Fr\. Abe\. Try again\./);
+  const ar = C.translator("ar");
+  assert.match(ar("rosterSaveFailed", { names: "X" }), /لم يُحفظ لـ X/, "the approved Arabic message");
+});
+
+test("Mark the rest present shows every member at once and undoes only the ones the server refused", async () => {
+  const [h, C] = boot();
+  const server = holdSave();
+  const props = { lang: "en", rows, readOnly: false, savePath: ATTENDANCE_PATH, onRecord: server.onRecord };
+  let tree = h.render(C.AttendanceRoster, props);
+  const batch = byName(tree, "Button")[0].props.onClick();
+  tree = h.render(C.AttendanceRoster, props);
+  assert.match(textOf(tree), /3 of 4 present(?! ·)/, "both shown before any answer");
+  assert.deepEqual(server.calls.map((c) => c.id), ["s", "m1"]);
+  server.calls[0].resolve();
+  server.calls[1].reject(new Error("no"));
+  await batch;
+  tree = h.render(C.AttendanceRoster, props);
+  assert.match(textOf(tree), /2 of 4 present · 1 not recorded/);
+  assert.match(textOf(byName(tree, "Notice")[0]), /Fr\. Abe/);
+});
+
+test("without a save path the roster stays confirm-first: nothing shows until the server agrees", async () => {
+  const [h, C] = boot();
+  const server = holdSave();
+  const props = { lang: "en", rows, readOnly: false, onRecord: server.onRecord };
+  let tree = h.render(C.AttendanceRoster, props);
+  byName(tree, "SegmentedControl").find((c) => /Fr\. Abe/.test(c.props.label)).props.onChange("present");
+  tree = h.render(C.AttendanceRoster, props);
+  assert.match(textOf(tree), /1 of 4 present · 2 not recorded/);
+  server.calls[0].resolve();
+  await settle();
+  tree = h.render(C.AttendanceRoster, props);
+  assert.match(textOf(tree), /2 of 4 present/);
+});
+
+test("all three attendance screens give the roster the endpoint they save to", () => {
+  const fs = require("node:fs");
+  for (const file of ["app.js", "council.js", "council-case.js"]) {
+    const source = fs.readFileSync(`static/ctm/${file}`, "utf8");
+    const calls = source.match(/onRecord:/g) || [];
+    const paths = source.match(/savePath:/g) || [];
+    if (file !== "council.js") assert.ok(calls.length >= 1 && paths.length === calls.length, `${file}: every onRecord has a savePath`);
+  }
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.ok(/savePath:/.test(council));
+});
+
+// Issue 313 rework (G5c): the summary is a polite live region, and the bulk button keeps keyboard focus while saving.
+test("the attendance summary is a polite live region that is read whole", () => {
+  const [h, C] = boot();
+  const tree = h.render(C.AttendanceRoster, { lang: "en", rows, readOnly: false, onRecord: async () => {} });
+  const summary = byName(tree, "Text").find((x) => /1 of 4 present/.test(textOf(x)));
+  assert.ok(summary, "summary text found");
+  assert.equal(summary.props.role, "status");
+  assert.equal(summary.props["aria-live"], "polite");
+  assert.equal(summary.props["aria-atomic"], true);
+});
+
+test("Mark the rest present is never disabled while saving: it shows the Plenix loading state and stays focusable", async () => {
+  const [h, C] = boot();
+  const server = holdSave();
+  const props = { lang: "en", rows, readOnly: false, savePath: ATTENDANCE_PATH, onRecord: server.onRecord };
+  let tree = h.render(C.AttendanceRoster, props);
+  assert.ok(!byName(tree, "Button")[0].props.disabled, "enabled before");
+  const batch = byName(tree, "Button")[0].props.onClick();
+  tree = h.render(C.AttendanceRoster, props);
+  const button = byName(tree, "Button")[0];
+  assert.ok(!button.props.disabled, "not disabled while saving, so focus stays");
+  assert.equal(button.props.loading, true, "documented busy state");
+  server.calls.forEach((c) => c.reject(Object.assign(new Error("x"), { status: 403 })));
+  await batch;
+  await settle();
+  tree = h.render(C.AttendanceRoster, props);
+  assert.ok(!byName(tree, "Button")[0].props.loading, "loading ends after a refusal");
+  assert.ok(!byName(tree, "Button")[0].props.disabled);
+});
+
+// Issue 313 (G5c finding 2): focus moves to the summary because the bulk button was the source, not because several
+// members were saved. With exactly one unrecorded member the button still turns off, so focus must still move.
+test("Mark the rest present moves focus to the summary even when only one member was unrecorded", async () => {
+  const h = harness();
+  h.React.Component = class { constructor(p) { this.props = p; } };
+  h.React.Component.prototype.isReactComponent = {};
+  const focused = [];
+  const document = { getElementById: (id) => ({ focus: () => focused.push(id) }) };
+  const C = load(h, {}, { document });
+  const one = rows.map((r) => (r.id === "s" ? { ...r, present: true } : r)); // only m1 is left unrecorded
+  const props = { lang: "en", rows: one, readOnly: false, savePath: ATTENDANCE_PATH, onRecord: async () => {} };
+  let tree = h.render(C.AttendanceRoster, props);
+  const summary = byName(tree, "Text").find((x) => /1 not recorded/.test(textOf(x)));
+  assert.ok(summary, "exactly one unrecorded");
+  await byName(tree, "Button")[0].props.onClick();
+  await settle();
+  tree = h.render(C.AttendanceRoster, props);
+  assert.deepEqual(focused, [summary.props.id], "focus moved to the summary");
+});
+
+test("a single Present / Absent choice does not move focus", async () => {
+  const h = harness();
+  h.React.Component = class { constructor(p) { this.props = p; } };
+  h.React.Component.prototype.isReactComponent = {};
+  const focused = [];
+  const C = load(h, {}, { document: { getElementById: (id) => ({ focus: () => focused.push(id) }) } });
+  const props = { lang: "en", rows, readOnly: false, savePath: ATTENDANCE_PATH, onRecord: async () => {} };
+  let tree = h.render(C.AttendanceRoster, props);
+  await byName(tree, "SegmentedControl").find((c) => /Fr\. Abe/.test(c.props.label)).props.onChange("present");
+  await settle();
+  h.render(C.AttendanceRoster, props);
+  assert.deepEqual(focused, []);
+});

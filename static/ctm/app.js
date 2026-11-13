@@ -666,6 +666,7 @@
     ];
     if (!Roster) return h(P.Notice, { tone: "danger" }, t("error"));
     return h(Roster, { lang: document.documentElement.lang === "ar" ? "ar" : "en", rows, readOnly: !session.can_record_attendance,
+      savePath: `/api/sessions/${sessionId}/attendance/`,
       onRecord: (memberId, present) => api(`/api/sessions/${sessionId}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present }) })
         .then(() => { if (onSaved) onSaved(); }) });
   }

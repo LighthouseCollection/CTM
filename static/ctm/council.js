@@ -2014,7 +2014,7 @@
     return { present: active.filter((row) => value(row) === true).length, total: active.length, unrecorded: active.filter((row) => value(row) == null).length };
   }
 
-  function AttendanceRoster({ lang, rows, readOnly, onRecord, label }) {
+  function AttendanceRoster({ lang, rows, readOnly, onRecord, savePath, label }) {
     const R = window.React,
       P = window.Plenix,
       h = R.createElement,
@@ -2022,26 +2022,27 @@
     const [overrides, setOverrides] = R.useState({});
     const [busy, setBusy] = R.useState(false);
     const [failed, setFailed] = R.useState([]);
+    // Issue 313 (G5c): when "Mark the rest present" (the bulk flag, whatever the member count) finishes and nothing is left, its
+    // button turns off; focus moves to the summary (tabIndex -1) so a keyboard user is not dropped to the page start.
+    const summaryId = R.useId ? R.useId() : "attendance-summary"; // Text takes no ref, so focus goes by id
+    const [refocus, setRefocus] = R.useState(0);
+    R.useEffect(() => { const el = refocus && typeof document !== "undefined" ? document.getElementById(summaryId) : null; if (el && el.focus) el.focus(); }, [refocus]);
     const n = (value) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(value);
     const ordered = rosterOrder(rows, lang);
     const value = (row) => (row.id in overrides ? overrides[row.id] : row.present);
-    async function save(list, present) {
+    // Issue 313: each choice shows at once and is sent in the background (CTMOptimistic); a refused one is put back.
+    // savePath is the endpoint saved to; without it the helper keeps this confirm-first (shown after the server agrees).
+    async function save(list, present, bulk) {
       setBusy(true);
       setFailed([]);
-      setOverrides((old) => ({ ...old, ...Object.fromEntries(list.map((row) => [row.id, present])) }));
-      const misses = [];
-      for (const row of list) {
-        try {
-          await onRecord(row.id, present);
-        } catch (error) {
-          misses.push(row);
-        }
-      }
-      if (misses.length) {
-        setOverrides((old) => { const next = { ...old }; for (const row of misses) delete next[row.id]; return next; });
-        setFailed(misses.map((row) => row.name || "—"));
-      }
+      const O = window.CTMOptimistic;
+      const show = (row) => setOverrides((old) => ({ ...old, [row.id]: present }));
+      const hide = (row) => setOverrides((old) => { const next = { ...old }; delete next[row.id]; return next; });
+      const outcomes = await Promise.all(list.map((row) => O.run({ path: savePath, save: () => onRecord(row.id, present), apply: () => show(row), revert: () => hide(row) })));
+      const misses = list.filter((row, i) => !outcomes[i].ok);
+      if (misses.length) setFailed(misses.map((row) => row.name || "—"));
       setBusy(false);
+      if (bulk && !misses.length) setRefocus((count) => count + 1);
     }
     if (!ordered.length) return h(P.EmptyState, { title: t("noSeatHolders") });
     const summary = rosterSummary(rows, overrides);
@@ -2058,8 +2059,8 @@
     ]).filter(Boolean));
     const body = h(P.Stack, { gap: "md" },
       h(P.Inline, { justify: "between", align: "center", gap: "sm" },
-        h(P.Text, { variant: "strong" }, t("rosterPresentOf", { present: n(summary.present), total: n(summary.total) }) + (summary.unrecorded ? ` · ${t("rosterNotRecorded", { n: n(summary.unrecorded) })}` : "")),
-        readOnly ? null : h(P.Button, { icon: "check", disabled: busy || !rest.length, onClick: () => save(rest, true) },
+        h(P.Text, { variant: "strong", role: "status", "aria-live": "polite", "aria-atomic": true, tabIndex: -1, id: summaryId }, t("rosterPresentOf", { present: n(summary.present), total: n(summary.total) }) + (summary.unrecorded ? ` · ${t("rosterNotRecorded", { n: n(summary.unrecorded) })}` : "")),
+        readOnly ? null : h(P.Button, { icon: "check", loading: busy, disabled: !busy && !rest.length, onClick: () => save(rest, true, true) },
           t(summary.unrecorded === summary.total ? "markAllPresent" : "markRestPresent"))),
       list,
       failed.length ? h(P.Notice, { tone: "danger" }, t("rosterSaveFailed", { names: failed.join(", ") })) : null);
@@ -2210,6 +2211,7 @@
                       h(P.Stack, { gap: "md" },
                         h(AttendanceRoster, { lang, readOnly: !canManage(user) || !writable,
                           rows: state.data.hearingRoster || state.data.hearingAttendance.map((row) => ({ id: row.member_id, name: row.member_name, role: row.member_role, seat: row.seat, photo_url: row.photo_url, present: row.present, former: Boolean(row.former) })),
+                          savePath: `/api/sessions/${encodeURIComponent(sessionId)}/attendance/`,
                           onRecord: (memberId, present) => api(`/api/sessions/${encodeURIComponent(sessionId)}/attendance/`, { method: "POST", body: JSON.stringify({ member_id: memberId, present, hearing_id: hearingId }) }).then(() => retry()) }),
                       ),
                     )

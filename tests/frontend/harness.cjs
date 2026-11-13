@@ -118,10 +118,10 @@ const named = (name) =>
 const Plenix = new Proxy({}, { get: (_t, key) => named(String(key)) });
 const nameOf = (type) => (type && type[PLENIX] && type.displayName) || "";
 
-function load(h, extra = {}) {
+function load(h, extra = {}, globals = {}) {
   const window = { React: h.React, Plenix, addEventListener() {}, removeEventListener() {}, ...extra };
-  const context = { window, console };
-  for (const file of ["council.js", "council-case.js", "council-decree.js", "council-media.js"])
+  const context = { window, console, ...globals };
+  for (const file of ["optimistic.js", "council.js", "council-case.js", "council-decree.js", "council-media.js"])
     vm.runInNewContext(fs.readFileSync(`static/ctm/${file}`, "utf8"), context);
   return window.CTMCouncil;
 }
