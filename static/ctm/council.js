@@ -1551,7 +1551,7 @@
       ),
       h(
         P.Dialog,
-        {
+        { closeLabel: t("close"),
           open: mode === "reject",
           title: t("returnTitle"),
           description: t("returnHelp"),
@@ -2120,7 +2120,7 @@
       });
     return h(
       P.Dialog,
-      {
+      { closeLabel: t("close"),
         open: true,
         size: "lg",
         title: t("hearingOutcome"),
@@ -2256,7 +2256,7 @@
     const err = (key) => (problem === key ? t(key) : undefined);
     return h(
       P.Dialog,
-      {
+      { closeLabel: t("close"),
         open: true,
         title: t("scheduleTestimony"),
         description: t("testimonyHelp"),
@@ -2428,7 +2428,7 @@
     }
     return h(
       P.Dialog,
-      {
+      { closeLabel: t("close"),
         open: true,
         size: "lg",
         title: t("rescheduleTitle"),
@@ -2628,7 +2628,7 @@
         empty: t("pickerNoMatch"),
         grid: { selectable: true, selected: chosen, onSelectionChange: (keys) => setChosen([...keys]), mode: "pages", pageSize: 10, pageSizes: [10, 25, 50],
           strings: { cardCount: plural(lang, "casesCount"), perPage: t("tablePerPage"), range: t("tableRange"), count: t("tableCount"), pages: t("tablePages") } } }));
-    return h(P.Dialog, {
+    return h(P.Dialog, { closeLabel: t("close"),
       // "xl": room for every column as a table (a narrower dialog turns the grid into row cards).
       open: true, size: "xl", title: t(part === 1 ? "pickerTitleAssign" : "pickerTitleHearing"),
       onClose: () => !pending && onClose(),
@@ -2923,7 +2923,7 @@
             { title: t("reason"), field: "reason", minWidth: "6.5rem", overflow: "dialog", lines: 2 },
             { title: t("yearsMarried"), field: "married_years", minWidth: "7.5rem", pill: false, render: (row) => row.married_years === null || row.married_years === undefined ? t("notRecorded") : t("years", { n: row.married_years }) },
             { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
-            { title: t("actions"), field: "open_action", minWidth: "9rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
+            { title: t("actions"), field: "open_action", minWidth: "12rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ]
@@ -2933,7 +2933,7 @@
             { title: t("respondent"), field: "respondent", width: "10.5rem", pill: false, render: (row) => personPill(row.respondent?.name, "respondent", row.respondent?.gender) },
             { title: t("assignedTo"), field: "assigned_member_name", width: "12rem", pill: false, render: (row) => personPill(row.assigned_member_name, "clergy") },
             { title: t("previousRecommendation"), field: "previous_recommendation", width: "12rem", pill: false, wrap: true, render: (row) => recommendationCell(P, h, row.previous_recommendation, t) },
-            { title: t("actions"), field: "open_action", minWidth: "9rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
+            { title: t("actions"), field: "open_action", minWidth: "12rem", pill: false, render: (row) => h(P.Inline, { gap: "xs" },
               h(P.Button, { size: "xs", icon: "open", onClick: () => onCase(row.case_id) }, t("open")),
               h(P.Button, { size: "xs", onClick: () => agendaCallbacks.onTransfer(row) }, t("moveCase"))) },
           ];
@@ -2997,7 +2997,7 @@
           })
         : null,
       dialog?.kind === "transfer"
-        ? h(P.Dialog, { open: true, size: "sm", title: t("transferCaseTitle"), onClose: () => !pending && setDialog(null) },
+        ? h(P.Dialog, { closeLabel: t("close"), open: true, size: "sm", title: t("transferCaseTitle"), onClose: () => !pending && setDialog(null) },
             h(P.Stack, { gap: "md" },
               h(P.Text, { variant: "secondary" }, t("transferCaseHelp")),
               h(P.Field, { label: t("moveToSession") }, h(P.Select, {
@@ -3032,7 +3032,7 @@
           )
         : null,
       dialog?.kind === "adjourn"
-        ? h(P.Dialog, { open: true, size: "sm", title: t("adjournSessionTitle"), onClose: () => !pending && setDialog(null) },
+        ? h(P.Dialog, { closeLabel: t("close"), open: true, size: "sm", title: t("adjournSessionTitle"), onClose: () => !pending && setDialog(null) },
             h(P.Stack, { gap: "md" },
               h(P.Text, { variant: "secondary" }, t("adjournedSessionMessage")),
               h(P.Field, { label: t("adjournEndTime"), required: true },
@@ -3093,7 +3093,7 @@
         : null,
       h(
         P.Dialog,
-        {
+        { closeLabel: t("close"),
           open: dialog?.kind === "assign",
           title: t("assignTitle"),
           description: t("assignHelp"),

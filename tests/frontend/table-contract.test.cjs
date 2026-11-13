@@ -231,11 +231,11 @@ test("plenix-requests.md has one row per PLX id", () => {
 // cap, so the session agenda overflowed at 1280px and its overlay scrollbar sat on the rows. A button column
 // now takes the width its caller asks for (width, else minWidth).
 test("button columns are as wide as the caller asks, not their 240px cap (#111)", () => {
-  const sized = mount({ label: "Agenda", rows: [], columns: [{ field: "open_action", minWidth: "9rem", render: () => ({ type: "Button" }) }] });
-  assert.equal(sized.props.columns[0].width, "9rem");
-  const explicit = mount({ label: "Agenda", rows: [], columns: [{ field: "open_action", width: "10rem", minWidth: "9rem", render: () => ({ type: "Button" }) }] });
+  const sized = mount({ label: "Agenda", rows: [], columns: [{ field: "open_action", minWidth: "12rem", render: () => ({ type: "Button" }) }] });
+  assert.equal(sized.props.columns[0].width, "12rem");
+  const explicit = mount({ label: "Agenda", rows: [], columns: [{ field: "open_action", width: "10rem", minWidth: "12rem", render: () => ({ type: "Button" }) }] });
   assert.equal(explicit.props.columns[0].width, "10rem");
-  const plain = mount({ label: "Cases", rows: [], columns: [{ field: "name", minWidth: "9rem" }] });
+  const plain = mount({ label: "Cases", rows: [], columns: [{ field: "name", minWidth: "12rem" }] });
   assert.equal("width" in plain.props.columns[0], false, "text columns keep Plenix's content sizing");
 });
 
@@ -248,7 +248,7 @@ test("session list and agenda columns are fitted to their content (#118, #114, #
     assert.match(list, new RegExp(`field: "${field}",[^\n]*width: "`), field);
   assert.doesNotMatch(list, /minWidth/);
   const agenda = council.slice(council.indexOf("const title = first ? t(\"casesToAssign\")"), council.indexOf("ctm-session-agenda-grid"));
-  assert.equal((agenda.match(/title: t\("actions"\), field: "open_action", minWidth: "9rem"/g) || []).length, 2);
+  assert.equal((agenda.match(/title: t\("actions"\), field: "open_action", minWidth: "12rem"/g) || []).length, 2);
   // Every hearings-agenda column has a width, so Plenix's fixed table does not stretch one past the room (PLX-025).
   const hearings = agenda.slice(agenda.indexOf('title: "#"'));
   for (const field of ["hearing_number", "applicant", "respondent", "assigned_member_name", "previous_recommendation"])
@@ -264,16 +264,31 @@ test("action columns are kind actions with no width cap (#184)", () => {
     assert.equal(out.kind, "actions", JSON.stringify(column));
     assert.equal("maxWidth" in out, false, JSON.stringify(column));
   }
-  const sized = mount({ label: "Agenda", rows: [], columns: [{ field: "open_action", minWidth: "9rem", render: () => ({ type: "Button" }) }] }).props.columns[0];
-  assert.equal(sized.width, "9rem");
+  const sized = mount({ label: "Agenda", rows: [], columns: [{ field: "open_action", minWidth: "12rem", render: () => ({ type: "Button" }) }] }).props.columns[0];
+  assert.equal(sized.width, "12rem");
 });
 
-// #184: dialogs use Plenix's default Close label (localized EN/AR by Plenix); none sets a "Cancel" close label.
-test("no dialog sets a Cancel close label (#184)", () => {
-  const offenders = [];
-  for (const file of fs.readdirSync("static/ctm").filter(f => f.endsWith(".js")))
-    fs.readFileSync("static/ctm/" + file, "utf8").split("\n").forEach((line, i) => {
-      if (/closeLabel:\s*(?:[\w.]+\([^)]*\))?\(?\s*["']?cancel/i.test(line) || /closeLabel[^,}]*\(["']cancel["']\)/.test(line)) offenders.push(`${file}:${i + 1}`);
-    });
-  assert.deepEqual(offenders, []);
+// #184 round 2 (G5b): the Plenix default Close label is English in Arabic, so every council dialog passes CTM's own
+// approved translated "close" label (council.js dictionary, EN "Close" / AR "إغلاق"). No new Arabic words.
+test("every council dialog passes the translated Close label (#184)", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.match(council, /close: "Close"/);
+  assert.match(council, /close: "إغلاق"/);
+  let total = 0;
+  for (const [file, label] of [["static/ctm/council.js", 't("close")'], ["static/ctm/council-case.js", 'base.translator(lang)("close")']]) {
+    const source = fs.readFileSync(file, "utf8");
+    for (const m of source.matchAll(/P\.Dialog,\s*\{/g)) {
+      total += 1;
+      const head = source.slice(m.index, m.index + 500);
+      assert.ok(head.includes(`closeLabel: ${label}`), `${file}: dialog at offset ${m.index} has no ${label}`);
+    }
+  }
+  assert.ok(total >= 13, `found ${total} dialogs`);
+});
+
+// #184 round 2: the Actions column is wide enough for Open + Move case (12rem, was 9rem: Open was clipped).
+test("session agenda Actions columns are 12rem (#184)", () => {
+  const council = fs.readFileSync("static/ctm/council.js", "utf8");
+  assert.equal((council.match(/field: "open_action", minWidth: "12rem"/g) || []).length, 2);
+  assert.doesNotMatch(council, /field: "open_action", minWidth: "9rem"/);
 });
