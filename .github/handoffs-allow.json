@@ -20,6 +20,12 @@
       "reason": "Report issue for the frontend engineer. No workflow has to react to its labels; the dashboard web page (dashboard.yml) picks it up on its 15-minute run."
     },
     {
+      "workflow": "browser.yml",
+      "job": "publish-screenshots",
+      "step": "Push to ci-screenshots",
+      "reason": "Pushes images to the ci-screenshots data branch, which needs no checks."
+    },
+    {
       "workflow": "plenix-upgrade.yml",
       "job": "upgrade",
       "step": "Publish screenshots to the dashboard branch",
