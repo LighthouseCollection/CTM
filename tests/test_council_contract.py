@@ -91,6 +91,7 @@ def test_session_workspace_projects_saved_header_and_assignment_facts(client, fi
         "presiding_member_id": str(people["president"].pk),
         "presiding_member_name": "president Test",
         "location": "St. George Coptic Orthodox Church, Bellflower, California",
+        "presiding_member_photo_url": None,
     }
     row = data["items"][0]
     assert row["applicant_name"] == "John Smith"

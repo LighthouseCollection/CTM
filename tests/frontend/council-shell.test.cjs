@@ -896,3 +896,22 @@ test("long-text grid columns use overflow dialog with two lines", () => {
   assert.match(read("council-case.js"), /field: "preview", kind: "wrap", overflow: "dialog", lines: 2/);
   assert.match(read("app.js"), /field: "body", kind: "wrap", overflow: "dialog", lines: 2/);
 });
+
+// #220: the session Presiding fact shows the president's photo (Plenix Avatar) when one exists, else the person icon.
+test("#220: the Presiding fact uses a Plenix Avatar with the photo, and keeps the person icon as the fallback", () => {
+  const src = fs.readFileSync("static/ctm/council.js", "utf8");
+  const start = src.indexOf("const presidingPhoto");
+  assert.ok(start > 0, "council.js reads the presiding photo");
+  const block = src.slice(start, src.indexOf("label: t(\"attendance\")", start));
+  assert.match(block, /session\.presiding_member_photo_url/);
+  assert.match(block, /P\.Avatar, \{ name: session\.presiding_member_name, src: presidingPhoto/);
+  // photo: no icon tile; no photo: the same person icon fact as before
+  assert.match(block, /icon: "person", label: t\("presiding"\)/);
+  assert.match(block, /data: false/);
+  assert.doesNotMatch(block, /style:|#[0-9a-fA-F]{3,6}\b/);
+});
+
+test("#220: the session projection carries presiding_member_photo_url from the same source as the council tiles", () => {
+  const proj = fs.readFileSync("tribunal/projections.py", "utf8");
+  assert.match(proj, /"presiding_member_photo_url": None,/);
+});

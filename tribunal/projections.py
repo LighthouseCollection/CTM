@@ -203,6 +203,7 @@ def session_data(session, actor):
         "starts_at": session.starts_at.astimezone(ZoneInfo("America/Los_Angeles")).isoformat() if session.starts_at else None,
         "presiding_member_id": str(session.presiding_member_id) if session.presiding_member_id else None,
         "presiding_member_name": name(session.presiding_member) if session.presiding_member_id else None,
+        "presiding_member_photo_url": None,  # CTM stores no council profile photos yet (same as the council tiles)
         "location": session_display_location(session.location) or None,
         "adjourned_at": session.adjourned_at.isoformat() if session.adjourned_at else None,
         "assigned_case_count": assigned_case_count,

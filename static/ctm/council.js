@@ -2698,8 +2698,13 @@
     // CDN record-page docs): each count carries its own button, and the session's state is the status
     // box among the facts. Buttons appear only on the current session and only for those allowed.
     const presentCount = Array.isArray(data.attendance) ? data.attendance.filter((row) => row.present === true).length : null;
+    // Issue 220: the president's photo (Plenix Avatar, the same photo_url the council tiles use) when one exists; without
+    // one the fact keeps the person icon.
+    const presidingPhoto = session.presiding_member_photo_url || undefined;
     const sessionFacts = [
-      { icon: "person", label: t("presiding"), value: session.presiding_member_name || t("presidingNotRecorded") },
+      presidingPhoto && session.presiding_member_name
+        ? { label: t("presiding"), data: false, value: h(P.Inline, { gap: "sm" }, h(P.Avatar, { name: session.presiding_member_name, src: presidingPhoto, size: "sm" }), session.presiding_member_name) }
+        : { icon: "person", label: t("presiding"), value: session.presiding_member_name || t("presidingNotRecorded") },
       {
         icon: "settings-users", label: t("attendance"), value: presentCount === null ? "—" : String(presentCount), data: true,
         action: current ? { label: t("attendance"), icon: "edit", name: t("attendance"), disabled: pending, onClick: () => setDialog({ kind: "attendance" }) } : undefined,
