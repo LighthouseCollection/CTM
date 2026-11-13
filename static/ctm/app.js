@@ -1568,6 +1568,7 @@
     );
     const header = h(P.AppHeader, {
       appName: "CTM",
+      // Hand-built brand: the Plenix 1.8.0 `brand` object clips the application line (PLX-028).
       brand: h(R.Fragment, null,
         h(P.Image, {
           src: "/static/ctm/tribunal-logo-36.svg",
@@ -2023,7 +2024,7 @@
       h(CaseNavigationState, { caseId: caseContext ? selection : null }),
       // The app's toasts (AppShell gives none, PLX-021): today the case-deleted toast.
       h(P.ToastProvider, null, h(CaseDeletedToast, { text: (number) => t("caseDeleted").replace("{number}", number) }),
-        h("div", { className: "plx-page-panes" }, caseNav,
+        h(P.PagePanes, null, caseNav,
           h(P.PageContent, null, h(P.Stack, { className: "plx-u-flex-1 plx-u-min-h-0" },
             preferenceFailure ? h(P.Notice, { tone: "danger", role: "alert" }, t(preferenceFailure)) : null,
             content(),
