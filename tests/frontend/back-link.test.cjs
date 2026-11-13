@@ -38,3 +38,8 @@ test("the applicant application editor back item is the same P.Link back, behind
   assert.match(applicant, /navigate\(onBack\)/);
   assert.match(applicant, /event\.metaKey \|\| event\.ctrlKey \|\| event\.shiftKey \|\| event\.button/);
 });
+
+test("the case back Link is a start-aligned row above the RecordPage, not in the Header actions slot", () => {
+  assert.doesNotMatch(app, /actions: backLink\(/);
+  assert.match(app, /if \(page === "case"\)\s*return h\(P\.Stack, null,\s*backLink\(t\("backCases"\), council \? "cases" : "past"\),\s*h\(P\.RecordPage/);
+});

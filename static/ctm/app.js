@@ -1811,10 +1811,11 @@
       });
       // The case is a RecordPage (record-page.md): the number leads, its status under it, the parts below.
       if (page === "case")
-        return h(P.RecordPage, {
+        return h(P.Stack, null,
+          backLink(t("backCases"), council ? "cases" : "past"),
+          h(P.RecordPage, {
             header: h(P.RecordPage.Header, { title: data.number,
               description: `${t("status")}: ${t(data.status)}`,
-              actions: backLink(t("backCases"), council ? "cases" : "past"),
             }),
           },
           !council && data.can_start_petition === true && window.CTMApplicantAppeals?.StartPetition
@@ -1845,7 +1846,7 @@
               })),
             }),
           ),
-        );
+        ));
       if (councilModule?.StatisticsWorkspace && council && page === "statistics")
         return h(councilModule.StatisticsWorkspace, { api, lang });
       if (councilModule?.SearchWorkspace && council && page === "search")
