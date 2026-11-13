@@ -275,7 +275,7 @@
           "ground": "abuse"
         }
       },
-      "returns": "total 0 when abuse exists only in a private correction revision saved after the return; the filter and the item's grounds read the council-visible revision (latest Submission.revision while status is returned, else the current_version revision)"
+      "returns": "total 0 when abuse exists only in a private correction revision saved after the return; also after that filing is withdrawn (SEC-312-2a); the filter and the item's grounds read the council-visible revision (the current_version revision when revision_visible, else the latest Submission.revision)"
     }
   ]
 }
