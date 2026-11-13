@@ -436,8 +436,12 @@ ${ar}` : en;
       undo: "Undo",
       lastHearingDate: "Last hearing date",
       children: "Children",
-      noChildren: "No children recorded",
       noChildrenShort: "No children",
+      noChildrenSummary: "None recorded",
+      summaryAssignedMember: "Council member",
+      summaryLastHearing: "Last hearing",
+      summaryMarriedFor: "Married for",
+      summaryGrounds: "Grounds",
       addChild: "Add child",
       childDone: "Done",
       edit: "Edit",
@@ -981,8 +985,12 @@ ${ar}` : en;
       undo: "تراجع",
       lastHearingDate: "تاريخ آخر جلسة",
       children: "الأبناء",
-      noChildren: "لا يوجد أبناء مسجلون",
       noChildrenShort: "لا يوجد أبناء",
+      noChildrenSummary: "لا يوجد أبناء",
+      summaryAssignedMember: "عضو المجلس",
+      summaryLastHearing: "آخر جلسة",
+      summaryMarriedFor: "مدة الزواج",
+      summaryGrounds: "الأسباب",
       addChild: "إضافة ابن",
       childDone: "تم",
       edit: "تحرير",
@@ -4596,14 +4604,14 @@ ${ar}` : en;
     };
     // D-0050 groups (groups.md): Case · Spouses · Marriage, the same in read and edit mode.
     const summaryGroups = [
-      { title: t("groupCase"), fields: [["case_number", t("caseNumber")], ["filing_date", t("filingDate")], ["status", bt("statusLabel")], ["assigned_member", t("assignedCouncilMember")], ["last_hearing_date", t("lastHearingDate")]] },
+      { title: t("groupCase"), fields: [["case_number", t("caseNumber")], ["filing_date", t("filingDate")], ["status", bt("statusLabel")], ["assigned_member", t("summaryAssignedMember")], ["last_hearing_date", t("summaryLastHearing")]] },
       { title: t("groupSpouses"), fields: [["applicant", t("applicant")], ["respondent", t("respondent")]] },
-      { title: t("marriageTitle"), fields: [["marriage_duration", t("marriageDuration")], ["children", t("children")], ["reason", t("reasonForDivorce")]] },
+      { title: t("marriageTitle"), fields: [["marriage_duration", t("summaryMarriedFor")], ["children", t("children")], ["reason", t("summaryGrounds")]] },
     ];
     const summaryReadValues = {
       case_number: record.number, filing_date: summaryDate(summary.filing_date, lang), status: ((badge) => h(P.Badge, { tone: badge.tone, icon: badge.icon }, badge.label))(caseStatusBadge(caseStatusOf(record), t, bt)), assigned_member: manager || bt("unassigned"),
       applicant: applicant?.name, respondent: respondent?.name, reason: summary.reason, marriage_duration: marriageDuration(record.marriage?.church_marriage_date, lang),
-      children: summary.children?.length ? h(P.Stack, { gap: "xs" }, ...summary.children.map((child, index) => h(P.Text, { key: index }, childLine(child, lang, t)))) : t("noChildren"), last_hearing_date: summaryDate(summary.last_hearing_date, lang),
+      children: summary.children?.length ? h(P.Stack, { gap: "xs" }, ...summary.children.map((child, index) => h(P.Text, { key: index }, childLine(child, lang, t)))) : t("noChildrenSummary"), last_hearing_date: summaryDate(summary.last_hearing_date, lang),
     };
     const summaryPanels = h(
       P.Stack,

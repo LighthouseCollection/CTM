@@ -398,3 +398,27 @@ test("Key Dates uses Plenix's compact grouped Timeline (issue 239, pds#1152)", (
   const src = require("fs").readFileSync(require("path").join(__dirname, "..", "..", "static", "ctm", "council-case.js"), "utf8");
   assert.match(src, /h\(P\.Timeline, \{ variant: "grouped", density: "compact", label: t\("keyDates"\)/);
 });
+
+// Issue 195: the read-only case summary uses the shorter labels; edit forms keep the full ones.
+test("case summary read-only view uses the shorter labels in English and Arabic", () => {
+  const start = source.indexOf("const summaryGroups = [");
+  const summaryGroups = source.slice(start, source.indexOf("const summaryReadValues", start));
+  for (const key of ["summaryAssignedMember", "summaryLastHearing", "summaryMarriedFor", "summaryGrounds"])
+    assert.match(summaryGroups, new RegExp(`t\\("${key}"\\)`));
+  for (const old of ["assignedCouncilMember", "lastHearingDate", "marriageDuration", "reasonForDivorce"])
+    assert.doesNotMatch(summaryGroups, new RegExp(`t\\("${old}"\\)`));
+  assert.match(source, /summaryAssignedMember: "Council member"/);
+  assert.match(source, /summaryLastHearing: "Last hearing"/);
+  assert.match(source, /summaryMarriedFor: "Married for"/);
+  assert.match(source, /summaryGrounds: "Grounds"/);
+  assert.match(source, /noChildrenSummary: "None recorded"/);
+  // Arabic reuses existing approved terms only (no new proposal).
+  assert.match(source, /summaryAssignedMember: "عضو المجلس"/);
+  assert.match(source, /summaryLastHearing: "آخر جلسة"/);
+  assert.match(source, /summaryMarriedFor: "مدة الزواج"/);
+  assert.match(source, /summaryGrounds: "الأسباب"/);
+  assert.match(source, /noChildrenSummary: "لا يوجد أبناء"/);
+  // The summary's empty children value uses it; the editable forms keep the full strings.
+  assert.match(source, /: t\("noChildrenSummary"\), last_hearing_date/);
+  assert.match(source, /label: t\("reasonForDivorce"\) \}, h\(P\.Input/);
+});
