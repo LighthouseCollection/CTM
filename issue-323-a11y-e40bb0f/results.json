@@ -1,0 +1,198 @@
+{
+  "en": {
+    "html_lang": "en",
+    "dir": "ltr",
+    "h1": "Home",
+    "axe_page": {
+      "violations": [
+        {
+          "id": "landmark-unique",
+          "impact": "moderate",
+          "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+          "nodes": [
+            {
+              "target": [
+                ".plx-nav-pane"
+              ],
+              "summary": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable"
+            }
+          ]
+        }
+      ],
+      "passes": 47,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "n": 8
+        }
+      ]
+    },
+    "tab_presses_to_trigger": 30,
+    "trigger_reached_by_tab": true,
+    "trigger_outline": "solid 2px",
+    "dialog_open": {
+      "dialog": true,
+      "role": "dialog",
+      "modal": "true",
+      "name": "Cases per member",
+      "focusInside": true,
+      "active": "BUTTON Close"
+    },
+    "axe_dialog_open": {
+      "violations": [
+        {
+          "id": "landmark-unique",
+          "impact": "moderate",
+          "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+          "nodes": [
+            {
+              "target": [
+                ".plx-nav-pane"
+              ],
+              "summary": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable"
+            }
+          ]
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "nodes": [
+            {
+              "target": [
+                "#plx-dnd-instructions-2"
+              ],
+              "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+            }
+          ]
+        }
+      ],
+      "passes": 50,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "n": 31
+        }
+      ]
+    },
+    "tab_x8_stays_in_dialog": true,
+    "dialog_closed_after_esc": true,
+    "focus_returned_to_trigger": true,
+    "active_after_esc": "BUTTON Show the data",
+    "errors": [
+      "unmocked api: /api/applications/",
+      "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  "ar": {
+    "html_lang": "ar",
+    "dir": "rtl",
+    "h1": "الرئيسية",
+    "axe_page": {
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                "button[aria-label=\"English\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.49 (foreground color: #c8dff7, background color: #2a6fdb, font size: 10.0pt (13.3333px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        },
+        {
+          "id": "landmark-unique",
+          "impact": "moderate",
+          "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+          "nodes": [
+            {
+              "target": [
+                ".plx-nav-pane"
+              ],
+              "summary": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable"
+            }
+          ]
+        }
+      ],
+      "passes": 47,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "n": 6
+        }
+      ]
+    },
+    "tab_presses_to_trigger": 30,
+    "trigger_reached_by_tab": true,
+    "trigger_outline": "solid 2px",
+    "dialog_open": {
+      "dialog": true,
+      "role": "dialog",
+      "modal": "true",
+      "name": "القضايا لكل عضو",
+      "focusInside": true,
+      "active": "BUTTON Close"
+    },
+    "axe_dialog_open": {
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                "button[aria-label=\"English\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.49 (foreground color: #c8dff7, background color: #2a6fdb, font size: 10.0pt (13.3333px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        },
+        {
+          "id": "landmark-unique",
+          "impact": "moderate",
+          "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+          "nodes": [
+            {
+              "target": [
+                ".plx-nav-pane"
+              ],
+              "summary": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable"
+            }
+          ]
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "nodes": [
+            {
+              "target": [
+                "#plx-dnd-instructions-2"
+              ],
+              "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+            }
+          ]
+        }
+      ],
+      "passes": 50,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "n": 30
+        }
+      ]
+    },
+    "tab_x8_stays_in_dialog": true,
+    "dialog_closed_after_esc": true,
+    "focus_returned_to_trigger": true,
+    "active_after_esc": "BUTTON عرض البيانات",
+    "errors": [
+      "unmocked api: /api/applications/",
+      "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  }
+}
