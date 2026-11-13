@@ -270,6 +270,14 @@ def delete_draft_session(actor, session_id):
     if Message.objects.filter(session=session).exists() or AgendaTransferEvent.objects.filter(to_session=session).exists():
         raise ValidationError("A session with retained history cannot be deleted.")
     with database_actor(actor), database_settings({"ctm.delete_draft_session": str(session.pk)}):
+        # #365 (#359): members who were invited (or sent an update) are told the entry is gone.
+        # The cancel is queued only if an invite or update was queued (never faked: with email
+        # not set up nothing was queued, and cancel_session_calendar queues nothing), and only
+        # inside this context, which is the only place the database accepts it for a Draft.
+        from tribunal.services.session_reminders import cancel_session_calendar
+        if Outbox.objects.filter(kind__in=("session_invite", "session_update"),
+                                 payload__session=str(session.pk)).exists():
+            cancel_session_calendar(session)
         session.delete()
 
 
