@@ -160,5 +160,6 @@
         "error": "resource_or_input_invalid"
       }
     }
-  ]
+  ],
+  "privacy_note": "SEC-312-3: events of a never-submitted draft are never returned, counted toward has_more or listed in facets: source tribunal.application, tribunal.answerrevision or tribunal.fileversion whose application has submitted_at IS NULL (filing_privacy.draft_event_q, excluded in SQL before audit_visible). An action filter such as draft_started matches only events of filings that were later submitted."
 }

@@ -13,7 +13,7 @@ Decision:
 - Body: `{ page, size, sort: [{ field, dir }], q, filters: {…}, facets }`. Response: `{ items, page, size, total, has_more }`.
 - Each list declares, per role, the sort keys, filter keys and search fields it accepts. Anything else is refused with 422. Nothing is ignored silently.
 - `total` is a SQL `COUNT` of the same authorized and filtered queryset that produces the page. Lists whose visibility is decided in Python (audit) return `total: null` and `has_more` from a look-ahead row.
-- The existing GET list endpoints stay unchanged for callers that still use them. They are removed in a later slice once nothing calls them.
+- The existing GET list endpoints keep their routes and shapes for callers that still use them, with one exception: they get the same privacy fixes as the new lists (G5e SEC-312-1..3: applicant case rows, the council-visible revision, no never-submitted draft events in the audit). They are removed in a later slice once nothing calls them.
 
 Consequences:
 - Easier: one contract and one adapter for every grid; permission rules for counts and search live in one place and are tested once per list.

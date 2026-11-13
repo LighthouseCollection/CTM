@@ -52,7 +52,56 @@
       "size": 50,
       "total": 1,
       "has_more": false
-    }
+    },
+    "role": "council (admin, secretary, president, member)"
+  },
+  "applicant_response": {
+    "role": "applicant",
+    "note": "SEC-312-1: applicants get their own item projection (lists.applicant_case_item). grounds and reason come only from the actor's own newest submitted petition on the case (owner = actor); [] and null when the actor has filed none, even if the other party has. No party names, no genders, no next_step. respondent_name and party_names stay out until ctm3-product-lead answers design risk 6 (deny by default).",
+    "request_body": {
+      "page": 1,
+      "size": 50,
+      "sort": [
+        {
+          "field": "created_at",
+          "dir": "desc"
+        }
+      ],
+      "q": "",
+      "filters": {
+        "status": "any"
+      }
+    },
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "7f3c2a10-5b1e-4c55-9a51-0c6f1d2e8a01",
+          "number": "20261020-04",
+          "status": "open",
+          "display_status": "open",
+          "assigned_member_id": "2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b",
+          "assigned_member": "Fr. Demo Member",
+          "grounds": [
+            "abandonment"
+          ],
+          "reason": "abandonment",
+          "closed_at": null
+        }
+      ],
+      "page": 1,
+      "size": 50,
+      "total": 1,
+      "has_more": false
+    },
+    "forbidden_item_keys": [
+      "applicant_gender",
+      "respondent_gender",
+      "applicant_name",
+      "respondent_name",
+      "party_names",
+      "next_step"
+    ]
   },
   "errors": [
     {
@@ -215,6 +264,18 @@
         "filters": {}
       },
       "returns": "the case above; q matches Concat(first_name, ' ', last_name)"
+    },
+    {
+      "purpose": "council filter by ground while a filing is returned for correction (SEC-312-2)",
+      "body": {
+        "page": 1,
+        "size": 50,
+        "q": "",
+        "filters": {
+          "ground": "abuse"
+        }
+      },
+      "returns": "total 0 when abuse exists only in a private correction revision saved after the return; the filter and the item's grounds read the council-visible revision (latest Submission.revision while status is returned, else the current_version revision)"
     }
   ]
 }
