@@ -1,0 +1,185 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/api/lists/audit/",
+    "headers": {
+      "Content-Type": "application/json",
+      "X-CSRFToken": "<csrftoken cookie>"
+    },
+    "body": {
+      "page": 1,
+      "size": 50,
+      "sort": [
+        {
+          "field": "created_at",
+          "dir": "desc"
+        }
+      ],
+      "q": "decree",
+      "filters": {
+        "source": "tribunal.decree",
+        "date_from": "2026-11-01",
+        "date_to": "2026-11-01"
+      },
+      "facets": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+          "action": "decree_released",
+          "source": "tribunal.decree",
+          "timestamp": "2026-11-02T07:59:00+00:00"
+        }
+      ],
+      "page": 1,
+      "size": 50,
+      "total": null,
+      "has_more": false,
+      "facets": {
+        "action": [
+          "decree_released",
+          "session_closed"
+        ],
+        "source": [
+          "tribunal.councilsession",
+          "tribunal.decree"
+        ]
+      }
+    }
+  },
+  "note": "total is always null: audit rows pass audit_visible() in Python, so a SQL count could include hidden rows. date_from/date_to are Los Angeles civil days; 2026-11-02T07:59Z is 2026-11-01 23:59 PST. facets is present only when the request sets facets: true and page is 1.",
+  "errors": [
+    {
+      "when": "not signed in",
+      "status": 401,
+      "body": {
+        "error": "authentication_required"
+      },
+      "note": "Only reached with a valid CSRF token (a browser session always has one). A bare unauthenticated POST gets the CSRF 403 first."
+    },
+    {
+      "when": "GET or another method",
+      "status": 405,
+      "body": {
+        "error": "method_not_allowed"
+      }
+    },
+    {
+      "when": "CSRF header missing or wrong (also an unauthenticated POST without a token)",
+      "status": 403,
+      "body": null,
+      "content_type": "text/html",
+      "note": "Django CsrfViewMiddleware answers with its HTML 403 page (no CSRF_FAILURE_VIEW). It runs before the endpoint, so it is also what an unauthenticated POST without a token gets instead of 401. CTMServerList treats any non-JSON error as a generic failure (Retry row) and never parses the body."
+    },
+    {
+      "when": "unknown list name, e.g. /api/lists/drafts/",
+      "status": 404,
+      "body": {
+        "error": "resource_or_input_invalid"
+      }
+    },
+    {
+      "when": "page not an integer from 1 to 1000000 (also the string \"1\", true, 1.5)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "page must be an integer from 1 to 1000000."
+        ]
+      }
+    },
+    {
+      "when": "size not an integer from 1 to 100 (also the string \"50\", true, 1.5)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "size must be an integer from 1 to 100."
+        ]
+      }
+    },
+    {
+      "when": "sort field not allowed for this list and role",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported sort field: <field>."
+        ]
+      }
+    },
+    {
+      "when": "more than 3 sort entries or dir not asc/desc",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Use up to 3 sort entries, each with dir asc or desc."
+        ]
+      }
+    },
+    {
+      "when": "q shorter than 2 or longer than 200 characters after trimming (empty is allowed)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Search text must be 2 to 200 characters."
+        ]
+      }
+    },
+    {
+      "when": "filter key not allowed for this list and role",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported filter: <key>."
+        ]
+      }
+    },
+    {
+      "when": "unknown top-level body key",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported list option: <key>."
+        ]
+      }
+    },
+    {
+      "when": "actor is not admin or secretary",
+      "status": 403,
+      "body": {
+        "error": "forbidden",
+        "detail": "Administrator or secretary required."
+      }
+    },
+    {
+      "when": "filters.date_from or date_to not YYYY-MM-DD",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "date_from must be a YYYY-MM-DD date."
+        ]
+      }
+    },
+    {
+      "when": "facets not a boolean",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "facets must be true or false."
+        ]
+      }
+    }
+  ],
+  "privacy_note": "SEC-312-3: events of a never-submitted draft are never returned, counted toward has_more or listed in facets: source tribunal.application, tribunal.answerrevision or tribunal.fileversion whose application has submitted_at IS NULL (filing_privacy.draft_event_q, excluded in SQL before audit_visible). An action filter such as draft_started matches only events of filings that were later submitted."
+}

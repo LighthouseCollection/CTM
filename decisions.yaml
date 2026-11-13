@@ -589,3 +589,13 @@ decisions:
     decided_by: owner
     status: active
     check: { kind: config, ref: .agents/agents.config.yaml }
+
+  - id: D-0075
+    date: 2026-11-13
+    area: process
+    decision: Cutover ended. The CTM3 team is stopped (its PM session closed on the agent host, its watcher timers disabled), and the CTM4 team works normally under D-0074
+    why: The owner confirmed the end of cutover on 2026-11-13 after the CTM4 PM's first status
+    options: [End cutover now (chosen), Keep the CTM4 team read-only]
+    decided_by: owner
+    status: active
+    review_only: An operating state of the agent host, recorded in the kit log there; nothing in this repository can check it
