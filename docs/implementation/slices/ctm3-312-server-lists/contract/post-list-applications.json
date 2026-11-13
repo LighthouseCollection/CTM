@@ -1,0 +1,208 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/api/lists/applications/",
+    "headers": {
+      "Content-Type": "application/json",
+      "X-CSRFToken": "<csrftoken cookie>"
+    },
+    "body": {
+      "page": 1,
+      "size": 50,
+      "sort": [],
+      "q": "",
+      "filters": {
+        "state": "awaiting_review"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "9a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+          "kind": "petition",
+          "origin": "portal",
+          "requires_new_information": false,
+          "status": "submitted",
+          "case_id": "7f3c2a10-5b1e-4c55-9a51-0c6f1d2e8a01",
+          "case_number": "20261020-04",
+          "filing_party_id": "5c6d7e8f-9a0b-4c1d-8e2f-3a4b5c6d7e8f",
+          "filing_party_name": "Demo Mina Applicant",
+          "filing_party_role": "applicant",
+          "version": 3,
+          "answers": {
+            "marriage_date": "2015-06-20"
+          },
+          "fee": {
+            "amount_minor": 15000,
+            "currency": "usd",
+            "status": "paid"
+          },
+          "applicant_name": "Demo Mina Applicant",
+          "respondent_name": "Demo Respondent",
+          "applicant_gender": "F",
+          "respondent_gender": "M",
+          "assigned_to": "Fr. Demo Member",
+          "submitted_at": "2026-10-20T17:04:00+00:00",
+          "submitted_version": 3,
+          "questionnaire": {
+            "id": "0d1e2f3a-4b5c-4d6e-8f7a-8b9c0d1e2f3a",
+            "version": 2,
+            "published": true,
+            "definition": {
+              "sections": []
+            },
+            "declaration_en": "Demo declaration.",
+            "declaration_ar": "إقرار تجريبي."
+          },
+          "manifest": [
+            {
+              "file_id": "4a5b6c7d-8e9f-4a0b-8c1d-2e3f4a5b6c7d",
+              "category": "marriage_certificate",
+              "name": "demo-certificate.pdf",
+              "scan_state": "clean"
+            }
+          ],
+          "reviews": [],
+          "can_review": true
+        }
+      ],
+      "page": 1,
+      "size": 50,
+      "total": 1,
+      "has_more": false
+    }
+  },
+  "note": "council item = application_data(app, council actor): the 13 encoded keys then staff_application_data keys, in this order. Council filings (kind appeal, or origin closed_case_intake; the council_consideration view) also carry supplements, disposition, eligible_hearings, can_record_result. An applicant's own item has a different tail (own_filing_actions, can_edit, can_checkout, can_submit ...); the contract test for applicants asserts application_data output, not this file. Example answers are shortened.",
+  "errors": [
+    {
+      "when": "not signed in",
+      "status": 401,
+      "body": {
+        "error": "authentication_required"
+      },
+      "note": "Only reached with a valid CSRF token (a browser session always has one). A bare unauthenticated POST gets the CSRF 403 first."
+    },
+    {
+      "when": "GET or another method",
+      "status": 405,
+      "body": {
+        "error": "method_not_allowed"
+      }
+    },
+    {
+      "when": "CSRF header missing or wrong (also an unauthenticated POST without a token)",
+      "status": 403,
+      "body": null,
+      "content_type": "text/html",
+      "note": "Django CsrfViewMiddleware answers with its HTML 403 page (no CSRF_FAILURE_VIEW). It runs before the endpoint, so it is also what an unauthenticated POST without a token gets instead of 401. CTMServerList treats any non-JSON error as a generic failure (Retry row) and never parses the body."
+    },
+    {
+      "when": "unknown list name, e.g. /api/lists/drafts/",
+      "status": 404,
+      "body": {
+        "error": "resource_or_input_invalid"
+      }
+    },
+    {
+      "when": "page not an integer from 1 to 1000000 (also the string \"1\", true, 1.5)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "page must be an integer from 1 to 1000000."
+        ]
+      }
+    },
+    {
+      "when": "size not an integer from 1 to 100 (also the string \"50\", true, 1.5)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "size must be an integer from 1 to 100."
+        ]
+      }
+    },
+    {
+      "when": "sort field not allowed for this list and role",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported sort field: <field>."
+        ]
+      }
+    },
+    {
+      "when": "more than 3 sort entries or dir not asc/desc",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Use up to 3 sort entries, each with dir asc or desc."
+        ]
+      }
+    },
+    {
+      "when": "q shorter than 2 or longer than 200 characters after trimming (empty is allowed)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Search text must be 2 to 200 characters."
+        ]
+      }
+    },
+    {
+      "when": "filter key not allowed for this list and role",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported filter: <key>."
+        ]
+      }
+    },
+    {
+      "when": "unknown top-level body key",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported list option: <key>."
+        ]
+      }
+    },
+    {
+      "when": "applicant sends filters.state or a non-empty q",
+      "status": 403,
+      "body": {
+        "error": "forbidden",
+        "detail": "Council access required."
+      }
+    },
+    {
+      "when": "filters.state not awaiting_review or council_consideration",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "state must be awaiting_review or council_consideration."
+        ]
+      }
+    },
+    {
+      "when": "filters.case not a UUID",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "case must be a case id."
+        ]
+      }
+    }
+  ]
+}
