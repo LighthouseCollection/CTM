@@ -469,7 +469,9 @@ def _case_list_data(case):
     filing = max(filings, key=lambda application: (application.submitted_at, application.id), default=None)
     applicant = filing.party if filing and filing.party_id else (parties[0] if parties else None)
     respondent = next((party for party in parties if not applicant or party.pk != applicant.pk), None)
-    revision = next((row for row in filing.revisions.all() if row.number == filing.current_version), None) if filing else None
+    # SEC-312-2: read the council-visible revision, never a private correction of a returned filing.
+    from tribunal.services.filing_privacy import council_revision
+    revision = council_revision(filing) if filing else None
     grounds = _submitted_grounds(revision.answers) if revision else []
     def party_gender(party):
         if not party:
@@ -499,27 +501,15 @@ def display_status(case, actor):
 
 @endpoint()
 def cases(request):
+    from tribunal.lists import case_item, case_queryset
     from tribunal.pagination import page_records
-    from tribunal.services.home import next_step
-    qs = m.Case.objects.all()
-    staff_view = request.user.role != "applicant"
-    if not staff_view:
-        qs = qs.filter(parties__account=request.user).distinct()
-    elif request.GET.get("mine") == "1":  # #170: Home "my cases"
+    qs = case_queryset(request.user)
+    if request.user.role != "applicant" and request.GET.get("mine") == "1":  # #170: Home "my cases"
         qs = qs.filter(assigned_member=request.user)
+    # SEC-312-1: applicant rows use lists.applicant_case_item (no other party's data).
     return JsonResponse(page_records(
-        qs.select_related("assigned_member").prefetch_related(
-            "parties", "applications__party", "applications__revisions"
-        ).order_by("-created_at", "-id"), request,
-        default_limit=100,
-        serialize=lambda c: encoded(
-            c, number=c.number, status=c.status, display_status=display_status(c, request.user),
-            assigned_member_id=str(c.assigned_member_id) if c.assigned_member_id else None,
-            assigned_member=f"{c.assigned_member.first_name} {c.assigned_member.last_name}".strip()
-            if c.assigned_member else None,
-            **_case_list_data(c),
-            **({"next_step": next_step(c)} if staff_view else {}),
-        ),
+        qs.order_by("-created_at", "-id"), request, default_limit=100,
+        serialize=lambda c: case_item(c, request.user),
     ))
 
 
