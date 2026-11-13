@@ -1,0 +1,281 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/api/lists/cases/",
+    "headers": {
+      "Content-Type": "application/json",
+      "X-CSRFToken": "<csrftoken cookie>"
+    },
+    "body": {
+      "page": 1,
+      "size": 50,
+      "sort": [
+        {
+          "field": "number",
+          "dir": "desc"
+        }
+      ],
+      "q": "Mina",
+      "filters": {
+        "status": "open"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "7f3c2a10-5b1e-4c55-9a51-0c6f1d2e8a01",
+          "number": "20261020-04",
+          "status": "open",
+          "display_status": "open",
+          "assigned_member_id": "2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b",
+          "assigned_member": "Fr. Demo Member",
+          "applicant_gender": "F",
+          "respondent_gender": "M",
+          "applicant_name": "Demo Mina Applicant",
+          "respondent_name": "Demo Respondent",
+          "grounds": [
+            "abandonment"
+          ],
+          "reason": "abandonment",
+          "closed_at": null,
+          "party_names": [
+            "Demo Mina Applicant",
+            "Demo Respondent"
+          ],
+          "next_step": "case.next.hearing"
+        }
+      ],
+      "page": 1,
+      "size": 50,
+      "total": 1,
+      "has_more": false
+    },
+    "role": "council (admin, secretary, president, member)"
+  },
+  "applicant_response": {
+    "role": "applicant",
+    "note": "SEC-312-1: applicants get their own item projection (lists.applicant_case_item). grounds and reason come only from the actor's own newest submitted petition on the case (owner = actor); [] and null when the actor has filed none, even if the other party has. No party names, no genders, no next_step. respondent_name and party_names stay out until ctm3-product-lead answers design risk 6 (deny by default).",
+    "request_body": {
+      "page": 1,
+      "size": 50,
+      "sort": [
+        {
+          "field": "created_at",
+          "dir": "desc"
+        }
+      ],
+      "q": "",
+      "filters": {
+        "status": "any"
+      }
+    },
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "7f3c2a10-5b1e-4c55-9a51-0c6f1d2e8a01",
+          "number": "20261020-04",
+          "status": "open",
+          "display_status": "open",
+          "assigned_member_id": "2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b",
+          "assigned_member": "Fr. Demo Member",
+          "grounds": [
+            "abandonment"
+          ],
+          "reason": "abandonment",
+          "closed_at": null
+        }
+      ],
+      "page": 1,
+      "size": 50,
+      "total": 1,
+      "has_more": false
+    },
+    "forbidden_item_keys": [
+      "applicant_gender",
+      "respondent_gender",
+      "applicant_name",
+      "respondent_name",
+      "party_names",
+      "next_step"
+    ]
+  },
+  "errors": [
+    {
+      "when": "not signed in",
+      "status": 401,
+      "body": {
+        "error": "authentication_required"
+      },
+      "note": "Only reached with a valid CSRF token (a browser session always has one). A bare unauthenticated POST gets the CSRF 403 first."
+    },
+    {
+      "when": "GET or another method",
+      "status": 405,
+      "body": {
+        "error": "method_not_allowed"
+      }
+    },
+    {
+      "when": "CSRF header missing or wrong (also an unauthenticated POST without a token)",
+      "status": 403,
+      "body": null,
+      "content_type": "text/html",
+      "note": "Django CsrfViewMiddleware answers with its HTML 403 page (no CSRF_FAILURE_VIEW). It runs before the endpoint, so it is also what an unauthenticated POST without a token gets instead of 401. CTMServerList treats any non-JSON error as a generic failure (Retry row) and never parses the body."
+    },
+    {
+      "when": "unknown list name, e.g. /api/lists/drafts/",
+      "status": 404,
+      "body": {
+        "error": "resource_or_input_invalid"
+      }
+    },
+    {
+      "when": "page not an integer from 1 to 1000000 (also the string \"1\", true, 1.5)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "page must be an integer from 1 to 1000000."
+        ]
+      }
+    },
+    {
+      "when": "size not an integer from 1 to 100 (also the string \"50\", true, 1.5)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "size must be an integer from 1 to 100."
+        ]
+      }
+    },
+    {
+      "when": "sort field not allowed for this list and role",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported sort field: <field>."
+        ]
+      }
+    },
+    {
+      "when": "more than 3 sort entries or dir not asc/desc",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Use up to 3 sort entries, each with dir asc or desc."
+        ]
+      }
+    },
+    {
+      "when": "q shorter than 2 or longer than 200 characters after trimming (empty is allowed)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Search text must be 2 to 200 characters."
+        ]
+      }
+    },
+    {
+      "when": "filter key not allowed for this list and role",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported filter: <key>."
+        ]
+      }
+    },
+    {
+      "when": "unknown top-level body key",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported list option: <key>."
+        ]
+      }
+    },
+    {
+      "when": "applicant sends filters.mine, filters.assigned, filters.ground or a council-only sort field (applicant search is number only, never refused: other text just matches nothing)",
+      "status": 403,
+      "body": {
+        "error": "forbidden",
+        "detail": "Council access required."
+      }
+    },
+    {
+      "when": "filters.status not open, closed or any",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "status must be open, closed or any."
+        ]
+      }
+    },
+    {
+      "when": "filters.ids not a list of 1 to 100 UUIDs",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "ids must list 1 to 100 case ids."
+        ]
+      }
+    },
+    {
+      "when": "filters.ground not one of infidelity, abandonment, abuse, faith, addiction, concealment",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "ground must be one of the six ground codes."
+        ]
+      }
+    }
+  ],
+  "extra_requests": [
+    {
+      "purpose": "council filter by ground (command-bar Select)",
+      "body": {
+        "page": 1,
+        "size": 50,
+        "q": "",
+        "filters": {
+          "status": "open",
+          "ground": "abandonment"
+        }
+      }
+    },
+    {
+      "purpose": "council search by manager full name",
+      "body": {
+        "page": 1,
+        "size": 50,
+        "q": "Fr. Demo Member",
+        "filters": {}
+      },
+      "returns": "the case above; q matches Concat(first_name, ' ', last_name)"
+    },
+    {
+      "purpose": "council filter by ground while a filing is returned for correction (SEC-312-2)",
+      "body": {
+        "page": 1,
+        "size": 50,
+        "q": "",
+        "filters": {
+          "ground": "abuse"
+        }
+      },
+      "returns": "total 0 when abuse exists only in a private correction revision saved after the return; also after that filing is withdrawn (SEC-312-2a); the filter and the item's grounds read the council-visible revision (the current_version revision when revision_visible, else the latest Submission.revision)"
+    }
+  ]
+}

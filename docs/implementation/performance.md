@@ -93,6 +93,9 @@ Where a rule meets an earlier decision, the earlier decision stays in force:
   config file.
 - A page already over its budget on `main` fails only when it gets slower.
   Built on CTM#314.
+- Status: the job `speed-budget` fails its own run. It is not a required check on
+  `main` yet, so it does not block a merge by itself. Making it required is a
+  member's decision.
 
 ### 8. Idle prefetch of larger data, within limits (D-0072, limits D-0073)
 

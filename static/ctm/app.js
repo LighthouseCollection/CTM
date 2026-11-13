@@ -498,7 +498,7 @@
     document.body.appendChild(form);
     form.submit();
   }
-  async function api(url, options = {}) {
+  async function fetchApi(url, options = {}) {
     const response = await fetch(url, {
       ...options,
       credentials: "same-origin",
@@ -528,6 +528,11 @@
     // 204 No Content (a DELETE such as the case delete, issue 176) has no body to read.
     return response.status === 204 ? null : response.json();
   }
+  // Issue 308: every call goes through the tab's memory store (data.js): kept reads come back at once, a read already
+  // on its way is shared, and any save clears what is kept. Without the store, calls go straight to the server.
+  const api = window.CTMData ? window.CTMData.wrap(fetchApi) : fetchApi;
+  // Issue 308: the CSRF cookie changes at every sign-in, so another tab's sign-in or sign-out empties the store here.
+  window.CTMData?.watch(csrf);
   function MessageComposer({ record, sessions, council, t, onSent, onClose }) {
     const [body, setBody] = R.useState(""),
       [recipients, setRecipients] = R.useState([]);
@@ -1066,6 +1071,15 @@
       [data, setData] = R.useState(null);
     const [failure, setFailure] = R.useState(false),
       [revision, reload] = R.useState(0);
+    // Issue 308: the shell's own list reads, drawn again quietly when the server's answer changes (data.js).
+    const [quietTick, setQuietTick] = R.useState(0);
+    const quietRun = R.useRef(false);
+    const shellReader = R.useRef(null);
+    if (window.CTMData && !shellReader.current)
+      shellReader.current = window.CTMData.reader(() => {
+        quietRun.current = true;
+        setQuietTick((n) => n + 1);
+      });
     const [saving, setSaving] = R.useState(false);
     const [preferenceFailure, setPreferenceFailure] = R.useState(null);
     const [caseDetailOpen, setCaseDetailOpen] = R.useState(true);
@@ -1076,6 +1090,10 @@
       const onDeleted = () => leaveDeletedCase.current && leaveDeletedCase.current();
       window.addEventListener("ctm:case-deleted", onDeleted);
       return () => window.removeEventListener("ctm:case-deleted", onDeleted);
+    }, []);
+    R.useEffect(() => {
+      shellReader.current?.open();
+      return () => shellReader.current?.close();
     }, []);
     R.useEffect(() => setCaseDetailOpen(true), [page, selection]);
     const applicantGuard = R.useRef(null);
@@ -1115,14 +1133,18 @@
       api("/api/session/")
         .then((value) => {
           if (active) {
+            // Issue 308: what the tab keeps belongs to this account; another account starts empty.
+            window.CTMData?.setAccount(value?.id);
             setUser(value);
             setLang(value.ui_language === "ar" ? "ar" : "en");
           }
         })
         .catch((error) => {
           if (active) {
-            if (error.status === 401) setUser(null);
-            else setFailure(true);
+            if (error.status === 401) {
+              window.CTMData?.setAccount(null);
+              setUser(null);
+            } else setFailure(true);
           }
         });
       return () => {
@@ -1131,12 +1153,20 @@
     }, [revision]);
     R.useEffect(() => {
       let active = true;
-      setData(null);
-      setFailure(false);
+      // Issue 308: a quiet refresh (a kept list changed on the server) keeps the page on screen and swaps the data in.
+      const quiet = quietRun.current;
+      quietRun.current = false;
+      if (!quiet) {
+        setData(null);
+        setFailure(false);
+      }
+      shellReader.current?.reset();
       if (!user)
         return () => {
           active = false;
         };
+      // Only the list pages (no forms on them) are drawn from kept data and refreshed quietly.
+      const listed = (load) => (shellReader.current ? shellReader.current.run(load) : load());
       let request;
       if (page === "appointments") request = Promise.resolve({});
       else if (page === "notifications") request = api("/api/notifications/");
@@ -1177,10 +1207,10 @@
         ["review", "newApplications", "sessions", "sessionsUpcoming", "sessionsArchived", "session", "decision", "decree", "appeals", "audit", "search", "medical", "parties", "hearings", "petition", "timeline", "statistics"].includes(page)
       )
         request = Promise.resolve({});
-      else if (page === "sessions") request = api("/api/sessions/");
-      else if (page === "applications") request = api("/api/applications/");
+      else if (page === "sessions") request = listed(() => api("/api/sessions/"));
+      else if (page === "applications") request = listed(() => api("/api/applications/"));
       else if (["home", "myCases", "cases", "archived", "past"].includes(page)) {
-        request =
+        request = listed(() =>
           user.portal === "applicant" && page === "home"
             ? Promise.all([api("/api/cases/"), api("/api/applications/")]).then(
                 ([cases, applications]) => ({
@@ -1188,7 +1218,7 @@
                   applications: applications.items,
                 }),
               )
-            : api("/api/cases/");
+            : api("/api/cases/"));
       } else {
         setData({});
         return () => {
@@ -1202,13 +1232,14 @@
         .catch((error) => {
           if (active) {
             if (error.status === 401) setUser(null);
-            else setFailure(true);
+            // A quiet refresh that lost the connection keeps what is on screen; a refusal still shows.
+            else if (!(quiet && !error.status)) setFailure(true);
           }
         });
       return () => {
         active = false;
       };
-    }, [user?.id, user?.portal, page, selection, revision]);
+    }, [user?.id, user?.portal, page, selection, revision, quietTick]);
     const go = (id, selected = null, guarded = false) => {
       if (id === page && selected === selection) return;
       const move = () => {

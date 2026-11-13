@@ -1,0 +1,165 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/api/lists/case-audit/",
+    "headers": {
+      "Content-Type": "application/json",
+      "X-CSRFToken": "<csrftoken cookie>"
+    },
+    "body": {
+      "page": 1,
+      "size": 50,
+      "sort": [],
+      "q": "",
+      "filters": {
+        "case": "7f3c2a10-5b1e-4c55-9a51-0c6f1d2e8a01"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "4d5e6f7a-8b9c-4d0e-8f1a-2b3c4d5e6f7a",
+          "action": "case_assigned",
+          "timestamp": "2026-10-21T16:00:00+00:00",
+          "source": "tribunal.case",
+          "source_id": "7f3c2a10-5b1e-4c55-9a51-0c6f1d2e8a01",
+          "actor": "2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b"
+        }
+      ],
+      "page": 1,
+      "size": 50,
+      "total": null,
+      "has_more": true
+    }
+  },
+  "errors": [
+    {
+      "when": "not signed in",
+      "status": 401,
+      "body": {
+        "error": "authentication_required"
+      },
+      "note": "Only reached with a valid CSRF token (a browser session always has one). A bare unauthenticated POST gets the CSRF 403 first."
+    },
+    {
+      "when": "GET or another method",
+      "status": 405,
+      "body": {
+        "error": "method_not_allowed"
+      }
+    },
+    {
+      "when": "CSRF header missing or wrong (also an unauthenticated POST without a token)",
+      "status": 403,
+      "body": null,
+      "content_type": "text/html",
+      "note": "Django CsrfViewMiddleware answers with its HTML 403 page (no CSRF_FAILURE_VIEW). It runs before the endpoint, so it is also what an unauthenticated POST without a token gets instead of 401. CTMServerList treats any non-JSON error as a generic failure (Retry row) and never parses the body."
+    },
+    {
+      "when": "unknown list name, e.g. /api/lists/drafts/",
+      "status": 404,
+      "body": {
+        "error": "resource_or_input_invalid"
+      }
+    },
+    {
+      "when": "page not an integer from 1 to 1000000 (also the string \"1\", true, 1.5)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "page must be an integer from 1 to 1000000."
+        ]
+      }
+    },
+    {
+      "when": "size not an integer from 1 to 100 (also the string \"50\", true, 1.5)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "size must be an integer from 1 to 100."
+        ]
+      }
+    },
+    {
+      "when": "sort field not allowed for this list and role",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported sort field: <field>."
+        ]
+      }
+    },
+    {
+      "when": "more than 3 sort entries or dir not asc/desc",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Use up to 3 sort entries, each with dir asc or desc."
+        ]
+      }
+    },
+    {
+      "when": "q shorter than 2 or longer than 200 characters after trimming (empty is allowed)",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Search text must be 2 to 200 characters."
+        ]
+      }
+    },
+    {
+      "when": "filter key not allowed for this list and role",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported filter: <key>."
+        ]
+      }
+    },
+    {
+      "when": "unknown top-level body key",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "Unsupported list option: <key>."
+        ]
+      }
+    },
+    {
+      "when": "applicant",
+      "status": 403,
+      "body": {
+        "error": "forbidden",
+        "detail": "Council access required."
+      }
+    },
+    {
+      "when": "filters.case missing or not a UUID",
+      "status": 422,
+      "body": {
+        "error": "validation",
+        "messages": [
+          "case must be a case id."
+        ]
+      }
+    },
+    {
+      "when": "filters.case names no case",
+      "status": 404,
+      "body": {
+        "error": "resource_or_input_invalid"
+      }
+    }
+  ],
+  "privacy_note": "SEC-312-3: events of a never-submitted draft are never returned, counted toward has_more or listed in facets: source tribunal.application, tribunal.answerrevision or tribunal.fileversion whose application has submitted_at IS NULL (filing_privacy.draft_event_q, excluded in SQL before audit_visible). An action filter such as draft_started matches only events of filings that were later submitted."
+}
