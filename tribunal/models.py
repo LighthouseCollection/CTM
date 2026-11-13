@@ -161,6 +161,12 @@ class Case(Root):
     )
     closed_at = models.DateTimeField(null=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["-created_at", "-id"], name="case_created_idx"),
+            models.Index(fields=["status", "-created_at"], name="case_status_created_idx"),
+        ]
+
 
 class CaseNumberCounter(models.Model):
     date = models.DateField(primary_key=True)
@@ -473,7 +479,11 @@ class AuditEvent(Immutable):
     metadata = models.JSONField(default=dict)
 
     class Meta:
-        indexes = [models.Index(fields=["source", "source_id", "action"], name="account_status_events_idx")]
+        indexes = [
+            models.Index(fields=["source", "source_id", "action"], name="account_status_events_idx"),
+            models.Index(fields=["-created_at", "-id"], name="audit_created_idx"),
+            models.Index(fields=["case", "-created_at", "-id"], name="audit_case_created_idx"),
+        ]
 
 
 class Outbox(Root):

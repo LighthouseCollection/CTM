@@ -31,7 +31,7 @@ Contract examples: `contract/post-list-*.json` (backend asserts them; frontend f
   - SQL `council_revision_answers_q(values)`: the same rule in one query. `current_visible` = the `current_version` revision `R` exists and either `Exists(Submission application=app, revision=R)` or (`app.status != "returned"` and not a returned correction: with `last_reject` = `Subquery` of the latest `CompletenessReview` with `result="reject"`, `submission__application=app`, `created_at <= R.created_at`, either `last_reject` is null or `Exists(Submission application=app, created_at__gt=last_reject, created_at__lte=R.created_at)`). Then an `Exists` over `AnswerRevision` of the filing with `(Q(number=F("application__current_version")) & current_visible) | (~current_visible & Q(pk=Subquery(latest Submission.revision_id)))`, plus the ground match on its answers. A parity test (T2) checks the SQL choice against `council_revision` in every state of the test below.
 - **Never-submitted draft events (SEC-312-3, SEC02),** defined once in `filing_privacy.py`: `draft_event_q()` is a `Q` matching an `AuditEvent` whose `source` is `tribunal.application` (`Exists(Application pk=OuterRef("source_id"), submitted_at__isnull=True)`), `tribunal.answerrevision` (`application__submitted_at__isnull=True`) or `tribunal.fileversion` (`attachment__application__submitted_at__isnull=True`). The `audit` and `case-audit` querysets apply `.exclude(draft_event_q())` first, so filters, `has_more` and facets never see these events, and `audit_visible(event)` also returns False for them (for any caller outside the list engine). Once the draft is submitted, its history shows as that of a submitted filing.
 - **Existing GET endpoints (the same leaks are live today)** are fixed in the same tasks by sharing these helpers, not by a separate bug. T2: `api.cases` serializes applicant rows with `applicant_case_item`, and `_case_list_data` reads `council_revision`. T3: `case_audit`/`system_audit` apply `.exclude(draft_event_q())`, and `audit_visible` hides the same events.
-- Migration (owner `database`): `tribunal/migrations/0078_list_indexes.py`, indexes only, with matching `Meta.indexes` in `tribunal/models.py`:
+- Migration (owner `database`): `tribunal/migrations/0079_list_indexes.py`, indexes only, with matching `Meta.indexes` in `tribunal/models.py`:
   - `AuditEvent(-created_at, -id)` name `audit_created_idx`; `AuditEvent(case, -created_at, -id)` name `audit_case_created_idx`
   - `Case(-created_at, -id)` name `case_created_idx`; `Case(status, -created_at)` name `case_status_created_idx`
   - `Party(case, slot)` exists as a unique constraint, so no new index.
@@ -242,19 +242,19 @@ Out of scope, follow-up issue: the Statistics page (`caseStatistics(cases.items,
 
 ```owners
 architect: docs/implementation/slices/ctm3-312-server-lists/brief.md, docs/implementation/slices/ctm3-312-server-lists/design.md, docs/implementation/slices/ctm3-312-server-lists/contract/*.json, docs/adr/0001-server-list-queries.md
-database: tribunal/migrations/0078_list_indexes.py, tribunal/models.py
+database: tribunal/migrations/0079_list_indexes.py, tribunal/models.py
 backend: tribunal/lists.py, tribunal/list_api.py, ctm/urls.py, tribunal/api.py, tribunal/services/filing_privacy.py, tests/test_list_contract.py, tests/test_list_privacy.py, tests/test_list_timing.py, docs/implementation/slices/ctm3-312-server-lists/evidence.md
 frontend: static/ctm/server-list.js, static/ctm/shell-layout.js, static/ctm/council.js, static/ctm/council-case.js, static/ctm/council-decree.js, static/ctm/ui-workspaces.js, static/ctm/app.js, tribunal/templates/tribunal/shell.html, tests/frontend/server-list.test.cjs, tests/frontend/council-server-lists.test.cjs, tests/frontend/table-contract.test.cjs
 i18n: docs/i18n/arabic-proposals.md
 ```
 
-Manifest: [NEW] `tribunal/lists.py`, `tribunal/list_api.py`, `tribunal/migrations/0078_list_indexes.py`, `static/ctm/server-list.js`, the four new test files. Everything else is [MODIFY].
+Manifest: [NEW] `tribunal/lists.py`, `tribunal/list_api.py`, `tribunal/migrations/0079_list_indexes.py`, `static/ctm/server-list.js`, the four new test files. Everything else is [MODIFY].
 
 ## 12. Tasks
 
 Run tests with `uv run pytest --ds=ctm.settings_postgres_test -q <file>` (needs `CTM_TEST_DATABASE_URL`) and `node --test <file>`.
 
-**T1. database: list indexes.** Files: `tribunal/models.py` (Meta.indexes on `Case`, `AuditEvent`), `tribunal/migrations/0078_list_indexes.py`. Depends: none. Parallel-safe: yes. Interfaces: produces the index names in section 3.
+**T1. database: list indexes.** Files: `tribunal/models.py` (Meta.indexes on `Case`, `AuditEvent`), `tribunal/migrations/0079_list_indexes.py`. Depends: none. Parallel-safe: yes. Interfaces: produces the index names in section 3.
 - write failing test: none (schema only) -> run `uv run python manage.py makemigrations --check --dry-run --settings=ctm.settings_test`, expect FAIL after the Meta edit -> write `0078` with `AddIndexConcurrently`, `atomic = False` -> run again and `node scripts/check_migration_diff.cjs`, expect PASS -> commit.
 
 **T2. backend: list engine, route, cases.** Files: `tribunal/lists.py`, `tribunal/list_api.py`, `ctm/urls.py` (one line: `path("api/lists/<slug:name>/", list_api.list_view)`), `tribunal/services/filing_privacy.py` (`council_revision`, `council_revision_answers_q`), `tribunal/api.py` (`cases` and `_case_list_data` only), `tests/test_list_contract.py`, `tests/test_list_privacy.py`. Depends: none. Parallel-safe: yes (with T1, T5). Interfaces: produces `ListSpec`, `REGISTRY`, `run_list(spec, actor, data) -> dict`, `list_view(request, name)` (`@endpoint(("POST",))`, `REGISTRY.get(name)` missing → raise `ObjectDoesNotExist`); matches `contract/post-list-cases.json`.
