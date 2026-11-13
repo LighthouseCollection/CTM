@@ -44,6 +44,13 @@ test('uploads the screenshots as an artifact and to ci-screenshots', () => {
   assert.match(text, /ci-screenshots/);
 });
 
+test('the screenshot upload reaches the hidden .tmp folder and fails loudly when it finds nothing', () => {
+  const step = (text.match(/uses: actions\/upload-artifact@[\s\S]*?(?=\n  [a-z][\w-]*:|\n      - |$)/) || [''])[0];
+  assert.ok(step, 'upload-artifact step missing');
+  assert.match(step, /include-hidden-files:\s*true/, '.tmp is hidden; upload-artifact skips it by default');
+  assert.match(step, /if-no-files-found:\s*error/, 'a run with no screenshots must not look green');
+});
+
 test('the job that runs browser code is read-only; only the publish job may write', () => {
   const jobs = text.split(/^jobs:\s*$/m)[1] || '';
   const blocks = jobs.split(/^  (?=[a-z][\w-]*:\s*$)/m).filter(Boolean);
