@@ -13,7 +13,7 @@ supplement interruption/EN–AR groups and nine shell groups pass. The real runn
 uses isolated SQLite, synthetic sessions/content and scanner test policy. Controlled
 provider output remains a fixture. No PostgreSQL/live-provider/antivirus/institutional
 wording/signature/issuance acceptance is claimed. [Report](supplement-integration-report.md)
-and [Download JSON](supplement-integration-result.json).
+and Download JSON: `supplement-integration-result.json` (kept in git history).
 
 | Batch | Work | Result / coverage |
 | --- | --- | --- |
@@ -39,7 +39,7 @@ recovery/retry, preserving unavailable evidence during refresh, keeping frozen e
 names with current-only links, and local-selection copy without an unconfirmed receipt
 claim. Independent review identified the last two issues; both were reproduced and fixed.
 
-[Detailed real API evidence](supplement-api-result.json) · [Remaining work](remaining-work.md).
+Detailed real API evidence: `supplement-api-result.json`; remaining work: `remaining-work.md` (both kept in git history).
 Earlier source reconciliation at d724ba5 remains a valid historical snapshot;
 its AS09 missing frontend contract is superseded by this local integration.
 

@@ -68,7 +68,7 @@ The alpha prototype remains in its separate repository. No operational CTM datab
 
 - Validation uses `/opt/ctm-validation`, the separate `ctm_validation` role/database and pytest's temporary `test_ctm_validation` database. The role is not superuser and cannot bypass RLS; CREATEDB is for disposable pytest databases only.
 
-- PostgreSQL migrations and regression tests executed in a Linux container. See `validation-results.json` for the final run count.
+- PostgreSQL migrations and regression tests executed in a Linux container. The final run count is in `validation-results.json` (kept in git history).
 
 - The application Docker image built successfully, including static collection.
 

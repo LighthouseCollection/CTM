@@ -97,8 +97,7 @@ attributed correction writes.55 of63 domain tables have forced RLS;8 core table
 reviews remain. This does not imply that remaining provider, role, identity,
 field-semantic and cross-stream acceptance work is complete.
 
-Run `python docs/implementation/build_reconciliation.py` after refreshing the model
-inventory to regenerate `schema-reconciliation.json`. Every approved table has a
+`build_reconciliation.py` (removed; kept in git history) regenerated `schema-reconciliation.json`. Every approved table has a
 candidate or unmapped review disposition, purpose and direct-column difference list.
 Same names/columns are not semantic equivalence. Multiple approved concepts may
 share an adapter/JSON field and still need constraints, history or field work.
