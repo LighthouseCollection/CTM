@@ -282,7 +282,7 @@ def every_kind(people, planned):
     """The payload of each of the four email kinds (an update, then a move that cancels and re-invites)."""
     update_session(people["secretary"], planned.pk, planned.date, starts_at=planned.starts_at, location="Hall 9")
     new_day = future_day(20)
-    reschedule_session(people["admin"], planned.pk, new_day, starts_at=at(new_day), location="Hall 2")
+    reschedule_session(people["admin"], planned.pk, new_day, {}, "Hall changed")
     found = {}
     for kind in ENGLISH:
         row = Outbox.objects.filter(kind=kind).order_by("-id").first()
