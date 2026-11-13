@@ -87,6 +87,14 @@ def assert_parity(app):
 
     app.refresh_from_db()
     revision = council_revision(app)
+    # #369: the list page's prefetch path picks the same revision, with no extra query.
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+    loaded = m.Application.objects.prefetch_related(
+        "revisions", "submissions__completenessreview_set").get(pk=app.pk)
+    with CaptureQueriesContext(connection) as captured:
+        assert council_revision(loaded) == revision
+    assert not captured.captured_queries
     visible = set(submitted_grounds(revision.answers)) if revision else set()
     for code in sorted(GROUNDS):
         values = [code, "desertion"] if code == "abandonment" else [code]

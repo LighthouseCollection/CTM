@@ -178,8 +178,12 @@ def case_queryset(actor):
     qs = m.Case.objects.all()
     if actor.role == "applicant":
         qs = qs.filter(Exists(m.Party.objects.filter(case=OuterRef("pk"), account=actor)))
-    return qs.select_related("assigned_member").prefetch_related(
+    qs = qs.select_related("assigned_member").prefetch_related(
         "parties", "applications__party", "applications__revisions")
+    if actor.role != "applicant":
+        # #369: council rows read council_revision from this prefetch, never per row.
+        qs = qs.prefetch_related("applications__submissions__completenessreview_set")
+    return qs
 
 
 def _status_filter(qs, value):

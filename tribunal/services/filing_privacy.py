@@ -27,11 +27,47 @@ def council_revision(app):
     revision_visible, otherwise the latest formal submission's revision, or None.
     Not keyed on status == "returned": a corrected returned filing can be withdrawn
     and its current_version is still the private correction (SEC-312-2a)."""
+    prefetched = _prefetched_council_revision(app)
+    if prefetched is not _NOT_PREFETCHED:
+        return prefetched
     revision = app.revisions.filter(number=app.current_version).first()
     if revision is not None and revision_visible(revision):
         return revision
     formal = app.submissions.select_related("revision").order_by("-created_at", "-id").first()
     return formal.revision if formal else None
+
+
+_NOT_PREFETCHED = object()
+
+
+def _cache(obj, name):
+    return getattr(obj, "_prefetched_objects_cache", {}).get(name)
+
+
+def _prefetched_council_revision(app):
+    """council_revision from a list page's prefetch (revisions, submissions and their
+    completeness reviews) without one more query, by the same rule as revision_visible
+    and returned_correction. _NOT_PREFETCHED when the prefetch is missing (#369)."""
+    revisions, submissions = _cache(app, "revisions"), _cache(app, "submissions")
+    if revisions is None or submissions is None:
+        return _NOT_PREFETCHED
+    if any(_cache(submission, "completenessreview_set") is None for submission in submissions):
+        return _NOT_PREFETCHED
+    current = next((row for row in revisions if row.number == app.current_version), None)
+    if current is not None:
+        if any(submission.revision_id == current.pk for submission in submissions):
+            return current  # a formal submission is always visible
+        if app.status != "returned":
+            review = max((row for submission in submissions for row in submission.completenessreview_set.all()
+                          if row.result == "reject" and row.created_at <= current.created_at),
+                         key=lambda row: (row.created_at, row.id), default=None)
+            if review is None or any(review.created_at < submission.created_at <= current.created_at
+                                     for submission in submissions):
+                return current  # not a correction saved in a returned filing's private window
+    latest = max(submissions, key=lambda submission: (submission.created_at, submission.id), default=None)
+    if latest is None:
+        return None
+    return next((row for row in revisions if row.pk == latest.revision_id), None) or latest.revision
 
 
 def _ground_answers_q(values):
