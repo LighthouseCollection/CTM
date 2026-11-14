@@ -599,3 +599,13 @@ decisions:
     decided_by: owner
     status: active
     review_only: An operating state of the agent host, recorded in the kit log there; nothing in this repository can check it
+
+  - id: D-0076
+    date: 2026-11-14
+    area: process
+    decision: Agents merge their own PRs again (self-merge). They turn on auto-merge, and GitHub merges only when every required check passes (Fast gates, Decisions have checks, Frontend tests, Opengrep, zizmor, postgres); the deploy then runs as before. This replaces the PR-only merging of D-0074; the rest of D-0074 stands
+    why: The owner decided on 2026-11-14 that no merge should wait for them, knowing that every merge deploys the live site
+    options: [Self-merge through auto-merge (chosen), PR-only (D-0074)]
+    decided_by: owner
+    status: active
+    check: { kind: config, ref: .agents/agents.config.yaml }
