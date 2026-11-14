@@ -188,3 +188,271 @@ The seat words stay as they are. `{actor}` is the other person's name, isolated 
   documented, the Presiding fact keeps its icon.
 - The builder must not invent: other file types or sizes, a crop step, a photo on applicant-facing or document surfaces,
   a corner-icon variant, or any Arabic text.
+
+---
+
+# G3 architecture (Solution Architect)
+
+Gate G3. Storage, API contract and permissions for the G2 design above. The decision record is
+`docs/adr/0002-council-photos.md`; real request and response examples are in `contract/*.json` (fixtures come from
+them, L-04). Checked by `tests/frontend/contract-353-council-photos.test.cjs`.
+
+## G3.1 Approaches
+
+| Approach | Verdict |
+|---|---|
+| **A. Append-only `CouncilPhotoChange` table + private files + versioned staff-only URL** | **Chosen.** Same shape as council seats (#175, D-0043): history, a version for conflicts, row security, the database clock. Outside every case table, so no case list, search or download can reach it |
+| B. `Attachment` + `FileVersion` with a new category | Case-bound rows; `authorized_file` applies case rules and audits every view; reachable through `/api/files/` |
+| C. A `photo` column on `Account` | No version (no G2 Conflict state), no history, mixes with account row security |
+| D. Signed, expiring URLs | A signing key and refreshes on long-open pages, for no gain over a per-request check inside a signed-in session |
+
+## G3.2 Data
+
+New model in `tribunal/models.py` (database engineer), next to `CouncilSeatChange`:
+
+```python
+class CouncilPhotoChange(Immutable):
+    """A council photo added, changed or removed (#353). Append-only; the latest version counts."""
+    account = models.ForeignKey(Account, on_delete=models.PROTECT, related_name="photo_changes")
+    version = models.PositiveIntegerField()                     # 1, 2, 3... per account
+    object_key = models.CharField(max_length=250, null=True, unique=True)  # "council-photos/<uuid4 hex>.<jpg|png>"
+    mime_type = models.CharField(max_length=20, null=True)     # image/jpeg | image/png
+    byte_count = models.PositiveIntegerField(null=True)        # stored bytes, after metadata removal
+    sha256 = models.CharField(max_length=64, null=True)        # of the stored bytes; the ETag
+    width = models.PositiveIntegerField(null=True)
+    height = models.PositiveIntegerField(null=True)
+    actor = models.ForeignKey(Account, on_delete=models.PROTECT, related_name="photo_changes_made")
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["account", "version"], name="council_photo_version")]
+        indexes = [models.Index(fields=["account", "-version"], name="council_photo_latest")]
+```
+
+- A **photo row** has every file field set; a **removal row** has every file field null (a check constraint).
+  `photo_version` in the API is the latest `version`, or 0 when the account never had a change.
+- Migration `tribunal/migrations/0080_council_photos.py` + `.sql` (0079 is taken by open PR #372; renumber if main moves):
+  - Check constraint: removal (all null) or photo (`mime_type IN ('image/jpeg','image/png')`, `byte_count` 1 to
+    2097152, `sha256 ~ '^[0-9a-f]{64}$'`, `width`/`height` 1 to 8000, `width*height <= 24000000`,
+    `object_key LIKE 'council-photos/%'`).
+  - Row security, `ENABLE` + `FORCE`, as `0073_council_seat_guards`: `photo_select` for active staff, not the worker
+    (`ctm_council_photo_readable()`); `photo_insert` only when the actor role is admin, secretary or president,
+    `actor_id = ctm_actor_id()`, the account's role is a staff role, and **for a photo row the account is seated now**
+    (`ctm_council_seat(account)->>'seated'`) (`ctm_council_photo_writable(jsonb)`). Applicants read zero rows.
+  - Triggers: `BEFORE INSERT` sets `created_at = clock_timestamp()` (unless the migration caller) and refuses a
+    `version` other than the account's last version + 1; `BEFORE UPDATE OR DELETE` runs `ctm_reject_history_update()`.
+  - Grants to `ctm_app`: `SELECT, INSERT` only, and `EXECUTE` on the two functions. `REVOKE ALL ... FROM PUBLIC`.
+  - Reverse: drop the triggers, policies, functions and table.
+- **Files:** `MEDIA_ROOT/council-photos/<uuid4 hex>.<jpg|png>`, written with `files.write_private_original` in
+  `transaction.on_commit` (0600 file, 0700 folder). Never under `static/` or a `MEDIA_URL`. The pre-deploy restic
+  snapshot of the media folder (`deploy/release.sh`) covers it. After a change commits, the previous photo's file is
+  deleted (`on_commit`, missing file ignored); the rows keep the history without the image.
+- **Audit:** `audit(actor, "council_photo_changed", change, metadata={"account_id", "version", "action": "set"|"removed",
+  "mime_type", "byte_count"})`. No image, original file name or hash in the audit (G1 AC-353-5).
+
+## G3.3 Service commands
+
+New module `tribunal/services/council_photos.py` (engineer). Seat rules come from `council_seats.py`; nothing is copied.
+
+```python
+PHOTO_EDITORS = SEAT_EDITORS            # {"admin", "secretary", "president"}
+MAX_BYTES = 2_097_152                   # G1 2 MB = G2 AvatarUpload maxSize
+MAX_SIDE, MAX_PIXELS = 8000, 24_000_000 # browser decode guard; 12 MP phone photos and 24 MP cameras pass
+
+class PhotoRefused(Exception):          # code, status, extra (dict merged into the JSON answer)
+
+def photo_state(account) -> dict        # {"account_id", "photo_url", "photo_version", "changed_by": {"id","name"}|None, "changed_at"|None}
+def photo_urls(account_ids) -> dict     # {account_id: url | None}, one query (latest version per account via Subquery)
+def clean_image(data) -> CleanImage     # (mime, extension, data, width, height); raises PhotoRefused
+def set_photo(actor, account_id, uploaded, expected_version) -> dict      # @transaction.atomic
+def remove_photo(actor, account_id, expected_version) -> dict             # @transaction.atomic
+def photo_for_delivery(actor, account_id, version) -> CouncilPhotoChange
+def photo_rights(actor, seat, state) -> dict  # {"can_add_photo", "can_remove_photo"}
+```
+
+**`set_photo` order** (each step's refusal is in G3.6; nothing is stored or audited before the last steps):
+1. `active(actor)`; `actor.role in PHOTO_EDITORS`, else `PermissionDenied` (403 `forbidden`). Before any lookup, so an
+   applicant or member learns nothing about the target.
+2. `expected_version`: a whole number >= 0 (not a bool, not text with spaces), else `expected_version_required`.
+3. Size: `uploaded.size > MAX_BYTES` or more than `MAX_BYTES` bytes read (`uploaded.read(MAX_BYTES + 1)`) gives
+   `photo_too_large` with `max_bytes`. The limit is the bytes received.
+4. `Account.objects.get(pk=account_id, role__in=STAFF_ROLES)` (else 404). `lock_key(f"council-photo:{account.pk}")`.
+5. Current state; `expected_version != photo_version` gives `photo_conflict` with `photo_state(account)`.
+6. `council_seat(account)["seated"]`, else `not_seated`.
+7. `clean_image(data)` (below). Bytes identical (`sha256`) to the current photo: return the current state, no row, no audit.
+8. `files.scan(clean.data)`: `"rejected"` gives `photo_rejected`; `"pending"` gives `scan_unavailable`. Only `"clean"` goes on.
+9. `with database_actor(actor):` insert the row (`version = photo_version + 1`); an `IntegrityError` on
+   `council_photo_version` (a race) is answered as `photo_conflict` with the fresh state. `on_commit`: write the file,
+   then delete the previous file. Audit. Return `photo_state(account)` (201).
+
+**`remove_photo`:** steps 1, 2, 4, 5 as above (no seat check: G2 keeps Remove for an unseated account). No current photo:
+return the current state (200, no row, no audit). Otherwise insert a removal row, `on_commit` delete the file, audit, 200.
+
+**`clean_image` (content, not the name):** pure Python, no new dependency, pixels never decoded.
+- **PNG:** the 8-byte signature; every chunk's length in bounds and CRC valid; `IHDR` first (width/height 1 to
+  `MAX_SIDE`, `width*height <= MAX_PIXELS`, valid bit depth and colour type); at least one `IDAT`; `IEND` last with nothing
+  after it. Unknown critical chunks (upper-case first letter) are refused. Kept: `IHDR PLTE IDAT IEND tRNS gAMA cHRM
+  sRGB iCCP sBIT pHYs bKGD`. Every other ancillary chunk is dropped (`tEXt zTXt iTXt eXIf tIME`, and the animation
+  chunks `acTL fcTL fdAT`, which leaves the still first frame).
+- **JPEG:** `FFD8` first; every marker segment's length in bounds up to `SOS`; exactly one frame header, baseline or
+  progressive (`SOF0`, `SOF1`, `SOF2`) with width/height in the limits above; entropy data runs to an `FFD9`; bytes after
+  it are dropped. Kept: `APP0` (JFIF), `APP2` `ICC_PROFILE`, `APP14` Adobe, `DQT DHT DRI SOF SOS` and the scan data.
+  Dropped: other `APP1` to `APP15` (EXIF with GPS, XMP, IPTC) and `COM`. If the dropped EXIF had an Orientation (tag
+  `0x0112`, value 2 to 8), a minimal `APP1` EXIF holding only that tag is written back, so phone photos stay upright.
+- Anything else, or any structure error: `photo_wrong_content`. Too many pixels: `photo_too_many_pixels`.
+- The stored `mime_type`, `byte_count`, `sha256`, `width`, `height` describe the cleaned bytes.
+
+**`photo_for_delivery`:** `staff(actor)` first (applicants 403, before any lookup). The latest row for the account; none,
+a removal row, or `version` not the latest gives `photo_unavailable` (404).
+
+## G3.4 Authorization and derivative surfaces
+
+| Who | Upload / change | Remove | See a photo (URL and bytes) |
+|---|---|---|---|
+| Admin, secretary, president | Seated accounts only (service step 6 + RLS) | Any staff account that has a photo | Yes |
+| Member | 403 `forbidden` | 403 `forbidden` | Yes |
+| Applicant | 403 `forbidden` | 403 `forbidden` | **Never:** 403 on every photo URL; no payload an applicant can call carries a council `photo_url` (AC-353-3) |
+| Worker (Celery) | No (RLS) | No (RLS) | No (RLS) |
+| Signed out | 401 | 401 | 401 |
+
+Derivatives, per `build-spec/permissions.md`:
+- **Search, counts, case files, downloads, documents, reports, exports, emails:** a council photo is in none of their
+  tables, and `/api/files/` cannot serve it (it is not a `FileVersion`). No change to those code paths.
+- **Payloads that gain `photo_url`** are all staff-only today and stay so: `GET /api/council/seats/` (`seat_list`,
+  `staff()`), `GET /api/dashboard/members/` (`members_summary`, `staff()`), the attendance roster
+  (`_roster_row` in `api.attendance`, `staff()`). The test suite proves an applicant gets 403 on each (contract
+  `get-seats.json`, `get-display-rows.json`) and that no applicant-callable response contains `/api/council/photos/`.
+- **Not added (G2):** the Presiding fact (`presiding_member_*` in `projections.py`) stays without a photo until PLX-028;
+  the case-assignment picker (`GET /api/members/`, `council-case.js` member options) is not a G2 surface and is left as it is.
+- **Viewing is not audited** (ADR 0002): decorative staff-directory image, shown on every Home load. Changes are audited.
+- **The image itself:** metadata (GPS and camera EXIF, XMP, IPTC, text) is removed before storage; served with
+  `nosniff`, a `sandbox` CSP and `Cross-Origin-Resource-Policy: same-origin`, so it cannot run as a page or be embedded
+  by another site.
+
+## G3.5 API contract
+
+Routes in `ctm/urls.py` (engineer), views in `tribunal/api.py` with `@endpoint`, CSRF as every other session write:
+
+| Method and path | View | Body / query | Success | Example |
+|---|---|---|---|---|
+| `POST /api/council/photos/<uuid:account_id>/` | `council_photo` | multipart: `photo` (file), `expected_version` | 201 `photo_state` | `contract/post-photo.json` |
+| `DELETE /api/council/photos/<uuid:account_id>/` | `council_photo` | `?expected_version=N` | 200 `photo_state` | `contract/delete-photo.json` |
+| `GET` / `HEAD /api/council/photos/<uuid:account_id>/<int:version>/` | `council_photo_file` | `If-None-Match` | 200 image / 304 | `contract/get-photo.json`, `contract/get-photo-applicant.json` |
+| `GET /api/council/seats/` (existing) | `council_seats` | none | rows gain `photo_url`, `photo_version`, `can_add_photo`, `can_remove_photo` | `contract/get-seats.json` |
+| `GET /api/dashboard/members/`, attendance roster (existing) | unchanged views | none | `photo_url` from `photo_urls()` instead of `None` | `contract/get-display-rows.json` |
+
+- `photo_url` is always `/api/council/photos/<account_id>/<photo_version>/` or `null`. It changes on every change, so
+  no cache shows a replaced photo; an old URL answers 404 and the surface shows its fallback (G2 "Photo fails to load").
+  URLs never expire; a long-open page keeps working until the photo changes.
+- `photo_state` answer: `{"account_id", "photo_url", "photo_version", "changed_by": {"id", "name"} | null, "changed_at" | null}`.
+  The control sets `AvatarUpload src` from `photo_url` and keeps `photo_version` for the next `expected_version`.
+- Image answer headers: `Content-Type` (stored type), `Content-Length`, `Content-Disposition: inline`,
+  `Cache-Control: private, no-cache`, `ETag: "<sha256>"`, `X-Content-Type-Options: nosniff`,
+  `Content-Security-Policy: default-src 'none'; sandbox`, `Cross-Origin-Resource-Policy: same-origin`. A matching
+  `If-None-Match` answers 304 after the permission check. No range requests.
+- The photo views answer their own codes: they catch `PhotoRefused` and return `{"error": code, **extra}` with its
+  status. `@endpoint` keeps 401, 403 `forbidden` (from `PermissionDenied`) and 404 `resource_or_input_invalid`. The
+  generic `@endpoint` mapping is not changed.
+
+## G3.6 Failure paths
+
+The control maps the `error` code to a G2 word (`max_bytes` fills `{max}`, formatted through `Intl`; `changed_by.name`
+fills `{actor}`). A network failure or any code not listed is `photoSaveFailed` (upload) or `photoRemoveFailed` (removal).
+
+| Status | Code | G2 word | When | State after |
+|---|---|---|---|---|
+| 422 | `photo_too_large` | `photoTooLarge` | More than `max_bytes` (2097152) received | Nothing stored |
+| 422 | `photo_wrong_content` | `photoWrongContent` | Not a well-formed JPEG or PNG by its bytes, whatever the name or declared type | Nothing stored |
+| 422 | `photo_too_many_pixels` | `photoTooLarge` | Wider or taller than 8000, or over 24 million pixels (see G3.9) | Nothing stored |
+| 422 | `not_seated` | `photoNotSeated` | Upload for an account without a seat now | Nothing stored; Remove still works |
+| 403 | `forbidden` | `photoForbidden` | Caller is not admin, secretary or president (or is an applicant) | Nothing stored |
+| 409 | `photo_conflict` | `photoConflict` | `expected_version` is not the current version, or a concurrent insert won; answer carries the current `photo_url`, `photo_version`, `changed_by`, `changed_at` | Nothing stored; G2 "Use my photo" resends with the new version |
+| 422 | `photo_rejected` | `photoWrongContent` | The safety scan refused the file | Nothing stored |
+| 503 | `scan_unavailable` | `photoSaveFailed` | The safety scan could not run (never stored unscanned) | Nothing stored; Try again |
+| 422 | `expected_version_required` | `photoSaveFailed` | `expected_version` missing or not a whole number >= 0 (a client bug) | Nothing stored |
+| 404 | `resource_or_input_invalid` | `photoSaveFailed` | Unknown account, or not a staff account | Nothing stored |
+
+Delivery (display surfaces never show these; Plenix falls back to initials or the icon): 403 `forbidden` (applicant or
+signed-out 401), 404 `photo_unavailable` (not the current version, or removed), 503 `source_unavailable` (file missing
+or its size differs from `byte_count`).
+
+Server limit for the record: `max_bytes` = 2097152 (G1 2 MB, G2 `maxSize={2097152}`).
+
+## G3.7 Owners
+
+```owners
+architect: docs/implementation/slices/core-353-council-photos/contract/*.json, docs/adr/0002-council-photos.md, tests/frontend/contract-353-council-photos.test.cjs
+design: docs/implementation/plenix-requests.md, tests/frontend/design-353-council-photos.test.cjs
+database: tribunal/models.py, tribunal/migrations/0080_council_photos.py, tribunal/migrations/0080_council_photos.sql, tests/test_council_photo_rls.py
+backend: tribunal/services/council_photos.py, tribunal/services/council_seats.py, tribunal/services/home.py, tribunal/api.py, ctm/urls.py, tests/test_council_photos.py, tests/test_council_photo_image.py, tests/test_council_photo_privacy.py, tests/fixtures/council-photos/*
+frontend: static/ctm/ui-workspaces.js, tests/frontend/council-photo-control.test.cjs
+i18n: docs/i18n/arabic-proposals.md
+```
+
+The slice folder (this file, `contract/`, `evidence.md`) is shared. `council.js` (Home tiles, rosters) needs no change:
+it already passes `row.photo_url` to `MetricCard person.src` and `UserCard src`. The database PR carries the label
+`agent:ctm3-database-engineer` (`scripts/db_owner_guard.cjs`).
+
+## G3.8 Tasks
+
+Test-first: red, then green, with both outputs in the PR. Run `uv run pytest --ds=ctm.settings_postgres_test -q <file>`
+(needs `CTM_TEST_DATABASE_URL`) and `node --test <file>`.
+
+**T1. database: table, row security, migration.** Files: the `database` row. Depends: none.
+- Tests first in `tests/test_council_photo_rls.py`, as the `ctm_app` role: staff read rows, an applicant reads none, the
+  worker reads none; a member's insert is refused; an editor inserting as someone else is refused; a photo row for an
+  unseated account is refused, a removal row for it is allowed; a skipped version is refused; update and delete are
+  refused; `created_at` is the database clock; the check constraint refuses a half-filled row.
+- Then the model, `0080_council_photos.py` + `.sql`, `makemigrations --check`, `check_migration_diff.cjs`.
+
+**T2. backend: service, image check, API, payloads.** Files: the `backend` row. Depends: T1 merged (or on its branch).
+- `tests/test_council_photo_image.py` first: small synthetic JPEG and PNG fixtures built in the test (no real photos,
+  the repository is public): a PNG with `tEXt` and `eXIf` comes back without them; a JPEG with EXIF GPS and
+  Orientation 6 comes back with only the Orientation; a PDF or GIF renamed `.jpg` is `photo_wrong_content`; a broken
+  CRC, a truncated JPEG, an unknown critical PNG chunk, data after `IEND` (dropped), 8001 pixels wide and 5000x5000
+  are each refused or cleaned as G3.3 says.
+- `tests/test_council_photos.py` first, from `contract/*.json`: every row of the G3.6 table; 201 and 200 answers match
+  `post-photo.json` and `delete-photo.json`; no-op removal and identical upload write no row and no audit;
+  conflict carries the current state; two racing uploads give one 201 and one 409; the previous file is deleted after
+  commit and a rolled-back upload leaves no file; the file is mode 0600 under `council-photos/`; the audit row has
+  no image, name or hash (AC-353-1, -2, -5).
+- `tests/test_council_photo_privacy.py` first (AC-353-3): an applicant session gets 403 for GET and HEAD of a current
+  URL, an old URL and a made-up one, and for POST and DELETE; 403 on `/api/council/seats/`, `/api/dashboard/members/`
+  and the attendance roster; and the applicant's own payloads (`/api/session/`, `/api/applications/`, `/api/cases/`, their case and message views,
+  search) contain no `/api/council/photos/`. Staff get the image with the G3.5 headers and 304 on `If-None-Match`.
+- Then `council_photos.py`, the two views and routes, `photo_urls()` in `seat_list`, `members_summary` and
+  `_roster_row` (replace the `None`s), and `photo_rights()` in `seat_list` rows.
+
+**T3. frontend: the Settings photo control.** Files: the `frontend` row. Depends: T2's contract (not its merge; build
+against `contract/*.json`).
+- `tests/frontend/council-photo-control.test.cjs` first: the G2 control props; hidden without `can_add_photo` or
+  `can_remove_photo`; upload sends `expected_version` and sets `src` only from the answer; each G3.6 code maps to its
+  G2 word; conflict keeps the file and "Use my photo" resends with the answer's `photo_version`; removal confirms first.
+- Then the control in `ui-workspaces.js` per G2 "Where the control lives" (today: row menu item, then `Dialog`), the 19
+  English keys, and screenshots EN/AR desktop (AC-353-4) from the browser check.
+
+**T4. i18n: Arabic proposals** for the 19 keys in `docs/i18n/arabic-proposals.md` (D-0012). Depends: T3's keys.
+
+### Acceptance trace
+
+| AC | Proven by |
+|---|---|
+| AC-353-1 | T2 `test_council_photos.py` (three roles succeed; member and applicant 403), T1 RLS insert tests |
+| AC-353-2 | T2 `test_council_photo_image.py` + size cases; T3 code-to-word mapping (EN/AR words from T4) |
+| AC-353-3 | T2 `test_council_photo_privacy.py`, T1 applicant reads zero rows, `contract/get-photo-applicant.json` |
+| AC-353-4 | Existing `council.js` render of `photo_url` + T2 payloads; T3 screenshots EN/AR; Presiding card keeps its icon until PLX-028 (G2) |
+| AC-353-5 | T2 audit assertions (one row per change, none for no-ops, no image data) |
+
+## G3.9 Risks and anything unclear
+
+- **Pixel limit wording.** `photo_too_many_pixels` reuses `photoTooLarge`, whose `{max}` is a file size, which is
+  wrong for this case. It is rare (over 24 MP under 2 MB). The technical writer (G7) may add a word such as
+  `photoTooManyPixels` in T3; until then the code maps as in G3.6.
+- **Unseated or deactivated accounts.** Settings > Users lists active staff only, so a deactivated account's photo can
+  only be removed after reactivation. It still shows in attendance history (G2 "Former members"). Raise as a follow-up
+  if a member wants deactivation to remove photos.
+- **Scanner down** means no photo can be saved (503 `scan_unavailable`), by design (never store unscanned).
+- **Migration number** 0080 assumes #372 merges 0079 first; the database engineer renumbers if main moves.
+- **PLX-028** (photo in the Presiding fact) is open; when Plenix documents it, a small follow-up adds
+  `presiding_member_photo_url` to the session projection from `photo_urls()`.
+- PR #352 draws an Avatar inside the Presiding fact; the Design Critic asked for it to be removed (G2 round 2). Not part
+  of this slice.

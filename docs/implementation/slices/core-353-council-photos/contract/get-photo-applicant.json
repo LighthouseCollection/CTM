@@ -1,0 +1,31 @@
+{
+  "note": "AC-353-3: an applicant session gets 403 for every council photo URL, current or not, existing or not, before any lookup; the same answer for HEAD.",
+  "cases": [
+    {
+      "actor": "applicant",
+      "request": {
+        "method": "GET",
+        "path": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/4/"
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "error": "forbidden"
+        }
+      }
+    },
+    {
+      "actor": "applicant",
+      "request": {
+        "method": "GET",
+        "path": "/api/council/photos/00000000-0000-4000-8000-000000000000/1/"
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "error": "forbidden"
+        }
+      }
+    }
+  ]
+}

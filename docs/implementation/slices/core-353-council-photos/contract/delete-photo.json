@@ -1,0 +1,77 @@
+{
+  "cases": [
+    {
+      "note": "Remove a photo. Allowed while the account has a photo, seated or not (G2). The version still goes up, so older URLs stop loading.",
+      "actor": "secretary",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/council/photos/5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b/?expected_version=2",
+        "headers": {
+          "X-CSRFToken": "<csrftoken cookie>"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "account_id": "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b",
+          "photo_url": null,
+          "photo_version": 3,
+          "changed_by": {
+            "id": "7c1d9e20-4a5b-4c6d-9e8f-1a2b3c4d5e6f",
+            "name": "Demo Secretary"
+          },
+          "changed_at": "2026-11-14T18:07:40.102000+00:00"
+        }
+      }
+    },
+    {
+      "note": "Nothing to remove (already removed with the same expected version): no change, no audit row, the current state.",
+      "actor": "secretary",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/council/photos/5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b/?expected_version=3",
+        "headers": {
+          "X-CSRFToken": "<csrftoken cookie>"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "account_id": "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b",
+          "photo_url": null,
+          "photo_version": 3,
+          "changed_by": {
+            "id": "7c1d9e20-4a5b-4c6d-9e8f-1a2b3c4d5e6f",
+            "name": "Demo Secretary"
+          },
+          "changed_at": "2026-11-14T18:07:40.102000+00:00"
+        }
+      }
+    },
+    {
+      "note": "Stale removal: the photo was changed after the control loaded it.",
+      "actor": "admin",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/?expected_version=3",
+        "headers": {
+          "X-CSRFToken": "<csrftoken cookie>"
+        }
+      },
+      "response": {
+        "status": 409,
+        "body": {
+          "error": "photo_conflict",
+          "account_id": "2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b",
+          "photo_url": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/4/",
+          "photo_version": 4,
+          "changed_by": {
+            "id": "7c1d9e20-4a5b-4c6d-9e8f-1a2b3c4d5e6f",
+            "name": "Demo Secretary"
+          },
+          "changed_at": "2026-11-14T18:05:12.481000+00:00"
+        }
+      }
+    }
+  ]
+}

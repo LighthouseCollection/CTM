@@ -1,0 +1,73 @@
+{
+  "cases": [
+    {
+      "note": "Any signed-in, active staff account (member, president, secretary, admin). Permission is checked on every request, including revalidation.",
+      "actor": "member",
+      "request": {
+        "method": "GET",
+        "path": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/4/"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "image/jpeg",
+          "Content-Length": "183977",
+          "Content-Disposition": "inline",
+          "Cache-Control": "private, no-cache",
+          "ETag": "\"<sha256 of the stored bytes>\"",
+          "X-Content-Type-Options": "nosniff",
+          "Content-Security-Policy": "default-src 'none'; sandbox",
+          "Cross-Origin-Resource-Policy": "same-origin"
+        },
+        "body": "<JPEG bytes, metadata removed>"
+      }
+    },
+    {
+      "note": "Revalidation: the browser keeps the image and asks again; still permission-checked.",
+      "actor": "president",
+      "request": {
+        "method": "GET",
+        "path": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/4/",
+        "headers": {
+          "If-None-Match": "\"<sha256>\""
+        }
+      },
+      "response": {
+        "status": 304,
+        "headers": {
+          "Cache-Control": "private, no-cache",
+          "ETag": "\"<sha256>\""
+        },
+        "body": null
+      }
+    },
+    {
+      "note": "Not the current version (changed or removed since the page loaded). The display surface falls back (G2 Photo fails to load).",
+      "actor": "member",
+      "request": {
+        "method": "GET",
+        "path": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/3/"
+      },
+      "response": {
+        "status": 404,
+        "body": {
+          "error": "photo_unavailable"
+        }
+      }
+    },
+    {
+      "note": "The stored bytes are missing or do not match the recorded size or hash.",
+      "actor": "admin",
+      "request": {
+        "method": "GET",
+        "path": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/4/"
+      },
+      "response": {
+        "status": 503,
+        "body": {
+          "error": "source_unavailable"
+        }
+      }
+    }
+  ]
+}

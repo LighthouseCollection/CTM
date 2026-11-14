@@ -1,0 +1,76 @@
+{
+  "cases": [
+    {
+      "note": "Council Home member tiles (#170): photo_url replaces today's null. Staff only (members_summary calls staff()). Counts under 5 stay suppressed as today.",
+      "actor": "member",
+      "request": {
+        "method": "GET",
+        "path": "/api/dashboard/members/"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "threshold": 5,
+          "items": [
+            {
+              "id": "4d5e6f70-8a9b-4c0d-9e1f-2a3b4c5d6e7f",
+              "name": "Fr. Demo President",
+              "title": "president",
+              "photo_url": null,
+              "active_cases": null,
+              "suppressed": true
+            },
+            {
+              "id": "2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b",
+              "name": "Fr. Demo Member",
+              "title": "member",
+              "photo_url": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/4/",
+              "active_cases": null,
+              "suppressed": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "note": "Attendance roster row (_roster_row, #229): photo_url replaces today's null, also for former members while a photo is stored.",
+      "actor": "secretary",
+      "request": {
+        "method": "GET",
+        "path": "/api/sessions/3f4a5b6c-7d8e-4f9a-8b0c-1d2e3f4a5b6c/attendance/?hearing_id=6c7d8e9f-0a1b-4c2d-8e3f-4a5b6c7d8e9f"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "items": [
+            {
+              "member_id": "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b",
+              "member_name": "Demo Former",
+              "member_role": "member",
+              "member_active": true,
+              "title": "member",
+              "voting": false,
+              "photo_url": "/api/council/photos/5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b/2/",
+              "present": true,
+              "actor_id": "7c1d9e20-4a5b-4c6d-9e8f-1a2b3c4d5e6f",
+              "timestamp": "2026-11-12T19:02:00+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "actor": "applicant",
+      "request": {
+        "method": "GET",
+        "path": "/api/dashboard/members/"
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "error": "forbidden"
+        }
+      }
+    }
+  ]
+}
