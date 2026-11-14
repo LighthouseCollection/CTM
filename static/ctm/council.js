@@ -1250,16 +1250,33 @@
     };
   }
 
+  // Issue 308: with the tab's memory store (data.js), a page's first reads may come from memory at once; when one
+  // of them changes on the server the loader runs again quietly (no loading state; a lost connection keeps what is
+  // shown). While any form has unsaved edits, nothing is redrawn under it.
   function useLoad(loader, deps) {
     const R = window.React;
     const [state, setState] = R.useState({ data: null, error: null, pending: true });
     const [tick, setTick] = R.useState(0);
+    const quietRun = R.useRef(false);
+    const reader = R.useRef(null);
+    if (window.CTMData && !reader.current)
+      reader.current = window.CTMData.reader(() => {
+        if (unsavedDrafts.size) return;
+        quietRun.current = true;
+        setTick((n) => n + 1);
+      });
+    R.useEffect(() => {
+      reader.current?.open();
+      return () => reader.current?.close();
+    }, []);
     R.useEffect(() => {
       let active = true;
-      setState((old) => ({ ...old, pending: true, error: null }));
-      loader()
+      const quiet = quietRun.current;
+      quietRun.current = false;
+      if (!quiet) setState((old) => ({ ...old, pending: true, error: null }));
+      (reader.current ? reader.current.run(loader) : loader())
         .then((data) => active && setState({ data, error: null, pending: false }))
-        .catch((error) => active && setState({ data: null, error, pending: false }));
+        .catch((error) => active && !(quiet && !error?.status) && setState({ data: null, error, pending: false }));
       return () => {
         active = false;
       };
@@ -3391,6 +3408,13 @@
       [user?.id],
     );
     const leadId = dash.data?.upcoming_sessions?.[0]?.id || null;
+    // Issue 308: once Home has its own data, the likely next page (the next session's agenda) loads
+    // while the user is idle. The full case list is not loaded ahead until the server pages it (issue 312). A click never
+    // waits for it (data.js).
+    R.useEffect(() => {
+      if (dash.data && window.CTMData)
+        window.CTMData.prefetch([leadId ? `/api/sessions/${encodeURIComponent(leadId)}/agenda/` : null]);
+    }, [Boolean(dash.data), leadId]);
     // Issue 308: /api/dashboard/ sends the lead session's card (time, place, agenda size and answers, issue 116), so Home
     // starts no session reads of its own. The two charts share one statistics read.
     const sharedApi = R.useMemo(() => sharedReads(api), [api]);
