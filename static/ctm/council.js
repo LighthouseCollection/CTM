@@ -3399,6 +3399,9 @@
       h = R.createElement,
       t = translator(lang);
     const n = (value) => typeof value === "number" ? new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US").format(value) : undefined;
+    // Issue 344: a person tile drops its unit when the value is a string with no ASCII digit (Plenix 1.8.0 tests
+    // `/\d/`), so the Arabic-Indic count goes in as a node and keeps "قضايا نشطة" beside it.
+    const count = (value) => { const text = n(value); return text === undefined ? undefined : h(R.Fragment, null, text); };
     const [dash, retryDash] = useLoad(() => api("/api/dashboard/"), [user?.id]);
     const [counts, retryCounts] = useLoad(
       () => Promise.all([
@@ -3528,7 +3531,7 @@
           ? h(P.WidgetGrid, { label: t("councilMembers"), columns: 4, items: rows.map((row) => ({ ...row, id: String(row.id) })),
               renderItem: (row) => h(P.MetricCard, { key: row.id, type: "person", size: "sm", title: row.name || "—", headingLevel: 3,
                 person: { name: row.name || "—", role: t(memberTitleKey(row.title)), src: row.photo_url || undefined },
-                value: row.suppressed ? t("hiddenValue") : n(row.active_cases), unit: row.suppressed ? undefined : t("activeCasesUnit") }) })
+                value: row.suppressed ? t("hiddenValue") : count(row.active_cases), unit: row.suppressed ? undefined : t("activeCasesUnit") }) })
           : h(P.EmptyState, { title: t("noMembers") });
       }
       // Issue 208: a hidden count can be 5 or more (one more is hidden so it cannot be worked out), so it reads

@@ -440,7 +440,7 @@ test("council home lists council members as person cards in their order; a suppr
   assert.ok(panel, "members panel");
   const grid = byName(panel, "WidgetGrid")[0];
   const cards = grid.props.items.map((item) => grid.props.renderItem(item));
-  same(cards.map((card) => [card.props.title, card.props.person.role, card.props.value ?? null]),
+  same(cards.map((card) => [card.props.title, card.props.person.role, card.props.value == null ? null : textOf(card.props.value).trim()]),
     [["H.G. Presiding", "Presiding", "9"], ["Sec Retary", "Secretary", "Hidden"], ["Fr. Abe Member", "Member", "12"], ["Fr. Zed Member", "Member", "7"]]);
   assert.ok(cards.every((card) => card.props.type === "person" && card.props.menu === undefined));
   assert.equal(cards[1].props.unit, undefined);
@@ -449,6 +449,37 @@ test("council home lists council members as person cards in their order; a suppr
   const ar = C.translator("ar");
   for (const key of ["case.next.completeness_review", "case.next.applicant_correction", "case.next.hearing", "case.next.assignment", "case.next.investigation", "councilMembers", "hiddenValue", "titlePresiding"])
     assert.notEqual(ar(key), C.translator("en")(key), key);
+});
+
+// Issue 344: every person tile reads "<count> <unit>" in both languages. Plenix 1.8.0's person tile
+// (layout "tile") treats a string with no ASCII digit as a word (`/\d/`) and drops the unit, so the Arabic-Indic
+// count "٧" would lose "قضايا نشطة". The count therefore reaches Plenix as a node (MetricCard `value` is a
+// documented React.ReactNode), never as a bare digit string; the hidden value stays a word with no unit.
+test("council member tiles keep the active-cases unit next to the count in Arabic and English (#344)", async () => {
+  const [h, C] = boot();
+  const api = async (url) =>
+    url === "/api/dashboard/" ? { my_cases: 0, review_queue: 0, upcoming_sessions: [] }
+      : url === "/api/notifications/" ? { unread_count: 0 }
+      : url === "/api/dashboard/members/" ? { items: [
+          { id: 1, name: "H.G. Presiding", title: "presiding", photo_url: null, active_cases: 7 },
+          { id: 2, name: "Sec Retary", title: "secretary", photo_url: null, active_cases: null, suppressed: true },
+        ] }
+      : { items: [] };
+  for (const [lang, count, unit, hidden] of [["ar", "٧", "قضايا نشطة", "مخفي"], ["en", "7", "active cases", "Hidden"]]) {
+    const props = { api, lang, user: secretary, onCase() {}, onSession() {}, onNavigate() {} };
+    h.render(C.CouncilHome, props);
+    await settle(); h.render(C.CouncilHome, props); await settle();
+    const tree = h.render(C.CouncilHome, props);
+    const panel = byName(tree, "Panel").find((node) => node.props.title === C.translator(lang)("councilMembers"));
+    assert.ok(panel, `${lang}: members panel`);
+    const grid = byName(panel, "WidgetGrid")[0];
+    const [shown, suppressed] = grid.props.items.map((item) => grid.props.renderItem(item));
+    assert.notEqual(typeof shown.props.value, "string", `${lang}: the count is a node, not a digit string Plenix can read as a word`);
+    assert.equal(textOf(shown.props.value).trim(), count, `${lang}: the count in the reader's digits`);
+    assert.equal(shown.props.unit, unit, `${lang}: the unit sits next to the count`);
+    assert.equal(suppressed.props.value, hidden, `${lang}: a hidden count is a word`);
+    assert.equal(suppressed.props.unit, undefined, `${lang}: a hidden count has no unit`);
+  }
 });
 
 // Issue 170 region 5: statistics never show a suppressed count, a total or anything that reveals one by subtraction.
