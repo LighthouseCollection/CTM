@@ -1,0 +1,202 @@
+{
+  "cases": [
+    {
+      "note": "Over 2 MB (2097152 bytes). Checked on the bytes received, before anything is parsed or stored.",
+      "actor": "secretary",
+      "request": {
+        "method": "POST",
+        "path": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=<boundary>",
+          "X-CSRFToken": "<csrftoken cookie>"
+        },
+        "body": {
+          "photo": "<file: big.jpg, image/jpeg, 2097153 bytes>",
+          "expected_version": 4
+        }
+      },
+      "response": {
+        "status": 422,
+        "body": {
+          "error": "photo_too_large",
+          "max_bytes": 2097152
+        }
+      }
+    },
+    {
+      "note": "Named .jpg but the bytes are not a well-formed JPEG or PNG (here a PDF).",
+      "actor": "secretary",
+      "request": {
+        "method": "POST",
+        "path": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=<boundary>",
+          "X-CSRFToken": "<csrftoken cookie>"
+        },
+        "body": {
+          "photo": "<file: photo.jpg, image/jpeg, 51200 bytes, starts %PDF->",
+          "expected_version": 4
+        }
+      },
+      "response": {
+        "status": 422,
+        "body": {
+          "error": "photo_wrong_content"
+        }
+      }
+    },
+    {
+      "note": "The account holds no council seat now (an unseated admin). Remove stays allowed when a photo exists.",
+      "actor": "president",
+      "request": {
+        "method": "POST",
+        "path": "/api/council/photos/9a0b1c2d-3e4f-4a5b-8c6d-7e8f9a0b1c2d/",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=<boundary>",
+          "X-CSRFToken": "<csrftoken cookie>"
+        },
+        "body": {
+          "photo": "<file: admin.png, image/png, 90112 bytes>",
+          "expected_version": 0
+        }
+      },
+      "response": {
+        "status": 422,
+        "body": {
+          "error": "not_seated"
+        }
+      }
+    },
+    {
+      "note": "A council member (no right to change photos).",
+      "actor": "member",
+      "request": {
+        "method": "POST",
+        "path": "/api/council/photos/4d5e6f70-8a9b-4c0d-9e1f-2a3b4c5d6e7f/",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=<boundary>",
+          "X-CSRFToken": "<csrftoken cookie>"
+        },
+        "body": {
+          "photo": "<file: p.jpg, image/jpeg, 70000 bytes>",
+          "expected_version": 1
+        }
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "error": "forbidden"
+        }
+      }
+    },
+    {
+      "note": "An applicant: refused before the target is looked up; the answer carries no council data.",
+      "actor": "applicant",
+      "request": {
+        "method": "POST",
+        "path": "/api/council/photos/4d5e6f70-8a9b-4c0d-9e1f-2a3b4c5d6e7f/",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=<boundary>",
+          "X-CSRFToken": "<csrftoken cookie>"
+        },
+        "body": {
+          "photo": "<file: p.jpg, image/jpeg, 70000 bytes>",
+          "expected_version": 1
+        }
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "error": "forbidden"
+        }
+      }
+    },
+    {
+      "note": "expected_version missing or not a whole number >= 0.",
+      "actor": "secretary",
+      "request": {
+        "method": "POST",
+        "path": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=<boundary>",
+          "X-CSRFToken": "<csrftoken cookie>"
+        },
+        "body": {
+          "photo": "<file: m.jpg, image/jpeg, 70000 bytes>"
+        }
+      },
+      "response": {
+        "status": 422,
+        "body": {
+          "error": "expected_version_required"
+        }
+      }
+    },
+    {
+      "note": "The safety scan could not run (scanner down). Nothing is stored; never fake success.",
+      "actor": "secretary",
+      "request": {
+        "method": "POST",
+        "path": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=<boundary>",
+          "X-CSRFToken": "<csrftoken cookie>"
+        },
+        "body": {
+          "photo": "<file: m.jpg, image/jpeg, 70000 bytes>",
+          "expected_version": 4
+        }
+      },
+      "response": {
+        "status": 503,
+        "body": {
+          "error": "scan_unavailable"
+        }
+      }
+    },
+    {
+      "note": "The scanner refused the file.",
+      "actor": "secretary",
+      "request": {
+        "method": "POST",
+        "path": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=<boundary>",
+          "X-CSRFToken": "<csrftoken cookie>"
+        },
+        "body": {
+          "photo": "<file: m.jpg, image/jpeg, 70000 bytes>",
+          "expected_version": 4
+        }
+      },
+      "response": {
+        "status": 422,
+        "body": {
+          "error": "photo_rejected"
+        }
+      }
+    },
+    {
+      "note": "Unknown account, or an account that is not a staff account (an applicant id).",
+      "actor": "secretary",
+      "request": {
+        "method": "POST",
+        "path": "/api/council/photos/00000000-0000-4000-8000-000000000000/",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=<boundary>",
+          "X-CSRFToken": "<csrftoken cookie>"
+        },
+        "body": {
+          "photo": "<file: m.jpg, image/jpeg, 70000 bytes>",
+          "expected_version": 0
+        }
+      },
+      "response": {
+        "status": 404,
+        "body": {
+          "error": "resource_or_input_invalid"
+        }
+      }
+    }
+  ]
+}

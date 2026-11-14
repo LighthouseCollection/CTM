@@ -1,0 +1,93 @@
+{
+  "cases": [
+    {
+      "note": "Settings > Users joins these rows by id. Each row gains photo_url, photo_version and the two rights the control needs (G2: Add/Change only for seat holders, Remove while a photo exists).",
+      "actor": "secretary",
+      "request": {
+        "method": "GET",
+        "path": "/api/council/seats/"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "can_edit": true,
+          "items": [
+            {
+              "id": "9a0b1c2d-3e4f-4a5b-8c6d-7e8f9a0b1c2d",
+              "name": "Demo Admin",
+              "role": "admin",
+              "seated": false,
+              "voting": false,
+              "photo_url": null,
+              "photo_version": 0,
+              "can_add_photo": false,
+              "can_remove_photo": false
+            },
+            {
+              "id": "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b",
+              "name": "Demo Former",
+              "role": "member",
+              "seated": false,
+              "voting": false,
+              "photo_url": "/api/council/photos/5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b/2/",
+              "photo_version": 2,
+              "can_add_photo": false,
+              "can_remove_photo": true
+            },
+            {
+              "id": "2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b",
+              "name": "Fr. Demo Member",
+              "role": "member",
+              "seated": true,
+              "voting": true,
+              "photo_url": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/4/",
+              "photo_version": 4,
+              "can_add_photo": true,
+              "can_remove_photo": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "note": "A member reads the same rows with every right false.",
+      "actor": "member",
+      "request": {
+        "method": "GET",
+        "path": "/api/council/seats/"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "can_edit": false,
+          "items": [
+            {
+              "id": "2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b",
+              "name": "Fr. Demo Member",
+              "role": "member",
+              "seated": true,
+              "voting": true,
+              "photo_url": "/api/council/photos/2b8e6f40-1c2d-4e5f-8a9b-0c1d2e3f4a5b/4/",
+              "photo_version": 4,
+              "can_add_photo": false,
+              "can_remove_photo": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "actor": "applicant",
+      "request": {
+        "method": "GET",
+        "path": "/api/council/seats/"
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "error": "forbidden"
+        }
+      }
+    }
+  ]
+}
